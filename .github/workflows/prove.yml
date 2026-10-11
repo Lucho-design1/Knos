@@ -16,7 +16,7 @@ name: knos prove
 #            the token, its relay and a comment on the pull request. It checks out nothing and runs none of the pull
 #            request's code.
 #            THE COMMENT IS ONE, and it carries the five states of the payment (received, accepted, submitted,
-#            confirmed, finalized; docs/RELAY.md): posted when the command has found something in escrow for the pull
+#            confirmed, finalized; docs/reference/RELAY.md): posted when the command has found something in escrow for the pull
 #            request ("received"), edited when the terms hold and GitHub has signed ("accepted, settling": before the
 #            token goes to Solana), edited again when the payment lands, and once more when it is finalized. Never a
 #            new comment per state. No commit status or check is written on the merge commit: that needs
@@ -138,10 +138,10 @@ jobs:
           enable-cache: false      # nothing is restored into a job that runs here, and nothing is saved from it
           ignore-empty-workdir: true
       # A release commit reaches the default branch before PyPI lists the knos file the lock pins, and an install
-      # started then fails (0.3.22: this job, after the push). So the lock is written to a file, and the install waits
+      # started then fails (this happened once, after a push). So the lock is written to a file, and the install waits
       # for that exact file as the worker's claims job does with scripts/pypi_wait.py, written in here because this job
       # checks nothing out: standard library only, PyPI's simple index in its JSON form (PEP 691), pauses of 5, 10, 20,
-      # 40 then 60 s, at most 10 minutes. A lock with no knos line (a rehearsal installs knos from its source) waits
+      # 40 then 60 s, at most 10 minutes. A lock with no knos line (a trial release installs knos from its source) waits
       # for nothing.
       - name: install knos and what it needs, each by its hash, and nothing else
         run: |
@@ -166,7 +166,7 @@ jobs:
               --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
               --hash=sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5
               # via solders
-          knos==0.3.26 --hash=sha256:4e5c1b60cac2ea7726a2138f88741e5ba2e38f691de6fc54008def219903fc9e
+          knos==0.3.27 --hash=sha256:5cb7fe4dd84e8c8e04307cc24559d346732fd4bd12f5b68d1a574ad42dc9ff00
           LOCK
           python3 -I - "$RUNNER_TEMP/knos.lock" 600 <<'WAIT'
           import json, re, sys, time, urllib.request
@@ -240,8 +240,8 @@ jobs:
           ignore-empty-workdir: true
       - name: install knos, this one requirement exactly
         env:
-          UV_EXCLUDE_NEWER: "2026-10-10T09:46:00Z"   # knos 0.3.26 reached PyPI at 2026-10-10T09:35:20Z
-        run: uv tool install --no-config "knos==0.3.26"
+          UV_EXCLUDE_NEWER: "2026-10-11T05:47:00Z"   # knos 0.3.27 reached PyPI at 2026-10-11T05:36:57Z
+        run: uv tool install --no-config "knos==0.3.27"
       - name: knos review
         id: review
         env:
@@ -311,8 +311,8 @@ jobs:
           ignore-empty-workdir: true
       - name: install knos, this one requirement exactly, with pytest and pip for the trees it judges
         env:
-          UV_EXCLUDE_NEWER: "2026-10-10T09:46:00Z"   # knos 0.3.26 reached PyPI at 2026-10-10T09:35:20Z
-        run: uv tool install --no-config --with pytest --with pip "knos==0.3.26"
+          UV_EXCLUDE_NEWER: "2026-10-11T05:47:00Z"   # knos 0.3.27 reached PyPI at 2026-10-11T05:36:57Z
+        run: uv tool install --no-config --with pytest --with pip "knos==0.3.27"
       # The same layers the judge puts around the code (sudo, a network namespace of its own, the user nobody, an empty
       # environment), and a program that tries to reach three well-known addresses by number. If it gets out, or the
       # sandbox cannot be made here, the job ends now.
@@ -407,7 +407,7 @@ jobs:
               --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
               --hash=sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5
               # via solders
-          knos==0.3.26 --hash=sha256:4e5c1b60cac2ea7726a2138f88741e5ba2e38f691de6fc54008def219903fc9e
+          knos==0.3.27 --hash=sha256:5cb7fe4dd84e8c8e04307cc24559d346732fd4bd12f5b68d1a574ad42dc9ff00
           LOCK
           echo "$RUNNER_TEMP/knos/bin" >> "$GITHUB_PATH"
       # Before anything can be signed. The verdict is text from a machine that ran a stranger's code: it is parsed

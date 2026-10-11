@@ -37,7 +37,7 @@ name: knos attest (reusable workflow)
 # and rejected when it closed it unmerged, and posts it as `knos-eval:`. The meter counts it against credits the buyer
 # opened for this file at the commit the run used, from the run's first attempt only.
 #
-# The kinds batch and claim are knos_meter's batch mode (docs/METER.md). `repository` is then the repository that holds a
+# The kinds batch and claim are knos_meter's batch mode (docs/reference/METER.md). `repository` is then the repository that holds a
 # ledger file (the one the run is in), `order` is the file's path there, optionally followed by `:<yyyymm>.<seq>` to
 # name one batch, and `pull` is 0. The command reads the file through GitHub's API, recomputes every root and total of
 # it, and asks GitHub to sign ONE batch (knosm:batch or knosm:claim): the one named, or the first one the chain has not
@@ -151,8 +151,8 @@ jobs:
           ignore-empty-workdir: true
       - name: install knos, this one requirement exactly, with pytest and pip for the trees it judges
         env:
-          UV_EXCLUDE_NEWER: "2026-10-10T09:46:00Z"   # knos 0.3.26 reached PyPI at 2026-10-10T09:35:20Z
-        run: uv tool install --no-config --with pytest --with pip "knos==0.3.26"
+          UV_EXCLUDE_NEWER: "2026-10-11T05:47:00Z"   # knos 0.3.27 reached PyPI at 2026-10-11T05:36:57Z
+        run: uv tool install --no-config --with pytest --with pip "knos==0.3.27"
       - name: the plan (which two commits, which suite, which image), from the order on Solana and GitHub's record
         id: plan
         env:
@@ -248,8 +248,8 @@ jobs:
           python-version: "3.12"
           enable-cache: false      # nothing is restored into a job that runs here, and nothing is saved from it
           ignore-empty-workdir: true
-      # PyPI's index can lag a release's upload, and uv may answer from what it read a moment before (0.3.23: the wait
-      # for the file passed, and uv still said "no version of knos"). So the install itself is tried 3 times, the
+      # PyPI's index can lag a release's upload, and uv may answer from what it read a moment before (once, the wait
+      # for the file passed and uv still said "no version of knos"). So the install itself is tried 3 times, the
       # second and third with --refresh (uv asks the index again), 10 then 30 s apart; the third failure ends the job.
       - name: install knos and what it needs, each by its hash, and nothing else
         run: |
@@ -274,7 +274,7 @@ jobs:
               --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
               --hash=sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5
               # via solders
-          knos==0.3.26 --hash=sha256:4e5c1b60cac2ea7726a2138f88741e5ba2e38f691de6fc54008def219903fc9e
+          knos==0.3.27 --hash=sha256:5cb7fe4dd84e8c8e04307cc24559d346732fd4bd12f5b68d1a574ad42dc9ff00
           LOCK
           refresh=""
           for nap in 10 30 end; do
@@ -347,7 +347,7 @@ jobs:
               --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
               --hash=sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5
               # via solders
-          knos==0.3.26 --hash=sha256:4e5c1b60cac2ea7726a2138f88741e5ba2e38f691de6fc54008def219903fc9e
+          knos==0.3.27 --hash=sha256:5cb7fe4dd84e8c8e04307cc24559d346732fd4bd12f5b68d1a574ad42dc9ff00
           LOCK
           refresh=""
           for nap in 10 30 end; do
