@@ -14,7 +14,7 @@ repository at that same commit can pay it.
 
 Call them by a full commit sha, never by a branch or a tag. The first three take no inputs; `attest.yml` takes a
 repository, a pull request, an order, a kind and optional payees, which name facts and never code. Every job installs
-knos 0.3.27 from PyPI, as exactly that release, so a caller cannot change which code judges.
+knos 0.3.28 from PyPI, as exactly that release, so a caller cannot change which code judges.
 
 The jobs that sign (`fund.yml`, `settle` and `attest` in `prove.yml`, and `attest.yml`) install from a list in which every file is
 named by its sha256, `uv pip install --require-hashes`: that list is written into the workflow and is also
