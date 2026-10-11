@@ -2,13 +2,13 @@
 
 # Trust: who holds the keys, and what is tested
 
-**In plain words.** Today one person, the founder, holds every key that can change the programs. A change must wait 48 hours in public before it can run. Nobody outside Knos has checked the code, and it runs only with test money.
+**In plain words.** Today one person, the founder, holds every key that can change the programs. A change must wait 8 days in public before it can run. Nobody outside Knos has checked the code, and it runs only with test money.
 
 ```mermaid
 flowchart TB
     founder["The founder holds all three keys"]
     vote["Two of the three keys approve a change"]
-    wait["The change waits 48 hours, where anyone can see it"]
+    wait["The change waits 8 days, where anyone can see it"]
     run["Then the change can run"]
     founder --> vote --> wait --> run
 ```
@@ -35,7 +35,7 @@ key holders. Nobody has been asked yet.
 
 ## How a change to the programs happens
 
-Two of the three keys approve the change. Then it waits 48 hours, and anyone can see it coming.
+Two of the three keys approve the change. Then it waits 8 days, and anyone can see it coming.
 
 `knos status` lists every change that is waiting. So does the site's [upgrade
 record](https://drexthealpha.github.io/Knos/upgrades.json).
@@ -46,8 +46,8 @@ New code can do anything, including taking the money in open tasks. A funder can
 
 `knos exit --before-upgrade` lists each of your holdings, and whether it can get out before a waiting change runs.
 
-A longer wait of 8 days is approved but not yet in force. It is proposal 9 of the upgrade multisig. Until it
-is carried out, the wait on chain stays 48 hours.
+A program change now waits 8 days in public (Squads [time lock](WORDS.md#time-lock) 691,200 s, in force since
+11 Oct 2026). Proposal 9 of the upgrade multisig set it. Before that the wait was 48 hours.
 
 The first set of programs, in [`programs/`](../programs), has no upgrade key. Nobody can change it. It stays
 as a record, and no new task is funded there.

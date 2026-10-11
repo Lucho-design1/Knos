@@ -58,7 +58,7 @@ includes ([MARKET.md](MARKET.md)). The faucet and the playground exist only on d
 ## A staged cap
 
 Not decided; this is the shape intended. The first mainnet build carries a low per-order cap as a constant. Raising
-it is a program upgrade like any other: proposed through the multisig, public for 48 hours, with the new bytes
+it is a program upgrade like any other: proposed through the multisig, public for 8 days, with the new bytes
 verifiable before the vote. The rule for when a raise may be proposed (how long at the current cap, how much
 settled, no open incident) is published before the first order, so that a raise is the execution of a rule and not
 a judgement made on the day. A funder's own Balance limits (per order, per day, in total) stay available below the
@@ -68,13 +68,13 @@ program's cap.
 
 What exists today is the mechanism; what is missing is the commitment and the people.
 
-- **Upgrades.** Only through the upgrade multisig, 2 of 3, executable 48 hours after approval and not before. The
-  proposal and the new program's bytes are public for those 48 hours ([GOVERNANCE.md](GOVERNANCE.md), sections 1 to
+- **Upgrades.** Only through the upgrade multisig, 2 of 3, executable 8 days after approval and not before. The
+  proposal and the new program's bytes are public for those 8 days ([GOVERNANCE.md](GOVERNANCE.md), sections 1 to
   3). A key holder's four checks before a vote are in section 4 there.
 - **Stopping.** The guardian multisig can revoke a signing key and can pause new funding for at most 7 days. A
   pause does not stop a refund, a withdrawal or a payment already owed ([KEYHOLDER.md](KEYHOLDER.md)).
 - **No fast path.** There is no upgrade without the delay. A defect found in a running program is answered by a
-  pause, a public proposal and 48 hours. [GOVERNANCE.md](GOVERNANCE.md), section 3, is the one time this has
+  pause, a public proposal and 8 days. [GOVERNANCE.md](GOVERNANCE.md), section 3, is the one time this has
   happened: a defect found during the delay, and the proposed build replaced before it ran.
 - **Reporting.** `SECURITY.md` at the repository's root and the `security.txt` in each binary name the contact.
   Every incident is written up in the open with what was affected and what changed.
@@ -94,7 +94,7 @@ each line with the evidence it was judged on. It exits 1 while any line fails.
 | upgrade authority | each program's upgrade authority is the pinned vault, or none |
 | security.txt | each on-chain binary embeds one |
 | new programs | `knos_meter` and `knos_passkey`, once deployed, are executable and held to the same vault |
-| upgrade multisig | the pinned vault is vault 0 of the pinned Squads multisig; its time lock is 172,800 seconds (48 hours; this check changes when upgrade proposal 9, which sets 691,200 seconds, executes: [GOVERNANCE.md](GOVERNANCE.md)); it has no config authority |
+| upgrade multisig | the pinned vault is vault 0 of the pinned Squads multisig; its time lock is 691,200 seconds (8 days, in force since 11 Oct 2026, when upgrade proposal 9 executed: [GOVERNANCE.md](GOVERNANCE.md)); it has no config authority |
 | guardian | the guardian both programs name is the pinned guardian multisig's vault, which has no config authority |
 | workflow pins | the rotate and claim commits are in the on-chain binaries and exist on GitHub |
 | GitHub's keys | every key GitHub publishes today has a key account that verifies now |

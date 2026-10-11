@@ -15,7 +15,7 @@ differently for each:
 
 - **The second deployment** (`programs-v2/`), where every new bounty is funded, can be changed only through a
   [multisig](docs/WORDS.md#multisig) (several keys that must agree, all held by one person today) after a public wait.
-  The wait is 48 hours today. A longer wait of 8 days is approved but not yet applied
+  The wait is 8 days, in force since 11 Oct 2026; before that it was 48 hours
   ([docs/reference/GOVERNANCE.md](docs/reference/GOVERNANCE.md)). A fix there is an upgrade, and it is public for the whole wait before it
   can run. In the meantime a guardian can pause new funding for at most 7 days at a time and can revoke a
   signing key. It cannot move money.

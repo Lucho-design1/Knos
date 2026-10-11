@@ -64,7 +64,7 @@ def test_every_command_the_page_gives_exists_and_parses():
     mjs = (ROOT / "scripts" / "governance.mjs").read_text(encoding="utf-8")
     assert "bash scripts/deploy_v2.sh --propose" in lines and "--propose [--replace] [--ungated]" in deploy
     assert "node scripts/governance.mjs upgrade execute <index>" in lines and "governance.mjs upgrade execute <index>" in mjs
-    assert "timeLock: WHICH[name].timeLock" in mjs and "timeLock: 172_800" in mjs and "172,800 s, 48 hours" in GATE_DOC
+    assert "timeLock: lockNow(name)" in mjs and "timeLock: 172_800" in mjs and "PLANNED_TIME_LOCK = 691_200;" in mjs and "Knos uses 691,200 s, 8 days" in GATE_DOC
     # the three scripts the page links to, and the test it names, are files
     for rel in re.findall(r"\]\((\.\./[^)#]+)\)", GATE_DOC):
         assert (ROOT / "docs" / "reference" / rel).resolve().exists(), rel

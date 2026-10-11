@@ -1,4 +1,4 @@
-# Release manifest: Knos 0.3.27
+# Release manifest: Knos 0.3.28
 
 **The neutral meter for AI agent work: neither side keeps the count.**
 
@@ -16,7 +16,7 @@ deployed there, the transactions recorded, and the fee schedule. The rows behind
 
 ## Source
 
-- Release: Knos 0.3.27 (`pyproject.toml`). Tag: [`v0.3.27`](https://github.com/drexthealpha/Knos/tree/v0.3.27); `git rev-list -n 1 v0.3.27` prints its commit. A file
+- Release: Knos 0.3.28 (`pyproject.toml`). Tag: [`v0.3.28`](https://github.com/drexthealpha/Knos/tree/v0.3.28); `git rev-list -n 1 v0.3.28` prints its commit. A file
   cannot hold the hash of the commit that holds it.
 - Cluster: Solana devnet. The money is test USDC. Mainnet is not touched.
 - Each source folder has a README that says what it holds: [`programs/`](../../programs-v2/README.md#the-first-deployment-in-programs-nobody-can-change-it) (the first
@@ -381,4 +381,4 @@ From [DISCLOSURE.md](DISCLOSURE.md), one line each.
 - **No mainnet deployment.** Solana devnet and test USDC only; no real money has moved.
 - **No second operator.** If the founder is unavailable, nobody answers a report, approves a key or cancels a proposal ([OPERATOR.md](OPERATOR.md)).
 - **No organisation account.** The pinned workflows and the relay live in one personal GitHub account ([GOVERNANCE.md](GOVERNANCE.md), section 9).
-- **The first deployment cannot be changed,** so its known limits stay ([SECURITY.md](SECURITY.md)); the second changes only through a multisig with a public 48-hour delay.
+- **The first deployment cannot be changed,** so its known limits stay ([SECURITY.md](SECURITY.md)); the second changes only through a multisig with a public 8-day delay.

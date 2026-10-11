@@ -28,8 +28,8 @@ skipped when those toolchains are not installed.
 There are two deployments. `programs/` is the first: it is on devnet with no upgrade authority, so its source must
 stay byte for byte what was deployed. Do not change it. `programs-v2/` is the second, where every new bounty is
 funded. It can be changed only through a [multisig](docs/WORDS.md#multisig) (several keys that must agree, all held by
-the founder today), after a public 48-hour wait. This holds until an outside review. So a change there reaches devnet
-two days after it is approved in public.
+the founder today), after a public 8-day wait (in force since 11 Oct 2026; 48 hours before). This holds until an
+outside review. So a change there reaches devnet 8 days after it is approved in public.
 
 ```bash
 bash scripts/build_programs_v2.sh          # needs cargo build-sbf; refreshes tests/fixtures/*_v2_*.so and their pins
@@ -72,7 +72,7 @@ in `requirements/sign.txt`, publish the pinned workflows, then make one commit, 
 tag:
 
 ```bash
-git tag v0.3.27 && git push origin v0.3.27
+git tag v0.3.28 && git push origin v0.3.28
 ```
 
 `.github/workflows/release.yml` then runs every test on that commit. Only if all of them pass does it publish

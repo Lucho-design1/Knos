@@ -20,7 +20,7 @@ back always means two things: mark the bad version, and publish the previous cod
 | the site (GitHub Pages) | revert on `main`; the `pages` workflow redeploys | the site is built from `main` only | write access |
 | the relay (`worker.yml`) | disable two workflows | Knos's relay stops; anyone can still relay | admin of the repository |
 | the programs | guardian pause of new funding | refuses new funding for at most 7 days; payments, refunds and withdrawals go on | 2 of 3 guardian keys |
-| the programs, code | an upgrade back to the previous build | waits for the time lock: 48 hours today; 8 days once the approved change to the lock is executed | 2 of 3 upgrade member keys |
+| the programs, code | an upgrade back to the previous build | waits for the time lock: 8 days (in force since 11 Oct 2026) | 2 of 3 upgrade member keys |
 
 ## 1. PyPI: yank
 
@@ -96,9 +96,9 @@ node scripts/governance.mjs guardian pause 0           # lifts it
 While paused, new funding is refused (error 96); payments, refunds, withdrawals and binds go on, and every open order
 keeps the terms and the fee stored when it was funded. A pause can be set again when it runs out.
 
-**Upgrade back to the previous build** (the upgrade multisig, 2 of 3 member keys). It waits for the time lock: 48
-hours on chain today; 8 days once the approved configuration change is executed ([GOVERNANCE.md](GOVERNANCE.md)).
-With an 8-day lock, a 7-day pause does not cover the wait by itself: set it again before it ends.
+**Upgrade back to the previous build** (the upgrade multisig, 2 of 3 member keys). It waits for the time lock: 8
+days on chain, in force since 11 Oct 2026 ([GOVERNANCE.md](GOVERNANCE.md)).
+With the 8-day lock, a 7-day pause does not cover the wait by itself: set it again before it ends.
 
 ```
 python scripts/exercise_public.py status --rpc https://api.devnet.solana.com      # which build runs now, by hash

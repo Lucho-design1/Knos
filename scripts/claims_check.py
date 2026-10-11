@@ -158,7 +158,7 @@ def live_immutable() -> tuple[bool, str]:
 
 def live_upgrade_delay() -> tuple[bool, str]:
     """The second deployment's programs can be upgraded only by the vault of the pinned Squads multisig, whose time lock
-    on chain is 172,800 seconds (48 hours) and which no single key can change."""
+    on chain is 691,200 seconds (8 days, since 11 Oct 2026) and which no single key can change."""
     from solders.pubkey import Pubkey
 
     from knos import mainnet_check as mc

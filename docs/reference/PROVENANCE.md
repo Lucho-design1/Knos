@@ -60,7 +60,7 @@ proofs are for), or that anyone outside Knos has followed it. Everything here is
 <!-- provenance:begin -->
 
 Assembled by `python scripts/provenance.py --write` from web/upgrades.json (the multisig's accounts as the feed read them; its `generated` says when), docs/capabilities.json, programs-v2/program_ids.json, docs/facts.json, CHANGELOG.md and docs/provenance.json (one read of the cluster; its `read` says when).
-Cluster: devnet. Upgrade multisig: `9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK`, 2 of 3, time lock 48 hours (web/upgrades.json `time_lock`; docs/facts.json checks 48 hours against the cluster at release).
+Cluster: devnet. Upgrade multisig: `9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK`, 2 of 3, time lock 8 days (web/upgrades.json `time_lock`; docs/facts.json checks 8 days against the cluster at release).
 
 | program | public id | devnet runs, as docs/capabilities.json records it | the chain is about | links recorded | complete |
 |---|---|---|---|---|---|

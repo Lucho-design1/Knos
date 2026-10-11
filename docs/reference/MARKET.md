@@ -372,9 +372,9 @@ Where each price is fixed:
   payments (netting) happens off chain: on chain the smallest order is 5 test USDC, and each release pays the floor. Value a buyer and a supplier reconcile off chain is invoiced off chain at the
   same rate, by `src/knos/billing.py`, and needs no customer money on chain. On devnet an order holds between 5
   and 100,000 test USDC; a build for real money decides its own cap. The current programs (Knos's
-  second deployment) can be upgraded only through a multisig with a public 48-hour delay, at least until an outside
+  second deployment) can be upgraded only through a multisig with a public 8-day delay, at least until an outside
   review, so any change to these constants is
-  public two days before it can run.
+  public 8 days before it can run.
 - **Record.** Through `knos record serve`, a server anyone runs and Knos hosts none of: a supplier's delivery
   record is also a static file, and the public record page and its file stay free. Revenue from lookups is
   budgeted at zero until someone buys one. The price is for a lookup by a machine: an agent, a marketplace or an
@@ -756,7 +756,7 @@ differ by country and by state. Legal advice is needed before any real money mov
 | **Zero-fee copies** | MIT, and MergePay charges no platform fee. Algora charges a "9% service fee" ([pricing](https://algora.io/pricing), read 6 Oct 2026), so the direction of prices is down. | Section 7: one fee of 0.30% on a signed acceptance, no fee for connecting a supplier, and the four things a fork lacks, which Knos lacks too. | Keep any percentage if the record, the cited terms, the issuers and the outside key holders stay at zero. |
 | **The attestor gap** | The issuer signs which workflow ran, at which commit, in which repository. It does not sign what the workflow read. | Pins the workflow by commit; requires a GitHub-hosted runner and the first attempt of a run (not a re-run); lets the supplier have the pinned workflow read the public record from a repository of its own. | Prove the reading without trusting the forge's hosted runners. A private order trusts the repository its funder named as judge ([SECURITY.md](SECURITY.md)). |
 | **Regulation** | Escrow and payout may be money transmission. Paying contractors brings tax reporting. Paying anyone brings sanctions law. | Holds no key to an order's money in normal operation; screens a payout address; exports every payment. | Give a legal opinion. None has been taken. Until an outside review the programs are upgradeable through the multisig, which weakens any claim that Knos does not control the money. |
-| **One person** | One founder holds every upgrade key and the one GitHub account the pinned workflows live in. | A public 48-hour delay on every upgrade; refunds that need neither GitHub nor Knos; the plan in [DEPENDENCY.md](DEPENDENCY.md). | Be an organisation before it is one. |
+| **One person** | One founder holds every upgrade key and the one GitHub account the pinned workflows live in. | A public 8-day delay on every upgrade; refunds that need neither GitHub nor Knos; the plan in [DEPENDENCY.md](DEPENDENCY.md). | Be an organisation before it is one. |
 | **Paid work for strangers has failed before** | Bountysource left at least 21,702.10 USD of completed work unpaid ([boehs.org, 3 May 2024](https://boehs.org/node/bountysource), read 3 Oct 2026). curl ended its bug bounty in January 2026 to "remove the incentive for people to submit crap and non-well researched reports" ([The Register, 21 Jan 2026](https://www.theregister.com/2026/01/21/curl_ends_bug_bounty/), read 3 Oct 2026). | No company holds the money. Acceptance is named checks fixed before the work. The free check marks a false "tests pass" before a person reads the pull request. The business is not the board. | Remove the review, or make a small market large. |
 
 ## What is not known

@@ -3,7 +3,7 @@
 Knos is three things other software can use without asking anyone: a program that verifies an OIDC token on Solana
 (`knos-oidc`), an escrow that pays on such a token (`knos_pay`), and the public record both leave. Nothing below
 needs a key of Knos's, an account with Knos, or a change to the programs. Everything runs on devnet with test USDC;
-the programs are upgradeable only through a multisig with a public 48-hour delay, until an outside review. Work orders,
+the programs are upgradeable only through a multisig with a public 8-day delay, until an outside review. Work orders,
 the meter and the passkey wallet were added in Knos 0.3.13 (4 Oct 2026): [SECURITY.md](SECURITY.md), section 8, says what is live when,
 and [ASSURANCE.md](ASSURANCE.md) which test holds which rule.
 

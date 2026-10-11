@@ -15,7 +15,7 @@ proposal that adds a key has executed on chain.
 
 Knos's four programs can be replaced only by the **upgrade multisig**
 `9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK`: 2 of its 3 member keys must approve, and the approved upgrade can
-run 48 hours later and not before. A second multisig, the **guardian**
+run 8 days later and not before. A second multisig, the **guardian**
 `EwqWNR3XwE9RMsJQdH7pZJSx4WERXCKLQdBpMnr8jFx5` (2 of 3, no delay), approves or revokes the signing keys the verifier
 accepts and can pause new funding for at most 7 days. A key holder holds one member key.
 
@@ -24,7 +24,7 @@ accepts and can pause new funding for at most 7 days. A key holder holds one mem
 - **Cast one vote for a program upgrade,** after checking the build. The four checks, on your own machine, are in
   [GOVERNANCE.md](GOVERNANCE.md), section 4: the bytes, the gate record, the diff, the tests.
 - **Not vote.** Nothing obliges you to approve, and nothing expires if you do not.
-- **Cast one vote to cancel** an approved upgrade during its 48 hours, or to reject one still collecting approvals.
+- **Cast one vote to cancel** an approved upgrade during its 8 days, or to reject one still collecting approvals.
 - **On the guardian, if you hold a key there too:** one vote to approve or revoke a signing key, or to pause new
   funding.
 
@@ -40,7 +40,7 @@ Each line was checked against the programs' source and is tested where a test is
 | approve an upgrade alone | The threshold is 2. One key is one vote (`scripts/governance.test.mjs`, "the key that writes a build buffer cannot authorise the upgrade, and one member key cannot either"). |
 | refuse an upgrade alone, **today** | With one outside key of three, the founder's two keys still meet the threshold. `node scripts/governance.mjs replace-member` prints this before anything is proposed. See "What one outside key changes" below. |
 
-**What two keys together can do.** Two member keys can replace a program, 48 hours after voting in public, and a
+**What two keys together can do.** Two member keys can replace a program, 8 days after voting in public, and a
 replaced program can do anything, including taking every order's money. That is the power the multisig exists to
 guard, and it is why your check of the build matters.
 
@@ -49,7 +49,7 @@ guard, and it is why your check of the build matters.
 - **Money: nothing.** Devnet has no real money. A vote is a transaction whose fee is paid in devnet SOL, which the
   public faucet gives away (<https://faucet.solana.com>).
 - **Joining: three steps,** below. Making the key takes seconds. The proposal that adds your key to the upgrade
-  multisig then waits that multisig's own 48 hours.
+  multisig then waits that multisig's own 8 days.
 - **Each upgrade: four checks.** How long they take an outside person has not been measured: nobody outside has
   done them. The longest is rebuilding the program from source ([ASSURANCE.md](ASSURANCE.md) has the commands).
 - **How often:** [`web/upgrades.json`](../../web/upgrades.json) lists every proposal so far, with its dates.
@@ -97,7 +97,7 @@ three things: your **public key**, a **name or handle**, and **how to reach you*
    `node scripts/governance.mjs replace-member <one of the founder's keys> <your public key>`.
    It sends nothing. Your key gets the permission to vote and no other.
 3. The same command with `--send` creates the proposal on each multisig and casts the founder's two votes. On the
-   upgrade multisig it can execute 48 hours later; on the guardian, at once.
+   upgrade multisig it can execute 8 days later; on the guardian, at once.
 4. After it executes, `node scripts/governance.mjs show --check` prints the new members, your entry is added to
    `web/keyholders.json`, and the count on this page and on the site becomes 1.
 

@@ -61,6 +61,28 @@ def test_the_transaction_page_and_the_changelog_say_which_build_runs_now_and_tha
     entry = flat("CHANGELOG.md").split("## 0.3.23")[0]
     if "approved, not yet applied" in flat("docs/reference/GOVERNANCE.md"):
         assert "The 8-day upgrade time lock is approved, not applied." in entry and "time lock is applied" not in entry
+    # once it says the time lock is in force, the newest entry says so in its first line, and no page says it is not yet
+    if "**State: in force since 11 Oct 2026.**" in flat("docs/reference/GOVERNANCE.md"):
+        top = flat("CHANGELOG.md").split("## 0.3.28 ")[1].split("## 0.3.27 ")[0]
+        assert "**In short:** the 8-day time lock is in force: every program change now waits 8 days in public." in top
+        for rel in ("docs/TRUST.md", "docs/reference/GOVERNANCE.md", "docs/reference/CHARTER.md", "docs/reference/KEYS.md", "docs/reference/ROLLBACK.md"):
+            page = flat(rel)
+            assert "not yet applied" not in page and "not yet in force" not in page and "approved, not applied" not in page, rel
+            assert "691,200 s, in force since 11 Oct 2026" in page or "in force since 11 Oct 2026" in page, rel
+
+
+def test_no_public_page_calls_48_hours_the_wait_of_today():
+    # the 8-day time lock is in force since 11 Oct 2026: the security policy, the contributing guide, the consumer
+    # example, the knos-oidc-interface README and programs-v2/README.md say 8 days, and 48 hours only as what came before (receipts, IDLs and
+    # the programs' own comments keep their words: CHANGELOG 0.3.28 and docs/reference/RECEIPT.md say why)
+    if "**State: in force since 11 Oct 2026.**" not in (ROOT / "docs" / "reference" / "GOVERNANCE.md").read_text(encoding="utf-8"):
+        return
+    for rel in ("SECURITY.md", "CONTRIBUTING.md", "examples/consumer/README.md", "crates/knos-oidc-interface/README.md",
+                "programs-v2/README.md"):
+        page = " ".join((ROOT / rel).read_text(encoding="utf-8").split())
+        for stale in ("48 hours today", "not yet applied", "public 48-hour", "public 48 hours before", "two days after it is approved"):
+            assert stale not in page, (rel, stale)
+        assert re.search(r"8[- ]day", page) and "11 Oct 2026" in page, rel
 
 
 def test_the_release_entry_says_what_ran_on_devnet_before_the_commit_and_calls_none_of_it_pending():
@@ -80,3 +102,25 @@ def test_the_release_entry_says_what_ran_on_devnet_before_the_commit_and_calls_n
         exercised = sum(c["stage"] == "exercised" for c in caps)
         assert f"to exercised ({exercised} of {len(caps)})" in entry
 
+
+
+def test_no_page_or_site_says_the_lock_in_force_is_two_days_once_it_is_8_days():
+    # since 11 Oct 2026 a program change waits 8 days; only the receipt's trust line (checked word for word, with its
+    # vectors and web/buyer_templates.json) keeps "public 48-hour delay", and dated history says "48 hours then"
+    if "**State: in force since 11 Oct 2026.**" not in " ".join((ROOT / "docs" / "reference" / "GOVERNANCE.md").read_text(encoding="utf-8").split()):
+        return
+    kept = {"docs/reference/RECEIPT.md", "docs/reference/TEAM.md"}   # TEAM.md: the dated 0.3.12 row (3 Oct 2026)
+    files = [ROOT / "README.md", ROOT / "README.pypi.md", *sorted((ROOT / "docs").rglob("*.md")),
+             *sorted(p for p in (ROOT / "web").rglob("*") if p.suffix in (".html", ".js", ".md", ".txt") and "node_modules" not in p.parts)]
+    said = []
+    for path in files:
+        rel = path.relative_to(ROOT).as_posix()
+        text = " ".join(path.read_text(encoding="utf-8").split())
+        for phrase in ("two days before it can run", "public two days", "waits 48 hours", "wait is 48 hours", "public 48-hour delay"):
+            if phrase in text and not (phrase == "public 48-hour delay" and rel in kept):
+                said.append((rel, phrase))
+    assert not said, said
+    # the check view spells its days out (it holds almost no digits): the word is the lock the site reads, in days
+    lock = json.loads((ROOT / "web" / "upgrades.json").read_text(encoding="utf-8"))["time_lock"]
+    assert lock == 691_200
+    assert "shown in public eight days before it can run" in " ".join((ROOT / "web" / "index.html").read_text(encoding="utf-8").split())

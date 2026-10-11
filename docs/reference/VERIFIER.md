@@ -6,7 +6,7 @@ same three calls serve GitLab CI, a cloud's workload identity, another CI system
 
 | | |
 |---|---|
-| program (devnet) | `FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W` (`knos-oidc`, second deployment; upgradeable only through a multisig with a public 48-hour delay) |
+| program (devnet) | `FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W` (`knos-oidc`, second deployment; upgradeable only through a multisig with a public 8-day delay) |
 | it takes | RS256, a 2048- or 4096-bit key (no other size: 1024 and 3072 are refused), a token of at most 8,192 bytes, an `exp` at most a day ahead |
 | it does not take | ES384, ES512, PS256, HS256, EdDSA. ES256 (P-256 keys) is live since knos_oidc 2.2 (9 Oct 2026), for tokens small enough for one transaction ([ES256.md](ES256.md)) |
 | who reads it today | Knos's own programs and examples. No program outside this repository is known to read it yet |

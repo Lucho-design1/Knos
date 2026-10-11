@@ -35,7 +35,7 @@ It charges nothing and does not know Knos's escrow exists. There are two deploym
 | | first deployment ([`programs/knos_oidc`](../../programs/knos_oidc)) | second deployment ([`programs-v2/knos_oidc`](../../programs-v2/knos_oidc)) |
 |---|---|---|
 | address | `vpWym9azbPU5f2PH2a6n8c4RfmsyUeW2dMuWr1DSHcE` | `FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W` |
-| who can change it | nobody: it has no upgrade authority | Knos, only through a multisig with a public 48-hour delay, until an outside review; after it the upgrade authority is removed |
+| who can change it | nobody: it has no upgrade authority | Knos, only through a multisig with a public 8-day delay, until an outside review; after it the upgrade authority is removed |
 | the keys it starts from | GitHub's four and GitLab's three of 2 Oct 2026 | GitHub's four of 2 Oct 2026 |
 | a later key | named by a GitHub-signed token of the rotate workflow, from any repository that calls it | named by such a token from one of two repositories of one account; then a day's wait and a guardian's approval |
 | another issuer's key | GitLab's only, fixed in the binary | 2.1: any RS256 issuer, the same way, with the issuer's URL stored on chain and checked against each token's `iss` |
@@ -69,7 +69,7 @@ The interface crate, [`crates/knos-oidc-interface`](../../crates/knos-oidc-inter
 allocate, so it builds with solana-program, pinocchio or anchor of any version:
 
 ```toml
-knos-oidc-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.3.27" }
+knos-oidc-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.3.28" }
 ```
 
 ```rust

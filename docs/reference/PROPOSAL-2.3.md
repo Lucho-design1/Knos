@@ -171,9 +171,9 @@ records which commit was paid. So a challenge must name that commit.
 ## The notice
 
 All four changes are one upgrade of knos_pay. An upgrade must pass the upgrade multisig (an account that needs several
-keys to act). Then it waits out the time lock (a public wait before it can run). The time lock is 48 hours until the
-approved 8-day time lock is applied. [GOVERNANCE.md](GOVERNANCE.md), section 2, has its state. This proposal should
-be sent only once the 8 days are in force. During the wait, the build and its source are public: `knos status`, the
+keys to act). Then it waits out the time lock (a public wait before it can run). A program change now waits 8 days in public
+(Squads time lock 691,200 s, in force since 11 Oct 2026; [GOVERNANCE.md](GOVERNANCE.md), section 2). This proposal
+was to be sent only once the 8 days were in force, and they are. During the wait, the build and its source are public: `knos status`, the
 feed in [`web/upgrades.json`](../../web/upgrades.json), and `knos exit --before-upgrade` for what you hold.
 
 Today one person holds every key ([KEYS.md](KEYS.md)). So the notice lets you leave in time. It is not a vote by

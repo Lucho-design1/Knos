@@ -22,7 +22,7 @@ A failed check is GitHub's record. It is not a judgment of why the check failed.
 The claim: a buyer and a supplier who do not trust each other get the same bill from records GitHub signed. A
 program on Solana pays on that signature. No company sits in the middle, and no outside service reports what happened.
 
-Why Solana: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public.
+Why Solana: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public.
 
 A receipt can be checked with no blockchain at all. The chain holds the money and the [root](WORDS.md#root).
 

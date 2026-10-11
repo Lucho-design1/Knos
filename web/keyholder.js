@@ -87,7 +87,7 @@ export function renderKeyholder(el, ctx = {}) {
     <div class="kh-two">
       <div><h3>Your key can</h3><ul>
         <li>Cast one vote on a program upgrade.</li>
-        <li>Vote to cancel an upgrade during its 48 hours.</li>
+        <li>Vote to cancel an upgrade during its 8 days.</li>
         <li>Compare the proposed build with your own build.</li>
       </ul></div>
       <div><h3>Your key cannot</h3><ul>

@@ -49,13 +49,14 @@ def _swap(root: Path, rel: str, old: str, new: str) -> None:
 
 def _feed(root: Path, pending_from: int = 1791324000) -> dict:
     """An upgrade record as the chain has it after 0.3.14: every committed proposal withdrawn (`replaced`), and one
-    new pending proposal that was approved 48 hours before `pending_from` (2026-10-06 22:00 UTC)."""
+    new pending proposal that was approved 48 hours before `pending_from` (2026-10-06 22:00 UTC), under the time lock of
+    that day (172,800 s; 691,200 s since 11 Oct 2026)."""
     feed = json.loads((root / dc.UPGRADES).read_text(encoding="utf-8"))
     for e in feed["entries"]:
         e["status"] = "replaced"
     old = feed["entries"][0]
     feed["entries"].insert(0, {**old, "index": 9, "status": "pending", "earliest_execution": pending_from,
-                               "since": pending_from - feed["time_lock"]})
+                               "since": pending_from - dc.EARLIER_LOCK})
     feed["pending"] = 1
     (root / dc.UPGRADES).write_text(json.dumps(feed), encoding="utf-8")
     return feed
@@ -163,6 +164,11 @@ def test_no_document_names_a_time_for_the_pending_upgrade_that_the_upgrade_recor
     _feed(tree)                                                  # pending: approved 2026-10-04 22:00, can run from 2026-10-06 22:00
     now, past = dc.upgrade_times(tree)
     assert now == {"2026-10-04 22:00", "2026-10-06 22:00"} and "2026-10-06 07:17" in past and "2026-10-04 07:17" in past
+    # a proposal that can run after 11 Oct 2026 was approved under the 8 days: its approval is 691,200 s before
+    assert dc.upgrade_times(tree)[0] == now and json.loads((tree / dc.UPGRADES).read_text(encoding="utf-8"))["time_lock"] == 691_200
+    _feed(tree, pending_from=1792000000)
+    assert dc.upgrade_times(tree)[0] == {dc._minute(1792000000), dc._minute(1792000000 - 691_200), dc._minute(1792000000 - 172_800)}
+    _feed(tree)
     # the withdrawn proposals' time, said as if it were the pending upgrade: the sentence 0.3.14 shipped
     _add(tree, "README.md", "The upgrade was proposed and approved by the multisig on 2026-10-04 07:17 UTC and can execute from 2026-10-06 07:17 UTC.")
     lines = _found(tree, "README.md", "names 2026-10-06 07:17 UTC for an upgrade", "not pending")

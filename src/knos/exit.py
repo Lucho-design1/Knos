@@ -5,9 +5,10 @@ knos_pay, and whether that can happen before a pending upgrade can execute.
     knos exit --before-upgrade --github-id N           the Balances a GitHub account owns, and their orders
               [--rpc URL] [--json] [--upgrade-at UNIX]
 
-An upgrade of a Knos program can execute 48 hours after the multisig approves it (docs/reference/GOVERNANCE.md). Whoever does
-not accept it has those hours to take their money out. Not every holding can be left that fast, and this command
-says which, from the program's own rules (programs-v2/knos_pay; the constants in knos.settle.v2.pay):
+An upgrade of a Knos program can execute 8 days after the multisig approves it: the upgrade multisig's time lock is
+691,200 s, in force since 11 Oct 2026 (docs/reference/GOVERNANCE.md). Whoever does not accept an upgrade has that time
+to take their money out. Not every holding can be left that fast, and this command says which, from the program's own
+rules (programs-v2/knos_pay; the constants in knos.settle.v2.pay):
 
     Balance                    Withdraw, signed by the Balance's wallet, at once.
     open order, past deadline  RefundOrder, sent by anyone, at once.
@@ -19,13 +20,12 @@ says which, from the program's own rules (programs-v2/knos_pay; the constants in
     order in warranty          the holdback goes to the seller (Release) when the warranty ends; the funder recovers
                                it only with a revert token from a judge of the order.
 
-So an open order whose deadline is more than 48 hours away CANNOT be left before an upgrade approved now: the 7 days of
-notice that protect the seller are longer than the upgrade's delay. A held order and a holdback in warranty cannot
-either. This is the gap the command shows, with the hours that are missing.
-
-The gap closes for open orders when the upgrade multisig's time lock is at least COVERS (NOTICE + GRACE + 2 seconds):
-scripts/timelock_plan.py plans that change (docs/reference/GOVERNANCE.md). With --before-upgrade the command reads the time lock
-on chain and says which it is: every open order can leave before any upgrade approved from now on, or not.
+A time lock of at least COVERS (NOTICE + GRACE + 2 seconds) lets every open order be cancelled and refunded before an
+upgrade approved now can execute. 8 days is above it. Until 11 Oct 2026 the time lock was 48 hours, shorter than the 7
+days of notice, so an open order with a later deadline could not be left in time; scripts/timelock_plan.py planned the
+change. A held order and a holdback in warranty still cannot be left in time. With --before-upgrade the command reads
+the time lock on chain and says which it is: every open order can leave before any upgrade approved from now on, or
+not, with the hours that are missing.
 
     holdings(ledger, wallet, github_id)   what the owner holds in knos_pay, read through ledger.program_accounts/infos
     upgrade_deadline(account, ids, now)   the earliest time a pending upgrade of a Knos program can execute

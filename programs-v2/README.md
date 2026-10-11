@@ -48,7 +48,7 @@ instead. [docs/reference/ASSURANCE.md](../docs/reference/ASSURANCE.md) explains 
 ## Who can change them today
 
 These programs can be [upgraded](../docs/WORDS.md#upgrade). Only one account can do it: a 2-of-3
-[multisig](../docs/WORDS.md#multisig), and only after a public 48-hour [time lock](../docs/WORDS.md#time-lock).
+[multisig](../docs/WORDS.md#multisig), and only after a public 8-day [time lock](../docs/WORDS.md#time-lock) (since 11 Oct 2026; 48 hours before).
 **Today one person, the founder, holds all three keys.** So the delay gives everyone notice of a change, but it does
 not stop him. [docs/reference/GOVERNANCE.md](../docs/reference/GOVERNANCE.md) says what each key can and cannot do. The multisig's address
 is `upgrade_multisig` in [`program_ids.json`](program_ids.json).

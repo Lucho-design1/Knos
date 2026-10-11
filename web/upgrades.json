@@ -4,7 +4,7 @@
  "cluster": "devnet",
  "feed": "https://drexthealpha.github.io/Knos/upgrades.xml",
  "multisig": "9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK",
- "time_lock": 172800,
+ "time_lock": 691200,
  "threshold": 2,
  "members": 3,
  "pending": 0,

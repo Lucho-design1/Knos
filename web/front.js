@@ -202,7 +202,7 @@ jobs:
       statuses: read
       actions: read
       id-token: write
-    uses: drexthealpha/knos-workflows/.github/workflows/fund.yml@18b7bb630848f59795e11268f65418256999332e
+    uses: drexthealpha/knos-workflows/.github/workflows/fund.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
     secrets:
       KNOS_RELAY_KEY: \${{ secrets.KNOS_RELAY_KEY }}       # optional: when the repository has none, this passes nothing
 
@@ -223,7 +223,7 @@ jobs:
       statuses: read
       actions: read
       id-token: write
-    uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@18b7bb630848f59795e11268f65418256999332e
+    uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
     secrets:
       KNOS_RELAY_KEY: \${{ secrets.KNOS_RELAY_KEY }}       # optional, as above
 
@@ -243,7 +243,7 @@ jobs:
       statuses: read
       actions: read
       id-token: write
-    uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@18b7bb630848f59795e11268f65418256999332e
+    uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
     secrets:
       KNOS_RELAY_KEY: \${{ secrets.KNOS_RELAY_KEY }}       # optional, as above
 `;
@@ -292,7 +292,7 @@ jobs:
       checks: read
       statuses: read
       actions: read
-    uses: drexthealpha/knos-workflows/.github/workflows/check.yml@18b7bb630848f59795e11268f65418256999332e
+    uses: drexthealpha/knos-workflows/.github/workflows/check.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
 `;
 
 export function checkUrl(owner, repo, branch) {

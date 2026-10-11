@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // The two Squads v4 multisigs of the second deployment, and everything they are ever asked to sign.
 //
-//   upgrade multisig   its vault is the upgrade authority of knos_oidc, knos_pay, knos_meter and knos_passkey. Time lock 172800 s: an upgrade
-//                      can be executed 48 hours after the vote that approved it, and not before. In that time a
+//   upgrade multisig   its vault is the upgrade authority of knos_oidc, knos_pay, knos_meter and knos_passkey. Time lock 691200 s: an upgrade
+//                      can be executed 8 days after the vote that approved it, and not before (172800 s, 48 hours,
+//                      until 11 Oct 2026, when proposal 9 set it). In that time a
 //                      vote of the members can cancel it, and anyone can read the proposal on chain.
 //   guardian multisig  its vault is the GUARDIAN both programs name. Time lock 0, so that a revocation is not
 //                      delayed. It can approve a signing key GitHub's signature admitted, revoke a key, and pause
@@ -18,7 +19,7 @@
 //   node scripts/governance.mjs guardian revoke <issuer> <key hash>     end a key for ever: nothing undoes it
 //   node scripts/governance.mjs guardian pause <seconds>        refuse new funding for that long (at most 604800; 0 lifts it)
 //   node scripts/governance.mjs upgrade propose <knos_oidc|knos_pay|knos_meter|knos_passkey> <buffer address> [--spill ADDRESS] [--ungated]
-//   node scripts/governance.mjs upgrade execute <index> [--expect-hash HASH]   once the proposal is approved and its 172800 s have passed
+//   node scripts/governance.mjs upgrade execute <index> [--expect-hash HASH]   once the proposal is approved and its time lock (691200 s) has passed
 //   node scripts/governance.mjs approve <upgrade|guardian> <index>   another member's vote for a proposal
 //   node scripts/governance.mjs cancel <upgrade|guardian> <index>    the members' votes that withdraw a proposal that has not run: an
 //                               approved one is cancelled (inside its time lock too: the Squads program asks only that it is
@@ -33,7 +34,7 @@
 //                               Each of the four PRINTS the proposal and what the multisig will be once it has executed (members,
 //                               threshold, how many voting keys the founder holds, whether the founder alone can still approve), and
 //                               sends nothing. With --send it creates that proposal and approves it with the member keys given; then
-//                               `execute <upgrade|guardian> <index>` runs it, after the 172800 s on the upgrade multisig. A new key
+//                               `execute <upgrade|guardian> <index>` runs it, after the time lock (691200 s) on the upgrade multisig. A new key
 //                               is an outside holder's unless --founder is passed; it gets the permission to vote and no other
 //                               unless --permissions says so. docs/reference/KEYHOLDER.md is the page for whoever holds the new key.
 //   node scripts/governance.mjs derive                          the addresses the create keys give (no network)
@@ -101,13 +102,14 @@ export const LOADER = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111
 // examples/upgrade_gate: it writes ["build", program, executable hash] only on a token GitHub signed for this repository's
 // program.yml at a commit of main or of a release tag, verified on chain by knos-oidc.
 export const UPGRADE_GATE = new PublicKey("2DfVEuBMWvvh3kXZaQwk2SoszJsoV1PTiK1VGCkB55HW");
-// What each multisig must be. The addresses are the pinned ones: the programs name these vaults.
+// What each multisig must be. The addresses are the pinned ones: the programs name these vaults. `timeLock` is the time lock
+// each was made with; the upgrade multisig's is PLANNED_TIME_LOCK since proposal 9 executed.
 export const WHICH = {
   upgrade: { timeLock: 172_800, multisig: IDS.upgrade_multisig, vault: IDS.upgrade_authority, createKey: "upgrade-create-key.json" },
   guardian: { timeLock: 0, multisig: IDS.guardian_multisig, vault: IDS.guardian, createKey: "guardian-create-key.json" },
 };
-// The upgrade multisig's time lock once `set-time-lock` has executed: 8 days, scripts/timelock_plan.py PLANNED. Either it or
-// WHICH.upgrade.timeLock is what the design fixes; Squads v4 takes no time lock above MAX_TIME_LOCK (3 x 30 days).
+// The upgrade multisig's time lock: 8 days, scripts/timelock_plan.py PLANNED, in force since 11 Oct 2026 (proposal 9,
+// `set-time-lock`). It is what the design fixes; Squads v4 takes no time lock above MAX_TIME_LOCK (3 x 30 days).
 export const PLANNED_TIME_LOCK = 691_200;
 const MAX_TIME_LOCK = 3 * 30 * 86_400;
 // every program whose upgrade authority is the upgrade vault: what `upgrade propose` takes, in the order a release proposes them
@@ -341,13 +343,15 @@ function describe(name, ms) {
          `${isAutonomous(ms) ? "no config authority" : `config authority ${ms.configAuthority}`})`;
 }
 
+/** The time lock each multisig must have today: the upgrade multisig's 8 days, the guardian's 0. */
+export const lockNow = (name) => (name === "upgrade" ? PLANNED_TIME_LOCK : WHICH[name].timeLock);
+
 /** What is wrong with a multisig as the chain has it, in words; empty when it is what the design fixes. The upgrade
- *  multisig's time lock is the one it was made with, or the planned one once `set-time-lock` has executed. */
+ *  multisig's time lock is PLANNED_TIME_LOCK (8 days), in force since `set-time-lock` executed on 11 Oct 2026. */
 export function wrong(name, ms) {
   const out = [];
-  if (ms.timeLock !== WHICH[name].timeLock && !(name === "upgrade" && ms.timeLock === PLANNED_TIME_LOCK)) {
-    out.push(`its time lock is ${ms.timeLock} s, not ${WHICH[name].timeLock} s` + (name === "upgrade" ? ` or the planned ${PLANNED_TIME_LOCK} s` : ""));
-  }
+  const want = lockNow(name);
+  if (ms.timeLock !== want) out.push(`its time lock is ${ms.timeLock} s, not ${want} s`);
   if (!isAutonomous(ms)) out.push(`it has a config authority (${ms.configAuthority}), which could change it alone`);
   if (ms.threshold < 1 || ms.threshold > ms.members.length) out.push(`its threshold ${ms.threshold} cannot be met by its ${ms.members.length} members`);
   return out;
@@ -380,7 +384,7 @@ async function create(o) {
       const config = await ProgramConfig.fromAccountAddress(conn, squads.getProgramConfigPda({})[0]).catch(() => null);
       if (!config) throw new Refused(`the Squads v4 program ${squads.PROGRAM_ID} is not on this cluster (no program config account).`);
       const ix = squads.instructions.multisigCreateV2({
-        createKey: createKeys[name].publicKey, creator: ctx.feePayer.publicKey, multisigPda, configAuthority: null, timeLock: WHICH[name].timeLock,
+        createKey: createKeys[name].publicKey, creator: ctx.feePayer.publicKey, multisigPda, configAuthority: null, timeLock: lockNow(name),
         members: members.map((key) => ({ key, permissions: squads.types.Permissions.all() })), threshold, treasury: config.treasury, rentCollector: null });
       await send(ctx, [ix], [createKeys[name]], `create the ${name} multisig`);
       ms = await readMultisig(conn, name);
@@ -835,11 +839,12 @@ export function planLines(name, plan) {
   const carried = actions.map((a) => a.__kind === "AddMember" ? `add ${a.newMember.key} (${perms(a.newMember.permissions.mask)})`
     : a.__kind === "RemoveMember" ? `remove ${a.oldMember}` : a.__kind === "SetTimeLock" ? `time lock ${span(a.newTimeLock)}` : `threshold ${a.newThreshold}`).join("; ");
   const what = name === "upgrade" ? "approve an upgrade" : "approve a signing key, revoke one or pause new funding";
+  const wait = timeLock ? timeLock.before : WHICH[name].timeLock;      // the time lock on chain when the proposal is made
   const lines = [
     `${name} multisig ${WHICH[name].multisig}`,
     `  today              ${before.threshold} of ${before.voters} voting keys; held by the founder: ${before.founder}; outside key holders: ${before.holders}`,
     `  the proposal       ${carried}`,
-    `  when               ${WHICH[name].timeLock ? `${span(WHICH[name].timeLock)} after the vote that approves it, and not before` : "as soon as it is approved (this multisig has no time lock)"}`,
+    `  when               ${wait ? `${span(wait)} after the vote that approves it, and not before` : "as soon as it is approved (this multisig has no time lock)"}`,
     `  after it executes  ${after.threshold} of ${after.voters} voting keys; held by the founder: ${after.founder}; outside key holders: ${after.holders}`,
     ...after.members.map((m) => `    ${m.key}  ${perms(m.mask)}  (${m.outside ? "outside" : "the founder's"})`),
     after.founderAlone

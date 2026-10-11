@@ -443,13 +443,14 @@ async function programsHtml() {
     : r.auth === null ? `<strong class="status" data-state="no-authority">no upgrade authority is set on chain: nothing can upgrade this program, which is not the plan stated above</strong>`
     : r.auth === all.upgrade_authority && r.auth === vault ? `<strong class="status ok" data-state="multisig">upgradeable only by the upgrade multisig's vault ${esc(short(r.auth))}</strong>`
     : `<strong class="status bad" data-state="other">upgradeable by ${esc(r.auth)}, which is not the upgrade multisig of this deployment</strong>`);
-  const hours = (m) => (m.timeLock % 3600 === 0 ? `${m.timeLock / 3600} hour${m.timeLock === 3600 ? "" : "s"}` : `${m.timeLock} seconds`);
+  const hours = (m) => (m.timeLock % 86400 === 0 && m.timeLock ? `${m.timeLock / 86400} day${m.timeLock === 86400 ? "" : "s"}`
+    : m.timeLock % 3600 === 0 ? `${m.timeLock / 3600} hour${m.timeLock === 3600 ? "" : "s"}` : `${m.timeLock} seconds`);
   return `<h3>Who can change the second deployment, read from Solana now</h3>
-    <p class="fine">The plan: upgradeable only through a multisig with a public 48-hour delay, until an outside review.
+    <p class="fine">The plan: upgradeable only through a multisig with a public 8-day delay, until an outside review.
       Today one person holds every key of that multisig; no outside key holder has joined. What the chain says now:</p>
     <dl class="facts" id="programs-now">${rows.map((r) => `<dt>${esc(r.name)}</dt><dd>${link("address", r.address)}<br>${verdict(r)}</dd>`).join("")}</dl>
     <dl class="facts" id="multisigs-now">
-      <dt>Upgrade multisig</dt><dd>${link("address", all.upgrade_multisig)}<br>${up ? `${esc(member(up))}, and an approved upgrade waits <strong>${esc(hours(up))}</strong> before it can run${up.timeLock === 172800 ? "" : ` <strong class="status bad">(not the 48 hours stated above)</strong>`}.`
+      <dt>Upgrade multisig</dt><dd>${link("address", all.upgrade_multisig)}<br>${up ? `${esc(member(up))}, and an approved upgrade waits <strong>${esc(hours(up))}</strong> before it can run${up.timeLock === 691200 ? "" : ` <strong class="status bad">(not the 8 days stated above)</strong>`}.`
         : `<span class="status">not on devnet yet</span>`}</dd>
       <dt>Guardian multisig</dt><dd>${link("address", all.guardian_multisig)}<br>${guard ? `${esc(member(guard))}; no delay${guard.timeLock ? ` (it reads ${esc(hours(guard))})` : ""}. The guardian (a second multisig) can approve or revoke a signing key and pause new funding for at most ${knos.v2.PAUSE_MAX / 86400} days.`
         : `<span class="status">not on devnet yet</span>`}</dd>

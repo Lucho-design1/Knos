@@ -2,44 +2,43 @@
 
 # Governance: who can change what, today
 
-**In plain words.** One person, the founder, holds every key that can change the [programs](../WORDS.md#program) (the code that holds the money). Each change is public for 48 hours before it runs; a longer wait of 8 days is approved, not yet applied. Other keys can pause new funding for 7 days at most, but cannot move money.
+**In plain words.** One person, the founder, holds every key that can change the [programs](../WORDS.md#program) (the code that holds the money). Each change is public for 8 days before it runs. Other keys can pause new funding for 7 days at most, but cannot move money.
 
 ```mermaid
 flowchart TB
     subgraph today["Today"]
         founder["One person, the founder, holds every key"]
         upgrade["Upgrade keys: 2 of 3 can change a program"]
-        wait["The change waits 48 hours in public, then it can run"]
+        wait["The change waits 8 days in public, then it can run"]
         guardian["Guardian keys: 2 of 3 can pause new funding for up to 7 days, and approve or refuse a signing key"]
         nomoney["The guardian keys cannot move money"]
         founder --> upgrade --> wait
         founder --> guardian --> nomoney
     end
     subgraph plan["Planned, not done"]
-        eight["The wait grows to 8 days: approved, not yet applied"]
         outside["A key holder who is not the founder: nobody asked yet"]
     end
-    wait --> eight
     founder --> outside
 ```
-*Who can change the programs today, and the two changes that are planned.*
+*Who can change the programs today, and the change that is planned.*
 
 This page says who can change the programs and the keys they trust, what stands between that power and a user's
 money, and what is planned. It describes the programs as devnet holds them, with test USDC; the pending proposals
 are in [`web/upgrades.json`](../../web/upgrades.json). [SECURITY.md](SECURITY.md) is
 the security model; [INVARIANTS.md](INVARIANTS.md) is what the programs guarantee while they are unchanged.
 
-**The short version.** One person can change every program, 48 hours after saying so in public. Both multisigs
-(accounts that act only when enough keys agree) need 2 of the same 3 member keys, and all three are the founder's. So the 48-hour delay gives **notice**. It does not give
+**The short version.** One person can change every program, 8 days after saying so in public. Both multisigs
+(accounts that act only when enough keys agree) need 2 of the same 3 member keys, and all three are the founder's. So the 8-day delay gives **notice**. It does not give
 independent oversight: nobody else has to agree, and nobody else can refuse.
 
-**Leaving before an upgrade is not always possible.** A Balance can be withdrawn at once. An open order whose
-deadline is after the upgrade's time cannot be refunded before the upgrade: cancelling gives the seller 7 days of
-notice, and the upgrade waits only 48 hours. `knos exit --before-upgrade` lists every holding of yours with its way out
-and the hours it misses by (section 2). What closes it for open orders: a time lock of 8 days, set by a Squads
-configuration transaction. Two member keys created and approved
-that transaction on 9 October 2026, after upgrade proposals 7 and 8 had run. It is approved, not yet applied. A
-member can execute it 48 hours after the approval; until then the time lock on chain stays 48 hours.
+**Leaving before an upgrade is possible for open orders, not for everything.** A Balance can be withdrawn at once.
+An open order can be cancelled and refunded before an upgrade approved from now on can run: cancelling gives the
+seller 7 days of notice, and a program change now waits 8 days in public (Squads time lock 691,200 s, in force since
+11 Oct 2026). An order held for a payee and a holdback in its warranty still cannot be left in time.
+`knos exit --before-upgrade` lists every holding of yours with its way out and the hours it misses by (section 2).
+Until 11 Oct 2026 the wait was 48 hours, shorter than the notice. Two member keys created and approved the
+configuration transaction that changed it (proposal 9) on 9 October 2026, after upgrade proposals 7 and 8 had run;
+it has been in force since 11 Oct 2026.
 
 **Outside key holders today: 0.** What would change it: one person opens a "Key holder request"
 ([KEYHOLDER.md](KEYHOLDER.md), one page) and the founder runs one command (section 5).
@@ -59,8 +58,8 @@ and all three member keys (section 6).
 
 | what | who, today | how fast | what limits it |
 |---|---|---|---|
-| The code of `knos_pay`, `knos_oidc`, `knos_meter`, `knos_passkey` | the upgrade multisig: 2 of 3 keys, all the founder's | 48 hours after the vote that approves it | the delay, and that the proposal and its bytes are public for those 48 hours. An upgrade can do anything, including taking every order's money |
-| The upgrade multisig's own members, threshold and delay | the same 2 of 3 | the same 48 hours | no single key can change its settings (it has no config authority): only a vote of its members can |
+| The code of `knos_pay`, `knos_oidc`, `knos_meter`, `knos_passkey` | the upgrade multisig: 2 of 3 keys, all the founder's | 8 days after the vote that approves it | the delay, and that the proposal and its bytes are public for those 8 days. An upgrade can do anything, including taking every order's money |
+| The upgrade multisig's own members, threshold and delay | the same 2 of 3 | the same 8 days | no single key can change its settings (it has no config authority): only a vote of its members can |
 | Which signing keys the verifier accepts | a new key: a signed statement (attestation) from a workflow run in one of two repositories of one personal GitHub account, then a one-day wait, then the guardian's approval. Refreshing a key that the issuer (such as GitHub) still publishes: anyone (section 8) | a day and the guardian's vote | constants in [`pins.rs`](../../programs-v2/knos_oidc/src/pins.rs) |
 | Revoking a key; pausing new funding for at most 7 days | the guardian multisig: 2 of 3 keys, all the founder's | at once (no time lock) | it has no instruction that moves money, and cannot block a refund, a withdrawal or a payment under a good key |
 | The guardian multisig's own members | the same 2 of 3 | at once | no config authority |
@@ -73,7 +72,7 @@ authority) and every pending proposal; `node scripts/governance.mjs show --check
 accounts. On devnet the Squads program itself has an upgrade authority, which is Squads' and not ours
 ([SECURITY.md](SECURITY.md), section 7).
 
-## 2. What the 48 hours are, and are not
+## 2. What the 8 days are, and are not
 
 - **They are notice.** From the moment of the approving vote, three things are on chain: the proposal, the buffer
   holding the new program code, and (when the release workflow made the build) the upgrade gate's record of the
@@ -93,47 +92,48 @@ accounts. On devnet the Squads program itself has an upgrade authority, which is
   |---|---|---|
   | a Balance | `Withdraw`, your wallet signs, at once | yes |
   | an open order past its deadline | `RefundOrder`, anyone sends it, at once | yes |
-  | an open order whose deadline is inside the 48 hours | `RefundOrder` after the deadline | yes |
-  | an open order whose deadline is later | `Cancel` moves the deadline to at most 7 days away (`NOTICE`), then `RefundOrder`; a wallet's order is cancelled by its wallet, a Balance's by a `/knos cancel` comment, which needs GitHub | **no**: 7 days of notice are longer than 48 hours |
+  | an open order whose deadline is inside the 8 days | `RefundOrder` after the deadline | yes |
+  | an open order whose deadline is later | `Cancel` moves the deadline to at most 7 days away (`NOTICE`), then `RefundOrder`; a wallet's order is cancelled by its wallet, a Balance's by a `/knos cancel` comment, which needs GitHub | yes, since 11 Oct 2026: 7 days and 2 hours of notice are shorter than 8 days (before, with 48 hours, **no**) |
   | an order held for a payee who has bound no wallet | `RefundOrder` after the 180-day hold | **no** |
   | a holdback in its warranty (up to 90 days) | `Release` to the seller when it ends; back to the funder only by a judge's revert token | **no** |
 
   **Where an order cannot be left, and why.** The notice protects the seller who is working on the order: a funder
-  who could take the money back at once could cancel after the work was done. So the timetable has two promises
-  that disagree, and today the seller's wins: an upgrade can execute while a funder's order is still in its notice.
+  who could take the money back at once could cancel after the work was done. Until 11 Oct 2026 the timetable had two
+  promises that disagreed, and the seller's won: an upgrade could execute while a funder's order was still in its
+  notice. The 8-day time lock ends that for open orders; held orders and holdbacks are still slower than it.
   For comparison, L2BEAT's framework for rollups asks that users have at least 7 days to exit before an unwanted
   upgrade, and 30 days at its highest stage
   ([L2BEAT, "Introducing Stages"](https://medium.com/l2beat/introducing-stages-a-framework-to-evaluate-rollups-maturity-d290bb22befe)).
-- **The plan that closes the gap for open orders, with no program change.** Set the upgrade multisig's time lock
+- **The change that closed the gap for open orders, with no program change.** Set the upgrade multisig's time lock
   above the notice plus the presentation grace: an order cancelled when an upgrade is approved is refunded 7 days,
-  2 hours and 1 second later, so the lock must be at least 612,002 s. The plan is 8 days (691,200 s); about 22 hours
+  2 hours and 1 second later, so the lock must be at least 612,002 s. It is 8 days (691,200 s); about 22 hours
   above the minimum are for sending the `Cancel`, which for a Balance's order is a comment and a workflow run.
   [`scripts/timelock_plan.py`](../../scripts/timelock_plan.py) reads the multisig and prints the Squads configuration
   transaction: `config_transaction_create` with one action, `SetTimeLock { new_time_lock: 691200 }`, then a
-  proposal, 2 approvals, and `config_transaction_execute`, which itself waits out the present 48 hours. It refuses
+  proposal, 2 approvals, and `config_transaction_execute`, which itself waited out the 48 hours then in force. It refuses
   while any proposal of the multisig is a draft, active, or approved and not executed, because the change makes
   every earlier proposal stale: one not yet approved can no longer be approved, and an approved upgrade waits the
-  new time lock from its approval. So the release run applies it only after proposals 7 and 8 have executed.
+  new time lock from its approval. So it was sent only after proposals 7 and 8 had executed.
   Facts from the Squads v4 source: `time_lock` is the seconds between approval and execution; at most 3 × 30 days;
   `SetTimeLock` calls `invalidate_prior_transactions`
   ([state/multisig.rs](https://github.com/Squads-Protocol/v4/blob/main/programs/squads_multisig_program/src/state/multisig.rs),
   [config_transaction_execute.rs](https://github.com/Squads-Protocol/v4/blob/main/programs/squads_multisig_program/src/instructions/config_transaction_execute.rs),
   [vault_transaction_execute.rs](https://github.com/Squads-Protocol/v4/blob/main/programs/squads_multisig_program/src/instructions/vault_transaction_execute.rs),
   [Squads documentation](https://docs.squads.so/main/development/typescript/instructions/create-config-transaction)).
-  Once it is in force, `knos exit --before-upgrade` says that every open order can be cancelled and refunded
-  before any upgrade approved from then on can execute. It does not cover held orders (180 days) or holdbacks in
+  Now that it is in force, `knos exit --before-upgrade` says that every open order can be cancelled and refunded
+  before any upgrade approved from now on can execute. It does not cover held orders (180 days) or holdbacks in
   warranty (up to 90 days). The cost: every fix waits 8 days, the one in section 3 included.
-  **State: approved, not yet applied.** The change is proposal 9 of the upgrade multisig. On 9 October 2026,
+  **State: in force since 11 Oct 2026.** A program change now waits 8 days in public (Squads time lock 691,200 s,
+  in force since 11 Oct 2026). The change is proposal 9 of the upgrade multisig. On 9 October 2026,
   `python scripts/timelock_plan.py --rpc` found no other proposal open, and
   `node scripts/governance.mjs set-time-lock --send` sent it (one action, `SetTimeLock { new_time_lock: 691200 }`).
   It was created in
   [`42yHfmYN...`](https://explorer.solana.com/tx/42yHfmYN8pF3zxow7a4SsVWW5voEpZ5BBbnSnyx6EQXSWQYifdVUySbEPuUDpLYErr24SpEa34eExcRy5ztSECfa?cluster=devnet) and approved by two of the three member keys in
   [`MSTGH4Q9...`](https://explorer.solana.com/tx/MSTGH4Q99fy6xNWVJ8hTCjs7mJzuVD7rGNF1Ymy6JeuB3cDMThTGnsxKBBKPvv5Q741DEfKLJrecrtBibv45uyQ?cluster=devnet). The Squads program executes a configuration transaction only once the
-  present time lock has run from its approval, so it can be executed 48 hours after that approval, by any member:
-  `node scripts/governance.mjs execute upgrade 9`. Until then the time lock on chain is 48 hours, two members can
-  still cancel it, and `knos status` lists proposal 9 as a change to the upgrade multisig itself. It is applied only
-  when a release run records the executed configuration transaction here, with its signature, and the multisig
-  reads back 691200 s.
+  time lock then in force (48 hours) has run from its approval. On 11 Oct 2026 a member executed it with
+  `node scripts/governance.mjs execute upgrade 9`, in
+  [`2gYPofAZDfwXi6pK2tAWkRdEDfqVcceAmf3PsmW6x4jkHafNCresgEQDS3zJg2dXZRKi1NnNMWcW6ct3eFPFV1m9`](https://explorer.solana.com/tx/2gYPofAZDfwXi6pK2tAWkRdEDfqVcceAmf3PsmW6x4jkHafNCresgEQDS3zJg2dXZRKi1NnNMWcW6ct3eFPFV1m9?cluster=devnet), and the multisig reads back
+  691200 s. Every proposal made before it is stale; an upgrade approved from now on waits 8 days.
 - **They are not oversight.** The same person proposes, approves and executes.
 - **Nothing is sent to anyone.** No comment is posted on repositories with open orders, and no email exists. The
   notice reaches someone who looks, or who subscribed to the feed.
@@ -206,7 +206,7 @@ accounts as devnet holds them (`scripts/governance.test.mjs`, with `tests/fixtur
    `RemoveMember` and, if asked, `ChangeThreshold`:
    [Squads documentation](https://docs.squads.so/main/development/typescript/instructions/create-config-transaction))
    and casts the founder's two votes.
-4. `node scripts/governance.mjs execute upgrade <index>` runs it once the multisig's own 48 hours have passed;
+4. `node scripts/governance.mjs execute upgrade <index>` runs it once the multisig's own time lock (8 days) has passed;
    `execute guardian <index>` at once. When a change of members or threshold executes, every proposal of that
    multisig that was not yet approved becomes stale and must be proposed again; one already approved can still run.
 5. `node scripts/governance.mjs show --check` prints the new member list. The holder is added to
@@ -228,7 +228,7 @@ Three kinds of key are involved in an upgrade. The addresses are the ones devnet
 |---|---|---|
 | The deploy fee payer (`payer.json` in the key folder) | not published; it is no member of either multisig | Write a build to a buffer and hand the buffer to the vault. It cannot propose, vote or execute, and it cannot sign the loader's `Upgrade`. |
 | One member key | `9XmgVhQ5i9XzqUrFn85ue2bnxjxD6KBeBCk23gAowUX9`, `9vcyLKaxG2k24PFhmMC6cRCbmM3FqxCoRyHS36aG3dyk` or `Az4ftNZuvopLHwLuxHsw9Rh3QffGsnEFzCEZj1LeH4BX` (the same three on both multisigs) | Create a proposal, cast one of the two approvals, and execute a proposal the others approved once its delay has passed. Alone it cannot approve, reject or cancel. |
-| The upgrade vault | `CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2` | It is the upgrade authority of all four programs and the only signer the loader's `Upgrade` takes. It has no private key: it is an address of the Squads program, which signs for it only when executing a proposal of multisig `9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK` that 2 members approved 48 hours before. |
+| The upgrade vault | `CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2` | It is the upgrade authority of all four programs and the only signer the loader's `Upgrade` takes. It has no private key: it is an address of the Squads program, which signs for it only when executing a proposal of multisig `9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK` that 2 members approved 8 days before. |
 
 **So the key that deploys a build buffer cannot by itself authorise the upgrade.** Where this is checked:
 
@@ -237,7 +237,7 @@ Three kinds of key are involved in an upgrade. The addresses are the ones devnet
   not on the Ed25519 curve), so no key file can sign for it; the vault and the fee payer are not members; one member key has one vote of the two
   needed; two member keys have every power. It reads the multisig account as devnet holds it.
 - [DRILLS.md](DRILLS.md), the four rows of the upgrade drill, run against the real Squads program on a local
-  validator: an approved upgrade is refused before its 48 hours (`TimeLockNotReleased`) and a cancelled one never
+  validator: an approved upgrade is refused before its time lock, then 48 hours, has run (`TimeLockNotReleased`) and a cancelled one never
   runs (`InvalidProposalStatus`).
 - Not drilled: a key that is no member sending a proposal or a vote to the Squads program and being refused. The
   test above reads the member list; it does not send that transaction.
@@ -248,7 +248,7 @@ Three kinds of key are involved in an upgrade. The addresses are the ones devnet
   buffer until 2 members approve a proposal that names it, and `upgrade propose` refuses bytes GitHub's runner did
   not build (that check is in the script, not in the multisig).
 - *One member key:* create proposals, which are public and do nothing without a second approval, and cast one vote.
-- *Two member keys:* everything, 48 hours later for the programs and at once for the guardian.
+- *Two member keys:* everything, 8 days later for the programs and at once for the guardian.
 
 **The present setup does not separate these duties.** One key folder (`.knos-keys`) on one machine holds the deploy
 fee payer and all three member keys, so whoever has that machine has every power above. Splitting them between two
@@ -263,18 +263,18 @@ This is a decision, with its cost stated.
 - **`knos_oidc`, the verifier, is frozen after an outside review, and not before:** its upgrade authority is removed, and from
   then nobody can change which signatures it accepts or how it checks them. The verifier is small, does one thing,
   and is what every other program relies on.
-- **`knos_pay`, the escrow, stays upgradeable behind the public 48-hour delay.** It holds the money and has the
+- **`knos_pay`, the escrow, stays upgradeable behind the public 8-day delay.** It holds the money and has the
   most code, and a defect in it must be fixable in place. The one in section 3 is the example.
 - **`knos_meter` and `knos_passkey`:** not decided. They stay behind the same delay until it is.
 
 What freezing costs. A frozen program's defects cannot be patched in place. A fault in the verifier would then be
-answered by deploying a new verifier at a new address and upgrading `knos_pay` to read it, 48 hours away, with the
+answered by deploying a new verifier at a new address and upgrading `knos_pay` to read it, 8 days away, with the
 guardian revoking keys in the meantime. The constants in `pins.rs` freeze with the program: the genesis keys, the
 guardian's address, the pinned rotate workflow and the account whose runs admit new keys. So the dependency on one
 GitHub account (section 9) has to be resolved **before** the freeze, not after it.
 
 The order is fixed: the outside review and its fixes first; then the move of the attesting account (section 9);
-then the freeze, proposed through the multisig with its 48 hours like any other change. Releases still fix the
+then the freeze, proposed through the multisig with its 8 days like any other change. Releases still fix the
 verifier (for example, a correction to how it reads a token's claims). That is why it is not frozen yet: a frozen
 verifier could not take such a fix.
 
@@ -289,7 +289,7 @@ keys that fix the multisigs' addresses. Every command reads the chain first and 
 | procedure | command | who must act |
 |---|---|---|
 | propose an upgrade | `bash scripts/deploy_v2.sh --propose` (builds, waits for the gate record, proposes and approves) | 2 member keys |
-| execute it after 48 hours | `node scripts/governance.mjs upgrade execute <index>` | any member |
+| execute it after 8 days | `node scripts/governance.mjs upgrade execute <index>` | any member |
 | cancel one | `node scripts/governance.mjs cancel upgrade <index>` | 2 member keys |
 | approve a new signing key | `node scripts/governance.mjs guardian approve <issuer> <key hash>` | 2 guardian keys |
 | revoke a key, for ever | `node scripts/governance.mjs guardian revoke <issuer> <key hash>` | 2 guardian keys |
@@ -318,14 +318,14 @@ attested.
   the daily rotate run names it, anyone registers it, the guardian approves, and a day later it verifies. Drilled
   in simulation on the test builds ([DRILLS.md](DRILLS.md), "GitHub rotates its signing key mid-period"): paid one
   day after the new key was published. If GitHub signs with a key the verifier never admitted and with no other,
-  every token is refused, no attestation can be verified, and only an upgrade of the verifier admits a key, 48
-  hours away; open orders go back to their funders at their deadlines. Not drilled on devnet.
+  every token is refused, no attestation can be verified, and only an upgrade of the verifier admits a key, 8
+  days away; open orders go back to their funders at their deadlines. Not drilled on devnet.
 - **If nobody does.** Keys expire one by one, 30 days after each one's last attestation. A token under an expired
   key is refused. An expired key comes back when it is attested again, as long as the attestation is verified under
   some other key that is still usable. When the last usable key of GitHub's expires, nothing can be verified and
   nothing can be attested: no order can be funded by comment or paid, and the escrow is refund-only
   ([DRILLS.md](DRILLS.md) has the funder's steps). From there the only way back is an upgrade of the verifier
-  through the multisig, 48 hours away, and after the verifier is frozen, a new verifier and an upgrade of the
+  through the multisig, 8 days away, and after the verifier is frozen, a new verifier and an upgrade of the
   escrow.
 
 ## 9. The dependency on one personal GitHub account
@@ -393,7 +393,7 @@ The steps, in order:
    for as long as the old repository is available.
 5. **Move the rotate and claim workflows by a program upgrade.** `knos_oidc` and `knos_pay` accept the
    organisation's `ROTATE_REF`, `CLAIM_REF` and owner id beside the old ones. It passes through the multisig and its
-   48 hours like any upgrade.
+   8 days like any upgrade.
 6. **Run the relay from the organisation,** and a second one somewhere that is not GitHub. A relay holds one
    fee-paying key and nobody's money ([OPERATOR.md](OPERATOR.md)).
 7. **Retire the old location.** When no open order records the old `wf_repo` (the chain says: every Order account's
@@ -420,8 +420,8 @@ pending upgrade against the gate before voting. The same page says what it canno
 
 - An outside key holder on either multisig ([KEYHOLDER.md](KEYHOLDER.md)). One would hold 1 key of 3 and could
   not act alone; the founder would keep 2 and could still approve any upgrade without them.
-- An exit window as long as the notice: an open order whose deadline is after an upgrade's time cannot be left
-  before it. The 8-day time lock that closes it was approved on 9 October 2026 and is not yet applied (section 2).
+- An exit window for an order held for a payee (180 days) and a holdback in its warranty (up to 90 days). The
+  8-day time lock, in force since 11 Oct 2026, covers open orders only (section 2).
 - A second person for any duty: review, deploy, approve, relay, respond ([OPERATOR.md](OPERATOR.md) is the
   checklist; nobody has run it).
 - An outside review of anything. The verifier's freeze waits on it.

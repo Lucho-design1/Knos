@@ -6,6 +6,7 @@
 //              its first verdict in under 10 s from the navigation's start, each GitHub answer 150 ms late
 //   answer     "Claimed tests pass" with the matched line quoted, failed checks by class, the verdict in one line
 //   paste      a pasted link is checked with no press at all; a later #check=… in the address is checked too
+//   late share a #check=… link followed while the last answer's share row loads stays the address and is checked
 //   pending    the steps and the grey bars are on the screen in the same task as the press
 //   limits     GitHub's refusal for its hourly limit says 60 an hour and when it resets; a missing PR says so
 //   words      no statement over twelve words, the title 3 to 6; nothing says wallet, hash, pin or token account
@@ -154,6 +155,33 @@ const verdictOf = (page) => page.waitForSelector("#check-verdict", { timeout: 15
     const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     ok(`width ${width}px: no sideways scroll`, over <= 0, over);
   }
+  await ctx.close();
+}
+
+// ---- a link followed while the share row loads ---------------------------------------------------------------------
+// The share row comes by a dynamic import and rewrites the address to its answer's. Held here in the one order that went
+// wrong by chance on a runner: the answer to link 1, then link 2 set in the address, then share.js in, and only then the
+// hashchange of link 2 (a task of its own). Link 2 stays the address and is the one checked; link 1 is not put back.
+{
+  const ctx = await open({ reducedMotion: "reduce" });
+  let release; const held = new Promise((r) => { release = r; });
+  await ctx.route(`${origin}/share.js`, async (route) => { await held; return route.continue(); });
+  await ctx.addInitScript(() => addEventListener("hashchange", (e) => { if (window.holdHash && e.isTrusted) { e.stopImmediatePropagation(); window.heldHash = location.hash; } }));
+  const page = await ctx.newPage();
+  await page.goto(`${origin}/#check=usestrix/strix/753`);
+  const first = await verdictOf(page);
+  ok("late share: link 1 answered", first.line === "Claims tests pass; every check passed.", first);
+  const LINK2 = "#check=spaja86/AI-IQ-SUPER-PLATFORMA/877";
+  await page.evaluate((h) => { window.holdHash = true; location.hash = h; }, LINK2);
+  await page.waitForFunction(() => window.heldHash);
+  release();
+  await page.evaluate(async () => { await import("/share.js"); await new Promise((r) => setTimeout(r, 100)); });   // link 1's import is in, and its then has run
+  const during = await page.evaluate(() => location.hash);
+  ok("late share: link 1's share row does not put its address back", during === LINK2, during);
+  await page.evaluate(() => { window.holdHash = false; dispatchEvent(new HashChangeEvent("hashchange")); });
+  const second = await page.waitForFunction(() => /test nothing/.test(document.getElementById("check-verdict")?.textContent || ""), null, { timeout: 15_000 })
+    .then(() => true, () => false);
+  ok("late share: link 2 is the one checked", second, await page.textContent("#check-verdict"));
   await ctx.close();
 }
 ok("hosts: only the page's own and api.github.com", [...hosts].every((h) => h === new URL(origin).host || h === "api.github.com"), [...hosts]);

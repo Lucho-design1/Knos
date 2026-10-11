@@ -44,7 +44,7 @@ Adopters today: 0 ([COMPOSE.md](COMPOSE.md), "Who uses the upgrade gate"). Knos'
 
 Before them, once: a Squads v4 multisig whose time lock is your delay. The time lock is a number of seconds on the
 multisig account (`timeLock` of `multisigCreateV2` in the Squads SDK; `SetTimeLock` in a config transaction:
-[Squads documentation](https://docs.squads.so/main/development/cli/commands)). Knos uses 172,800 s, 48 hours. You
+[Squads documentation](https://docs.squads.so/main/development/cli/commands)). Knos uses 691,200 s, 8 days (since 11 Oct 2026; 172,800 s, 48 hours, before). You
 also need the Knos repository checked out and installed (`pip install .`), and the Solana command line.
 
 **1. Make your gate.** It needs no network. It writes your own copy of the gate program (a Rust crate) and the job your build workflow adds.
@@ -148,7 +148,7 @@ title and links are still worded for Knos: edit the two files' headings before y
 - **The delay is notice, not oversight,** unless the multisig's members are different people. Knos's are not:
   all three keys are the founder's ([GOVERNANCE.md](GOVERNANCE.md)).
 - **It trusts GitHub:** its signing keys, its hosted runners, and that your workflow file builds what it says.
-- **It depends on `knos-oidc`,** which Knos's multisig can upgrade after a 48-hour wait. The GitHub signing
+- **It depends on `knos-oidc`,** which Knos's multisig can upgrade after an 8-day wait. The GitHub signing
   keys it holds each expire 30 days after their last refresh ([GOVERNANCE.md](GOVERNANCE.md), section 8). If it stops, no new record can be
   written; your multisig and its delay go on.
 - **Nobody is told.** The file and the banner reach someone who looks.

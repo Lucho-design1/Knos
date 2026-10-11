@@ -192,9 +192,9 @@
   },
   {
    "say": [
-    "48"
+    "8"
    ],
-   "what": "hours of public delay before an upgrade of the second deployment can execute: the time lock (172,800 seconds) of the Squads multisig `upgrade_multisig` in programs-v2/program_ids.json, whose vault is the programs' upgrade authority",
+   "what": "days of public delay before an upgrade of the second deployment can execute: the time lock (691,200 seconds, in force since 11 Oct 2026) of the Squads multisig `upgrade_multisig` in programs-v2/program_ids.json, whose vault is the programs' upgrade authority",
    "live": "upgrade_delay"
   },
   {
@@ -1147,9 +1147,9 @@
     "docs/TRUST.md",
     "docs/reference/GOVERNANCE.md"
    ],
-   "what": "days of the planned time lock of the upgrade multisig: 691,200 seconds (192 hours), set by proposal 9, one action SetTimeLock { new_time_lock: 691200 } (docs/reference/GOVERNANCE.md). It is approved and has not executed, so the lock in force is still 48 hours",
-   "file": "scripts/governance.mjs",
-   "has": "export const PLANNED_TIME_LOCK = 691_200;"
+   "what": "days of the time lock of the upgrade multisig: 691,200 seconds (192 hours), set by proposal 9, one action SetTimeLock { new_time_lock: 691200 } (docs/reference/GOVERNANCE.md). It executed on 11 Oct 2026, so the lock in force is 8 days; it was 48 hours before",
+   "file": "src/knos/mainnet_check.py",
+   "has": "TIME_LOCK = 691_200"
   },
   {
    "say": [

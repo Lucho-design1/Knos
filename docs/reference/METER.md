@@ -39,7 +39,7 @@ in whatever the two parties settle in; the meter adds it up and moves none of it
 
 Everything here is on Solana devnet with test USDC. `knos_meter` 1.1, with the batch mode, is the version on devnet
 since upgrade proposal 5 (October 2026). It can be upgraded only through a
-multisig with a public 48-hour delay, until an outside review. The whole path below
+multisig with a public 8-day delay, until an outside review. The whole path below
 (ledger file, the workflow's command, the signed audience, the relay, the two accounts, `verify` and `reconcile`
 reading them back) runs in `tests/test_meter_e2e.py` against the program in LiteSVM. Before that upgrade it ran on devnet once,
 on a staging deployment of knos_meter 1.1 during the release rehearsal of Knos 0.3.14, with tokens GitHub signed for a staging copy of the workflows:

@@ -372,7 +372,7 @@ def test_the_schedule_is_the_later_of_the_two_times_plus_ten_minutes_and_an_unap
     assert plan["executable_from"] == NOW + 30 + 172_800 and plan["run_at"] == plan["executable_from"] + 600
     assert [p["hash"] for p in plan["proposals"]] == ["ab" * 32] * 2          # the build each was proposed with: the run executes no other
     assert plan["run_at_utc"] == d.when(plan["run_at"]) and [p["index"] for p in plan["proposals"]] == [3, 4] and plan["rpc"] == "https://api.devnet.solana.com"
-    with pytest.raises(SystemExit, match=r"proposal 4 \(knos_pay\) is not approved yet, so its 48 hours have not started"):
+    with pytest.raises(SystemExit, match=r"proposal 4 \(knos_pay\) is not approved yet, so its time lock has not started"):
         d.schedule([parts[1], part("knos_pay", 4, None)], "x")
     with pytest.raises(SystemExit, match="nothing to schedule"):
         d.schedule([], "x")

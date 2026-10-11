@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Deploy the second deployment (programs-v2) to devnet, set it up, and hand both programs' upgrade authority to the
-# vault of the upgrade multisig, so that from then on a program changes only by a proposal that waits 48 hours in
-# public. Run it again after any failure: every step reads the chain first and does only what is missing. The last
+# vault of the upgrade multisig, so that from then on a program changes only by a proposal that waits out the
+# multisig's time lock in public (8 days since 11 Oct 2026; 48 hours before). Run it again after any failure: every step reads the chain first and does only what is missing. The last
 # line it prints says what is on chain now.
 #
 #   bash scripts/deploy_v2.sh               devnet (or the cluster of KNOS_RPC; mainnet-beta is refused)
@@ -433,7 +433,7 @@ rc_close() {
 # ---- --propose: the upgrade of the four programs, through the multisig -----------------------------------------------
 # withdraw_older: no proposal that can still run would deploy another build of one of the four than this one afterwards.
 # Without --replace such a proposal stops the run (deploy_v2.py stale says which and how); with it each is withdrawn by the
-# member keys' votes first: an approved one is cancelled, inside its 48 hours too, one still collecting approvals is rejected
+# member keys' votes first: an approved one is cancelled, inside its time lock too, one still collecting approvals is rejected
 withdraw_older() {
   local name builds="" found rc=0 index program hash status left flag=""
   [ "$REPLACE" != 1 ] || flag="--replace"

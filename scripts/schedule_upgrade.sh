@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Execute the proposed upgrades when their 48 hours have passed, unattended.
+# Execute the proposed upgrades when their time lock (8 days) has passed, unattended.
 #
 # `bash scripts/deploy_v2.sh --propose` wrote <key folder>/upgrade-schedule.json: each proposal's index, the executable
 # hash of the build it was proposed with, and the time from which all of them can be executed, plus ten minutes
@@ -61,7 +61,7 @@
 # Windows task starts it. When schtasks.exe cannot be reached from WSL, the other two are taken and the script says
 # what they need: keep a window open.
 #
-# The run starts 48 hours later with a bare environment, perhaps after a restart, so it does not lean on this shell:
+# The run starts 8 days later with a bare environment, perhaps after a restart, so it does not lean on this shell:
 #   - every timer starts it through a login shell (bash -l), so the user's profile does what it does for a terminal:
 #     mounts the drive that holds the keys, puts node and knos on PATH;
 #   - then it reads <key folder>/upgrade-run.env, which arranging wrote (mode 600): PATH and the PATHS of the keys
@@ -267,7 +267,7 @@ run() {
 
 # ---- a dry trigger ----------------------------------------------------------------------------------------------------
 # What the timer starts, short of sending: first half here (this shell), second half (--bare) in a login shell with a bare
-# environment, as 48 hours later
+# environment, as 8 days later
 verify() {
   local missing n
   if [ "$BARE" = 0 ]; then

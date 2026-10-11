@@ -13,7 +13,7 @@ Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build
 The claim: two parties who distrust each other compute the same bill from evidence a third party signed, and the
 program releases the money on that signature.
 
-Why Solana: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public.
+Why Solana: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public.
 
 ## Start here
 

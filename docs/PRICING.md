@@ -87,7 +87,7 @@ The fee is written into the program's code: `FEE_BPS` and `FEE_MIN` in
 The meter's price is `FEE` and `FREE_PER_MONTH` in
 [`programs-v2/knos_meter/src/lib.rs`](../programs-v2/knos_meter/src/lib.rs).
 
-To change them takes an upgrade of the program, which waits 48 hours in public first ([Trust](TRUST.md)).
+To change them takes an upgrade of the program, which waits 8 days in public first ([Trust](TRUST.md)).
 
 The site's [price page](https://drexthealpha.github.io/Knos/#pricing) reads the fee from the program itself.
 

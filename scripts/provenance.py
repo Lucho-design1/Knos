@@ -245,8 +245,8 @@ def missing(chain: dict) -> list[str]:
 def time_lock(data: dict) -> str:
     seconds = data["upgrades"].get("time_lock")
     fact = next((f for f in data["facts"] if f.get("live") == "upgrade_delay"), None)
-    hours = f"{seconds // 3600} hours" if isinstance(seconds, int) else MISSING
-    return f"{hours} (web/upgrades.json `time_lock`" + (f"; docs/facts.json checks {fact['say'][0]} hours against the cluster at release)" if fact and fact.get("say") else ")")
+    span = (f"{seconds // 86_400} days" if seconds % 86_400 == 0 else f"{seconds // 3600} hours") if isinstance(seconds, int) else MISSING
+    return f"{span} (web/upgrades.json `time_lock`" + (f"; docs/facts.json checks {fact['say'][0]} days against the cluster at release)" if fact and fact.get("say") else ")")
 
 
 def _show(name: str, v: dict, chain: dict) -> str:

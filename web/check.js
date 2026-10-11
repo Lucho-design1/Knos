@@ -90,7 +90,7 @@ export function renderCheck(el, ctx = {}) {
   let run = 0;
 
   async function check(text) {
-    const ref = parsePr(text), mine = ++run;
+    const ref = parsePr(text), mine = ++run, began = globalThis.location?.hash || "";
     shared.innerHTML = "";                  // the last answer's share row goes with it, whatever this run finds
     if (!ref) { out.innerHTML = `<p class="status bad" id="check-error">Paste a link like github.com/owner/repo/pull/123.</p>`; return null; }
     box.value = `https://github.com/${ref.owner}/${ref.repo}/pull/${ref.number}`;
@@ -107,8 +107,13 @@ export function renderCheck(el, ctx = {}) {
       step("read", "done"); step("checks", r.cls === "failed" ? "bad" : "done"); step("verdict", r.cls === "failed" && r.claim ? "bad" : "done");
       out.innerHTML = answerHtml(r);
       el.dispatchEvent(new CustomEvent("knos:check", { bubbles: true, detail: r }));
-      // shared only while the address is still a check's: a reader who has left #check is not sent back to it
-      import("./share.js").then((m) => { if (mine === run && el.contains(form) && /^#check=/.test(globalThis.location?.hash || "")) m.renderShare(el.querySelector("#check-share"), { verdict: r }); }).catch(() => {});
+      // shared only while the address is still a check's and still the one this run began at: a reader who has left
+      // #check, or followed another #check= link whose hashchange (a later task) has not reached the page yet, is not
+      // sent back to this answer (the share row rewrites the address)
+      import("./share.js").then((m) => {
+        const now = globalThis.location?.hash || "";
+        if (mine === run && el.contains(form) && /^#check=/.test(now) && now === began) m.renderShare(el.querySelector("#check-share"), { verdict: r });
+      }).catch(() => {});
       return r;
     } catch (e) {
       if (mine !== run) return null;

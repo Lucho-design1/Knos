@@ -84,8 +84,8 @@ Published: the upgrade, and a test that the guardian can sign nothing but a paus
 
 ## What is published at every step
 
-- The change, on chain, before it can run. The time lock is 48 hours until the approved 8-day time lock is applied
-  ([GOVERNANCE.md](GOVERNANCE.md), section 2).
+- The change, on chain, before it can run. A program change now waits 8 days in public (Squads time lock
+  691,200 s, in force since 11 Oct 2026; [GOVERNANCE.md](GOVERNANCE.md), section 2).
 - The member list and the number of keys needed: `knos status`, or `node scripts/governance.mjs show --check`.
 - Each outside key in [`web/keyholders.json`](../../web/keyholders.json), added only after the change has run.
 - The count at the top of this page.

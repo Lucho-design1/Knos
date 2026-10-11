@@ -23,7 +23,7 @@ const DUR = [120, 240, 480], EASE = "cubic-bezier(.2,.7,.2,1)";
 const REPO = "https://github.com/drexthealpha/Knos/blob/main/";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const longDay = (d) => { const [y, m, n] = String(d).split("-").map(Number); return y && m && n ? `${n} ${MONTHS[m - 1]} ${y}` : String(d); };
-export const WHY_SOLANA = "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public.";
+export const WHY_SOLANA = "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public.";
 const esc0 = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const short = (s) => `${s.slice(0, 4)}…${s.slice(-4)}`;
 const thousands = (n) => String(n).replace(/\B(?=(\d{3})+$)/g, ",");

@@ -14,7 +14,7 @@ account has the same layout under both.
 ```toml
 knos-oidc-interface = "0.3.14"
 # or the same source from the release tag:
-# knos-oidc-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.3.27" }
+# knos-oidc-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.3.28" }
 ```
 
 ```rust
@@ -80,8 +80,9 @@ taken for an issuer's.
 The crate's defaults (`ID`, `Token::read`, `Token::read_any`; `v2::read` is the same by name) read the second
 deployment of knos-oidc. A new key needs GitHub's signature, then waits one day for the guardian's approval (the
 guardian is a key that can approve or revoke keys). Every key expires 30 days after it was last confirmed, and the
-guardian can revoke a key early. The program can be changed only through a multisig, after a public 48-hour delay.
-Today one person holds every key of that multisig, and no outside security review has been done.
+guardian can revoke a key early. The program can be changed only through a multisig, after a public 8-day delay
+(since 11 Oct 2026; 48 hours before). Today one person holds every key of that multisig, and no outside security
+review has been done.
 
 The first deployment has no upgrade authority, so nobody can change it: its keys never expire and cannot be revoked. A token account has the same layout
 under both, so the same code reads it, but nothing in this crate takes a first-deployment account unless you write

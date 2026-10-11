@@ -147,7 +147,7 @@ def test_a_passkey_funding_against_knos_passkey_1_0_is_refused_in_plain_words_an
 
 def test_the_sentence_without_a_date_when_the_upgrade_is_not_approved_or_not_proposed():
     w = World()
-    for accounts, words in ((proposals((6, "Active", "knos_passkey")), "which is proposed (proposal 6 of the upgrade multisig) and executes 48 hours after the members approve it"),
+    for accounts, words in ((proposals((6, "Active", "knos_passkey")), "which is proposed (proposal 6 of the upgrade multisig) and executes 8 days after the members approve it"),
                             (proposals((2, "Cancelled", "knos_passkey"), (4, "Approved", "knos_pay")), "which is not on this cluster yet: no approved upgrade of it was found"),
                             ({}, "which is not on this cluster yet")):
         net = old(Counted, passkey.PASSKEY_ID, LITESVM, accounts)(w)

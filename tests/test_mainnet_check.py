@@ -1,6 +1,6 @@
 """knos mainnet-check, offline: every gate driven by injected fetchers. The gates are about the second deployment:
 what is on chain is the verified build, only the pinned vault can upgrade it, that vault belongs to a multisig whose
-time lock is 48 hours and that no single key can change, the guardian is the pinned one, GitHub's keys verify, the
+time lock is 8 days and that no single key can change, the guardian is the pinned one, GitHub's keys verify, the
 program ids are used on no other cluster, and an outside review of those bytes is on record."""
 
 from __future__ import annotations
@@ -79,7 +79,7 @@ def world(*, authority: str | None = IDS["upgrade_authority"], elfs=None, verifi
         pd = Pubkey.find_program_address([bytes(Pubkey.from_string(IDS[name]))], mc.LOADER)[0]
         head = (3).to_bytes(4, "little") + bytes(8) + (b"\x01" + bytes(Pubkey.from_string(authority)) if authority else b"\x00" + bytes(32))
         accts[str(pd)] = (str(mc.LOADER), head + elfs[name])
-    accts[IDS["upgrade_multisig"]] = (owner, upgrade if upgrade is not None else squads_multisig(UPGRADE_KEY, 172_800))
+    accts[IDS["upgrade_multisig"]] = (owner, upgrade if upgrade is not None else squads_multisig(UPGRADE_KEY, 691_200))
     accts[IDS["guardian_multisig"]] = (owner, guardian if guardian is not None else squads_multisig(GUARDIAN_KEY, 0))
     for n, data in (KEYS if keys is None else keys).items():
         accts[str(oidc.key_pda(oidc.GITHUB, n, Pubkey.from_string(IDS["knos_oidc"])))] = (IDS["knos_oidc"], data)
@@ -140,7 +140,7 @@ def test_all_gates_pass_and_exit_zero():
     assert len(got) == 17 and "mainnet: locked (by design)" in got
     assert got[NEW_GATE][1] == "; ".join(f"{n} {IDS[n]}: deployed, executable, upgrade authority {IDS['upgrade_authority']}, the upgrade vault" for n in mc.NEW_PROGRAMS)
     assert got[KEYS_GATE][1] == "2 keys published; kid0-000: genesis, expires 2026-10-20; kid1-000: approved, expires 2026-10-20"
-    assert got["upgrade multisig: time lock is 172800 s (48 hours), or the planned 691200 s (8 days)"][1] == f"{IDS['upgrade_multisig']}: time lock 172800 s, 2 of 3 members, config authority none"
+    assert got["upgrade multisig: time lock is 691200 s (8 days)"][1] == f"{IDS['upgrade_multisig']}: time lock 691200 s, 2 of 3 members, config authority none"
     assert got[VAULT_GATE][1] == f"{IDS['knos_pay']}: upgrade authority {IDS['upgrade_authority']}, the pinned vault"
 
 
@@ -148,8 +148,8 @@ def test_each_gate_fails_on_its_own():
     one_key = str(Pubkey.new_unique())
     cases = {
         "knos_pay: on-chain bytes are this repository's verified build": world(verified={"knos_oidc": {"executable_hash": mc.elf_hash(elf("knos_oidc"))}, "knos_pay": {"executable_hash": "0" * 64}}),
-        "upgrade multisig: time lock is 172800 s (48 hours), or the planned 691200 s (8 days)": world(upgrade=squads_multisig(UPGRADE_KEY, 86_400)),
-        "upgrade multisig: no config authority": world(upgrade=squads_multisig(UPGRADE_KEY, 172_800, config_authority=Pubkey.from_string(one_key))),
+        "upgrade multisig: time lock is 691200 s (8 days)": world(upgrade=squads_multisig(UPGRADE_KEY, 86_400)),
+        "upgrade multisig: no config authority": world(upgrade=squads_multisig(UPGRADE_KEY, 691_200, config_authority=Pubkey.from_string(one_key))),
         "guardian: the vault both programs name is the pinned multisig's, which has no config authority": world(guardian=squads_multisig(GUARDIAN_KEY, 0, config_authority=Pubkey.from_string(one_key))),
         "rotate and claim workflow pins are in the programs and on GitHub": world(commit=False),
         KEYS_GATE: world(keys={N1: KEYS[N1]}),
@@ -173,16 +173,15 @@ def test_only_the_pinned_vault_may_hold_the_upgrade_authority():
 
 
 def test_the_multisig_gates_read_the_account_the_squads_program_owns_at_the_pinned_address():
-    lock, auth, vault = "upgrade multisig: time lock is 172800 s (48 hours), or the planned 691200 s (8 days)", "upgrade multisig: no config authority", "upgrade multisig: the pinned vault is its vault"
-    for time_lock in (0, 172_799, 172_801, 7_776_000):
+    lock, auth, vault = "upgrade multisig: time lock is 691200 s (8 days)", "upgrade multisig: no config authority", "upgrade multisig: the pinned vault is its vault"
+    for time_lock in (0, 172_800, 691_199, 691_201, 7_776_000):        # the 48 hours it had before 11 Oct 2026 included
         got = results(world(upgrade=squads_multisig(UPGRADE_KEY, time_lock)))
         assert (got[lock], got[auth], got[vault]) == (False, True, True), time_lock
     # a rent collector moves the members along; the time lock is where it was
-    assert all(results(world(upgrade=squads_multisig(UPGRADE_KEY, 172_800, rent_collector=Pubkey.new_unique()))).values())
-    # the planned time lock of 8 days (scripts/timelock_plan.py; docs/reference/GOVERNANCE.md, section 2), once its configuration
-    # transaction has executed, is what the design fixes too: no gate fails on it
-    assert mc.PLANNED_TIME_LOCK == 691_200 and mc.TIME_LOCKS == (172_800, 691_200)
-    assert all(results(world(upgrade=squads_multisig(UPGRADE_KEY, mc.PLANNED_TIME_LOCK))).values())
+    assert all(results(world(upgrade=squads_multisig(UPGRADE_KEY, 691_200, rent_collector=Pubkey.new_unique()))).values())
+    # the time lock of 8 days (scripts/timelock_plan.py; docs/reference/GOVERNANCE.md, section 2), in force since its
+    # configuration transaction executed on 11 Oct 2026, is the only one the design fixes
+    assert mc.TIME_LOCK == 691_200 == 8 * 86_400 and not hasattr(mc, "TIME_LOCKS")
     # another program's account, an account that is not a multisig, a multisig of another create key at this address, nothing
     other_owner = evidence(world(owner=str(Pubkey.new_unique())))
     assert not other_owner[lock][0] and "not by the Squads program" in other_owner[lock][1]
@@ -332,7 +331,7 @@ def test_nothing_deployed_fails_plainly():
                  review=lambda: (None, "no docs/review.json"), now=lambda: NOW, elsewhere=lambda a: {"testnet": False, "mainnet-beta": False})
     got = {n: (ok, d) for n, ok, d in mc.run(f, ids=IDS, env={})}
     assert got["knos_oidc: upgradeable only through the pinned vault"] == (False, f"{IDS['knos_oidc']}: not deployed")
-    assert got["upgrade multisig: time lock is 172800 s (48 hours), or the planned 691200 s (8 days)"] == (False, f"{IDS['upgrade_multisig']}: no such account")
+    assert got["upgrade multisig: time lock is 691200 s (8 days)"] == (False, f"{IDS['upgrade_multisig']}: no such account")
     assert got[KEYS_GATE] == (False, f"{oidc.JWKS[oidc.GITHUB]} unreadable")
     assert sorted(n for n, (ok, _) in got.items() if ok) == ["mainnet: locked (by design)", "program ids are in use on no other cluster"]
 
@@ -420,8 +419,8 @@ def _claims_check():
     return mod
 
 
-def test_the_48_hours_hold_only_when_the_time_locked_multisigs_vault_is_the_upgrade_authority(monkeypatch):
-    """The sentence the pitch says is true on chain only when the multisig's time lock is 172800 seconds, no single key
+def test_the_8_days_hold_only_when_the_time_locked_multisigs_vault_is_the_upgrade_authority(monkeypatch):
+    """The sentence the pitch says is true on chain only when the multisig's time lock is 691200 seconds, no single key
     can change it, and its vault (not a deploy key) is what can upgrade both programs."""
     cc, ids = _claims_check(), oidc.IDS
 
@@ -438,14 +437,16 @@ def test_the_48_hours_hold_only_when_the_time_locked_multisigs_vault_is_the_upgr
         monkeypatch.setattr(cc, "_rpc", rpc)
         return cc.LIVE["upgrade_delay"]()
 
-    real, vault = bytes.fromhex(REAL["upgrade"]), ids["upgrade_authority"]
+    recorded, vault = bytes.fromhex(REAL["upgrade"]), ids["upgrade_authority"]
+    assert chain_with(recorded, vault)[0] is False                  # the account as recorded at creation: 48 hours, no longer the time lock
+    real = recorded[:74] + (691_200).to_bytes(4, "little") + recorded[78:]   # the same account once proposal 9 executed
     ok, said = chain_with(real, vault)
-    assert ok and said == (f"upgrade multisig {ids['upgrade_multisig']}: time lock 172800 s, 2 of 3 members, config authority none; "
+    assert ok and said == (f"upgrade multisig {ids['upgrade_multisig']}: time lock 691200 s, 2 of 3 members, config authority none; "
                            f"knos_oidc: upgrade authority {vault}, its vault; knos_pay: upgrade authority {vault}, its vault")
     deployer = str(Pubkey.new_unique())
     ok, said = chain_with(real, deployer)                            # deployed, the hand-over not done yet
     assert not ok and said.endswith(f"knos_pay: upgrade authority {deployer}, NOT its vault")
-    assert chain_with(real, None)[0] is False                        # no authority: there is no upgrade to wait 48 hours for
+    assert chain_with(real, None)[0] is False                        # no authority: there is no upgrade to wait 8 days for
     no_lock = real[:74] + (0).to_bytes(4, "little") + real[78:]
     one_key = real[:40] + bytes(Pubkey.new_unique()) + real[72:]
     for multisig in (no_lock, one_key, bytes.fromhex(REAL["guardian"]), None):
@@ -537,7 +538,7 @@ def test_status_has_twelve_checks_and_all_pass_for_a_deployment_that_is_running_
     assert got["upgrade authority"].evidence.count("the upgrade vault") == 2
     assert got["new programs"].evidence == "; ".join(f"{n} {IDS[n]}: deployed, executable, upgrade authority {IDS['upgrade_authority']}, the upgrade vault"
                                                     for n in mc.NEW_PROGRAMS)
-    assert got["upgrade delay"].evidence == (f"{IDS['upgrade_multisig']}: time lock 172800 s, 2 of 3 members, config authority none; vault 0 is {IDS['upgrade_authority']}")
+    assert got["upgrade delay"].evidence == (f"{IDS['upgrade_multisig']}: time lock 691200 s, 2 of 3 members, config authority none; vault 0 is {IDS['upgrade_authority']}")
     assert got["GitHub's keys"].evidence == "2 keys published; kid0-000: genesis, expires 2026-10-20; kid1-000: approved, expires 2026-10-20"
     assert got["new funding"].evidence == "not paused"
     assert got["first deployment"].evidence == "; ".join(f"{n} {FIRST[n]}: no upgrade authority (immutable)" for n in mc.PROGRAMS)
@@ -552,8 +553,8 @@ def test_each_status_check_fails_on_its_own_and_says_what_to_do():
         "program ids": (status_world(programs=False), "scripts/deploy_v2.sh"),
         "upgrade authority": (status_world(authority=str(other)), "set-upgrade-authority"),
         "new programs": (status_world(new=str(other)), "set-upgrade-authority"),
-        "upgrade delay": (status_world(upgrade=squads_multisig(UPGRADE_KEY, 86_400)), "node scripts/governance.mjs create"),
-        "upgrade multisig": (status_world(upgrade=squads_multisig(UPGRADE_KEY, 172_800, config_authority=other)), "node scripts/governance.mjs create"),
+        "upgrade delay": (status_world(upgrade=squads_multisig(UPGRADE_KEY, 172_800)), "node scripts/governance.mjs set-time-lock 691200 --send"),
+        "upgrade multisig": (status_world(upgrade=squads_multisig(UPGRADE_KEY, 691_200, config_authority=other)), "node scripts/governance.mjs create"),
         "upgrade proposal": (status_world(proposals={5: proposal_account(5, "Approved", NOW - 3600)}), "governance.mjs cancel upgrade 5"),
         "guardian": (status_world(guardian=squads_multisig(GUARDIAN_KEY, 0, config_authority=other)), "pin it"),
         "GitHub's keys": (status_world(keys={N1: KEYS[N1]}), "the rotate workflow"),
@@ -802,18 +803,20 @@ def _upgrade(status: str, at: int = NOW - 3600, approved: int = 2, **tx):
 
 def test_a_pending_upgrade_is_named_with_its_index_its_buffer_and_when_it_can_execute():
     got = _upgrade("Approved", at=NOW - 3600)
-    left = 172_800 - 3600
+    left = 691_200 - 3600
     unread = "; its buffer could not be read, so whether GitHub built it is not known"         # (no buffer account in this world: the gate says so)
     assert not got.ok and got.evidence == (f"proposal 5: an upgrade of program {PROG} from buffer {BUF}; approved by 2 of 2 members needed; "
-                                           f"it can be executed from {mc._at(NOW - 3600 + 172_800)} (in {left // 3600} h {left % 3600 // 60} min)" + unread)
+                                           f"it can be executed from {mc._at(NOW - 3600 + 691_200)} (in {left // 3600} h {left % 3600 // 60} min)" + unread)
     assert got.todo.startswith(f"before it runs, compare the buffer with the verified build: solana program dump {BUF} buffer.so")
     assert "node scripts/governance.mjs cancel upgrade 5" in got.todo and "passes again once it has executed or been cancelled" in got.todo
     # once the delay is over, it says so
-    got = _upgrade("Approved", at=NOW - 3 * 86_400)
+    got = _upgrade("Approved", at=NOW - 7 * 86_400)
+    assert not got.ok and "its delay is over" not in got.evidence                  # 7 days after the vote: a day of the 8 left
+    got = _upgrade("Approved", at=NOW - 9 * 86_400)
     assert not got.ok and "its delay is over" in got.evidence and "execute it now" in got.evidence
     # a proposal still being voted on, and one only drafted
     got = _upgrade("Active", approved=1)
-    assert not got.ok and got.evidence == f"proposal 5: an upgrade of program {PROG} from buffer {BUF}; 1 of 2 approvals so far; it can be executed 48 hours after the last approval is given" + unread
+    assert not got.ok and got.evidence == f"proposal 5: an upgrade of program {PROG} from buffer {BUF}; 1 of 2 approvals so far; it can be executed 8 days after the last approval is given" + unread
     got = _upgrade("Draft")
     assert not got.ok and got.evidence.endswith("drafted, not yet put to the members' vote" + unread)
     # the upgrade is found whatever comes before it in the transaction

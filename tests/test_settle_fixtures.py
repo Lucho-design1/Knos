@@ -385,11 +385,11 @@ def test_the_numbers_the_site_states_are_the_codes():
     assert f"held for you for {pay.HOLD // 86_400} days" in claim and f"After {pay.HOLD // 86_400} days it goes back to the funder" in claim
     assert f"stops working after {oidc.KEY_TTL // 86_400} days" in build and "waits a day" in build and oidc.KEY_DELAY == 86_400
     app = (WEB / "app.js").read_text(encoding="utf-8")
-    plan = "upgradeable only through a multisig with a public 48-hour delay, until an outside review"
+    plan = "upgradeable only through a multisig with a public 8-day delay, until an outside review"
     # the page that draws the upgrade authority says it in full; the foot of every page links to who can change the programs
     assert plan in app and re.search(r'<a href="https://github\.com/drexthealpha/Knos/blob/main/docs/reference/GOVERNANCE\.md">Who can change the programs</a>',
                                      (WEB / "index.html").read_text(encoding="utf-8"))
-    assert "172800" in app and 172_800 == 48 * 3600                                  # the delay the page checks the chain against
+    assert "691200" in app and "172800" not in app and 691_200 == 8 * 86_400         # the delay the page checks the chain against
     assert "PAUSE_MAX" in app and pay.PAUSE_MAX == 7 * 86_400                          # the pause length shown is the client's constant
 
 
@@ -432,10 +432,10 @@ def test_the_first_view_has_no_numbers_outside_code_but_the_one_measurement_it_l
     assert f"{black_box} of {cases} cheating pull requests passed it, {plain_ci} passed plain CI" in said
     assert said.index(share) < said.index(f"{black_box} of {cases}")
     # the one line on why Solana, folded under "How it works", names the public wait before a program change: the time
-    # lock the upgrade multisig holds (web/upgrades.json, in seconds), in hours
+    # lock the upgrade multisig holds (web/upgrades.json, in seconds), in days
     lock = json.loads((WEB / "upgrades.json").read_text(encoding="utf-8"))["time_lock"]
-    assert lock == 48 * 3600 and "a program change waits 48 hours in public." in said
-    assert re.findall(r"\d+(?:\.\d+)?%?", said) == [*lead, str(lock // 3600), share, str(first['any_check_failed']['repos']), str(first['repos']), black_box, cases, plain_ci], re.findall(r"\d+(?:\.\d+)?%?", said)
+    assert lock == 8 * 86_400 and "a program change waits 8 days in public." in said
+    assert re.findall(r"\d+(?:\.\d+)?%?", said) == [*lead, str(lock // 86_400), share, str(first['any_check_failed']['repos']), str(first['repos']), black_box, cases, plain_ci], re.findall(r"\d+(?:\.\d+)?%?", said)
 
 
 def test_the_site_says_nothing_it_may_not():

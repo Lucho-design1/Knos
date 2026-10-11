@@ -219,7 +219,7 @@ def test_each_dependency_failure_is_drilled_and_says_what_broke_what_is_seen_how
     assert said == [f"when {r.name}: {r.seconds}: pass" for r in rows]
     github, key, killed, rpc, evidence, reset, restored, rotated = rows
     assert rotated.seconds == "A: paid 86400 s after the new key was published (86400 s of it the program's own wait). B: never paid; refunded in full after the deadline"
-    assert "only an upgrade of the verifier (48 hours) admits a key" in rotated.recovers and "new kid" in rotated.broken
+    assert "only an upgrade of the verifier (8 days) admits a key" in rotated.recovers and "new kid" in rotated.broken
     assert "1 of 1 bundle restored byte for byte from the export alone" in restored.seconds and "knos vault restore" in restored.recovers
     assert "all 3 paid on the first pass after GitHub answered, 3 s later (603 s after their comments); none paid twice" in github.seconds and "502 for 600 s" in github.broken
     assert "(no transaction was sent)" in key.sees and "this signing key expired" in key.sees and key.seconds.startswith("paid 121 s after the key expired")

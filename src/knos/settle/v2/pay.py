@@ -1,6 +1,6 @@
 """Client for knos-pay, second deployment (programs-v2/knos_pay): the escrow that pays the author of a pull request
 on a GitHub-signed token verified on chain by knos-oidc. Pure instruction builders, audiences and account readers;
-no network. The program is upgradeable only through a multisig with a public 48-hour delay. After an outside review the
+no network. The program is upgradeable only through a multisig with a public 8-day delay. After an outside review the
 plan is to make it immutable; no outside review exists today (`knos mainnet-check`), so today it is upgradeable.
 
 A job is one bounty on one issue of one repository, funded from a Balance (`balance_pda`: money a wallet set aside

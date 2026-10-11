@@ -45,8 +45,9 @@ def test_the_fixture_says_what_programs_v2_pins():
     assert (fx["programs"]["knos_oidc"], fx["programs"]["knos_pay"], fx["programs"]["squads"]) == (pins["knos_oidc"], pins["knos_pay"], pins["squads_program"])
     assert fx["guardian"] == pins["guardian"] == str(oidc.GUARDIAN) == str(pay.GUARDIAN)
     assert {n: (m["multisig"], m["vault"], m["time_lock"]) for n, m in fx["multisigs"].items()} == {
-        "upgrade": (pins["upgrade_multisig"], pins["upgrade_authority"], mc.TIME_LOCK),
+        "upgrade": (pins["upgrade_multisig"], pins["upgrade_authority"], 172_800),     # the time lock it was made with
         "guardian": (pins["guardian_multisig"], pins["guardian"], 0)}
+    assert mc.TIME_LOCK == 691_200          # what proposal 9 set on 11 Oct 2026, and what the chain is held to since
 
 
 def test_the_fixtures_instructions_are_the_documented_ones():

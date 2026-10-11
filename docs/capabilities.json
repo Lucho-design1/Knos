@@ -1454,7 +1454,7 @@
   },
   {
    "id": "upgrade_delay",
-   "what": "The second deployment is upgradeable only through a multisig with a public 48-hour delay.",
+   "what": "The second deployment is upgradeable only through a multisig with a public 8-day delay.",
    "stage": "tested",
    "evidence": {
     "implemented": {
@@ -4116,7 +4116,7 @@
      "names": "test_it_refuses_while_a_proposal_is_open_or_approved_and_not_executed"
     }
    },
-   "note": "The script is tested. The configuration transaction it plans was created and approved on devnet on 9 October 2026: proposal 9 of the upgrade multisig, approved by two member keys in MSTGH4Q99fy6xNWVJ8hTCjs7mJzuVD7rGNF1Ymy6JeuB3cDMThTGnsxKBBKPvv5Q741DEfKLJrecrtBibv45uyQ. The time lock itself is not applied until that transaction executes, which the Squads program allows 48 hours after the approval; docs/reference/GOVERNANCE.md says applied only when a release run records it."
+   "note": "The script is tested. The configuration transaction it plans was created and approved on devnet on 9 October 2026: proposal 9 of the upgrade multisig, approved by two member keys in MSTGH4Q99fy6xNWVJ8hTCjs7mJzuVD7rGNF1Ymy6JeuB3cDMThTGnsxKBBKPvv5Q741DEfKLJrecrtBibv45uyQ. It is in force since 11 Oct 2026: the upgrade multisig's time lock is 691,200 s (8 days), and docs/reference/GOVERNANCE.md, section 2, records the execution."
   },
   {
    "id": "bank_unknown_held",

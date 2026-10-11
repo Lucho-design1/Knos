@@ -48,4 +48,4 @@ on an existing issue is one: GitHub fills a new issue's body from a link but not
 instruction could take a bind token from a pinned Knos workflow on `issue_comment` (created, not edited), with
 `actor_id` the commenter, carrying `knos2:bind:<address>` from the comment. The payee would then make a passkey, paste
 `/knos address <address>` as a comment on the pull request and press Comment: 4 clicks, no repository. That is a
-program upgrade (multisig, public 48-hour delay) and has not been built.
+program upgrade (multisig, public 8-day delay) and has not been built.

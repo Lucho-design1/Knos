@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WHY_SOLANA = ("Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every "
-              "upgrade key today; a program change waits 48 hours in public.")
+              "upgrade key today; a program change waits 8 days in public.")
 
 
 def _judges():
@@ -99,7 +99,9 @@ def test_the_zeros_are_the_numbers_page_and_no_fee_or_missing_thing_is_claimed()
     assert "From merge to paid took 28 seconds at the median, over 56 payments on devnet (10 Oct 2026)." in page and "25" in json.dumps(bench)
     took = bench["devnet"]["stats"]["latency"]["merge_to_paid"]
     assert (took["median"], took["count"]) == (28, 56)
-    assert "it with any buyer" not in page and "Not measured." in page and not re.search(r"\d+(\.\d+)? days", page)
+    # no number of days is claimed, but the one line on why Solana, which names the public wait before a program change
+    assert "it with any buyer" not in page and "Not measured." in page and not re.search(r"\d+(\.\d+)? days", page.replace(WHY_SOLANA, ""))
+    assert page.count(WHY_SOLANA) == 1 and re.findall(r"\d+(?:\.\d+)? days", WHY_SOLANA) == ["8 days"]
     for word in ("audit", "customer says", "pilot customer", "immutable", "trustless"):
         assert word not in page.lower(), word
 

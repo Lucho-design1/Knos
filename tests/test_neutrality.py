@@ -114,7 +114,7 @@ def test_the_page_says_what_the_test_checks():
     assert "tests/test_neutrality.py" in section and "No key of Knos's signs a verdict." in section
     for module in VERDICT_MODULES:
         assert f"`knos.{module}`" in section, module
-    assert "there is no default" in section and "48-hour" in section
+    assert "there is no default" in section and "8-day" in section
 
 
 # == the charter (docs/reference/CHARTER.md) ==================================================================================

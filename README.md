@@ -1,8 +1,8 @@
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/drexthealpha/Knos/v0.3.27/web/brand/wordmark-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/drexthealpha/Knos/v0.3.27/web/brand/wordmark-light.svg">
-    <img alt="Knos" src="https://raw.githubusercontent.com/drexthealpha/Knos/v0.3.27/web/brand/wordmark-light.svg" height="84">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/drexthealpha/Knos/v0.3.28/web/brand/wordmark-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/drexthealpha/Knos/v0.3.28/web/brand/wordmark-light.svg">
+    <img alt="Knos" src="https://raw.githubusercontent.com/drexthealpha/Knos/v0.3.28/web/brand/wordmark-light.svg" height="84">
   </picture>
 </h1>
 
@@ -74,7 +74,7 @@ The money waits in a program on [Solana](docs/WORDS.md#solana), not with Knos. T
 
 Today Knos earns its fee only when work is accepted. When you get a refund, the fee goes back to you. So Knos gains when work passes, and the meter is not yet fully neutral ([the plan to fix it](docs/reference/CHARTER.md)).
 
-Why Solana: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public. A custodian is a company that holds your money for you.
+Why Solana: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public. A custodian is a company that holds your money for you.
 
 ## Is it real?
 
@@ -82,12 +82,12 @@ It runs on test money only: [test USDC](docs/WORDS.md#test-usdc) on Solana's pra
 
 There are no customers yet. Nobody has bought anything ([what is not real yet](docs/reference/DISCLOSURE.md)).
 
-One person holds every key today. Any change to the programs waits in public for 48 hours first ([who holds the keys](docs/TRUST.md)).
+One person holds every key today. Any change to the programs waits in public for 8 days first ([who holds the keys](docs/TRUST.md)).
 
 <!-- bench:today -->
 | What | Today | Read from |
 |---|---|---|
-| This copy | Release 0.3.27, October 2026. A copy naming an older release, or another product, is out of date | [CHANGELOG.md](CHANGELOG.md); the newest: [PyPI](https://pypi.org/project/knos/) |
+| This copy | Release 0.3.28, October 2026. A copy naming an older release, or another product, is out of date | [CHANGELOG.md](CHANGELOG.md); the newest: [PyPI](https://pypi.org/project/knos/) |
 | Reproduced by someone else | 0 of 270 | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "reproduced by someone else" |
 | Exercised at the public devnet program ids | 26 of 270: GitHub token verification, funding by one comment, funding from a wallet, pay on merge, refund at the deadline, pause, work orders, an order paying up to four payees, orders judged by the buyer's black-box tests, auto-accepted orders, a holdback released after its warranty, top-ups, single-use tokens, one counted evaluation, a counted batch of evaluations, the seller's own count, a payee's passkey wallet, a passkey funder, the passkey relay, the site's Buy page, an x402 order, the upgrade gate, strict JSON in the verifier, an outcome that is not code, ES256 tokens in one transaction, the presentation grace | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "exercised on devnet" |
 | Deployed at the public devnet program ids, no transaction recorded | 3 of 270: GitLab token verification, the key guardian, holding pay for a payee with no wallet | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "deployed on devnet" |
@@ -105,7 +105,7 @@ One person holds every key today. Any change to the programs waits in public for
 | Paying customers | 0 | [docs/reference/DISCLOSURE.md](docs/reference/DISCLOSURE.md) |
 | Revenue | 0; test USDC is not money | [docs/reference/MARKET.md](docs/reference/MARKET.md) |
 | Outside security review | none | [docs/reference/ASSURANCE.md](docs/reference/ASSURANCE.md) |
-| Key holders | one person holds every key; an upgrade waits 48 hours in public | [docs/reference/GOVERNANCE.md](docs/reference/GOVERNANCE.md) |
+| Key holders | one person holds every key; an upgrade waits 8 days in public | [docs/reference/GOVERNANCE.md](docs/reference/GOVERNANCE.md) |
 | Network and money | Solana devnet, test USDC; mainnet is not touched | [docs/reference/SECURITY.md](docs/reference/SECURITY.md) |
 <!-- /bench:today -->
 

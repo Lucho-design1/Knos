@@ -3,9 +3,10 @@
     python scripts/timelock_plan.py [--rpc URL | --state FILE] [--seconds N] [--creator ADDRESS] [--payer ADDRESS] [--json]
 
 Why. An upgrade of a Knos program can execute once the upgrade multisig's time lock has run from the vote that
-approves it (172,800 s, 48 hours, today). A funder who does not accept the upgrade cancels an open order, and the
+approves it. It was 172,800 s (48 hours) until 11 Oct 2026; since then it is 691,200 s (8 days), the change this
+script planned (proposal 9 of the upgrade multisig). A funder who does not accept the upgrade cancels an open order, and the
 program then holds it for the seller's notice (`knos.settle.v2.pay.NOTICE`, 7 days) and, for an order funded with the
-presentation grace, `GRACE` (2 hours) more before `RefundOrder` takes it back. 48 hours are shorter than that. A time
+presentation grace, `GRACE` (2 hours) more before `RefundOrder` takes it back. 48 hours were shorter than that. A time
 lock of at least NOTICE + GRACE + 2 seconds lets every open order be cancelled and refunded before any upgrade that is
 approved after the change can execute (`knos exit --before-upgrade` holds each exit to it). PLANNED is 8 days: about 22
 hours above the minimum are for sending the Cancel, which for a Balance's order is a `/knos cancel` comment and a
@@ -53,7 +54,7 @@ from knos.settle.v2 import pay  # noqa: E402
 
 KIND = "knos.timelock-plan/1"
 MINIMUM = pay.NOTICE + pay.GRACE + 2          # knos.exit: a refund at notice + grace + 1 is out before approval + lock
-PLANNED = mc.PLANNED_TIME_LOCK                 # 8 days: what knos status and governance.mjs show --check accept once it executed
+PLANNED = mc.TIME_LOCK                         # 8 days: in force since 11 Oct 2026; what knos status and governance.mjs show --check accept
 MAX_TIME_LOCK = 3 * 30 * 24 * 60 * 60         # Squads v4 state/multisig.rs
 SET_TIME_LOCK = 3                             # ConfigAction::SetTimeLock, the fourth variant
 SYSTEM = "11111111111111111111111111111111"

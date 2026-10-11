@@ -53,6 +53,9 @@ SOURCES = [MANIFEST, UPGRADES, IDS, BENCH, "docs/backtest.json", GATE]
 # Where a withdrawn proposal's times may stand, in a sentence that says they are history (WAS).
 HISTORY = {"CHANGELOG.md", "docs/reference/GOVERNANCE.md"}
 WAS = re.compile(r"withdr[ae]w|replaced|cancel|could have run|never ran|never executed|was proposed")
+# The upgrade multisig's time lock was 172,800 s until proposal 9 set 691,200 s on 11 Oct 2026. A proposal whose earliest
+# execution is before that day was approved under the earlier lock, so its approval time is computed with it.
+EARLIER_LOCK, LOCK_CHANGED = 172_800, int(datetime(2026, 10, 11, tzinfo=timezone.utc).timestamp())
 # Written by scripts/drills.py from a local validator's own clock: their times are the drill's, not the upgrade's.
 GENERATED = {"docs/reference/DRILLS.md", "docs/reference/drills_recovery.md"}
 # Read line by line besides the documents: the site's scripts, the command line's help, and what the registries show.
@@ -137,7 +140,8 @@ def upgrade_times(root: Path = ROOT) -> tuple[set[str], set[str]]:
     now, past = set(), set()
     for e in feed["entries"]:
         at = [e[k] for k in ("since", "earliest_execution") if e.get(k)]
-        at += [e["earliest_execution"] - feed["time_lock"]] if e.get("earliest_execution") and feed.get("time_lock") else []
+        lock = EARLIER_LOCK if e.get("earliest_execution") and e["earliest_execution"] < LOCK_CHANGED else feed.get("time_lock")
+        at += [e["earliest_execution"] - lock] if e.get("earliest_execution") and lock else []
         (now if e.get("status") == "pending" else past).update(_minute(t) for t in at)
     return now, past - now
 

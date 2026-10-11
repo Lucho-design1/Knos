@@ -45,7 +45,7 @@ code can supply.
 | Who approved an order that a multisig's vault funded (0.3.16): the vault, the multisig's threshold, its members and the members who approved the proposal, read from the chain | [`audit.py`](../../src/knos/audit.py) `squads_approval`, with the account layouts of [`mainnet_check.py`](../../src/knos/mainnet_check.py). `tests/test_audit.py` builds the accounts' bytes; it has not been run against a funding on the public cluster. | `knos audit show <order>` |
 | Files a finance system imports (0.3.16): one line per accepted deliverable for NetSuite, SAP, Coupa and QuickBooks, and a generic file that carries the statement and gives back the same head | [`exports.py`](../../src/knos/exports.py); golden files in `tests/data/finance`, `tests/test_exports.py`. The SAP and Coupa files are best effort, unverified, and no file has been loaded into any of the four products ([FINANCE.md](FINANCE.md), section 4). | `knos audit export --owner <org> --format netsuite\|sap\|coupa\|quickbooks\|generic` |
 | What a supplier is owed and why it is not paid yet (0.3.16): held for a wallet, in a review window until a date, reverted, disputed; from the chain's records alone | [`audit.py`](../../src/knos/audit.py) `owed` | `knos audit owed --payee <login>` |
-| A delay before a program changes: 48 hours, by a multisig | Squads, section 2 | |
+| A delay before a program changes: 8 days, by a multisig | Squads, section 2 | |
 
 How `knos budget set` works. Only the wallet that opened the Balance can sign a change. With that wallet's key
 (`--keypair`, or `KNOS_WALLET_KEY`) the command sends it. Without a key, or with `--dry-run`, it sends nothing: it
@@ -90,7 +90,7 @@ a file. Nothing sends it anywhere, and nothing keeps it.
 
 | who | can | cannot | where |
 |---|---|---|---|
-| The upgrade multisig | replace either program, 48 hours after the vote that approved it | act sooner; change its own members, threshold or delay without the same 48 hours | `upgrade_multisig` in [`programs-v2/program_ids.json`](../../programs-v2/program_ids.json); [`scripts/governance.mjs`](../../scripts/governance.mjs); read back by [`src/knos/mainnet_check.py`](../../src/knos/mainnet_check.py) |
+| The upgrade multisig | replace either program, 8 days after the vote that approved it | act sooner; change its own members, threshold or delay without the same 8 days | `upgrade_multisig` in [`programs-v2/program_ids.json`](../../programs-v2/program_ids.json); [`scripts/governance.mjs`](../../scripts/governance.mjs); read back by [`src/knos/mainnet_check.py`](../../src/knos/mainnet_check.py) |
 | The guardian multisig | approve a signing key that an attestation admitted; revoke a key, for ever; refuse new funding for at most 7 days at a time | add a key alone, move money, pay, redirect a payment, block a refund or a withdrawal | `GUARDIAN` and `PAUSE_MAX` in [`programs-v2/knos_pay/src/lib.rs`](../../programs-v2/knos_pay/src/lib.rs); [`programs-v2/knos_oidc/src/pins.rs`](../../programs-v2/knos_oidc/src/pins.rs) |
 | The wallet that opened a Balance | name up to four GitHub accounts that may spend it by comment; set a cap per order, a daily limit, a total limit, the repositories that may spend it and the workflows commit that may sign for it; withdraw unspent money | spend another owner's Balance | [`programs-v2/knos_pay/src/fund.rs`](../../programs-v2/knos_pay/src/fund.rs); the limits are the Balance's side account, set by `SetBalanceX` (0.3.13); `knos budget set` sends it and `knos budget who` names the wallet (0.3.15) |
 | A named spender | fund an order by comment, within those limits and the policy | withdraw; change the list or the limits | the same |
@@ -109,9 +109,9 @@ anyone but the founder as a holder of a guardian key. No outside signer sits on 
 
 | control | what exists | where |
 |---|---|---|
-| A delay before a program changes | 48 hours (172,800 seconds), enforced by the Squads multisig that holds the upgrade authority. The proposal and the new program's bytes are on chain for that time, and the members can cancel. | [SECURITY.md](SECURITY.md), section 7; `knos mainnet-check` reads the time lock from the chain |
+| A delay before a program changes | 8 days (691,200 seconds, in force since 11 Oct 2026; 48 hours before), enforced by the Squads multisig that holds the upgrade authority. The proposal and the new program's bytes are on chain for that time, and the members can cancel. | [SECURITY.md](SECURITY.md), section 7; `knos mainnet-check` reads the time lock from the chain |
 | Notice that a change is pending | `knos status` fails a check while an upgrade proposal is pending, and the site shows a banner (0.3.13). Nothing is sent to anyone: a customer has to look. | [`src/knos/cli.py`](../../src/knos/cli.py) |
-| The change has been rehearsed | A drill proposes an upgrade, shows it cannot run before 48 hours, runs it, and cancels a second one (0.3.13). | `scripts/drill_upgrade.sh`; [DRILLS.md](DRILLS.md) |
+| The change has been rehearsed | A drill proposes an upgrade, shows it cannot run before its time lock (then 48 hours) has run, runs it, and cancels a second one (0.3.13). | `scripts/drill_upgrade.sh`; [DRILLS.md](DRILLS.md) |
 | A funded order is not changed by a release | An order records, at funding, the hash of its terms and the commit of the workflows that may sign for it. A later release cannot alter either. | `wf_sha` and the terms hash in [`programs-v2/knos_pay/src/state.rs`](../../programs-v2/knos_pay/src/state.rs) |
 | Workflows and actions are pinned | Every workflow is called by commit. Every action is named by a full commit, never a tag. | [`scripts/pinned_workflows.py`](../../scripts/pinned_workflows.py); [`scripts/action_pins.json`](../../scripts/action_pins.json) |
 | What a signing job installs is pinned | From a hash-locked requirements file published at the pinned workflows commit (0.3.13). Before that, by version and date only. | `requirements/sign.txt` |
@@ -127,7 +127,7 @@ the person who deploys it; a change-approval record beyond git; a notice sent to
 | key | who holds it | what it can do | how it is limited |
 |---|---|---|---|
 | The signing keys that authorise payment | GitHub, and any other issuer admitted. Knos holds no private key that can authorise a payment. | sign the statement a payment rests on | The program holds only public keys. A new one needs an attestation GitHub signed, then waits a day (`KEY_DELAY`), then needs the guardian's approval. Every key expires 30 days after it was last attested (`KEY_TTL`). A revoked key stays revoked. [`programs-v2/knos_oidc/src/pins.rs`](../../programs-v2/knos_oidc/src/pins.rs) |
-| Upgrade multisig member keys | the founder | section 1 | the 48-hour delay |
+| Upgrade multisig member keys | the founder | section 1 | the 8-day delay |
 | Guardian multisig member keys | no holder other than the founder is named | section 1 | cannot move money |
 | The fee wallet | Knos | receive fees; set a contract rate for one owner | cannot touch an order |
 | A relay key | whoever relays; a private repository keeps its own in its secrets (`KNOS_RELAY_KEY`) | pay transaction fees | never holds an order's money and decides nothing |
@@ -158,7 +158,7 @@ policy written by Knos; alerts; a log held by anyone independent of Knos other t
 |---|---|
 | A private channel for reports: GitHub's security advisories on the repository | [SECURITY.md](../../SECURITY.md) |
 | A table of failures, what the system does in each, and what still works | [docs/reference/SECURITY.md](SECURITY.md), section 9 |
-| Three emergency tools: a pause of new funding (at most 7 days per signature), a key revocation (for ever), an upgrade (48 hours after approval) | sections 6 and 7 of the same |
+| Three emergency tools: a pause of new funding (at most 7 days per signature), a key revocation (for ever), an upgrade (8 days after approval) | sections 6 and 7 of the same |
 | Recovery that needs neither GitHub nor Knos: refund at the deadline, withdrawal of a Balance, the 180-day return of a held payment | section 10 of the same |
 | Drills of those paths on the deployed bytes (0.3.13) | [DRILLS.md](DRILLS.md) |
 | A canary payment on a schedule, and a generated record of its runs and failures (0.3.13) | [OPERATIONS.md](OPERATIONS.md) |

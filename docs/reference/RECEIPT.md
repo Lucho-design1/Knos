@@ -24,7 +24,9 @@ Version 2 lacks the fourth; `knos receipt` still prints its heading and says it 
    code of the pinned workflow; the repository's administrators for a merge-mode order; the account that ran the
    judge when it was not the order's own repository; and Knos's upgrade multisig (the programs are upgradeable only
    through a multisig with a public 48-hour delay, until an outside review). The list follows from the provider, the
-   mode and the judge, and a receipt that leaves one out is not valid.
+   mode and the judge, and a receipt that leaves one out is not valid. These words were fixed when the delay was
+   48 hours. Since 11 Oct 2026 it is 8 days ([GOVERNANCE.md](GOVERNANCE.md), section 2). The words stay as they are,
+   because `knos receipt FILE` checks them word for word and every receipt already made carries them.
 
 Beside the verdict itself `knos receipt` prints the trusted parties in one line, so nobody reads "accepted" without
 them:

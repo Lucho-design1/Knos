@@ -539,8 +539,8 @@ def programs(account, feed: Callable[[], dict], ids: dict | None = None) -> dict
     except (*UNASKED, ValueError) as why:
         raise Skip(f"the upgrade feed at {FEED} could not be read ({' '.join(str(why).split())[:120]})") from None
     out, wrong = {"multisig": ids["upgrade_multisig"], "multisig_state": said, "programs": {}}, []
-    if ms is None or ms.time_lock not in mc.TIME_LOCKS:
-        wrong.append(f"the upgrade multisig does not hold upgrades for {mc.TIME_LOCK // 3600} hours, nor for the planned {mc.PLANNED_TIME_LOCK // 86_400} days ({said})")
+    if ms is None or ms.time_lock != mc.TIME_LOCK:
+        wrong.append(f"the upgrade multisig does not hold upgrades for {mc.TIME_LOCK // 86_400} days ({said})")
     for name, (deployed, authority, elf) in state.items():
         row = out["programs"][name] = {"address": ids[name], "on_chain": gate.executable_hash(elf).hex() if elf else None, "upgrade_authority": authority}
         if not deployed or authority not in (vault, None):

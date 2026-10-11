@@ -24,8 +24,8 @@ None of the moves below has been made.
   it is late.
 - **Keys lapse.** With nobody able to run the rotation workflow, the registered signing keys expire after 30 days,
   and after that the verifier accepts no token until a key is attested again, which needs the account or an upgrade.
-- **The way back is an upgrade.** The programs are upgradeable only through a multisig with a public 48-hour delay,
-  until an outside review. An upgrade can pin workflows in another account. It takes at least those 48 hours, and
+- **The way back is an upgrade.** The programs are upgradeable only through a multisig with a public 8-day delay,
+  until an outside review. An upgrade can pin workflows in another account. It takes at least those 8 days, and
   every key of that multisig is the founder's today.
 - **What is not affected:** the programs themselves, the record on chain, and a count already recorded.
 
@@ -34,7 +34,7 @@ account breaks its terms, whether or not it does.
 
 ## What moves to an organisation, and when
 
-Each step is a public change. Steps 2 and 3 are program upgrades and pass through the 48-hour delay like any other.
+Each step is a public change. Steps 2 and 3 are program upgrades and pass through the 8-day delay like any other.
 
 | step | what moves | when | what it needs |
 |---|---|---|---|

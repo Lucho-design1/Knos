@@ -207,8 +207,8 @@ def schedule(parts: list[dict], rpc: str, wait: int = 600) -> dict:
         raise SystemExit("refused: no proposal was given, so there is nothing to schedule.")
     waiting = [p for p in parts if not p.get("executable_from")]
     if waiting:
-        raise SystemExit("refused: " + ", ".join(f"proposal {p.get('index')} ({p.get('program')})" for p in waiting) + " is not approved yet, so its 48 hours "
-                         "have not started. Another member approves with: node scripts/governance.mjs approve upgrade <index> --member FILE. Then run --propose again.")
+        raise SystemExit("refused: " + ", ".join(f"proposal {p.get('index')} ({p.get('program')})" for p in waiting) + " is not approved yet, so its time lock "
+                         "has not started. Another member approves with: node scripts/governance.mjs approve upgrade <index> --member FILE. Then run --propose again.")
     last = max(int(p["executable_from"]) for p in parts)
     return {"rpc": rpc, "executable_from": last, "executable_from_utc": when(last), "run_at": last + wait, "run_at_utc": when(last + wait),
             "proposals": sorted(({k: p[k] for k in ("program", "address", "buffer", "hash", "index", "approved_at", "executable_from")} for p in parts),
@@ -326,7 +326,7 @@ def addresses(keys: list[tuple[str, int]]) -> list[tuple[str, str]]:
     out = []
     for name in ("knos_oidc", "knos_pay"):
         out += [(f"{name} program", ids[name]), (f"{name} program data (its bytes and upgrade authority)", str(mc.programdata_address(ids[name])))]
-    out += [("upgrade multisig (Squads v4, time lock 172800 s)", ids["upgrade_multisig"]), ("upgrade vault (the programs' upgrade authority)", ids["upgrade_authority"]),
+    out += [("upgrade multisig (Squads v4, time lock 691200 s)", ids["upgrade_multisig"]), ("upgrade vault (the programs' upgrade authority)", ids["upgrade_authority"]),
             ("guardian multisig (Squads v4, time lock 0)", ids["guardian_multisig"]), ("guardian vault (the GUARDIAN both programs name)", ids["guardian"]),
             ("test-USDC mint of the faucet", str(mint)), ("fee owner", ids["fee_owner"]), ("fee owner's token account", str(pay.ata(pay.FEE_OWNER, mint))),
             ("pause account of knos_pay", str(pay.pause_pda()))]

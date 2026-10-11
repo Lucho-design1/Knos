@@ -25,7 +25,7 @@ on 10 Oct 2026 (knos_pay 2.2, knos_oidc 2.2); no source was read again for it, a
   older fee it was funded with. A refund returns it.
 - An order holds at most 100,000 on devnet (the limit was 500 under the earlier build). A mainnet cap is not decided. The size of
   a single payment bears on every question on this page, and none was examined at that size.
-- **Knos can change the program** through a multisig, after a public 48-hour delay. An upgrade "could do anything,
+- **Knos can change the program** through a multisig, after a public 8-day delay. An upgrade "could do anything,
   including taking every vault" ([SECURITY.md](SECURITY.md), section 7). The multisig is 2-of-3 and every member
   key is the founder's: no second person has to agree ([GOVERNANCE.md](GOVERNANCE.md)).
 - **That does not end with an outside review.** The decision recorded in [GOVERNANCE.md](GOVERNANCE.md), section 7,
@@ -60,7 +60,7 @@ condition. Any conclusion for Knos is the author's inference, not the guidance's
 |---|---|
 | The funder is buying a service on its own behalf (4.2.1, users). | Knos wrote the program and deployed it (5.2.2). |
 | Knos holds no key to an order's money and cannot move it in normal operation (4.2.1, factor d). | Knos takes a fee from each payment. |
-| The funder and the payee interact with the chain directly, or through a relay that decides nothing (factor c). | Until an outside review Knos can replace the program, after 48 hours, and a replacement could move the money. That bears on "total independent control". |
+| The funder and the payee interact with the chain directly, or through a relay that decides nothing (factor c). | Until an outside review Knos can replace the program, after 8 days, and a replacement could move the money. That bears on "total independent control". |
 | | Knos runs the public relay. A relay decides nothing, but today it is the one that carries the tokens, and for a passkey funder it also pays the network fee. |
 | | One person holds every key that can replace the program. |
 

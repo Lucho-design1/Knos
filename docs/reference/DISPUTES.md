@@ -36,7 +36,7 @@ buyer funds it" does not make that interest go away. What keeps Knos out of the 
 each import of the verdict modules, and the fee function's arguments.
 
 What is still not separate: the founder writes the pinned judge workflow and holds every upgrade key. A new judge
-is a new pinned commit, which binds only orders funded under it; a program change waits through a public 48-hour
+is a new pinned commit, which binds only orders funded under it; a program change waits through a public 8-day
 delay ([GOVERNANCE.md](GOVERNANCE.md)). Knos has no commercial staff to keep apart from adjudication, because one
 person is the whole team; until outside key holders exist, the separation is in the code and in public, not
 between people.

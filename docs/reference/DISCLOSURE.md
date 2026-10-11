@@ -115,7 +115,7 @@ One dependency also carries over: Sibyl's memory client, which the judge and the
 - **Knos 0.3.12**: the second deployment (`programs-v2`). Terms fixed at funding; no veto; payment straight to a
   wallet, in the transaction that verifies the pay token; balances funded from a wallet and spent by comment; classic
   and Token-2022 mints; signing keys that wait a day and expire; a guardian that can revoke a key or pause new
-  funding for at most 7 days. It is upgradeable only through a multisig with a public 48-hour delay, until an
+  funding for at most 7 days. It is upgradeable only through a multisig with a public 8-day delay, until an
   outside review. The first deployment keeps working for jobs funded on it.
 - **Knos 0.3.13**: an upgrade of the second deployment through that multisig, and two new programs. Work orders in
   place of single bounties: each with a token account of its own, the fee paid by the funder on top of the amount,
@@ -202,7 +202,7 @@ copies these lines into [MANIFEST.md](MANIFEST.md).
 - **No mainnet deployment.** Solana devnet and test USDC only; no real money has moved.
 - **No second operator.** If the founder is unavailable, nobody answers a report, approves a key or cancels a proposal ([OPERATOR.md](OPERATOR.md)).
 - **No organisation account.** The pinned workflows and the relay live in one personal GitHub account ([GOVERNANCE.md](GOVERNANCE.md), section 9).
-- **The first deployment cannot be changed,** so its known limits stay ([SECURITY.md](SECURITY.md)); the second changes only through a multisig with a public 48-hour delay.
+- **The first deployment cannot be changed,** so its known limits stay ([SECURITY.md](SECURITY.md)); the second changes only through a multisig with a public 8-day delay.
 
 ## Reproduce the counts
 

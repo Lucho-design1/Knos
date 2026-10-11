@@ -32,7 +32,7 @@ change the programs is in [GOVERNANCE.md](GOVERNANCE.md). Report a vulnerability
   repository the funder named; an arbiter the funder named. Each can go wrong in its own way
   ([section 2](#2-the-four-judges-who-is-trusted-in-each-and-what-each-could-do-wrong)).
 - A statement moves the money of one order and nothing else.
-- Until an outside review, Knos can change every program through a multisig, after a public 48-hour delay. Today
+- Until an outside review, Knos can change every program through a multisig, after a public 8-day delay. Today
   one person holds every key of that multisig, so the delay is notice and not a second opinion
   ([GOVERNANCE.md](GOVERNANCE.md)).
 
@@ -45,7 +45,7 @@ change the programs is in [GOVERNANCE.md](GOVERNANCE.md). Report a vulnerability
 | **Solana** | running the programs as written | |
 | **The judge of an order** (one of four, section 2) | everything a pay token says beyond GitHub's signature | any order but the one it judges |
 | **The pinned workflows and the `knos` release they install** | reading GitHub's record as the terms say. They are fixed by commit and by hash, so they are the same code for everyone | |
-| **Knos** (drexthealpha) | until the outside review: not misusing the upgrade multisig; approving new keys; registering other issuers' keys | it cannot add a signing key alone, pay or redirect an order, change an order's terms, or block a refund or a withdrawal. Changing a program or a price takes the 48-hour delay |
+| **Knos** (drexthealpha) | until the outside review: not misusing the upgrade multisig; approving new keys; registering other issuers' keys | it cannot add a signing key alone, pay or redirect an order, change an order's terms, or block a refund or a withdrawal. Changing a program or a price takes the 8-day delay |
 | **A relayer** (the job itself, Knos's public worker, or anyone) | being there: it carries tokens to the chain and pays the fees | it cannot change where money goes. A payment tips it out of the fee |
 | **The issuer of the token that is paid** (a stablecoin's issuer) | what its mint lets it do to every holder, such as freezing an account | |
 
@@ -326,7 +326,8 @@ signatures it simulated.
 The upgrade authority of all four programs is the vault of a Squads multisig
 (`upgrade_authority` and `upgrade_multisig` in [`program_ids.json`](../../programs-v2/program_ids.json)).
 
-- **A 48-hour time lock.** An upgrade can run 172,800 seconds after the vote that approved it, and not before. In
+- **An 8-day time lock.** An upgrade can run 691,200 seconds after the vote that approved it, and not before. It is
+  in force since 11 Oct 2026, when proposal 9 of the multisig executed; before that it was 172,800 seconds (48 hours). In
   that time the proposal and the new program's bytes are on chain for anyone to read, and the members can cancel it.
 - **No config authority.** No single key can change the members, the threshold or the delay.
 - **A record of the build.** [`examples/upgrade_gate`](../../examples/upgrade_gate) writes a record on chain only when
@@ -345,7 +346,7 @@ The upgrade authority of all four programs is the vault of a Squads multisig
   delay gives notice, not independent oversight: nobody else must agree and nobody else can refuse
   ([GOVERNANCE.md](GOVERNANCE.md) has what an independent signer would check and how one would be added; none has
   agreed).
-- **The delay has been used once.** A defect was found in a proposed build during its 48 hours; the proposal was
+- **The delay has been used once.** A defect was found in a proposed build during its 48 hours (the delay then); the proposal was
   cancelled and a corrected build proposed (section 15).
 - **What an upgrade could do: anything**, including taking every vault and every order's money. The delay is the
   protection.
@@ -353,15 +354,16 @@ The upgrade authority of all four programs is the vault of a Squads multisig
   its program data names one, `HM5y4mz3Bt9JY9mr1hkyhnvqxSH4H2u2451j7Hc2dtvK`, which is taken here to be Squads' own key
   (read from both clusters on 3 Oct 2026). A devnet time lock is only as strong as that.
 
-What the 48 hours are good for: a Balance's wallet can withdraw its unspent money at once. Money already in an
-order cannot leave early except by a cancellation, which takes up to 7 days. So the notice protects Balances, and
-orders whose deadline falls inside it.
+What the 8 days are good for: a Balance's wallet can withdraw its unspent money at once. Money already in an
+open order leaves early only by a cancellation, which takes up to 7 days and 2 hours: less than the 8 days. So the
+notice protects Balances and open orders. It does not protect an order held for a payee (up to 180 days) or a
+holdback in its warranty (up to 90 days).
 
 ## 8. Versions, and what is live when
 
 | | first deployment ([`programs`](../../programs)) | second deployment, 2.0 | second deployment, 2.1 and 2.2 (2.2 live at the public ids since 9 Oct 2026) |
 |---|---|---|---|
-| can it be changed | no: neither program has an upgrade authority | through the multisig, after 48 hours | the same |
+| can it be changed | no: neither program has an upgrade authority | through the multisig, after 8 days | the same |
 | the unit | a bounty | a bounty | a work order; 2.0 bounties finish as they were funded |
 | who may sign a payment | the funder's repository | the funder's repository | one of four judges (section 2) |
 | the fee | from the payment | from the payment | paid by the funder on top |
@@ -390,8 +392,8 @@ Mainnet will be different program ids and Circle's mint. Nothing is deployed the
 | One of GitHub's signing keys leaks | the guardian revokes it. Tokens it verified stop at once. An order waits for a token under a good key | everything else |
 | GitHub is down, or changes its tokens | tokens wait. Nothing is paid | refunds at the deadline, withdrawals, releases of a holdback |
 | No key is attested for 30 days | every key expires. The escrow is refund-only. Anyone can prevent this for the keys GitHub still publishes (section 5) | refunds, withdrawals, held orders whose payee has a bound wallet |
-| A fault is found in a program | the guardian can refuse new funding, 7 days at a time. A fix is an upgrade: public, and 48 hours away | payments, refunds, withdrawals, bindings |
-| The upgrade keys are stolen | a hostile upgrade is public for 48 hours before it can run. The members can cancel it | withdrawals of Balances at once; orders as section 7 says |
+| A fault is found in a program | the guardian can refuse new funding, 7 days at a time. A fix is an upgrade: public, and 8 days away | payments, refunds, withdrawals, bindings |
+| The upgrade keys are stolen | a hostile upgrade is public for 8 days before it can run. The members can cancel it | withdrawals of Balances at once; orders as section 7 says |
 | The buyer's repository deletes its workflow after a merge | nothing, by itself. In a public repository the seller starts the neutral run (section 2) | the payment |
 | Knos's public relay stops | tokens wait as comments | anyone can relay with `knos relay`, and a payment tips whoever does; a repository with a relay key relays its own |
 | Knos's GitHub account is suspended | the published workflows cannot be fetched, so no new token is signed for an order that pinned them; no key can be refreshed | refunds, withdrawals, settlements to a bound wallet, releases. A funded order can only be refunded ([GOVERNANCE.md](GOVERNANCE.md), section 9) |
@@ -399,7 +401,7 @@ Mainnet will be different program ids and Circle's mint. Nothing is deployed the
 | Knos disappears | no new key can be approved. Keys GitHub still publishes are kept alive by anyone | payments under those keys; refunds and withdrawals, for ever |
 
 The three emergency tools, and their reach: a **pause** stops new funding and nothing else, for at most 7 days per
-signature; a **revocation** stops one key and what it signed, for ever; an **upgrade** can change anything, 48 hours
+signature; a **revocation** stops one key and what it signed, for ever; an **upgrade** can change anything, 8 days
 after it is approved in public.
 
 ## 10. Recovery without GitHub, and without Knos
@@ -1003,7 +1005,7 @@ this tree. [INVARIANTS.md](INVARIANTS.md) lists them with the other adversarial 
 - **Different program ids, Circle's mint, no faucet.** The released programs are devnet builds.
 - **The cap** is 100,000 per order on devnet. A mainnet build decides its own; none is decided.
 - **After the review** the verifier, `knos-oidc`, is frozen: its upgrade authority is removed. The escrow,
-  `knos-pay`, stays upgradeable only through the multisig with its public 48-hour delay, so that a defect in the
+  `knos-pay`, stays upgradeable only through the multisig with its public 8-day delay, so that a defect in the
   program that holds money can be fixed in place. [GOVERNANCE.md](GOVERNANCE.md), section 7, says what that costs.
 
 ## Known limits
@@ -1018,7 +1020,7 @@ The first three cannot be removed. They come with the design.
    it until the key is revoked or expires. If GitHub is down, tokens wait.
 4. **Nobody outside Knos has reviewed the security of anything:** not the programs, the workflows, the relay, the
    clients, the site or these documents.
-5. **One person can change the programs, after 48 hours.** Both multisigs are 2-of-3 and every member key is the
+5. **One person can change the programs, after 8 days.** Both multisigs are 2-of-3 and every member key is the
    founder's. No independent signer exists ([GOVERNANCE.md](GOVERNANCE.md)).
 6. **An upgrade's notice is pulled, not pushed.** A banner, `knos status` and a feed to subscribe to; no comment on
    repositories with open orders (section 7).

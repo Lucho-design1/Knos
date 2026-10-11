@@ -4,7 +4,7 @@
     python scripts/upgrade_feed.py --ids FILE [--gate ADDRESS] --out DIR [--rpc URL]      # another project's programs: the same full feed
 
 Every change to a program of the second deployment is a proposal of the upgrade multisig (Squads v4), public on chain
-for 48 hours before it can run. This script reads every proposal the multisig has made and writes
+for the multisig's time lock (8 days for Knos since 11 Oct 2026) before it can run. This script reads every proposal the multisig has made and writes
 
     web/upgrades.json   one entry per upgrade proposal: program, proposed build hash, source commit, earliest execution
                         time, status (pending, executed, cancelled, replaced)
@@ -189,7 +189,7 @@ def words(e: Entry, now: int | None = None) -> str:
               "upgrade_gate holds no record of this build: no GitHub run vouches for these bytes" if e.build_hash else "its source commit is not known")
     if e.status == "pending":
         state = (f"The multisig approved it ({e.approved} of {e.threshold}); it can run from {utc(e.earliest_execution)}." if e.earliest_execution else
-                 f"{e.approved} of {e.threshold} approvals so far; it can run 48 hours after the vote that approves it.")
+                 f"{e.approved} of {e.threshold} approvals so far; it can run once the multisig's time lock has passed after the vote that approves it.")
         left = hours_to_leave(e, now)
         todo = ((f" {left} hours to leave (at {utc(now)})." if left is not None else "")
                 + " Until then: read the diff at that commit, compare the hash with your own build (docs/reference/ASSURANCE.md), and if you do not "
@@ -232,7 +232,7 @@ def as_atom(got: list[Entry], ids: dict, now: int) -> str:
     return ('<?xml version="1.0" encoding="UTF-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">'
             f"<id>tag:drexthealpha.github.io,2026:knos/upgrades/{ids['upgrade_multisig']}</id>"
             "<title>Knos: upgrade proposals of the programs</title>"
-            "<subtitle>Every proposal to change a Knos program, from the upgrade multisig on Solana devnet. A proposal can run 48 hours after it is approved.</subtitle>"
+            "<subtitle>Every proposal to change a Knos program, from the upgrade multisig on Solana devnet. A proposal can run 8 days after it is approved.</subtitle>"
             f'<link rel="self" href="{FEED}"/><link rel="alternate" href="{SITE}"/>'
             f"<author><name>Knos</name></author><updated>{utc(now)}</updated>"
             + "".join(one(e) for e in got) + "</feed>\n")

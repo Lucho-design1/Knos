@@ -182,7 +182,7 @@ that needs no token, no signature of Knos's or of the funder's, and does not rea
 - **Also without a token:** `Withdraw` (a Balance's wallet, at any time), `SettleOrder` (a held order whose payee
   now has a wallet), `Release` (after the warranty), `Refund` (a first-generation bounty), a passkey wallet's withdrawal.
 - **What can still stop it:** the mint's issuer freezing the account; no reachable RPC endpoint; a program upgrade
-  that removed the instruction, which is public for 48 hours first ([GOVERNANCE.md](GOVERNANCE.md)).
+  that removed the instruction, which is public for 8 days first ([GOVERNANCE.md](GOVERNANCE.md)).
 - **Checked by:** `test_an_order_goes_back_to_its_funder_after_the_deadline_and_not_before` in
   `tests/test_order_chain.py`; `test_an_order_is_held_for_a_payee_with_no_wallet_then_settled_and_an_unproven_one_goes_back`
   in `tests/test_relay2.py`; `test_the_guardian_pauses_new_funding_only_and_nobody_else_can` in
@@ -406,9 +406,8 @@ an account written by hand in the 2.1 layout: 5.00 with its 2.1 fee of 0.40, whe
 - **What an upgrade can change.** Everything. The stored fields are bytes the program owns; a later build decides how
   to read them, and can remove an instruction or move an order's money
   ([GOVERNANCE.md](GOVERNANCE.md): "An upgrade can do anything, including taking every order's money"). What limits
-  it is the delay and the public bytes: 48 hours today, and 8 days once the time lock approved on 9 October 2026 is
-  applied, which the Squads program allows 48 hours after that approval. `knos exit --before-upgrade` lists each
-  holding and its way out.
+  it is the delay and the public bytes: a program change now waits 8 days in public (Squads time lock 691,200 s, in
+  force since 11 Oct 2026; 48 hours before). `knos exit --before-upgrade` lists each holding and its way out.
 
 ## Safety and liveness
 
@@ -431,7 +430,7 @@ obliged to run a relay:
 | a relay | carrying the token to the chain (anyone may run one; none is obliged to) | nothing is sent until some relay runs |
 | the cluster | an RPC endpoint that answers and blocks that are produced | the relay tries again for as long as the token is good |
 | a signing key of GitHub's that is still registered on chain | the verifier takes a token only under one; a key lapses after 30 days without a refresh | the token is refused until anyone refreshes the key |
-| the program as deployed | the instruction still exists and still reads this token | an upgrade can change either, after 48 hours in public ([GOVERNANCE.md](GOVERNANCE.md)) |
+| the program as deployed | the instruction still exists and still reads this token | an upgrade can change either, after 8 days in public ([GOVERNANCE.md](GOVERNANCE.md)) |
 
 What is tested is recovery from named failures, in a simulator, with times that are simulated seconds: the six rows
 of [DRILLS.md](DRILLS.md), "When a dependency fails" (GitHub's API down for ten minutes, GitHub's signing key expired

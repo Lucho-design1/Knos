@@ -64,7 +64,7 @@
   {
    "source": "docs/TRUST.md",
    "block": 1,
-   "sha256": "77a2856fc98ec71575c48822f288af4e5c8e4344ee43bf8640c9d396996da548",
+   "sha256": "23859c41963b380d9a568aba46b7d06ef60f648172fbd5363b36425ebb8545b0",
    "svg": "docs/diagrams/docs-trust-1.svg"
   },
   {
@@ -88,7 +88,7 @@
   {
    "source": "docs/reference/GOVERNANCE.md",
    "block": 1,
-   "sha256": "ffa67db6070e188a769942cdfc51c2aae2b183582744a5dca85848b2d0b039b6",
+   "sha256": "1374ba1a3373cdfffb504e8ce4eaac96e14144be1764498d7a107e9a88c6e433",
    "svg": "docs/diagrams/docs-reference-governance-1.svg"
   },
   {

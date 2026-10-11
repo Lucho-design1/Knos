@@ -4,6 +4,43 @@ Prices and figures in older entries are superseded; the current price book is [d
 
 Each entry starts with what changed for you, in one or two plain lines ("In short"); the full notes follow.
 
+## 0.3.28 (October 2026)
+
+**In short:** the 8-day time lock is in force: every program change now waits 8 days in public.
+
+**The 8-day time lock is in force.** A program change now waits 8 days in public (Squads time lock 691,200 s, in force
+since 11 Oct 2026). Proposal 9 of the upgrade multisig set it: approved on 9 Oct 2026, carried out by transaction
+`2gYPofAZDfwXi6pK2tAWkRdEDfqVcceAmf3PsmW6x4jkHafNCresgEQDS3zJg2dXZRKi1NnNMWcW6ct3eFPFV1m9`. The multisig now reads 691,200 s. Before that the wait was 48 hours.
+
+Everything is on Solana devnet, which is test mode: the money is test USDC. **No program changes in this release:**
+nothing under `programs-v2/knos_*`, `programs/`, `idl/` or `tests/fixtures/*.so` moved by a byte. The interface
+crates stay at 0.3.14.
+
+### What this means for you
+
+- **An open order can be left before any upgrade runs.** Cancelling gives the seller at most 7 days and 2 hours of
+  notice, and an upgrade approved from now on waits 8 days. `knos exit --before-upgrade` says so.
+- **Some money still cannot leave in time:** an order held for a payee (up to 180 days) and a holdback in its warranty
+  (up to 90 days).
+- **Every fix waits 8 days too.** The guardian can still pause new funding for 7 days at a time.
+
+### What changed in the repository
+
+- **The pages say 8 days.** The README, the trust page, governance, the charter, security, the keys pages and the
+  site said 48 hours, or that the 8 days were approved and not yet in force. They now say what is true today. Lines
+  about the past keep their dates.
+- **The checks expect 691,200 s.** `knos status`, `knos mainnet-check`, the live check of the README's numbers,
+  `node scripts/governance.mjs show --check`, `knos reproduce` and the site's network view now hold the upgrade
+  multisig to 691,200 s, and a multisig at 48 hours fails them.
+
+### What still says 48 hours, and why
+
+- **Receipts.** A receipt's list of what remains to be trusted names "a public 48-hour delay". `knos receipt` checks
+  that list word for word, and every receipt already made carries it, so the words stay.
+- **The programs' own comments and interface files** say 48 hours. Changing them would change the programs.
+- **The upgrade drill** (`scripts/drill_upgrade.sh`) still moves the clock 48 hours, so with `--from-devnet` it now
+  stops at its first check. Its recorded run, from before the change, stays as it was.
+
 ## 0.3.27 (October 2026)
 
 **In short:** The README, the documents a newcomer reads first and the site's front page are rewritten in plain

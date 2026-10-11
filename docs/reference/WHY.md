@@ -217,7 +217,7 @@ unanswered. At least 21,702.10 USD of completed work was left unpaid, and its ow
 The rule: no company holds the money. It sits in a program. Money with no payment returns to the funder at the
 deadline, without a token and without an operator. A payment held for a payee who gave no address returns after
 180 days. A prefunded balance can be withdrawn only by the wallet that opened it. One custodian risk remains and
-is stated: until an outside review, Knos can change the program through a multisig after a public 48-hour delay.
+is stated: until an outside review, Knos can change the program through a multisig after a public 8-day delay.
 
 ### tea.xyz: a reward computed from countable things gets farmed
 
@@ -266,7 +266,7 @@ The rule: the default acceptance is the merge. Checks are necessary and not suff
 
 ## 5. Why a chain, and why Solana
 
-In one line: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public.
+In one line: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public.
 A receipt verifies with no chain; the chain is for the money and for the root.
 
 A chain gives this three things a company cannot promise. The money is committed before the work, in a program and

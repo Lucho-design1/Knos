@@ -516,10 +516,10 @@ test("set-time-lock: one SetTimeLock action of the planned 8 days, the bytes scr
   const guardian = run("set-time-lock", "--on", "guardian");
   assert.equal(guardian.code, 1);
   assert.match(guardian.err, /the guardian's time lock stays 0/);
-  // `show --check`: the upgrade multisig is right with the time lock it was made with, and with the planned one once that executed
-  assert.deepEqual(gov.wrong("upgrade", ms), []);
+  // `show --check`: the upgrade multisig is right only with the 8 days in force since proposal 9 executed; the 48 hours it was made with are wrong now
   assert.deepEqual(gov.wrong("upgrade", { ...ms, timeLock: 691_200 }), []);
-  assert.deepEqual(gov.wrong("upgrade", { ...ms, timeLock: 600 }), ["its time lock is 600 s, not 172800 s or the planned 691200 s"]);
+  assert.deepEqual(gov.wrong("upgrade", ms), ["its time lock is 172800 s, not 691200 s"]);
+  assert.deepEqual(gov.wrong("upgrade", { ...ms, timeLock: 600 }), ["its time lock is 600 s, not 691200 s"]);
   assert.deepEqual(gov.wrong("guardian", { ...multisigOf("guardian"), timeLock: 691_200 }), ["its time lock is 691200 s, not 0 s"]);
 });
 

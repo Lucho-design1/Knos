@@ -2,7 +2,7 @@
 
 Both were deployed at 1.0. Their 1.1 (the meter's batch mode, the passkey wallet's Fund) came as a proposal of the
 upgrade multisig (proposals 5 and 6 at the public ids, executed), and a 1.0 program keeps running until such a proposal
-executes, 48 hours after it was approved at the earliest. A 1.0 program answers an instruction it does not have with "invalid instruction data", which tells nobody
+executes, 8 days after it was approved at the earliest (the time lock in force since 11 Oct 2026; it was 48 hours before). A 1.0 program answers an instruction it does not have with "invalid instruction data", which tells nobody
 what to do. So the relay asks first, by simulation (no fee, nothing sent):
 
     knos_meter     Version (7): 1.1 logs `knosm:version 1.1`; 1.0 has no instruction 7
@@ -112,9 +112,9 @@ def needs(ledger, payer: Keypair, name: str, now: int | None = None) -> str | No
     if at is not None:
         late = now is not None and now >= at
         head += (f"could be executed since {_when(at)} and has not been yet" if late else f"executes on {_when(at)} or shortly after") + \
-                f" (proposal {index} of the upgrade multisig, public for 48 hours before it runs)"
+                f" (proposal {index} of the upgrade multisig, public for 8 days before it runs)"
     elif found:
-        head += f"is proposed (proposal {index} of the upgrade multisig) and executes 48 hours after the members approve it"
+        head += f"is proposed (proposal {index} of the upgrade multisig) and executes 8 days after the members approve it"
     else:
         head += "is not on this cluster yet: no approved upgrade of it was found (knos status says what is proposed)"
     return (f"{head}. The cluster runs {name} {HAS[name]} until then, which has no such instruction. Nothing was sent and nothing was charged: "

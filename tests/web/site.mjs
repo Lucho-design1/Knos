@@ -382,7 +382,7 @@ await reset();
     && (await page.getAttribute('meta[property="og:title"]', "content")) === TITLE && (await page.getAttribute('meta[name="twitter:title"]', "content")) === TITLE
     && (await begins('meta[name="description"]')) && (await begins('meta[property="og:description"]')) && (await begins('meta[name="twitter:description"]')));
   check("  why a chain is answered in the one line, behind a fold, where the page first says Solana pays", await page.$eval("#why-solana", (d) => d.tagName === "DETAILS" && d.previousElementSibling.classList.contains("devnet") && d.querySelector("summary").textContent === "Why Solana?"
-    && d.querySelector("p").textContent === "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public."));
+    && d.querySelector("p").textContent === "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public."));
   check("  the round below the first screen is not asked for until the reader moves", await page.evaluate(() => document.getElementById("demo").childElementCount === 0 && !performance.getEntriesByType("resource").some((r) => /\/demo\.js(\?|$)/.test(r.name))));
   // the brand: one source (web/brand/), drawn in the colour of the text, and nothing of it comes from another host
   {
@@ -1218,16 +1218,17 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("  every address is shown whole, may break anywhere, and has a button that copies it; the button adds no word to the page's text", await page.$$eval("#view-network .mono", (els) => els.filter((e) => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(e.textContent.trim())).every((e) =>
     (e.closest("a") || e).nextElementSibling?.matches(`button.copy[data-copy="${e.textContent.trim()}"]`) && ["anywhere", "break-word"].includes(getComputedStyle(e).overflowWrap) || getComputedStyle(e).wordBreak === "break-all"))
     && (await page.$$eval("#view-network button.copy", (b) => b.length > 3 && b.every((x) => x.textContent === "" && getComputedStyle(x, "::before").content === '"Copy"'))));
-  check("  the plan is stated in the words the project uses, as a plan", (await text(page, "#network-programs")).includes("The plan: upgradeable only through a multisig with a public 48-hour delay, until an outside review.") && !/immutable/i.test(await text(page, "#view-network")));
+  check("  the plan is stated in the words the project uses, as a plan", (await text(page, "#network-programs")).includes("The plan: upgradeable only through a multisig with a public 8-day delay, until an outside review.") && !/immutable/i.test(await text(page, "#view-network")));
   check("  the explorer links are for devnet", (await page.$$eval("#network-programs a", (a) => a.every((x) => x.getAttribute("href").endsWith("?cluster=devnet")))));
 
   for (const [what, setup, expected, words, absent = []] of [
-    ["upgradeable only by the upgrade multisig's vault, 2 of 3, 48 hours", { oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 172800 }, guard: { threshold: 2, timeLock: 0 } }, ["multisig", "multisig"],
-      ["2 of 3 members must approve, and an approved upgrade waits 48 hours before it can run.", "2 of 3 members must approve; no delay. The guardian (a second multisig) can approve or revoke a signing key and pause new funding for at most 7 days."], ["not the 48 hours"]],
-    ["a delay that is not the 48 hours said", { oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 3600 }, guard: { threshold: 1, timeLock: 0 } }, ["multisig", "multisig"], ["waits 1 hour before it can run", "(not the 48 hours stated above)"]],
-    ["a program that someone else can upgrade", { oidc: stranger, pay: "vault", up: { threshold: 2, timeLock: 172800 }, guard: { threshold: 2, timeLock: 0 } }, ["other", "multisig"],
+    ["upgradeable only by the upgrade multisig's vault, 2 of 3, 8 days", { oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 691200 }, guard: { threshold: 2, timeLock: 0 } }, ["multisig", "multisig"],
+      ["2 of 3 members must approve, and an approved upgrade waits 8 days before it can run.", "2 of 3 members must approve; no delay. The guardian (a second multisig) can approve or revoke a signing key and pause new funding for at most 7 days."], ["not the 8 days"]],
+    ["a delay that is not the 8 days said", { oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 3600 }, guard: { threshold: 1, timeLock: 0 } }, ["multisig", "multisig"], ["waits 1 hour before it can run", "(not the 8 days stated above)"]],
+    ["the 48 hours of before 11 Oct 2026 are not the 8 days said", { oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 172800 }, guard: { threshold: 2, timeLock: 0 } }, ["multisig", "multisig"], ["waits 2 days before it can run", "(not the 8 days stated above)"]],
+    ["a program that someone else can upgrade", { oidc: stranger, pay: "vault", up: { threshold: 2, timeLock: 691200 }, guard: { threshold: 2, timeLock: 0 } }, ["other", "multisig"],
       [`upgradeable by ${stranger}, which is not the upgrade multisig of this deployment`]],
-    ["a second deployment with no upgrade authority at all", { oidc: null, pay: null, up: { threshold: 2, timeLock: 172800 }, guard: { threshold: 2, timeLock: 0 } }, ["no-authority", "no-authority"], ["no upgrade authority is set on chain", "not the plan stated above"]],
+    ["a second deployment with no upgrade authority at all", { oidc: null, pay: null, up: { threshold: 2, timeLock: 691200 }, guard: { threshold: 2, timeLock: 0 } }, ["no-authority", "no-authority"], ["no upgrade authority is set on chain", "not the plan stated above"]],
     ["one program deployed and the other not", { oidc: "vault", pay: "missing" }, ["multisig", "missing"], ["not on devnet yet"]]]) {
     await deploy(setup);
     await visit(page, "#network");
@@ -1250,7 +1251,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
     ["GitLab, waiting for the guardian", { issuer: 1, limbs: 128, flags: 0, activeAt: NOW + day, expiresAt: NOW + 31 * day, seed: 5 }, "waiting for the guardian's approval", "attested"],
     ["approved but not yet active", { flags: 1, activeAt: NOW + 3600, expiresAt: NOW + 30 * day, seed: 6 }, `usable from ${when(NOW + 3600)}`, "attested"],
     ["registered, not ready", { state: 0, flags: 1, activeAt: NOW - day, expiresAt: NOW + 29 * day, seed: 7 }, "registered, not ready", "attested"]];
-  await deploy({ oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 172800 }, guard: { threshold: 2, timeLock: 0 }, keys: keyList.map(([, key]) => key) });
+  await deploy({ oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 691200 }, guard: { threshold: 2, timeLock: 0 }, keys: keyList.map(([, key]) => key) });
   await visit(page, "#network");
   await loaded(page);
   const hashes = await Promise.all(keyList.map(async ([, key], i) => (await knos.v2.keyAccountHash(chain.accounts.get(unique(100 + i)).data)).slice(0, 12)));
@@ -1266,7 +1267,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("keys: a deployed knos-oidc with no key says so", (await text(page, "#keys-none")) === "No signing key is on chain yet.");
 
   // the chain cannot be read: that is said, never turned into "not deployed"
-  await deploy({ oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 172800 }, guard: { threshold: 2, timeLock: 0 } });
+  await deploy({ oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 691200 }, guard: { threshold: 2, timeLock: 0 } });
   chain.down = "Node is behind by 100 slots";
   await visit(page, "#network");
   await page.waitForFunction(() => document.querySelectorAll("#network-programs .status.bad, #network-keys .status.bad, #first-deployment .status.bad").length === 3);
@@ -1332,7 +1333,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   put(await k.bind(4242), bindBytes({ userId: 4242, wallet: OTHER_WALLET, iat: NOW - day }), ids.knos_pay);
   put(await k.rep(4242), repBytes({ paid: 3, funders: 2, total: 58_500_000, first: NOW - 30 * day, last: NOW - day }), ids.knos_pay);
   for (const [program, a] of [[ids.knos_oidc, ids.upgrade_authority], [ids.knos_pay, ids.upgrade_authority], [FIRST.oidc, null], [FIRST.pay, null]]) put(await knos.programData(program), programDataBytes(a), knos.LOADER);
-  put(ids.upgrade_multisig, multisigBytes({ threshold: 2, timeLock: 172800, members: [unique(11), unique(12), unique(13)] }), knos.SQUADS);
+  put(ids.upgrade_multisig, multisigBytes({ threshold: 2, timeLock: 691200, members: [unique(11), unique(12), unique(13)] }), knos.SQUADS);
   put(ids.guardian_multisig, multisigBytes({ threshold: 2, timeLock: 0, members: [unique(14), unique(15), unique(16)] }), knos.SQUADS);
   put(unique(100), keyBytes({ flags: 5, activeAt: NOW - 100 * day, expiresAt: NOW + 20 * day }), ids.knos_oidc);
   put(unique(101), keyBytes({ issuer: 1, limbs: 128, flags: 0, activeAt: NOW + day, expiresAt: NOW + 31 * day, seed: 5 }), ids.knos_oidc);

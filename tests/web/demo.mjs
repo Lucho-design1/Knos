@@ -23,7 +23,7 @@ const STEPS = ["Agree", "Fails", "Passes", "Statement", "Replay", "Pay", "Verify
 const ACTS = ["Agree and fund", "Check the submission", "Push the correction", "Compute both statements", "Send the same token again", `Pay in ${data.money}`, "Verify the export"];
 const READ = [false, true, false, true, false, true, true];          // the beats that show something to read before their action
 const BAD = [1, 4];                                                    // the two refusals: the rejected submission, the token sent again
-const WHY = "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public.";
+const WHY = "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public.";
 // the sample statement's root, computed here as src/knos/statement.py does: canonical JSON, the sha256 field empty
 const sample = JSON.parse(readFileSync(join(root, "statement_sample.json"), "utf8"));
 const canon = (d) => (d === null ? "null" : typeof d !== "object" ? JSON.stringify(d) : Array.isArray(d) ? `[${d.map(canon).join(",")}]` : `{${Object.keys(d).sort().map((k) => `${JSON.stringify(k)}:${canon(d[k])}`).join(",")}}`);

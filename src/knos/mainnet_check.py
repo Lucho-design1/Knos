@@ -6,8 +6,8 @@ evidence it was judged on.
     upgrade authority   each program's upgrade authority is the pinned vault; or none, once the outside review is
                         done and the program has been made immutable
     security.txt        each binary embeds a security.txt
-    upgrade multisig    that vault is vault 0 of the pinned Squads v4 multisig; the multisig's time lock is 172800
-                        seconds (an upgrade waits 48 hours in public after it is approved); it has no config
+    upgrade multisig    that vault is vault 0 of the pinned Squads v4 multisig; the multisig's time lock is 691200
+                        seconds (an upgrade waits 8 days in public after it is approved); it has no config
                         authority (no single key can change its members, its threshold or that delay)
     guardian            the GUARDIAN both programs name is vault 0 of the pinned guardian multisig, which has no
                         config authority either
@@ -38,7 +38,7 @@ chain, each line with what to do when it fails:
 
     program ids         the two pinned ids are deployed and executable
     upgrade authority   each program's upgrade authority is the upgrade vault (or none, once made immutable)
-    upgrade multisig    its time lock is 172800 seconds and it has no config authority
+    upgrade multisig    its time lock is 691200 seconds and it has no config authority
     upgrade proposal    no upgrade (or change) is pending on the upgrade multisig; one that is, with its index, the
                         buffer and when it can execute (the Squads accounts are read as scripts/governance.mjs
                         documents them: see `proposals`)
@@ -78,11 +78,10 @@ NOT_HERE = "not checked from here: needs a clone"
 NEEDS_GH = NOT_HERE + " (and gh, logged in to GitHub)"
 PROGRAMS = ("knos_oidc", "knos_pay")
 NEW_PROGRAMS = ("knos_meter", "knos_passkey")       # both run at the public ids; a cluster without them yet is skipped, not failed
-TIME_LOCK = 172_800      # seconds between the vote that approves an upgrade and its execution
-# 8 days, once the configuration transaction scripts/timelock_plan.py plans has executed (docs/reference/GOVERNANCE.md, section 2):
-# longer than an order's 7 days of notice and 2 hours of grace. Either is what the design fixes.
-PLANNED_TIME_LOCK = 691_200
-TIME_LOCKS = (TIME_LOCK, PLANNED_TIME_LOCK)
+# Seconds between the vote that approves an upgrade and its execution: 8 days, longer than an order's 7 days of notice
+# and 2 hours of grace. In force since 11 Oct 2026, when proposal 9 of the upgrade multisig (the configuration
+# transaction scripts/timelock_plan.py planned) executed; it was 172,800 s (48 hours) before (docs/reference/GOVERNANCE.md, section 2).
+TIME_LOCK = 691_200
 KEY_MARGIN = 7 * 86_400  # `knos status`: a key must outlive today by this much, so that the rotate workflow has a week to refresh it
 MULTISIG = hashlib.sha256(b"account:Multisig").digest()[:8]   # Anchor's discriminator of a Squads v4 Multisig account
 PROPOSAL = hashlib.sha256(b"account:Proposal").digest()[:8]
@@ -322,7 +321,7 @@ def _pending_words(p: Pending, now: int) -> str:
                 f"its delay is over ({_at(p.executes_at)}): anyone in the multisig can execute it now")
         return f"proposal {p.index}: {what}; approved by {p.approved} of {p.threshold} members needed; {when}"
     if p.status == "Active":
-        return (f"proposal {p.index}: {what}; {p.approved} of {p.threshold} approvals so far; it can be executed {TIME_LOCK // 3600} hours after the "
+        return (f"proposal {p.index}: {what}; {p.approved} of {p.threshold} approvals so far; it can be executed {TIME_LOCK // 86_400} days after the "
                 "last approval is given")
     return f"proposal {p.index}: {what}; drafted, not yet put to the members' vote"
 
@@ -415,7 +414,7 @@ def run(fetch: Fetch, ids: dict | None = None, env: Mapping[str, str] | None = N
     its_vault = ms is not None and str(vault_address(Pubkey.from_string(ids["upgrade_multisig"]), Pubkey.from_string(squads))) == vault
     res.append(("upgrade multisig: the pinned vault is its vault", its_vault,
                 found if ms is None else f"vault 0 of {ids['upgrade_multisig']} is " + (vault if its_vault else f"not {vault}")))
-    res.append((f"upgrade multisig: time lock is {TIME_LOCK} s (48 hours), or the planned {PLANNED_TIME_LOCK} s (8 days)", ms is not None and ms.time_lock in TIME_LOCKS, found))
+    res.append((f"upgrade multisig: time lock is {TIME_LOCK} s ({TIME_LOCK // 86_400} days)", ms is not None and ms.time_lock == TIME_LOCK, found))
     res.append(("upgrade multisig: no config authority", ms is not None and ms.config_authority is None, found))
 
     res.append(("guardian: the vault both programs name is the pinned multisig's, which has no config authority", *_guardian(fetch.account, ids, elfs)))
@@ -566,11 +565,13 @@ def status(fetch: Fetch, ids: dict | None = None, first: dict | None = None) -> 
     ms, said = multisig_at(fetch.account, ids["upgrade_multisig"], squads)
     its_vault = ms is not None and str(vault_address(Pubkey.from_string(ids["upgrade_multisig"]), Pubkey.from_string(squads))) == vault
     moot = " (not needed now: both programs are immutable)" if immutable else ""
-    fixed = ("a multisig's delay and its authority are fixed when it is made. Make a new upgrade multisig with node scripts/governance.mjs create, "
+    fixed = ("a multisig's authority is fixed when it is made. Make a new upgrade multisig with node scripts/governance.mjs create, "
              "pin its addresses in programs-v2/program_ids.json and hand the programs to it; until then upgrades are not held to a public wait")
-    res.append(Check(f"upgrade delay: an upgrade waits {TIME_LOCK // 3600} hours in public, or the planned {PLANNED_TIME_LOCK // 86_400} days",
-                     immutable or (its_vault and ms is not None and ms.time_lock in TIME_LOCKS),
-                     said + ("" if ms is None else f"; vault 0 is {'' if its_vault else 'not '}{vault}") + moot, fixed))
+    relock = (f"only a vote of the members changes the time lock: node scripts/governance.mjs set-time-lock {TIME_LOCK} --send, then node "
+              "scripts/governance.mjs execute upgrade <index> once the time lock now on chain has run" if ms is not None and its_vault else fixed)
+    res.append(Check(f"upgrade delay: an upgrade waits {TIME_LOCK // 86_400} days in public",
+                     immutable or (its_vault and ms is not None and ms.time_lock == TIME_LOCK),
+                     said + ("" if ms is None else f"; vault 0 is {'' if its_vault else 'not '}{vault}") + moot, relock))
     res.append(Check("upgrade multisig: no single key can change it", immutable or (ms is not None and ms.config_authority is None),
                      said + moot, fixed))
 

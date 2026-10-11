@@ -320,7 +320,7 @@ TODAY_LAST = [
     ("Paying customers", "0", "[docs/reference/DISCLOSURE.md](docs/reference/DISCLOSURE.md)"),
     ("Revenue", "0; test USDC is not money", "[docs/reference/MARKET.md](docs/reference/MARKET.md)"),
     ("Outside security review", "none", "[docs/reference/ASSURANCE.md](docs/reference/ASSURANCE.md)"),
-    ("Key holders", "one person holds every key; an upgrade waits 48 hours in public", "[docs/reference/GOVERNANCE.md](docs/reference/GOVERNANCE.md)"),
+    ("Key holders", "one person holds every key; an upgrade waits 8 days in public", "[docs/reference/GOVERNANCE.md](docs/reference/GOVERNANCE.md)"),
     ("Network and money", "Solana devnet, test USDC; mainnet is not touched", "[docs/reference/SECURITY.md](docs/reference/SECURITY.md)"),
 ]
 

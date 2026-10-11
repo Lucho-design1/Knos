@@ -140,7 +140,7 @@ repository must re-pin; [DEPENDENCY.md](DEPENDENCY.md) has what each step needs.
    alone would change little: the organisation would depend on that one account as the personal account does now.
 2. Publish the pinned workflows from the organisation, and have the programs accept a workflow pin under either
    owner for a period, so that orders funded under the old pin still pay. This is a program upgrade and passes
-   through the public 48-hour delay.
+   through the public 8-day delay.
 3. Move the rotation and claim workflows the same way.
 4. Run the relay from the organisation, and a second relay somewhere that is not GitHub.
 5. Remove the personal account from every pin once the last order funded under it is paid or refunded.

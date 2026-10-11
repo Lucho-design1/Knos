@@ -1270,7 +1270,7 @@ def issuer_key_rotates() -> Outage:
                   "Without it (B): every payment is refused, the order's money stays in escrow, and it goes back to the funder at the deadline",
                   "the daily rotate run, signed under the old key while it still signs, names the new key; anyone sends RegisterKey; the "
                   "guardian approves; a day later the key verifies. If GitHub stops signing with every key the verifier holds before that, "
-                  "no attestation can be verified and only an upgrade of the verifier (48 hours) admits a key",
+                  "no attestation can be verified and only an upgrade of the verifier (8 days) admits a key",
                   f"A: paid {took} s after the new key was published ({oidc.KEY_DELAY} s of it the program's own wait). B: never paid; "
                   "refunded in full after the deadline")
 
