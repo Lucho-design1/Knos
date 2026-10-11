@@ -19,10 +19,10 @@ name: claims
 #     is a privileged token beside a stranger's code.
 #   - tests/test_workflows2.py holds every workflow of Knos to that: none is started by `pull_request_target`.
 # So a pull request is answered by a SWEEP: the job lists the open issues and pull requests through the API and
-# answers the ones that claim a payment and have no answer. Since 0.3.19 the always-on worker runs that sweep on
+# answers the ones that claim a payment and have no answer. The always-on worker runs that sweep on
 # its own passes, at most once in 5 minutes (worker.yml; knos.claim_guard.sweep_served), and the timer below is the
-# FALLBACK for when no worker runs. A timer alone was not enough: in the 0.3.18 release run this 15-minute schedule
-# did not fire once in 38 minutes. GitHub says scheduled workflows can be delayed when load is high and that a queued
+# FALLBACK for when no worker runs. A timer alone was not enough: once, in October 2026, this 15-minute
+# schedule did not fire for 38 minutes. GitHub says scheduled workflows can be delayed when load is high and that a queued
 # run can be dropped (https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule,
 # read 2026-10-07). A fork's own `pull_request` event
 # carries a read-only token and could not comment; an event of the base repository can. Issues and comments are
@@ -78,8 +78,8 @@ jobs:
           version: "0.8.20"
           python-version: "3.12"
           enable-cache: false
-      # PyPI's index can lag a release's upload, and uv may answer from what it read a moment before (0.3.23: the wait
-      # for the file passed, and uv still said "no version of knos"). So the install itself is tried 3 times, the
+      # PyPI's index can lag a release's upload, and uv may answer from what it read a moment before (once, the wait
+      # for the file passed and uv still said "no version of knos"). So the install itself is tried 3 times, the
       # second and third with --refresh (uv asks the index again), 10 then 30 s apart; the third failure ends the job.
       - name: install what the check needs, each by its hash, and nothing else
         run: |

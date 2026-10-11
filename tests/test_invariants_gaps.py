@@ -1,4 +1,4 @@
-"""The six guarantees of docs/INVARIANTS.md that had no test of their own (knos_pay 2.2 in LiteSVM):
+"""The six guarantees of docs/reference/INVARIANTS.md that had no test of their own (knos_pay 2.2 in LiteSVM):
 
   4. a pay or fund token of one deployment is refused by the same build at other program ids;
   5. every ordering of two and of three of pay, cancel, expiry, refund, settle, release and revert, from an order that
@@ -398,7 +398,7 @@ def test_invariants_json_names_nine_invariants_and_only_tests_and_instructions_t
     import re
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
-    doc, page = json.loads((root / "docs" / "invariants.json").read_text(encoding="utf-8")), (root / "docs" / "INVARIANTS.md").read_text(encoding="utf-8")
+    doc, page = json.loads((root / "docs" / "invariants.json").read_text(encoding="utf-8")), (root / "docs" / "reference" / "INVARIANTS.md").read_text(encoding="utf-8")
     assert [i["id"] for i in doc["invariants"]] == list(range(1, 10))
     lib, proofs = (root / doc["program"] / "src" / "lib.rs").read_text(encoding="utf-8"), (root / doc["kani_file"]).read_text(encoding="utf-8")
     for i in doc["invariants"]:

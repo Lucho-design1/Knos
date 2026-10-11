@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "https://github.com/drexthealpha/Knos/blob/main/docs/receipt/acceptance-receipt.v1.schema.json",
  "title": "Knos acceptance receipt, version 1",
- "description": "Who signed what, about which artifact, under which terms, and what was paid for it. The rules a schema cannot say are in docs/RECEIPT.md.",
+ "description": "Who signed what, about which artifact, under which terms, and what was paid for it. The rules a schema cannot say are in docs/reference/RECEIPT.md.",
  "type": "object",
  "additionalProperties": false,
  "required": [

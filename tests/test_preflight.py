@@ -283,7 +283,7 @@ def test_four_protections_in_order_each_enforced_by_the_program_the_workflow_or_
     assert all(p["held"] is True and p["says"] and not p["warning"] and not p["ask"] for p in got)
     assert terms.terms_hash(TESTS)[:12] in got[0]["says"] and "cd" * 6 in got[0]["says"]
     assert f"up to {preflight.CANCEL_DAYS} days' notice" in got[3]["says"]
-    assert "cancellation" in (ROOT / "docs" / "SECURITY.md").read_text(encoding="utf-8") and "at most 7 days away" in (ROOT / "docs" / "SECURITY.md").read_text(encoding="utf-8")
+    assert "cancellation" in (ROOT / "docs" / "reference" / "SECURITY.md").read_text(encoding="utf-8") and "at most 7 days away" in (ROOT / "docs" / "reference" / "SECURITY.md").read_text(encoding="utf-8")
 
 
 def test_terms_with_no_acceptance_deadline_are_said_so_in_plain_words():
@@ -357,7 +357,7 @@ def test_terms_read_from_a_funded_issue_are_an_order_that_held_its_price(knos_ho
 
 def test_the_suppliers_page_and_guide_show_the_same_four_rows():
     page = (ROOT / "web" / "supplier.js").read_text(encoding="utf-8")
-    guide = (ROOT / "docs" / "SUPPLIER.md").read_text(encoding="utf-8")
+    guide = (ROOT / "docs" / "reference" / "SUPPLIER.md").read_text(encoding="utf-8")
     for key, title, how, line in (*preflight.PROTECTIONS, preflight.NETTED):
         assert f'{{ id: "{key}", title: "{title}", enforced: "{how}", line: "{line}" }}' in page, key
         assert f"| {title} | {line} | {how} |" in guide or (key, how) == ("predictable_payment", "advisory") and f"| {title}, netted work | {line} | {how} |" in guide, key

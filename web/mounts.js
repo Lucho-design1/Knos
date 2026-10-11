@@ -5,9 +5,9 @@
 //                when the page is opened: a reader with no login gets 60 answers an hour from GitHub, and a page nobody
 //                looks at should use none of them.
 //   #index       the Agent PR Index by week (web/index_board.js), from agent_weekly.json, the build's copy of docs/.
-//   #pilot       the one thing offered for money, in the words of docs/PILOT.md and the price book: who it is for,
+//   #pilot       the one thing offered for money, in the words of docs/reference/PILOT.md and the price book: who it is for,
 //                what the buyer gets, what it costs, and that nobody has bought it. No form: the page collects nothing.
-//   #reproduce   the three lines of docs/REPRODUCE.md, and how many reproductions people outside have sent: the names
+//   #reproduce   the three lines of docs/reference/REPRODUCE.md, and how many reproductions people outside have sent: the names
 //                in reproductions.json, which the build writes from the repository's reproductions/ folder.
 //
 // Every sentence here is true with nothing read: a file that is not there, a GitHub that does not answer and a relay
@@ -70,7 +70,7 @@ export function relayView(log, stats, nowMs, esc = escHtml) {
   const link = `<a href="${esc(log.issue.html_url || `https://github.com/${RELAY_REPO}/issues/${log.issue.number}`)}" target="_blank" rel="noopener">the relay's log</a>`;
   const silent = s.worker.lastSeen === null, changed = Date.parse(log.issue.updated_at || "");
   const headline = silent
-    ? `The relay has written nothing in its log in the last 24 hours${Number.isFinite(changed) ? ` (the log was last changed ${clock(changed)})` : ""}. Tokens posted now wait until it runs again, or relay them yourself with \`knos relay\`.`
+    ? `The relay has written nothing in its log in the last 24 hours${Number.isFinite(changed) ? ` (the log was last changed ${clock(changed)})` : ""}. Signed payments posted now wait until it runs again, or you can send them yourself with \`knos relay\`.`
     : s.headline;
   const none = `<span class="fine">The log does not say: this relay writes no status line.</span>`;
   const reasons = s.refused.reasons.slice(0, 5).map((r) => `<li>${esc(r.count)} × ${esc(r.reason)} <span class="fine">(last ${at(r.last)})</span></li>`).join("");
@@ -97,8 +97,8 @@ const code = (text, esc) => esc(text).replace(/`([^`]+)`/g, "<code>$1</code>");
  *  env: { gh, rpc, EXPLORER, esc, now (ms), file(path) } as web/app.js has them. Returns { start, stop }. */
 export function renderStatus(el, env = {}) {
   const esc = env.esc || escHtml, now = env.now || (() => Date.now()), file = env.file || jsonFile, doc = el.ownerDocument, $ = (id) => doc.getElementById(id);
-  el.innerHTML = `<h2>Relay and canary status</h2>
-    <p class="lede">Check the relay and a whole round.</p>
+  el.innerHTML = `<h2>Is the payment service running?</h2>
+    <p class="lede">See whether the relay is sending payments, and watch a full test payment.</p>
     <div class="card" id="relay-status">
       <h3>The public relay</h3>
       <details class="k-more"><summary>What the relay does</summary><p>A signed token is a comment on GitHub until someone carries it to Solana. The public relay does that about once a minute and pays the transaction fee;
@@ -117,7 +117,7 @@ export function renderStatus(el, env = {}) {
       <p class="fine">The money does not wait on that person: a refund after the deadline, the release of a holdback and the settling of a held payment can each be sent by anyone.
         What was measured over many runs (the canary's runs, the relay's attempts) is in this site's <a href="operations.json">operations.json</a>.</p>
     </div>`;
-  const gh = env.gh || (async (path) => { const r = await fetch(`https://api.github.com${path}`, { headers: { Accept: "application/vnd.github+json" } }); if (!r.ok) throw new Error(r.status === 403 || r.status === 429 ? "GitHub's free limit for this network is used up (60 reads an hour without login). Try again in an hour." : `GitHub said ${r.status}`); return r.json(); });
+  const gh = env.gh || (async (path) => { const r = await fetch(`https://api.github.com${path}`, { headers: { Accept: "application/vnd.github+json" } }); if (!r.ok) throw new Error(r.status === 403 || r.status === 429 ? "GitHub's free limit for your connection is used up (60 reads an hour without signing in). Try again in an hour." : `GitHub said ${r.status}`); return r.json(); });
   let live = null, started = false, stopped = false;
 
   function draw(log, stats, asof) {
@@ -183,19 +183,19 @@ export function renderIndex(el, weekly, esc = escHtml, feed = null) {
   const has = weekly && weekly.agents && Object.keys(weekly.agents).length > 0;
   el.innerHTML = `<h2>Agent PR Index</h2>
     <p class="lede">How often GitHub's checks agree with “tests pass”, per agent, per week.</p>
-    <div class="card" id="index-card">${has ? "" : `<p class="status" id="index-none">This build has no agent_weekly.json, or the file holds no agent, so no table is shown. The table of the repository is in <a href="${DOCS}/INDEX.md" target="_blank" rel="noopener">docs/INDEX.md</a>.</p>`}</div>
+    <div class="card" id="index-card">${has ? "" : `<p class="status" id="index-none">This copy of the site has no weekly agent data, so no table is shown. The table of the repository is in <a href="${DOCS}/INDEX.md" target="_blank" rel="noopener">docs/reference/INDEX.md</a>.</p>`}</div>
     ${has ? `<div class="card" id="index-limits"><h3>What this is, and what it is not</h3>
       <p class="fine" id="index-source">Read ${esc(weekly.read || "on a day the file does not name")}. ${esc(String(weekly.source || "").replace(/([^.])$/, "$1."))}</p>
       ${Array.isArray(weekly.limits) && weekly.limits.length ? `<ul class="fine">${weekly.limits.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}
       <p class="fine">The numbers are the file <a href="agent_weekly.json">agent_weekly.json</a>, written by
         <a href="https://github.com/drexthealpha/Knos/blob/main/scripts/agent_pr_index.py" target="_blank" rel="noopener">scripts/agent_pr_index.py</a>; how a pull request is told to be an agent's, what counts as a claim and what the script cannot see are in
-        <a href="${DOCS}/INDEX.md" target="_blank" rel="noopener">docs/INDEX.md</a>. To check one pull request yourself: <a href="#check">Check</a>.</p></div>` : ""}`;
+        <a href="${DOCS}/INDEX.md" target="_blank" rel="noopener">docs/reference/INDEX.md</a>. To check one pull request yourself: <a href="#check">Check</a>.</p></div>` : ""}`;
   if (has) renderIndexBoard(el.querySelector("#index-card"), weekly, { feed });
   return el;
 }
 
 // ---- Pilot ------------------------------------------------------------------------------------------------------------
-// docs/PILOT.md, shortened. The price is the price book's Pilot row (price.js), so the page and the book cannot differ.
+// docs/reference/PILOT.md, shortened. The price is the price book's Pilot row (price.js), so the page and the book cannot differ.
 export const PILOT_DELIVERABLES = [
   ["One reconciled invoice", "The buyer's accepted work for the 30 days, from both suppliers, set against what each billed, as one list of deliverables: the order, the milestone, the artifact, the policy version that judged it and the verdict. A deliverable is counted once, whatever number of pull requests carried it."],
   ["A mismatch list", "Every difference between what was accepted and what was billed, named: billed and not accepted; accepted and not billed; billed twice; judged differently by the two sides. A mismatch is a dispute line, never an invoice line."],
@@ -234,7 +234,7 @@ export function renderPilot(el, esc = escHtml) {
       <details class="k-more"><summary>What stands in the way, plainly</summary>
       <ul>${PILOT_BLOCKERS.map(([head, what]) => `<li><strong>${esc(head)}</strong> ${esc(what)}</li>`).join("")}</ul></details>
       <p class="fine">Not included: private repositories under a contract, single sign-on tried with a real provider, a service-level agreement, Knos paying the suppliers (the buyer pays from its own bank; mainnet is not touched), a second person to call, or a security review of Knos by anyone outside it. There has been none.</p>
-      <p class="fine">This page has no form and collects nothing. What the buyer and each supplier do, what is measured and how: <a href="${DOCS}/PILOT.md" target="_blank" rel="noopener">docs/PILOT.md</a>.</p>
+      <p class="fine">This page has no form and collects nothing. What the buyer and each supplier do, what is measured and how: <a href="${DOCS}/PILOT.md" target="_blank" rel="noopener">docs/reference/PILOT.md</a>.</p>
     </div>`;
   return el;
 }

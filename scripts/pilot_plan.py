@@ -4,7 +4,7 @@
     python scripts/pilot_plan.py assign --tasks FILE --seed N [--block 4] [--out FILE]
     python scripts/pilot_plan.py power --baseline P --effect D [--alpha 0.05] [--power 0.8] [--json]
 
-The plan is docs/PILOT.md, "A fair test, written down before it starts". Nothing here has been run with a buyer.
+The plan is docs/reference/PILOT.md, "A fair test, written down before it starts". Nothing here has been run with a buyer.
 
 assign. FILE lists the tasks: a CSV with the columns `buyer,task`, or JSON, either a list of {"buyer", "task"} or
 {"tasks": [...]} of them. A task can be a planned piece of work or a numbered slot ("the 7th task this buyer opens").

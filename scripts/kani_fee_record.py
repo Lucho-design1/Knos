@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Runs the Kani harnesses of programs-v2/fee_proofs and records what the solver answered in docs/kani.json, under
 `fee_proofs` (the rest of that file, the run of programs-v2/knos_pay/src/proofs.rs, is not touched), and the same
-summary under invariant 8 of docs/invariants.json. docs/INVARIANTS.md says it in words; tests/test_fee_proofs.py holds
+summary under invariant 8 of docs/invariants.json. docs/reference/INVARIANTS.md says it in words; tests/test_fee_proofs.py holds
 the page's words to the record.
 
     python scripts/kani_fee_record.py --harness <name>   # run one harness alone, within the limit, and record it

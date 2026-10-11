@@ -105,7 +105,7 @@ export interface Client1 {
 export function client(ids: ProgramIds): Client1;
 
 // ---- who can change a program --------------------------------------------------------------------------------------------
-/** The upgrade authority in a program-data account: an address, null when the program is immutable, undefined when the
+/** The upgrade authority in a program-data account: an address, null when the program has no upgrade authority, undefined when the
  *  bytes are not a program-data account (the program is not deployed). */
 export function upgradeAuthority(programDataBytes: Bytes | null): Address | null | undefined;
 export function squadsVault(multisig: Address, index?: number): Promise<Address>;
@@ -270,7 +270,7 @@ export interface V2Client {
   versionIx(): Instruction;
   /** The wallet that opened a Balance sets its side account. Limits are in the mint's smallest units (0: none). */
   setBalanceXIx(a: { authority: Address; balance: Address; dayLimit?: Num; totalLimit?: Num; repos?: Num[]; wfSha?: string }): Promise<Instruction>;
-  /** FEE_OWNER sets the fee rate of the orders of one repository owner until `expires`: 10 to 30 basis points under the 0.3.18 fee (knos_pay 2.2), 50 to 250 before. */
+  /** FEE_OWNER sets the fee rate of the orders of one repository owner until `expires`: 10 to 30 basis points under knos_pay 2.2 (live since 9 October 2026), 50 to 250 under earlier builds. */
   setPlanIx(a: { feeOwner: Address; payer: Address; ownerId: Num; feeBps: number; expires: Num }): Promise<Instruction>;
   /** A wallet funds an order for an issue of any public repository: `amount` for the payees plus orderFee(amount) on top. */
   fundOrderWalletIx(a: { funder: Address; funderToken: Address; mint: Address; repoId: Num; issue: Num; amount: Num; wfRepo: string; wfSha: string;
@@ -331,11 +331,11 @@ export interface V2 {
   readonly HB_LEN: number; readonly DONE_LEN: number; readonly DONE_LEN_21: number; readonly GRACE: number; readonly AS_LEN: number; readonly USED_LEN: number;
   /** Seconds: how long a cancelled order still takes a pay token, and how long after it was made a used marker can be closed. */
   readonly NOTICE: number; readonly USED_KEEP: number;
-  /** The two fee rules of knos_pay. `new` (0.3.18, knos_pay 2.2): 0.30% of the amount, at least 0.05, one rate, a Plan no lower than 0.10%.
-   *  `old` (0.3.14, knos_pay 2.1): 2.5% of the first 1,000, 1% to 50,000, 0.5% above, at least 0.40. The LIVE program decides which is charged:
-   *  the public programs charge `old` until the upgrade to 2.2 executes. Orders funded before the upgrade keep the rate fixed at their funding. */
+  /** The two fee rules of knos_pay. `new` (knos_pay 2.2): 0.30% of the amount, at least 0.05, one rate, a Plan no lower than 0.10%.
+   *  `old` (knos_pay 2.1 and 2.0): 2.5% of the first 1,000, 1% to 50,000, 0.5% above, at least 0.40. The LIVE program decides which is charged:
+   *  the public programs have charged `new` since 9 October 2026. Orders funded before the upgrade keep the rate fixed at their funding. */
   readonly FEE_RULES: { readonly new: FeeRule; readonly old: FeeRule };
-  /** What Version logs from the build with the 0.3.18 fee on: 2. */
+  /** What Version logs from knos_pay 2.2 on: 2. */
   readonly FEE_VERSION: number;
   /** The rule of the knos_pay that answered `version` (Version's number): `new` from 2 up or when nobody was asked, `old` below. */
   feeRule(version?: number | null): FeeRule;
@@ -364,7 +364,7 @@ export interface V2 {
   destination(bind: Bind | null, audience: string): Address | null;
 
   /** The fee of an order, which its funder pays on top of the amount, as the program of `rule` computes it: `bps` (the rule's rate, or the
-   *  owner's Plan) of the amount, at least the rule's floor, no maximum. Default: the 0.3.18 rule. */
+   *  owner's Plan) of the amount, at least the rule's floor, no maximum. Default: the knos_pay 2.2 rule. */
   orderFee(amount: Num, bps?: number | null, decimals?: number, rule?: FeeRule): Num;
   /** An order's scope. Public: sha256("knos3:scope" || repo id || issue). Private: sha256(salt || repo id || issue). */
   scopeOf(repoId: Num, issue: Num, salt?: Bytes | string | null): Promise<Bytes>;

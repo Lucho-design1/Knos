@@ -85,9 +85,9 @@ def test_only_runs_the_named_checks_in_the_fixed_order_and_refuses_a_name_it_doe
 def test_every_check_supports_capabilities_the_manifest_lists_and_the_named_things_are_the_recorded_ones():
     listed = {c["id"]: c for c in MANIFEST["capabilities"]}
     assert set(rp.ORDER) == set(rp.SUPPORTS) and all(set(caps) <= set(listed) for caps in rp.SUPPORTS.values())
-    # the payment is the rehearsal's, on the staging deployment docs/CAPABILITIES.md names: the manifest's note of order_pay
+    # the payment is the rehearsal's, on the staging deployment docs/reference/CAPABILITIES.md names: the manifest's note of order_pay
     # gives its signature, and because those addresses are not the public program ids, it is no evidence of a stage
-    rehearsal = (ROOT / "docs" / "CAPABILITIES.md").read_text(encoding="utf-8").split("## The 0.3.14 rehearsal on devnet", 1)[1]
+    rehearsal = (ROOT / "docs" / "reference" / "CAPABILITIES.md").read_text(encoding="utf-8").split("## The 0.3.14 rehearsal on devnet", 1)[1]
     assert rp.PAYMENT["signature"] in listed["order_pay"]["note"] and rp.PAYMENT["signature"] in rehearsal
     assert rp.PAYMENT["pay"] in rehearsal and rp.PAYMENT["oidc"] in rehearsal
     assert (listed["order_pay"]["evidence"].get("exercised") or {}).get("signature") != rp.PAYMENT["signature"]
@@ -212,7 +212,7 @@ def test_an_own_run_completes_is_filed_apart_and_counts_for_nothing(tmp_path):
     # that the check is red for them (it said that after the workflow had learned it: seen in the 0.3.19 staging run)
     flow = (ROOT / ".github" / "workflows" / "reproductions.yml").read_text(encoding="utf-8")
     assert 'into="$RUNNER_TEMP/sent/own"' in flow and '--own "${own[@]}"' in flow
-    page = (ROOT / "docs" / "REPRODUCE.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "REPRODUCE.md").read_text(encoding="utf-8")
     assert "does not yet check" not in page and "checked by `reproductions.yml`" in page
 
 
@@ -346,7 +346,7 @@ def test_nothing_is_reproduced_yet_and_the_folder_holds_no_file_of_ours():
     assert rp.own_runs(ROOT, cap.archived_keys(), OWN) == ({}, [])
     assert cap.reproductions() == ({}, []) and cap.key_problems() == []
     assert not [c["id"] for c in MANIFEST["capabilities"] if c["stage"] == "reproduced"]
-    readme, doc = ((ROOT / p).read_text(encoding="utf-8") for p in ("reproductions/README.md", "docs/REPRODUCE.md"))
+    readme, doc = ((ROOT / p).read_text(encoding="utf-8") for p in ("reproductions/README.md", "docs/reference/REPRODUCE.md"))
     assert "Nobody outside has sent a reproduction yet" in readme and "Nobody outside has done this yet" in doc
     # the archived keys are GitHub's as the tests' own fixture recorded them
     fixture = rp.keys_of(json.loads((ROOT / "tests" / "fixtures" / "github_jwks_2026-10-02.json").read_text(encoding="utf-8")))

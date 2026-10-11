@@ -4,7 +4,7 @@
     python show_badge.py receipt.json [--digest <sha256 the receipt was published under>] [--out badge.svg]
 
 It prints one JSON line and exits 0 when the badge may be shown, 1 when it may not. Nothing is asked of Knos and no
-network is used: the receipt is checked against its own rules (docs/RECEIPT.md), and the badge is drawn only when
+network is used: the receipt is checked against its own rules (docs/reference/RECEIPT.md), and the badge is drawn only when
 every rule holds and the verdict is `accepted`. A receipt that does not check is `insufficient evidence`, not a
 rejection. The badge cannot be bought: this function is the only way to get one.
 

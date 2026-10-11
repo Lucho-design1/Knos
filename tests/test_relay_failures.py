@@ -1,7 +1,7 @@
 """Every way a token can wait minutes for the public relay, each under a fake GitHub and a clock the test moves:
 a repository the worker has not seen, a handover with no run relaying, a first send that fails, GitHub's rate limits,
 a workflow that queued. What the relay can do about each is asserted; what it cannot is measured and has its bound in
-docs/RELAY.md ("Where a token waits"). Then the journal: a token is written down before it is sent, retried on fixed
+docs/reference/RELAY.md ("Where a token waits"). Then the journal: a token is written down before it is sent, retried on fixed
 times until it has an answer, and a relay killed between the send and the confirmation pays nobody twice (LiteSVM)."""
 from __future__ import annotations
 

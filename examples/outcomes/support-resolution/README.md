@@ -12,7 +12,7 @@ work, when a ticket counts. The meter counts by that rule, and the supplier's in
 **The terms.** A ticket is one accepted resolution when the agent marked it solved, no person took it over (no
 escalation, no human reply), the customer did not come back for 72 hours after `solved` (no reopening, no further
 message), and those 72 hours have passed. The customer's confirmation counts, and so does leaving without asking for
-more. A ticket is billed once. [docs/OUTCOMES.md](../../docs/OUTCOMES.md), "Support resolutions", names the two
+more. A ticket is billed once. [docs/reference/OUTCOMES.md](../../../docs/reference/OUTCOMES.md), "Support resolutions", names the two
 published definitions this mirrors.
 
 **Run it** from the repository's root:

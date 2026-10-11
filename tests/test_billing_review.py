@@ -32,7 +32,7 @@ def test_a_review_without_a_case_or_with_a_negative_price_is_refused(row):
 def test_the_arithmetic_unit_costs_shows():
     got = b.review_budget()
     assert (got["fee"], got["budget"], got["outcomes"]) == (Decimal("0.00198"), Decimal("0.000099"), 252_525)
-    doc = (ROOT / "docs" / "UNIT_COSTS.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "UNIT_COSTS.md").read_text(encoding="utf-8")
     for said in ("| Acceptance on a 0.99 USD outcome at 0.20% | 0.00198 USD |", "0.000099 USD, about 0.0001", "252,525 outcomes, about 250,000",
                  b.RULES["exceptional"], "`knos appeal`"):
         assert said in doc, said

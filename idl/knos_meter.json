@@ -4,6 +4,7 @@
   "docs": [
     "Acceptance without escrow: a neutral on-chain count of evaluations that GitHub signed, paid from prepaid credits. It moves no customer money.",
     "Upgradeable only through a multisig with a public 48-hour delay, until an outside review.",
+    "The multisig is 2 of 3, and today one person holds all three keys.",
     "A native program: this file is written by hand from programs-v2/knos_meter/src (lib.rs lists every instruction, state.rs every account) and checked by tests/test_meter_chain.py.",
     "Instruction data is the discriminant byte, then the arguments in order, little-endian, with no padding.",
     "token is a VERIFIED GitHub Actions token account owned by knos-oidc (the second deployment's verifier), from a GitHub-hosted runner, at most an hour past its expiry,",

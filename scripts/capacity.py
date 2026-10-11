@@ -1,6 +1,6 @@
 """Capacity of the whole workflow: what one order costs outside the chain, and which limit a customer meets first.
 
-    python scripts/capacity.py --write            # count again, write docs/load.json's `workflow` section and docs/LOAD.md
+    python scripts/capacity.py --write            # count again, write docs/load.json's `workflow` section and docs/reference/LOAD.md
     python scripts/capacity.py -R 10 -N 1000      # one customer: 10 repositories, 1,000 accepted deliverables a day
 
 scripts/load.py measures the chain side. A chain number is not the system's capacity: an order is also two workflow
@@ -38,7 +38,7 @@ sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tests"), str(ROOT / "scripts")]
 JSON, BENCH = ROOT / "docs" / "load.json", ROOT / "docs" / "bench.json"
 DAY = 86_400
 READ = "2026-10-05"                 # the day the published limits below were read
-SIZES = ((1, 10), (10, 1_000), (100, 100_000))     # (repositories, accepted deliverables a day): the three customers of the page
+SIZES = ((1, 10), (10, 1_000), (100, 100_000))     # (repositories, accepted deliverables a day): the three example customer sizes the page models
 OWN, PUBLIC = "own", "public"       # who carries the token: the job itself, with the repository's fee key; Knos's public worker
 SERIAL_PASS = "the public relay's pass, at the serial rate recorded"       # the row of `bounds` for what one relayer carries in a day
 
@@ -194,7 +194,7 @@ def constants(counted: dict | None = None, load: dict | None = None, bench: dict
         "latency": {"merge_to_paid_s": {k: m2p[k] for k in ("count", "median", "p95")}, "window": m2p["window"],
                     "comment_to_funded_median_s": lat.get("comment_to_funded", {}).get("median"),
                     "stage_split": "not apart in these samples; scripts/latency_stages.py splits"
-                                   " the payments whose relay log line carries the stage fields: docs/RELAY.md, \"Where a token waits\""},
+                                   " the payments whose relay log line carries the stage fields: docs/reference/RELAY.md, \"Where a token waits\""},
     }
 
 
@@ -328,7 +328,7 @@ def main(argv=None) -> int:
     ap.add_argument("--plan", choices=tuple(LIMITS["concurrent_jobs"]), default="Free", help="the GitHub plan (concurrent jobs)")
     ap.add_argument("--peak", type=float, default=1.0, help="how many times the mean hour the busiest hour is (1: even over the day)")
     ap.add_argument("--relayers", type=int, default=1)
-    ap.add_argument("--write", action="store_true", help="count again and write docs/load.json's workflow section and docs/LOAD.md")
+    ap.add_argument("--write", action="store_true", help="count again and write docs/load.json's workflow section and docs/reference/LOAD.md")
     a = ap.parse_args(argv)
     if a.write:
         import load

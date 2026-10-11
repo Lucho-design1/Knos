@@ -499,7 +499,7 @@ def test_signing_asks_github_for_the_close_audience_and_keeps_the_token_beside_t
 def test_the_document_shows_what_the_example_ledgers_give():
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
-    doc = (root / "docs" / "METER.md").read_text(encoding="utf-8")
+    doc = (root / "docs" / "reference" / "METER.md").read_text(encoding="utf-8")
     buyer, seller = (L.load(root / "examples" / "meter" / f"{name}.jsonl") for name in L.ROLES)
     record = L.close(buyer, seller, 202610)
     assert record["state"] == "disputed" and all(f"IN DISPUTE {x['id']}: {x['why']}\n" in doc for x in record["disputed"])

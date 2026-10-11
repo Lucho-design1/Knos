@@ -446,9 +446,9 @@ check("  a line says how the other party recomputes it", (await text(page, "#ost
   check("  a payment on devnet is a demonstration in test money, never called paid", chips.some(([chip]) => chip === "devnet demonstration") && !chips.some(([chip]) => /^paid$|paid on/.test(chip)) && Object.values(con.CHIP).every((w) => WORDS.includes(w))
     && Object.keys(con.CHIP).sort().join() === [...fd.SETTLEMENTS].sort().join());
   const offered = await page.$$eval("#ost-exports [data-export]", (l) => l.map((b) => [b.dataset.export, b.textContent, b.nextElementSibling?.dataset.unverified === b.dataset.export ? b.nextElementSibling.textContent : ""]));
-  check("  five files for a finance system: the generic one, then NetSuite, SAP, Coupa and QuickBooks, each of those four marked best effort, unverified (docs/FINANCE.md)",
+  check("  five files for a finance system: the generic one, then NetSuite, SAP, Coupa and QuickBooks, each of those four marked best effort, unverified (docs/reference/FINANCE.md)",
     offered.map((o) => o[0]).sort().join() === "coupa,generic,netsuite,quickbooks,sap" && offered[0][0] === "generic" && offered.every(([fmt, , mark]) => (fmt === "generic" ? mark === "" : mark === "best effort, unverified"))
-    && Object.entries(fd.FORMATS).every(([fmt, f]) => f.unverified === (fmt !== "generic")) && /best effort|unverified/i.test(readFileSync(new URL("../../docs/FINANCE.md", import.meta.url), "utf8")), JSON.stringify(offered));
+    && Object.entries(fd.FORMATS).every(([fmt, f]) => f.unverified === (fmt !== "generic")) && /best effort|unverified/i.test(readFileSync(new URL("../../docs/reference/FINANCE.md", import.meta.url), "utf8")), JSON.stringify(offered));
   const shownHead = await text(page, "#ost-head");
   for (const fmt of ["generic", "netsuite"]) {
     const [download] = await Promise.all([page.waitForEvent("download"), page.click(`#ost-exports [data-export="${fmt}"]`)]);
@@ -638,7 +638,7 @@ chain.feed = { not: "a feed" };
 const nobody = await feesOf("nobody answers");
 check("nobody answers: the 0.3.18 number with both rules said, never a rule claimed as live", nobody.rule === "0.3.18" && nobody.source === "none"
   && nobody.note === `This is the fee from knos_pay 2.2. Until that upgrade is live the public program charges 2.50 on this order. ${KEEPS}`
-  && /once knos_pay 2\.2 is live; until that upgrade executes the public program charges the fee it charges before the upgrade \(2\.5% of the first 1,000, 1% to 50,000, 0\.5% above, at least 0\.40\)/.test(nobody.under) && nobody.under.endsWith(KEEPS), nobody);
+  && /\(knos_pay 2\.2, live on devnet since 9 October 2026; `knos status` says which build runs\)/.test(nobody.under) && nobody.under.endsWith(KEEPS), nobody);
 chain.payVersion = 1; chain.feed = null;
 
 await browser.close(); server.close();

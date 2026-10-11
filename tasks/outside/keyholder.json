@@ -14,5 +14,5 @@
  "counted_when": "the account that did it is not one of Knos's own (scripts/own_github_ids.json); shown as \"on tasks Knos funded itself\"",
  "amount": 5000000,
  "currency": "test USDC",
- "doc": "docs/KEYHOLDER.md"
+ "doc": "docs/reference/KEYHOLDER.md"
 }

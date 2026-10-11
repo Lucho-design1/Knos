@@ -1,6 +1,6 @@
 name: outcome on kubernetes
 
-# One outcome that is not code, signed by a workload identity that is not a forge (docs/OUTCOMES.md, "A Kubernetes
+# One outcome that is not code, signed by a workload identity that is not a forge (docs/reference/OUTCOMES.md, "A Kubernetes
 # cluster signs an outcome"). The job starts a kind cluster on the runner, runs the data-transformation example's
 # black-box suite as a Kubernetes Job under the service account knos-judge, and the pod asks its own cluster (the
 # TokenRequest API) for a token of that service account whose audience is the evaluation: knosm:eval:..., the meter's

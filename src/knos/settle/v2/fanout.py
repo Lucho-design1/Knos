@@ -1,7 +1,8 @@
 """One signed transaction sent to more than one endpoint, sent again until an endpoint takes it, and confirmed by its
 signature, in ONE status request for every transaction the process waits on.
 
-The 0.3.24 burst on devnet paid 22 of 40: the other 18 were turned away by the public endpoint (dropped connections,
+In a load test on devnet (Knos 0.3.24, 9 October 2026) 22 of 40 payments were paid: the other 18 were turned away by
+the public endpoint (dropped connections,
 timeouts, HTTP 408), each a payment whose ONE send's answer never came. A transaction's signature is its identity: the
 same signed bytes land at most once, however often and wherever they are sent. So `FanLedger` (a `knos.chain.Ledger`)
 
@@ -19,7 +20,7 @@ same signed bytes land at most once, however often and wherever they are sent. S
     time and WAIT_SLACK_S more have passed on the clock whatever the polls, so the caller may sign again over a fresh
     blockhash.
 
-Why the last three are so: the first 0.3.25 burst on devnet (10 October 2026) asked each transaction's status every
+Why the last three are so: the first load test of 0.3.25 on devnet (10 October 2026) asked each transaction's status every
 0.5 s and sent its bytes again every 2 s whatever an endpoint had answered. Forty payments at once asked about 80 status
 requests a second of an endpoint that takes 40 of one method per 10 seconds; it answered every one with 429, each poll
 waited out `chain.call`'s back-off (up to 15 s) while the wait was counted in polls, and 11 of 40 were paid in 23

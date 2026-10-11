@@ -1559,7 +1559,7 @@
    "stage": "tested",
    "evidence": {
     "implemented": {
-     "path": "docs/OUTCOMES.md",
+     "path": "docs/reference/OUTCOMES.md",
      "names": "examples/outcomes/"
     },
     "tested": {

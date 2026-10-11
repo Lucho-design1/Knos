@@ -99,7 +99,7 @@ def test_a_page_has_its_diagrams_and_their_captions_and_not_the_ones_it_shows():
     assert found[0].sha256 == hashlib.sha256(found[0].text.encode("utf-8")).hexdigest()
     assert [b.svg for b in found] == ["docs/diagrams/readme-1.svg", "docs/diagrams/readme-2.svg"]
     assert d.parse(README.replace("\n", "\r\n"), "README.md") == found          # a page saved on Windows is the same page
-    assert d.slug("docs/submission/NUMBERS.md") == "docs-submission-numbers"
+    assert d.slug("examples/witnessed/README.md") == "examples-witnessed-readme"
     assert [b.caption for b in d.parse("```mermaid\nflowchart TB\n  A\n```\n**Bold is not a caption**\n", "x.md")] == [None]
 
 

@@ -18,4 +18,4 @@ Report sha256 `<the hash the run printed>`. I am not the maintainer of Knos and 
 - [ ] The file is the artifact `knos-reproduction` of the run, unedited (an edited report no longer matches GitHub's signature, and the check here says so).
 - [ ] A check that failed is a bug, not a reproduction: I opened an issue with the report instead.
 
-What was awkward, unclear or broken on the way (this is the part nobody inside can write):
+What was awkward, unclear or broken on the way (only someone outside Knos can tell us this):

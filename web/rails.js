@@ -167,7 +167,7 @@ export function renderRails(el, ctx = {}) {
     <label${ctx.files === false ? " hidden" : ""}>Statement and status files <input type="file" data-rails-files accept=".json,application/json" multiple></label>
     <div data-rails-body></div>
     <p role="status" aria-live="polite" data-rails-said></p>
-    <p><a href="https://github.com/drexthealpha/Knos/blob/main/docs/RAILS.md">How the route works</a></p>
+    <p><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/RAILS.md">How the route works</a></p>
   </section>`;
   const body = el.querySelector("[data-rails-body]"), said = el.querySelector("[data-rails-said]");
   const draw = () => {

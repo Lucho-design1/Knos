@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         A vendor whose agent the Agent PR Index counts may reply to its row. The reply costs nothing.
-        It is listed in `docs/index_replies.json` and printed word for word on the vendor's page (docs/VENDORS.md and
+        It is listed in `docs/index_replies.json` and printed word for word on the vendor's page (docs/reference/VENDORS.md and
         the site's vendor page), with a link to this issue. A reply changes no number by itself: to say that pull
         requests were counted wrongly, use the "Dispute a row" form instead, which can change one.
         Knos never charges a vendor for its row, and a vendor cannot pay to change one.

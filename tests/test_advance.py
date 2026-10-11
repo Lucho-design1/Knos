@@ -184,11 +184,11 @@ def test_the_documents_say_who_carries_which_risk_and_how_a_reserve_returns_word
     from knos import advance, netting
 
     docs = Path(__file__).resolve().parent.parent / "docs"
-    said = " ".join((docs / "ADVANCE.md").read_text(encoding="utf-8").split())
+    said = " ".join((docs / "reference" / "ADVANCE.md").read_text(encoding="utf-8").split())
     assert [w for w, _t in advance.WHO_CARRIES] == ["buyer", "supplier", "financier", "Knos"]
     for who, what in advance.WHO_CARRIES:
         assert f"| {who} | {what} |" in said
-    net = " ".join((docs / "NETTING.md").read_text(encoding="utf-8").split())
+    net = " ".join((docs / "reference" / "NETTING.md").read_text(encoding="utf-8").split())
     for words in ("`RefundOrder` (knos_pay instruction 22)", "`Cancel` (instruction 21)", "`Withdraw`, instruction 2", "funded = brought + consumed + free"):
         assert words in net
     assert "RefundOrder (knos_pay instruction 22)" in netting.REFUND and "Cancel (instruction 21)" in netting.REFUND and "Withdraw, instruction 2" in netting.NOT_LOCKED

@@ -89,7 +89,7 @@
   "overlaps_above": true,
   "disputed": [],
   "dispute": "https://github.com/drexthealpha/Knos/issues/new?template=dispute-index-row.yml&title=Dispute+a+row%3A+codex%2C+week+of+2026-09-28&agent=codex&week=2026-09-28",
-  "method": "https://github.com/drexthealpha/Knos/blob/main/docs/INDEX.md"
+  "method": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/INDEX.md"
  },
  "limits": [
   "Knos wrote this file and nobody outside Knos has reviewed it: dispute it with the link in it.",
@@ -102,7 +102,7 @@
   "page": "https://drexthealpha.github.io/Knos/#record=codex",
   "file": "https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/records/codex.json",
   "dispute": "https://github.com/drexthealpha/Knos/issues/new?template=dispute-index-row.yml&title=Dispute+a+record%3A+codex&agent=codex&week=2026-09-28",
-  "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/RECORD.md"
+  "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECORD.md"
  },
- "sha256": "9cb97a4d3b4d1abe23ab952b0574db299f15996477ff2df7f961ff9ae2ca38c7"
+ "sha256": "41c3698b4006eae1cee8ece78a3ea674be544277a652f1ca05adb46457bc817c"
 }

@@ -5,7 +5,7 @@
 // organisation's budget would let this funding through and which rule decides, any earlier order or payment for the
 // same issue, and what a supplier can and cannot do alone when the repository is private. After: the receipt's five
 // parts, who answers when the service fails, and the orders that wait for a person. The words and the rules of those
-// panels are web/console.js; this file reads the chain and draws. docs/CONSOLE.md is the operator's guide.
+// panels are web/console.js; this file reads the chain and draws. docs/reference/CONSOLE.md is the operator's guide.
 // renderBuyer(el, env) draws it into `el`. The page sends nothing to Solana: the passkey signs one intent
 // (passkey_fund.js) and the page shows the one line `/knos passkey-fund ...` to post on the issue, which a relay
 // carries and pays for. It asks GitHub for the repository's id and the issue, devnet for the wallet and the order, and
@@ -124,7 +124,7 @@ export function renderBuyer(el, env = {}) {
   const $ = (id) => doc.getElementById(id);
   const gh = env.gh || (async (path) => {
     const r = await fetch(GH + path, { headers: { Accept: "application/vnd.github+json" } });
-    if ((r.status === 403 || r.status === 429) && r.headers.get("x-ratelimit-remaining") === "0") throw new Error("GitHub's free limit for this network is used up (60 reads an hour without login). Try again in an hour.");
+    if ((r.status === 403 || r.status === 429) && r.headers.get("x-ratelimit-remaining") === "0") throw new Error("GitHub's free limit for your connection is used up (60 reads an hour without signing in). Try again in an hour.");
     if (r.status === 404) throw new Error("GitHub has no such public repository, issue or account.");
     if (!r.ok) throw new Error(`GitHub said ${r.status}`);
     return r.json();
@@ -147,7 +147,7 @@ export function renderBuyer(el, env = {}) {
   if (!doc.getElementById("buy-step-style")) { const st = doc.createElement("style"); st.id = "buy-step-style"; st.textContent = STEP_STYLE; doc.head.appendChild(st); }
   el.innerHTML = `
     <h2>Buy work per outcome</h2>
-    <p class="lede">Fix price and terms first. Pay when a signed run accepts.</p>
+    <p class="lede">Fix price and terms first. Pay when GitHub's signed checks pass.</p>
     <div class="buy-top"><span class="devnet">Devnet: test USDC, never real money</span>
       <a class="k-btn quiet" id="buy-get-usdc" href="${FAUCET_ISSUE}" target="_blank" rel="noopener">Get test USDC</a>
       <button type="button" class="k-btn quiet" id="buy-go-records">See one order as four records</button></div>
@@ -343,7 +343,7 @@ export function renderBuyer(el, env = {}) {
     if (!v) return "The templates did not load. Reload the page.";
     if (v.units === null) return "Write the amount as a number like 50 or 7.5, with at most six decimals.";
     if (v.units < c.minAmount) return `An order takes at least ${show(c.minAmount)} test USDC.`;
-    if (v.units > c.maxAmount) return `An order takes at most ${show(c.maxAmount)} test USDC until an outside review.`;
+    if (v.units > c.maxAmount) return `An order takes at most ${show(c.maxAmount)} test USDC until an outside security review of the programs.`;
     if (v.days < 1 || v.days > MAX_DAYS) return `The deadline is a whole number of days from 1 to ${MAX_DAYS}.`;
     if (v.kind === "offer" && !LOGIN.test(v.vendor)) return "Write the vendor's GitHub account: letters, digits and single hyphens.";
     if (v.kind === "offer" && (v.rateUnits === null || v.rateUnits < c.minAmount || v.rateUnits > v.units)) return `The rate is a number from ${show(c.minAmount)} up to the budget.`;
@@ -594,7 +594,7 @@ export function renderBuyer(el, env = {}) {
         <p><a id="buy-open" class="button" href="${esc(link)}" target="_blank" rel="noopener">Copy the line and open the issue</a>
           <button type="button" id="buy-copy" class="ghost small">Copy the line</button></p>
         <p class="fine" data-fold="Where to paste the line, and who pays">GitHub cannot fill a comment box from a link, so the button copies the line and opens the issue: paste it in the comment box at the bottom, and press Comment. The public relay reads the line,
-          pays the transaction and the order's rent, and answers on the issue. You need no SOL. Then read the order under Invoice.</p>`;
+          pays the network fee and the order's storage deposit, and answers on the issue. You need no SOL. Then read the order under Invoice.</p>`;
       copyTo($("buy-copy"), line, $("buy-line"));
       $("buy-open").addEventListener("click", () => { navigator.clipboard?.writeText(line).catch(() => {}); });
       $("buy-order").value = intent.order;
@@ -631,7 +631,7 @@ export function renderBuyer(el, env = {}) {
       const t = template(), accepted = paid.length || events.some((e) => e.event === "held");
       const receipt = accepted ? `<h4>Accepted: the receipt</h4><details class="k-more" id="buy-receipt-more"><summary>The receipt, in its five parts</summary><dl class="parts" id="buy-receipt">
           ${con.receiptParts(o, events, tx, t ? t.trusted.slice(1) : null).map(([head, line]) => `<dt>${esc(head)}</dt><dd>${line}</dd>`).join("")}</dl></details>
-          <p class="fine">${paid.length ? `Paid ${esc(show(paid.reduce((n, e) => n + Number(e.amount), 0)))} test USDC to ${paid.length === 1 ? "one person" : `${paid.length} people`}. ` : ""}Each line is what the chain's log holds. The receipt as a file with every claim is specified in docs/RECEIPT.md.</p>` : "";
+          <p class="fine">${paid.length ? `Paid ${esc(show(paid.reduce((n, e) => n + Number(e.amount), 0)))} test USDC to ${paid.length === 1 ? "one person" : `${paid.length} people`}. ` : ""}Each line is what the chain's log holds. The receipt as a file with every claim is specified in docs/reference/RECEIPT.md.</p>` : "";
       const answers = `<h4>Who answers if this fails</h4><p id="buy-answers">${esc(con.ANSWERS)}</p>`;
       out.innerHTML = `<p class="verdict ${st.state === "none" ? "" : "ok"}" id="buy-state" data-state="${esc(st.state)}">${esc(st.state === "none" ? "No order yet" : st.state[0].toUpperCase() + st.state.slice(1))}</p>
         <p id="buy-state-words">${esc(st.words)}</p>

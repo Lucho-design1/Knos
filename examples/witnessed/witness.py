@@ -68,8 +68,8 @@ TIMEOUT = 600                       # seconds one command may take (--timeout); 
 TOP_UP = 10_000_000                 # test USDC (millionths) moved from --fund-from when the faucet says no: the budget's 10
 
 # The replies, word for word as Knos writes them (knos.faucet `_words` and `no`; knos.flow `_fund` and `_funded_order`).
-# A reply is read by these and nothing else: 0.3.21 and 0.3.22 waited for a transaction link in the funding reply, which
-# links the order's address, and read every funding as "nothing was funded".
+# A reply is read by these and nothing else. Do not wait for a transaction link in the funding reply: it links the
+# order's address, so every funding would read as "nothing was funded".
 FAUCET_SENT = re.compile(r"^Knos: [\d.]+ test USDC sent to `(?P<to>[1-9A-HJ-NP-Za-km-z]{32,44})`")
 FAUCET_NO = re.compile(r"^Knos: nothing was sent\. (?P<why>.*)", re.S)
 FUNDED = re.compile(r"^Knos: (?P<money>[\d.]+ .+?) from (?P<source>.+?) is in escrow for issue #(?P<issue>\d+)(?: as a (?:private )?work order)? "
@@ -77,7 +77,7 @@ FUNDED = re.compile(r"^Knos: (?P<money>[\d.]+ .+?) from (?P<source>.+?) is in es
 NOT_FUNDED = ("nothing was funded", "Knos: not confirmed yet.")      # every refusal of `_fund`, and the relay's time out
 # Which comment on the issue is the funding's reply. The workflow posts two, as the same account (github-actions[bot]):
 # first the token GitHub signed, `knos-fund: <jwt>` (knos.flow `_relay_there`, for a relayer to carry), then the reply.
-# 0.3.23 took the first comment after its own for the reply, and read the token as "nothing was funded". Every reply
+# Taking the first comment after our own as the reply is wrong: the token comes first. Every reply
 # of the flow and of the command grammar (knos.commands.reply) starts "Knos: "; a token comment never does.
 FLOW_REPLY = re.compile(r"\A\s*Knos: ")
 SETTLED = re.compile(r"settled by (?P<tx>[1-9A-HJ-NP-Za-km-z]{64,90}) in slot (?P<slot>\d+)")     # `knos statement settle-sync`
@@ -163,7 +163,7 @@ def _comment(shell: Shell, repo: str, issue: int, body: str) -> int:
 # ---- the steps ----------------------------------------------------------------------------------------------------------
 def repo(s: dict, sh: Shell) -> dict:
     """The repository made from the template. A second run by one account finds the one it made before (`gh repo create`
-    refuses a name that exists: 0.3.23's second run stopped here): it is cloned here, unless DIR holds its clone, and its
+    refuses a name that exists): it is cloned here, unless DIR holds its clone, and its
     caller workflows are brought to the template's."""
     work, updated = s["dir"] / NAME, None
     if sh.run(["gh", "api", f"repos/{s['repo']}"])[0] != 0:

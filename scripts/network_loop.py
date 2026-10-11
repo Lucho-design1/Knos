@@ -4,7 +4,7 @@
     buyer adopts -> suppliers integrate -> a supplier reuses the integration with another buyer -> the acceptance
     format spreads -> the record improves decisions -> more buyers adopt
 
-Each link has one counter here, and docs/MARKET.md, section 7, prints them. Three are read from the same job records
+Each link has one counter here, and docs/reference/MARKET.md, section 7, prints them. Three are read from the same job records
 scripts/outsiders.py counts (its rules decide who is outside: `funder_of`, `payees_of`); the others are read from this
 repository: the report files of reproductions/, and the counts a person keeps by hand in docs/facts.json.
 

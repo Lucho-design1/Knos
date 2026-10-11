@@ -26,15 +26,15 @@ branding:
 #     commit's finished checks, and refused when one failed;
 #   - the repository's own rules (CONTRIBUTING.md), read from the base commit, so a pull request cannot edit them.
 #
-# Two things the workflow above gets right, and why. The job is called `knos`: by a name that starts with "knos" Knos
-# tells its own earlier runs on a commit from the checks it judges by. And it is a workflow file of its own: Knos
-# never counts the jobs of its own workflow run as evidence, so tests in the same file would not be read.
+# Two things the workflow above gets right, and why. Name the job `knos`. When Knos reads a commit's checks, it skips
+# every job whose name starts with "knos", so it never counts its own earlier runs. And it is a workflow file of its
+# own: Knos never counts the jobs of its own workflow run as evidence, so tests in the same file would not be read.
 #
-# It needs no `pull_request_target`, no secret and no id-token: a `pull_request` run's read-only token is enough, also
-# for a pull request from a fork. Such a run can save nothing, so this check keeps no memory between runs; its result
+# It needs no `pull_request_target`, no secret and no id-token. A `pull_request` run's read-only token is enough, also
+# for a pull request from a fork. Such a run can save nothing, so this check keeps no memory between runs. Its result
 # is the job's own conclusion and summary. Knos is installed from this action's own commit (the one the caller
-# pinned) with exactly the dependencies uv.lock names. Nothing is written to the workspace: the base commit, the diff
-# and the evidence are under the runner's temp directory.
+# pinned), with exactly the dependencies uv.lock names. Nothing is written to the workspace. The base commit, the diff
+# and the evidence are kept under the runner's temp directory.
 outputs:
   passed:
     description: "true when the pull request's claims and the repository's rules hold"

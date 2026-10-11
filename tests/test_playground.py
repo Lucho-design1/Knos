@@ -67,7 +67,7 @@ def test_the_document_says_the_limits_the_code_holds_and_claims_nobody():
     spec = importlib.util.spec_from_file_location("small_repos_playground", ROOT / "scripts" / "small_repos.py")
     small = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(small)
-    doc = (ROOT / "docs" / "PLAYGROUND.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "PLAYGROUND.md").read_text(encoding="utf-8")
     lib = (ROOT / "programs-v2" / "knos_pay" / "src" / "lib.rs").read_text(encoding="utf-8")
     assert "pub const FAUCET_CAP: u64 = 100_000_000;" in lib and "pub const FUND_PERIOD: i64 = 60;" in lib and pay.FAUCET_CAP == 100_000_000
     assert "| One funding | at most 100 test USDC | the program (`FAUCET_CAP`) |" in doc and "one faucet funding a minute | the program (`FUND_PERIOD`, error 90)" in doc
@@ -94,7 +94,7 @@ def test_the_document_says_the_limits_the_code_holds_and_claims_nobody():
     assert not any(w in low for w in ("immutable", "audited", "customers")) and "## How it is counted" in doc
     # the site links the same place and the same repository
     site = (ROOT / "web" / "playground.js").read_text(encoding="utf-8")
-    assert f'export const REPO = "{playground.REPO}";' in site and "docs/PLAYGROUND.md" in site and "#how-it-is-counted" in site
+    assert f'export const REPO = "{playground.REPO}";' in site and "docs/reference/PLAYGROUND.md" in site and "#how-it-is-counted" in site
 
 
 def test_the_site_draws_the_playground_from_mocked_data_and_asks_only_github_and_itself():

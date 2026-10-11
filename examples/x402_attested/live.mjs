@@ -7,7 +7,7 @@
 //   node examples/x402_attested/live.mjs status --rpc URL --order ADDRESS [--program ID]        # escrowed, paid or refunded
 //   node examples/x402_attested/live.mjs refund --rpc URL --key any.json --order ADDRESS        # after the deadline: back to the funder
 //
-// `run`, `buy`, `status` and `refund` print one JSON object. The offer file is offer.devnet.json's shape; docs/X402.md
+// `run`, `buy`, `status` and `refund` print one JSON object. The offer file is offer.devnet.json's shape; docs/reference/X402.md
 // has the command the release runs on devnet. No package to install.
 import { readFileSync } from "node:fs";
 

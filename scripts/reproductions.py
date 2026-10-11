@@ -9,7 +9,7 @@ of scripts/own_github_ids.json, or a repository of drexthealpha) is never listed
 A file that does not verify, or in which a check failed or none passed, is listed under `refused`, with why.
 
 The count it prints is the outside reproductions count: owners, runs, and the wall time of each run (from the
-workflow's first step to GitHub's signature, both signed; empty for a report made before 0.3.25). Standard library
+workflow's first step to GitHub's signature, both signed; empty for a report made by Knos 0.3.24 or older). Standard library
 only: it runs on a bare Python, as the check of a pull request does.
 """
 from __future__ import annotations

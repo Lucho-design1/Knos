@@ -4,7 +4,7 @@
 
 Every operation is answered by the function the rest of Knos uses (src/knos/receipt.py, ids.py, terms.py, ledger.py and
 settle/v2), except statement.hash: Knos writes a statement's hash and has no function that reads one back, so the few
-lines below do what docs/CONFORMANCE.md says. Another implementation needs none of this file: only the protocol in
+lines below do what docs/reference/CONFORMANCE.md says. Another implementation needs none of this file: only the protocol in
 conformance/run.py.
 """
 

@@ -13,7 +13,7 @@ export const WORKED = [100, 5_000, 100_000];      // whole units
 
 // The sentence the page says about the version of the program, from what it answered.
 export function versionWords(version, jobFee, c, upgrade = "") {
-  if (version >= FEE_VERSION) return `the program is 2.2 or later: at release it takes what the calculator below says, the funder paying the fee on top of the amount.`;
+  if (version >= FEE_VERSION) return `the payment program on devnet is the current one: it charges what the calculator below shows, paid by the funder on top.`;
   // 2.1 is live and charges the fee of its own build: the calculators below show that fee (drawLive), and the next one in a line
   if (version >= 1) return `the program on devnet is 2.1. ${feeWords(version)} The calculator below shows the fee it charges today.`;
   if (version === 0) {
@@ -46,10 +46,10 @@ export function drawLive(dl, live, esc = (t) => String(t)) {
 }
 
 // ---- the calculator ---------------------------------------------------------------------------------------------------
-export const BILLING_DOC = "https://github.com/drexthealpha/Knos/blob/main/docs/MARKET.md#3-the-price-book";
+export const BILLING_DOC = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/MARKET.md#3-the-price-book";
 // where each slider stops: [least, most, step]
 export const RANGES = Object.freeze({ evaluations: [0, 2_000_000, 10_000], accepted: [0, 30_000_000, 50_000], onchain: [0, 100, 5], lookups: [0, 5_000, 10] });
-// the worked customer of docs/MARKET.md: Business, 110,000 evaluations a month, 10 million accepted a year
+// the worked customer of docs/reference/MARKET.md: Business, 110,000 evaluations a month, 10 million accepted a year
 export const START = Object.freeze({ plan: "business", evaluations: "110,000", accepted: "833,333.33", onchain: "0", lookups: "0" });
 const STYLE = `
 .bill form { display: grid; gap: 12px 20px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); margin: 0 0 16px; }
@@ -89,10 +89,10 @@ const TIER_NAMES = BILL.acceptBps.map((bps, n) => `${rateOf(bps)} ${n === 0 ? "t
 export function billRows(e) {
   return [
     ["control", "Control", usd(e.control), e.deliverable ? "a year" : "from; not deliverable yet", ""],
-    ["meter", "Meter", usd(e.meter), `${count(e.billable)} billable a month`, e.meter ? "" : "yes"],
-    ["acceptance", "Acceptance", usd(e.acceptance), "on value reconciled off chain", e.acceptance ? "" : "yes"],
+    ["meter", "Meter", usd(e.meter), `${count(e.billable)} billable a month, at the proposed price`, e.meter ? "" : "yes"],
+    ["acceptance", "Acceptance", usd(e.acceptance), "on value matched outside Solana", e.acceptance ? "" : "yes"],
     ["onchain", "Paid on chain", usd(e.paidOnChain), "at release; never charged again", e.paidOnChain ? "" : "yes"],
-    ["rebate", "Volume rebate", `${e.rebate ? "-" : ""}${usd(e.rebate)}`, e.volume ? "by contract, on chain value" : "needs a contract", e.rebate ? "" : "yes"],
+    ["rebate", "Volume rebate", `${e.rebate ? "-" : ""}${usd(e.rebate)}`, e.volume ? "by contract, on value paid through Solana" : "needs a contract", e.rebate ? "" : "yes"],
     ["records", "Record lookups", usd(e.records), `${(BILL.recordCents / 100).toFixed(2)} a lookup`, e.records ? "" : "yes"],
     ["total", "Total a year", usd(e.total), "USD, billed to the buyer", ""],
     ["devnet", "Fees on devnet", "0.00", DEVNET, ""],
@@ -153,7 +153,7 @@ export function renderPricing(el, ctx = {}) {
       row.querySelector(".k-num").textContent = usd(t.of);
     });
     $("bill-tiers").dataset.volume = e.volume ? "yes" : "no";
-    $("bill-benefit").textContent = `Demand a benefit of ${BILL.benefitRule} to 1: ${usd(e.benefit)} a year.`;
+    $("bill-benefit").textContent = `Rule of thumb: savings of ${BILL.benefitRule} times the price, ${usd(e.benefit)} a year.`;
     return e;
   }
   // a slider and its box hold one number: moving either writes the other
@@ -181,7 +181,7 @@ export function initPricing(ctx) {
   const view = $("view-pricing");
   if (!bill && view) { bill = document.createElement("div"); bill.id = "bill"; bill.className = "k-card"; view.insertBefore(bill, view.querySelector(".card, .k-card")); }
   renderPricing(bill, { ...ctx, live });
-  // the price book: its rows are written here from price.js, in the book's own words (docs/MARKET.md, "The price book"),
+  // the price book: its rows are written here from price.js, in the book's own words (docs/reference/MARKET.md, "The price book"),
   // as many columns as the page's table has, and the rule it is published with (id "price-rule")
   const set = (id, words) => { const el = $(id); if (el) el.textContent = words; };
   const table = $("price-book"), book = table?.querySelector("tbody"), columns = table?.querySelectorAll("thead th").length || 3;
@@ -249,7 +249,7 @@ export function initPricing(ctx) {
     out.innerHTML = `<div class="table-wrap"><table id="meter-table"><tbody>
       ${row("free", "Free", count(m.free), `an organisation's first ${count(BILL.meterFree)} a month`)}
       ${row("billable", "Billable", count(m.billable))}
-      ${row("list", "Cost at the price", usd(m.cost), `${BILL.meterPerThousandCents / 100_000} USD each`)}</tbody></table></div>
+      ${row("list", "Cost at the proposed price", usd(m.cost), `${BILL.meterPerThousandCents / 100_000} USD each (proposed)`)}</tbody></table></div>
       <p class="fine">A retry or a duplicate is free. A rejection counts. Charged from prepaid credits.</p>`;
   }
 

@@ -54,8 +54,8 @@ from pathlib import Path
 
 from . import ids
 
-FREE_PER_MONTH = 100_000    # the price book's Meter line: an organisation's first evaluations of a month cost nothing
-RATE = 2_000                # then 0.002 USD each, in millionths, from prepaid credits (knos_meter on devnet keeps its own constants: knos.settle.v2.meter)
+FREE_PER_MONTH = 100_000    # the PROPOSED price book's Meter line: an organisation's first evaluations of a month cost nothing
+RATE = 2_000                # then 0.002 USD each (proposed), in millionths, from prepaid credits (the deployed knos_meter charges 0.05 after 10,000 free: knos.settle.v2.meter)
 MICRO = 1_000_000
 ZERO = bytes(32)            # a Ledger account's running hash before its first batch
 _HEX = set("0123456789abcdef")
@@ -1233,7 +1233,7 @@ def numbers(c: Canon, month: int) -> Numbers:
 
 
 # -- one deliverable is billed once ------------------------------------------------------------------------------------------
-# The rules, as docs/METER.md prints them (tests hold the two together). `case`: what happened. `is`: what the ledger
+# The rules, as docs/reference/METER.md prints them (tests hold the two together). `case`: what happened. `is`: what the ledger
 # makes of it. `billed`: what it adds to the accepted outcomes, the number a per-outcome price multiplies.
 RULES = (
     ("a retry", "the same deliverable and artifact, judged again", "a new evaluation", "nothing: the deliverable is billed once"),
@@ -1740,7 +1740,7 @@ def register(app, out, Stop, help_rows: list | None = None, panel: str | None = 
     typer = importlib.import_module("typer")       # the command line's package, named here and not imported: the relay reaches this module on an install without it
 
     meter = typer.Typer(add_completion=False, help="The meter's off-chain ledger: build a batch, check a ledger against the chain, prove one evaluation, "
-                                                   "set the buyer's ledger against the seller's, correct an entry, close a month and state it.")
+                                                   "compare the buyer's ledger with the seller's, correct an entry, close a month and print its statement.")
     app.add_typer(meter, name="meter")
     if help_rows is not None:
         help_rows.append(("meter", panel, "The meter's ledger: batch, verify, prove, reconcile, correct, close, statement, export."))
@@ -1775,7 +1775,7 @@ def register(app, out, Stop, help_rows: list | None = None, panel: str | None = 
     def batch_(events: Path = typer.Argument(..., help="evaluations, one a line: ledger lines or knosm:eval:... audiences"),
                ledger: Path = typer.Option(..., "--ledger", help="the ledger file the batch is added to (made if it is not there)"),
                month: str = typer.Option(..., "--month", help="the month the batch is counted in, YYYY-MM"),
-               claim: bool = typer.Option(False, "--claim", help="the seller's own count (ClaimBatch) instead of the buyer's (RecordBatch)"),
+               claim: bool = typer.Option(False, "--claim", help="record the seller's own count instead of the buyer's"),
                corrections: Path = typer.Option(None, "--corrections", help="correction lines to carry in this batch (default: <ledger>.corrections, where `knos meter correct` writes)"),
                events_log: Path = typer.Option(None, "--events", help="also take the batch into this log of events (`knos events`); default: the file KNOS_EVENTS names, else none"),
                format_: int = typer.Option(FORMAT, "--format", help="the commitment format of the root: 2 hashes every field of every evaluation; 1 hashes the ids only")) -> None:
@@ -1849,7 +1849,7 @@ def register(app, out, Stop, help_rows: list | None = None, panel: str | None = 
         got = read(ledger)
         bad = _structure(got)
         if bad:
-            raise Stop(f"{ledger} does not hold as it is: {bad[0]}.", "Run `knos meter verify` on it first.")
+            raise Stop(f"{ledger} has an error: {bad[0]}.", "Run `knos meter verify` on it first.")
         try:
             lines = migrate(got, month)
         except Bad as why:
@@ -1874,7 +1874,7 @@ def register(app, out, Stop, help_rows: list | None = None, panel: str | None = 
                 month: str = typer.Option(None, "--month", help="which month --onchain is for, YYYY-MM (needed when the ledger has several)"),
                 rpc: str = typer.Option(None, "--rpc", metavar="URL", help="read the Ledger accounts from this Solana RPC node and hold every month of the file to them"),
                 claim: bool = typer.Option(False, "--claim", help="with --rpc: the file is the seller's, so it is held to the seller's claim account"),
-                individual: Path = typer.Option(None, "--individual", help="ids the individual mode recorded, one a line: an evaluation here and in a batch is counted twice"),
+                individual: Path = typer.Option(None, "--individual", help="evaluation ids that were recorded one at a time on chain (not in a batch), one per line: an evaluation here and in a batch is counted twice"),
                 marks: bool = typer.Option(False, "--marks", help="with --rpc: read the individual mode's mark of every evaluation in the file (one read each) instead of --individual"),
                 bundle_: bool = typer.Option(False, "--bundle", help="the file is a month's archive (`knos meter export --bundle`): check all of it, with no network")) -> None:
         """Recompute every root, every total and the running hash of a ledger, and refuse one that counts an evaluation twice; with --rpc (or --onchain), compare
@@ -1912,7 +1912,7 @@ def register(app, out, Stop, help_rows: list | None = None, panel: str | None = 
         for line in bad:
             out.print(line, markup=False)
         if bad:
-            out.print(f"{ledger} does not hold: {len(bad)} problem(s) above.", markup=False)
+            out.print(f"{ledger} failed the check: {len(bad)} problem(s) listed above.", markup=False)
             raise typer.Exit(1)
         for m in sorted({s.month for s in got}):
             t = totals(got, m)
@@ -1956,11 +1956,12 @@ def register(app, out, Stop, help_rows: list | None = None, panel: str | None = 
 
     @meter.command("reconcile")
     def reconcile_(buyer: Path = typer.Argument(..., help="the buyer's ledger"), seller: Path = typer.Argument(..., help="the seller's ledger"),
-                   rate: int = typer.Option(RATE, "--rate", help="the fee per evaluation in millionths of a USD (2000 is 0.002, the price book's)"),
-                   free: int = typer.Option(FREE_PER_MONTH, "--free", help="free evaluations the buyer has left for this seller in a month"),
+                   rate: int = typer.Option(RATE, "--rate", help="the fee per evaluation in millionths of a USD (default 2000 = 0.002, the proposed price; the deployed knos_meter charges 50000 = 0.05 after 10,000 free a month)"),
+                   free: int = typer.Option(FREE_PER_MONTH, "--free", help="free evaluations the buyer has left for this seller in a month (default 100,000, the proposed price; the deployed meter gives 10,000)"),
                    as_json: bool = typer.Option(False, "--json", help="print everything as JSON"),
                    rpc: str = typer.Option(None, "--rpc", metavar="URL", help="also read the two on-chain counts of each month from this Solana RPC node and print them side by side")) -> None:
-        """Set the buyer's ledger against the seller's: events only one has, different verdicts, duplicates, and the statement both compute alike. Exit 1 if they differ."""
+        """Compare the buyer's ledger with the seller's: events only one has, different verdicts, duplicates, and the
+        statement both should compute. Exit 1 if they differ."""
         try:
             r = reconcile(read(buyer), read(seller), rate, free)
         except Bad as why:
@@ -2077,7 +2078,7 @@ def register(app, out, Stop, help_rows: list | None = None, panel: str | None = 
     def close_(buyer: Path = typer.Argument(None, help="the buyer's ledger"), seller: Path = typer.Argument(None, help="the seller's ledger"),
                month: str = typer.Option(None, "--month", help="the month to close, YYYY-MM"),
                to: Path = typer.Option(None, "--out", help="where the close record is written (default: knos-close-<yyyymm>.json)"),
-               individual: Path = typer.Option(None, "--individual", help="ids the individual mode recorded, one a line"),
+               individual: Path = typer.Option(None, "--individual", help="evaluation ids that were recorded one at a time on chain (not in a batch), one per line"),
                sign: Path = typer.Option(None, "--sign", metavar="CLOSE", help="in a GitHub Actions job: have GitHub sign this close record for your side, and keep the token beside it"),
                role: str = typer.Option(None, "--as", help="with --sign: buyer or seller"),
                token_file: Path = typer.Option(None, "--token", metavar="FILE", help="with --sign: the token GitHub already signed for this record (a job that installs nothing "
@@ -2184,9 +2185,9 @@ def register(app, out, Stop, help_rows: list | None = None, panel: str | None = 
     def statement_(ledger: Path = typer.Argument(..., help="a ledger file"),
                    month: str = typer.Option(..., "--month", help="the month, YYYY-MM"),
                    close_file: Path = typer.Option(None, "--close", help="the month's close record; without it the statement's state is `open`"),
-                   individual: Path = typer.Option(None, "--individual", help="ids the individual mode recorded, one a line"),
-                   rate: int = typer.Option(RATE, "--rate", help="the Meter fee per evaluation in millionths of a USD (2000 is 0.002, the price book's)"),
-                   free: int = typer.Option(FREE_PER_MONTH, "--free", help="free evaluations the buyer has left for this seller in the month"),
+                   individual: Path = typer.Option(None, "--individual", help="evaluation ids that were recorded one at a time on chain (not in a batch), one per line"),
+                   rate: int = typer.Option(RATE, "--rate", help="the Meter fee per evaluation in millionths of a USD (default 2000 = 0.002, the proposed price; the deployed knos_meter charges 50000 = 0.05 after 10,000 free a month)"),
+                   free: int = typer.Option(FREE_PER_MONTH, "--free", help="free evaluations the buyer has left for this seller in the month (default 100,000, the proposed price; the deployed meter gives 10,000)"),
                    disputed: bool = typer.Option(False, "--disputed", help="print a disputed month anyway, with every disputed line marked"),
                    as_json: bool = typer.Option(False, "--json", help="the month as JSON: the four verdicts counted, and every line with its four ids")) -> None:
         """One month as three numbers that are never added together: evaluations (what the Meter bills), accepted outcomes (one per deliverable, what a

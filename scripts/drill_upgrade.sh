@@ -47,7 +47,7 @@
 #   KNOS_KEYS, KNOS_FEE_PAYER, KNOS_MEMBERS    as scripts/deploy_v2.sh and scripts/governance.mjs read them: the fee
 #                       payer and at least as many member keys as the multisig's threshold
 #   KNOS_DRILL_LOG      a file that gets one line per step: its name, what was checked, pass (tab separated).
-#                       python scripts/drills.py --upgrade-log FILE puts those rows in docs/DRILLS.md
+#                       python scripts/drills.py --upgrade-log FILE puts those rows in docs/reference/DRILLS.md
 #   PYTHON              the Python that has this repository's requirements (default python3)
 #
 # Needs: solana, solana-keygen and (for the restart) solana-test-validator; node 20 or later with

@@ -1,4 +1,4 @@
-# knos.toml: the one file a customer-hosted Knos reads (docs/SELFHOST.md). Copy it to deploy/knos.toml and check it:
+# knos.toml: the one file a customer-hosted Knos reads (docs/reference/SELFHOST.md). Copy it to deploy/knos.toml and check it:
 #   python -m knos.selfhost check deploy/knos.toml
 # Paths are as the containers see them (deploy/compose.yaml mounts ./secrets at /run/secrets and ./records at
 # /srv/knos/records). Keys are named BY FILE PATH, never written here: a value that looks like a key is refused.

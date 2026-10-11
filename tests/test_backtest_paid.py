@@ -1,7 +1,7 @@
 """scripts/backtest_paid.py: of the merged pull requests that were paid a bounty on Algora or Opire, how many had a failed
 check. Offline: GitHub's answers are recorded in the shapes its REST API documents (search/issues, issue timeline, comments,
 pulls, commit status, check runs) and handed to the script as `get`. Until the release run, the committed document says `not
-run`; once the release run has filled it, the document and the block of docs/BENCH.md are the script's own output, and its
+run`; once the release run has filled it, the document and the block of docs/reference/BENCH.md are the script's own output, and its
 numbers add up."""
 
 from __future__ import annotations
@@ -145,7 +145,7 @@ def test_windows_and_queries_cover_the_labels_and_the_opire_text():
 
 def test_the_document_and_the_block_say_not_run_until_the_release_run_fills_them_and_then_are_the_scripts_own(tmp_path):
     committed = json.loads((ROOT / "docs" / "backtest_paid.json").read_text(encoding="utf-8"))
-    bench = (ROOT / "docs" / "BENCH.md").read_text(encoding="utf-8")
+    bench = (ROOT / "docs" / "reference" / "BENCH.md").read_text(encoding="utf-8")
     block = bench.split("<!-- backtest_paid:begin -->")[1].split("<!-- backtest_paid:end -->")[0]
     # the block is exactly what the script writes from the committed document: not one word of it typed by hand
     assert bp.update_bench(bench, committed) == bench

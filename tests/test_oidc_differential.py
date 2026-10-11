@@ -817,7 +817,7 @@ def test_the_recorded_long_run_is_of_this_program_this_seed_and_this_corpus():
     unread = rec["not_json_in_an_unread_value"]["by_kind"]
     assert len(unread) >= 13 and all(cell["accepted"] in (0, cell["cases"]) for cell in unread.values())
     # the document says the run's numbers and no others
-    page = (ROOT / "docs" / "ASSURANCE.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "ASSURANCE.md").read_text(encoding="utf-8")
     assert f"{rec['cases']:,} cases" in page and rec["date"] in page and rec["program_sha256"] in page
 
 

@@ -1,5 +1,5 @@
 {
- "note": "Conformance vectors of the acceptance receipt, version 5 (docs/RECEIPT.md, Version 5). A reader must accept every receipt of `valid_v5`, compute its digest and say its `assurance` level from the receipt's own evidence, and refuse every one of `invalid_v5`: `of` is the index of the valid receipt it was made from and `set` the fields changed (dotted paths). `verdict` and `authorises_payment` are as in version 4.",
+ "note": "Conformance vectors of the acceptance receipt, version 5 (docs/reference/RECEIPT.md, Version 5). A reader must accept every receipt of `valid_v5`, compute its digest and say its `assurance` level from the receipt's own evidence, and refuse every one of `invalid_v5`: `of` is the index of the valid receipt it was made from and `set` the fields changed (dotted paths). `verdict` and `authorises_payment` are as in version 4.",
  "valid_v5": [
   {
    "name": "reported: version 4's first receipt as version 5; the order's own repository judged and nobody ran the suite again",

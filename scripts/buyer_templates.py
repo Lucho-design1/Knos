@@ -32,7 +32,7 @@ TITLES = {"bugfix": "A bug fix", "feature-blackbox": "A feature, checked black-b
           "standing-rate": "A rate per accepted pull request", "private-attested": "Work in a private repository"}
 # what the acceptance itself leaves to trust, before the list every receipt carries
 _MERGE = ("The named checks are your repository's own CI. Plain CI passed 56 of 63 cheating pull requests in Knos's tamper suite "
-          "(docs/TAMPER.md), so the checks alone are not the acceptance: a maintainer's merge is.")
+          "(docs/reference/TAMPER.md), so the checks alone are not the acceptance: a maintainer's merge is.")
 _NOT_PASSKEY = {"tests": "its terms carry the hash of your acceptance suite, which this page cannot read from your repository",
                 "vendor": "a standing offer is funded from the organisation's Balance, by comment",
                 "policy": "a private order is funded by the organisation's attestor repository, by comment"}

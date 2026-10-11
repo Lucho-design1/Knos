@@ -11,9 +11,9 @@ again with `git log --find-object`) and a verdict:
     test key        a key whose secret is public on purpose: under tests/, a fixtures folder, conformance/ or a vector
                     file, and not one of the addresses Knos operates with
     operational     a Solana keypair whose public key is one of the addresses in program_ids.json: it must be rotated
-    reviewed        a blob a person has read, listed in REVIEWED below with what it is (docs/LAUNCH.md, items 1 and 2),
+    reviewed        a blob a person has read, listed in REVIEWED below with what it is and why it is safe,
                     and not operational: the operational test runs first
-    look            anything else: a person reads it, rotates the key if it is real, and says so in docs/LAUNCH.md
+    look            anything else: a person reads it, rotates the key if it is real, and adds it to REVIEWED with what was found
 
 Exit 0 when every hit is a test key or reviewed, 1 otherwise, 2 when git cannot be read. Binary blobs (a NUL byte in the first
 8,000) and blobs over 20 MB are skipped and counted. Standard library and git only; solders, when installed, checks that

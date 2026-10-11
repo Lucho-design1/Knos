@@ -84,7 +84,7 @@ _.decide_                       # knos.decide.register: knos decide
 _.margin_                       # knos.billing.register: knos bill margin
 _.migrate_                      # knos.ledger.register: knos meter migrate
 _._propose                      # knos.terms_templates.register: knos terms propose
-# The line by which a final receipt replaces a provisional one: the library's call for whoever holds both (docs/RELAY.md),
+# The line by which a final receipt replaces a provisional one: the library's call for whoever holds both (docs/reference/RELAY.md),
 # with no caller inside src/knos; tests/test_decide.py holds it.
 from knos import decide
 
@@ -128,10 +128,10 @@ badge_.verified_svg, badge_.verified_markdown       # examples/receipt_consumer/
 billing_.PILOT, billing_.BOOK                       # the price book, as tests/test_billing.py holds it to tests/data/billing_vectors.json
 ghwords_.program_code                               # tests/test_refusals.py
 ledger_.billed_once                                 # conformance/impl/knos_python.py (conformance/vectors/ids.v1.json, ids.billed_once)
-ledger_.reopened, ledger_.reopened_key              # docs/METER.md; tests/test_verdicts_ids.py
+ledger_.reopened, ledger_.reopened_key              # docs/reference/METER.md; tests/test_verdicts_ids.py
 pdf_.A4                                             # tests/test_statement.py
-private_.receipt_shows                              # docs/PRIVATE.md; tests/test_private_path.py
-receipt_.exposed                                    # docs/RECEIPT.md (the six questions); tests/test_verdicts_ids.py
+private_.receipt_shows                              # docs/reference/PRIVATE.md; tests/test_private_path.py
+receipt_.exposed                                    # docs/reference/RECEIPT.md (the six questions); tests/test_verdicts_ids.py
 relayq_.EVENT_TYPE                                  # the repository_dispatch type worker.yml listens for; tests/test_relayq.py holds the two together
 
 
@@ -181,8 +181,8 @@ _.__class__
 from knos import exports as exports_
 from knos.proof import history as history_
 
-billing_.release_split                              # a release's money, whose it is (docs/UNIT_COSTS.md); tests/test_billing.py
-billing_.support_hours                              # the support hours a budget buys (docs/UNIT_COSTS.md); tests/test_billing.py
+billing_.release_split                              # a release's money, whose it is (docs/reference/UNIT_COSTS.md); tests/test_billing.py
+billing_.support_hours                              # the support hours a budget buys (docs/reference/UNIT_COSTS.md); tests/test_billing.py
 exports_.parts_check                                # an export held to its parts file; tests/test_exports_parts.py
 history_.grant_withdrawn                            # whether a buyer withdrew a supplier's grant; tests/test_history_defence.py
 
@@ -203,10 +203,10 @@ _.protect_                      # knos.strip_check.register: knos protect
 _.settle_sync_                  # knos.statement.register: knos statement settle-sync
 _.complete_                     # knos.statement.register: knos statement complete
 # Public functions with no caller inside src/knos or scripts, each held by the tests that name it.
-billing_.review_budget                              # the arithmetic of an exceptional review (docs/UNIT_COSTS.md); tests/test_billing_review.py
+billing_.review_budget                              # the arithmetic of an exceptional review (docs/reference/UNIT_COSTS.md); tests/test_billing_review.py
 _.relative_left                                     # scripts/bump_version.py: no link of README.pypi.md leans on the repository; tests/test_pypi_readme.py
 
-# 0.3.26. knos.sources: a library a caller uses in its own code (docs/SOURCES.md); nothing in the package calls it yet.
+# 0.3.26. knos.sources: a library a caller uses in its own code (docs/reference/SOURCES.md); nothing in the package calls it yet.
 from knos import sources as sources_
 from knos.sources import der as der_
 

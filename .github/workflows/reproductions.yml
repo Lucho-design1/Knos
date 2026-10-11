@@ -1,7 +1,7 @@
 name: reproductions
 
 # A pull request that adds a file under reproductions/ says: someone outside ran `knos reproduce` in a repository of
-# their own, and GitHub signed the result (docs/REPRODUCE.md). This checks that claim so the file can be merged without
+# their own, and GitHub signed the result (docs/reference/REPRODUCE.md). This checks that claim so the file can be merged without
 # trusting its sender or reading code:
 #
 #   the token carries GitHub's signature (GitHub's keys as they are now, and scripts/github_oidc_keys.json);

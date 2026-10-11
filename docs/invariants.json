@@ -1,6 +1,6 @@
 {
   "version": "0.3.14",
-  "page": "docs/INVARIANTS.md",
+  "page": "docs/reference/INVARIANTS.md",
   "program": "programs-v2/knos_pay",
   "kani_file": "programs-v2/knos_pay/src/proofs.rs",
   "invariants": [
@@ -670,7 +670,7 @@
     "fixture": "tests/data/completeness/order_funded_under_2_1.json",
     "file": "tests/test_completeness.py",
     "test": "test_the_stored_schedule_of_an_order_funded_under_2_1_is_read_from_its_account",
-    "upgrade_can_change": "everything the program owns, after the public delay (docs/GOVERNANCE.md)",
-    "exercised": "an order funded under 2.1 refunded with its stored 0.40 at the public id on 9 October 2026 (docs/CAPABILITIES.md, round stored_fee)"
+    "upgrade_can_change": "everything the program owns, after the public delay (docs/reference/GOVERNANCE.md)",
+    "exercised": "an order funded under 2.1 refunded with its stored 0.40 at the public id on 9 October 2026 (docs/reference/CAPABILITIES.md, round stored_fee)"
   }
 }

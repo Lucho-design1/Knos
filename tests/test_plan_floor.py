@@ -70,7 +70,7 @@ def test_the_check_fails_on_a_plan_in_force_below_20():
 
 def test_the_words_are_the_ones_the_docs_use():
     assert P.DOC == "the program allows 10 bps; Knos signs no Plan below 20 bps; the check proves which Plans exist."
-    assert "The program allows 10 bps; Knos signs no Plan below 20 bps; the check proves which Plans exist." in (ROOT / "docs" / "ENFORCEMENT.md").read_text(encoding="utf-8")
+    assert "The program allows 10 bps; Knos signs no Plan below 20 bps; the check proves which Plans exist." in (ROOT / "docs" / "reference" / "ENFORCEMENT.md").read_text(encoding="utf-8")
 
 
 def test_the_command_exits_1_below_the_floor(monkeypatch):

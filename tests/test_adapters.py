@@ -1,4 +1,4 @@
-"""The adapters (examples/adapters/, docs/ADAPTERS.md): workflow files that turn another system's event into the run that
+"""The adapters (examples/adapters/, docs/reference/ADAPTERS.md): workflow files that turn another system's event into the run that
 attests a work order.
 
 An adapter signs nothing. It writes one commit status and starts the repository's own Knos workflow by hand, which is
@@ -6,7 +6,7 @@ the pinned prove.yml (or, for the meter, the pinned attest.yml). So three things
 workflow GitHub accepts (YAML, actionlint), it is safe to install (no token of GitHub's signature, nothing of an event
 inside a script), and the run it starts is one the programs accept: the pinned workflow runs its signing job on that
 event, and knos_pay takes that run's token, in LiteSVM. The same harness shows what is refused, with the program's own
-error, for the direct paths docs/ADAPTERS.md lists under "needs a program change".
+error, for the direct paths docs/reference/ADAPTERS.md lists under "needs a program change".
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTERS = ROOT / "examples" / "adapters"
-DOC = ROOT / "docs" / "ADAPTERS.md"
+DOC = ROOT / "docs" / "reference" / "ADAPTERS.md"
 FILES = sorted(ADAPTERS.glob("*.yml"))
 PAY = ("deployment.yml", "release.yml", "workflow-run.yml", "attestation.yml", "linear.yml", "jira.yml", "notion.yml")
 # the events each file runs on: what another system's event arrives as
@@ -108,7 +108,7 @@ def test_a_pay_adapter_starts_the_repositorys_own_knos_workflow_which_settles_on
     signing = doc(ROOT / ".github" / "workflows" / "prove.yml")["jobs"]["settle"]
     assert signing["permissions"]["id-token"] == "write" and "github.event_name == 'workflow_dispatch'" in _if(signing)
     for event in EVENTS[name] - {"workflow_dispatch", "schedule"}:
-        assert event not in _if(signing), event      # why an adapter cannot call prove.yml on its own event: docs/ADAPTERS.md says so
+        assert event not in _if(signing), event      # why an adapter cannot call prove.yml on its own event: docs/reference/ADAPTERS.md says so
     # the status is not one Knos would ignore as its own, and it can be named in an order's terms
     from knos import terms
     context = job["env"]["CONTEXT"]
@@ -314,7 +314,7 @@ def test_the_document_lists_every_adapter_with_what_is_authenticated_and_its_sta
     rows = [[c.strip() for c in ln.strip().strip("|").split("|")] for ln in text.splitlines() if ln.startswith("| ") and "examples/" in ln]
     listed = {m for r in rows for m in re.findall(r"examples/adapters/([\w-]+\.yml)", r[1])}
     assert listed == {p.name for p in FILES}
-    assert all(len(r) == 5 and r[4] in ("works with 2.1 as built", "needs a program change") for r in rows), [r for r in rows if len(r) != 5]
+    assert all(len(r) == 5 and r[4] in ("works with 2.2 as built", "needs a program change") for r in rows), [r for r in rows if len(r) != 5]
     assert any("examples/gitlab" in r[1] for r in rows)
     assert "## Needs a program change" in text
     for word in ("E_WORKFLOW", "E_CLAIMS", "HMAC", "Sigstore", "test USDC"):

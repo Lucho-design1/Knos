@@ -22,7 +22,7 @@
 #                                                 Node packages (installing them when they are missing), loads them in
 #                                                 node, and sends NOTHING. Exit 0: the run would start. Do it after arranging
 #   bash scripts/schedule_upgrade.sh --cancel     take the arrangement back (the proposals stay as they are on chain).
-#                                                 The first step when a proposal must not execute: docs/RELEASE.md
+#                                                 The first step when a proposal must not execute: docs/reference/RELEASE.md
 #   bash scripts/schedule_upgrade.sh --run        the run itself, now: what the timer calls. Safe by hand too: a
 #                                                 proposal whose time has not come is refused by governance.mjs and by
 #                                                 the Squads program, and one already executed is left alone

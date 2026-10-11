@@ -4,6 +4,7 @@
   "docs": [
     "A wallet from a passkey: an account whose only authority is a WebAuthn (P-256) assertion, verified by Solana's secp256r1 precompile (SIMD-0075).",
     "Upgradeable only through a multisig with a public 48-hour delay, until an outside review.",
+    "The multisig is 2 of 3, and today one person holds all three keys.",
     "A native program: this file is written by hand from programs-v2/knos_passkey/src/lib.rs (its header lists every instruction and the account) and checked by tests/test_passkey_chain.py.",
     "Instruction data is the discriminant byte, then the arguments in order, little-endian, with no padding. A `bytes` argument runs to the end of the data.",
     "The wallet's money is in ordinary token accounts whose owner is the wallet's address (its associated token account for a mint); whoever pays the wallet creates them.",

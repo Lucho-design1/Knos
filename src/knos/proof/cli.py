@@ -57,7 +57,7 @@ def register(app: typer.Typer, out, Stop, repo_of) -> None:
 
     @proof.command("checks-hash")
     def checks_hash(dir_: Path = typer.Option(..., "--dir", help="e.g. .knos/acceptance/<issue>")) -> None:
-        """Print the sha256 of an acceptance bundle (sorted "path\\0sha256(content)\\n" lines), as fixed on chain."""
+        """Print the sha256 that identifies an acceptance bundle (the value fixed on chain when the bounty is funded)."""
         from .. import judge
         try:
             out.print(judge.checks_hash(dir_), markup=False)
@@ -221,10 +221,10 @@ def register(app: typer.Typer, out, Stop, repo_of) -> None:
              funded: str = typer.Option("", "--funded", help="issue numbers that carry a bounty, comma-separated: a description "
                                                              "that mentions one without closing it is told so"),
              strict: bool = typer.Option(False, "--strict", help="at the merged commit: a claim that cannot be checked is refused")) -> None:
-        """A pull request, running none of its code: the repo's rules, what its history requires, and whether the
-        description's "tests pass" is true at the head commit; for a bounty's pull request also its terms (--terms:
-        every funded check passed at that commit, nothing out of scope changed), who is paid and the issue's
-        assignment. Exit 1 unless it passes."""
+        """Check a pull request without running its code: the repository's rules, what its history requires, and whether
+        "tests pass" in the description is true at the head commit. For a bounty's pull request it also checks
+        the terms (with --terms: every funded check passed at that commit, nothing out of scope changed), who
+        is paid, and the issue's assignment. Exit 1 unless it passes."""
         from .. import judge
         bought = _terms(terms_file)
         st, diff_text, body, runs, statuses = _inputs(store, diff, body_file, checks_file, repo_name, head, wait, bought, statuses_file)
@@ -279,8 +279,8 @@ def register(app: typer.Typer, out, Stop, repo_of) -> None:
                     terms_file: Path = typer.Option(None, "--terms", help="that issue's bounty, as funded (its canonical JSON); "
                                                                           "none when it has no bounty")) -> None:
         """Answer one `/knos` comment (or a new issue's description). Prints one JSON object: the reply to post, the
-        assignees to add and remove on the issue, and `then`: what is left to do because it needs the chain (fund,
-        tip, settle or status; empty when the reply is all). Prints nothing when it holds no command."""
+        assignees to add and remove, and `then`, the step that still needs the blockchain (fund, tip, settle
+        or status; empty when the reply is all). Prints nothing when there is no command."""
         import time
 
         from .. import closing, commands, judge, terms, who
@@ -321,10 +321,10 @@ def register(app: typer.Typer, out, Stop, repo_of) -> None:
                   to: Path = typer.Option(None, "--out", help="write the canonical terms here, byte for byte"),
                   as_json: bool = typer.Option(False, "--json", help="print one JSON object: terms, hash, where the checks came "
                                                                      "from, the amount")) -> None:
-        """Fix a bounty's terms: read the fund command, ask GitHub what the repository requires (its required
-        checks, else what ran on the default branch's head), and print the canonical terms and their hash; with
-        --json also the amount and the reply to post. A `/knos tip` gets the terms of a tip, which ask for nothing.
-        Exit 1 with the reply to post when the command is neither, or the terms cannot be fixed."""
+        """Lock in a bounty's terms: read the fund command, ask GitHub what the repository requires (its required checks,
+        else what ran on the default branch's head), and print the canonical terms and their hash. With --json
+        it also prints the amount and the reply to post. A `/knos tip` gets the terms of a tip, which ask for
+        nothing. Exit 1 with the reply to post when the command is neither, or the terms cannot be locked in."""
         from .. import commands, judge, terms
         text = body_file.read_text(encoding="utf-8", errors="replace") if body_file else command
         fund = commands.parse(text)
@@ -372,10 +372,10 @@ def register(app: typer.Typer, out, Stop, repo_of) -> None:
                      changed: Path = common["changed"], checks_file: Path = common["checks_file"],
                      statuses_file: Path = common["statuses_file"], wait: int = common["wait"],
                      to: Path = typer.Option(None, "--out", help="write the verdict here as JSON")) -> None:
-        """A bounty's terms against GitHub's record of one commit: each required check's state (passed, failed,
-        skipped, pending, absent, unreadable) and the verdict. Exit 0 only when every one passed and no changed
-        file is out of scope: that, not a description, is what a payment needs. (A bounty funded with acceptance
-        checks needs those to pass as well: `knos proof judge --terms`.)"""
+        """Check a bounty's terms against GitHub's record of one commit: each required check's state (passed, failed,
+        skipped, pending, absent, unreadable) and the verdict. Exit 0 only when every check passed and no
+        changed file is out of scope. A bounty funded with acceptance checks also needs those to pass: run
+        `knos proof judge --terms`."""
         from .. import judge, terms
         bought = _terms(terms_file)
         if bought is None:
@@ -409,7 +409,7 @@ def register(app: typer.Typer, out, Stop, repo_of) -> None:
             raise typer.Exit(1)
         out.print("[green]accepted[/green]")
 
-    memory = typer.Typer(add_completion=False, help="the judge's memory between runs: the repository's knos-memory issue")
+    memory = typer.Typer(add_completion=False, help="Keep the judge's memory between runs in the repository's knos-memory issue.")
     proof.add_typer(memory, name="memory")
 
     @memory.command("pull")
@@ -445,7 +445,7 @@ def register(app: typer.Typer, out, Stop, repo_of) -> None:
     def judge_cmd(base: Path = typer.Option(..., "--base", help="the base branch checkout"),
                   pr: Path = typer.Option(..., "--pr", help="the pull request head source"),
                   issue: str = typer.Option(..., "--issue", help="the acceptance bundle: .knos/acceptance/<issue>/"),
-                  changed: Path = typer.Option(None, "--changed", help="file listing the PR's changed paths"),
+                  changed: Path = typer.Option(None, "--changed", help="file listing the pull request's changed paths"),
                   setup: str = typer.Option("", "--setup", help="shell command that installs a tree's dependencies"),
                   sandbox: str = typer.Option("auto", "--sandbox", help="auto, require, off or hermetic"),
                   diff: Path = common["diff"], evidence: Path = common["evidence"], store: Path = common["store"],
@@ -481,7 +481,7 @@ def register(app: typer.Typer, out, Stop, repo_of) -> None:
 
     @proof.command("lint")
     def lint() -> None:
-        """Claims this repo's evidence contradicts."""
+        """List the claims that this repository's evidence contradicts."""
         from . import history
         got = history.lint(_store(repo_of(None)))
         if not got:
@@ -507,4 +507,4 @@ def register(app: typer.Typer, out, Stop, repo_of) -> None:
         for r in rules:
             out.print(f"  a {r['when']} claim now requires {r['require']}  ({r.get('because', '')})", markup=False)
         if not rules:
-            out.print("No false done in this repo's history yet.")
+            out.print("No false \"done\" claim in this repository's history yet.")

@@ -45,7 +45,7 @@ KEY = "sentence"
 REPO = "drexthealpha/Knos"
 SITE = "https://drexthealpha.github.io/Knos/"
 SERVER = "io.github.drexthealpha/knos"
-# the repository's topics as GitHub lists them: what Knos is and what it serves (docs/X402.md, server.json)
+# the repository's topics as GitHub lists them: what Knos is and what it serves (docs/reference/X402.md, server.json)
 TOPICS = ("ai-agents", "coding-agents", "metering", "invoice-reconciliation", "oidc", "github-actions", "solana", "escrow", "mcp",
           "mcp-server", "x402")
 STALE = ("Bounties that pay", "Paid GitHub bounties", "Hire any AI agent", "shared memory", "local memory", "memory every coding agent",
@@ -276,7 +276,7 @@ def remote(said: str, fetch: Callable[[str], Any] = _get) -> list[dict]:
         row("GitHub About: homepage", repo.get("homepage") or None, f"gh repo edit {REPO} --homepage {SITE}", ok=repo.get("homepage") == SITE)
         row("GitHub About: topics", topics, f"gh repo edit {REPO} {adds} {drops}".strip(), ok=not adds and not drops)
     for package, fix in (("knos", "PyPI shows the summary of the newest upload and it cannot be edited: `python scripts/release.py publish` "
-                                  "(docs/RELEASE.md) uploads this version, whose pyproject description is the sentence"),
+                                  "(docs/reference/RELEASE.md) uploads this version, whose pyproject description is the sentence"),
                          ("knos-hermes", "the old package: upload one last version whose summary is \"Renamed: install knos. " + said
                                          + "\", or yank its releases at https://pypi.org/manage/project/knos-hermes/releases/")):
         got = ask(f"https://pypi.org/pypi/{package}/json")

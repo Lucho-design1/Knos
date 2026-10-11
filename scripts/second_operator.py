@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The second operator's drill as one command (docs/OPERATOR.md, "The drill"): a person who is not the founder shows
+"""The second operator's drill as one command (docs/reference/OPERATOR.md, "The drill"): a person who is not the founder shows
 that they can operate Knos on devnet from a fork of their own, with a fee payer of their own.
 
     python scripts/second_operator.py --fork YOU/Knos --key relay.json
@@ -15,7 +15,7 @@ It runs five steps, prints what each one saw beside what it expected, and stops 
 
 Steps 4 and 5 use the GitHub CLI (`gh`), signed in as you. It asks the founder nothing and reads no file of his.
 What it cannot show is the drill's last condition: a payment or a refund whose fee payer is your address. The command
-prints the line to look for and the row to send for docs/DRILLS.md; a person checks it on a block explorer.
+prints the line to look for and the row to send for docs/reference/DRILLS.md; a person checks it on a block explorer.
 
 `--simulate` runs the same steps against canned answers (no network, no key, no `gh`): it tests this script, and it
 is not a drill. Nobody but the founder has run the real one.
@@ -111,15 +111,15 @@ def drill(fork: str, key: str, *, rpc: str = RPC, knos: list | None = None, run:
     if not started:
         raise Failed(f"5 the chain: {WORKFLOW} was asked to start in {fork} and GitHub lists no run of it after 30 seconds: look at the fork's Actions tab")
     say(f"5 the chain  ok: run {started['databaseId']} of {WORKFLOW} is {started['status']} in {fork} (expected: a run started by hand, which starts the next)")
-    say("Not shown by this command: a payment or refund whose fee payer is your address. Fund an order in a repository of your own (docs/INSTALL.md), "
+    say("Not shown by this command: a payment or refund whose fee payer is your address. Fund an order in a repository of your own (docs/reference/INSTALL.md), "
         f"then find the paying transaction on a block explorer: its fee payer must be {mine}.")
-    say(f"The row for docs/DRILLS.md: date {time.strftime('%Y-%m-%d', time.gmtime())}, your handle, that transaction's signature, the minutes from clone to payment, "
-        "and every step where docs/OPERATOR.md was not enough.")
+    say(f"The row for docs/reference/DRILLS.md: date {time.strftime('%Y-%m-%d', time.gmtime())}, your handle, that transaction's signature, the minutes from clone to payment, "
+        "and every step where docs/reference/OPERATOR.md was not enough.")
     return {"fee_payer": mine, "fork": fork, "run": started["databaseId"]}
 
 
 def main(argv: list | None = None) -> int:
-    ap = argparse.ArgumentParser(description="The second operator's drill as one command (docs/OPERATOR.md).")
+    ap = argparse.ArgumentParser(description="The second operator's drill as one command (docs/reference/OPERATOR.md).")
     ap.add_argument("--fork", required=True, help="your fork, as you/name")
     ap.add_argument("--key", type=Path, help="your fee payer's key file (relay.json)")
     ap.add_argument("--rpc", default=RPC)
@@ -132,7 +132,7 @@ def main(argv: list | None = None) -> int:
             drill(a.fork, "[]", rpc=a.rpc, run=run, balance=balance, address=address, wait=lambda _s: None)
             return 0
         if a.key is None:
-            raise Failed("--key is your fee payer's key file (section 2 of docs/OPERATOR.md makes one)")
+            raise Failed("--key is your fee payer's key file (section 2 of docs/reference/OPERATOR.md makes one)")
         drill(a.fork, a.key.read_text(encoding="utf-8").strip(), rpc=a.rpc)
         return 0
     except (Failed, OSError) as why:

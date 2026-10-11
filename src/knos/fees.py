@@ -6,13 +6,14 @@
     0.3.14 (knos_pay 2.1)   an order: 2.5% of the first 1,000, 1% from there to 50,000, 0.5% above, at least 0.40; a
                             Plan lowers the first rate to no less than 0.5%. A job: 2.5%, at least 0.05.
 
-The public programs charge the 0.3.14 fee until the upgrade to knos_pay 2.2 executes (a proposal of the upgrade
-multisig, public for 48 hours first). So a fee shown to a person follows the build that is LIVE:
+knos_pay 2.2 has run at the public program id on devnet since 9 October 2026 (upgrade proposal 8, executed). An order
+funded before then keeps the fee fixed at its funding. `version` still asks the program, so a cluster on an older build
+gets the right answer. So a fee shown to a person follows the build that is LIVE:
 
     version(ledger)   asks the program (Version, by simulation: `knos2:version 2` is 2.2), as knos.settle.v2.relay does
     feed_version(f)   the same answer from the upgrade feed (web/upgrades.json) for a page or a command that asks no chain
     rule(v)           NEW from 2 up, OLD below
-    words(v)          the fee in one sentence; with v None (nobody was asked) it says both rules and what decides
+    words(v)          the fee in one sentence; with v None (nobody was asked) it says the live 2.2 fee and its date
 
 An order's fee is taken when it is funded and held with it, so an order funded before the upgrade keeps the rate fixed
 at its funding (KEEPS says so wherever the fee is stated).
@@ -107,10 +108,10 @@ def feed_version(feed: dict | None) -> int | None:
 
 def words(version: int | None = None) -> str:
     """The fee in plain words, true whichever build is live. `version`: what the program or the feed answered; None
-    says both rules and what decides between them."""
+    (nobody was asked) says the 2.2 fee, live on devnet since 9 October 2026."""
     if version is None:
-        return (f"Fee: {NEW.rate()} test USDC, paid by the funder on top, once knos_pay {NEW.build} is live; until that upgrade executes "
-                f"the public program charges the fee it charges before the upgrade ({OLD.rate()}). `knos status` says which build runs. {KEEPS}")
+        return (f"Fee: {NEW.rate()} test USDC, paid by the funder on top (knos_pay {NEW.build}, live on devnet since 9 October 2026; "
+                f"`knos status` says which build runs). {KEEPS}")
     if version >= NEW_VERSION:
         return f"Fee: {NEW.rate()} test USDC, paid by the funder on top (knos_pay {NEW.build} is live). {KEEPS}"
     return (f"Fee today: {OLD.rate()} test USDC, paid by the funder on top (the fee it charges before the upgrade: knos_pay {NEW.build} is not live yet). "

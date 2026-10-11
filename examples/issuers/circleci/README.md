@@ -48,9 +48,11 @@ One issuer URL per organisation. A job re-run with SSH carries `ssh-rerun` true,
 
 ## Register its key
 
-A public key, one any program can rely on, is admitted on GitHub's signature: the attester's run of the pinned
-rotate workflow with the input `issuer: https://oidc.circleci.com/org/c9035eb6-6eb2-4c85-8a81-d9ed6a1d1d1e` reads the key set over TLS, GitHub signs which key it found, and
-the key then waits a day and the guardian's approval. You cannot do that alone; ask for it in an issue. The call it ends in:
+A public key (one any program can rely on) needs GitHub's signature first. Knos's pinned rotate workflow, run
+with the input `issuer: https://oidc.circleci.com/org/c9035eb6-6eb2-4c85-8a81-d9ed6a1d1d1e`, fetches the issuer's key set over HTTPS, and GitHub
+signs which key it found. The key then waits one day and needs the guardian's approval (the guardian is a key that
+can approve or revoke keys; one person holds it today). You cannot do this alone: ask for it in an issue on
+drexthealpha/Knos. The last step is this call:
 
 ```python
 from knos.settle.v2 import oidc
@@ -89,5 +91,5 @@ The whole program around these lines is [`examples/oidc_gate/template.rs`](../..
 ## Tested
 
 `tests/test_issuers.py` registers a key for this issuer in the test build of the verifier, verifies a token with exactly
-the claims above and reads them back. That token is signed with a test key derived from a fixed seed, not by the issuer:
-the test shows the program takes this shape, not that the issuer issued anything.
+the claims above and reads them back. That token is signed with a test key derived from a fixed seed, not by the issuer.
+The test shows the verifier accepts a token of this shape. It does not show the issuer ever issued one.

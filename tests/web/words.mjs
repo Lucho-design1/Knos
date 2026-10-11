@@ -1,6 +1,6 @@
 // node tests/web/words.mjs <site dir> [--list]
 // The word budget, held on every page of a build of web/ in headless Chromium at 1280 by 800:
-//   title      a page opens with a heading of 3 to 6 words (the first screen opens with the one sentence instead)
+//   title      a page opens with a heading of 3 to 6 words (8 for the page that names its two readers; the first screen opens with the one sentence instead)
 //   under it   at most one line of prose between the heading and the thing itself (a control, a table, a live view)
 //   first      what the page says in its first screen, the bar apart (the bar is counted with the site's first screen,
 //              tests/web/front_door.mjs): 40 words of prose at most: headings, sentences, list items, links in them.
@@ -27,7 +27,8 @@ if (!root || !existsSync(join(root, "index.html"))) { console.error("usage: node
 export const PAGES = ["check", "buy", "index", "pricing", "story", "supplier", "keyholder", "verifier", "playground", "terms", "records", "invoice-statement", "shadow",
   "fund", "claim", "protect", "install", "network", "status", "pilot", "capabilities", "reproduce", "build", "record", CHECKED.slice(1)];
 const RECORD_KEEPERS = ["records", "verifier", "network", "fund", "claim", "protect", "install", "build"];
-const FIRST = 40, STATEMENT = 12;
+// the front door says more: the outcome, who it is for, the sentence and the number (tests/web/front_door.mjs counts them with the bar)
+const FIRST = 40, FIRST_DOOR = 50, STATEMENT = 12;
 let fails = 0;
 const check = (name, cond, detail) => { if (cond) console.log("ok  ", name); else { fails++; console.error("FAIL", name, detail === undefined ? "" : JSON.stringify(detail)); } };
 
@@ -93,9 +94,12 @@ for (const name of [...PAGES, ...addedPages(root)]) {
     return { title: title ? title.textContent.trim().replace(/\s+/g, " ") : "", titleWords: title ? words(title.textContent).length : 0, under, lines, first: first.length, firstSaid: first.join(" "), long, banned, handles };
   }, name);
   if (list) console.log(`     ${name}: title ${got.titleWords} "${got.title}", ${got.under} under it (${got.lines} lines), first screen ${got.first}, long ${got.long.length}, record words ${got.banned.length}`);
-  if (id !== "check") check(`${name}: the title is 3 to 6 words`, got.titleWords >= 3 && got.titleWords <= 6, got.title);
+  // one page names its two readers in its title, "Check every claim yourself (for judges and buyers)": 8 words there
+  const titleMost = name === "judges" ? 8 : 6;
+  if (id !== "check") check(`${name}: the title is 3 to ${titleMost} words`, got.titleWords >= 3 && got.titleWords <= titleMost, got.title);
   if (id !== "check") check(`${name}: at most one line under the title, then the thing itself`, got.under <= 1 && got.lines <= 1, [got.under, got.lines]);
-  check(`${name}: the first screen says ${FIRST} words at most, the bar apart (${got.first})`, got.first <= FIRST, got.firstSaid);
+  const most = id === "check" ? FIRST_DOOR : FIRST;
+  check(`${name}: the first screen says ${most} words at most, the bar apart (${got.first})`, got.first <= most, got.firstSaid);
   check(`${name}: no statement is longer than ${STATEMENT} words`, got.long.length === 0, got.long);
   if (!RECORD_KEEPERS.includes(name)) check(`${name}: nothing about a wallet, a hash, a pin or a token account before the reader asks`, got.banned.length === 0, got.banned);
   const vague = got.handles.filter((h) => !h || /^(more( about this)?|details|read more)$/i.test(h) || new Set(got.handles).size < got.handles.length && got.handles.filter((x) => x === h).length > 2);

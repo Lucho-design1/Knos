@@ -93,14 +93,14 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   await page.waitForFunction(() => !document.querySelector('nav a[data-mount="shadow"]').hidden);
   await settle(page);
   const words = await firstScreen(page);
-  check(`words: the first screen says 40 words at most at ${width} by ${height}`, words.length <= 40 && words.length >= 20, [words.length, words.join(" ")]);
+  check(`words: the first screen says 56 words at most at ${width} by ${height}`, words.length <= 56 && words.length >= 20, [words.length, words.join(" ")]);
   if (width === 1280) {
     const bar = await page.$$eval("#nav > a", (l) => l.filter((a) => a.offsetParent !== null).map((a) => a.textContent));
     check("words: the bar shows six words of links and More", bar.join() === menuOf(root).bar.join() && bar.join(" ").split(" ").length <= 6 && await page.isVisible("#more-button") && (await page.$$eval("#more-list a", (l) => l.filter((a) => a.offsetParent !== null).length)) === 0, bar);
     const hero = await page.evaluate(() => ({ h1: document.querySelector("h1").textContent.trim(), fact: document.getElementById("hero-fact").textContent.trim().split(/\s+/).length,
       order: [...document.querySelectorAll(".hero h1, .hero #hero-fact, .hero .actions, .hero #mark3d, #demo")].map((e) => e.id || e.className || e.tagName),
       demoTop: document.getElementById("demo").getBoundingClientRect().top, fold: innerHeight, door: !!document.getElementById("front-door") }));   // with the front door (0.3.17) the round sits below it
-    check("words: the sentence, the figure in 12 words or fewer, two buttons, the mark, then the demo at the fold", hero.h1 === "The neutral meter for AI agent work: neither side keeps the count." && hero.fact <= 12
+    check("words: the outcome, the figure in 18 words or fewer, two buttons, the mark, then the demo at the fold", hero.h1 === "Pay AI agents only when your checks pass." && hero.fact <= 18
       && (hero.door ? hero.order[0] === "check" && hero.order.at(-1) === "demo" && hero.demoTop >= hero.fold - 1 : hero.order.join() === "check,hero-fact,actions,mark3d,demo" && Math.abs(hero.demoTop - hero.fold) <= 1), hero);
     const folded = await page.$$eval("details.k-more", (l) => [l.length, l.filter((d) => d.open).length]);
     check("words: the longer explanations are folded, one press away", folded[0] > 10 && folded[1] === 0, folded);

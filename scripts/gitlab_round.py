@@ -379,7 +379,7 @@ def round_gitlab(book: Any, st: dict, ep: Any, forge: Any = None, env: Mapping[s
     good, bad = keys_state(w, w.jwks)
     if not good:
         raise ep.Cannot("the public knos_oidc holds no usable key of gitlab.com (" + "; ".join(bad) + "). A GitLab key is named by a run of the rotate workflow, "
-                        "waits a day and is approved by the guardian (docs/OIDC.md, \"The trust root\"); `knos keys` prints each key's state")
+                        "waits a day and is approved by the guardian (docs/reference/OIDC.md, \"The trust root\"); `knos keys` prints each key's state")
     me, default = forge.user(), project["default_branch"]
     st["project"] = {"path": project["path"], "id": project["id"], "namespace": project["namespace_id"], "user": me["id"]}
 

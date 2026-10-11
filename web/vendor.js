@@ -1,5 +1,5 @@
 // One agent vendor's page: #vendor=<slug>. The file is vendors.json (knos.vendors/1), the build's copy of
-// docs/vendors.json, which `python scripts/agent_pr_index.py vendors` writes beside docs/VENDORS.md.
+// docs/vendors.json, which `python scripts/agent_pr_index.py vendors` writes beside docs/reference/VENDORS.md.
 //
 //   renderVendor(el, ctx)   draws the vendor the address names (or ctx.slug); ctx: { slug, data, fetch, base }.
 //                           Follows the address when it changes. Returns { loaded, show }.

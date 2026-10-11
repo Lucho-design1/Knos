@@ -4,7 +4,7 @@
 # What starts it:
 #
 #   The end of a run of `knos reproduce` in this repository (`workflow_run`). Nobody starts it by hand: the one button
-#       is "Run workflow" on `knos reproduce` (docs/REPRODUCE.md). This job takes that run's artifact
+#       is "Run workflow" on `knos reproduce` (docs/reference/REPRODUCE.md). This job takes that run's artifact
 #       `knos-reproduction` (the report and the token GitHub signed for its hash, in one file,
 #       <owner>-<repo>-<run id>.json), creates the branch `reproduction-<run id>` in THIS repository from the commit
 #       drexthealpha/Knos has on main, adds the file as reproductions/<owner>-<repo>-<run id>.json and nothing else,
@@ -20,10 +20,9 @@
 # repository (`contents: write`). It installs nothing, runs no knos code and no code from the artifact, and reaches no
 # secret; it needs none. What it cannot do: write anywhere else, or sign anything (it asks GitHub for no token).
 # In a repository that is not a fork of drexthealpha/Knos (one made from the template, or a copy) there is no branch a
-# pull request could come from: it says so and stops, and the artifact is sent by hand as docs/REPRODUCE.md describes.
-# In drexthealpha's own repositories a run of Knos's own is NOT a reproduction and is never counted as one. Until 0.3.19
-# this job skipped there, so its path had never run before a stranger tried it (the 0.3.18 release run could not pass
-# it as written). Now it completes: the same signed file goes onto the branch `reproduction-own-<run id>` of this
+# pull request could come from: it says so and stops, and the artifact is sent by hand as docs/reference/REPRODUCE.md describes.
+# In drexthealpha's own repositories a run of Knos's own is NOT a reproduction and is never counted as one. There it
+# still completes, so its path has run before a stranger tries it: the same signed file goes onto the branch `reproduction-own-<run id>` of this
 # repository as reproductions/own/<owner>-<repo>-<run id>.json. Nothing counts that folder (the counts read
 # reproductions/*.json and no deeper), `knos.reproduce.verified(..., ours=True)` accepts there only a run that IS
 # Knos's own and gives it no capability, and a file of an own run directly under reproductions/ is refused as before.
@@ -78,7 +77,7 @@ jobs:
           parent="$(gh api "repos/$GITHUB_REPOSITORY" --jq '.parent.full_name // ""')"
           if [ "$parent" != "$UPSTREAM" ]; then
             { echo "This repository is not a fork of $UPSTREAM, so no pull request can come from it."
-              echo "Download the artifact \`knos-reproduction\` of [the run](https://github.com/$GITHUB_REPOSITORY/actions/runs/$RUN) and add \`$want\` as \`reproductions/$want\` in a pull request to $UPSTREAM (docs/REPRODUCE.md, \"How to send it\")."
+              echo "Download the artifact \`knos-reproduction\` of [the run](https://github.com/$GITHUB_REPOSITORY/actions/runs/$RUN) and add \`$want\` as \`reproductions/$want\` in a pull request to $UPSTREAM (docs/reference/REPRODUCE.md, \"How to send it\")."
             } | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -110,7 +109,7 @@ jobs:
                   + (f"**A check failed ({', '.join(failed)}), so this is a bug to report and not a reproduction to send:** open an issue on {upstream} and attach "
                      "`report.json` (the artifact `knos-report`).\n" if failed else
                      f"**[Open the pull request]({link})** and press **Create pull request**. Its last line asks what was awkward or broken on the way: "
-                     "that is the part nobody inside can answer.\n"))
+                     "only someone outside Knos can tell us this.\n"))
           print(text)
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
               f.write(text)

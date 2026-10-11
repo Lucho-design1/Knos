@@ -54,7 +54,7 @@ def test_the_links_no_chain_shows_come_from_files(tmp_path):
 
 
 def test_market_prints_each_link_with_its_counter_and_reads_zero():
-    market = (ROOT / "docs" / "MARKET.md").read_text(encoding="utf-8")
+    market = (ROOT / "docs" / "reference" / "MARKET.md").read_text(encoding="utf-8")
     table = market.split("### The loop, link by link, as it is measured today")[1].split("\n## ")[0]
     here = nl.from_repository(ROOT)
     for name in nl.DEFINITIONS:

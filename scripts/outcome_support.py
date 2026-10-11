@@ -1,5 +1,5 @@
 """A second outcome that is not code: SUPPORT RESOLUTIONS, counted by the meter under terms agreed before the work.
-docs/OUTCOMES.md, "Support resolutions", is the page; examples/outcomes/support-resolution holds the made-up data.
+docs/reference/OUTCOMES.md, "Support resolutions", is the page; examples/outcomes/support-resolution holds the made-up data.
 
     python scripts/outcome_support.py evaluate  --tickets T --terms TERMS [--out DIR]   a verdict for every ticket
     python scripts/outcome_support.py batch     --tickets T --terms TERMS --month YYYY-MM [--seq N] [--buyer ID --seller ID] --out DIR

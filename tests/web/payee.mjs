@@ -117,8 +117,8 @@ try {
   const href = await page.$eval("#py-go", (a) => a.href);
   ok("with no knos-claim yet, the link is GitHub's filled-in form", href === `https://github.com/new?template_owner=drexthealpha&template_name=knos-claim&owner=${LOGIN}&name=knos-claim&visibility=public`, href);
   await page.click("#py-check");
-  await page.waitForFunction(() => /Not bound|Bound/.test(document.querySelector("[data-py-done]").textContent));
-  ok("Check before the run: not bound", (await page.textContent("[data-py-done]")).startsWith("Not bound yet"));
+  await page.waitForFunction(() => /No address is linked|Bound/.test(document.querySelector("[data-py-done]").textContent));
+  ok("Check before the run: not bound", (await page.textContent("[data-py-done]")).startsWith("No address is linked yet"));
   world.bound = address;
   await page.click("#py-check");
   await page.waitForSelector("[data-py-bound]");

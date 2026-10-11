@@ -4,6 +4,7 @@
   "docs": [
     "Pay on proof, second deployment: an escrow that pays the author of a pull request on a GitHub-signed token verified on chain by knos-oidc.",
     "Upgradeable only through a multisig with a public 48-hour delay, until an outside review.",
+    "The multisig is 2 of 3, and today one person holds all three keys.",
     "A native program: this file is written by hand from programs-v2/knos_pay/src (lib.rs and order_terms.rs list every instruction, state.rs and order_terms.rs every account) and checked by tests/test_idl.py and tests/test_pay2_idl.py.",
     "Instruction data is the discriminant byte, then the arguments in order, little-endian, with no padding. A `bytes` argument runs to the end of the data.",
     "Every token account below is a VERIFIED GitHub Actions token account owned by knos-oidc (the second deployment's verifier), from a GitHub-hosted",
@@ -267,7 +268,7 @@
     },
     {
       "name": "Version",
-      "docs": ["Logs `knos2:version 1`. Simulate it to learn whether 2.1 is live: 2.0 refuses the instruction."],
+      "docs": ["Logs `knos2:version 2` (2.1 logged 1). Simulate it to learn which build is live: 2.0 refuses the instruction."],
       "accounts": [],
       "args": [],
       "discriminant": {"type": "u8", "value": 12}

@@ -19,7 +19,7 @@ The sources (SOURCES), and nothing else:
     docs/bench.json               what was measured on devnet: the `[[stat: name]]` slots of scripts/bench_docs.py
 
 A document states such a fact through a slot or a generated block, or in words that stay true as the state changes
-("the live state is in web/upgrades.json", "docs/CAPABILITIES.md lists each capability's stage"). What this refuses:
+("the live state is in web/upgrades.json", "docs/reference/CAPABILITIES.md lists each capability's stage"). What this refuses:
 
     counts     a number of capabilities at a stage, of programs, or of pending proposals that is not the source's;
                "nothing is recorded as exercised" while something is; a sentence that gives a whole release one stage
@@ -51,15 +51,15 @@ MANIFEST, UPGRADES, IDS, BENCH = "docs/capabilities.json", "web/upgrades.json", 
 GATE = "examples/upgrade_gate/src/lib.rs"     # upgrade_gate's public id, its own declare_id! (scripts/capabilities.py, public_ids)
 SOURCES = [MANIFEST, UPGRADES, IDS, BENCH, "docs/backtest.json", GATE]
 # Where a withdrawn proposal's times may stand, in a sentence that says they are history (WAS).
-HISTORY = {"CHANGELOG.md", "docs/GOVERNANCE.md"}
+HISTORY = {"CHANGELOG.md", "docs/reference/GOVERNANCE.md"}
 WAS = re.compile(r"withdr[ae]w|replaced|cancel|could have run|never ran|never executed|was proposed")
 # Written by scripts/drills.py from a local validator's own clock: their times are the drill's, not the upgrade's.
-GENERATED = {"docs/DRILLS.md", "docs/drills_recovery.md"}
+GENERATED = {"docs/reference/DRILLS.md", "docs/reference/drills_recovery.md"}
 # Read line by line besides the documents: the site's scripts, the command line's help, and what the registries show.
 OTHER = ["src/knos/cli.py", "server.json", "gemini-extension.json", "glama.json", ".claude-plugin/marketplace.json",
          "plugin/.claude-plugin/plugin.json", "plugin/.codex-plugin/plugin.json"]
 PROGRAMS_START, PROGRAMS_END = "<!-- programs:start -->", "<!-- programs:end -->"
-REHEARSAL = "## The 0.3.14 rehearsal on devnet"     # the section of docs/CAPABILITIES.md that names the staging addresses
+REHEARSAL = "## The 0.3.14 rehearsal on devnet"     # the section of docs/reference/CAPABILITIES.md that names the staging addresses
 NAMES = {"knos_oidc": "the verifier", "knos_pay": "the escrow", "knos_meter": "the count", "knos_passkey": "a wallet from a passkey"}
 _WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen",
           "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]

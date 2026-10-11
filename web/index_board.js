@@ -17,7 +17,7 @@
 // hidden behind a percentage. An agent under the file's `min_claims_to_rank` has no place and is shown with its
 // counts. Bars and whiskers grow in once when the board comes into view, and again when another week is picked;
 // with `prefers-reduced-motion: reduce` they are simply there. A statement on the board is 12 words at most. The
-// method is docs/INDEX.md.
+// method is docs/reference/INDEX.md.
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;" }[c]));
 const pct = (x) => `${(x * 100).toFixed(1)}%`;
@@ -166,13 +166,13 @@ export function indexBoardHtml(weekly, week, feed) {
       <tbody>${board.rows.map((r) => rowHtml(r, shown, least)).join("")}</tbody></table></div>
     <ul class="fine ib-notes">
       <li id="ib-rate">Count merged claims that had a failed check.</li>
-      <li id="ib-bar">Read each whisker as a 95% interval.</li>
+      <li id="ib-bar">The thin line on each bar is the 95% confidence interval.</li>
       <li id="ib-rank">Mark agents under ${esc(least)} merged claims “${TOO_FEW}”.</li>
       <li id="ib-not">Treat a failed check as a record, not proof.</li>
       <li id="ib-pay">Dispute any row; no vendor pays to change one.</li>
-      <li id="ib-quality">Rates no defect-free work, code or vendor.</li>
+      <li id="ib-quality">It does not say any work, code or vendor is free of defects.</li>
     </ul>
-    <p class="fine" id="ib-verified"><strong>Verified: ${esc(verified)} this week.</strong> Counts claims Knos also paid on a black-box check.</p>
+    <p class="fine" id="ib-verified"><strong>Verified: ${esc(verified)} this week.</strong> Verified means Knos also paid it on a black-box check.</p>
     ${says ? `<details class="k-more" id="ib-basis"><summary>Which pull requests these shares count</summary><p class="fine">${esc(says)}</p></details>` : ""}
   </div>`;
 }

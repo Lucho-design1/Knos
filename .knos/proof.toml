@@ -10,7 +10,7 @@ name = "benchmark docs match their source"
 run = "python scripts/bench_docs.py --check"
 
 [[check]]
-name = "every pitch number has a fact"
+name = "every number on the front pages has a source"
 run = "python scripts/claims_check.py --offline"
 
 [[check]]

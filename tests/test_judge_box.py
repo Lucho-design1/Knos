@@ -151,6 +151,6 @@ def test_without_a_sandbox_the_command_still_gets_the_cpu_and_file_size_limits()
 
 
 def test_what_each_platform_enforces_is_said():
-    doc = (Path(__file__).resolve().parents[1] / "docs" / "ATTESTOR.md").read_text(encoding="utf-8")
+    doc = (Path(__file__).resolve().parents[1] / "docs" / "reference" / "ATTESTOR.md").read_text(encoding="utf-8")
     for words in ("RLIMIT_NPROC", "macOS", "Windows", "read-only"):
         assert words in doc

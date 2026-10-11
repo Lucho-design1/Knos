@@ -120,7 +120,10 @@ def register(app, help_lines: list | None = None) -> None:
     @app.command("protect")
     def protect_(check_strip: str = typer.Option(..., "--check-strip", metavar="OWNER/REPO", help="the repository to read"),
                  branch: str = typer.Option("", "--branch", help="the branch (default: the repository's default branch)")) -> None:
-        """Read the repository's rulesets and branch protection and say whether the workflow-strip hole is closed (a ruleset requires the Knos workflow), partly closed (a required status check only) or open. Never closed for those who can edit the ruleset. On a personal repository partly is the most GitHub allows. Exit code 1 when open."""
+        """Read the repository's rulesets and branch protection and say whether a pull request can pass by deleting the
+        Knos workflow. CLOSED: a ruleset requires the Knos workflow. PARTLY: only a required status check.
+        OPEN: neither. Anyone who can edit the ruleset can always reopen it. On a personal repository, PARTLY
+        is the most GitHub allows. Exit code 1 when open."""
         from .judge import github
         got = check(check_strip, github, branch or None)
         typer.echo(f"{got['repository']} {got['branch']}: {got['state'].upper()}. {got['says'][0].upper()}{got['says'][1:]}.")

@@ -27,7 +27,7 @@ const got = await verify({ token, receipt, terms }, jwks, { repository_id: 98765
 ```
 
 `token`, `receipt` and `terms` are `token.jwt`, `receipt.json` and `terms.json` of a Knos evidence bundle
-(`knos bundle make ORDER`; see [`docs/RECEIPT.md`](../../docs/RECEIPT.md)). The token alone is enough for the
+(`knos bundle make ORDER`; see [`docs/reference/RECEIPT.md`](../../docs/reference/RECEIPT.md)). The token alone is enough for the
 signed facts. `jwks` is GitHub's published keys
 (`https://token.actions.githubusercontent.com/.well-known/jwks`) as you fetched and kept them, or the bundle's
 `key.json`. The function opens no connection.
@@ -50,8 +50,8 @@ Every answer carries these in `limits`:
 
 - The wallets paid and the amounts are the receipt's word. No signed token carries them.
 - The key is the one you gave. It was not compared with the key account on chain.
-- The named checks were not evaluated again, and the token's expiry was not held against it: a receipt records a
-  past payment.
+- The named checks were not evaluated again, and an expired token is still accepted, because a receipt
+  records a payment in the past.
 
 `knos bundle verify FILE --rpc URL` does all three from the bundle and the chain. Use this function to decide
 whether to show a badge or a line of text; use the bundle check before anything that moves money.

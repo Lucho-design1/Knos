@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 FLOOR_BPS = 20             # the contract floor (price book 3.1); the program's own floor is PLAN_BPS_MIN = 10
-DOC = "the program allows 10 bps; Knos signs no Plan below 20 bps; the check proves which Plans exist."
+DOC = "the program allows 10 bps; Knos signs no Plan below 20 bps; the check proves which Plans exist."     # pinned to docs/reference/ENFORCEMENT.md (knos.enforce)
 
 
 class Refused(ValueError):
@@ -40,7 +40,7 @@ def build(fee_owner, payer, owner_id: int, bps: int, expires: int, program=None)
     standard rate the program refuses it anyway; that is said here first."""
     from .settle.v2 import pay
     if isinstance(bps, bool) or not isinstance(bps, int) or bps < FLOOR_BPS:
-        raise Refused(f"a Plan below {FLOOR_BPS} basis points is below the contract floor; {DOC}")
+        raise Refused(f"A plan below 0.20% ({FLOOR_BPS} basis points) is below Knos's minimum rate; {DOC}")
     if bps > pay.FEE_BPS:
         raise Refused(f"a Plan lowers the rate: at most {pay.FEE_BPS} basis points")
     return pay.set_plan_ix(fee_owner, payer, owner_id, bps, expires, program or pay.PAY_ID)
@@ -90,14 +90,15 @@ def register(app, help_lines: list | None = None) -> None:
     """`knos fees plans [--check]`, on the main app."""
     import importlib
     typer = importlib.import_module("typer")       # named here and not imported: this module is standard library only at import
-    group = typer.Typer(add_completion=False, no_args_is_help=True, help="The fee rate's Plans, read from the chain.")
+    group = typer.Typer(add_completion=False, no_args_is_help=True, help="Fee plans (discounted fee rates for one repository owner), read from the chain.")
     app.add_typer(group, name="fees")
     if help_lines is not None:
-        help_lines.append(("fees", "For money", "Every fee Plan on the cluster, and whether one in force is below the 20 bps floor."))
+        help_lines.append(("fees", "For money", "Every fee plan on the cluster, and whether one in force is below the 0.20% minimum."))
 
     @group.command("plans")
     def plans_(check: bool = typer.Option(False, "--check", help="exit 1 when a Plan in force is below 20 basis points")) -> None:
-        """List every Plan account of knos_pay on the cluster (KNOS_CLUSTER) with its rate and expiry. The program allows 10 bps; Knos signs no Plan below 20 bps; this check proves which Plans exist."""
+        """List every fee plan on the cluster (KNOS_CLUSTER) with its rate and expiry. The program allows rates down to
+        0.10% (10 basis points); Knos signs no plan below 0.20%; this command shows which plans exist."""
         from . import chain
         led = chain.ledger()
         found = plans(lambda method, params: chain.call(led.url, method, params, timeout=30))

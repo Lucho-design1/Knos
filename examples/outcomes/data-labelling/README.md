@@ -33,8 +33,8 @@ artifact (the submission's files), so two ids, one accepted and one rejected:
 
     id = sha256(order || artifact || policy || milestone)
 
-**What this suite cannot check.** The 280 messages that are neither visible nor gold are judged only by inference from
-the 120. The gold labels are taken as right; a wrong gold label is paid for or held against the labeller. And the gold
+**What this suite cannot check.** The other 280 messages are never checked directly; the score on the 120 hidden
+("gold") messages stands for them. The gold labels are taken as right; a wrong gold label is paid for or held against the labeller. And the gold
 file is in this repository so that the example runs: the judge takes it out of the tree the submission is read from,
 but a labeller who can read the repository can read it. For a file deliverable the bundle has to be somewhere the
 labeller cannot read (a private repository), with only its hash in the terms. That arrangement is not exercised here.

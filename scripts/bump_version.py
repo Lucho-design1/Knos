@@ -25,8 +25,8 @@ the fixtures: after a version change the programs' bytes change, so run `bash sc
 once before the release tree is frozen (the deployed bytes are the verified build's, never a fixture's).
 
 A release that changes no program must not change a program's bytes either, and a crate's version is in its bytes
-(the compiler mixes it into every symbol's hash: in 0.3.14 the example programs' binaries changed with no line of
-their source changed). So the crates named in PROGRAMS_FROZEN stay at FROZEN_AT, with their entries in every lock
+(the compiler mixes it into every symbol's hash: when release 0.3.14 changed only the version, the example programs'
+binaries changed with no line of their source changed). So the crates named in PROGRAMS_FROZEN stay at FROZEN_AT, with their entries in every lock
 file and the IDLs that describe them, whatever version is written elsewhere: a bump writes FROZEN_AT there, and
 --check fails when one of them names anything else. Empty PROGRAMS_FROZEN in the release that next changes a program.
 """
@@ -89,12 +89,9 @@ PINS = (r"\bknos==" + V, r'tag = "v' + V + '"', r"drexthealpha/Knos@v" + V, r"dr
         r"drexthealpha/Knos/\.github/workflows/supplier\.yml@v" + V, r"releases/download/v" + V + r"/knos-settle-" + V + r"\.tgz",
         r"git tag v" + V + r" && git push origin v" + V, r"raw\.githubusercontent\.com/drexthealpha/Knos/v" + V + "/")
 PIN = re.compile("|".join(PINS))
-# Pins that move only in some files: the submission's links to the tag's tree and files (a judge's link names a tag, which no
-# cache has served before the release). Elsewhere a tag link may be history.
-SCOPED_PINS: tuple[tuple[str, str, re.Pattern], ...] = (
-    ("docs/submission/", ".md", re.compile(r"github\.com/drexthealpha/Knos/(?:tree|blob)/v" + V)),
-    ("docs/submission/", ".md", re.compile(r"` at `v" + V + "`")),                 # the words of such a link: [`docs/JUDGES.md` at `vX`](...)
-)
+# Pins that move only in some files: (folder, suffix, pattern). None now: the folder that had them is no longer in this
+# repository. Elsewhere a tag link may be history.
+SCOPED_PINS: tuple[tuple[str, str, re.Pattern], ...] = ()
 # history, the first deployment, the patterns themselves, and the lock (its line names a wheel by hash: see unlock).
 # examples/reader_template is the one example that really builds against a tag (the others name theirs in a comment and
 # build by path): its Cargo.lock holds that tag's commit, and a tag exists only after its release is pushed, so a bump
@@ -103,7 +100,7 @@ NOT_PINNED = ("CHANGELOG.md", "programs/", "scripts/bump_version.py", "requireme
 # scripts/action_pins.json lists the commit of each Knos tag a workflow or a document names. A commit cannot name
 # itself, so the tag of the release being made has no commit yet: a bump adds its key with SELF_PIN as the value and
 # leaves every earlier key alone (an earlier tag's commit never changes, and .github/workflows/supplier.yml runs the
-# action at one). The first commit after the tag writes the tag's commit there (docs/RELEASE.md, "After the tag").
+# action at one). The first commit after the tag writes the tag's commit there (docs/reference/RELEASE.md, "After the tag").
 SELF_PINS = "scripts/action_pins.json"
 SELF_PIN = "KNOS_RELEASE_SHA"
 SELF_KEY = re.compile(r'^(\s*)"drexthealpha/Knos@v' + V + r'": "([^"]*)",?\r?\n', re.M)
@@ -307,7 +304,7 @@ def disagreements(version: str | None = None, root: Path = ROOT, changelog: bool
 def unlock(version: str, root: Path = ROOT) -> bool:
     """requirements/sign.txt ends with the hash of one release's wheel once that release is locked. A wheel of another
     version has another hash, so the line of an earlier release is removed, never renamed: the next release locks its
-    own wheel (docs/RELEASE.md). True when a line was removed."""
+    own wheel (docs/reference/RELEASE.md). True when a line was removed."""
     path = root / "requirements" / "sign.txt"
     text = _text(path) or ""
     m = LOCK.search(text)

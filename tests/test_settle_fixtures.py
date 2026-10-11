@@ -387,7 +387,7 @@ def test_the_numbers_the_site_states_are_the_codes():
     app = (WEB / "app.js").read_text(encoding="utf-8")
     plan = "upgradeable only through a multisig with a public 48-hour delay, until an outside review"
     # the page that draws the upgrade authority says it in full; the foot of every page links to who can change the programs
-    assert plan in app and re.search(r'<a href="https://github\.com/drexthealpha/Knos/blob/main/docs/GOVERNANCE\.md">Who can change the programs</a>',
+    assert plan in app and re.search(r'<a href="https://github\.com/drexthealpha/Knos/blob/main/docs/reference/GOVERNANCE\.md">Who can change the programs</a>',
                                      (WEB / "index.html").read_text(encoding="utf-8"))
     assert "172800" in app and 172_800 == 48 * 3600                                  # the delay the page checks the chain against
     assert "PAUSE_MAX" in app and pay.PAUSE_MAX == 7 * 86_400                          # the pause length shown is the client's constant
@@ -415,7 +415,7 @@ def test_the_first_view_has_no_numbers_outside_code_but_the_one_measurement_it_l
     is the one that led before (the share of repositories whose first such pull request had a failed check):
     docs/bench.json's, the Agent PR Index, any_check_failed of first_pr_per_repo. The only other numbers are one line
     under a fold, held here to its source: how many cheating pull requests passed the black-box check and how many
-    passed plain CI, the totals row of docs/TAMPER.md."""
+    passed plain CI, the totals row of docs/reference/TAMPER.md."""
     whole = _view("check")
     assert '<section id="demo"' in whole and 'id="what-is-here"' in whole and whole.count("<section") == whole.count("</section>")
     view = re.sub(r"<pre>(.*?)</pre>", lambda m: "<code>" + m.group(1) + "</code>", whole, flags=re.S)
@@ -425,13 +425,17 @@ def test_the_first_view_has_no_numbers_outside_code_but_the_one_measurement_it_l
     assert round(first["any_check_failed"]["repos"] / first["repos"], 3) == first["any_check_failed"]["share"]
     merged = json.loads((ROOT / "docs" / "backtest.json").read_text(encoding="utf-8"))["reviewed"]["overall"]     # after the second reading (docs/index_review.json)
     lead = (str(merged["prs"]), str(merged["test_or_build_check_failed"]["prs"]))
-    assert f"{lead[0]} merged agent “tests pass” pull requests: {lead[1]} failed tests or builds." in said
-    assert f"{share} of" in said and said.count("had a failed check") == 1 and said.index(lead[0]) < said.index(share)
-    row = re.search(r"^\| \*\*all\*\* \| \*\*(\d+)\*\* \| \*\*(\d+)\*\* \| \*\*(\d+)\*\* \| \*\*(\d+)\*\* \|$", (ROOT / "docs" / "TAMPER.md").read_text(encoding="utf-8"), re.M)
+    assert f"Of {lead[0]} merged agent “tests pass” pull requests: {lead[1]} failed a test, build, lint or type check." in said
+    assert f"{share} of" in said and f"had a failed check: {first['any_check_failed']['repos']} of {first['repos']}." in said and said.count("had a failed check") == 1 and said.index(lead[0]) < said.index(share)
+    row = re.search(r"^\| \*\*all\*\* \| \*\*(\d+)\*\* \| \*\*(\d+)\*\* \| \*\*(\d+)\*\* \| \*\*(\d+)\*\* \|$", (ROOT / "docs" / "reference" / "TAMPER.md").read_text(encoding="utf-8"), re.M)
     cases, plain_ci, _in_process, black_box = row.groups()
     assert f"{black_box} of {cases} cheating pull requests passed it, {plain_ci} passed plain CI" in said
     assert said.index(share) < said.index(f"{black_box} of {cases}")
-    assert re.findall(r"\d+(?:\.\d+)?%?", said) == [*lead, share, black_box, cases, plain_ci], re.findall(r"\d+(?:\.\d+)?%?", said)
+    # the one line on why Solana, folded under "How it works", names the public wait before a program change: the time
+    # lock the upgrade multisig holds (web/upgrades.json, in seconds), in hours
+    lock = json.loads((WEB / "upgrades.json").read_text(encoding="utf-8"))["time_lock"]
+    assert lock == 48 * 3600 and "a program change waits 48 hours in public." in said
+    assert re.findall(r"\d+(?:\.\d+)?%?", said) == [*lead, str(lock // 3600), share, str(first['any_check_failed']['repos']), str(first['repos']), black_box, cases, plain_ci], re.findall(r"\d+(?:\.\d+)?%?", said)
 
 
 def test_the_site_says_nothing_it_may_not():

@@ -117,10 +117,10 @@ flowchart LR
 Some repositories (code projects) give many PRs. PRs from one project are alike, so they are not fully independent.
 The Wilson interval treats them as independent. Version 2 puts two more intervals beside it:
 
-- clustered Wilson: the Wilson interval on a smaller "effective" count. That count is 241 divided by the design
-  effect (how much the grouping widens the spread; never below 1);
-- cluster bootstrap: draw the 146 repositories again with replacement, 2,000 times, seed 20261010, and take the middle
-  95% of the shares.
+- clustered Wilson: the Wilson interval computed as if there were fewer pull requests: 241 divided by the design
+  effect (a number, never below 1, that says how much grouping by repository widens the spread);
+- cluster bootstrap: 2,000 times, pick 146 repositories at random from the 146 (the same one may be picked twice;
+  seed 20261010), and take the middle 95% of the shares this gives.
 
 | Count | PRs of 241 | From how many repositories | Most from one | Wilson | Design effect | Clustered Wilson | Cluster bootstrap |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -141,10 +141,11 @@ missed failure there would make the lead too low. The protocol:
    way. Shuffle all of them together.
 2. Give the reader only the shuffled links. The reader does not see which are controls, or what the scan recorded.
 3. For each, the reader writes down: merged or not, the target branch, and the page's checks line.
-4. Then match each row to the scan. Each negative gets one outcome: consistent (all checks passed, or merged outside
-   the default branch), inconclusive (some checks did not pass, or no checks line, and the failed one cannot be
-   named), unreadable (the page shows no merge or checks), or flipped (a failed test, build, lint or type check on a merge into the
-   default branch).
+4. Then match each row to the scan. Each negative gets one outcome:
+   - consistent: all checks passed, or it was merged outside the default branch;
+   - inconclusive: some checks did not pass, or there is no checks line, and the failed one cannot be named;
+   - unreadable: the page shows no merge or checks;
+   - flipped: a test, build, lint or type check failed on a merge into the default branch.
 5. Record it in [index_reread_negatives.json](index_reread_negatives.json). `backtest.py` refuses a list that is not
    the seeded draw.
 
@@ -170,8 +171,9 @@ the 9 of 241 says something about the projects, not about agents. The plan:
 5. Matched size: in each repository, at most as many PRs by people as there are agent PRs there, newest first. That
    gives up to 241.
 6. Same counts, same second reading (R1-R5), and the same blind re-read of the negatives.
-7. Report the difference of the two strict shares with a cluster bootstrap interval (seed 20261010). With about 241 a
-   side and shares near 4%, that interval is about 3.5 points either way by a normal approximation, wider once repositories are clustered: it can show a large gap, not a small one.
+7. Report the difference of the two strict shares with a cluster bootstrap interval (seed 20261010). With about 241 pull
+   requests on each side and shares near 4%, that interval is about 3.5 percentage points either way (normal
+   approximation), and wider once repositories are grouped. So it can show a large gap, not a small one.
 
 Limits, said before it runs: PRs by people rarely claim tests pass in words, so many repositories will give none.
 A person can use an agent without saying so. Both lower what the comparison can show.

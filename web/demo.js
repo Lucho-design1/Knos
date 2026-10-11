@@ -21,7 +21,9 @@
 const STEPS = ["Agree", "Fails", "Passes", "Statement", "Replay", "Pay", "Verify"];
 const DUR = [120, 240, 480], EASE = "cubic-bezier(.2,.7,.2,1)";
 const REPO = "https://github.com/drexthealpha/Knos/blob/main/";
-export const WHY_SOLANA = "Money is released with no custodian, and the count is anchored where neither side can alter it.";
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const longDay = (d) => { const [y, m, n] = String(d).split("-").map(Number); return y && m && n ? `${n} ${MONTHS[m - 1]} ${y}` : String(d); };
+export const WHY_SOLANA = "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public.";
 const esc0 = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const short = (s) => `${s.slice(0, 4)}…${s.slice(-4)}`;
 const thousands = (n) => String(n).replace(/\B(?=(\d{3})+$)/g, ",");
@@ -188,8 +190,8 @@ export async function renderDemo(el, env = {}) {
 
   // Each beat's public evidence, one link: a transaction on the explorer, or where the repository records the beat. The
   // last is the stand-alone verifier, which checks an archive with nothing of Knos installed.
-  const EVIDENCE = [["the funding transaction", EXPLORER("tx", d.fund.tx)], ["the refused pull request, tamper benchmark", `${REPO}docs/TAMPER.md`],
-    ["the accepted fix, tamper benchmark", `${REPO}docs/TAMPER.md`], ["both counts, in the round's record", `${REPO}docs/CAPABILITIES.md#${d.ids === "public" ? "the-round-on-the-public-program-ids" : "the-0314-rehearsal-on-devnet"}`],
+  const EVIDENCE = [["the funding transaction", EXPLORER("tx", d.fund.tx)], ["the refused pull request, tamper benchmark", `${REPO}docs/reference/TAMPER.md`],
+    ["the accepted fix, tamper benchmark", `${REPO}docs/reference/TAMPER.md`], ["both counts, in the round's record", `${REPO}docs/reference/CAPABILITIES.md#${d.ids === "public" ? "the-round-on-the-public-program-ids" : "the-0314-rehearsal-on-devnet"}`],
     ["the refused transaction", EXPLORER("tx", d.replay.tx)], ["the payment transaction", EXPLORER("tx", d.paid.tx)],
     ["verify.py, run it without Knos", `${REPO}conformance/standalone/verify.py`]];
 
@@ -211,7 +213,7 @@ export async function renderDemo(el, env = {}) {
   el.setAttribute("role", "group");
   el.setAttribute("aria-label", "One transaction, in seven beats");
   el.innerHTML = `
-    <div class="kd-top"><p class="k-kicker">One witnessed transaction. You drive.</p><p class="kd-keys" aria-hidden="true">Enter: act · arrows: steps · Esc: start over</p></div>
+    <div class="kd-top"><p class="k-kicker">One real devnet transaction. Press the button to go step by step.</p><p class="kd-keys" aria-hidden="true">Enter: act · arrows: steps · Esc: start over</p></div>
     <p class="kd-mark" data-ids="${esc(d.ids || "staging")}">Recorded on ${esc(d.cluster)}: ${esc(where)}, ${esc(day)}.</p>
     <ol class="kd-steps">${STEPS.map((s, i) => `<li><button type="button" class="k-step" data-step="${i}" data-state="idle"><i>${i + 1}</i><span>${esc(s)}</span></button></li>`).join("")}</ol>
     <ul class="kd-rail k-stage" aria-hidden="true">${["Buyer", "GitHub", "Solana", "Supplier"].map((n) => `<li class="kd-node" data-node="${n.toLowerCase()}"><b></b><span>${n}</span><em class="k-num"></em></li>`).join("")}</ul>
@@ -219,7 +221,7 @@ export async function renderDemo(el, env = {}) {
     <p class="kd-say" role="status" aria-live="polite"></p>
     <div class="kd-act"><button type="button" class="k-btn kd-go"></button><button type="button" class="k-btn quiet ghost kd-alt" hidden></button><button type="button" class="k-btn quiet ghost kd-reset" hidden>Start over</button></div>
     <p class="kd-src">Sources:
-      <a href="${REPO}docs/CAPABILITIES.md#the-round-on-the-public-program-ids">round</a>, <a href="${REPO}docs/TAMPER.md">tamper benchmark</a>, <a href="${REPO}docs/RELAY.md">timing</a>, <a href="statement_sample.json">sample statement</a>, <a href="${REPO.replace("/blob/", "/tree/")}examples/witnessed">run it yourself</a>.</p>`;
+      <a href="${REPO}docs/reference/CAPABILITIES.md#the-round-on-the-public-program-ids">round</a>, <a href="${REPO}docs/reference/TAMPER.md">tamper benchmark</a>, <a href="${REPO}docs/reference/RELAY.md">timing</a>, <a href="statement_sample.json">sample statement</a>, <a href="${REPO.replace("/blob/", "/tree/")}examples/witnessed">run it yourself</a>.</p>`;
   const q = (s) => el.querySelector(s), node = (n) => q(`[data-node="${n}"]`);
   const scene = q(".kd-scene"), say = q(".kd-say"), go = q(".kd-go"), alt = q(".kd-alt"), resetB = q(".kd-reset");
   const badge = (s, text) => `<span class="kd-badge" data-s="${s}">${esc(text)}</span>`;
@@ -257,13 +259,13 @@ export async function renderDemo(el, env = {}) {
     (on) => {
       const f = on && facts, same = !!f?.buyer && f.buyer === f.supplier && f.buyer === f.stated;
       const pane = (who, n, txs, word, r, cls = "") => `<div class="kd-box ${cls}" data-s="${on && !agreed && cls ? "bad" : ""}"><span class="kd-tag">${who} counted</span><span class="kd-big k-num">${n}</span>
-            <span class="kd-fine">${txs.map((t, k) => tx(t, `${word} ${k + 1}`)).join(" ")}</span><span class="kd-tag">${who}'s root</span>${root(r, same ? "ok" : "")}</div>`;
+            <span class="kd-fine">${txs.map((t, k) => tx(t, `${word} ${k + 1}`)).join(" ")}</span><span class="kd-tag">${who}'s fingerprint</span>${root(r, same ? "ok" : "")}</div>`;
       return {
         html: `<div class="kd-sides">${pane("Buyer", thousands(d.count.buyer), d.count.buyer_tx, "batch", f?.buyer)}
           ${pane("Supplier", `${thousands(d.count.seller)}${on && !agreed ? ` <small class="kd-apart">+${esc(d.count.apart)}</small>` : ""}`, d.count.seller_tx, "claim", f?.supplier, "kd-seller")}</div>
         <p class="kd-row"><span class="kd-tag">The month</span><span class="kd-badge kd-row-state" data-s="${on ? (agreed ? "ok" : "bad") : "wait"}">${on ? (agreed ? "agreed" : "disputed") : "not compared"}</span>
-          ${same ? badge("ok", "same root") : ""}${on && !agreed ? `<span class="kd-fine k-num">${esc(d.count.apart)} the buyer's ledger left out, each named.</span>` : ""}</p>${on && facts && !facts.st ? none : ""}`,
-        say: on ? (agreed ? `Agreed: both counted ${thousands(d.count.buyer)}.${same ? " One root." : ""}` : `Disputed: the buyer's ledger left out ${d.count.apart} evaluations.`) : `Buyer counted ${thousands(d.count.buyer)}. Supplier counted ${thousands(d.count.seller)}.`,
+          ${same ? badge("ok", "same fingerprint") : ""}${on && !agreed ? `<span class="kd-fine k-num">${esc(d.count.apart)} the buyer's ledger left out, each named.</span>` : ""}</p>${on && facts && !facts.st ? none : ""}`,
+        say: on ? (agreed ? `Agreed: both counted ${thousands(d.count.buyer)}.${same ? " Same fingerprint on both sides." : ""}` : `Disputed: the buyer's ledger left out ${d.count.apart} evaluations.`) : `Buyer counted ${thousands(d.count.buyer)}. Supplier counted ${thousands(d.count.seller)}.`,
         act: "Compute both statements",
       };
     },
@@ -280,7 +282,7 @@ export async function renderDemo(el, env = {}) {
     },
     (on) => ({
       html: `<p class="kd-big"><span class="k-num kd-secs" data-to="${on ? d.paid.seconds : 0}">${on ? esc(d.paid.seconds) : 0}</span> <small>seconds</small></p>
-        <p class="kd-fine k-num">Merge to paid, median of ${esc(d.paid.payments)} payments.</p>
+        <p class="kd-fine k-num">Merge to paid: median of ${esc(d.paid.payments)} payments${d.paid.window ? `, to ${esc(longDay(d.paid.window.to))}` : ""}.</p>
         ${on ? `<p class="kd-row">${badge("ok", "Paid")}<span class="k-num"><strong>${esc(money(d.paid.amount))}</strong> ${esc(d.money)}</span></p>` : ""}
         ${state.bank ? `<p class="kd-row kd-bank">${badge("ok", "Bank file written")}<a class="kd-mono" download="${esc(state.bank.name)}" href="${esc(state.bank.href)}">${esc(state.bank.name)}</a><span class="kd-fine k-num">${esc(thousands(state.bank.bytes))} bytes. No bank has taken this file.</span></p>
           <p class="kd-fine kd-return">A payment the bank returns makes its lines payable again.</p>` : ""}
@@ -294,10 +296,10 @@ export async function renderDemo(el, env = {}) {
       const line = (good, text) => `<li data-s="${f ? (good ? "ok" : "bad") : "wait"}"><span>${text}</span>${badge(f ? (good ? "ok" : "bad") : "wait", f ? (good ? "matches" : "differs") : "not checked")}</li>`;
       return {
         html: `<div class="kd-box kd-shake"><div class="kd-row"><span class="kd-tag">Export</span><a class="kd-mono" href="statement_sample.json" download>statement_sample.json</a>${bad ? badge("bad", "one amount changed") : ""}</div>
-            <div class="kd-row"><span class="kd-tag">Root, derived again</span>${root(r, f ? (ok ? "ok" : "bad") : "")}</div></div>
-          <ul class="kd-checks">${line(f && r === f.stated, "The root the file states")}${line(f && (bad ? f.otherTotals : f.totals), "Every total, added again")}</ul>
+            <div class="kd-row"><span class="kd-tag">Fingerprint, computed again</span>${root(r, f ? (ok ? "ok" : "bad") : "")}</div></div>
+          <ul class="kd-checks">${line(f && r === f.stated, "The fingerprint the file states")}${line(f && (bad ? f.otherTotals : f.totals), "Every total, added again")}</ul>
           ${on && d.verify ? `<p class="kd-row kd-recorded">${badge("ok", "recorded")}<a href="${esc(REPO + d.verify.link)}">${esc(d.verify.says)}</a></p>` : ""}${on && facts && !facts.st ? none : ""}`,
-        say: !on ? "Check the export again, from the file alone." : !f ? "No sample statement in this build." : ok ? "Verified: root and totals match the export." : "Not verified: the changed file has another root.",
+        say: !on ? "Check the export again, from the file alone." : !f ? "No sample statement in this build." : ok ? "Verified: fingerprint and totals match the export." : "Not verified: the changed file has another fingerprint.",
         act: "Verify the export",
         alt: f ? [bad ? "Put the amount back" : "Change one amount", () => { state.changed = !state.changed; draw(); if (state.changed) shake(); }] : null,
       };

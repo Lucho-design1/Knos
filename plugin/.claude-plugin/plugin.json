@@ -1,12 +1,12 @@
 {
   "name": "knos",
-  "version": "0.3.26",
-  "description": "The neutral meter for AI agent work: neither side keeps the count. The plugin adds a Stop hook: when the agent says tests pass, CI is green, it shipped or it is done, Knos runs that check itself before the agent may stop. And the knos MCP server: bounties on GitHub issues, paid in test USDC on Solana devnet, and pull request claim checks. The server's work tools let an agent find funded work, reserve it, check its own tree and open the pull request, and bind its own payout address; the ones that post are off until the person who runs the agent turns them on (docs/AGENTS.md).",
+  "version": "0.3.27",
+  "description": "The neutral meter for AI agent work: neither side keeps the count. It adds a Stop hook: when the agent says the tests pass, CI is green, it shipped or the work is done, Knos runs that check before the agent may stop. It also adds the knos MCP server, for bounties on GitHub issues paid in test USDC on Solana devnet, and for checking what a pull request claims. Its tools let an agent find funded work, reserve it, check its own work, open the pull request and set its payout address. The tools that post stay off until the person who runs the agent turns them on (docs/reference/AGENTS.md).",
   "author": {
     "name": "drexthealpha",
     "url": "https://github.com/drexthealpha"
   },
-  "homepage": "https://github.com/drexthealpha/Knos/blob/main/docs/INSTALL.md",
+  "homepage": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/INSTALL.md",
   "repository": "https://github.com/drexthealpha/Knos",
   "license": "MIT",
   "keywords": ["hooks", "mcp", "verification", "bounties"]

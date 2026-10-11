@@ -1,6 +1,6 @@
 # Clean our customer exports
 
-Budget: 40 USDC, paid when the check passes. No review, no merge: the check below decides.
+Budget: 40 test USDC (devnet, no monetary value), paid when the check passes. No review, no merge: the check below decides.
 
 Our shop sends customer lists to us as CSV files that people have typed and exported from three systems. We need a
 program that turns any of them into one clean file.

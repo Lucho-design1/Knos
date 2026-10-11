@@ -66,7 +66,7 @@ clock: `queued_at` the token was posted for a relay (its comment's creation; han
 comment), `seen_at` this relay picked it up, `sent_at` it handed its first transaction to the cluster, `confirmed_at`
 its last transaction confirmed. A token the chain already showed done (`already`) was sent by someone else: its line
 says `sent_at=-` and `confirmed_at=-`, never a time this relay did not measure. scripts/latency_stages.py turns
-them into the five states of a payment (received, accepted, submitted, confirmed, finalized: docs/RELAY.md).
+them into the five states of a payment (received, accepted, submitted, confirmed, finalized: docs/reference/RELAY.md).
 
 `t` is the time from the comment's creation to the token's last transaction. The four before the note say where the
 time went, in seconds, each only when it could be measured (`stages`): `queue`, from the comment or the merge that
@@ -76,7 +76,7 @@ its token id (`wait_for`) and comments the verdict with its own token. A line wi
 itself, the same whoever posted it. A comment that holds a token it cannot carry (someone's copy under another marker,
 or with other terms) is logged with `-` for the id, so it answers nobody who waits for the token.
 
-What a token can wait for, and the bound of each, is in docs/RELAY.md ("Where a token waits"). Three rules hold here:
+What a token can wait for, and the bound of each, is in docs/reference/RELAY.md ("Where a token waits"). Three rules hold here:
 
     journaled before sent   a token the relay has seen is written to its notes (`journal`, in KNOS_HOME/ghrelay.json:
                             the queue of knos.settle.v2.relayq, which carries up to 4 tokens of different owners at
@@ -895,7 +895,7 @@ def claim_repos(env=None) -> set[str]:
 def _claims(state: dict, now: float, ledger) -> list[dict]:
     """The claim guard's sweep, on this pass, for each of `claim_repos` that is due (at most once in
     claim_guard.SWEEP_EVERY seconds for one repository; when, is in the notes under `claims`). GitHub's timer for
-    claims.yml is not kept to any time (docs/RELAY.md, "The claim guard on the worker"); this pass is. A listing that
+    claims.yml is not kept to any time (docs/reference/RELAY.md, "The claim guard on the worker"); this pass is. A listing that
     could not be read is an error line on the run's page, never silence, and is asked again a minute later."""
     repos = claim_repos()
     if not repos:

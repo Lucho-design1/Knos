@@ -12,8 +12,8 @@
 //   ... --execute INDEX --member FILE    once the approvals reach the threshold (and the multisig's time lock has passed)
 //
 // --amount is in the mint's smallest units (20000000 is 20 USDC): what the payees receive. The vault is debited the
-// amount plus knos_pay's fee (0.30% of the amount, at least 0.05: knos_pay 2.2; the 2.1 build still live before its upgrade
-// charges the 0.3.14 fee, and --send checks the vault holds the larger of the two), and pays the rent of the order's two
+// amount plus knos_pay's fee (0.30% of the amount, at least 0.05: knos_pay 2.2, live at the public ids since 9 Oct 2026;
+// --send checks the vault holds enough), and pays the rent of the order's two
 // accounts, which returns to it when the order closes. So before it executes, the vault needs the tokens in its
 // associated token account and a little SOL. --terms is the terms JSON (a file, at most 600 bytes) the order is paid
 // under. Only devnet is written to. Install the packages first: npm ci --prefix scripts

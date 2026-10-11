@@ -1,6 +1,6 @@
 name: outcome support resolutions
 
-# A second outcome that is not code (docs/OUTCOMES.md, "Support resolutions"): the made-up tickets of
+# A second outcome that is not code (docs/reference/OUTCOMES.md, "Support resolutions"): the made-up tickets of
 # examples/outcomes/support-resolution are judged under the terms beside them (solved by the agent, nobody took the
 # ticket over, the customer did not come back inside the window, the window has closed), the meter's batch of those
 # evaluations is made, and GitHub signs this run with the batch as its audience:

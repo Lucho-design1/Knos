@@ -1,5 +1,5 @@
 """The six latencies are reported apart (scripts/latency_stages.py --separate): each row has its own sample, none is a
-sum, a row nothing measured says so, and docs/BENCH.md holds exactly what docs/bench.json records."""
+sum, a row nothing measured says so, and docs/reference/BENCH.md holds exactly what docs/bench.json records."""
 from __future__ import annotations
 
 import importlib.util
@@ -60,7 +60,7 @@ def test_the_document_holds_what_the_record_says_and_names_the_one_command_of_th
     kept = ls.recorded()
     assert [row["stage"] for row in kept["stages"]["six"]] == [name for name, *_ in ls.SIX] and kept["stages"]["whole"]["n"] > 0
     assert kept["decision"]["devnet"]["offline"]["median"] == 356 and kept["decision"]["devnet"]["chain_check"]["median"] == 854
-    doc = (ROOT / "docs" / "BENCH.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "BENCH.md").read_text(encoding="utf-8")
     assert "## Every latency, apart" in doc
     held = doc.split(ls.SEP_OPEN)[1].split(ls.SEP_CLOSE)[0].strip("\n").split("\n")
     assert held == ls.separate_block(kept)                                      # written by the script, not by hand
@@ -69,7 +69,7 @@ def test_the_document_holds_what_the_record_says_and_names_the_one_command_of_th
     said: list[str] = []
     assert ls.main(["--separate", "--recorded"], say=said.append) == 0 and said == held       # no network asked
     load = json.loads((ROOT / "docs" / "load.json").read_text(encoding="utf-8"))["relay"]["decision"]
-    assert "offline, warm" in load["rows"]                                      # docs/LOAD.md's decision clock is the same run
+    assert "offline, warm" in load["rows"]                                      # docs/reference/LOAD.md's decision clock is the same run
 
 
 def test_every_rate_has_its_denominator_and_its_failures_and_the_tail_is_apart():

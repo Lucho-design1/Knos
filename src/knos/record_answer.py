@@ -1,4 +1,4 @@
-"""What a paid record lookup adds to the free file (docs/RECORD.md section 5; served by knos.record_api).
+"""What a paid record lookup adds to the free file (docs/reference/RECORD.md section 5; served by knos.record_api).
 
     knos record verify ANSWER          checks a paid answer with no network: fresh, stale, unsigned or invalid
     knos record grant <slug>           the supplier signs a grant: a named reader may read named fields of its history

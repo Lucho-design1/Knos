@@ -127,5 +127,5 @@ def test_the_committed_section_is_what_the_script_computes_and_is_about_the_comm
     assert w["chain"]["fixtures"] == doc["local"]["fixtures"] and w["limits"] == cap.LIMITS
     assert [(a["repositories"], a["per_day"], a["way"]) for a in w["customers"]] == [(r, n, way) for r, n in cap.SIZES for way in ("own", "public")]
     assert all(u.startswith("https://") for u in w["sources"].values())
-    text = (ROOT / "docs" / "LOAD.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "reference" / "LOAD.md").read_text(encoding="utf-8")
     assert "## 5. The whole workflow" in text and "NEEDS A PROGRAM CHANGE" not in text and "K fee accounts, no program change" in text and all(u in text for u in w["sources"].values())

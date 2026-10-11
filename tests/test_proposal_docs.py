@@ -1,4 +1,4 @@
-"""docs/PROPOSAL-2.3.md (the written upgrade proposal for knos_pay) and docs/KEYS.md (the plan for the keys) say only
+"""docs/reference/PROPOSAL-2.3.md (the written upgrade proposal for knos_pay) and docs/reference/KEYS.md (the plan for the keys) say only
 what the programs hold.
 
 - Every name either page puts in backticks exists: an instruction or account of the IDL, a word of the programs'
@@ -25,11 +25,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-PROPOSAL, KEYS = "docs/PROPOSAL-2.3.md", "docs/KEYS.md"
+PROPOSAL, KEYS = "docs/reference/PROPOSAL-2.3.md", "docs/reference/KEYS.md"
 SOURCES = [ROOT / "programs-v2" / "knos_pay" / "src", ROOT / "programs-v2" / "knos_oidc" / "src"]
 IDLS = [ROOT / "idl" / "knos_pay_v2.json", ROOT / "idl" / "knos_oidc_v2.json"]
 FILE_DIRS = [".github/workflows", "programs-v2", "scripts", "src", "docs", "idl", "web", "tests", "examples"]
-MARK = '<img src="../web/brand/mark.svg" height="40" alt="Knos">'
+MARK = '<img src="../../web/brand/mark.svg" height="40" alt="Knos">'
 NEW_NAMES = "## New names this proposal adds"
 
 

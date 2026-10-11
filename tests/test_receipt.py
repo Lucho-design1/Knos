@@ -1,4 +1,4 @@
-"""The acceptance receipt (docs/RECEIPT.md): the reference checker and the JSON Schema accept the five conformance
+"""The acceptance receipt (docs/reference/RECEIPT.md): the reference checker and the JSON Schema accept the five conformance
 vectors of each version and give their digests, both refuse every invalid one for the reason it names, a version 2
 receipt says its parts in order (five in version 3), the page prints a vector of each version, and
 scripts/sas_receipt.mjs computes the same digest and builds the attestation's instructions (when its package is there)."""
@@ -366,7 +366,7 @@ def test_the_attestation_is_of_the_receipt_as_issued_and_a_reader_of_version_2_c
 
 
 def test_the_document_says_the_five_parts_the_independence_fields_and_what_survives_a_devnet_reset():
-    page = (ROOT / "docs" / "RECEIPT.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "RECEIPT.md").read_text(encoding="utf-8")
     doc = " ".join(page.split())
     at = [page.index(f"**{receipt.HEADINGS[k]}** (`{k}`)") for k in receipt.PARTS]
     assert at == sorted(at) and len(at) == 5 and "keeps five things apart" in doc
@@ -572,7 +572,7 @@ def test_a_script_that_crashes_after_sending_is_checked_on_chain_and_its_own_err
 
 
 def test_the_page_prints_the_first_vector_and_says_what_was_not_confirmed():
-    page = (ROOT / "docs" / "RECEIPT.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "RECEIPT.md").read_text(encoding="utf-8")
     shown = json.loads(re.search(r"## Version 1\n\n```json\n(.*?)\n```", page, re.S).group(1))
     assert shown == VECTORS["valid"][0]["receipt"] and VECTORS["valid"][0]["sha256"] in page
     shown2 = json.loads(re.search(r"## Version 2\n\n```json\n(.*?)\n```", page, re.S).group(1))
@@ -613,7 +613,7 @@ def test_the_script_builds_the_attestation_and_its_digest_is_the_python_one(tmp_
 
 
 def test_the_privacy_page_says_what_a_payment_reveals_and_what_a_hash_proves():
-    page = (ROOT / "docs" / "PRIVACY.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "PRIVACY.md").read_text(encoding="utf-8")
     for said in ("**Ids**", "**Amounts**", "**Timing**", "**The payee's wallet**", "**Counterparties**", "It does not hide:", "Merkle root", "## 4. Retention",
                  "**Not availability.**", "**Not confidentiality.**", "proves **correspondence**", "test USDC"):
         assert said in page, said
@@ -692,11 +692,11 @@ def test_the_payment_still_succeeds_when_the_attestation_raises(monkeypatch, tmp
 
 
 def test_the_document_names_the_bundles_options_and_states_the_offline_limit():
-    """docs/RECEIPT.md says what `knos bundle` takes and what an offline check cannot show, in the command's own words."""
+    """docs/reference/RECEIPT.md says what `knos bundle` takes and what an offline check cannot show, in the command's own words."""
     import inspect
 
     from knos import bundle
-    doc = " ".join((ROOT / "docs" / "RECEIPT.md").read_text(encoding="utf-8").split())
+    doc = " ".join((ROOT / "docs" / "reference" / "RECEIPT.md").read_text(encoding="utf-8").split())
     for said in ("`knos bundle make ORDER [--verdict FILE]`", "`knos bundle verify FILE [--rpc URL] [--mirror DIR]`", "knos bundle verify FILE --mirror DIR",
                  "knos bundle make <order> --verdict FILE", "Offline, the paid wallet is not checked against the chain.", "a line that starts `limit:`",
                  "`ref_path`", "`ref_type`", "`project_path`", "900000000000000000 + id", "800000000000000000 + id"):
@@ -722,7 +722,7 @@ def test_the_attestation_script_reads_a_version_3_receipt_and_attests_its_own_di
     done = subprocess.run([node, str(tmp_path / "fields.mjs")], capture_output=True, text=True, encoding="utf-8", timeout=120)
     assert done.returncode == 0, done.stderr
     got = json.loads(done.stdout)
-    assert got["refused"] == "this is not a Knos acceptance receipt of version 1 to 5 (docs/RECEIPT.md)."
+    assert got["refused"] == "this is not a Knos acceptance receipt of version 1 to 5 (docs/reference/RECEIPT.md)."
     for v, three, two in zip(VECTORS["valid_v3"], got["three"], got["two"]):
         assert three["receipt_sha256"] == v["sha256"] != two["receipt_sha256"], v["name"]
         assert {k: x for k, x in three.items() if k != "receipt_sha256"} == {k: x for k, x in two.items() if k != "receipt_sha256"}, v["name"]

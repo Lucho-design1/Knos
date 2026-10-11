@@ -50,11 +50,11 @@
  "paid": {
   "tx": "59AfaYHTvWHhbAhiiNHCbCfEcGCxG1kCydJwfRNjZqry9bCnMF3ox6bd4P7favA9hjgzB5nk283g2Mdq3LruyNWV",
   "amount": "5.00",
-  "seconds": 26,
-  "payments": 51,
+  "seconds": 28,
+  "payments": 56,
   "window": {
    "from": "2026-10-02",
-   "to": "2026-10-09"
+   "to": "2026-10-10"
   }
  },
  "replay": {
@@ -77,18 +77,18 @@
  },
  "bank_file": true,
  "sources": [
-  "docs/CAPABILITIES.md",
+  "docs/reference/CAPABILITIES.md",
   "docs/capabilities.json",
-  "docs/TAMPER.md",
+  "docs/reference/TAMPER.md",
   "docs/bench.json",
   "docs/facts.json",
-  "docs/OIDC.md",
+  "docs/reference/OIDC.md",
   "programs-v2/knos_pay/src/lib.rs",
   "src/knos/commands.py",
   "docs/archive_verify.json"
  ],
  "verify": {
   "says": "Stand-alone verifier on the sample archive: 3 checks hold, 2 notes.",
-  "link": "docs/RETENTION.md"
+  "link": "docs/reference/RETENTION.md"
  }
 }

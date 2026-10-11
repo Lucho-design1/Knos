@@ -85,7 +85,7 @@ const type = async (p, y) => {
   ok("  there is no Verify line, no Settle line, no greater-of line and no supplier line", ["verify", "settle", "usage", "suppliers"].every((k) => !(k in first)) && !/Verify|Settle|greater|capped/i.test(await p.innerText("#bill")));
   ok("  two sentences under it: The rated party never pays. Connecting a supplier costs nothing.", (await p.textContent("#bill-pays")) === "The rated party never pays." && (await p.textContent("#bill-connect")) === "Connecting a supplier costs nothing.");
   ok("  fees on devnet are test money: 0 revenue", first.devnet.say === "test money: 0 revenue" && first.devnet.amount === "");
-  ok("  and the benefit a buyer should demand is three to one", (await p.textContent("#bill-benefit")) === `Demand a benefit of 3 to 1: ${worked.out.benefit_to_demand} a year.`);
+  ok("  and the benefit a buyer should demand is three to one", (await p.textContent("#bill-benefit")) === `Rule of thumb: savings of 3 times the price, ${worked.out.benefit_to_demand} a year.`);
   const opened = await tiers(p);
   ok("  the month's 833,333.33 is all in the first rate", JSON.stringify(opened.map((t) => [t.name, t.of, t.on])) === JSON.stringify([["0.30% to 1M", "833,333.33", "yes"], ["0.20% above 1M", "0.00", "no"]]) && opened[0].width === "100%", opened);
   let typed = 0;

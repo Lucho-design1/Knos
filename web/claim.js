@@ -123,7 +123,7 @@ export function initClaim(ctx) {
       const to = await passkey.ata(dest, MINT), there = await knos.accountInfo(RPC, to), token = there?.owner === knos.TOKEN ? knos.readTokenAccount(there.data) : null;
       if (!token || token.mint !== MINT) {
         return bad(MINT === knos.USDC_DEVNET
-          ? `${esc(dest.slice(0, 4))}…${esc(dest.slice(-4))} has no test USDC token account on devnet, so there is nowhere for the money to land. Make one there first (any wallet that has received test USDC has one). Nothing was signed.`
+          ? `${esc(dest.slice(0, 4))}…${esc(dest.slice(-4))} has no test USDC account on devnet, so the money has nowhere to go. Create one first: any wallet that has received test USDC has one. Nothing was signed.`
           : `${esc(dest.slice(0, 4))}…${esc(dest.slice(-4))} has no token account of the devnet faucet's test USDC (mint <span class="mono">${esc(MINT)}</span>), so there is nowhere for the money to land. Make one there first (any wallet a bounty funded by comment has paid has one). Nothing was signed.`);
       }
       const nonce = me.nonce + 1;

@@ -17,7 +17,7 @@ What every line carries, whatever the product calls the column:
                    receipt from
 
 FORMATS says, per product, where its column names come from and what could not be confirmed from the product's own
-documentation. docs/FINANCE.md repeats it with the links. None of the four products' files has a place for a comment, so
+documentation. docs/reference/FINANCE.md repeats it with the links. None of the four products' files has a place for a comment, so
 an unverified format says so there and on the command's standard error, not in the file. The `generic` file is Knos's
 own, says its version in its first line, and carries the whole statement after its lines, so `statement_of` gives the
 statement back and its head is the head the two parties compare.
@@ -93,7 +93,7 @@ FORMATS = {
                                 "line of a bill repeats Bill no., Supplier and Bill Date; the date format is chosen at import (D/M/YYYY is the "
                                 "page's example); at most 100 bills a file is recommended; the page names no purchase-order column (read again 2026-10-07)",
                    "unverified": "the optional columns Line Description and Memo, and the United States edition, whose own page could not be read"},
-    "generic": {"name": "Knos: generic finance export", "extension": "csv", "date": "YYYY-MM-DD", "source": "docs/FINANCE.md", "confirmed": "Knos's own format",
+    "generic": {"name": "Knos: generic finance export", "extension": "csv", "date": "YYYY-MM-DD", "source": "docs/reference/FINANCE.md", "confirmed": "Knos's own format",
                 "unverified": ""},
 }
 DEFAULTS = {"account": "Accepted agent work", "entity": "", "tax_code": "", "date_format": ""}
@@ -358,7 +358,7 @@ def parts_check(export_text: str, parts_text: str) -> list[str]:
 
 # ---- the purchase-order match, and the invoice as cXML ---------------------------------------------------------------------
 STATEMENT_MORE = {
-    "match": {"name": "Knos: purchase-order match", "extension": "csv", "source": "docs/RAILS.md", "confirmed": "Knos's own format", "unverified": ""},
+    "match": {"name": "Knos: purchase-order match", "extension": "csv", "source": "docs/reference/RAILS.md", "confirmed": "Knos's own format", "unverified": ""},
     "ariba": {"name": "SAP Ariba: cXML InvoiceDetailRequest", "extension": "xml",
               "source": "https://compass.coupa.com/en-us/products/product-documentation/supplier-resources/for-suppliers/integration-resources/"
                         "standard-invoice-examples/sample-cxml-invoice-with-both-backed-and-unbacked-lines",

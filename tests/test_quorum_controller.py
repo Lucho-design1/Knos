@@ -1,4 +1,4 @@
-"""Two judges started by one account are one judge (docs/STANDARD.md, "Evaluators"; docs/CHARTER.md).
+"""Two judges started by one account are one judge (docs/reference/STANDARD.md, "Evaluators"; docs/reference/CHARTER.md).
 
 knos_pay 2.2 counts a quorum's judges by the owner of the repository each ran in. A person who starts runs in a
 repository he owns and in one his organisation owns is two owners to the program and one controller in fact. The

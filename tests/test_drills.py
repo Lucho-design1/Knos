@@ -140,7 +140,7 @@ def test_with_a_token_file_and_the_upgrade_drills_log_every_row_runs(tmp_path, w
     replay = next(s for s in said if s.startswith("a replay is refused "))
     assert "the pay token again: error 8" in replay and "the fund token again: error 91" in replay and "no money moved" in replay
     doc = out.read_text(encoding="utf-8")
-    assert "14 of 15 rows passed, 0 failed, 1 were not run." in doc and f"This run read 3 tokens from `{tokens}`." in doc
+    assert "14 of 15 rows passed, 0 failed, 1 was not run." in doc and f"This run read 3 tokens from `{tokens}`." in doc
     assert f"| a cancelled upgrade never runs | {drills.VOTED} | proposal 3 of the upgrade multisig | pass |" in doc
     assert f"python scripts/drills.py --rpc http://cluster --tokens {tokens} --upgrade-log {log}\n" in doc and f"KNOS_DRILL_LOG={log} bash scripts/drill_upgrade.sh --from-devnet\n" in doc
 
@@ -192,17 +192,17 @@ def test_an_unsigned_token_is_a_whole_token_that_no_key_signed():
 
 
 def test_the_committed_table_has_a_row_for_every_drill_and_none_of_them_failed():
-    """docs/DRILLS.md is written by the script from a run against devnet. A drill added to the script without a new run,
+    """docs/reference/DRILLS.md is written by the script from a run against devnet. A drill added to the script without a new run,
     a row that failed, or an upgrade row that does not come from the committed log shows up here."""
     docs = FIX.parents[1] / "docs"
-    doc = (docs / "DRILLS.md").read_text(encoding="utf-8")
+    doc = (docs / "reference" / "DRILLS.md").read_text(encoding="utf-8")
     rows = {line.split(" | ")[0][2:]: line for line in doc.splitlines() if line.startswith("| ") and line.count(" | ") == 3}
     assert [name for name in [n for n, *_ in drills.DRILLS] + list(drills.UPGRADE) if name not in rows] == []
     assert not [line for line in rows.values() if "FAIL" in line]
     assert all(rows[name].endswith("| pass |") for name, how, needs, _f in drills.DRILLS if not needs and how != drills.PERSON)
     # the one row no script runs: a second person's, and it says nobody has run it
     assert [name for name, how, *_ in drills.DRILLS if how == drills.PERSON] == ["second operator"]
-    assert "| not run: not yet run by a second person" in rows["second operator"] and "## The drill: `second operator`" in (docs / "OPERATOR.md").read_text(encoding="utf-8")
+    assert "| not run: not yet run by a second person" in rows["second operator"] and "## The drill: `second operator`" in (docs / "reference" / "OPERATOR.md").read_text(encoding="utf-8")
     for p in BUILDS:
         assert pay.IDS[p] in doc
     logged = drills.upgrade_rows(docs / "drill_upgrade.log", lambda _line: None)
@@ -257,9 +257,9 @@ def test_the_dependency_section_is_in_the_page_replaced_alone_and_a_row_that_fai
 
 def test_the_committed_page_has_the_dependency_rows_as_the_script_writes_them_and_the_customers_version():
     docs = FIX.parents[1] / "docs"
-    doc = (docs / "DRILLS.md").read_text(encoding="utf-8")
+    doc = (docs / "reference" / "DRILLS.md").read_text(encoding="utf-8")
     assert drills.dependency_section(drills.dependency_rows(lambda _line: None)) in doc, "run: python scripts/drills.py --dependencies-only"
-    recovery = (docs / "drills_recovery.md").read_text(encoding="utf-8")
+    recovery = (docs / "reference" / "drills_recovery.md").read_text(encoding="utf-8")
     assert doc.endswith(recovery) and "## What you see when something Knos depends on fails" in recovery
     table = [line for line in recovery.splitlines() if line.startswith("| ") and line.count(" | ") == 3][2:]       # (after its heading and the rule under it)
     assert len(table) == len(drills.DEPENDENCIES)                      # one row for the person waiting, per drill

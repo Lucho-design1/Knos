@@ -1,6 +1,6 @@
 """Merge to paid has one value and one source: the fact in docs/facts.json, which points into docs/bench.json (filled
-from the site's stats.json by `scripts/bench_docs.py --stats`). The pitch, the submission, the judges' page, the
-demo's data and the front pages state that value or none."""
+from the site's stats.json by `scripts/bench_docs.py --stats`). The judges' page, the demo's data and the front pages
+state that value or none."""
 from __future__ import annotations
 
 import importlib.util
@@ -38,7 +38,7 @@ def test_every_statement_of_merge_to_paid_is_the_one_in_facts_json():
     value = _seconds()
     stated = _bench_docs().said(ROOT).get("seconds_from_merge_to_paid", {})
     assert set(stated) <= {str(value)}, stated
-    for doc in ("docs/submission/pitch_script.md", "docs/submission/SUBMISSION.md", "docs/JUDGES.md"):
+    for doc in ("docs/JUDGES.md",):
         assert doc in stated.get(str(value), []), f"{doc} does not state merge to paid from facts.json"
 
 

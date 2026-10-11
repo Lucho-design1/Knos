@@ -1,7 +1,7 @@
 """`knos accept init`: a black-box acceptance bundle made from a reference implementation.
 
 A bounty can be paid by its acceptance checks alone, with no merge, only when the bundle in `.knos/acceptance/<issue>/` is
-black-box (`knos.judge.black_box`; docs/TAMPER.md measures why): the pull request's code runs as a separate process, only
+black-box (`knos.judge.black_box`; docs/reference/TAMPER.md measures why): the pull request's code runs as a separate process, only
 what it prints is compared, and nothing it does can change the verdict except printing the right answer. Writing that
 check by hand is the part people skip, so this makes it from what a funder already has: a command that answers right.
 
@@ -21,7 +21,7 @@ tree. Outputs are compared after trailing spaces and blank lines at the ends are
 
 What this does not do, and the README in the bundle says so: the cases are in the repository, so an implementation can
 answer exactly those from a table. Generated inputs, compared with a reference at the time the check runs, are what no
-table survives (that is what a hand-written blackbox.py in docs/TAMPER.md does); recorded ones make a table a lot of work
+table survives (that is what a hand-written blackbox.py in docs/reference/TAMPER.md does); recorded ones make a table a lot of work
 for a bounty, not an impossible one. More cases make it more work.
 """
 
@@ -189,7 +189,7 @@ merge, when this folder is on the default branch before the bounty is funded: `/
 What it does not do: the cases are in this repository, so an implementation can answer exactly them from a table. More
 cases make that more work, not impossible. A check that generates its inputs when it runs and compares them with a
 reference at that time cannot be answered from a table: write that as `blackbox.py` yourself if the bounty is worth it
-(Knos's docs/TAMPER.md measures the difference).
+(Knos's docs/reference/TAMPER.md measures the difference).
 """
 
 

@@ -67,7 +67,7 @@ def refuses(github, repo: str, event: dict, units: int, now: float) -> str:
     if int(issue.get("number") or 0) > SLOTS:
         return (f"Knos: nothing was funded. The playground has acceptance checks for issues 1 to {SLOTS}, and this is issue "
                 f"#{issue.get('number')}: the next release adds more. Knos works in your own repository today "
-                "(https://github.com/drexthealpha/Knos/blob/main/docs/INSTALL.md).")
+                "(https://github.com/drexthealpha/Knos/blob/main/docs/reference/INSTALL.md).")
     n = opened_today(github, repo, login, now)
     if n is None:
         return f"Knos: GitHub did not say how many tasks @{login} opened here today, so nothing was funded. Open the issue again."

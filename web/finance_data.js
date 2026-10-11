@@ -267,7 +267,7 @@ export const FORMATS = {
   sap: { name: "SAP S/4HANA: Import Supplier Invoices (app F3041)", extension: "csv", date: "YYYYMMDD", source: "https://userapps.support.sap.com/sap/support/knowledge/en/3782347", unverified: true },
   coupa: { name: "Coupa: flat file (CSV) import, Invoices", extension: "csv", date: "YYYY-MM-DD", source: "https://compass.coupa.com/en-us/products/product-documentation/integration-technical-documentation/coupa-core-flat-files-(csv)/flat-file-(csv)-import/invoices-import", unverified: true },
   quickbooks: { name: "QuickBooks Online: import bills", extension: "csv", date: "D/M/YYYY", source: "https://quickbooks.intuit.com/learn-support/en-ca/help-article/import-transactions/import-bills-quickbooks-online/L4Q6QWsRw_CA_en_CA", unverified: true },
-  generic: { name: "Knos: generic finance export", extension: "csv", date: "YYYY-MM-DD", source: "docs/FINANCE.md", unverified: false },
+  generic: { name: "Knos: generic finance export", extension: "csv", date: "YYYY-MM-DD", source: "docs/reference/FINANCE.md", unverified: false },
 };
 export const DEFAULTS = { account: "Accepted agent work", entity: "", tax_code: "", date_format: "" };
 const NETSUITE = ["External ID", "Vendor", "Date", "Reference No.", "Memo", "Expenses : Account", "Expenses : Amount", "Expenses : Memo"];

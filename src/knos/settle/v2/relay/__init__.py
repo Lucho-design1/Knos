@@ -60,7 +60,7 @@ audience, the workflow, the key that signed, the job, the Balance, the faucet's 
 (the same arithmetic as on chain, done here). Anyone can have GitHub sign any audience from a repository of their own
 and post it where a relayer looks, so a relayer that paid first and asked later could be made to pay for nothing.
 
-Round trips. On a 2.1 cluster (`version` answers 1) with a ledger that sends v1 transactions (4,096 bytes), a GitHub
+Round trips. On a 2.1 or later cluster (`version` answers 1 or more) with a ledger that sends v1 transactions (4,096 bytes), a GitHub
 token of the usual size (the harness's are 1,770 to 1,910 bytes) takes two transactions and two waits, whatever it
 asks for:
 

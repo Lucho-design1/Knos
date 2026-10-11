@@ -2,7 +2,7 @@
   "version": "0.3.14",
   "name": "knos_oidc",
   "docs": [
-    "OIDC on Solana: verifies an RS256 token from GitHub Actions or GitLab CI on chain. No admin, immutable.",
+    "First deployment (programs/; nothing new is funded there). OIDC on Solana: verifies an RS256 token from GitHub Actions or GitLab CI on chain. No admin. It has no upgrade authority, so nobody can change it.",
     "A native program: this file is written by hand from programs/knos_oidc/src/lib.rs and checked by tests/test_idl.py.",
     "Instruction data is the discriminant byte, then the arguments in order, little-endian, with no padding.",
     "An argument or field of type bytes is raw and runs to the end: it has no length prefix."

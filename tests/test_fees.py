@@ -154,7 +154,8 @@ def _find(doc, key):
 def test_the_fee_in_words_is_true_on_both_sides_and_says_what_an_older_order_keeps():
     both, before, after = fees.words(None), fees.words(1), fees.words(2)
     assert all(w.endswith(fees.KEEPS) for w in (both, before, after, fees.words(0)))
-    assert "once knos_pay 2.2 is live" in both and "until that upgrade executes the public program charges the fee it charges before the upgrade" in both and "`knos status`" in both
+    assert both == f"Fee: 0.30% of the amount, at least 0.05 test USDC, paid by the funder on top (knos_pay 2.2, live on devnet since 9 October 2026; `knos status` says which build runs). {fees.KEEPS}"
+    assert "until that upgrade executes" not in both and "0.40" not in both
     assert before.startswith("Fee today: 2.5% of the first 1,000, 1% to 50,000, 0.5% above, at least 0.40 test USDC") and "From knos_pay 2.2: 0.30% of the amount, at least 0.05." in before
     assert after == f"Fee: 0.30% of the amount, at least 0.05 test USDC, paid by the funder on top (knos_pay 2.2 is live). {fees.KEEPS}"
     assert "2.5%" not in after and "0.40" not in after
@@ -170,12 +171,9 @@ def test_the_site_and_the_python_say_the_fee_in_the_same_words():
 
 def test_every_document_that_states_the_fee_says_both_sides_and_what_an_older_order_keeps():
     keeps = "funded before the upgrade keep the rate fixed at their funding"
-    for rel in ("docs/SECURITY.md", "docs/INSTALL.md", "docs/X402.md", "docs/COMPARE.md", "docs/CONSOLE.md", "docs/CONTROLS.md", "sdk/settle/README.md"):
+    for rel in ("docs/reference/SECURITY.md", "docs/reference/INSTALL.md", "docs/reference/X402.md", "docs/reference/COMPARE.md", "docs/reference/CONSOLE.md", "docs/reference/CONTROLS.md", "sdk/settle/README.md"):
         text = " ".join((ROOT / rel).read_text(encoding="utf-8").split())
         assert keeps in text, rel
         assert "0.30%" in text and "0.05" in text, rel                                  # the 0.3.18 fee
         assert ("2.5% of the first 1,000" in text or "0.3.14 fee" in text) and "0.40" in text, rel     # and the one the public program charges until 2.2 is live
         assert "knos_pay 2.2" in text, rel
-    # the submission's form field has a length limit: the same facts in fewer words
-    short = " ".join((ROOT / "docs" / "submission" / "SUBMISSION.md").read_text(encoding="utf-8").split())
-    assert "0.30%, minimum 0.05, from knos_pay 2.2 (before that upgrade: the 0.3.14 fee, minimum 0.40; earlier orders keep their rate)" in short

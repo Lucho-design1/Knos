@@ -1,7 +1,7 @@
-"""How long `knos decide` takes, measured here, and the table of it in docs/BENCH.md ("Decision time").
+"""How long `knos decide` takes, measured here, and the table of it in docs/reference/BENCH.md ("Decision time").
 
     python scripts/decide_bench.py            # measure and print
-    python scripts/decide_bench.py --write    # and rewrite the block in docs/BENCH.md and the decision clock of docs/LOAD.md
+    python scripts/decide_bench.py --write    # and rewrite the block in docs/reference/BENCH.md and the decision clock of docs/reference/LOAD.md
     python scripts/decide_bench.py --tokens tokens.jsonl [--write]   # also on real tokens (scripts/replay_tokens.py --capture)
 
 What is timed is `knos.decide.token` (the relay's own reads, `knos.settle.v2.relay.precheck`) followed by
@@ -27,11 +27,11 @@ bounds on this machine with no network; neither is a claim about a cluster.
 interpreter start, imports, the offline decision, the receipt written), and takes apart what the command says of
 itself: "rules loaded in L ms" (paid once a process) and "offline A ms" (paid once a token). `streamed(n)` starts ONE
 `python -m knos.decide --stream` and hands it n tokens: each line's own `ms`. `round_trips()` counts requests through
-an endpoint that only counts: the relay's whole precheck (what `knos decide` asked of a cluster in 0.3.18) against the
+an endpoint that only counts: the relay's whole precheck (what `knos decide` asked of a cluster before it was split in two) against the
 one request of `chain_check`. `real(path)` decides on every token of a file `scripts/replay_tokens.py --capture`
 wrote, with the key set of its day and the clock at its issue time; the tree holds no such file (a token is public,
 but nobody committed one), so the release run makes it. The 100 ms figure in the table is a TARGET for the warm
-offline decision, set in 0.3.20 (it was 250 ms); the figures beside it are what was measured.
+offline decision (it was 250 ms until release 0.3.20). The figures beside it are what was measured.
 
 `--write` also keeps what was measured in docs/bench.json (`decision.local`), beside the devnet sample of the last
 release run (`decision.devnet`, entered from that run's report); scripts/latency_stages.py reads both.
@@ -54,11 +54,12 @@ for extra in (ROOT / "src", ROOT / "tests"):
     if str(extra) not in sys.path:
         sys.path.insert(0, str(extra))
 
-DOC = ROOT / "docs" / "BENCH.md"
+DOC = ROOT / "docs" / "reference" / "BENCH.md"
 OPEN, CLOSE = "<!-- decide:time -->", "<!-- /decide:time -->"
 TARGETS = {"cached": 200.0, "fresh": 2000.0, "local": 100.0, "warm": 100.0}        # milliseconds at p95: targets, on one machine with no network
-DEVNET = ("On devnet, four runs of the 0.3.18 command (the relay's whole precheck, on real fund tokens over the shared public RPC) took 4.3 to 32.6 s: "
-          "a first reading, not a sample. The 0.3.19 split was timed there on 24 real tokens: the tables after this block.")
+DEVNET = ("On devnet, four runs of the command as it was in Knos 0.3.18 (the relay's whole precheck, on real fund tokens over the shared public RPC) "
+          "took 4.3 to 32.6 s: a first reading, not a sample. The split into an offline half and a chain check (Knos 0.3.19) was timed there on 24 "
+          "real tokens: the tables after this block.")
 BENCH_JSON = ROOT / "docs" / "bench.json"
 ROWS = (("fresh, accepted", "fresh", "a fund token never seen: signature checked, chain read"),
         ("fresh, rejected", "fresh", "a pay token for an issue with nothing in escrow: signature checked, chain read"),
@@ -326,12 +327,12 @@ def imports_lines(i: dict | None) -> list[str]:
     t, k = i["token"], i["checks"]
     return ["", "What `python -m knos.decide` imports, by `python -X importtime` (the median of 5 new processes, each module's own time summed): deciding on a token offline, "
             f"{t['modules']} modules in {t['ms']:.0f} ms, typer {yes(t['typer'])}, the relay's rules {yes(t['relay'])} (they are the rules it decides by); "
-            f"the free check, {k['modules']} modules in {k['ms']:.0f} ms, typer {yes(k['typer'])}, the relay's rules {yes(k['relay'])}. Before 0.3.19 the same "
+            f"the free check, {k['modules']} modules in {k['ms']:.0f} ms, typer {yes(k['typer'])}, the relay's rules {yes(k['relay'])}. Before Knos 0.3.19 the same "
             "command loaded typer for every answer: on this machine, idle, 151 modules in 94 ms for the free check and 268 in 165 ms for a token."]
 
 
 def table(r: dict, day: str) -> list[str]:
-    """The block of docs/BENCH.md."""
+    """The block of docs/reference/BENCH.md."""
     ms = lambda v: "under 0.1 ms" if v < 0.05 else f"{v:.1f} ms" if v < 100 else f"{v:.0f} ms"  # noqa: E731
     out = [f"Measured on {day} by `python scripts/decide_bench.py --write` on this machine: {r['machine']}. The chain is LiteSVM with the "
            "committed test builds, in the same process: no network. " + DEVNET, "",
@@ -377,7 +378,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--n", type=int, default=40, help="samples for each row (default 40)")
     ap.add_argument("--cold", type=int, default=10, help="new processes for the cold command (default 10)")
-    ap.add_argument("--write", action="store_true", help="rewrite the block in docs/BENCH.md")
+    ap.add_argument("--write", action="store_true", help="rewrite the block in docs/reference/BENCH.md")
     ap.add_argument("--tokens", type=Path, help="also decide on every token of this file (scripts/replay_tokens.py --capture wrote it)")
     a = ap.parse_args(argv)
     r = measure(max(1, a.n))
@@ -392,7 +393,7 @@ def main(argv: list[str] | None = None) -> int:
         kept = json.loads(BENCH_JSON.read_text(encoding="utf-8"))
         kept.setdefault("decision", {})["local"] = record(r, day, a.n)
         BENCH_JSON.write_text(json.dumps(kept, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-        # the same sample for the five clocks of docs/LOAD.md (docs/load.json `relay.decision`; scripts/load.py renders it)
+        # the same sample for the five clocks of docs/reference/LOAD.md (docs/load.json `relay.decision`; scripts/load.py renders it)
         sys.path.insert(0, str(ROOT / "scripts"))
         import load
         doc = load.load()

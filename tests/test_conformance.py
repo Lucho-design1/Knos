@@ -1,6 +1,6 @@
 """The conformance kit (conformance/): its vectors are the ones the manifest names, Knos's own Python passes every
 case, the JavaScript client passes every case it implements, a wrong implementation is caught, and
-docs/CONFORMANCE.md says what the kit holds."""
+docs/reference/CONFORMANCE.md says what the kit holds."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ KIT = ROOT / "conformance"
 spec = importlib.util.spec_from_file_location("conformance_run", KIT / "run.py")
 kit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(kit)
-DOC = (ROOT / "docs" / "CONFORMANCE.md").read_text(encoding="utf-8")
+DOC = (ROOT / "docs" / "reference" / "CONFORMANCE.md").read_text(encoding="utf-8")
 PYTHON = [sys.executable, str(KIT / "impl" / "knos_python.py")]
 
 # Kit version 1, written down a second time: a vector cannot be changed by editing the kit alone.

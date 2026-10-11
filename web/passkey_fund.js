@@ -23,7 +23,7 @@ import * as passkey from "./passkey.js";
 const RPC = "https://api.devnet.solana.com";
 const DOMAIN = new TextEncoder().encode("knos-passkey:fund");
 export const COMMENT = "/knos passkey-fund";
-// A wallet that holds none asks the faucet (docs/FAUCET.md; the rules are knos.faucet's): one line, posted on the faucet issue.
+// A wallet that holds none asks the faucet (docs/reference/FAUCET.md; the rules are knos.faucet's): one line, posted on the faucet issue.
 export const FAUCET_ISSUE = "https://github.com/drexthealpha/knos-playground/issues?q=is%3Aissue+is%3Aopen+label%3Afaucet";
 export const FAUCET_AMOUNT = 20_000_000;
 /** The line that asks the faucet for test USDC to `address`: `/knos faucet <address>`. */

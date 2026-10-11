@@ -21,9 +21,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PLAIN = "**In plain words.**"
 # each document, and the kind of diagram it holds (None: none)
 DOCS = {"docs/README.md": "flowchart", "docs/STORY.md": "flowchart", "docs/JUDGES.md": "flowchart",
-        "docs/GOVERNANCE.md": "flowchart", "docs/METER.md": "flowchart", "docs/FINANCE.md": None,
-        "docs/submission/TRANSACTION.md": "stateDiagram-v2", "docs/submission/MARKET_SIZE.md": "flowchart",
-        "docs/submission/FLOWS.md": "flowchart"}
+        "docs/reference/GOVERNANCE.md": "flowchart", "docs/reference/METER.md": "flowchart", "docs/reference/FINANCE.md": None,
+        "docs/TRANSACTION.md": "flowchart", "docs/reference/MARKET_SIZE.md": "flowchart",
+        "docs/reference/FLOWS.md": "flowchart"}
 MERMAID = re.compile(r"(?ms)^```mermaid\n(.*?)^```[ \t]*\n(.*?)$")
 WORD = re.compile(r"[A-Za-z]+(?:['’][A-Za-z]+)*|\d[\d,.]*\d|\d")
 END = re.compile(r"[.!?](?=\s|$)")
@@ -95,14 +95,16 @@ def test_each_diagram_is_mermaid_with_no_colours_and_an_italic_caption(rel):
 
 
 def test_the_map_lists_the_new_documents_and_draws_the_six_questions():
-    page = read("docs/README.md")
-    for name in ("WORDS.md", "PILOT.md", "PROPOSAL-2.3.md", "KEYS.md"):
+    page = read("docs/reference/README.md")         # the map of every document; docs/README.md holds the eight front pages
+    for name in ("PILOT.md", "PROPOSAL-2.3.md", "KEYS.md"):
         assert f"| [{name}]({name}) |" in page, name
+    assert "| [WORDS.md](../WORDS.md) |" in page
     body = MERMAID.findall(page)[0][0]
     for n, question in enumerate(("Does it work?", "Why does it matter?", "What is new?", "How do I use it?",
                                   "How do I build on it?", "How is it run and paid for?"), 1):
         assert f"{n}. {question}" in body and f"\n## {n}. {question}\n" in page, question
-    assert "](WORDS.md)" in next(p for p in page.split("\n\n") if p.startswith(PLAIN))
+    assert "](../WORDS.md)" in next(p for p in page.split("\n\n") if p.startswith(PLAIN))
+    assert "](WORDS.md)" in next(p for p in read("docs/README.md").split("\n\n") if p.startswith(PLAIN))
 
 
 def test_the_judges_page_counts_what_a_reader_reads(tmp_path):
@@ -121,3 +123,12 @@ def test_the_release_entry_counts_the_words_that_docs_words_explains():
     explained = len(re.findall(r"(?m)^### ", read("docs/WORDS.md")))
     said = re.findall(r"\(docs/WORDS\.md\)\*\* explains (\d+) words", read("CHANGELOG.md"))
     assert said and all(int(k) == explained for k in said), (said, explained)
+
+
+def test_the_release_entry_says_rewritten_only_of_what_was_rewritten():
+    # 0.3.27 rewrote the README, the first documents and the site's front page; documents in docs/reference/ moved,
+    # some byte for byte. So the entry never says that every page or every document was rewritten.
+    entry = read("CHANGELOG.md").split("\n## 0.3.27 ", 1)[1].split("\n## ", 1)[0]
+    sentences = re.split(r"(?<=[.!?:])\s+", " ".join(entry.split()))
+    said = [x for x in sentences if re.search(r"(?i)\bevery (page|document)\b", x) and "rewritten" in x]
+    assert not said, said

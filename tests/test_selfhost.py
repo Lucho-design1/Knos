@@ -1,4 +1,4 @@
-"""The customer-hosted bundle (deploy/, src/knos/selfhost.py, docs/SELFHOST.md): the config is checked before anything
+"""The customer-hosted bundle (deploy/, src/knos/selfhost.py, docs/reference/SELFHOST.md): the config is checked before anything
 starts, keys are only ever named by file path, the compose file names only images built from digest-pinned bases, the
 Dockerfile installs every package by its hash, and what `plan` prints is what compose defines. No network: the site's
 server is asked once on the loopback."""
@@ -232,7 +232,7 @@ def test_site_server_serves_files_and_no_listing(tmp_path):
 
 
 def test_selfhost_doc_states_the_limits():
-    doc = (ROOT / "docs" / "SELFHOST.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "SELFHOST.md").read_text(encoding="utf-8")
     for must in ("not been run in any cloud", "fake sign-in provider only", "oauth2-proxy", "Pomerium", "127.0.0.1", "knos selfhost check",
                  "05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f"):
         assert must in doc, must

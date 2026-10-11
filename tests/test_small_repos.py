@@ -119,7 +119,7 @@ def test_the_task_template_holds_the_reproduction_workflow_so_use_this_template_
     files = r.files("knos-task")
     doc = yaml.safe_load(files[".github/workflows/knos-reproduce.yml"].decode("utf-8"))
     assert doc["name"] == "knos reproduce" and set(doc.get(True) or doc.get("on")) == {"workflow_dispatch"}       # by hand only: a new repository runs nothing unasked
-    readme, how = files["README.md"].decode("utf-8"), (ROOT / "docs" / "REPRODUCE.md").read_text(encoding="utf-8")
+    readme, how = files["README.md"].decode("utf-8"), (ROOT / "docs" / "reference" / "REPRODUCE.md").read_text(encoding="utf-8")
     assert "**Use this template**" in readme and "**knos reproduce**" in readme and "**Run workflow**" in readme
     lead = how.split("## ", 2)[1]
     assert lead.startswith("Two clicks and one button") and f"https://github.com/new?template_owner={r.OWNER}&template_name=knos-task&name=knos-reproduce&visibility=public&owner=@me" in lead
@@ -220,7 +220,7 @@ def test_the_tree_id_is_the_one_the_pinned_workflows_script_computes(name):
 
 
 def test_the_release_plan_rebuilds_after_the_stamp_every_repository_that_calls_the_pinned_workflows():
-    pub, plan = _script("pinned_workflows"), (ROOT / "docs" / "RELEASE.md").read_text(encoding="utf-8")
+    pub, plan = _script("pinned_workflows"), (ROOT / "docs" / "reference" / "RELEASE.md").read_text(encoding="utf-8")
     [step] = [ln for ln in plan.splitlines() if ln.startswith("python scripts/small_repos.py build ")]
     callers = [name for name in r.REPOS if any(pub.NAMED.search(data.decode("utf-8")) for data in r.files(name).values())]
     assert {"knos-task", "knos-playground", "knos-attest"} <= set(callers)          # each names the commit the stamp writes

@@ -39,7 +39,7 @@ export function b58decode(text) {
 const hex = (bytes) => Buffer.from(bytes).toString("hex");
 const sha256 = (data) => createHash("sha256").update(data).digest("hex");
 
-// docs/CONFORMANCE.md, ids: prefix _ first 24 hex of sha256("knos.id.v1" 0 kind 0, then each part as u32 BE length + UTF-8)
+// docs/reference/CONFORMANCE.md, ids: prefix _ first 24 hex of sha256("knos.id.v1" 0 kind 0, then each part as u32 BE length + UTF-8)
 const PREFIX = { deliverable: "dlv", evaluation: "evl", invoice_line: "inv", settlement: "stl" };
 export function knosId(kind, ...parts) {
   const h = createHash("sha256").update(Buffer.from(`knos.id.v1\0${kind}\0`, "utf8"));
@@ -188,7 +188,7 @@ async function payment(rpc, pay, sig) {
 }
 
 /** Which milestone of `order` the deliverable id `id` names: {milestone, by} or null. Two published forms name one: the
- * order as 64 hex characters (a receipt, a meter ledger: docs/CONFORMANCE.md, ids), and an audit export's billing key,
+ * order as 64 hex characters (a receipt, a meter ledger: docs/reference/CONFORMANCE.md, ids), and an audit export's billing key,
  * "order:funding transaction:milestone" (`knos audit export`; `knos events ingest --from settle` and a witnessed
  * statement take their deliverable from it). The milestone is 0, or a standing order's pull request (`pr=` in the log). */
 export function milestoneOf(id, order, fundedSig, prs = []) {

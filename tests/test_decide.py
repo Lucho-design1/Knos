@@ -163,7 +163,7 @@ def test_a_cached_ledger_answers_again_from_memory_for_its_time_and_sends_nothin
         assert again >= 2 and reads - again == (0 if primed else 1), (primed, reads, again)
         clock[0] += 31                                          # past its time: the chain is asked again
         assert decide.token(fund, t2.TERMS, ledger=kept, payer=c.payer, jwks=t2.JWKS, now=now) == first and kept.reads == reads + again
-        with pytest.raises(AttributeError, match="sends nothing"):
+        with pytest.raises(AttributeError, match="cannot send transactions: it has no send"):
             kept.send([], c.payer)
 
 
@@ -318,7 +318,7 @@ def test_a_meter_batch_the_chain_took_is_not_called_unused_by_the_chain_half():
 
 
 def test_the_targets_hold_here_a_warm_offline_decision_under_100_ms_a_cached_one_under_200_ms_and_evidence_to_decision_under_2_s():
-    """Generous bounds on purpose: the measured figures are a few milliseconds (docs/BENCH.md, "Decision time"), so the
+    """Generous bounds on purpose: the measured figures are a few milliseconds (docs/reference/BENCH.md, "Decision time"), so the
     100 ms bound has a margin of more than ten times on a machine shared with other work. The chain is LiteSVM in this
     process, so this is Knos's own time; a cluster's round trips are not in it."""
     bench = _script("decide_bench")
@@ -351,7 +351,7 @@ def test_the_targets_hold_here_a_warm_offline_decision_under_100_ms_a_cached_one
     kept = json.loads((ROOT / "docs" / "bench.json").read_text(encoding="utf-8"))["decision"]
     assert kept["local"]["rows"]["offline, warm"]["p95"] < 100 and kept["local"]["target_ms_p95_warm"] == 100 and "CPUs" in kept["local"]["machine"]
     assert kept["devnet"]["offline"] == {"n": 24, "fastest": 170, "median": 356, "slowest": 863, "p95": None}                 # the last release run's
-    doc = (ROOT / "docs" / "BENCH.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "BENCH.md").read_text(encoding="utf-8")
     assert "## Decision time" in doc and bench.OPEN in doc and bench.CLOSE in doc
     held = doc.split(bench.OPEN)[1].split(bench.CLOSE)[0]
     assert all(f"| {name} |" in held for name, _t, _w in bench.ROWS) and "| 40 |" in held

@@ -25,8 +25,8 @@
 # A relayer finds it there and carries it to Solana; without the comment nobody would. What it cannot do: change
 # anything else. It writes no code, pull request, release or setting, and it holds no secret of yours.
 #
-# Two jobs, for a payment. When the order is paid by its acceptance checks (a black-box suite whose hash is in the
-# order's terms), the first job fetches two commits from the order's repository and runs that suite again here, in a
+# A payment uses two jobs. If the order is paid by acceptance checks (a black-box suite whose hash is in the order's
+# terms), the first job fetches two commits from the order's repository. It runs that suite again here, in a
 # sandbox: your run does not repeat what a check in the buyer's repository said, it finds out. That job runs code you
 # did not write, so it can only read, holds no secret and cannot ask GitHub for a signed statement. The second job,
 # the one that asks, checks out nothing and runs nothing from the pull request: it takes the first job's verdict as
@@ -83,7 +83,7 @@ jobs:
       contents: read
       issues: write           # the signed statement is posted on this repository's "knos tokens" issue, where a relayer finds it
       id-token: write
-    uses: drexthealpha/knos-workflows/.github/workflows/attest.yml@59c61e1c97be687d41ab191f9ec706e05875754c
+    uses: drexthealpha/knos-workflows/.github/workflows/attest.yml@18b7bb630848f59795e11268f65418256999332e
     with:
       repository: ${{ inputs.repository }}
       pull: ${{ fromJSON(inputs.pull) }}       # a number input started by hand reaches here as text, and the called workflow takes a number

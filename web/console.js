@@ -230,7 +230,7 @@ export function receiptParts(o, events, tx, trusted = null) {
     [PARTS[1], `Verdict: accepted${Number(accepted.pr) ? `, for pull request #${esc(accepted.pr)}` : ""}. Judged by ${esc(JUDGES[settled?.judge] || "the order's judge")}. The run's own log stays on GitHub; the chain holds the verdict.`],
     [PARTS[2], `The terms fixed at funding${o ? `, hash <span class="mono">${esc(o.terms)}</span>` : funded ? `, in ${tx(funded.tx)}` : ""}. Nobody could change them after.`],
     [PARTS[3], authorised],
-    [PARTS[4], trusted?.length ? `<ul>${trusted.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>` : "GitHub's signing key, the pinned workflow's code, and Knos's upgrade multisig."],
+    [PARTS[4], trusted?.length ? `<ul>${trusted.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>` : "GitHub's signing key, the pinned workflow's code, and Knos's upgrade multisig. Today one person holds every key of that multisig; no outside key holder has joined."],
   ];
 }
 

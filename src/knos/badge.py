@@ -4,7 +4,7 @@
                                    to that repository, in which money, as of which day
     knos badge <owner/repo>#<pr>   an SVG: what that pull request was paid, in which money, on which day
     knos record <login or id>      knos_pay's reputation account for a payee (state.rs R_*), with its caveats
-    knos record build <supplier>   a supplier's public record file, docs/records/<slug>.json (knos.record_page, docs/RECORD.md)
+    knos record build <supplier>   a supplier's public record file, docs/records/<slug>.json (knos.record_page, docs/reference/RECORD.md)
     knos record receipt <file>     an acceptance receipt as one PDF page and JSON, to send with an invoice
     knos record serve <offer>      the paid lookup as a server anyone runs; --health says whether it can answer (knos.record_api)
     knos record verify <answer>    a paid answer checked with no network: fresh, stale, unsigned or invalid (knos.record_answer)
@@ -120,7 +120,7 @@ NOT_FOR_SALE = "This badge is issued only from a receipt that checks. It cannot 
 
 def verified(receipt, digest: str | None = None, disputed: bool = False) -> dict:
     """Whether one deliverable gets the badge, and the evidence it links to. `receipt`: an acceptance receipt
-    (docs/RECEIPT.md). `digest`: the digest the receipt was published under, when the caller has one; a receipt that
+    (docs/reference/RECEIPT.md). `digest`: the digest the receipt was published under, when the caller has one; a receipt that
     does not hash to it gets no badge. `disputed`: somebody contested the verdict and nobody resolved it yet.
 
     Returns {issued, verdict, words, why, digest, repository_id, pull_request, commit, evidence, note}. `issued` is
@@ -168,7 +168,7 @@ def verified_svg(v: dict) -> str:
 
 def verified_markdown(v: dict, image: str) -> str:
     """The line to paste: the badge, linked to the first piece of evidence (or to the receipt's specification)."""
-    to = v["evidence"][0]["url"] if v.get("evidence") else "https://github.com/drexthealpha/Knos/blob/main/docs/RECEIPT.md"
+    to = v["evidence"][0]["url"] if v.get("evidence") else "https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECEIPT.md"
     return f"[![{VERIFIED_LABEL}: {verified_message(v)}]({image})]({to})"
 
 
@@ -293,10 +293,10 @@ def register(app) -> None:
     def record_cmd(ctx, who: str = typer.Argument(..., help="a GitHub login, or a GitHub user id; or `build <supplier>`, `receipt <acceptance receipt file>`, `serve <offer file>`, `verify <answer file>`, `grant <slug>`, `history <supplier>`"),
                    what: str = typer.Argument("", help="with `build`: the supplier's name; with `receipt`: the acceptance receipt's file; with `serve`: the seller's offer"),
                    out: Path = typer.Option(None, "--out", help="build: the folder to write (default docs/records); receipt: the files' path without the ending"),
-                   index: Path = typer.Option(Path("docs/index.json"), "--index", help="build: the Agent PR Index feed, for an agent it measures"),
+                   index: Path = typer.Option(Path("docs/index.json"), "--index", help="build: the Agent PR Index feed (Knos's public table of agent pull requests), for an agent listed there"),
                    events_log: Path = typer.Option(None, "--events", help="build: the events log to count work settled through Knos from (default: KNOS_EVENTS)"),
                    supplier_id: list[str] = typer.Option([], "--id", help="build: a name the supplier has in the events log (repeat it; default: the supplier's name)"),
-                   memory: Path = typer.Option(None, "--memory", help="build: the folder of the Sibyl store to recall the supplier from"),
+                   memory: Path = typer.Option(None, "--memory", help="build: the folder of the local memory store (Sibyl) that holds what Knos learned about the supplier"),
                    repo: list[str] = typer.Option([], "--repo", help="build: a repository to recall the supplier in, owner/repo (repeat it)"),
                    as_of: str = typer.Option(None, "--as-of", help="build: the day to write in the file, YYYY-MM-DD"),
                    invoice: str = typer.Option("", "--invoice", help="receipt: the number of the invoice it goes with"),
@@ -333,7 +333,7 @@ def register(app) -> None:
                     cli.out.print(f"Wrote {pdf_path} and {json_path}: {doc['accepted']['words']}, receipt {doc['receipt_sha256']}.", markup=False)
                     cli.out.print(f"Whoever receives it checks the receipt file with no network: {doc['verify']['command']}", markup=False)
             except (OSError, ValueError) as why:
-                raise cli.Stop(f"Nothing was written: {why}", "The record's inputs and the receipt's are described in docs/RECORD.md.") from None
+                raise cli.Stop(f"Nothing was written: {why}", "The record's inputs and the receipt's are described in docs/reference/RECORD.md.") from None
             return
         from .settle.v2 import pay
         uid = int(who) if who.isdigit() else int(cli._github(f"users/{who}")["id"])

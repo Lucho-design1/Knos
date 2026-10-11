@@ -1,6 +1,7 @@
 """Client for knos-passkey (programs-v2/knos_passkey): a wallet from a passkey. Pure address derivation, instruction
 builders and the account reader; no network and no elliptic-curve code. The program is upgradeable only through a
-multisig with a public 48-hour delay, until an outside review.
+multisig with a public 48-hour delay. After an outside review the plan is to remove that authority; no outside
+review exists today.
 
 A passkey is a P-256 key a browser creates and keeps (WebAuthn). Its wallet is `wallet(key)`, the program's account
 at ["pk", sha256(key)], with `key` the public key in its 33-byte compressed form (`compressed` takes the forms a

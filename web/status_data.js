@@ -12,7 +12,7 @@
 //
 // The `round` lines are in the status comment, under its counts: the last ten tokens the relay took up, newest first.
 // The four `_at` fields (Unix seconds; `-` where the relay measured none) place a payment among the FIVE STATES every
-// part of Knos names the same way: received, accepted, submitted, confirmed, finalized (docs/RELAY.md).
+// part of Knos names the same way: received, accepted, submitted, confirmed, finalized (docs/reference/RELAY.md).
 //
 // Only lines the log's own workflow wrote count (anyone can comment on a public issue). What the log cannot say is
 // null here, never a guess: a relay older than the status line writes none, and then `waiting` and `lastRound` are null.

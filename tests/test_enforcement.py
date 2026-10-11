@@ -154,7 +154,7 @@ def test_the_page_and_the_json_are_the_table(capsys):
 
 
 def test_the_controls_page_says_what_the_source_does_about_the_gate():
-    text = (ROOT / "docs/CONTROLS.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs/reference/CONTROLS.md").read_text(encoding="utf-8")
     for false in ("nothing calls it today", "does not ask it yet", "not asked by the funding workflow yet", "a workflow would ask"):
         assert false not in text, false
     assert "ENFORCEMENT.md" in text and "approvals.gate_order" in text and "flow._gated" in text

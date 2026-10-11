@@ -1,4 +1,4 @@
-"""The supplier's kit (docs/RECORD.md): the record file, its badge, the receipt for an invoice, the one-line install.
+"""The supplier's kit (docs/reference/RECORD.md): the record file, its badge, the receipt for an invoice, the one-line install.
 
 A record counts work settled through Knos from the events log and from the supplier's memory (knos.proof.history),
 keeps the Agent PR Index's row apart and labelled, lists the evidence behind every count, and is never a score. The
@@ -230,7 +230,7 @@ def test_the_one_line_install_runs_the_free_check_posts_once_and_attaches_the_re
     assert name.startswith("knos") and set(job) == {"permissions", "uses"}       # one line: nothing is passed, no secret, no input
     line = f"uses: {job['uses']}"
     assert job["uses"].startswith("drexthealpha/Knos/.github/workflows/supplier.yml@v")
-    assert line in (ROOT / "docs" / "RECORD.md").read_text(encoding="utf-8") and line in (ROOT / "web" / "supplier_record.js").read_text(encoding="utf-8")
+    assert line in (ROOT / "docs" / "reference" / "RECORD.md").read_text(encoding="utf-8") and line in (ROOT / "web" / "supplier_record.js").read_text(encoding="utf-8")
     assert called.get("on", called.get(True)) == {"workflow_call": {}} and called["permissions"] == {}
     [(_, check)] = called["jobs"].items()
     assert check["permissions"] == job["permissions"] == {"contents": "read", "checks": "read", "pull-requests": "write"}
@@ -249,11 +249,11 @@ def test_the_one_line_install_runs_the_free_check_posts_once_and_attaches_the_re
 
 
 def test_the_document_is_on_the_map_and_names_each_part_of_the_kit():
-    text = (ROOT / "docs" / "RECORD.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "reference" / "RECORD.md").read_text(encoding="utf-8")
     for needle in ("knos record build", "knos badge record", "knos record receipt", "knos.supplier-record/1", "knos.proof.history",
                    "from public pull requests, not from Knos orders", "never pays", "Nothing in the file is a score"):
         assert needle in text, needle
-    assert "(RECORD.md)" in (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "(RECORD.md)" in (ROOT / "docs" / "reference" / "README.md").read_text(encoding="utf-8")
     assert record_page.SCHEMA in (ROOT / "web" / "supplier_record.js").read_text(encoding="utf-8")
 
 

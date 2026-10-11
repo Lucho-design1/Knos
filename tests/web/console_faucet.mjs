@@ -1,7 +1,7 @@
 // node tests/web/console_faucet.mjs <site dir>
 // The Console's way to test money, on a build of web/ in headless Chromium: "Get test USDC" is in the Console's top line
 // for every visitor, before any wallet or passkey exists (the passkey wallet's own button shows only once a wallet holds
-// none, and a browser without WebAuthn never gets there); it opens the playground's faucet issue (docs/FAUCET.md) in a
+// none, and a browser without WebAuthn never gets there); it opens the playground's faucet issue (docs/reference/FAUCET.md) in a
 // new tab; nothing runs off the side at 390 or 1280. No browser: a failure in CI, a skip elsewhere (tests/web/overflow.mjs).
 import { createServer } from "node:http";
 import { readFileSync, existsSync } from "node:fs";

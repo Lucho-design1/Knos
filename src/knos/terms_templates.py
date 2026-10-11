@@ -1,6 +1,6 @@
-"""Terms from a template: five ready `/knos` comments, each with the exact terms it funds and one sentence that says them.
+"""Terms from a template: eight ready `/knos` comments (five for code, three for outcomes that are not code), each with the exact terms it funds and one sentence that says them.
 
-    knos terms list            the five, one sentence each
+    knos terms list            all eight, one sentence each
     knos terms show <name>     the comment to post, the sentence, the terms JSON knos-pay hashes, and its sha256
     knos terms diff <a> <b>    what changed between two versions of an acceptance policy, in plain words
 
@@ -30,7 +30,7 @@ what you copy; the reply to it shows your repository's own terms and their hash.
 
 An ACCEPTANCE POLICY is the terms an order was funded on, and its version is their sha256: the hash the order keeps,
 every pay token carries, and the meter records as `policy`. Nobody edits a version; a change is a new version with a
-new hash, used by the next order. `diff` says what differs between two versions (docs/ASSURANCE.md, "Acceptance
+new hash, used by the next order. `diff` says what differs between two versions (docs/reference/ASSURANCE.md, "Acceptance
 policies").
 """
 from __future__ import annotations
@@ -93,7 +93,7 @@ OUTCOMES = {t.name: t for t in (       # the comment that funds each example of 
 ALL = {**TEMPLATES, **OUTCOMES}
 
 
-# ---- the supplier's menu: three tiers a supplier may ask a buyer to fund (docs/STANDARD.md, "The supplier's menu") ----
+# ---- the supplier's menu: three tiers a supplier may ask a buyer to fund (docs/reference/STANDARD.md, "The supplier's menu") ----
 # A tier is a template plus what holds its promise. Standard and Assured are whole on chain: the holdback and its
 # warranty are options of the order (pay.opts), which the fund token signs and knos_pay keeps. Bonded adds a stake
 # the supplier puts up; knos_pay has no field for a supplier's stake, so that part is off chain only: a promise

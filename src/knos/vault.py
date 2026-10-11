@@ -14,7 +14,7 @@ supplier and an auditor each hold a key of their own; any one of them opens the 
     knos vault checkpoint   one hash over every bundle hash, signed when a key is given: anchor it anywhere
     knos vault verify       a checkpoint against a vault, an export or a folder of bundles: no chain, no network
 
-The sealed file, version 1 (docs/VAULT.md has every field and a test vector; tests/data/vault_v1.json is the vector):
+The sealed file, version 1 (docs/reference/VAULT.md has every field and a test vector; tests/data/vault_v1.json is the vector):
 
     one content key (32 random bytes) encrypts the bundle with ChaCha20-Poly1305 under a random 12-byte nonce.
     one ephemeral X25519 key per file. For each recipient: shared = X25519(ephemeral, recipient's public key),
@@ -153,7 +153,7 @@ def header(blob: bytes) -> dict:
           and type(doc.get("size")) is int and type(doc.get("sealed_at")) is int
           and all(isinstance(r, dict) and set(r) == {"id", "label", "public", "wrapped"} and isinstance(r["label"], str) for r in doc["recipients"]))
     if not ok or set(doc) != {*_HEAD, "recipients", "nonce", "ciphertext"}:
-        raise ValueError("the sealed file's header is not the one version 1 has (docs/VAULT.md)")
+        raise ValueError("the sealed file's header is not the one version 1 has (docs/reference/VAULT.md)")
     return doc
 
 
@@ -257,7 +257,7 @@ def check_checkpoint(doc) -> list[str]:
     except Exception:  # noqa: BLE001
         held = False
     if not held:
-        raise ValueError("the checkpoint's signature does not hold: it was changed after it was signed, or signed by another key than it names")
+        raise ValueError("the checkpoint's signature is not valid: it was changed after it was signed, or signed by another key than it names")
     return said + [f"signed by {sig['public']} (Ed25519): that key's holder made this checkpoint. Who holds the key is not in the file"]
 
 
@@ -416,7 +416,7 @@ def register(app, help_lines: list | None = None) -> None:
     import time
     typer = importlib.import_module("typer")
     if help_lines is not None:
-        help_lines.append(("vault", "For money", "Evidence that outlives devnet: bundles sealed to buyer, supplier and auditor; export, retention, checkpoints, restore."))
+        help_lines.append(("vault", "For money", "Seal evidence for buyer, supplier and auditor so it stays checkable if devnet resets: export, retention, checkpoints, restore."))
 
     def stop(words: str, code: int = 1):
         typer.echo(words, err=True)
@@ -441,7 +441,8 @@ def register(app, help_lines: list | None = None) -> None:
     def utc(t: int) -> str:
         return time.strftime("%Y-%m-%d", time.gmtime(t))
 
-    vault = typer.Typer(help="Evidence that outlives devnet and the operator: bundles sealed to the people who may open them, and checkpoints anyone can verify.", no_args_is_help=True)
+    vault = typer.Typer(help="Keep evidence safe even if devnet resets or the operator is gone: seal bundles so only named people can open them, "
+                        "and write checkpoints anyone can verify.", no_args_is_help=True)
     app.add_typer(vault, name="vault")
     now_opt = typer.Option(None, "--now", help="the time to record, in seconds since 1970 (default: this machine's clock)")
 

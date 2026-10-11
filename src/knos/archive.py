@@ -17,7 +17,7 @@ of Knos to be read again:
               its age. Nothing is deleted here: the report is for the person who does.
 
 No archive is written that its own verifier does not pass. What a root proves and does not, and who keeps what, is in
-docs/RETENTION.md.
+docs/reference/RETENTION.md.
 """
 from __future__ import annotations
 
@@ -279,10 +279,11 @@ def register(app, help_lines: list | None = None) -> None:
     typer = importlib.import_module("typer")
 
     archive = typer.Typer(add_completion=False, no_args_is_help=True,
-                          help="Evidence that outlives Knos: one archive with its own verifier, compared between holders, kept by a policy.")
+                          help="Keep evidence anyone can check even if Knos is gone: make one archive with its own checker, compare two copies, "
+                                "and apply a retention policy.")
     app.add_typer(archive, name="archive")
     if help_lines is not None:
-        help_lines.append(("archive", "For money", "Evidence that outlives Knos: make, verify with no Knos, compare two holders, retention policy."))
+        help_lines.append(("archive", "For money", "Keep evidence anyone can check without Knos: make, verify, compare two holders' copies, apply a retention policy."))
 
     def stop(said: str, fix: str = ""):
         from . import cli

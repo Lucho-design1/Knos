@@ -393,9 +393,10 @@ def _waiting(k, now: int) -> bool:
 
 @_app.command()
 def keys() -> None:
-    """Every signing key the second verifier holds, and whether each key GitHub and GitLab publish today verifies
-    there. Exit 1 when one of GitHub's is missing, cannot be used, or expires within 7 days, or when another issuer's is
-    missing or broken; exit 0 when the only keys that cannot be used yet are others' waiting out their delay."""
+    """List every signing key the on-chain verifier (knos_oidc, second deployment) holds, and whether each key GitHub
+    and GitLab publish today works there. Exit 1 when a GitHub key is missing, unusable or expires within 7 days, or
+    another issuer's key is missing or broken. Exit 0 when the only unusable keys are others still waiting out their
+    delay."""
     from .settle import relay as first
     from .settle.v2 import oidc
     from .settle.v2 import relay as second
@@ -415,7 +416,8 @@ def keys() -> None:
         out.print(f"{names.get(k.issuer, k.issuer)}  {k.bits} bits  {_key_state(k, now)}  active from {_when(k.active_at)}  expires {_when(k.expires_at)}  "
                   f"{'approved' if k.approved else 'not approved'}  {'REVOKED' if k.revoked else 'not revoked'}  {today}  {addr}", markup=False)
     if not held:
-        out.print("The second verifier holds no key on this cluster.")
+        out.print("The on-chain verifier holds no signing key on this cluster, so no payment can be verified here. "
+                  "Check KNOS_CLUSTER, or see docs/reference/RELAY.md for how keys are added.")
     for addr, (name, kid, issuer) in published.items():
         k = held.get(addr)
         usable, why = oidc.key_usable(k, now)
@@ -618,10 +620,10 @@ def fund_wallet(where: str = typer.Argument(..., metavar="OWNER/REPO#ISSUE"), am
                 reserve: int = typer.Option(7, "--reserve", help="days a `/knos take` reservation lasts"),
                 workflow: str = typer.Option(None, "--workflow", metavar="OWNER/NAME@COMMIT", help="the workflows whose signed runs may pay it (default: the ones the repository installed, or for a repository with none, the ones this release's knos-attest.yml calls)"),
                 mint: str = _MINT, keypair: Path = _KEYPAIR) -> None:
-    """Put a bounty on an issue straight from a wallet: anyone can add their own to any issue. It is paid when the
-    pull request that closes the issue is merged and meets the terms shown; unpaid, it goes back to the wallet. On an
-    issue of a repository that runs no Knos workflow it is a neutral work order (the fee on top), which the person
-    who did the work has paid after the merge with `knos settle --neutral`."""
+    """Put a bounty on an issue straight from your wallet. Anyone can add one to any issue. It pays when a merged pull
+    request closes the issue and meets the terms shown; if unpaid, it goes back to your wallet. If the repository runs
+    no Knos workflow, it becomes a neutral work order: you pay the fee on top, and after the merge the person who did
+    the work runs `knos settle --neutral` to get paid."""
     from . import commands, fees, judge, terms
     from .settle.v2 import pay
     from .settle.v2 import relay as second
@@ -659,7 +661,7 @@ def fund_wallet(where: str = typer.Argument(..., metavar="OWNER/REPO#ISSUE"), am
     except terms.Refused as why:
         raise Stop(str(why)) from None
     except (OSError, KeyError, TypeError) as why:
-        raise Stop(f"GitHub did not answer for {name}'s checks ({ghwords.first_line(why)}), so the bounty's terms could not be fixed. "
+        raise Stop(f"GitHub did not answer for {name}'s checks ({ghwords.first_line(why)}), so the bounty's terms could not be locked in. "
                    + (f"It refused the request: {ghwords.RATE}." if ghwords.code_of(why) in (403, 429) else "Try again.")) from None
     me, repo_id = wallet.pubkey(), int(repo["id"])
     source = pay.ata(me, m, program)
@@ -723,7 +725,7 @@ def bounty(where: str = typer.Argument(..., metavar="OWNER/REPO#ISSUE")) -> None
         how = "paid when a maintainer merges the pull request that closes it" if j1.mode == 0 else \
               "paid when its acceptance checks pass, after the review window"
         state = "open" if j1.state == "open" else f"proven for GitHub user {j1.author_id}; released in {max(0, j1.pay_after - now)} s unless vetoed"
-        out.print(f"{_usdc(j1.amount)} test USDC  {state}  ({how}; refundable in {max(0, j1.deadline - now) // 3600} h)  job {addr}  (first deployment)", markup=False)
+        out.print(f"{_usdc(j1.amount)} test USDC  {state}  ({how}; refundable in {max(0, j1.deadline - now) // 3600} h)  job {addr}  (first deployment (Knos 0.3.11 and earlier))", markup=False)
 
 
 @_app.command()
@@ -754,10 +756,10 @@ def due(login: str = typer.Argument(..., help="a GitHub login")) -> None:
         out.print(f"{rep.self_paid} payment{s(rep.self_paid)} from bounties this account funded itself: kept apart from the record.", markup=False)
     owed = [(m, a) for m, a in first.dues_for(ledger, uid) if a]
     for m, a in owed:
-        out.print(f"The first deployment holds {_usdc(a)} of {m} for {login}.", markup=False)
+        out.print(f"The first deployment (Knos 0.3.11 and earlier) holds {_usdc(a)} of {m} for {login}.", markup=False)
     old = pay1.read_rep(ledger.account(pay1.rep_pda(uid)))
     if old.paid_jobs:
-        out.print(f"On the first deployment: paid for {old.paid_jobs} pull request(s) in {old.repositories} repositor{'y' if old.repositories == 1 else 'ies'}, "
+        out.print(f"On the first deployment (Knos 0.3.11 and earlier): paid for {old.paid_jobs} pull request(s) in {old.repositories} repositor{'y' if old.repositories == 1 else 'ies'}, "
                   f"{_usdc(old.total_paid)} in all.", markup=False)
     if not bound:
         out.print("Name a wallet, and what is held is sent there: knos claim <address>   (or in the browser: https://drexthealpha.github.io/Knos/#claim)", markup=False)
@@ -767,7 +769,7 @@ def due(login: str = typer.Argument(..., help="a GitHub login")) -> None:
 
 @_app.command()
 def claim(address: str = typer.Argument(..., help="the Solana address your GitHub account is paid at"),
-          v1: bool = typer.Option(False, "--v1", help="send what the first deployment holds for your account to this address instead"),
+          v1: bool = typer.Option(False, "--v1", help="send what the first deployment (Knos 0.3.11 and earlier) holds for your account to this address instead"),
           repo: str = typer.Option(None, "--repo", help="with --v1: a repository you own to run the claim in (default: <you>/knos-claim)"),
           org: str = typer.Option(None, "--org", metavar="ORGANISATION", help="name the address an organisation you are a member of is paid at "
                                                                               "(a bot's or a vendor's pull requests), in <organisation>/knos-claim"),
@@ -807,8 +809,8 @@ def mainnet_check_cmd(as_json: bool = typer.Option(False, "--json")) -> None:
 
 @_app.command("status")
 def status_cmd(as_json: bool = typer.Option(False, "--json", help='print the checks as data instead of lines: {"cluster", "checks": [{"check", "pass", "evidence", "next"}], "overall", "passed", "of"}; the exit code is the same')) -> None:
-    """Is the second deployment running as designed? Reads Solana (KNOS_RPC, default devnet) and GitHub's key list, and
-    says for each of twelve things whether it holds and, when it does not, what to do. Exit 1 while any fails. With
+    """Check that Knos's programs on devnet (the second deployment) are running as designed. Reads Solana (KNOS_RPC,
+    default devnet) and GitHub's key list, and says, for each check, whether it holds and, when it does not, what to do. Exit 1 while any fails. With
     --json the same answer is one JSON document: each check's name, whether it passes, what was read, and its next step."""
     from . import mainnet_check
     raise typer.Exit(mainnet_check.status_main(lambda s: out.print(s, markup=False), as_json=as_json))
@@ -872,7 +874,7 @@ _NO_NAMES = typer.Option(False, "--no-names", help="do not ask GitHub for reposi
 
 
 @_app.command("receipt")
-def receipt_check(path: str = typer.Argument(..., help="an acceptance receipt (JSON), as docs/RECEIPT.md specifies it; - reads standard input")) -> None:
+def receipt_check(path: str = typer.Argument(..., help="an acceptance receipt (JSON), as docs/reference/RECEIPT.md specifies it; - reads standard input")) -> None:
     """Check an acceptance receipt against the specification (its shape, that shares and amounts add up, that the judge
     fits the order) and print its digest. Anyone can rebuild a receipt from the chain and compare digests."""
     from . import receipt
@@ -894,7 +896,7 @@ def receipt_check(path: str = typer.Argument(..., help="an acceptance receipt (J
 def receipts(owner: str = typer.Option(..., "--owner", help="the GitHub login or id whose money paid"), first: str = _FIRST, last: str = _LAST,
              fmt: str = typer.Option("csv", "--format", help="csv or jsonl"), limit: int = _LIMIT, no_names: bool = _NO_NAMES,
              to_file: Path = typer.Option(None, "--out", help="write the rows here instead of printing them")) -> None:
-    """One row per payment out of an owner's money, recomputed from the escrows' log lines: date, repository, issue, pull request, who was paid and where, amount, fee, the terms' hash, the transaction. The columns are listed in knos.records."""
+    """One row per payment out of an owner's money, recomputed from the escrows' log lines: date, repository, issue, pull request, who was paid and where, amount, fee, the terms' hash, the transaction. Each column is named in the file's first row."""
     from . import records
     if fmt not in ("csv", "jsonl"):
         raise Stop(f"--format is csv or jsonl; {fmt!r} is neither.")
@@ -964,7 +966,7 @@ def statement(ctx: typer.Context,
 
 
 @_app.command()
-def export(siem: bool = typer.Option(False, "--siem", help="JSON Lines, one escrow event per line: time, actor, action, repository, issue, amount, transaction (fields: knos.records.SIEM_FIELDS)"),
+def export(siem: bool = typer.Option(False, "--siem", help="JSON Lines, one escrow event per line: time, actor, action, repository, issue, amount, transaction (the field names are in each line)"),
            first: str = _FIRST, last: str = _LAST, limit: int = _LIMIT, no_names: bool = _NO_NAMES,
            to_file: Path = typer.Option(None, "--out", help="write the lines here instead of printing them")) -> None:
     """Every event the escrows logged, as JSON Lines for a SIEM: time, actor, repository, action, amount, transaction (and the fields a line has)."""
@@ -1024,9 +1026,10 @@ def accept_init(issue: int = typer.Option(..., "--issue", help="the issue the bo
                 inputs: Path = typer.Option(None, "--inputs", help="your own inputs, one per line, instead of generated ones"),
                 root: Path = typer.Option(None, "--in", help="the repository (default: the one you are in)"),
                 force: bool = typer.Option(False, "--force", help="replace a bundle that is already there")) -> None:
-    """Make a black-box acceptance bundle from a reference implementation: the reference is run on generated inputs, its answers
-    are recorded, and a judge compares the pull request's code with them, running that code as a separate process so nothing it does can
-    forge the verdict. The reference must pass the bundle and an echo must fail it, or nothing is written."""
+    """Make a black-box acceptance bundle from a reference program. Knos runs the reference on generated inputs and
+    records its answers. Later a judge runs the pull request's code as a separate process and compares its answers, so the
+    code cannot fake the verdict. Nothing is written unless the reference passes and a program that only echoes its input
+    fails."""
     from . import accept
     if inputs is not None and cases != 30:
         raise Stop("Give --inputs or --cases, not both: --inputs is the cases.")
@@ -1049,7 +1052,7 @@ _HELP = [    # (command or group, its panel (None: the first, "Commands"), the o
     ("check", None, "Does what a pull request says agree with GitHub's record of its checks?"),
     ("init", None, "Install the free Stop hook, and register `knos mcp`, with the coding agents on this machine."),
     ("claim", None, "Name the Solana address your GitHub account is paid at; `claim --org`: an organisation's."),
-    ("status", None, "Is the second deployment running as designed? `--json` prints the same as data."),
+    ("status", None, "Check that Knos's programs on devnet (the second deployment) are running as designed. `--json` prints the same as data."),
     ("command", WORKFLOWS, "A workflow's job: act on a comment's `/knos` line and reply."),
     ("settle", WORKFLOWS, "A workflow's job: pay what each merged pull request earned."),
     ("review", WORKFLOWS, "A workflow's job: one comment on a pull request saying what it would earn."),

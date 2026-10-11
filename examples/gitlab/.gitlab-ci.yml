@@ -1,12 +1,12 @@
 # .gitlab-ci.yml for the protected branch `knos` of a gitlab.com project: fund a Knos work order from the project,
-# and pay the author of a merge request once it is merged. docs/OIDC.md, "GitLab", says what the escrow checks.
+# and pay the author of a merge request once it is merged. docs/reference/OIDC.md, "GitLab", says what the escrow checks.
 #
 # NOT RUN ON gitlab.com YET. The escrow's rules for the tokens this file asks for are tested against GitLab-shaped
 # tokens (tests/test_gitlab_pay.py). The jobs below show which pipeline asks for which token and what the paying job
 # must read first; nobody has run them in a project. The always-on relay takes no GitLab token for the escrow: each
 # job leaves the signed token as an artifact (`knos-token.jwt`), and `python scripts/gitlab_round.py run` carries the
 # pay token to Solana (it also does the set-up below through GitLab's API, funds the order from a wallet and starts
-# the pipeline: docs/OIDC.md, "The round as one command"). By hand, the client is in src/knos/settle/v2
+# the pipeline: docs/reference/OIDC.md, "The round as one command"). By hand, the client is in src/knos/settle/v2
 # (FundOrderBalance, PayOrder), as the test uses it.
 #
 # Set up, once:
@@ -14,7 +14,8 @@
 #      Allow to merge and to push: the people who may fund and who merge. Never commit to it again: an order pins this
 #      file at the commit it was funded from, and a pipeline of any later commit pays nothing.
 #   2. Open a Balance for the project's namespace and list who may fund: owner id 800000000000000000 + the namespace
-#      id, spenders 900000000000000000 + each user id. Send test USDC to it (devnet).
+#      id, spenders 900000000000000000 + each user id (Knos adds these offsets so GitLab ids never collide with GitHub
+#      ids). Send test USDC to it (devnet).
 #   3. In the default branch's own .gitlab-ci.yml, start this file after a merge (a pipeline that a pipeline started):
 #        knos-pay:
 #          rules: [{ if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH' }]

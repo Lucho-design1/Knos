@@ -1,4 +1,4 @@
-"""Write, or check, the sha256 in the footer of docs/CHARTER.md.
+"""Write, or check, the sha256 in the footer of docs/reference/CHARTER.md.
 
     python scripts/charter_hash.py           write the footer: the sha256 of every byte above it
     python scripts/charter_hash.py --check   exit 1 when the footer is not the sha256 of the text above it
@@ -11,9 +11,9 @@ import hashlib
 import sys
 from pathlib import Path
 
-PAGE = Path(__file__).resolve().parents[1] / "docs" / "CHARTER.md"
+PAGE = Path(__file__).resolve().parents[1] / "docs" / "reference" / "CHARTER.md"
 MARKER = "\n---\n\nsha256 of everything above this line: `"
-TAIL = "`. Check it yourself: `sed '/^---$/,$d' docs/CHARTER.md | sha256sum`. `tests/test_neutrality.py` checks it on every change.\n"
+TAIL = "`. Check it yourself: `sed '/^---$/,$d' docs/reference/CHARTER.md | sha256sum`. `tests/test_neutrality.py` checks it on every change.\n"
 
 
 def split(text: str) -> tuple[str, str | None]:
@@ -34,12 +34,12 @@ def main(argv: list[str]) -> int:
     want = digest(body)
     if "--check" in argv:
         if said != want:
-            print(f"docs/CHARTER.md: the footer says {said}, the text above it hashes to {want}: run python scripts/charter_hash.py")
+            print(f"docs/reference/CHARTER.md: the footer says {said}, the text above it hashes to {want}: run python scripts/charter_hash.py")
             return 1
-        print(f"docs/CHARTER.md: sha256 {want}")
+        print(f"docs/reference/CHARTER.md: sha256 {want}")
         return 0
     PAGE.write_text(body + MARKER + want + TAIL, encoding="utf-8", newline="")
-    print(f"docs/CHARTER.md: sha256 {want}")
+    print(f"docs/reference/CHARTER.md: sha256 {want}")
     return 0
 
 

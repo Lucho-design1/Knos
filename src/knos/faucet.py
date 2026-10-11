@@ -7,7 +7,7 @@ amount of it, on Solana devnet. Test USDC has no monetary value, and every reply
     knos faucet request <address>                            # the line to post, and where
     knos faucet status                                       # what the journal on this machine holds
 
-THE RULES, all of them (docs/FAUCET.md says the same):
+THE RULES, all of them (docs/reference/FAUCET.md says the same):
 
     where       only on an issue labelled LABEL in knos.playground.REPO, while its owner is the playground's owner
     how much    AMOUNT (20 test USDC), one fixed amount
@@ -61,7 +61,7 @@ BOT = "github-actions[bot]"         # whose replies carry the journal
 NOTE = "Test USDC has no monetary value."
 MARK = "<!-- knos-faucet 1 "        # then one JSON object and " -->": the row, in the faucet's own reply
 FORM = "/knos faucet <your Solana address | passkey>"
-DOC = "https://github.com/drexthealpha/Knos/blob/main/docs/FAUCET.md"
+DOC = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/FAUCET.md"
 WHERE = f"https://github.com/{playground.REPO}/issues?q=is%3Aissue+is%3Aopen+label%3A{LABEL}"
 
 _B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"

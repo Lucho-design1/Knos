@@ -9,10 +9,10 @@ unanswered, that reads as a debt. This module answers it once, in words that acc
     python -m knos.claim_guard --event "$GITHUB_EVENT_PATH" --event-name "$GITHUB_EVENT_NAME"
     python -m knos.claim_guard --sweep          # every open issue and pull request (the timer: see claims.yml)
 
-Since 0.3.19 the always-on worker runs the same sweep (`sweep_served`, called by every pass of
-`knos.proof.ghrelay.once`): at most once in SWEEP_EVERY seconds for each repository it may write to, through the
-worker's own conditional reader, so a listing with nothing new is a 304. GitHub's timer is a fallback: in the 0.3.18
-release run claims.yml's 15-minute schedule did not fire once in 38 minutes.
+The always-on worker also runs this sweep (`sweep_served`, every pass of `knos.proof.ghrelay.once`), at most once
+every SWEEP_EVERY seconds per repository it may write to, through the worker's own conditional reader, so a listing
+with nothing new is a 304. GitHub's timer is only a fallback: in one release run (Knos 0.3.18) claims.yml's 15-minute
+schedule did not fire once in 38 minutes.
 
 What it does, and all it does: one comment (found again by its hidden first line, so a second event posts nothing)
 and the label `no-order`. It closes nothing. It answers nothing written by the owner, a member, a collaborator or a
@@ -143,7 +143,7 @@ def bot(who: dict | None) -> bool:
 
 def answered(comments: list) -> bool:
     """Whether this repository has answered here already: the marker, in a comment by the workflow's own account or
-    by someone who may write here (scripts/tidy_issues.py posts the same answer as the owner). A marker in anyone
+    by someone who may write here (the owner may post the same answer by hand). A marker in anyone
     else's comment is ignored."""
     return any(isinstance(c, dict) and str(c.get("body") or "").startswith(MARK)
                and ((c.get("user") or {}).get("login") == BOT or str(c.get("author_association") or "").upper() in OURS) for c in comments)

@@ -558,7 +558,7 @@ def tamper_checks_required(store, repo=None, agent=None) -> set[str]:
 
 OUTCOMES = ("accepted", "fixed", "reverted", "disputed")     # accepted first time; refused then fixed; reverted in warranty; disputed
 _TEMPLATE = re.compile(r"[a-z][a-z0-9-]{0,39}")
-# the published template (docs/TERMS.md, terms/) each kind of ending supports, and what that template does about it
+# the published template (docs/reference/TERMS.md, terms/) each kind of ending supports, and what that template does about it
 _SUPPORTS = {"reverted": ("milestone", "holding a share back"), "disputed": ("feature-blackbox", "paying on a black-box suite"),
              "fixed": ("bugfix", "")}
 

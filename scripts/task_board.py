@@ -33,8 +33,8 @@ What bounds it, all printed by `plan`:
 ONLY THROUGH THE PUBLIC PINNED WORKFLOWS. An order names, when it is funded, the commit of the workflows whose signed
 run may pay it. `open` reads the playground's own workflow files first (`unpinned`) and funds nothing unless every
 reusable workflow they call is drexthealpha/knos-workflows at the commit this checkout's examples name: an order funded
-through a staging copy is one the public worker cannot pay (that is why one merged pull request was not paid in
-0.3.19). `plan` and `status` say the same check's result; `why` reads one order back from the chain (knos.tasks.why).
+through a staging copy is one the public worker cannot pay (that is why one merged pull request went unpaid in
+October 2026). `plan` and `status` say the same check's result; `why` reads one order back from the chain (knos.tasks.why).
 
 THE TASKS THAT ARE NOT CODE (`--kinds`; tasks/outside/<kind>.json, knos.tasks.KINDS). Each opens as a board issue
 `outside-<kind>` that pays 5 test USDC on a maintainer's MERGE of the pull request filing its evidence, one file
@@ -45,8 +45,8 @@ the same day's budget, and not in the target.
 
 A STRANDED TASK IS FUNDED AGAIN IN PLACE, OR OPENED AGAIN. `plan` and `open` read each open funded issue's order from
 the chain (knos.tasks.why): one funded through a commit of the workflows the playground no longer calls (every release
-rebuilds it at the next commit), past its deadline, or no longer open can pay no merge. One stranded by the PIN alone
-(0.3.24: #22 to #29) stays open: `open --apply` says the chain's sentence on it and funds it again, on the same issue,
+rebuilds it at the next commit), past its deadline, or no longer open can pay no merge. One stranded only because the
+workflows' pinned commit moved (as issues #22 to #29 were in October 2026) stays open: `open --apply` says the chain's sentence on it and funds it again, on the same issue,
 through the commit the playground calls now (a second order of the issue; the old one goes back to its funder at its
 deadline), first in the day's budget; a marker in that comment (REPINNED) names the commit, so a later run funds it
 once per commit and never twice. One past its deadline or no longer open is closed with that sentence and the board

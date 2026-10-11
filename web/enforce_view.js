@@ -68,7 +68,7 @@ export function renderEnforcement(el, { esc, data } = {}) {
       </table></div>
       <div class="ke-said" role="status" aria-live="polite"><p class="fine">No cell pressed yet.</p></div>
     </div>
-    <p class="fine" data-keep><a href="https://github.com/drexthealpha/Knos/blob/main/docs/ENFORCEMENT.md">The same matrix as a document</a></p>`;
+    <p class="fine" data-keep><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/ENFORCEMENT.md">The same matrix as a document</a></p>`;
   const box = el.querySelector(".ke"), said = el.querySelector(".ke-said"), wrap = el.querySelector(".k-table");
   box.addEventListener("focusin", (ev) => {
     const b = ev.target.closest?.(".ke-cell");

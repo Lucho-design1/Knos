@@ -14,9 +14,9 @@ GitHub signs the result of the checks a buyer named before the work started. A p
 ## Docs
 
 - [Story](https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/STORY.md): one task in seven steps, each with its evidence
-- [Release manifest](https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/MANIFEST.md): the code, what runs on devnet, the limits
-- [What is not real yet](https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/DISCLOSURE.md): no customers, no revenue, test money only
-- [Map of the documents](https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/README.md): every document, under six questions
+- [Release manifest](https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/reference/MANIFEST.md): the code, what runs on devnet, the limits
+- [What is not real yet](https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/reference/DISCLOSURE.md): no customers, no revenue, test money only
+- [Map of the documents](https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/README.md): the eight pages to start with; everything else in docs/reference/
 
 ## Optional
 

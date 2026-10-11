@@ -2,12 +2,16 @@
 
 Copy [`template.rs`](template.rs), change the marked lines, build. Your instruction then runs only when a token that
 `knos-oidc` verified on chain says "repository X, branch main, workflow Y", or "Google Cloud service account Z".
-There is no CPI, no oracle and no key of anyone's to trust. [docs/VERIFIER.md](../../docs/VERIFIER.md) is the one
+There is no CPI (no call into another program), no oracle (no outside service that reports the result) and no key of
+anyone's to trust. [docs/reference/VERIFIER.md](../../docs/reference/VERIFIER.md) is the one
 page on the verifier and lists the other issuers; [`examples/issuers`](../issuers) has the lines for each.
 
-This example is Knos's own, and no program outside this repository is known to read a token yet. For a whole program
-to copy, in a workspace of its own with its test and the five mistakes to avoid, take
-[`examples/reader_template`](../reader_template) instead; this folder is the shortest form of the same check.
+This example is Knos's own, and no program outside this repository is known to read a token yet. Want a whole
+program to copy, with its own workspace, its test and the five mistakes to avoid? Use
+[`examples/reader_template`](../reader_template). This folder is the shortest form of the same check.
+
+Note: this folder holds two programs. [`template.rs`](template.rs) is the one to copy; it reads the second deployment
+of knos-oidc. [`src/lib.rs`](src/lib.rs) is a worked example that reads the first deployment ([below](#this-example)).
 
 ## The steps
 
@@ -26,7 +30,7 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 solana-program = "=2.2.1"
-knos-oidc-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.3.26" }   # no dependency of its own
+knos-oidc-interface = "0.3.14"   # from crates.io; no dependency of its own
 
 [lints.rust]
 unexpected_cfgs = { level = "allow" }
@@ -41,8 +45,8 @@ cargo build-sbf                               # target/deploy/my_gate.so
 solana program deploy --url devnet target/deploy/my_gate.so
 ```
 
-`cargo check` of the unchanged template against the interface crate of this repository (by path) is what was run
-for this release; `cargo build-sbf` and a deployment of the template were not. The crate itself is built for Solana
+For this release only `cargo check` was run on the unchanged template, with the crate taken from this repository.
+Nobody has run `cargo build-sbf` on the template or deployed it. The crate itself is built for Solana
 in every release: [`src/lib.rs`](src/lib.rs) here uses it and `tests/test_oidc_gate.py` runs that build.
 
 In the workflow that may act, ask GitHub for a token with your audience (the job needs `id-token: write`):
@@ -53,7 +57,7 @@ curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
 ```
 
 Whoever sends your instruction writes that token to `knos-oidc` and verifies it first (`Write`, then two `Step`:
-[docs/VERIFIER.md](../../docs/VERIFIER.md), call 2), then passes the two accounts below.
+[docs/reference/VERIFIER.md](../../docs/reference/VERIFIER.md), call 2), then passes the two accounts below.
 
 ## The lines that do it
 
@@ -110,6 +114,7 @@ decided, or what the code behind a service account does.
 ## This example
 
 `src/lib.rs` is a release gate: per repository, it records the last commit for which GitHub signed "a workflow ran
-here on a GitHub-hosted runner with audience `oidc-gate:release`". It reads the first deployment (`v1::read`), to
-show how a deployment is named. `tests/test_oidc_gate.py` runs it in LiteSVM against the real verifier build;
+here on a GitHub-hosted runner with audience `oidc-gate:release`". It is not the template: it reads the first
+deployment (`v1::read`), to show how a deployment is named. `tests/test_oidc_gate.py` runs it in LiteSVM (a local
+Solana simulator) against the real verifier build;
 `bash scripts/build_programs_v2.sh examples` rebuilds it. The example program is not deployed anywhere.

@@ -22,13 +22,13 @@ Agent PR Index scan the docs quote, the programs' compute units, what was measur
                                                      "by_hand" in docs/facts.json)
     python scripts/bench_docs.py --slots            list the slots that have no number yet; exit 1 if there is one
 
-A block is `<!-- bench:NAME -->` ... `<!-- /bench:NAME -->` in README.md or docs/BENCH.md:
+A block is `<!-- bench:NAME -->` ... `<!-- /bench:NAME -->` in README.md or docs/reference/BENCH.md:
 
     headline      the index's two named figures, and the merged pull requests
     today         README: how many capabilities are at each stage, and which ones reached the public program ids (all
                   read from docs/capabilities.json, so the table cannot disagree with it), and the outside-use numbers of
                   NUMBERS.md, zeros included, from the same sources
-    outside-use   docs/submission/NUMBERS.md: nine numbers about use by anyone who is not Knos, each from where it is kept
+    outside-use   docs/NUMBERS.md: nine numbers about use by anyone who is not Knos, each from where it is kept
     market        the index: a failed check of any kind, per agent
     market-tests  the same pull requests, counting only failed tests and builds
     backtest      the merged ones
@@ -38,7 +38,7 @@ A block is `<!-- bench:NAME -->` ... `<!-- /bench:NAME -->` in README.md or docs
     devnet        the second deployment on devnet. A number nobody has measured yet reads "measured at release"
     devnet1       the first deployment's record on devnet
 
-A slot is `[[stat: name]]` in a file under docs/submission/ or in one of SLOTTED (README.md, CHANGELOG.md and the
+A slot is `[[stat: name]]` in one of SLOTTED (README.md, CHANGELOG.md and the
 documents a judge opens): a number that only the release run can measure. SLOTS names every slot and says what it
 counts. `--stats` fills the ones stats.json has, `--set` fills one of the others. Filling a slot does three things: the
 number replaces the slot in the text, in every file that carries it; it is kept in docs/bench.json (`devnet.stats`, at
@@ -67,15 +67,14 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DOCS = ["README.md", "docs/BENCH.md", "docs/submission/NUMBERS.md"]
+DOCS = ["README.md", "docs/reference/BENCH.md", "docs/NUMBERS.md"]
 # The pitch-facing text (scripts/claims_check.py reads the same list): every number in it needs a fact.
-PITCH = ["README.md", "web/index.html", "docs/submission/SUBMISSION.md", "docs/submission/pitch_script.md",
-         "docs/submission/demo_script.md", "docs/submission/weekly_update.md", "docs/submission/pitch_script_120.md"]
-SUBMISSION = "docs/submission"       # every .md under it may carry [[stat: name]] slots
+PITCH = ["README.md", "web/index.html"]
 # The other files that may carry slots. Everything a judge opens states a release-measured fact through one, so that the
 # release fills them all in one run and no document is left with an older number.
-SLOTTED = ["README.md", "CHANGELOG.md", "docs/DISCLOSURE.md", "docs/WHY.md", "docs/COMPARE.md", "docs/MARKET.md",
-           "docs/SECURITY.md", "docs/ASSURANCE.md", "docs/BENCH.md", "docs/RELAY.md"]
+SLOTTED = ["README.md", "CHANGELOG.md", "docs/reference/DISCLOSURE.md", "docs/reference/WHY.md", "docs/reference/COMPARE.md", "docs/reference/MARKET.md",
+           "docs/reference/SECURITY.md", "docs/reference/ASSURANCE.md", "docs/reference/BENCH.md", "docs/reference/RELAY.md", "docs/NUMBERS.md", "docs/TRANSACTION.md",
+           "docs/reference/FLOWS.md", "docs/reference/MARKET_SIZE.md", "docs/reference/DEPENDENCY.md"]
 UNMEASURED = "measured at release"
 SLOT = re.compile(r"(?<!`)\[\[stat: ([a-z][a-z_]*)\]\]")      # not one quoted as code: that is the docs naming the syntax
 # The rows of the `devnet` block: (what was measured, its path in stats.json).
@@ -154,7 +153,7 @@ STAGE_SLOTS |= {f"stage_whole_{stat}": (f"{what}: the merge to the payment, the 
 STAGE_SLOTS |= {f"pay_attempts_{name}": (f"{words} (scripts/latency_stages.py, network_stats.attempts)", ("attempts", name))
                 for name, words in ATTEMPT_WORDS.items()}
 SLOTS |= {name: (what, None) for name, (what, _where) in STAGE_SLOTS.items()}
-# Use by anyone who is not Knos (docs/submission/NUMBERS.md). Two are counted by the site's build (stats.json,
+# Use by anyone who is not Knos (docs/NUMBERS.md). Two are counted by the site's build (stats.json,
 # `outsiders`: scripts/outsiders.py). The others are read from this repository: the report files of reproductions/, and
 # the counts only a person can supply, which are constants under BY_HAND in docs/facts.json that a person changes when
 # the other party agrees to be counted. The table of NUMBERS.md is written from them (the block `outside-use`), and
@@ -239,7 +238,7 @@ def outside_rows(src: dict, repo: dict) -> list[tuple[str, object, str]]:
     if payees is None and between.get("source"):                           # the accounts the measured payments name
         payees = len(set(re.findall(r"to another GitHub account \((\d+)\)", between["source"])))
         where_p = "`docs/bench.json`, `release.payments_between_unrelated_accounts.source`: the accounts it names, on tasks Knos funded itself"
-    by_hand = "`docs/facts.json`, `by_hand`: a person changes it; [DISCLOSURE.md](../DISCLOSURE.md) says the same"
+    by_hand = "`docs/facts.json`, `by_hand`: a person changes it; [DISCLOSURE.md](reference/DISCLOSURE.md) says the same"
     rows = [
         ("Outside funders: accounts other than Knos's that funded a task with their own tokens", _dig(stats, "outside.funders"),
          "`docs/bench.json`, `devnet.stats.outside.funders`"),
@@ -247,20 +246,20 @@ def outside_rows(src: dict, repo: dict) -> list[tuple[str, object, str]]:
         ("Outside payees: GitHub accounts other than the funder's that were paid", payees, where_p),
         ("Payments between unrelated accounts: payments whose payee is another GitHub account than the funder", between.get("value"),
          "`docs/bench.json`, `release.payments_between_unrelated_accounts`, read from the escrows' logs"),
-        ("Buyer interviews held", (repo.get("buyer_interviews_held") or [None])[0], by_hand + "; [INTERVIEWS.md](INTERVIEWS.md) is the kit, unused"),
+        ("Buyer interviews held", (repo.get("buyer_interviews_held") or [None])[0], by_hand),
         ("Letters of intent", (repo.get("letters_of_intent") or [None])[0], by_hand),
         ("Reproductions signed by GitHub: files in `reproductions/` from a run in someone else's repository",
-         (repo.get("reproductions_signed") or [None])[0], "the report files of [`reproductions/`](../../reproductions/README.md)"),
+         (repo.get("reproductions_signed") or [None])[0], "the report files of [`reproductions/`](../reproductions/README.md)"),
         ("Outside programs reading the verifier", (repo.get("outside_programs_reading_the_verifier") or [None])[0],
-         by_hand + "; the examples in [COMPOSE.md](../COMPOSE.md) are Knos's own"),
+         by_hand + "; the examples in [COMPOSE.md](reference/COMPOSE.md) are Knos's own"),
         ("Shadow counts published: a neutral count printed beside a supplier's own invoice count, with every mismatch",
-         (repo.get("shadow_counts_published") or [None])[0], by_hand + "; [PILOT.md](../PILOT.md), \"How it starts: shadow mode\""),
+         (repo.get("shadow_counts_published") or [None])[0], by_hand + "; [PILOT.md](reference/PILOT.md), \"How it starts: shadow mode\""),
     ]
     return rows
 
 
 def outside_use(src: dict, repo: dict) -> str:
-    """docs/submission/NUMBERS.md's table: nine numbers about use by anyone who is not Knos, each from where it is kept.
+    """docs/NUMBERS.md's table: nine numbers about use by anyone who is not Knos, each from where it is kept.
     `repo` is repo_numbers(): what this repository answers itself. A number nothing has measured is said so, never 0."""
     lines = ["| # | number | value | where it is read |", "|---|---|---|---|"]
     lines += [f"| {i} | {what} | {_said(value) if _number(value) else 'not measured'} | {where} |"
@@ -270,8 +269,8 @@ def outside_use(src: dict, repo: dict) -> str:
 
 # README.md's one table, "What is real today": the stage rows (stage_rows), the nine
 # numbers of NUMBERS.md and the rows no number decides (TODAY_LAST), so the front page prints every zero that page prints and can print no other value.
-NUMBERS_DOC = "[docs/submission/NUMBERS.md](docs/submission/NUMBERS.md)"
-CAPS_DOC = "[docs/CAPABILITIES.md](docs/CAPABILITIES.md)"
+NUMBERS_DOC = "[docs/NUMBERS.md](docs/NUMBERS.md)"
+CAPS_DOC = "[docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md)"
 # The plain name of each capability the stage rows print; a capability with none is printed by its id. The stage of each
 # is read from docs/capabilities.json every time, so the front page cannot say a capability is lower or higher than that.
 PLAIN = {
@@ -286,7 +285,7 @@ PLAIN = {
     "outcome_not_code": "an outcome that is not code", "holdback_release": "a holdback released after its warranty",
     "oidc_strict_json": "strict JSON in the verifier", "es256_tokens": "ES256 tokens in one transaction", "presentation_grace": "the presentation grace",
 }
-STAGE_ROWS = (   # (stage, the row's name, what the row adds after the names, the label docs/CAPABILITIES.md gives the stage)
+STAGE_ROWS = (   # (stage, the row's name, what the row adds after the names, the label docs/reference/CAPABILITIES.md gives the stage)
     ("reproduced", "Reproduced by someone else", "", "reproduced by someone else"),
     ("exercised", "Exercised at the public devnet program ids", "", "exercised on devnet"),
     ("deployed", "Deployed at the public devnet program ids, no transaction recorded", "", "deployed on devnet"),
@@ -318,11 +317,11 @@ def stage_rows(caps: list[dict]) -> list[tuple[str, str, str]]:
 
 TODAY_NOTES = {3: ", on tasks Knos funded itself", 4: ", on tasks Knos funded itself"}     # by row of NUMBERS.md
 TODAY_LAST = [
-    ("Paying customers", "0", "[docs/DISCLOSURE.md](docs/DISCLOSURE.md)"),
-    ("Revenue", "0; test USDC is not money", "[docs/MARKET.md](docs/MARKET.md)"),
-    ("Outside security review", "none", "[docs/ASSURANCE.md](docs/ASSURANCE.md)"),
-    ("Key holders", "one person holds every key; an upgrade waits 48 hours in public", "[docs/GOVERNANCE.md](docs/GOVERNANCE.md)"),
-    ("Network and money", "Solana devnet, test USDC; mainnet is not touched", "[docs/SECURITY.md](docs/SECURITY.md)"),
+    ("Paying customers", "0", "[docs/reference/DISCLOSURE.md](docs/reference/DISCLOSURE.md)"),
+    ("Revenue", "0; test USDC is not money", "[docs/reference/MARKET.md](docs/reference/MARKET.md)"),
+    ("Outside security review", "none", "[docs/reference/ASSURANCE.md](docs/reference/ASSURANCE.md)"),
+    ("Key holders", "one person holds every key; an upgrade waits 48 hours in public", "[docs/reference/GOVERNANCE.md](docs/reference/GOVERNANCE.md)"),
+    ("Network and money", "Solana devnet, test USDC; mainnet is not touched", "[docs/reference/SECURITY.md](docs/reference/SECURITY.md)"),
 ]
 
 
@@ -474,7 +473,7 @@ def backtest(bt: dict, labels: list[str]) -> str:
         ra, rt = r["any_check_failed"]["prs"], r["test_or_build_check_failed"]["prs"]
         lines += ["", f"A second reading of each page by hand kept {ra:,} of the {r['prs']:,} with a failed check of "
                       f"any kind ({_share(ra, r['prs'])}) and **{rt:,} with a failed test, build, lint or type-check job "
-                      f"({_share(rt, r['prs'])})**: the lead figure ([INDEX_METHOD.md](INDEX_METHOD.md))."]
+                      f"({_share(rt, r['prs'])})**: the lead figure ([INDEX_METHOD.md](../INDEX_METHOD.md))."]
     lines += ["", "What this cannot show:", ""] + [f"- {line}." for line in bt["cannot_show"]]
     return "\n".join(lines)
 
@@ -644,7 +643,7 @@ def take(index_path: str, root: Path = ROOT) -> None:
     bench.write_text(json.dumps(src, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-# ---- the slots of docs/submission ---------------------------------------------------------------------------------------
+# ---- the slots -------------------------------------------------------------------------------------------------------
 
 def _keep(into: dict, path: str, value) -> None:
     parts = path.split(".")
@@ -654,8 +653,8 @@ def _keep(into: dict, path: str, value) -> None:
 
 
 def slot_files(root: Path = ROOT) -> list[str]:
-    """Every file that may carry a slot and exists: docs/submission/*.md, then SLOTTED."""
-    return [f"{SUBMISSION}/{doc.name}" for doc in sorted((root / SUBMISSION).glob("*.md"))] + [d for d in SLOTTED if (root / d).is_file()]
+    """Every file that may carry a slot and exists: SLOTTED."""
+    return [d for d in SLOTTED if (root / d).is_file()]
 
 
 def slots(root: Path = ROOT) -> list[tuple[str, str]]:
@@ -678,8 +677,8 @@ def _prose(root: Path, doc: str) -> str:
 
 def public_text(root: Path = ROOT) -> list[str]:
     """Every public document and the site's text: where one fact must have one value."""
-    docs = ["README.md", "CHANGELOG.md", *sorted(f"docs/{p.name}" for p in (root / "docs").glob("*.md")),
-            *sorted(f"{SUBMISSION}/{p.name}" for p in (root / SUBMISSION).glob("*.md")), "web/index.html"]
+    pages = (p.relative_to(root).as_posix() for d in ("docs", "docs/reference") for p in (root / d).glob("*.md"))
+    docs = ["README.md", "CHANGELOG.md", *sorted(pages, key=lambda rel: rel.replace("docs/reference/", "docs/", 1)), "web/index.html"]
     return [d for d in docs if (root / d).is_file()]
 
 
@@ -739,7 +738,7 @@ def disagreements(root: Path = ROOT) -> list[str]:
 def site_disagreements(stats: dict, latency: dict | None = None, root: Path = ROOT) -> list[str]:
     """Every number the documents share with the site's data, where the two differ, one line each. `stats` is the
     site's stats.json and `latency` its latency.json (both of one build). Three comparisons: docs/bench.json's
-    `devnet.stats` (which docs/BENCH.md's table and docs/facts.json state) against stats.json, path by path, when
+    `devnet.stats` (which docs/reference/BENCH.md's table and docs/facts.json state) against stats.json, path by path, when
     bench.json was filled from that very stats.json (`updated` is the same); every fact of docs/facts.json that points
     into `devnet.stats` against bench.json; and stats.json against latency.json. The release runs it after `--stats`
     (`python scripts/bench_docs.py --site _site`), and the Pages build can."""
@@ -810,7 +809,7 @@ def fill(stats_path: str | None = None, given: dict | None = None, root: Path = 
         new = SLOT.sub(number, text)
         if new != text:
             doc.write_text(new, encoding="utf-8")
-    # A number said only in documents that are not pitch-facing (docs/ASSURANCE.md, ...) is a "doc" fact: claims_check.py
+    # A number said only in documents that are not pitch-facing (docs/reference/ASSURANCE.md, ...) is a "doc" fact: claims_check.py
     # then holds those documents to it, instead of looking for it in the pitch-facing text, which does not say it.
     for f in facts["facts"]:
         docs = where_said.get(f.get("path"), set())

@@ -40,6 +40,6 @@ artifact, so two ids, one accepted and one rejected.
 
 **What this suite cannot check.** Tables shaped unlike the generator's (other columns, null amounts, currencies), speed
 on production volumes, and behaviour in another database engine than SQLite. Fixed seeds make the verdict repeatable
-and also make the 40 cases knowable to anyone who can read the bundle; a submission written against exactly those
-would have to reproduce 40 ledgers, which is the work. A buyer who wants fresh cases at each judgment trades away the
-identical rerun.
+and also make the 40 cases knowable to anyone who can read the bundle; a submission written only for those 40 cases
+would have to compute 40 correct ledgers, which is the work itself. A buyer who wants new cases at each judgment gives
+up getting the same verdict on a rerun.

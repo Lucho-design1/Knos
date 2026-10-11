@@ -21,7 +21,7 @@ After that the order has one of three ends, and each pays exactly one party once
     expired        the deadline passes; anyone sends RefundOrder and the funder is refunded.
 
 In the last two the advancer has paid and collects nothing. It has no recourse on chain: the program gives it no
-claim on the supplier or on the funder. docs/ADVANCE.md says what to check before advancing.
+claim on the supplier or on the funder. docs/reference/ADVANCE.md says what to check before advancing.
 
 A netting period is financed the same way, and only when a reserve secures it: the receivable is the period's draws
 on its reserve order, the supplier assigns that order's payments, and the financier collects the draws. WHO_CARRIES
@@ -42,7 +42,7 @@ ANY = "*"
 MAX_RATE_BPS = 5_000
 NOT_KNOS = "Not offered by Knos: a third party can do this today with the program as it is."
 RECOURSE = "none on chain: the program gives the advancer no claim on the supplier or on the funder"
-CHECK_FIRST = ("the supplier's record (knos record build <supplier>; docs/RECORD.md)",
+CHECK_FIRST = ("the supplier's record (knos record build <supplier>; docs/reference/RECORD.md)",
                "the order's terms, by their hash: what the judge will accept",
                "the deadline: an order nobody accepted goes back to its funder then",
                "the judge the order pins: the workflow repository and its commit")
@@ -76,7 +76,7 @@ def offer(advancer: str, mint: str, rate_bps: int, cap: int, *, evaluators=(ANY,
     if not 0 < int(rate_bps) <= MAX_RATE_BPS:
         raise ValueError(f"the discount is {rate_bps} basis points: give 1 to {MAX_RATE_BPS}")
     if int(cap) <= 0:
-        raise ValueError("the cap is the most advanced against one order, in base units: give more than 0")
+        raise ValueError("The cap (the most you will advance against one order, in base units) must be more than 0.")
     ev = sorted({str(e) for e in evaluators})
     if not ev or any(e != ANY and (e.count("@") != 1 or len(e.split("@")[1]) != 40) for e in ev):
         raise ValueError('an evaluator is "<workflow repository>@<40 character commit>", or "*" for any')
@@ -283,7 +283,7 @@ def register(app: Any, help_lines: list | None = None) -> None:
     typer = importlib.import_module("typer")
     if help_lines is not None:
         help_lines.append(("advance", "For money", "An advance by a third party against a funded order or a reserved netting period. Knos lends nothing and charges nothing."))
-    group = typer.Typer(help="An advance by a third party against a funded order (docs/ADVANCE.md). " + NOT_KNOS, no_args_is_help=True)
+    group = typer.Typer(help="Get paid early: a third party pays the supplier now and collects the order's payment later (docs/reference/ADVANCE.md). " + NOT_KNOS, no_args_is_help=True)
     app.add_typer(group, name="advance", rich_help_panel="For money")
 
     def _stop(said: str, fix: str = ""):
@@ -328,7 +328,7 @@ def register(app: Any, help_lines: list | None = None) -> None:
               workflows: str = typer.Option("", "--workflows", help="the workflow repository the order pins, owner/repo"),
               assurance: str = typer.Option(None, "--assurance", help="how the judge ran, when an acceptance is already signed"),
               period: Path = typer.Option(None, "--period", help="a netting book: take against its last closed period, whose reserve is --order"),
-              keypair: Path = typer.Option(None, "--keypair", help="the supplier's bound wallet: it signs Assign"),
+              keypair: Path = typer.Option(None, "--keypair", help="the supplier's bound wallet: it signs the hand-over of the order's payment to the advancer"),
               advancer_keypair: Path = typer.Option(None, "--advancer-keypair", help="the advancer's wallet: it signs the transfer"),
               as_json: bool = typer.Option(False, "--json", help="the quote as JSON")) -> None:
         """Quote an offer for one order; with both keys, send the one transaction that pays the supplier and assigns the order."""
@@ -372,7 +372,7 @@ def register(app: Any, help_lines: list | None = None) -> None:
     @group.command("quote")
     def quote_(offer_file: Path = typer.Argument(..., help="the financier's offer"),
                period: Path = typer.Option(..., "--period", help="the netting book (knos net) whose closed, reserved period is sold"),
-               name: str = typer.Option(None, "--name", help="the period, like 202610.0 (default: the last closed one)"),
+               name: str = typer.Option(None, "--name", help="the netting period, written YYYYMM.N, like 202610.0 (default: the last closed one)"),
                workflows: str = typer.Option("", "--workflows", help="the workflow repository the reserve pins, owner/repo"),
                as_json: bool = typer.Option(False, "--json", help="the quote as JSON")) -> None:
         """Price a closed, reserved netting period as a receivable. Nothing is sent: `take` sends it, against the reserve order."""

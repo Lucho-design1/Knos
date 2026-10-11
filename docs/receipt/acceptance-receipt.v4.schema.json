@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "https://github.com/drexthealpha/Knos/blob/main/docs/receipt/acceptance-receipt.v4.schema.json",
  "title": "Knos acceptance receipt, version 4",
- "description": "Version 3's five parts, with the verdict in one of four words (accepted, rejected, insufficient_evidence, disputed), the ids of the deliverable, the evaluation, the invoice line and the settlement, the evidence source, and `limitations`: what this evidence does not show. A receipt that is rejected or insufficient records no payment (transaction null) and authorises none; a receipt no issuer signed has issuer_authenticated null. The rules a schema cannot say are in docs/RECEIPT.md, Version 4.",
+ "description": "Version 3's five parts, with the verdict in one of four words (accepted, rejected, insufficient_evidence, disputed), the ids of the deliverable, the evaluation, the invoice line and the settlement, the evidence source, and `limitations`: what this evidence does not show. A receipt that is rejected or insufficient records no payment (transaction null) and authorises none; a receipt no issuer signed has issuer_authenticated null. The rules a schema cannot say are in docs/reference/RECEIPT.md, Version 4.",
  "type": "object",
  "additionalProperties": false,
  "required": [

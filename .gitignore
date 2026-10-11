@@ -35,7 +35,5 @@ examples/*/target
 # agent tooling scratch
 .claude/
 
-# videos rendered by scripts/video/render.py
-scripts/video/out/
 examples/target
 mutants/

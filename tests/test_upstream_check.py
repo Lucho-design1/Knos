@@ -90,20 +90,20 @@ def test_the_docs_this_gate_covers_name_outside_repositories_and_never_knos_itse
     assert uc.repos_in([page]) == ["fresh/repo", "quiet/repo"]
     page.write_text("[a](https://github.com/fresh/repo)\n<!-- not-active -->\n[c](https://github.com/quiet/repo)\n<!-- /not-active -->\n", encoding="utf-8")
     assert uc.repos_in([page]) == ["fresh/repo"] and uc.repos_in([page], marked=True) == ["fresh/repo", "quiet/repo"]
-    listed = run("--docs", str(ROOT / "docs" / "INTEGRATIONS.md"), str(ROOT / "docs" / "X402.md"), "--list")
+    listed = run("--docs", str(ROOT / "docs" / "reference" / "INTEGRATIONS.md"), str(ROOT / "docs" / "reference" / "X402.md"), "--list")
     names = listed.stdout.split()
     assert listed.returncode == 0 and "x402-foundation/x402" in names and "codeswithroh/mergepay" in names
     assert not [n for n in names if n.startswith("drexthealpha/")] and len(names) == len(set(names))
     assert "gitcoinco/web" not in names         # the page marks it as not active already: nothing is sent there
     # and the pages say how the gate is run, with the same list
-    text = (ROOT / "docs" / "INTEGRATIONS.md").read_text(encoding="utf-8")
-    assert "python scripts/upstream_check.py --docs docs/INTEGRATIONS.md docs/X402.md" in text
+    text = (ROOT / "docs" / "reference" / "INTEGRATIONS.md").read_text(encoding="utf-8")
+    assert "python scripts/upstream_check.py --docs docs/reference/INTEGRATIONS.md docs/reference/X402.md" in text
 
 
 def test_the_x402_page_says_what_was_opened_upstream_and_that_nobody_answered():
     # the knos-order proposal: an issue and a draft pull request with the specification only, both linked; the page
     # no longer says nothing was opened, and the count of outside facilitators stays 0
-    text = " ".join((ROOT / "docs" / "X402.md").read_text(encoding="utf-8").split())
+    text = " ".join((ROOT / "docs" / "reference" / "X402.md").read_text(encoding="utf-8").split())
     assert "https://github.com/x402-foundation/x402/issues/3720" in text
     assert "https://github.com/x402-foundation/x402/pull/3731" in text
     assert "no issue and no pull request has been opened" not in text and "has not been run from a machine" not in text

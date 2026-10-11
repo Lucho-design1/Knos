@@ -351,7 +351,7 @@ export function statementHtml(st, hash) {
   const lines = st.lines.filter((r) => r.class !== "clean").map((r) => `<li data-class="${r.class}"><span class="k-num">${r.line}</span> · ${r.url ? link(r.url, r.pr) : esc(r.pr || "no pull request")} · ${
     r.class === "failed" ? `failed: ${r.failed.map((f) => link(f.url, f.name)).join(", ")}` : esc(LABELS[r.class])}${r.class !== "failed" && r.why ? `: ${esc(r.why)}` : ""}</li>`).join("");
   return `<div class="sh-result k-reveal">
-    <p class="k-kicker">In dispute</p>
+    <p class="k-kicker">Lines to question</p>
     <p class="sh-big k-num" data-sh="share">${esc(d.share)}</p>
     <p data-sh="of">${byAmount ? `${esc(d.amount)} of ${esc(st.amounts.billed)} billed` : `${d.lines} of ${st.lines_billed} lines billed`}</p>
     <div class="k-table"><table><thead><tr><th scope="col">Outcome</th><th scope="col">Lines</th>${byAmount ? `<th scope="col">Amount</th>` : ""}</tr></thead><tbody>${rows}</tbody></table></div>
@@ -359,7 +359,7 @@ export function statementHtml(st, hash) {
     ${st.complete ? "" : `<p data-sh="partial">Unread lines are counted apart, never guessed.</p>`}
     <p class="fine">A failed check is not proof of bad work.</p>
     <p class="fine">A green check is not proof of good work.</p>
-    <p class="fine">Shadow mode changes nothing and holds no money.</p>
+    <p class="fine">This check changes nothing and holds no money.</p>
     <p class="fine mono sh-hash" data-sh="hash">sha256 ${esc(hash)}</p>
     <p class="sh-row"><button type="button" class="k-btn" data-sh="json">Download statement (JSON)</button>
       <button type="button" class="k-btn quiet" data-sh="csv">Download statement (CSV)</button></p>
@@ -371,7 +371,7 @@ export function renderShadow(el, env = {}) {
   const doc = el.ownerDocument, fetchFn = env.fetch || ((...a) => globalThis.fetch(...a)), sample = env.sample ?? SAMPLE;
   if (!doc.getElementById("shadow-style")) { const s = doc.createElement("style"); s.id = "shadow-style"; s.textContent = STYLE; doc.head.appendChild(s); }
   el.innerHTML = `<section class="shadow k-card">
-    <p class="k-kicker">Shadow mode</p>
+    <p class="k-kicker">Read-only check</p>
     <h2>Check an invoice against GitHub</h2>
     <label for="shadow-in">Paste or drop the invoice (CSV)</label>
     <textarea id="shadow-in" rows="6" spellcheck="false" autocomplete="off" placeholder="pr,amount,supplier"></textarea>
@@ -387,7 +387,7 @@ export function renderShadow(el, env = {}) {
   </section>`;
   const $ = (name) => el.querySelector(`[data-sh="${name}"]`), box = el.querySelector("textarea"), budget = { remaining: null, limit: ANONYMOUS_AN_HOUR, reset: null, asked: 0, spent: false };
   let busy = false, last = null;
-  const showBudget = () => { $("budget").textContent = budget.remaining === null ? `GitHub allows ${ANONYMOUS_AN_HOUR} requests an hour without login.` : `Budget: ${budget.remaining} of ${budget.limit} requests left this hour.`; };
+  const showBudget = () => { $("budget").textContent = budget.remaining === null ? `GitHub allows ${ANONYMOUS_AN_HOUR} requests an hour without login.` : `GitHub lets this page make ${budget.remaining} more requests this hour (of ${budget.limit}).`; };
   const save = (name, text, type) => {
     const url = URL.createObjectURL(new Blob([text], { type })), a = doc.createElement("a");
     a.href = url; a.download = name; doc.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -417,7 +417,7 @@ export function renderShadow(el, env = {}) {
     const st = statement(invoice, facts), hash = await digest(st);
     last = { st, hash };
     $("out").innerHTML = statementHtml(st, hash);
-    $("said").innerHTML = budget.spent ? `Budget spent. Run <code>knos shadow invoice.csv</code> for more.` : `Checked ${invoice.lines.length} lines.`;
+    $("said").innerHTML = budget.spent ? `GitHub's hourly limit is used up. To check more lines, run <code>knos shadow invoice.csv</code> on your computer.` : `Checked ${invoice.lines.length} lines.`;
     busy = false; $("run").disabled = false;
     try { const motion = await import("./motion.js"); if (motion.reveal) motion.reveal(el); } catch { /* the page is complete without it */ }
   }

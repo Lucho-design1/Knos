@@ -4,7 +4,7 @@
     knos approve check  --approver mei-acme --requester ravi-acme --amount 1200 [--on 2026-10-06] [--as finance]
     knos approve status --offer .knos/procurement/offers/bug-fix-octocat.yaml
 
-The policy is one file in the buyer's repository, `.knos/procurement/policy.yaml` (docs/CONTROLS.md has the schema):
+The policy is one file in the buyer's repository, `.knos/procurement/policy.yaml` (docs/reference/CONTROLS.md has the schema):
 four roles (requester, approver, finance, auditor), the forge accounts that hold each and between which dates, and
 thresholds that say how many approvers an amount needs and from where finance signs too.
 
@@ -286,7 +286,7 @@ def gate(files: dict[str, str], *, vendor: str, rate: int, budget: int, on: str,
             raise ValueError(f"Refused: {path}: {why}") from None
         bad = problems(doc)
         if bad:
-            raise ValueError(f"Refused: {path} is not sound. {bad[0]}")
+            raise ValueError(f"Refused: {path} is not a valid policy. {bad[0]}")
         return doc
     try:
         policy = sound(f"{root}/policy.yaml", policy_problems)

@@ -1,6 +1,6 @@
 # Summarise our incident reports
 
-Budget: 30 USDC, paid when the check passes. No review, no merge: the check below decides.
+Budget: 30 test USDC (devnet, no monetary value), paid when the check passes. No review, no merge: the check below decides.
 
 Our on-call engineers write an incident report after every outage. Management reads one line. We want that line written
 for them.

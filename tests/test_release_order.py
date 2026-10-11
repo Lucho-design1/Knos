@@ -1,4 +1,4 @@
-"""The release order with one commit and one push (docs/RELEASE.md): the wheel is built once, before the commit of the
+"""The release order with one commit and one push (docs/reference/RELEASE.md): the wheel is built once, before the commit of the
 pinned workflows exists, the lock names it, the workflows are built with that lock, their commit is stamped into the
 tree, and the wheel built again from the stamped tree is the same file. Run here on a copy of this tree, with the real
 build."""
@@ -169,10 +169,10 @@ def test_the_lock_is_the_last_line_of_sign_txt_and_the_rest_is_the_third_party_l
 
 
 def test_the_plan_names_every_step_in_the_order_the_tools_enforce():
-    plan = (ROOT / "docs" / "RELEASE.md").read_text(encoding="utf-8")
+    plan = (ROOT / "docs" / "reference" / "RELEASE.md").read_text(encoding="utf-8")
     # PyPI before the workflows: their cutoff is written from the time PyPI took the wheel (pinned_workflows.py cutoff)
     order = ["scripts/bump_version.py --check", "scripts/release.py wheel", "pinned_workflows.py lock", "scripts/release.py publish", "pinned_workflows.py cutoff",
-             "scripts/release.py workflows", "pinned_workflows.py stamp", "scripts/small_repos.py build", "scripts/release.py verify", "ship_check.py", "git commit",
+             "scripts/release.py workflows", "pinned_workflows.py stamp", "scripts/small_repos.py build", "scripts/release.py verify", "git commit",
              "git push origin main", "git tag v"]
     at = [plan.index(step) for step in order]
     assert at == sorted(at), [step for step, a, b in zip(order, at, sorted(at)) if a != b]

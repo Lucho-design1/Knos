@@ -14,7 +14,7 @@ It reads public data with the job's read-only token, holds no secret and no wall
 verdict goes to stdout, to --out, to the job summary (GITHUB_STEP_SUMMARY) and to the step's outputs (GITHUB_OUTPUT:
 `passed`, `verdict`, the path of the JSON). Exit 1 when it did not pass, unless --no-fail.
 
-A check's name is whatever a workflow file says, so names GitHub returned are only ever inside `untrusted`.
+Anyone can name a check anything in a workflow file, so check names from GitHub appear only under the key `untrusted`.
 """
 from __future__ import annotations
 

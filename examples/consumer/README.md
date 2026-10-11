@@ -1,9 +1,11 @@
 # Use the record without Knos
 
-`consumer.mjs` is a second application, written apart from Knos: Node 20 or later, no package, no code of Knos's. It
+`consumer.mjs` is a second application, written separately from Knos: Node 20 or later, no package, no code of Knos's. It
 reads an acceptance receipt, or a statement's status file, and a Solana cluster, and decides on its own whether the
 order is paid, by which transaction, and under which terms hash. All it knows of Knos is two published files: the
 receipt's JSON Schema ([`docs/receipt/`](../../docs/receipt)) and knos_pay's IDL ([`idl/knos_pay_v2.json`](../../idl/knos_pay_v2.json)).
+
+From `examples/consumer/`:
 
     node consumer.mjs receipt RECEIPT.json                 # asks devnet's public endpoint
     node consumer.mjs receipt RECEIPT.json --rpc URL       # asks your own endpoint
@@ -31,25 +33,27 @@ two files taken from the release tag. Exit 0: paid, and every claim it checked a
    of the terms that funding logged, or, for a private order, the hash in the funding instruction's terms argument;
    it must be the receipt's `policy.terms_hash`. The funded amount and the funding transaction the receipt names agree.
 7. The receipt's deliverable and settlement ids are the ones the order, milestone and transaction give
-   (`docs/CONFORMANCE.md`; the published vectors in `conformance/vectors/ids.v1.json` are in its tests).
+   (`docs/reference/CONFORMANCE.md`; the published vectors in `conformance/vectors/ids.v1.json` are in its tests).
 
-For a status file it does 2 to 4 and 6 for each payment on chain, and checks that the line's deliverable is of the
-order paid and that its settlement id is that deliverable paid by that transaction. A deliverable id names an order's
-milestone in one of two published ways: by the order (a receipt, a meter ledger), or by an audit export's billing key,
-the order and the transaction that funded it (`knos audit export`; a witnessed statement takes its line from it). The
-milestone is 0, or a standing order's pull request, which the payment logs.
+For a status file it runs checks 2, 3, 4 and 6 on each payment on chain. It also checks that each line's deliverable
+belongs to the order paid, and that the line's settlement id is that deliverable paid by that transaction. A
+deliverable id names an order's milestone in one of two published ways. One is by the order (a receipt, a meter
+ledger). The other is by an audit export's billing key: the order plus the transaction that funded it
+(`knos audit export`; a witnessed statement takes its line from it). The milestone is 0, or a standing order's pull
+request, which the payment logs.
 
 ## What it trusts
 
 - The cluster's answers. Ask a second endpoint to remove that.
 - That the program at the IDL's address is knos_pay as published: its upgrade authority is a multisig with a time
-  lock, so a change is public before it runs.
+  lock, so a change is public 48 hours before it runs. Today one person holds every key of that multisig, so this is a
+  delay, not a second opinion.
 - Which work was accepted, and why. The forge signs the judge's run, and knos_oidc checks that signature on chain
   before knos_pay pays; this program does not re-read the token.
 
 ## Its tests
 
-`test.mjs` runs on `fixtures/order_paid.json`: one order funded from a Balance and paid on the LiteSVM harness
+`test.mjs` runs on `fixtures/order_paid.json`: one order funded from a Balance and paid on the LiteSVM harness (a local Solana simulator)
 (knos_pay and knos_oidc as built), its receipt, a status file and the answers a cluster would give. The signatures
 are numbered stand-ins, since a LiteSVM run has no cluster. `record.py` writes the fixtures again;
 `tests/test_consumer.py` also decides an order paid on a fresh harness each run.

@@ -2,7 +2,7 @@
 seller hold the same bytes and either can re-derive the verdict with no network.
 
     MANIFEST.json   {"type", "version", "order", "files": {name: sha256}}
-    receipt.json    the acceptance receipt, version 5 (or 4, 3, or 2), in canonical form (docs/RECEIPT.md)
+    receipt.json    the acceptance receipt, version 5 (or 4, 3, or 2), in canonical form (docs/reference/RECEIPT.md)
     token.jwt       the raw token the issuer signed, as it was written to knos_oidc
     key.json        the issuer's public key that verified it: {issuer, kid, n, e, account}
     terms.json      the order's terms, the bytes that were hashed at funding
@@ -29,7 +29,7 @@ so offline they are the receipt's word, and `verify` says so. `gather` builds th
 `verify_offline` is the check for when the chain is gone (`--no-chain`): it sorts every statement into verified from
 signatures, resting on an archived copy, or not checkable without a cluster.
 
-The commands live here: `knos bundle make|verify`, and `knos receipt <file> | mirror | verify` (docs/RECEIPT.md).
+The commands live here: `knos bundle make|verify`, and `knos receipt <file> | mirror | verify` (docs/reference/RECEIPT.md).
 """
 from __future__ import annotations
 
@@ -690,7 +690,7 @@ def gather(call, events: list[dict], target: str, get, published=None, verdict: 
         if bounty is not None:
             raise ValueError(f"{target} is the payment of an issue's bounty (repository id {bounty['repo']}, issue {bounty['issue']}), not of a "
                              "work order: a receipt and its bundle are built from a work order's payment, whose token names the order, its "
-                             "terms and the commit (docs/RECEIPT.md)")
+                             "terms and the commit (docs/reference/RECEIPT.md)")
         raise Unavailable(f"the escrow's history on this cluster shows no payment of {target}")
     o, sig = hit
     if o["private"] or not o["terms"]:
@@ -700,8 +700,9 @@ def gather(call, events: list[dict], target: str, get, published=None, verdict: 
     settled = next((e for e in mine if e["event"] == "order_settled"), None)
     spent = next((keys for data, keys in _ixs(tx, str(pay2.PAY_ID)) if data[:1] == b"\x11"), None)
     if settled is not None and settled.get("judge") == 4:      # the program's Judge::Auto (programs-v2/knos_pay/src/order_pay.rs)
-        raise ValueError(f"transaction {sig} paid an AUTO order's open pull request (the program's judge e: the order's own black-box checks, "
-                         "with no merge): a receipt is built for a payment by a judge a to d, so none is built for it here")
+        raise ValueError(f"Transaction {sig} paid an open pull request of an auto order (paid by the order's own black-box checks, "
+                         "with no merge). Receipts are built only for payments judged by the repository's own run, the neutral "
+                         "evaluator, an attestor or an arbiter, so none is built for this one.")
     if settled is None or spent is None or settled.get("judge") not in (0, 1, 2, 3):
         raise ValueError(f"transaction {sig} is not a payment a judge's token made (a release after a warranty has no token of its own)")
     token, verified_tx = token_of(call, spent[1], str(oidc.OIDC_ID))
@@ -845,13 +846,13 @@ def register(app, help_lines: list | None = None) -> None:
                     mirror: str = typer.Option("", "--mirror", help="for verify: a mirror's folder or https URL, read when the chain has no record"),
                     rpc: str = typer.Option("", "--rpc", help="the cluster's JSON-RPC URL (default: KNOS_RPC, then devnet)"),
                     limit: int = typer.Option(1000, "--limit", help="how many of the escrow's newest transactions to read"),
-                    no_attest: bool = typer.Option(False, "--no-attest", help="for mirror: do not write new receipts as Solana Attestation Service attestations"),
+                    no_attest: bool = typer.Option(False, "--no-attest", help="for mirror: do not also publish new receipts as on-chain attestations (Solana Attestation Service)"),
                     no_chain: bool = typer.Option(False, "--no-chain", help="for verify: ask no cluster. TARGET is a bundle file, or an order or transaction read from --mirror"),
                     no_network: bool = typer.Option(False, "--no-network", help="with --no-chain: do not ask the issuer for its key list either")) -> None:
-        """Check an acceptance receipt file and print its five parts and digest; `knos receipt mirror --out DIR` writes every
-        receipt the chain shows as files any static host can serve; `knos receipt verify ORDER --mirror DIR` rebuilds a receipt
-        from the chain, or reads it from a mirror when the chain no longer has it; `knos receipt explain FILE` reads a receipt in
-        five parts, one line each: Identity, Execution, Acceptance, Consequence, Assurance (what stayed trusted or outside)."""
+        """Check an acceptance receipt file and print its five parts and digest. Subcommands: `mirror --out DIR` writes
+        every receipt on the chain as files any static host can serve; `verify ORDER --mirror DIR` rebuilds a
+        receipt from the chain, or reads it from a mirror; `explain FILE` prints the five parts (Identity,
+        Execution, Acceptance, Consequence, Assurance), one line each."""
         if what == "explain":
             if not target:
                 stop("give the receipt file: knos receipt explain FILE", 2)
@@ -900,7 +901,7 @@ def register(app, help_lines: list | None = None) -> None:
                     stop(f"the mirror at {mirror} has no receipt for {target}, and no cluster was asked.")
                 for r in held:
                     _show(r, typer.echo)
-                    typer.echo(f"{rc.FROM_MIRROR}: no cluster was asked. The receipt keeps the rules of docs/RECEIPT.md and is the one the mirror's index lists; "
+                    typer.echo(f"{rc.FROM_MIRROR}: no cluster was asked. The receipt keeps the rules of docs/reference/RECEIPT.md and is the one the mirror's index lists; "
                                "its bundle (knos bundle verify --no-chain) is what proves the issuer's signature.")
                 return
             url = _caller(rpc)[0]
@@ -993,8 +994,8 @@ def register(app, help_lines: list | None = None) -> None:
     def verify_cmd(path: Path = typer.Argument(..., help="a bundle written by `knos bundle make`"),
                    rpc: str = typer.Option("", "--rpc", help="also read the key's account and the paying transaction on this cluster (without it, no network is used)"),
                    mirror: str = typer.Option("", "--mirror", help="also compare the receipt with the one this mirror (a folder or https URL) holds"),
-                   no_chain: bool = typer.Option(False, "--no-chain", help="the cluster is gone or reset: check what signatures prove, what rests on the bundle's archived "
-                                                                           "copy of the chain record, and say what only a cluster could show"),
+                   no_chain: bool = typer.Option(False, "--no-chain", help="use when the Solana cluster is gone or reset: check what the signatures prove, what depends on "
+                                                                           "the bundle's saved copy of the chain, and list what only a live cluster could show"),
                    no_network: bool = typer.Option(False, "--no-network", help="with --no-chain: do not ask the issuer for its key list either")) -> None:
         """Re-derive a payment's verdict from the bundle alone and print the receipt's five parts, the judge's assurance, and
         what an offline check cannot show. With --no-chain it also reads the bundle's archived copy of the chain record and

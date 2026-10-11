@@ -12,5 +12,5 @@ For a program of yours, make your own:
 python examples/upgrade_gate/adopt.py init --repo-id 123456789 --workflow OWNER/REPO/.github/workflows/build.yml --gate-id GATE_ADDRESS --out my_gate
 ```
 
-[docs/GATE.md](../../docs/GATE.md) has the three commands, the banner and what the gate cannot do.
+[docs/reference/GATE.md](../../docs/reference/GATE.md) has the three commands, the banner and what the gate cannot do.
 `tests/test_upgrade_gate.py` runs the program in a simulator; `tests/test_gate_adopt.py` runs `adopt.py`.

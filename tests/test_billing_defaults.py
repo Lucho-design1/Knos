@@ -1,4 +1,4 @@
-"""Two pricing promises of the price book (docs/MARKET.md, "The billing rule"), held by knos.billing: 0.20% is paid
+"""Two pricing promises of the price book (docs/reference/MARKET.md, "The billing rule"), held by knos.billing: 0.20% is paid
 only on the part of a month's value above 1,000,000, and a price rise needs 90 days' notice and never touches an order
 already funded. The later prices here are made up for the test: the book has one price. Nothing opens the network."""
 

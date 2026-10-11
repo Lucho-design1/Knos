@@ -8,10 +8,11 @@ commitment, and a budget reserved before work starts.
     knos boundary release  --db FILE --request ID   |   knos boundary spend --db FILE --request ID
     knos boundary status   --db FILE --budget NAME
 
-What holds, and by what (docs/BOUNDARY.md says it for a reader; knos.enforce cell by cell):
+What holds, and by what (docs/reference/BOUNDARY.md says it for a reader; knos.enforce cell by cell):
 
-- The money is in a Squads v4 vault (program SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf, deployed and audited; Knos
-  changes nothing in it). `plan` turns the buyer's approval policy (.knos/procurement/policy.yaml) and a boundary
+- The money is in a Squads v4 vault (program SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf, built and deployed by
+  Squads, not by Knos; Squads publishes its own security reviews, and Knos has not checked them; Knos changes nothing in
+  it). `plan` turns the buyer's approval policy (.knos/procurement/policy.yaml) and a boundary
   file (.knos/procurement/boundary.yaml: the key each account signs with, the config authority, the time lock, the
   vault's Balance and any allowance) into the multisig's settings: requesters may only propose (Initiate), approvers
   and finance vote (Vote), the threshold is the most votes any amount of the policy needs, a time lock, and a config
@@ -414,7 +415,8 @@ def register(app, help_lines: list | None = None) -> None:
     import importlib
     typer = importlib.import_module("typer")
 
-    group = typer.Typer(add_completion=False, no_args_is_help=True, help="The enterprise spending boundary: a Squads vault, bound approvals, reserved budgets.")
+    group = typer.Typer(add_completion=False, no_args_is_help=True, help="Limit what an organisation can spend: a shared multi-signature wallet (a Squads vault), "
+                        "approvals tied to each payment, and budgets held in advance.")
     app.add_typer(group, name="boundary")
     if help_lines is not None:
         help_lines.append(("boundary", "For money", "Hold an organisation's money in a Squads vault: plan its settings, bind approvals, reserve budgets."))
@@ -435,7 +437,7 @@ def register(app, help_lines: list | None = None) -> None:
     def plan_(policy: Path = typer.Argument(..., help="the approval policy, .knos/procurement/policy.yaml"),
               boundary: Path = typer.Option(None, "--boundary", help=f"the boundary file (default: {BOUNDARY_FILE} beside the policy)"),
               as_json: bool = typer.Option(False, "--json", help="print the plan as JSON")) -> None:
-        """Turn the approval policy into a Squads v4 vault's settings and the vault's knos_pay Balance, and say what is hard and what is not."""
+        """Turn the approval policy into settings for a Squads v4 vault and its Knos balance, and say which rules the blockchain enforces and which it does not."""
         doc, _t = load(policy)
         bdoc, _t = load(boundary or policy.with_name(BOUNDARY_FILE))
         try:

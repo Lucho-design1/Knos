@@ -1,4 +1,4 @@
-"""Pages added to the site by name (web/views.js ADDED), and the file the "For judges" page is drawn from.
+"""Pages added to the site by name (web/views.js ADDED), and the file the "Check every claim yourself" page is drawn from.
 
 tests/web/added.mjs drives the mount in headless Chromium on a build of web/: the link in the menu, the grey bars at
 the press, the module's drawing, the enforcement matrix and the judges' rows on data of the documented shapes, and the
@@ -28,7 +28,7 @@ One page.
 | Judged | What exists | Evidence |
 | --- | --- | --- |
 | How well it works | A payment **ran** on the public program ids. | [the transaction](https://explorer.solana.com/tx/abc?cluster=devnet) |
-| Potential impact | One count both sides compute. | [docs/WHY.md](WHY.md#the-buyer) |
+| Potential impact | One count both sides compute. | [docs/reference/WHY.md](reference/WHY.md#the-buyer) |
 | Open source | Every test is in the tree. | [`tests/`](../tests/test_ledger.py) |
 
 ## What is not real yet
@@ -57,7 +57,7 @@ def test_the_judges_file_is_the_documents_rows_cell_for_cell():
     assert got["rows"][0] == {"thing": "How well it works", "sentence": "A payment ran on the public program ids.",
                               "link": "https://explorer.solana.com/tx/abc?cluster=devnet", "label": "the transaction"}
     # a link inside docs/ and one that climbs out of it both become addresses of the repository
-    assert got["rows"][1]["link"] == "https://github.com/drexthealpha/Knos/blob/main/docs/WHY.md#the-buyer"
+    assert got["rows"][1]["link"] == "https://github.com/drexthealpha/Knos/blob/main/docs/reference/WHY.md#the-buyer"
     assert got["rows"][2]["link"] == "https://github.com/drexthealpha/Knos/blob/main/tests/test_ledger.py" and got["rows"][2]["label"] == "`tests/`"
     assert got["not_real"] == ["Outside funders: 0.", "Interviews: 0."]
 

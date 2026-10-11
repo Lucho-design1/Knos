@@ -1,5 +1,5 @@
 """The registry of published terms, read: which published template and version some terms are, and the sentence a
-contract carries (docs/TERMS.md, "Knos Terms 1"). scripts/terms_registry.py builds the registry from
+contract carries (docs/reference/TERMS.md, "Knos Terms 1"). scripts/terms_registry.py builds the registry from
 knos.terms_templates; this module only reads it, so `knos terms cite` and `knos terms verify` work from an installed
 package (the wheel carries the registry as knos/_terms) as they do in a checkout (terms/ at the root).
 """
@@ -191,7 +191,7 @@ def read3(name: str, version: int | None = None, root: Path | None = None) -> di
     root = root or where()
     rows = [r for r in check3(root) if r["name"] == name]
     if not rows:
-        raise KeyError(f"no terms 3 document named {name} is published: the published ones are {', '.join(latest(check3(root))) or 'none'}")
+        raise KeyError(f"no Knos Terms 3 document named {name} is published: the published ones are {', '.join(latest(check3(root))) or 'none'}")
     row = rows[-1] if version is None else next((r for r in rows if r["version"] == version), None)
     if row is None:
         raise KeyError(f"{name} has no version {version}: its versions are {', '.join(str(r['version']) for r in rows)}")

@@ -1,4 +1,5 @@
-"""From "staging" to "public": what the 2.1 and 1.1 builds add, run once at the PUBLIC program ids, and written down.
+"""Run each new program feature once at the PUBLIC program ids on devnet, and record the transactions as evidence.
+(knos_pay 2.1 and 2.2 and knos_oidc 1.1 and 2.2 are program versions; "staging" means a test copy at addresses of its own.)
 
     python scripts/exercise_public.py status --rpc URL [--json] [--want 2.2]
     python scripts/exercise_public.py run --phase before|after --rpc URL --keys DIR [--resume] [--neutral OWNER/REPO] [--only STEP]
@@ -11,7 +12,7 @@
     python scripts/exercise_public.py rehearse --rc --simulate           the same rehearsal on a local simulator
     python scripts/exercise_public.py record --simulate --evidence FILE --root COPY
 
-status   hashes the executable of each of the four public programs the way docs/PROVENANCE.md does (sha256 of the
+status   hashes the executable of each of the four public programs the way docs/reference/PROVENANCE.md does (sha256 of the
          program data with its trailing zeros stripped) and says, per program: the build it runs, the proposal that
          build belongs to, and the slot of its last deployment. Exit 0: all four run the 2.1 / 1.1 builds (or a later
          build this repository names). Exit 3: an upgrade has not executed yet: skip the exercises and ship the rest;
@@ -47,7 +48,7 @@ record   writes that evidence into the repository: docs/capabilities.json (a cap
          a transaction that succeeded at a public program id; `on_chain` moves only for a program whose hash on chain
          is the proposal's build), docs/provenance.json (the slot each build went live), web/upgrades.json (read again
          from the multisig by scripts/upgrade_feed.py when --rpc is given; a proposal stays `executed` there only when
-         the program ran its build), then docs/CAPABILITIES.md, web/demo_data.json and docs/PROVENANCE.md through their
+         the program ran its build), then docs/reference/CAPABILITIES.md, web/demo_data.json and docs/reference/PROVENANCE.md through their
          own scripts. Evidence of a simulated run is refused for the repository
          itself: it is written only into a copy (`--root`), which is how the tests run this command.
 
@@ -68,8 +69,8 @@ rehearse --rc   the staging rehearsal of knos_pay's new build, as one command: t
          open order goes back; staging is closed. `--simulate` runs all of it on the local simulator, starting on the
          test build of the live source (tests/fixtures/live) and upgrading in place to the tree's.
 
-propose  REFUSES in this release: its tree changes no program, and knos_oidc and knos_pay are proposed already
-         (proposals 7 and 8). What follows describes the command as the release before ran it.
+propose  REFUSES in this release: this release changes no program, and the upgrades of knos_oidc and knos_pay were
+         already proposed (upgrade proposals 7 and 8 of the multisig, listed in web/upgrades.json). What follows describes the command as the release before ran it.
          After proposals 3 to 6 have executed: the plan is every program whose verified build in --so-dir is not the
          build its public id runs, and it must be exactly this release's set, [knos_oidc, knos_pay] (RELEASE_CHANGES in
          scripts/provenance.py); any other plan stops it with nothing sent. Each build is held to the record the
@@ -1221,7 +1222,7 @@ def round_strict(book: Book, st: dict) -> None:
     build = book.ev["programs"].get("knos_oidc", {}).get("is")
     if not isinstance(w, Simulated):
         if build != "next":
-            raise Skip("knos_oidc with strict JSON is not live at the public id (it is proposed after the push of this release): a NaN claim is accepted until then")
+            raise Skip("knos_oidc at the public id is not the strict build: a NaN claim is accepted until its upgrade executes")
         raise Skip("no forge signs a NaN claim: this needs a key Knos holds, admitted as an issuer at the public id, and the release run has none")
     if "refused" in st:
         return
@@ -1506,7 +1507,7 @@ def round_appeal(book: Book, st: dict) -> None:
     w = book.w
     if "answer" in st:
         return
-    how = (f"in {PLAYGROUND} (docs/PLAYGROUND.md): fund a test task, open a pull request for it that its terms refuse, wait for the refusal, and comment "
+    how = (f"in {PLAYGROUND} (docs/reference/PLAYGROUND.md): fund a test task, open a pull request for it that its terms refuse, wait for the refusal, and comment "
            "`/knos appeal <reason>` as the pull request's author. When the neutral judge has answered: `python scripts/exercise_public.py note appeal --keys "
            f"<keys> pull={PLAYGROUND}#<number> fund=<the order's funding transaction> answer=upheld` (or `answer=overturned paid=<the payment>`), then this again")
     got = _note(w, "appeal", ("pull", "fund", "answer"), "attest.yml", how)
@@ -1831,7 +1832,7 @@ def run(w: World, ev: dict, only: str | None = None, say: Callable[[str], None] 
 
 # ---- record -----------------------------------------------------------------------------------------------------------
 def round_section(ev: dict) -> str:
-    """The run as a section of docs/CAPABILITIES.md, markers included: every transaction and what was checked."""
+    """The run as a section of docs/reference/CAPABILITIES.md, markers included: every transaction and what was checked."""
     date = datetime.fromtimestamp(ev["finished"], timezone.utc)
     out = [BEGIN, "", "## The round on the public program ids", "",
            f"On {date.day} {date:%B %Y} `scripts/exercise_public.py` ran the rounds below on devnet at the PUBLIC program ids, in test USDC, with the smallest "
@@ -1910,7 +1911,7 @@ def record(ev: dict, root: Path = ROOT, say: Callable[[str], None] = print, refr
         note = c.get("note", "")
         if note.startswith("Rehearsed on "):        # the rehearsal stays named, as what came before; what it says of the public ids is no longer so
             sig = _SIG.search(note)
-            note = (f'Before the upgrade it was rehearsed on a staging deployment (signature {sig.group(0)}; docs/CAPABILITIES.md, "The 0.3.14 rehearsal on '
+            note = (f'Before the upgrade it was rehearsed on a staging deployment (signature {sig.group(0)}; docs/reference/CAPABILITIES.md, "The 0.3.14 rehearsal on '
                     'devnet"); the transaction here is at the public program id.') if sig else ""
         note = re.sub(r"^Runs at the public ids? only once .*?\(the live state is in web/upgrades\.json\)\.\s*", "", note)
         # what a 2.2 capability said while its build was proposed and not live: no longer so once a transaction at the public id is its evidence
@@ -1959,7 +1960,7 @@ def record(ev: dict, root: Path = ROOT, say: Callable[[str], None] = print, refr
         _write(root / "web" / "upgrades.json", up)
     _write(root / "docs" / "provenance.json", seen)
 
-    doc = root / "docs" / "CAPABILITIES.md"
+    doc = root / "docs" / "reference" / "CAPABILITIES.md"
     text = doc.read_text(encoding="utf-8")
     section = round_section(ev)
     if BEGIN in text:
@@ -2870,9 +2871,9 @@ def main(argv: list[str] | None = None, say: Callable[[str], None] = print) -> i
     ap.add_argument("words", nargs="*", help="note: the round's name, then key=value for each thing its outside step printed")
     ap.add_argument("--json", action="store_true", help="status: one JSON object (`exit` is the exit code)")
     ap.add_argument("--rc", action="store_true", help="rehearse: on staging ids (the only kind there is)")
-    ap.add_argument("--phase", choices=("before", "after"), help="run: the rounds of proposals 7 and 8, before or after they execute, at the PUBLIC ids. "
+    ap.add_argument("--phase", choices=("before", "after"), help="run: the checks of the knos_oidc and knos_pay 2.2 upgrades (multisig proposals 7 and 8), before or after they execute, at the PUBLIC ids. "
                                                                  "rehearse: one phase alone, on the ids of KNOS_PROGRAM_IDS (what `rehearse --rc` calls)")
-    ap.add_argument("--want", choices=tuple(WANT), help="status: exit 0 only when the builds of this version are live (2.2: proposals 7 and 8 executed)")
+    ap.add_argument("--want", choices=tuple(WANT), help="status: exit 0 only when the builds of this version are live (2.2: upgrade proposals 7 and 8 have executed)")
     ap.add_argument("--neutral", help="run --phase after: owner/repo of ANOTHER owner whose attest.yml run is the second judge; it is read, never written to")
     ap.add_argument("--live-so-dir", type=Path, default=Path(os.environ["KNOS_LIVE_SO_DIR"]) if os.environ.get("KNOS_LIVE_SO_DIR") else None,
                     help="rehearse: the verified builds that are live (program.yml's run on the v0.3.14 tag)")

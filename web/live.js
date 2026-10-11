@@ -10,7 +10,7 @@
 //   Solana devnet         the transactions of the escrow account the funding comment links: when each was confirmed
 //   this site             stats.json (the measured wait from merge to payment), operations.json (the canary's runs)
 //
-// THE FIVE STATES of the payment (received, accepted, submitted, confirmed, finalized: docs/RELAY.md) are shown by name
+// THE FIVE STATES of the payment (received, accepted, submitted, confirmed, finalized: docs/reference/RELAY.md) are shown by name
 // under the timeline, each with the time Knos's workflow wrote into its one comment on the pull request (the line
 // `knos-states`, which `knos settle` edits as each state is reached). A state not reached has no time.
 //
@@ -40,9 +40,9 @@ const knosSays = (comments, ...marks) => (comments || []).find((c) => String(c.b
 export const explorerLinks = (body) => [...String(body || "").matchAll(/\[([^\]]{1,80})\]\(https:\/\/explorer\.solana\.com\/(tx|address)\/([1-9A-HJ-NP-Za-km-z]{32,90})(?:\?cluster=devnet)?\)/g)]
   .map((m) => ({ text: m[1], kind: m[2], id: m[3] }));
 
-// The five states of a payment, in order, and what each means in a few words (docs/RELAY.md has the table).
+// The five states of a payment, in order, and what each means in a few words (docs/reference/RELAY.md has the table).
 export const STATES = [["received", "the merge reached the workflow"], ["accepted", "terms checked, run signed"], ["submitted", "first transaction sent"],
-  ["confirmed", "payment confirmed"], ["finalized", "cluster finalized it"]];
+  ["confirmed", "payment confirmed"], ["finalized", "devnet confirmed it for good"]];
 // What Knos's comment says of them: { since, received, accepted, submitted, confirmed, finalized (ms, or absent), tx } or null.
 export function statesOf(body) {
   const m = /<!-- knos-states ([^\n]*)/.exec(String(body || ""));
@@ -223,15 +223,15 @@ export function headline(round, now) {
 export function renderLive(el, env = {}) {
   const doc = el.ownerDocument, esc = env.esc || escHtml, now = env.now || (() => Date.now()), repo = env.repo || CANARY_REPO;
   const explorer = env.EXPLORER || ((kind, id) => `https://explorer.solana.com/${kind}/${id}?cluster=devnet`);
-  const gh = env.gh || (async (path) => { const r = await fetch(GITHUB + path, { headers: { Accept: "application/vnd.github+json" } }); if (!r.ok) throw new Error(r.status === 403 || r.status === 429 ? "GitHub's free limit for this network is used up (60 reads an hour without login). Try again in an hour." : `GitHub said ${r.status}`); return r.json(); });
+  const gh = env.gh || (async (path) => { const r = await fetch(GITHUB + path, { headers: { Accept: "application/vnd.github+json" } }); if (!r.ok) throw new Error(r.status === 403 || r.status === 429 ? "GitHub's free limit for your connection is used up (60 reads an hour without signing in). Try again in an hour." : `GitHub said ${r.status}`); return r.json(); });
   const rpc = env.rpc || (async (method, params) => { const r = await fetch(DEVNET_RPC, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }); const j = await r.json(); if (j.error) throw new Error(j.error.message); return j.result; });
   const file = env.file || (async (path) => { const r = await fetch(path, { cache: "no-cache" }); return r.ok ? r.json() : null; });
   const io = { gh, rpc, repo };
   if (!doc.getElementById("live-style")) { const st = doc.createElement("style"); st.id = "live-style"; st.textContent = STYLE; doc.head.appendChild(st); }
   el.innerHTML = `<div class="card" id="live">
     <p class="devnet">Devnet: test USDC, worth nothing.</p>
-    <h3>A round you can watch</h3>
-    <p>The canary is a workflow in <a href="https://github.com/${esc(repo)}" target="_blank" rel="noopener">${esc(repo)}</a>, set to run every 30 minutes. A round funds an issue with 5 test USDC, opens a pull request
+    <h3>A test payment you can watch</h3>
+    <p>A test robot (a workflow in <a href="https://github.com/${esc(repo)}" target="_blank" rel="noopener">${esc(repo)}</a>, runs every 30 minutes. A round funds an issue with 5 test USDC, opens a pull request
       that closes it, merges it and waits to be paid. You need no account, wallet or repository to follow one: this page reads GitHub and Solana devnet, as you could.</p>
     <p id="live-head" class="status" role="status" aria-live="polite">Reading the canary's latest round…</p>
     <div id="live-round"></div>

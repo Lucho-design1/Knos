@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """agent_pr_board.py -- the Agent PR Index as a weekly leaderboard, from the published series alone (no network).
 
-    python scripts/agent_pr_index.py board            # write the table into docs/INDEX.md, docs/index.json, docs/index.atom
+    python scripts/agent_pr_index.py board            # write the table into docs/reference/INDEX.md, docs/index.json, docs/index.atom
     python scripts/agent_pr_index.py board --check    # write nothing; exit 1 when any of the three differs
 
 One row an agent: of its merged pull requests that claimed passing tests and whose checks had finished, how many
@@ -17,7 +17,7 @@ A row can be disputed (.github/ISSUE_TEMPLATE/dispute-index-row.yml). docs/index
                    "outcome": "<what was found, in words>" or null,
                    "changed": [{"field": "failed_at_merge", "from": 10, "to": 9}]}]}
 
-Beside the feed it writes one record file an agent, docs/records/<agent>.json (knos.record_page, docs/RECORD.md): the
+Beside the feed it writes one record file an agent, docs/records/<agent>.json (knos.record_page, docs/reference/RECORD.md): the
 agent's row as the public part of its record, labelled as coming from public pull requests and not from Knos orders.
 
 An open dispute marks its row, with the link, on the board of its week and of every later one. A resolved dispute
@@ -46,7 +46,7 @@ TOO_FEW = agent_pr_index.TOO_FEW
 STATUSES = ("open", "resolved", "rejected")
 NO_PAY = "An agent vendor never pays for a row and cannot pay to change one."
 # Which pull requests a row counts. The Index publishes two bases, and a share means nothing without its own:
-# every merged claiming pull request here; the first claiming pull request per repository in docs/BENCH.md.
+# every merged claiming pull request here; the first claiming pull request per repository in docs/reference/BENCH.md.
 BASIS = ("Basis: every merged pull request that claimed passing tests, so a busy repository counts many times. "
          "[BENCH.md](BENCH.md) counts the first such pull request per repository instead; the two shares differ.")
 BEGIN = "<!-- board:begin (written by scripts/agent_pr_index.py board; do not edit by hand) -->"
@@ -86,7 +86,7 @@ METHOD = [
     "shares share a place. The others are \"too few to rank\", shown with their counts. \"overlaps\" means the interval "
     "reaches into the one above: this sample does not tell those two places apart.",
     "**The week.** A board is named by a Monday and adds up every week read up to and including it. Each week's own "
-    "counts, and how it was read, are in [`agent_weekly.json`](agent_weekly.json).",
+    "counts, and how it was read, are in [`agent_weekly.json`](../agent_weekly.json).",
 ]
 
 LIMITS = [
@@ -180,13 +180,13 @@ def feed(series: dict[str, Any], disputes: Any = ()) -> dict[str, Any]:
     least = series.get("min_claims_to_rank", agent_pr_index.MIN_CLAIMS_TO_RANK)
     canon = json.dumps(series, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
     return {"schema": SCHEMA, "name": series.get("name", agent_pr_index.NAME), "latest_week": weeks_of(series)[0], "read": series["read"],
-            "basis": {"counts": "every_merged_claiming_pr", "says": BASIS.replace("[BENCH.md](BENCH.md)", "docs/BENCH.md"),
-                      "other": "docs/BENCH.md and docs/bench.json `first_pr_per_repo`: the first claiming pull request per repository"},
+            "basis": {"counts": "every_merged_claiming_pr", "says": BASIS.replace("[BENCH.md](BENCH.md)", "docs/reference/BENCH.md"),
+                      "other": "docs/reference/BENCH.md and docs/bench.json `first_pr_per_repo`: the first claiming pull request per repository"},
             "min_claims_to_rank": least, "rule": NO_PAY, "measure": MEASURE, "method": [m.format(least=least) for m in METHOD], "limits": LIMITS,
             "agents_told_by": series.get("agents_told_by", {}), "claim_search": series.get("claim_search"),
             "source": {"file": "docs/agent_weekly.json", "sha256_of_canonical_json": hashlib.sha256(canon).hexdigest(),
                        "reproduce": "python scripts/agent_pr_index.py board --check"},
-            "links": {"page": f"{REPO}/blob/main/docs/INDEX.md", "json": f"{RAW}/index.json", "atom": f"{RAW}/index.atom",
+            "links": {"page": f"{REPO}/blob/main/docs/reference/INDEX.md", "json": f"{RAW}/index.json", "atom": f"{RAW}/index.atom",
                       "dispute": f"{REPO}/issues/new?template={TEMPLATE}"},
             "weeks": [board(series, w, disputes) for w in weeks_of(series)], "disputes": list(disputes), "changelog": changelog(disputes)}
 
@@ -226,7 +226,7 @@ def atom(doc: dict[str, Any]) -> str:
 
 
 def table(doc: dict[str, Any], week: str | None = None) -> str:
-    """What docs/INDEX.md holds between its board markers: the table, the method in ten lines, the limits, the week,
+    """What docs/reference/INDEX.md holds between its board markers: the table, the method in ten lines, the limits, the week,
     how to work it again, the disputes and the changelog."""
     w = next(x for x in doc["weeks"] if x["week"] == (week or doc["latest_week"]))
     cell = lambda r: "not read" if r["merged"] is None else "0 of 0" if not r["merged"] else f"{r['failed_at_merge']} of {r['merged']}"  # noqa: E731
@@ -243,9 +243,9 @@ def table(doc: dict[str, Any], week: str | None = None) -> str:
     lines += ["", NO_PAY, "", "**Method, in ten lines.**", "", *(f"{i}. {m}" for i, m in enumerate(doc["method"], 1)), "",
               "**Limits.**", "", *(f"- {x}" for x in doc["limits"]), "",
               "**Work it again.** One command, no network, from the files of this repository. It counts the table again from "
-              "[`agent_weekly.json`](agent_weekly.json) and fails when this page, [`index.json`](index.json) or "
-              "[`index.atom`](index.atom) says anything else:", "", f"    {doc['source']['reproduce']}", "",
-              "Every pull request behind the weeks read on 2026-10-01 is listed in [`agent_pr_ci.json`](agent_pr_ci.json) by "
+              "[`agent_weekly.json`](../agent_weekly.json) and fails when this page, [`index.json`](../index.json) or "
+              "[`index.atom`](../index.atom) says anything else:", "", f"    {doc['source']['reproduce']}", "",
+              "Every pull request behind the weeks read on 2026-10-01 is listed in [`agent_pr_ci.json`](../agent_pr_ci.json) by "
               "repository and number, so each can be opened on GitHub and looked at.", "",
               "**Disputes.** Anyone can [dispute a row](" + doc["links"]["dispute"] + "): name the agent, the pull requests "
               "counted wrongly, and the evidence. An open dispute marks its row with † and its link."]

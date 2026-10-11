@@ -50,11 +50,11 @@ export const WORDS = { disputed: "disputed", duplicate: "duplicate", insufficien
 export const COLUMNS = [["supplier", "Supplier"], ["po", "Authorisation"], ["deliverable", "Agreed deliverable"], ["evidence", "Acceptance evidence"],
   ["amount", "Amount to approve"], ["exception", "Exception"], ["payment", "Payment status"]];
 export const PARTS = ["identity", "execution", "acceptance", "consequence", "assurance"];
-export const PRIVATE_PATH = "https://github.com/drexthealpha/Knos/blob/main/docs/PRIVATE.md";
+export const PRIVATE_PATH = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/PRIVATE.md";
 // The sample's purchase orders: made up, like its invoice. Both limits cover what is agreed, so the sample can be paid.
 export const SAMPLE_ORDERS = "pull_request,po_number,po_amount\nexample-co/storefront#101,PO-1001,1500.00\nexample-co/storefront#102,PO-1001,1500.00\nexample-co/storefront#103,PO-1001,1500.00\n"
   + "example-co/storefront#104,PO-1001,1500.00\nexample-co/storefront#105,PO-1001,1500.00\nexample-co/billing-internal#7,PO-1002,500.00\n";
-// the accounting systems a bill-import file is written for (web/finance_data.js statementExport; docs/FINANCE.md)
+// the accounting systems a bill-import file is written for (web/finance_data.js statementExport; docs/reference/FINANCE.md)
 const SYSTEMS = { quickbooks: "QuickBooks", netsuite: "NetSuite" };
 const REMEDY = { disputed: "Send the passing run for this change, or appeal.", duplicate: "Withdraw the line, or name the separate deliverable it is for.",
   replayed: "Withdraw the line: an earlier invoice was agreed for this deliverable.", insufficient_evidence: "Send evidence that this line was accepted.",
@@ -140,7 +140,7 @@ function rowsFrom(lines, scale, orders, receipts, limit = null) {
       parts: receipt ? receipt.parts : null, ln };
   });
 }
-// SINGLE SIGN-ON (docs/SELFHOST.md, section 4). Served by the self-host bundle with [sso], each approval and each export
+// SINGLE SIGN-ON (docs/reference/SELFHOST.md, section 4). Served by the self-host bundle with [sso], each approval and each export
 // is written to the audit log: POST /sso/act, with the form token GET /sso/me gives. Sign-in sets the cookie
 // knos_signed_in (it holds no secret); without it (the public site, a page opened from disk, a bundle without [sso])
 // nothing is sent and nothing changes. `signedIn()` reads that cookie when it is asked.
@@ -181,7 +181,7 @@ export const rowsOf = (st, status = null, orders = {}, receipts = [], limit = nu
 /** Is this what `knos recall decisions --json` prints: what was accepted, refused or authorised before for each line's
  *  supplier under the same terms (schema knos.recall.decision/1)? A list of rows, each naming its invoice line. */
 export const isDecisions = (d) => Array.isArray(d) && d.length > 0 && d.every((r) => r && typeof r === "object" && r.kind === "knos.recall.decision/1" && typeof r.invoice_line === "string");
-const APPEAL = "https://github.com/drexthealpha/Knos/blob/main/docs/DISPUTES.md#the-path";
+const APPEAL = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/DISPUTES.md#the-path";
 /** The rows of an invoice with no statement: nothing was checked, so nothing is agreed and every line is an exception. */
 export const uncheckedRows = (invoice, orders = {}) => rowsFrom(invoice.lines.map((ln) => ({ line: ln.line, reference: ln.pr, supplier: ln.supplier, amount: ln.amount === null ? "" : money(ln.amount),
   state: "insufficient_evidence", why: "no statement covers this line", payment: "held", evaluations: [], evidence: "", evidence_sha256: "", duplicate_of: "", invoice_line: "", deliverable: "",
@@ -324,7 +324,7 @@ export function renderApprover(el, ctx = {}) {
       <section class="ap-queue" data-ap="queue" aria-label="Exceptions"></section>
       <div data-ap="recall" hidden></div>
     </div>
-    <p class="fine" data-ap="account">No account system exists. This screen works signed out.</p>
+    <p class="fine" data-ap="account">There are no accounts: this screen works without signing in.</p>
     <p class="fine">Nothing leaves this browser.</p>
     <p class="fine" data-ap="time" hidden></p>
     <p class="fine"><a href="${PRIVATE_PATH}" target="_blank" rel="noopener">Private repositories: read the private path</a></p>`;

@@ -1,4 +1,4 @@
-"""A model of ES256 as knos_oidc's VerifyEs256 takes it (programs-v2/knos_oidc/src/es256.rs, docs/ES256.md).
+"""A model of ES256 as knos_oidc's VerifyEs256 takes it (programs-v2/knos_oidc/src/es256.rs, docs/reference/ES256.md).
 
 Pure Python, no dependency: P-256, ECDSA with the nonces of RFC 6979 (so a key and a message give one signature and
 two runs write the same bytes), the two spellings of a signature (s and n - s), a compact ES256 token, and the data of

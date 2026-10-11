@@ -57,7 +57,7 @@ TARGETS = {
                               "Memo; an account is written with its number when the account uses account numbers",
                  "unverified": "the date format (the page's samples are M/D/YYYY), the body field Memo, and the fields an account's own form "
                                "makes mandatory; Vendor is the supplier's name here: map it to the vendor's id in the import's mapping step"},
-    "csv": {"name": "Knos: plain bill file", "columns": PLAIN, "date": "YYYY-MM-DD", "source": "docs/FINANCE.md", "seen": "",
+    "csv": {"name": "Knos: plain bill file", "columns": PLAIN, "date": "YYYY-MM-DD", "source": "docs/reference/FINANCE.md", "seen": "",
             "confirmed": "Knos's own format, one column per step", "unverified": ""},
 }
 

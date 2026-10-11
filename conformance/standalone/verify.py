@@ -1058,7 +1058,7 @@ def main(argv):
     for line in notes:
         print("note: " + line + ".")
     for line in problems:
-        print("DOES NOT HOLD: " + line)
+        print("FAILED: " + line)
     weak = [x for x in notes if x.startswith(("INCOMPLETE", "UNSIGNED", "OPEN"))] if "--strict" in argv else []
     failed = bool(problems) or bool(weak)
     print(("NOT VERIFIED: %d problems" % len(problems) + (", %d notes marked INCOMPLETE or UNSIGNED (--strict)" % len(weak) if "--strict" in argv else "")) if failed

@@ -53,7 +53,7 @@ def test_back_up_delete_restore_and_the_statements_are_byte_identical(tmp_path, 
     made_statement = S.canonical(S.make(ev["events"], HEAD))
     assert made_statement == ev["statements"]["ap-statement.json"]
 
-    # 1. back up: the command an operator runs (documented in docs/LAUNCH.md)
+    # 1. back up: the command an operator runs (documented in docs/reference/RETENTION.md)
     backup = tmp_path / "offsite" / "knos-2026-10.zip"
     backup.parent.mkdir()
     assert cli.main(["archive", "make", str(backup), "--events", str(live / "events.jsonl"), "--ledger", str(live / "buyer.jsonl"),

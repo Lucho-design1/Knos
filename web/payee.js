@@ -25,7 +25,7 @@ export const STORE = "knos-passkey";              // claim.js and buyer.js keep 
 const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
 const JOB_LEN = 320, ORDER_LEN = 512, JOB_PAYEE = 56, ORDER_PAYEE = 152, ORDER_HELD = 3;
 
-// The clicks to a first payout, counted on GitHub's and a wallet app's own screens as of October 2026 (docs/PAYEE.md).
+// The clicks to a first payout, counted on GitHub's and a wallet app's own screens as of October 2026 (docs/reference/PAYEE.md).
 export const CLICKS = {
   before: ["install a wallet app", "create a wallet, write down its seed phrase", "copy its address", "open the template",
     "Use this template", "Create a new repository", "type the name knos-claim", "Create repository", "Actions", "knos claim",
@@ -176,7 +176,7 @@ export function renderPayee(el, ctx = {}) {
     out.textContent = "Reading devnet…";
     try {
       const ids = await idsP, at = await boundTo(rpc, ids, who.id ?? (await held(), who.id));
-      if (!at) { out.textContent = "Not bound yet. Runs take about a minute."; return; }
+      if (!at) { out.textContent = "No address is linked yet. The GitHub run takes about a minute."; return; }
       const mine = me && at === me.wallet;
       out.innerHTML = `Bound to <span class="mono" data-py-bound>${esc(at)}</span>${mine ? "" : " (not this passkey)"}. The relay sends held payments there.`;
       step("py-done", mine ? "done" : "bad");

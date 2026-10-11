@@ -117,7 +117,7 @@ export function open() {
   field.focus();
   if (docs === null) {
     docs = [];
-    fetch(new URL("./docs_index.json", import.meta.url)).then((r) => (r.ok ? r.json() : [])).then((d) => { docs = Array.isArray(d) ? d.filter((x) => x && x.title && /^[\w.-]+$/.test(x.file || "")) : []; if (dlg.open && field.value) draw(); }).catch(() => {});
+    fetch(new URL("./docs_index.json", import.meta.url)).then((r) => (r.ok ? r.json() : [])).then((d) => { docs = Array.isArray(d) ? d.filter((x) => x && x.title && /^(reference\/)?[\w.-]+$/.test(x.file || "")) : []; if (dlg.open && field.value) draw(); }).catch(() => {});
   }
   return dlg;
 }

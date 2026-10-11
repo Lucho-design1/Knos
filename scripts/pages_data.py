@@ -1,6 +1,6 @@
 """The public record of Knos as static files: JSON for aggregators and agent platforms, and a page for each one.
 
-    python scripts/pages_data.py --out _site --events _events.json --index _site/index.json [--docs docs/OPERATIONS.md]
+    python scripts/pages_data.py --out _site --events _events.json --index _site/index.json [--docs docs/reference/OPERATIONS.md]
     python scripts/pages_data.py --out _site --empty        # the same files with nothing measured (a local build)
 
 It counts from what scripts/network_stats.py counts from (the escrows' own log lines of both deployments, the relay
@@ -22,7 +22,7 @@ number that could not be measured is null with a note, never a guess. Written un
     outsiders.json                   outside funders, outside repositories, outside payees: three numbers, never added,
                                      each with its definition (scripts/outsiders.py); a build that read nothing says so
     records.json                     which accounts and repositories have a file, and how many could not be named
-    docs/OPERATIONS.md (--docs)      operations.json in words; with no data it says so
+    docs/reference/OPERATIONS.md (--docs)      operations.json in words; with no data it says so
 
 Every file carries `source` (what it was counted from) and `generated` (when). Every file can be recomputed by running
 this script on the same inputs.
@@ -653,7 +653,7 @@ def _sentence(note: str | None) -> str:
 
 
 def render_operations_md(ops: dict) -> str:
-    """docs/OPERATIONS.md from operations.json. Only what the json holds: with no data it says so and shows nothing."""
+    """docs/reference/OPERATIONS.md from operations.json. Only what the json holds: with no data it says so and shows nothing."""
     c, r = ops.get("canary") or {}, ops.get("response") or {}
     lines = ["# Operations", "",
              "Whether Knos is working, from the public record. This page is written by `scripts/pages_data.py` from `operations.json`, "
@@ -1118,7 +1118,7 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default="_site")
     ap.add_argument("--events", help="the log events scripts/network_stats.py --events-out wrote; without it the chain is read here")
     ap.add_argument("--index", help="the Agent PR Index (index.json), already checked")
-    ap.add_argument("--docs", help="also write OPERATIONS.md here (docs/OPERATIONS.md)")
+    ap.add_argument("--docs", help="also write OPERATIONS.md here (docs/reference/OPERATIONS.md)")
     ap.add_argument("--limit", type=int, default=1000, help="signatures asked for in one page when --events is not given (the whole history is read, page by page)")
     ap.add_argument("--canary", default=CANARY, help=f"the canary workflow's file in the repository it is installed in (default: {CANARY})")
     ap.add_argument("--canary-repo", default=CANARY_REPO, help=f"OWNER/NAME of the repository the canary runs in (default: {CANARY_REPO})")

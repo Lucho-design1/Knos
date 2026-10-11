@@ -89,7 +89,7 @@
   "overlaps_above": true,
   "disputed": [],
   "dispute": "https://github.com/drexthealpha/Knos/issues/new?template=dispute-index-row.yml&title=Dispute+a+row%3A+claude-code%2C+week+of+2026-09-28&agent=claude-code&week=2026-09-28",
-  "method": "https://github.com/drexthealpha/Knos/blob/main/docs/INDEX.md"
+  "method": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/INDEX.md"
  },
  "limits": [
   "Knos wrote this file and nobody outside Knos has reviewed it: dispute it with the link in it.",
@@ -102,7 +102,7 @@
   "page": "https://drexthealpha.github.io/Knos/#record=claude-code",
   "file": "https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/records/claude-code.json",
   "dispute": "https://github.com/drexthealpha/Knos/issues/new?template=dispute-index-row.yml&title=Dispute+a+record%3A+claude-code&agent=claude-code&week=2026-09-28",
-  "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/RECORD.md"
+  "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECORD.md"
  },
- "sha256": "04e80bdd11f7fb2e21e460947c0796903b8c7de5e2c7c131f9e914fd44d4e041"
+ "sha256": "62d8ed3e490b60a65577f3dcf2dab867769f2d0455523c88b06269a879825f87"
 }

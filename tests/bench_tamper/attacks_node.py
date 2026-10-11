@@ -193,7 +193,7 @@ OUT_OF_SCOPE = {"stub slugify to return the expected constants",
                 "source makes assertions a no-op in the acceptance tests' process only (forgery from inside)"}
 # What the judge's node runner misses and its pytest and minitest runners catch (the black-box check stops it too).
 GAP = {"source makes every assertion a no-op when it is loaded"}
-# Printed under this repository's table in docs/TAMPER.md.
+# Printed under this repository's table in docs/reference/TAMPER.md.
 NOTE = ("Attack 9 fools the in-process judge here and in neither other repository. There the canary runs in the same\n"
         "process as the acceptance tests, so code that makes every test pass makes the canary pass and is seen. node\n"
         "runs each test file in its own process, and the judge's canary is another file: it never meets the `assert`\n"

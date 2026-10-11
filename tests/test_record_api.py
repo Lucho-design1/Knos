@@ -1,4 +1,4 @@
-"""The Record line as a machine-priced API (src/knos/record_api.py, examples/record_api, docs/X402.md "Record"), in the
+"""The Record line as a machine-priced API (src/knos/record_api.py, examples/record_api, docs/reference/X402.md "Record"), in the
 Solana runtime (LiteSVM), with two stand-in agents: pay, then the JSON. A replayed payment is refused, a call another
 wallet signed is refused, the free file stays free, and the escrow pays the server on a signed acceptance or goes back."""
 from __future__ import annotations

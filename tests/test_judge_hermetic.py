@@ -307,7 +307,7 @@ def test_every_verdict_names_its_assurance_and_what_it_means(repos):
 
 
 def test_the_assurance_page_has_the_three_rows_and_a_bounded_claim():
-    page = (ROOT / "docs" / "ASSURANCE.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "ASSURANCE.md").read_text(encoding="utf-8")
     part = page.split("## How much a verdict can carry", 1)[1].split("\n## ", 1)[0]
     rows = [ln for ln in part.split("| Invariant |")[0].splitlines() if ln.startswith("| `") and not ln.startswith("| `assurance`")]
     assert [r.split("|")[1].strip() for r in rows] == ["`in-process`", "`black-box`", "`hermetic`"]

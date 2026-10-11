@@ -1,4 +1,4 @@
-"""docs/STANDARD.md says what the code holds: the supplier's menu is knos.terms_templates.MENU, the path codes are
+"""docs/reference/STANDARD.md says what the code holds: the supplier's menu is knos.terms_templates.MENU, the path codes are
 the judge's, the schemas on the page are JSON, and the one tier no program holds says so."""
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 from knos import judge, terms_templates
 
-PAGE = (Path(__file__).resolve().parents[1] / "docs" / "STANDARD.md").read_text(encoding="utf-8")
+PAGE = (Path(__file__).resolve().parents[1] / "docs" / "reference" / "STANDARD.md").read_text(encoding="utf-8")
 
 
 def test_every_schema_on_the_page_is_json():

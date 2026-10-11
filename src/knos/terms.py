@@ -22,10 +22,9 @@ at most 600 bytes.
 Globs are GitHub's own, as in a workflow's `paths:` filter: `*` stays inside one directory, `**` crosses them, `?` is
 one character, and a pattern ending in `/` means everything under that directory.
 
-The defaults a newcomer gets. Each one blocks a way to game the count. The first two are always on. The third is
-written and tested here, and nothing calls it yet: knos.flow still funds a work order with no holdback unless the
-comment or the repository's .knos/policy.yml asks for one. Wiring it in would change what public rounds and plain
-orders pay, so it waits for a release that says so.
+The defaults a newcomer gets. Each one blocks a way to game the count. The first two are always on. The third,
+`window()`, is not used by any command yet: knos.flow funds a work order with no holdback unless the comment or the
+repository's .knos/policy.yml asks for one.
 
     deny      A pull request may not edit the files that judge it: .github/** (the workflows that run the checks)
               and .knos/** (the acceptance checks and the policy). Such a pull request is refused, however its
@@ -356,7 +355,7 @@ def build(fund, required=None, check_runs=None, statuses=None, accept: str = "",
         runs, stats = listing(check_runs, "check_runs"), listing(statuses, "statuses")
         if required is None or runs is None or stats is None:
             raise Refused("GitHub did not answer for this repository's checks, so the bounty's terms could not be "
-                          f"fixed. {_AGAIN}")
+                          f"locked in. {_AGAIN}")
         runs = [r for r in runs if not ours(r)]
         stats = [s for s in stats if not _knos_name(s.get("context"))]
         pins: dict[str, set] = {}
@@ -452,9 +451,9 @@ def _named(checks: list) -> str:
     return ", ".join(f"`{c['name']}`{kind.get(c['app'], '')}" for c in checks)
 
 
-ASSURANCE = {      # what each way of judging was measured to stop: docs/TAMPER.md has the numbers, docs/ASSURANCE.md the table
+ASSURANCE = {      # what each way of judging was measured to stop: docs/reference/TAMPER.md has the numbers, docs/reference/ASSURANCE.md the table
     "in-process": "The checks load the pull request's code into the process that judges it: 7 of 63 cheating pull "
-                  "requests in Knos's tamper suite passed this mode (docs/TAMPER.md).",
+                  "requests in Knos's tamper suite passed this mode (docs/reference/TAMPER.md).",
     "black-box": "The pull request's code runs as a separate process on the judge's machine and only its output is "
                  "compared: 0 of 63 cheating pull requests in that suite passed. That is a count for that suite, not a "
                  "proof for every attack.",

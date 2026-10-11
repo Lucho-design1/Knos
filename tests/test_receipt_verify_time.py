@@ -195,7 +195,7 @@ def test_an_auto_orders_payment_is_named_for_what_it_is():
             return [{"signature": s, "err": None} for s in ("paying", "funding")]
         return txs.get(params[0])
 
-    with pytest.raises(ValueError, match=r"transaction paying paid an AUTO order's open pull request \(the program's judge e") as got:
+    with pytest.raises(ValueError, match=r"Transaction paying paid an open pull request of an auto order \(paid by the order's own black-box checks, with no merge\)") as got:
         receipt.from_chain(order, "u", call=cluster, clock=lambda: 0.0)
     assert "no token" not in str(got.value)
 

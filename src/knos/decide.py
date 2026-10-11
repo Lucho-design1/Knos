@@ -6,7 +6,7 @@
     knos decide --checks-file FILE [--out FILE]
     knos decide --stream [--keys-file FILE] < tokens.jsonl        # one process that stays up: a decision for each line
 
-THE DECISION IS SPLIT IN TWO (0.3.19), because the first half needs no network and the second must never be waited
+THE DECISION IS SPLIT IN TWO, because the first half needs no network and the second must never be waited
 for:
 
     offline       `offline`: the issuer's signature against the key lists KEPT on this machine (`kept_keys`; the
@@ -22,7 +22,7 @@ for:
 Neither half sends anything, and neither is the relay's precheck: a relay still makes every read of its own before it
 spends a fee. `--full` (and `token(..., ledger=...)`, which `knos.flow` calls) is that precheck, as before.
 
-A payment waits for a workflow run, then for a relay, then for two or three transactions (docs/LOAD.md, "The five
+A payment waits for a workflow run, then for a relay, then for two or three transactions (docs/reference/LOAD.md, "The five
 clocks"). The DECISION does not need the last two: once the forge has signed its token, everything the chain will ask
 of it can be asked here, from reads. `token` asks it and answers accepted, rejected or insufficient evidence
 (knos.ids.VERDICTS; nothing here is ever "disputed"), and `provisional` writes that answer down as a PROVISIONAL
@@ -53,7 +53,7 @@ A cached decision: `Cached(ledger)` keeps what the chain answered for `ttl` seco
 (the status comment, the site, a second evaluator) is answered from memory. What is kept is what the chain said THEN:
 the provisional receipt carries the time of the read.
 
-WARM AND COLD (0.3.20). The offline decision itself is a few lines of arithmetic: one RSA check and the claims. What
+WARM AND COLD. The offline decision itself is a few lines of arithmetic: one RSA check and the claims. What
 a new process pays before it is LOADING THE RULES (the relay's module and the Solana types under it). `Decider` loads
 them and parses the kept key lists once, BEFORE any evidence arrives; every decision after that is the arithmetic
 alone. `--stream` is that as a command: it stays up, reads one token a line (the bare token, the comment that carries
@@ -62,10 +62,10 @@ milliseconds from the line in hand to the provisional receipt. The one-shot comm
 ("rules loaded in L ms, offline A ms"): the first is paid once a process, the second once a token. A decision is a
 function of the token, the terms, the key lists and the time given: nothing is remembered between two of them.
 
-Measured by `scripts/decide_bench.py` (docs/BENCH.md, "Decision time"); `tests/test_decide.py` holds the bounds. What
-is measured is this machine's own time. Against devnet, four runs of the 0.3.18 command took 4.3 to 32.6 s; the 0.3.19
-split, once on each of 24 real tokens, a new process for each, took a median of 356 ms offline (loading the rules
-included) and 854 ms for the chain check (docs/BENCH.md, after the "Decision time" block; docs/RELAY.md has the
+Measured by `scripts/decide_bench.py` (docs/reference/BENCH.md, "Decision time"); `tests/test_decide.py` holds the bounds. What
+is measured is this machine's own time. Against devnet, the old one-step command took 4.3 to 32.6 s over four runs; the
+split decision, run once on each of 24 real tokens (a new process each), took a median of 356 ms offline (loading the rules
+included) and 854 ms for the chain check (docs/reference/BENCH.md, after the "Decision time" block; docs/reference/RELAY.md has the
 command).
 """
 from __future__ import annotations
@@ -115,7 +115,7 @@ class Cached:
 
     def __getattr__(self, name: str) -> Any:
         if name in ("send", "send_all"):
-            raise AttributeError(f"a cached ledger decides and sends nothing: it has no {name}")
+            raise AttributeError(f"This offline ledger copy cannot send transactions: it has no {name}.")
         got = getattr(self._ledger, name)
         if not callable(got):
             return got
@@ -588,7 +588,7 @@ def register(app: Any, help_lines: list | None = None) -> None:
     @app.command("decide", rich_help_panel="For money")
     def decide_(token_file: Path = typer.Option(None, "--token-file", help="the forge's signed token (or the comment that carries it)"),
                 terms_file: Path = typer.Option(None, "--terms-file", help="a fund token's terms, as they travel with it"),
-                checks_file: Path = typer.Option(None, "--checks-file", help="the free check: JSON [{name, conclusion: passed, failed or missing}]"),
+                checks_file: Path = typer.Option(None, "--checks-file", help="the checks' results, as JSON [{name, conclusion: passed, failed or missing}]"),
                 no_chain: bool = typer.Option(False, "--no-chain", help="stop after the offline half: the signed evidence alone"),
                 order: str = typer.Option(None, "--order", help="the order's or job's address: the chain check then says whether it is open"),
                 keys_file: Path = typer.Option(None, "--keys-file", help=f"the kept key lists (default: ${KEYS_ENV}, else the cache folder)"),
@@ -691,7 +691,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m knos.decide", description="Decide now, from the signed evidence; then ask the chain once. Prints a provisional receipt.")
     ap.add_argument("--token-file", type=Path, help="the forge's signed token (or the comment that carries it)")
     ap.add_argument("--terms-file", type=Path, help="a fund token's terms, as they travel with it")
-    ap.add_argument("--checks-file", type=Path, help="the free check: JSON [{name, conclusion: passed, failed or missing}]")
+    ap.add_argument("--checks-file", type=Path, help="the checks' results, as JSON [{name, conclusion: passed, failed or missing}]")
     ap.add_argument("--no-chain", action="store_true", help="stop after the offline half: the signed evidence alone")
     ap.add_argument("--order", help="the order's or job's address: the chain check then says whether it is open")
     ap.add_argument("--keys-file", type=Path, help=f"the kept key lists (default: ${KEYS_ENV}, else the cache folder)")

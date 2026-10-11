@@ -76,7 +76,7 @@ def test_write_puts_the_sentence_back_keeps_what_a_plugin_adds_and_drops_an_olde
     assert sorted(pf.write(root)) == ["gemini-extension.json", "plugin/.codex-plugin/plugin.json", "pyproject.toml"]
     assert pf.problems(root) == [] and (root / "server.json").read_bytes() == before
     codex = json.loads((root / "plugin" / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))["description"]
-    assert codex.startswith(SENTENCE + " The plugin adds a Stop hook") and "Bounties that pay" not in codex and "Attested by" not in codex
+    assert codex.startswith(SENTENCE + " It adds a Stop hook") and "Bounties that pay" not in codex and "Attested by" not in codex
     for rel in ("pyproject.toml", "gemini-extension.json", "plugin/.codex-plugin/plugin.json"):      # nothing but the description moved
         ours, theirs = (ROOT / rel).read_text(encoding="utf-8"), (root / rel).read_text(encoding="utf-8")
         assert ours == theirs, rel
@@ -147,7 +147,7 @@ def test_remote_passes_when_every_place_serves_the_sentence():
     assert all(line.startswith("same  ") for line in said[:-1])
     assert all(re.fullmatch(r"[a-z0-9][a-z0-9-]{0,49}", t) for t in pf.TOPICS) and len(pf.TOPICS) <= 20      # GitHub's rules for a topic
     # each topic names what the tree has: the MCP server, the x402 page; none is an older pitch
-    assert (ROOT / "server.json").is_file() and (ROOT / "docs" / "X402.md").is_file() and {"mcp-server", "x402"} <= set(pf.TOPICS)
+    assert (ROOT / "server.json").is_file() and (ROOT / "docs" / "reference" / "X402.md").is_file() and {"mcp-server", "x402"} <= set(pf.TOPICS)
     assert "attestation" not in pf.TOPICS
 
 

@@ -23,10 +23,10 @@ summary: none is silent.
                    repository, an evaluation for knos_meter (eval: merged is accepted, closed unmerged rejected).
     knos canary    one full round on devnet (fund, pull request, merge, payment), each leg timed.
 
-Where knos_pay is 2.1 (`Run.version()`), `/knos fund` opens a WORK ORDER instead of a job: its funder pays the fee on
+Where knos_pay is 2.1 or later (`Run.version()`; devnet runs 2.2 since 9 October 2026), `/knos fund` opens a WORK ORDER instead of a job: its funder pays the fee on
 top, it may hold a share back for a warranty, name an arbiter, pay up to four people, and be paid on a token the
 seller asks for himself (neutral). The repository's .knos/policy.yml (knos.policy) is read at funding and at payout,
-and every address is screened (knos.screen) before a payout. Where it is 2.0, everything is as it was.
+and every address is screened (knos.screen) before a payout. On the old 2.0 program it opens a job, as before.
 
 PRIVATE work orders (see "the attestor", below): `knos command` and `knos settle` with `--attestor [--target owner/name]`,
 or started by hand or on a schedule in the repository a policy names as its attestor, fund and pay the orders of other
@@ -95,7 +95,7 @@ BIND = "`knos claim <their Solana address>` in a terminal, or https://drexthealp
 
 def _bind(login: str) -> str:
     """How a payee whose money is held binds a wallet: the payout page for their login (a passkey wallet, no seed
-    phrase; docs/PAYEE.md), or `knos claim` in a terminal."""
+    phrase; docs/reference/PAYEE.md), or `knos claim` in a terminal."""
     return f"https://drexthealpha.github.io/Knos/#payee={login.lstrip('@')} in the browser, or `knos claim <their Solana address>` in a terminal"
 OPEN = ("A wallet opens one for that id with `knos balance open`, lists the GitHub ids that may spend it, and adds money "
         "with `knos balance deposit`.")
@@ -239,7 +239,7 @@ class Run:
         def github(path: str, data: dict | None = None, method: str | None = None):
             reads = (data is None and method in (None, "GET")) or (path == "graphql" and method in (None, "POST"))
             if not reads and not (method in (None, "POST") and comments.fullmatch(path)):
-                raise OSError("an attestor writes nothing in a repository it reads but its own comments")
+                raise OSError("An attestor may only post its own comments in a repository it reads; it writes nothing else there.")
             return get(path, data, method) if method else get(path, data)
         view = Run(repo, {}, github=github, ledger=self.ledger, relay=self._relay, ghrelay=self._ghrelay, mint=self.mint, key=self._key,
                    env=self.env, clock=self.clock, sleep=self.sleep, scratch=self._scratch, version=self.version, screen=self._screen,
@@ -1575,7 +1575,7 @@ def _fund(run: Run, cmd, said: dict, on: dict, pull: dict | None, att=None) -> s
     except OSError as why:      # the acceptance checks: not knowing whether there are any is not "there are none"
         run.failed = True
         return (f"Knos: GitHub did not answer for this issue's acceptance checks (.knos/acceptance/{number}/ on the default "
-                f"branch: {_short(why)}), so the bounty's terms could not be fixed and nothing was funded. {retry}.")
+                f"branch: {_short(why)}), so the bounty's terms could not be locked in and nothing was funded. {retry}.")
     doc = None          # the repository's Knos Terms 3 document (`.knos/terms.json`), when it has one: the order is then held to it
     if not tip and not offer and att is None:
         try:
@@ -2346,7 +2346,7 @@ def _built(run: Run, cmd, rp: dict, number: int, merge_only: bool = False) -> te
     head = (_read(run, f"repos/{run.repo}/commits/{urllib.parse.quote(rp['branch'], safe='')}") or {}).get("sha")
     accept, files = _bundle(run, str(head or rp["branch"]), number)
     # paid by its checks alone (mode 1) only when they are black-box: the second deployment has no veto window, and checks that
-    # share a process with the pull request's code can be made to pass from inside (docs/TAMPER.md)
+    # share a process with the pull request's code can be made to pass from inside (docs/reference/TAMPER.md)
     cfg = _proof_toml(run, str(head or rp["branch"])) if accept else {}
     fooled = _not_black_box(run, str(head or rp["branch"]), files, cfg) if accept else ""
     required = runs = statuses = None
@@ -3133,7 +3133,7 @@ def hidden_pull(salt: bytes, number: int) -> int:
     """How a PRIVATE order's pay token names its pull request: a number made of the order's salt and the pull request's,
     the same every time (a standing order pays each pull request once), that does not say which it is. Six bytes of the
     hash, so below 2^48 (at most 15 digits): knos_pay's audience parser takes at most 18 digits (claims.rs parse_u64), and a
-    receipt's JSON number holds only integers below 2^53 (docs/RECEIPT.md). Eight bytes made 19 orders in 20 unpayable."""
+    receipt's JSON number holds only integers below 2^53 (docs/reference/RECEIPT.md). Eight bytes made 19 orders in 20 unpayable."""
     return int.from_bytes(hashlib.sha256(salt + b"knos3:pull" + _u64(number)).digest()[:6], "little")
 
 
@@ -3805,7 +3805,7 @@ def _rerun_job(run: Run, plan: dict | None, folder: str, judging: bool, judge_fn
     v = _rerun_judge(plan, where, run.env, judge_fn) if judging and plan is not None else _rerun_verdict(plan, run.env) if plan is None else None
     if v is None:
         if plan is None:        # (with no plan there is a verdict, the one that says nothing was run)
-            raise ValueError("there is no plan and no verdict")
+            raise ValueError("Nothing to do: no payment plan and no verdict were found for this pull request.")
         (where / "plan.json").write_text(json.dumps(plan, sort_keys=True), encoding="utf-8")
         for k in ("base", "head"):
             run.output(k, plan[k])
@@ -4687,9 +4687,9 @@ def _parser():
                                    "Solana, applies the rules `knos settle` applies, and asks GitHub to sign only what that record supports.")
     s.add_argument("--repository", required=True, help="the repository the work order is for, as owner/name")
     s.add_argument("--order", required=True, help="the work order's address (eval: <work order's 32-byte id in hex>.<milestone>.<rate>)")
-    s.add_argument("--kind", required=True, choices=KINDS, help="pay: the merge met the terms; take: reserve it; revert: the merge was reverted "
-                                                                "inside the warranty; rule: you are its arbiter; eval: one evaluation for knos_meter, "
-                                                                "run in a repository of the buyer (merged: accepted, closed unmerged: rejected)")
+    s.add_argument("--kind", required=True, choices=KINDS, help="pay: the merge met the terms. take: reserve the order. revert: the merge was reverted "
+                                                                "during the warranty. rule: you are the order's arbiter. eval: record one evaluation for "
+                                                                "the meter, run in the buyer's repository (merged = accepted, closed without merge = rejected).")
     s.add_argument("--pull", type=int, default=0, help="the pull request's number (pay, revert, eval)")
     s.add_argument("--payees", default="", help="rule: who is paid, as id.bps.address entries separated by commas")
     s.add_argument("--plan", default="", metavar="DIR", help="the job before the one that signs: write DIR/plan.json, what to fetch to run "

@@ -1,6 +1,6 @@
-"""docs/MANIFEST.md: one page that ties a release together.
+"""docs/reference/MANIFEST.md: one page that ties a release together.
 
-    python scripts/release_manifest.py            # write docs/MANIFEST.md
+    python scripts/release_manifest.py            # write docs/reference/MANIFEST.md
     python scripts/release_manifest.py --check    # exit 1 when the page is not what its sources give
 
 The page says, for the release this tree is: its version and tag; for each program its public id, the build that is
@@ -15,7 +15,7 @@ Nothing on it is typed and nothing is assumed. Each part is read from the file t
     docs/capabilities.json        the version each public id runs (`programs.*.on_chain`), every capability's stage
     docs/provenance.json          the hash at each public id, from one read of the cluster
     web/upgrades.json             the proposals: build hash, source commit, verified-build run, status
-    docs/DISCLOSURE.md            the limits, one line each ("## Outstanding limits")
+    docs/reference/DISCLOSURE.md            the limits, one line each ("## Outstanding limits")
     docs/load.json                the orders the load runs sent to the public ids (`measured`), with their dates
     docs/fee_slots.json           the slot of each recorded transaction, read from the cluster by `--read-slots`
 
@@ -45,7 +45,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import capabilities as cap  # noqa: E402
 import provenance as prov  # noqa: E402
 
-DOC = "docs/MANIFEST.md"
+DOC = "docs/reference/MANIFEST.md"
 SENTENCE = "The neutral meter for AI agent work: neither side keeps the count."
 REPO = "https://github.com/drexthealpha/Knos"
 LIMITS = "## Outstanding limits"
@@ -120,14 +120,14 @@ def source_of(c: dict) -> str:
     got = (c.get("evidence") or {}).get("implemented")
     if not got:
         return NONE
-    return f"[`{got['path']}`](../{got['path']})" + (f": `{_cell(got['names'])}`" if got.get("names") else "")
+    return f"[`{got['path']}`](../../{got['path']})" + (f": `{_cell(got['names'])}`" if got.get("names") else "")
 
 
 def test_of(c: dict) -> str:
     got = (c.get("evidence") or {}).get("tested")
     if not got:
         return NONE
-    return f"[`{got['test']}`](../{got['test']})" + (f": `{_cell(got['names'])}`" if got.get("names") else "")
+    return f"[`{got['test']}`](../../{got['test']})" + (f": `{_cell(got['names'])}`" if got.get("names") else "")
 
 
 def build_of(c: dict, data: dict) -> str:
@@ -161,7 +161,7 @@ def reproduction_of(c: dict) -> str:
     got = (c.get("evidence") or {}).get("reproduced")
     if not got:
         return NONE
-    return f"[outside run]({got['url']})" if got.get("url") else f"[`{got['file']}`](../{got['file']})" if got.get("file") else NONE
+    return f"[outside run]({got['url']})" if got.get("url") else f"[`{got['file']}`](../../{got['file']})" if got.get("file") else NONE
 
 
 def evidence(c: dict) -> str:
@@ -202,14 +202,14 @@ def capabilities(data: dict, root: Path = ROOT) -> list[str]:
 
 
 def limits(root: Path = ROOT) -> list[str]:
-    """The lines of docs/DISCLOSURE.md's "Outstanding limits": each is one list item on one line."""
-    text = (root / "docs" / "DISCLOSURE.md").read_text(encoding="utf-8")
+    """The lines of docs/reference/DISCLOSURE.md's "Outstanding limits": each is one list item on one line."""
+    text = (root / "docs" / "reference" / "DISCLOSURE.md").read_text(encoding="utf-8")
     if LIMITS not in text:
-        raise SystemExit(f'docs/DISCLOSURE.md has no "{LIMITS}" section')
+        raise SystemExit(f'docs/reference/DISCLOSURE.md has no "{LIMITS}" section')
     body = text.split(LIMITS, 1)[1].split("\n## ", 1)[0]
     got = [line for line in body.splitlines() if line.startswith("- ")]
     if not got:
-        raise SystemExit(f'"{LIMITS}" in docs/DISCLOSURE.md lists nothing')
+        raise SystemExit(f'"{LIMITS}" in docs/reference/DISCLOSURE.md lists nothing')
     return got
 
 
@@ -397,7 +397,10 @@ def render(root: Path = ROOT) -> str:
         "## Source", "",
         f"- Release: Knos {v} (`pyproject.toml`). Tag: [`v{v}`]({REPO}/tree/v{v}); `git rev-list -n 1 v{v}` prints its commit. A file",
         "  cannot hold the hash of the commit that holds it.",
-        "- Cluster: Solana devnet. The money is test USDC. Mainnet is not touched.", "",
+        "- Cluster: Solana devnet. The money is test USDC. Mainnet is not touched.",
+        "- Each source folder has a README that says what it holds: [`programs/`](../../programs-v2/README.md#the-first-deployment-in-programs-nobody-can-change-it) (the first",
+        "  deployment, which nobody can change), [`programs-v2/`](../../programs-v2/README.md) (the programs Knos runs today),",
+        "  [`idl/`](../../idl/README.md) (how to call each program) and [`examples/`](../../examples/README.md).", "",
         "## Programs: what is live at each public id", "",
         "Read from `docs/capabilities.json` (`programs`), `docs/provenance.json` (one read of the cluster; its `read` says",
         "when) and `web/upgrades.json` (the multisig's accounts; its `generated` says when). A proposal that is pending has",
@@ -431,7 +434,7 @@ def render(root: Path = ROOT) -> str:
 
 def main(argv: list[str] | None = None, say: Callable[[str], None] = print, root: Path = ROOT) -> int:
     ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n\n")[0])
-    ap.add_argument("--check", action="store_true", help="exit 1 when docs/MANIFEST.md is not what its sources give")
+    ap.add_argument("--check", action="store_true", help="exit 1 when docs/reference/MANIFEST.md is not what its sources give")
     ap.add_argument("--read-slots", action="store_true", help="read each recorded transaction's slot from the cluster into docs/fee_slots.json, then write")
     ap.add_argument("--rpc", help="with --read-slots: the cluster's endpoint (default: KNOS_RPC, else public devnet)")
     a = ap.parse_args(argv)

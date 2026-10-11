@@ -206,7 +206,7 @@ def test_the_link_it_prints_opens_the_pull_request_with_the_file_the_branch_and_
 
 
 def test_the_page_gives_three_lines_and_the_count_is_what_the_folder_holds():
-    page = (ROOT / "docs" / "REPRODUCE.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "REPRODUCE.md").read_text(encoding="utf-8")
     held = sorted(p.name for p in (ROOT / "reproductions").glob("*.json"))
     assert f"Outside reproductions: {len(held)}, which is the number of signed reports" in " ".join(page.split())
     assert f"{len(held)} reproductions" in (ROOT / "reproductions" / "README.md").read_text(encoding="utf-8")

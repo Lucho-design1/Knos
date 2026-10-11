@@ -326,7 +326,7 @@ def ix_json(ix) -> dict:
 # supplier and period; an envelope is the finance owner's limit over the same money `decide` judges on chain, and it
 # counts what leaves the Balance: the amount and the fee on top. The files are a small, fixed part of YAML that this
 # module and web/procure.js read with the same few lines and judge with the same sentences
-# (tests/data/procure_cases.json holds both to one answer). docs/CONTROLS.md, "Procurement files", is the schema.
+# (tests/data/procure_cases.json holds both to one answer). docs/reference/CONTROLS.md, "Procurement files", is the schema.
 PROCUREMENT = ".knos/procurement"           # the directory in the buyer's repository
 FILES = {"rate-card": "rate-cards", "standing-offer": "offers", "budget-envelope": "envelopes"}     # kind -> subdirectory; the policy is policy.yaml
 PERIODS = {"week": 7, "month": 30, "quarter": 90}       # a cap's period in days: at most what one order may wait (knos_pay MAX_WORK)
@@ -718,7 +718,7 @@ SAMPLE_REPOSITORY = "drexthealpha/knos-playground"     # where the sample below 
 
 def sample() -> dict:
     """One small organisation's four files and its approvals so far, as data: what the console shows before a
-    repository is named, and what the tests and docs/CONTROLS.md use. It is set in this project's own playground
+    repository is named, and what the tests and docs/reference/CONTROLS.md use. It is set in this project's own playground
     repository, drexthealpha/knos-playground, so that no link of the console leads to somebody else's; the files and the
     people in them (the -acme accounts) are made up."""
     hashes = published_terms()
@@ -748,10 +748,11 @@ def register(app, help_lines: list | None = None) -> None:
     typer = importlib.import_module("typer")       # the command line's package, named here and not imported: the relay reaches this module on an install without it
 
     budget_app = typer.Typer(add_completion=False, no_args_is_help=True,
-                             help="A Balance's limits: see them, set them, ask whether a funding would pass, and see who has authority. Rate cards, standing offers and budget envelopes: check the files.")
+                             help="See and set the limits on a balance (money set aside for bounties), ask whether a funding would pass, "
+                                  "and see who has authority. Also checks rate-card, standing-offer and budget files.")
     app.add_typer(budget_app, name="budget")
     if help_lines is not None:
-        help_lines.append(("budget", "For money", "A Balance's cap, daily and total limits, repositories and spenders: show, set, check, who."))
+        help_lines.append(("budget", "For money", "A balance's limits (cap per order, daily and total limits, repositories, spenders): show, set, check, who."))
     owner_opt = typer.Option(..., "--owner", help="the GitHub login or id of the organisation whose repositories spend the Balance")
     balance_opt = typer.Option(None, "--balance", help="the Balance's address, when the owner has several")
     names_opt = typer.Option(False, "--no-names", help="do not ask GitHub for names: ids only")
@@ -907,7 +908,7 @@ def register(app, help_lines: list | None = None) -> None:
             raise cli.Stop(f"{path}: {why}") from None
         bad = problems(doc)
         if bad:
-            raise cli.Stop(f"{path} is not a sound {what}:", "\n".join(f"  {b}" for b in bad))
+            raise cli.Stop(f"{path} is not a valid {what}:", "\n".join(f"  {b}" for b in bad))
         return doc
 
     def bars(cli, state: dict, label: str) -> None:
@@ -916,7 +917,8 @@ def register(app, help_lines: list | None = None) -> None:
 
     @budget_app.command("card")
     def card_(file: Path = file_arg) -> None:
-        """Is this rate card sound? Every outcome needs a name, a price, a unit and the terms template it cites by hash; the hash must be the one terms/ publishes. Exit status 1 with one sentence per problem."""
+        """Check that this rate card is valid. Every outcome needs a name, a price, a unit and the terms template it
+        cites by hash; the hash must be the one terms/ publishes. Exit status 1 with one sentence per problem."""
         from . import cli
         card = load(cli, file, "rate card", lambda d: card_problems(d, published_terms()))
         cli.out.print(f"Rate card {card['name']}, valid {card['valid_from']} to {card['valid_to']}:", markup=False)
@@ -952,7 +954,10 @@ def register(app, help_lines: list | None = None) -> None:
 
     @budget_app.command("offer")
     def offer_(file: Path = file_arg, write: bool = typer.Option(False, "--write", help="add what the offer commits to the envelope's file")) -> None:
-        """Is this standing offer sound, and does it fit its envelope? Reads the rate card and the envelope it names from beside it, shows the envelope before and after, and refuses over the limit with the amount it is over by. Then the comment that funds each supplier for one period on devnet. Nothing is sent. Exit status 1 when refused."""
+        """Check that this standing offer is valid and fits its budget envelope (the spending limit it names). Shows the
+        envelope before and after, and refuses when over the limit, saying by how much. Then prints the
+        comment that funds each supplier for one period on devnet. Nothing is sent. Exit status 1 when
+        refused."""
         from . import cli
         root = file.resolve().parent.parent
         offer = load(cli, file, "standing offer", offer_problems)

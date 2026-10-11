@@ -89,7 +89,7 @@ def _plan_batch(a: _Ask, claim: bool = False) -> _Plan:
     got = _read(ledger, [where, meter.plan_pda(b.buyer), meter.METER_ID])
     if _data(got, meter.METER_ID) is None:
         raise _no(kind, f"knos_meter ({meter.METER_ID}) is not deployed on this cluster, so no batch can be counted here")
-    if old := live.needs(ledger, a.payer, "knos_meter", now):     # the batch mode is 1.1's: 1.0 runs until the upgrade executes
+    if old := live.needs(ledger, a.payer, "knos_meter", now):     # the batch mode is 1.1's (1.1 runs at the public ids: proposals 5 and 6 executed; a cluster still on 1.0 is told so)
         raise _no(kind, old)
     before = meter.read_ledger(_data(got, where))
     result = dict(kind=kind, buyer_id=b.buyer, seller_id=b.seller, month=b.month, seq=b.seq, count=b.count, accepted=b.accepted, value=b.value, root=b.root.hex())

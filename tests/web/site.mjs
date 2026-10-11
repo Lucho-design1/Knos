@@ -17,7 +17,7 @@ import { generateKeyPairSync, createHash, createPublicKey, sign as ecSign, verif
 
 const root = process.argv[2];
 // the menu of this build (tests/web/overflow.mjs menuOf): a page added by name (web/views.js ADDED) has a link, and one
-// added to the bar takes its words from Docs, Leaderboard and Check
+// added to the bar takes its words from Docs, Install and Check
 const MENU = menuOf(root || ".");
 const here = dirname(fileURLToPath(import.meta.url));
 const recorded = (name) => JSON.parse(readFileSync(join(here, "recorded", `${name}.json`), "utf8"));
@@ -371,17 +371,18 @@ await reset();
   served.front = stamp(COMMIT);                  // so the Protect view hands out its links whatever commit the examples name
   const page = await plain.newPage();
   await visit(page);
-  const SHORT = "The neutral meter for AI agent work: neither side keeps the count.";
-  const LEAD = "A work order is a task, its budget and the terms that decide whether it is done, fixed before the work starts. A bounty on an issue is the smallest work order. When the work is merged, a workflow run that GitHub signs says whether the terms were met, and a Solana program checks that signature itself before it pays. No person holds the money in between.";
-  check("front door renders: the one sentence, then what a work order is", (await text(page, "h1")) === SHORT && (await text(page, "#view-check .lede")) === LEAD);
+  const SHORT = "Pay AI agents only when your checks pass.";
+  const LEAD = "A work order is a task, its budget and the terms that decide when it is done. All three are fixed before work starts. A bounty on an issue is the smallest work order. When the work is merged, GitHub signs which checks ran. A Solana program checks that signature before it pays. No person holds the money in between.";
+  check("front door renders: the outcome, then what a work order is", (await text(page, "h1")) === SHORT && (await text(page, "#view-check .lede")) === LEAD);
   // the title is the line under the sentence, for a person searching (scripts/public_face.py `title`); every description begins with the sentence
   const TITLE = "Knos. Pay AI agents only when your checks pass.";
-  const begins = async (sel) => ((await page.getAttribute(sel, "content")) || "").startsWith(SHORT + " ");
+  const ONE = "The neutral meter for AI agent work: neither side keeps the count.";        // the sentence: every description begins with it
+  const begins = async (sel) => ((await page.getAttribute(sel, "content")) || "").startsWith(ONE + " ");
   check("  the title and the card of a shared link say the line under the sentence, every description begins with the sentence, and nothing else describes the product", (await page.title()) === TITLE
     && (await page.getAttribute('meta[property="og:title"]', "content")) === TITLE && (await page.getAttribute('meta[name="twitter:title"]', "content")) === TITLE
     && (await begins('meta[name="description"]')) && (await begins('meta[property="og:description"]')) && (await begins('meta[name="twitter:description"]')));
   check("  why a chain is answered in the one line, behind a fold, where the page first says Solana pays", await page.$eval("#why-solana", (d) => d.tagName === "DETAILS" && d.previousElementSibling.classList.contains("devnet") && d.querySelector("summary").textContent === "Why Solana?"
-    && d.querySelector("p").textContent === "Money is released with no custodian, and the count is anchored where neither side can alter it."));
+    && d.querySelector("p").textContent === "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public."));
   check("  the round below the first screen is not asked for until the reader moves", await page.evaluate(() => document.getElementById("demo").childElementCount === 0 && !performance.getEntriesByType("resource").some((r) => /\/demo\.js(\?|$)/.test(r.name))));
   // the brand: one source (web/brand/), drawn in the colour of the text, and nothing of it comes from another host
   {
@@ -430,7 +431,7 @@ await reset();
     check("the bar: six words of links and More, on one line, and nothing of More shown until it is pressed", (await bar()).join() === MENU.bar.join() && (await bar()).join(" ").split(" ").length <= 6 && (await page.$$eval("#nav > a", (l) => l.filter((a) => !a.hidden).length)) === MENU.bar.length && (await under()).length === 0 && (await page.getAttribute("#more-button", "aria-expanded")) === "false"
       && await page.$$eval("#nav > a, #more-button", (l) => new Set(l.filter((a) => a.offsetParent !== null).map((a) => Math.round(a.getBoundingClientRect().top / 8))).size === 1), await bar());
     await page.click("#more-button");
-    check("  More opens the others, inside the window", (await under()).join() === [...MENU.first, "Story,For suppliers,Supplier records,Hold a key,Verifier,Playground,Terms,Records,Statement,Invoice from a file,Check a pull request,Fund,Get paid,Protect,Install,Numbers,Status,Pilot,Capabilities,Reproduce,Build", ...MENU.last].join() && (await page.getAttribute("#more-button", "aria-expanded")) === "true"
+    check("  More opens the others, inside the window", (await under()).join() === [...MENU.first, "Fund,Get paid,Check a pull request,Invoice from a file,Records,Statement,Protect,For suppliers,Terms,Leaderboard,Supplier records,Playground,Story,Status,Numbers,Pilot,Verifier,Build,Capabilities,Reproduce,Hold a key", ...MENU.last].join() && (await page.getAttribute("#more-button", "aria-expanded")) === "true"
       && await page.$eval("#more-list", (e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= document.documentElement.clientWidth; }) && (await overflow(page)) <= 1, await under());
     await page.keyboard.press("Escape");
     check("  Escape closes it and gives the button the focus back", (await under()).length === 0 && await page.evaluate(() => document.activeElement.id === "more-button"));
@@ -460,12 +461,12 @@ await reset();
     await phone.close();
     const bare = await (await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1100, height: 900 } })).newPage();
     await bare.goto(base);
-    check("  without scripts: the links of the views are all in the bar, More's too, and its button is not shown", (await bare.$$eval("#nav a", (l) => l.filter((a) => a.offsetParent !== null).map((a) => a.getAttribute("href")))).join() === `#check,#demo,#pricing,${DOCS},#records,#check-a-pull-request,#fund,#claim,#protect,#network,#build` && await bare.isHidden("#more-button"));
+    check("  without scripts: the links of the views are all in the bar, More's too, and its button is not shown", (await bare.$$eval("#nav a", (l) => l.filter((a) => a.offsetParent !== null).map((a) => a.getAttribute("href")))).join() === `#check,#demo,#pricing,${DOCS},#fund,#claim,#check-a-pull-request,#records,#protect,#network,#build` && await bare.isHidden("#more-button"));
     await bare.context().close();
     await visit(page);
   }
   // the first screen: two buttons, the flow in three steps with a payment on devnet, the five things one line each
-  check("  one control: a box for an invoice or a repository, its button, and a sample", (await page.$$eval("#front-door textarea, #front-door [data-fd]", (l) => l.map((x) => `${x.dataset.fd || x.id} ${x.textContent.trim()}`))).join() === "fd-in ,run Check,sample Try a sample"
+  check("  one control: a box for an invoice or a repository, its button, and a sample", (await page.$$eval("#front-door textarea, #front-door [data-fd]", (l) => l.map((x) => `${x.dataset.fd || x.id} ${x.textContent.trim()}`))).join() === "fd-in ,run Check,sample Try a sample invoice"
     && await page.isVisible("#front-door [data-fd=run]") && await page.isVisible("#front-door [data-fd=sample]"));
   await page.$eval("#what-is-here", (d) => { d.open = true; });
   check("  the flow is three steps, and the last links the payment on devnet that the third example reads", (await page.$$eval("#view-check .how > li", (l) => l.length)) === 3
@@ -499,9 +500,9 @@ await reset();
   check("  Check a pull request, under More, puts the cursor in the box", await page.evaluate(() => document.activeElement.id === "fd-in"));
   // the pages other modules fill: not offered while empty, shown alone at their hash once they hold something
   // in the order of the menu: the bar's, then More's; a page added by name (MENU) stands in the bar before Pricing or
-  // last under More, and the Leaderboard goes first under More when an added page takes its words
-  const added = (bar) => MENU.added.filter((a) => a.bar === bar).map((a) => `#${a.name}`), board = MENU.first.includes("Leaderboard");
-  const mounts = ["#buy", ...(board ? [] : ["#index"]), ...added(true), ...(board ? ["#index"] : []), "#story", "#supplier", "#record", "#keyholder", "#verifier", "#playground", "#terms", "#invoice-statement", "#shadow", "#install", "#status", "#pilot", "#capabilities", "#reproduce", ...added(false)];
+  // last under More, and Install goes first under More when an added page takes its words
+  const added = (bar) => MENU.added.filter((a) => a.bar === bar).map((a) => `#${a.name}`), inst = MENU.first.includes("Install");
+  const mounts = ["#buy", ...(inst ? [] : ["#install"]), ...added(true), ...(inst ? ["#install"] : []), "#shadow", "#invoice-statement", "#supplier", "#terms", "#index", "#record", "#playground", "#story", "#status", "#pilot", "#verifier", "#capabilities", "#reproduce", "#keyholder", ...added(false)];
   const found = await page.$$eval("nav a[data-mount]", (a) => a.map((x) => x.getAttribute("href")));
   check("the pages other modules fill are there, and an empty one is not in the menu", found.join() === mounts.join()
     && await page.$$eval("nav a[data-mount]", (a) => a.every((x) => !x.hidden)), { found, mounts });
@@ -518,8 +519,8 @@ await reset();
   await visit(page, "#record"); await page.waitForSelector('#record [data-sr="pick"] a');
   check("  Supplier records, with no supplier named, lists every record to pick from", (await page.$$eval('#record [data-sr="pick"] a', (l) => l.map((a) => a.getAttribute("href")))).join() === recordLinks.map((r) => r[1]).join());
   await visit(page, "#capabilities"); await page.waitForSelector("#cap-manifest", { state: "attached" });
-  check("capabilities: one link opens what is live, in one page (docs/MANIFEST.md)", (await page.getAttribute("#cap-manifest", "href")) === "https://github.com/drexthealpha/Knos/blob/main/docs/MANIFEST.md" && (await text(page, "#cap-manifest")) === "What is live, in one page"
-    && existsSync(join(here, "../../docs/MANIFEST.md")));
+  check("capabilities: one link opens what is live, in one page (docs/reference/MANIFEST.md)", (await page.getAttribute("#cap-manifest", "href")) === "https://github.com/drexthealpha/Knos/blob/main/docs/reference/MANIFEST.md" && (await text(page, "#cap-manifest")) === "What is live, in one page"
+    && existsSync(join(here, "../../docs/reference/MANIFEST.md")));
   for (const id of ["buy", "install", "capabilities"]) {
     await visit(page, `#${id}`);
     if (id === "capabilities") await page.waitForSelector("#capabilities table", { state: "attached" });      // filled from capabilities.json, once it has loaded
@@ -529,14 +530,14 @@ await reset();
     await page.evaluate((i) => { if (!document.getElementById(i).childElementCount) document.getElementById(i).innerHTML = "<h2>Filled</h2>"; }, id);
     await page.waitForSelector(`#${id}`, { state: "visible" });
     check(`  #${id} once filled is shown alone, with its link in the menu`, await page.isHidden("#view-check") && !(await page.$eval(`nav a[href="#${id}"]`, (a) => a.hidden)) && (await page.getAttribute("nav a[aria-current=page]", "href")) === `#${id}`
-      && (await page.$eval("#more", (e) => e.classList.contains("current"))) === (id !== "buy"));
+      && (await page.$eval("#more", (e) => e.classList.contains("current"))) === !["buy", "install"].includes(id));
   }
   // what fills them in this build: Install is in the page, Capabilities is the manifest the build copied, Buy is web/buyer.js when there is one
   await visit(page, "");
-  await settled(); await page.click("#more-button"); await page.click('#more-list a[href="#install"]');
+  await settled(); await page.click('#nav > a[href="#install"]');
   await page.waitForSelector("#install-repo", { state: "visible" });
-  check("install: Install, under More, lands on the Install page, shown alone, with the box to write a repository in", await page.isVisible("#install") && await page.isHidden("#view-check") && (await page.evaluate(() => document.body.dataset.page)) === "install"
-    && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#install" && (await text(page, "#install h2")) === "Install by one pull request");
+  check("install: Install, in the bar, lands on the Install page, shown alone, with the box to write a repository in", await page.isVisible("#install") && await page.isHidden("#view-check") && (await page.evaluate(() => document.body.dataset.page)) === "install"
+    && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#install" && (await text(page, "#install h2")) === "Install with one pull request");
   await page.fill("#install-repo", "octo/widgets");
   check("  a repository gives the link that opens GitHub's editor there, and the five terms templates are under it", (await page.getAttribute("#install-open", "href")).startsWith("https://github.com/octo/widgets/new/main?filename=.github%2Fworkflows%2Fknos.yml&value=")
     && (await page.$$eval("#install-terms .card", (c) => c.length)) === 5);
@@ -637,7 +638,7 @@ await reset();
   check("  leaving #check clears the check", true);
   await viaForm(page, "https://github.com/octo/widgets/pull/12");
   await page.waitForSelector("#verdict");
-  check("the examples' form still answers one pull request", (await text(page, "#verdict")).includes("No tests-pass claim") && (await page.$("#pr-result #repo-record")) === null);
+  check("the examples' form still answers one pull request", (await text(page, "#verdict")).includes("does not say its tests pass") && (await page.getAttribute("#verdict", "data-verdict")).includes("No tests-pass claim") && (await page.$("#pr-result #repo-record")) === null);
   check("the result offers to protect that repository, at its default branch", (await page.getAttribute("#check-protect", "href")) === "#protect=octo%2Fwidgets%40develop");
   check("the result says the fee applies only when someone is paid, and names no rate of its own", (await text(page, "#pr-result")).includes("Fee: only when someone is paid, at the rate Pricing reads from the program.")
     && !/\d(\.\d+)?%/.test((await text(page, "#pr-result")).split("Fee:")[1]));
@@ -1078,7 +1079,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("escrow: nothing there says so, and who funds it, and how", got.includes("Nothing is in escrow for octo/widgets#12.") && got.includes("/knos fund 20"));
   check("  a sentence for something that is not an issue", (await ask("hello")).includes("Enter the issue as owner/repo#7."));
   check("  a sentence for a repository GitHub does not have", (await ask("octo/nothing#1")).includes("GitHub has no such public repository, issue or user."));
-  check("  a sentence for GitHub's rate limit", (await ask("limited/repo#1")).includes("GitHub's free limit for this network is used up"));
+  check("  a sentence for GitHub's rate limit", (await ask("limited/repo#1")).includes("GitHub's free limit for your connection is used up"));
   await visit(page, "#fund=" + encodeURIComponent("octo/widgets#7"));
   await settled("#st-result");
   check("escrow: a link to one issue reads it on arrival", (await page.inputValue("#st-issue")) === "octo/widgets#7" && (await text(page, "#st-result")).includes("20.00 test USDC"));
@@ -1097,7 +1098,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("  what is held for it, until when, and that it can be sent now", got.includes("12.00 test USDC is held for mona until " + when(NOW + 100 * 86400) + ".")
     && got.includes("A wallet is bound, so it can be sent there now: comment /knos settle on the merged pull request."));
   check("  first deployment: its separate held amount and v1 claim command", got.includes("4.88 test USDC is still held for mona on the first deployment.")
-    && got.includes("First authenticate GitHub CLI as mona with gh auth login, then send it to an address you choose with knos claim --v1 <address>")
+    && got.includes("First sign in to the GitHub command line as mona (gh auth login), then run knos claim --v1 <address> to send it to an address you choose.")
     && (await page.$("#due-v1")) !== null, got);
   const record = await page.$$eval("#due-record dd", (d) => d.map((x) => x.textContent.replace(/\s+/g, " ").trim()));
   check("  its record: payments, funders, total and the dates", record[0] === "3 payments from 2 different funders, 58.50 test USDC in all (" + when(NOW - 30 * 86400) + " to " + when(NOW - 86400) + ")", record);
@@ -1222,7 +1223,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
 
   for (const [what, setup, expected, words, absent = []] of [
     ["upgradeable only by the upgrade multisig's vault, 2 of 3, 48 hours", { oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 172800 }, guard: { threshold: 2, timeLock: 0 } }, ["multisig", "multisig"],
-      ["2 of 3 members must approve, and an approved upgrade waits 48 hours before it can run.", "2 of 3 members must approve; no delay. The guardian can approve or revoke a signing key and pause new funding for at most 7 days."], ["not the 48 hours"]],
+      ["2 of 3 members must approve, and an approved upgrade waits 48 hours before it can run.", "2 of 3 members must approve; no delay. The guardian (a second multisig) can approve or revoke a signing key and pause new funding for at most 7 days."], ["not the 48 hours"]],
     ["a delay that is not the 48 hours said", { oidc: "vault", pay: "vault", up: { threshold: 2, timeLock: 3600 }, guard: { threshold: 1, timeLock: 0 } }, ["multisig", "multisig"], ["waits 1 hour before it can run", "(not the 48 hours stated above)"]],
     ["a program that someone else can upgrade", { oidc: stranger, pay: "vault", up: { threshold: 2, timeLock: 172800 }, guard: { threshold: 2, timeLock: 0 } }, ["other", "multisig"],
       [`upgradeable by ${stranger}, which is not the upgrade multisig of this deployment`]],
@@ -1509,7 +1510,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
     && JSON.stringify(book.map((r) => r[0])) === JSON.stringify(["Check", "Meter", "Acceptance", "Record", "Control", "Pilot"]) && book[2][2] === vectors.lines[2][2] && book[2][2].startsWith("0.30%; by contract 0.20% on monthly value above 1M (the rate never goes below 0.20%") && !/0\.10% above|10M/.test(JSON.stringify(book))
     && book[1][2] === "100,000 a month free per organisation, then 0.002 USD" && JSON.stringify(await page.$$eval("#price-book thead th", (th) => th.map((x) => x.textContent))) === JSON.stringify(vectors.columns), JSON.stringify(book));
   check("  under it: the relayer's tip, and an order's bounds on devnet with a build for real money setting its own cap", (await text(page, "#price-tip")).replace(/\s+/g, " ").trim()
-    === "Relayer tip: 0.05, or 0.30 on a payee's first payment, out of the fee. An order holds from 5 to 100,000 test USDC on devnet; a build for real money sets its own cap." && c.minAmount === 5e6 && c.maxAmount === 100_000e6);
+    === "Of the fee, 0.05 goes to whoever sends the payment to Solana (0.30 on someone's first payment). An order holds from 5 to 100,000 test USDC on devnet; a version that uses real money would set its own maximum." && c.minAmount === 5e6 && c.maxAmount === 100_000e6);
   check("  it says what is enforced and what is a contract", (await text(page, "#price-honest")).replace(/\s+/g, " ").includes("The program enforces the Acceptance line at release: 0.30% and the floor.") && (await text(page, "#price-honest")).replace(/\s+/g, " ").includes("contract prices that nothing on chain enforces"));
 
   const rows = async (sel) => Object.fromEntries(await page.$$eval(`${sel} tr`, (tr) => tr.map((r) => [r.dataset.key, r.children[1].textContent.trim()])));
@@ -1543,7 +1544,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("pricing: the fee worked at 100, 5,000 and 100,000: one rate, one step each", JSON.stringify(worked) === JSON.stringify([["100", "0.30% of 100", "0.30"], ["5,000", "0.30% of 5,000", "15"], ["100,000", "0.30% of 100,000", "300"]]), JSON.stringify(worked));
   const pageWords = (await page.evaluate(() => document.querySelector("main").textContent)).replace(/\s+/g, " ");
   check("  nothing on the page says a fee has a maximum of 25, or that an order stops at 500", !/at most 25\b|maximum (?:of )?25\b|at most 500\b|1 to 500\b|capped at 500/.test(arithmetic) && !/at most 25\)|0\.40 test USDC, at most 25|from 1 to 500 test USDC, with/.test(pageWords)
-    && pageWords.includes("from 5 to 100,000 test USDC, with at most 6 decimals. A build for real money sets its own cap.") && pageWords.includes("There is no maximum.") && pageWords.includes("An order funded under knos_pay 2.1 keeps its stored fee: 2.5% of the first 1,000, 1% to 50,000, 0.5% above, at least 0.40 test USDC."));
+    && pageWords.includes("from 5 to 100,000 test USDC, with at most 6 decimals. A version that uses real money would set its own maximum.") && pageWords.includes("There is no maximum.") && pageWords.includes("An order funded under knos_pay 2.1 keeps its stored fee: 2.5% of the first 1,000, 1% to 50,000, 0.5% above, at least 0.40 test USDC."));
   const effective = await page.$$eval("#fee-effective tbody tr", (tr) => tr.map((r) => [...r.children].map((x) => x.textContent.trim())));
   check("pricing: the effective fee before funding: 5 pays 0.05 (1.00%), and from 20 up 0.30%", JSON.stringify(effective) === JSON.stringify([
     ["5", "0.05", "1.00%"], ["20", "0.06", "0.30%"], ["100", "0.30", "0.30%"], ["1,000", "3", "0.30%"], ["5,000", "15", "0.30%"], ["100,000", "300", "0.30%"]]), JSON.stringify(effective));
@@ -1577,7 +1578,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("  a program that logs knos2:version 1 is 2.1: it charges the 0.3.14 fee, and the calculator is said to show the fee charged today", got.words.includes("the program on devnet is 2.1.") && got.words.includes("Fee today: 2.5% of the first 1,000, 1% to 50,000, 0.5% above, at least 0.40 test USDC, paid by the funder on top")
     && got.words.includes("From knos_pay 2.2: 0.30% of the amount, at least 0.05.") && got.words.includes("The calculator below shows the fee it charges today."), got.words);
   got = await said({ err: null, logs: ["Program log: knos2:version 2"] });
-  check("  a program that logs knos2:version 2 is 2.2: it takes what the calculator says, the funder paying on top", got.words.includes("the program is 2.2 or later") && got.words.includes("on top of the amount"), got.words);
+  check("  a program that logs knos2:version 2 is the current one: it charges what the calculator says, the funder paying on top", got.words.includes("the payment program on devnet is the current one") && got.words.includes("paid by the funder on top"), got.words);
   got = await said({ err: "BlockhashNotFound", logs: [] });
   check("  any other answer is not guessed at", got.words.includes("could not be read just now"), got.words);
   chain.simulate = null;
@@ -1648,7 +1649,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await refused("5", WALLET, "", "Your GitHub login");
   await refused("5", WALLET, "bad--login", "Your GitHub login");
   await refused("12.51", WALLET, "octocat", "holds 12.50 test USDC, so 12.51 cannot be withdrawn");
-  await refused("5", OTHER_WALLET, "octocat", "has no test USDC token account on devnet");
+  await refused("5", OTHER_WALLET, "octocat", "has no test USDC account on devnet");
 
   // a withdrawal: 5 of the 12.50 to WALLET's token account
   githubReads = 0;
@@ -2169,7 +2170,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await refuse("no description", { fields: { description: "" } }, "Describe the task");
   await refuse("an amount that is not a number", { fields: { amount: "twenty" } }, "a number like 20 or 7.5");
   // the bounds are the second deployment's, read from the client: a work order's (what `/knos fund` opens), and beside it the older 2.0 job's own
-  const orderBounds = "The amount is from 5 to 100,000 test USDC. A work order holds from 5 to 100,000 test USDC, and `/knos fund` opens a work order. A bounty of the older kind (2.0) takes from 1 to 100,000, where the escrow holds no work orders yet; this page writes the comment for a work order.";
+  const orderBounds = "The amount is from 5 to 100,000 test USDC. A work order holds from 5 to 100,000 test USDC, and `/knos fund` opens a work order. An older bounty (program version 2.0) takes from 1 to 100,000. This page writes the comment for a work order.";
   check("task: the bounds it states are the client's: an order's 5 to 100,000 and a 2.0 job's 1 to 100,000, never the first deployment's 1 to 500",
     knos.v2.ORDER_MIN_AMOUNT === 5_000_000 && knos.v2.MAX_AMOUNT === 100_000_000_000 && knos.v2.MIN_AMOUNT === 1_000_000 && knos.MAX_AMOUNT === 500_000_000
     && !readFileSync(join(root, "task.js"), "utf8").includes("knos.MAX_AMOUNT"));
@@ -2267,11 +2268,11 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   const payUp = rec.pending.find((p) => p.index === 4), oidcUp = rec.pending.find((p) => p.index === 3);
   check("upgrade: the banner shows the two upgrades of Knos's programs, newest first: not the unrelated program's draft, not the multisig's own change, not the one that ran", JSON.stringify(paras.map((p) => p.slice(0, 3))) === JSON.stringify([["knos_pay", "Approved", "4"], ["knos_oidc", "Active", "3"]]), JSON.stringify(paras));
   const short = (a) => `${a.slice(0, 4)}…${a.slice(-4)}`;
-  check("  an approved one says the program, the buffer, the votes, and when it can be run, from the chain's clock: 43 h 0 min", paras[0][3] === `An upgrade of knos_pay is pending: it would replace the program's code with the bytes in the buffer ${short(payUp.buffer)}. The multisig has approved it (2 of 2 members); it can be run from ${day(payUp.executes_at)}, in 43 h 0 min. 43 hours to leave: knos exit --before-upgrade lists what you hold and how to take it out before then.`, paras[0][3]);
-  check("  an active one says the votes so far and how long after the last it can run", paras[1][3] === `An upgrade of knos_oidc is pending: it would replace the program's code with the bytes in the buffer ${short(oidcUp.buffer)}. 1 of 2 approvals so far. It can be run 48 hours after the vote that approves it.`, paras[1][3]);
+  check("  an approved one says the program, the buffer, the votes, and when it can be run, from the chain's clock: 43 h 0 min", paras[0][3] === `An upgrade of knos_pay is pending: it would replace the program's code with a new build already uploaded to Solana at ${short(payUp.buffer)}. The multisig has approved it (2 of 2 members); it can be run from ${day(payUp.executes_at)}, in 43 h 0 min. 43 hours to leave: knos exit --before-upgrade lists what you hold and how to take it out before then.`, paras[0][3]);
+  check("  an active one says the votes so far and how long after the last it can run", paras[1][3] === `An upgrade of knos_oidc is pending: it would replace the program's code with a new build already uploaded to Solana at ${short(oidcUp.buffer)}. 1 of 2 approvals so far. It can be run 48 hours after the vote that approves it.`, paras[1][3]);
   check("  the buffer links to devnet's explorer", (await page.getAttribute('#upgrade-banner p[data-program="knos_pay"] a', "href")) === `https://explorer.solana.com/address/${payUp.buffer}?cluster=devnet`);
-  const security = readFileSync(join(here, "../../docs/SECURITY.md"), "utf8");
-  check("  it links to docs/SECURITY.md, section 7 (which is there), in a new tab", (await page.getAttribute("#upgrade-security", "href")) === "https://github.com/drexthealpha/Knos/blob/main/docs/SECURITY.md#7-the-upgrade-authority" && /^## 7\. The upgrade authority$/m.test(security)
+  const security = readFileSync(join(here, "../../docs/reference/SECURITY.md"), "utf8");
+  check("  it links to docs/reference/SECURITY.md, section 7 (which is there), in a new tab", (await page.getAttribute("#upgrade-security", "href")) === "https://github.com/drexthealpha/Knos/blob/main/docs/reference/SECURITY.md#7-the-upgrade-authority" && /^## 7\. The upgrade authority$/m.test(security)
     && (await page.getAttribute("#upgrade-security", "rel")).includes("noopener") && (await text(page, "#upgrade-banner")).includes("the delay is there so that it can be seen coming"));
   check("  and nothing was sent: it only read", chain.sent.length === 0 && called("sendTransaction").length === 0 && called("getMultipleAccounts").length === 2 && called("simulateTransaction").length === 0, called("getMultipleAccounts").length);
   for (const hash of ["#fund", "#claim", "#pricing", "#records"]) { await visit(page, hash); await page.waitForSelector("#upgrade-banner:not([hidden])"); }
@@ -2400,7 +2401,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("fund any issue: the two copies of settle.js these tests serve differ from the built one only where the client is made", builtSettle.split("function client2(ids) {").length === 2 && standIn(builtSettle).includes("client2_(ids)") && without(builtSettle).includes("delete k.fundOrderWalletIx"));
   const V1 = { err: null, logs: ["Program log: knos2:version 1"] }, V0 = { err: { InstructionError: [0, "InvalidInstructionData"] }, logs: [] };
   const loadSquads = () => { for (const [address, a] of Object.entries(rec.accounts)) put(address, hexBytes(a.data), a.owner); };
-  const available = async (page) => { await page.waitForFunction(() => !document.getElementById("any-available").textContent.includes("Asking devnet")); return text(page, "#any-available"); };
+  const available = async (page) => { await page.waitForFunction(() => !document.getElementById("any-available").textContent.includes("Checking which version of the payment program")); return text(page, "#any-available"); };
   const fill = async (page, over = {}) => { for (const [id, v] of Object.entries({ "any-issue": "octo/widgets#7", "any-amount": "20", "any-days": "14", "any-checks": "test", "any-paths": "src/**", ...over })) await page.fill(`#${id}`, v); };
   // an issue the tab has read before is shown at once from what was kept (#any-asof says so) and read again: `read` waits for what GitHub says now
   const read = async (page, over = {}) => { await fill(page, over); await page.click("#any-go"); await page.waitForFunction(() => (document.querySelector("#any-facts") && !document.querySelector("#any-asof")) || document.querySelector("#any-result .status.bad")); return text(page, "#any-result"); };
@@ -2421,7 +2422,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
     }
     check("  a form that is wrong asks GitHub nothing", githubReads === reads);
     for (const [over, words] of [[{ "any-issue": "octo/widgets#8" }, "octo/widgets#8 is closed. Fund an open issue."], [{ "any-issue": "octo/widgets#12" }, "That is a pull request. Fund the issue it closes."], [{ "any-issue": "octo/widgets#99" }, "GitHub has no such public repository, issue or user."],
-      [{ "any-issue": "octo/old#1" }, "octo/old is archived: no pull request can be merged in it."], [{ "any-issue": "nobody/nothing#1" }, "GitHub has no such public repository, issue or user."], [{ "any-issue": "limited/repo#1" }, "GitHub's free limit for this network is used up"]]) {
+      [{ "any-issue": "octo/old#1" }, "octo/old is archived: no pull request can be merged in it."], [{ "any-issue": "nobody/nothing#1" }, "GitHub has no such public repository, issue or user."], [{ "any-issue": "limited/repo#1" }, "GitHub's free limit for your connection is used up"]]) {
       const got = await read(page, over);
       check(`  fund any issue: GitHub's answer for ${over["any-issue"]} is said: ${words.slice(0, 44)}`, got.includes(words) && await gone(page, "#any-facts"), got);
     }
@@ -2650,7 +2651,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   const first = await (await world({ wallets: [["Test Wallet", WALLET]] })).newPage();
   await visit(first, "#fund");
   await first.evaluate((ixs) => { window.__fundOrder = async (args) => { const x = ixs[String(args.seq)]; return { program: x.program, data: Uint8Array.from(x.data.match(/../g), (h) => parseInt(h, 16)), accounts: x.accounts }; }; }, fa.order.ix);
-  await first.waitForFunction(() => !document.getElementById("any-available").textContent.includes("Asking devnet"));
+  await first.waitForFunction(() => !document.getElementById("any-available").textContent.includes("Checking which version of the payment program"));
   let did = 0;
   const act = async (what) => { did++; await what(); }, began = Date.now(), sims = () => chain.calls.filter((c) => c.method === "simulateTransaction" && !c.version).length, sims0 = sims();
   await act(() => first.fill("#any-issue", "octo/widgets#7"));
@@ -2714,7 +2715,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   const old = lib.relayView(log(day.slice(1, 4)), null, T);
   check("  a relay that writes no status line: its last round and its queue are not guessed", fact(old, "Last round") === "The log does not say: this relay writes no status line." && fact(old, "Tokens waiting") === fact(old, "Last round") && old.kind === "bad", JSON.stringify(old.facts));
   const silent = lib.relayView(log([day[4]], T - 30 * 3600_000), null, T);
-  check("  a log with no line of the relay's in 24 hours says that, and when the log last changed", silent.kind === "bad" && silent.headline === "The relay has written nothing in its log in the last 24 hours (the log was last changed 2026-10-04 06:00:00 UTC). Tokens posted now wait until it runs again, or relay them yourself with `knos relay`."
+  check("  a log with no line of the relay's in 24 hours says that, and when the log last changed", silent.kind === "bad" && silent.headline === "The relay has written nothing in its log in the last 24 hours (the log was last changed 2026-10-04 06:00:00 UTC). Signed payments posted now wait until it runs again, or you can send them yourself with `knos relay`."
     && fact(silent, "Carried in 24 hours") === "0 tokens." && fact(silent, "Refused in 24 hours") === "None.", silent.headline);
   const asked = [];
   const got = await lib.readRelayLog(async (path) => { asked.push(path); return path.includes("/comments") ? (asked.length < 4 ? Array.from({ length: 100 }, () => day[1]) : [day[2]]) : [{ number: 9, pull_request: {} }, { number: 41, html_url: "u", updated_at: "x" }]; }, T + 12_345);
@@ -2734,7 +2735,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await visit(page, "#status");
   await page.waitForSelector("#relay-facts dt");
   await page.waitForFunction(() => !document.getElementById("live-head").textContent.includes("Reading"));
-  check("status: opened, it is shown alone under its heading, with its link marked in the bar", (await text(page, "#status > h2")) === "Relay and canary status" && await page.isVisible("#status") && await page.isHidden("#view-check") && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#status");
+  check("status: opened, it is shown alone under its heading, with its link marked in the bar", (await text(page, "#status > h2")) === "Is the payment service running?" && await page.isVisible("#status") && await page.isHidden("#view-check") && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#status");
   check("  the relay: ran in the last 10 minutes, nothing waiting, the day's carried, refused and retried, from the log's own lines", /^The relay ran \d+ s ago\. Nothing is waiting\. In 24 hours: 1 carried, 1 refused, 1 retry\.$/.test((await text(page, "#relay-head")).trim())
     && await page.$eval("#relay-head", (e) => e.classList.contains("ok")) && (await page.$$eval("#relay-facts dt", (l) => l.map((x) => x.textContent))).join("|") === "Ran in the last 10 minutes|Last round|Tokens waiting|Carried in 24 hours|Refused in 24 hours|Retries in 24 hours|Merge to paid, measured"
     && (await text(page, "#relay-facts")).includes("it took 14 s and looked at 3 tokens") && (await text(page, "#relay-facts")).includes("None (as of ") && (await page.getAttribute("#relay-note a", "href")) === "https://github.com/drexthealpha/Knos/issues/41", await text(page, "#relay-status"));
@@ -2790,8 +2791,8 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("  it says plainly that nobody has bought it and that there is no legal entity to invoice from", (await text(page, "#pilot-honest")) === "An offer, not a record. Nobody has bought it. Nobody has been asked. No legal entity to invoice from yet."
     && (await text(page, "#pilot-blockers")).includes("Nobody has bought it.") && (await text(page, "#pilot-blockers")).includes("There is no legal entity to invoice from yet.") && (await text(page, "#pilot-blockers")).includes("It has never been run."));
   check("  no form and nothing to type into: the page collects nothing", (await page.$$eval("#pilot form, #pilot input, #pilot textarea, #pilot select, #pilot button:not(.copy)", (l) => l.length)) === 0 && !/customer|pilot is running|signed up/i.test(await text(page, "#pilot")));
-  const pilotDoc = readFileSync(join(here, "..", "..", "docs", "PILOT.md"), "utf8").replace(/\s+/g, " ");
-  check("  its deliverables are the four of docs/PILOT.md, by name", lib.PILOT_DELIVERABLES.every(([name]) => pilotDoc.includes(`**${name}**`)) && pilotDoc.includes("2,500 USD for one buyer and two suppliers, for 30 days"));
+  const pilotDoc = readFileSync(join(here, "..", "..", "docs", "reference", "PILOT.md"), "utf8").replace(/\s+/g, " ");
+  check("  its deliverables are the four of docs/reference/PILOT.md, by name", lib.PILOT_DELIVERABLES.every(([name]) => pilotDoc.includes(`**${name}**`)) && pilotDoc.includes("2,500 USD for one buyer and two suppliers, for 30 days"));
   check("  nothing runs off the side at any width", (await overflow(page)) <= 1, await overflow(page));
 
   // Reproduce: the three lines, and the count of what the build carries
@@ -2799,9 +2800,9 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
     === JSON.stringify({ files: readdirSync(join(here, "..", "..", "reproductions")).filter((f) => f.endsWith(".json")).sort() }) && JSON.parse(readFileSync(join(root, "reproductions.json"), "utf8")).files.length === 0);
   await visit(page, "#reproduce");
   await page.waitForSelector("#repro-count");
-  const reproDoc = readFileSync(join(here, "..", "..", "docs", "REPRODUCE.md"), "utf8");
+  const reproDoc = readFileSync(join(here, "..", "..", "docs", "reference", "REPRODUCE.md"), "utf8");
   check("reproduce: none yet is said as none yet", (await page.getAttribute("#repro-count", "data-count")) === "0" && (await text(page, "#repro-count")) === "Outside reproductions so far: none yet. No capability is marked as reproduced." && await gone(page, "#repro-files"));
-  check("  three lines: the one command of docs/REPRODUCE.md, the fork and run, how to send the result", (await page.$$eval("#repro-lines > li > strong:first-child", (l) => l.map((x) => x.textContent))).join("|") === "The one command.|Fork and run, signed by GitHub.|Send the result."
+  check("  three lines: the one command of docs/reference/REPRODUCE.md, the fork and run, how to send the result", (await page.$$eval("#repro-lines > li > strong:first-child", (l) => l.map((x) => x.textContent))).join("|") === "The one command.|Fork and run, signed by GitHub.|Send the result."
     && (await text(page, "#repro-command")).trim() === lib.REPRODUCE_COMMAND && reproDoc.includes(`\n${lib.REPRODUCE_COMMAND}\n`) && (await text(page, "#repro-lines")).includes("reproductions/<owner>-<repo>-<run id>.json")
     && (await page.getAttribute('#repro-lines a[href*="knos-reproduce.yml"]', "href")) === "https://github.com/drexthealpha/Knos/blob/main/examples/knos-reproduce.yml" && existsSync(join(here, "..", "..", "examples", "knos-reproduce.yml")));
   check("  shown alone, with More marked as holding it", await page.isHidden("#view-check") && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#reproduce" && await page.$eval("#more", (e) => e.classList.contains("current")) && (await overflow(page)) <= 1);
@@ -2866,7 +2867,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
     steps: [...document.querySelectorAll('#shadow [data-sh="steps"] li')].map((li) => li.dataset.class), rows: document.querySelectorAll("#shadow .sh-result tbody tr").length, budget: document.querySelector('#shadow [data-sh="budget"]').textContent }));
   check("  two lines checked against GitHub: each gets a class, the share in dispute is one number, the statement has a hash", sh.steps.length === 2 && sh.steps.every(Boolean) && sh.steps[1] === "unreadable" && /^\d+(\.\d+)?%$/.test(sh.share.trim()) && sh.of.includes("200.00 billed")
     && /^sha256 [0-9a-f]{64}$/.test(sh.hash.trim()) && sh.rows === 6 && githubReads > before, JSON.stringify(sh));
-  check("  it says the three limits, and runs off no side", (await text(page, "#shadow .sh-result")).includes("A failed check is not proof of bad work.") && (await text(page, "#shadow .sh-result")).includes("Shadow mode changes nothing and holds no money.") && (await overflow(page)) <= 1);
+  check("  it says the three limits, and runs off no side", (await text(page, "#shadow .sh-result")).includes("A failed check is not proof of bad work.") && (await text(page, "#shadow .sh-result")).includes("This check changes nothing and holds no money.") && (await overflow(page)) <= 1);
 
   // Verify: the builders' page, with this build's knos-oidc address and a sample token decoded in the page
   await visit(page, "#verifier");

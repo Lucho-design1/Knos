@@ -1,6 +1,6 @@
 """The round `judge`: a judge hosted by an outside evaluator. An order needs two judges; the run in the order's own
 repository is one, and the second is a run of the pinned attest workflow that ANOTHER account started in a repository
-of its own (examples/knos-attest.yml, docs/ATTESTOR.md: host a judge). Two owners' runs pay; the host is paid nothing.
+of its own (examples/knos-attest.yml, docs/reference/ATTESTOR.md: host a judge). Two owners' runs pay; the host is paid nothing.
 
     python scripts/exercise_public.py run --only judge --simulate --neutral host/knos-judge
     python scripts/exercise_public.py run --only judge --rpc URL --keys DIR --neutral OWNER/REPO [--resume]

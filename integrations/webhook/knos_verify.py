@@ -127,7 +127,7 @@ def _receipt(r, token: str, claims: dict, facts: dict) -> None:
     except Exception:  # noqa: BLE001 - a missing field, or not a mapping at all
         shaped = False
     if not shaped:
-        raise _No("receipt", "This is not an acceptance receipt of version 2 to 5 with an accepted verdict (docs/RECEIPT.md).")
+        raise _No("receipt", "This is not an acceptance receipt of version 2 to 5 with an accepted verdict (docs/reference/RECEIPT.md).")
     if hashlib.sha256(_unb64(token.rsplit(".", 1)[1])).hexdigest() != digest:
         raise _No("receipt", "The receipt names another token than the one given (token_sha256 differs).")
     if told != _told(claims) or issuer != claims.get("iss") or str(repo) != str(claims.get("repository_id")):

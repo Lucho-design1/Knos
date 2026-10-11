@@ -23,7 +23,6 @@ What is written (all of it committed; the site build copies web/ as it is):
     web/brand/wordmark-light.svg, -dark    the wordmark in a set colour, for a page that cannot hand one down (GitHub)
     web/brand/mark.js                      the small mark for web/badge.js
     web/icon.svg                           the favicon: the small mark, dark on a light tab and light on a dark one
-    scripts/video/sample/card.svg          the title card of the sample video: the wordmark over the title
     web/brand/apple-touch-icon.png, card.png   (--png) the home-screen icon and the 1200x630 card of a shared link
 No colour is set by `fill`: a file that needs one sets `color` on its root, and every path stays currentColor.
 """
@@ -355,25 +354,8 @@ def files() -> dict[Path, str]:
                             "// of a badge (the same text is in src/knos/badge.py; tests/test_brand.py holds the two together).\n"
                             f"export const BADGE_MARK = {json.dumps(bm, indent=1)};\n"),
         ROOT / "web" / "icon.svg": svg(square(tight(mark_view, small), 0.04), small, inner=scheme),
-        ROOT / "scripts" / "video" / "sample" / "card.svg": title_card(word_view, word),
     }
     return out
-
-
-def title_card(view: str, word: str) -> str:
-    """The title card of the sample storyboard (scripts/video/sample.storyboard `show: still sample/card.svg`): the wordmark
-    over the title. A storyboard's own title card is this file with its own three lines."""
-    w = round(120 * float(view.split()[2]) / float(view.split()[3]))
-    sans, mono = "Segoe UI, Helvetica, Arial, sans-serif", "Consolas, Menlo, DejaVu Sans Mono, monospace"
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
-  <rect width="1280" height="720" fill="#0d1117"/>
-  <rect x="80" y="80" width="1120" height="560" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2"/>
-  <svg x="{(1280 - w) // 2}" y="124" width="{w}" height="120" viewBox="{view}" color="#e6edf3" role="img" aria-label="Knos">{word}</svg>
-  <text x="640" y="352" text-anchor="middle" font-family="{sans}" font-size="72" font-weight="700" fill="#e6edf3">Sample storyboard</text>
-  <text x="640" y="418" text-anchor="middle" font-family="{sans}" font-size="34" fill="#8b949e">a storyboard, a voice, a browser and ffmpeg</text>
-  <text x="640" y="566" text-anchor="middle" font-family="{mono}" font-size="28" fill="#3fb950">python scripts/video/render.py scripts/video/sample.storyboard</text>
-</svg>
-"""
 
 
 BADGE_PY = ROOT / "src" / "knos" / "badge.py"

@@ -830,7 +830,7 @@ def _gh_pull(owner: str, name: str, text: str, gh) -> str:
     return gh("api", "-X", "POST", f"{repo}/pulls", "-f", "title=Install Knos", "-f", "head=knos-install", "-f", f"base={base}",
               "-f", "body=Adds .github/workflows/knos.yml: a `/knos fund` comment funds an issue with test USDC on Solana devnet, and the merged "
                     "pull request that closes it is paid. No secret, and no write access to this repository's code. "
-                    "https://github.com/drexthealpha/Knos/blob/main/docs/INSTALL.md", "--jq", ".html_url").strip()
+                    "https://github.com/drexthealpha/Knos/blob/main/docs/reference/INSTALL.md", "--jq", ".html_url").strip()
 
 
 def _gh(*args: str) -> str:

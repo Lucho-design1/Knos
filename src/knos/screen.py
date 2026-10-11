@@ -117,7 +117,7 @@ def load(now: float | None = None, get=None, cache: Path | None = None, ttl: int
         text = raw.decode("utf-8-sig", "replace") if isinstance(raw, (bytes, bytearray)) else str(raw)
         found = parse(text)
         if not found:
-            raise ValueError("it holds no digital currency address at all, so its format may have changed")
+            raise ValueError("The sanctions list holds no digital-currency address at all, so its format may have changed. Download it again, or update knos.")
     except Exception as why:  # noqa: BLE001 - no network, a refusal, or a file that is not the list
         if have:
             return Listing(frozenset(have[0]), have[1], stale=True)

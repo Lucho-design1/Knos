@@ -2,7 +2,7 @@
 """vendor_pages.py -- one page for each agent vendor the Agent PR Index rates: its numbers, its reply, its disputes and
 what it can do to earn the supplier badge. From the published files alone; no network, no clock.
 
-    python scripts/agent_pr_index.py vendors           # write docs/VENDORS.md and docs/vendors.json
+    python scripts/agent_pr_index.py vendors           # write docs/reference/VENDORS.md and docs/vendors.json
     python scripts/agent_pr_index.py vendors --check   # write nothing; exit 1 when either differs
 
 What a vendor gets, for each row:
@@ -13,7 +13,7 @@ What a vendor gets, for each row:
                docs/index_replies.json and printed beside the row word for word, as the vendor wrote it
     disputes   one click opens the "Dispute a row" form with the agent and the week filled in; every dispute of the
                row, open or closed, with what was found (docs/index_disputes.json)
-    badge      the two steps that turn the vendor's record from grey to green (docs/RECORD.md): the free check on its
+    badge      the two steps that turn the vendor's record from grey to green (docs/reference/RECORD.md): the free check on its
                own pull requests, and accepted work under a funded order, which writes a signed delivery record
 
     docs/index_replies.json:
@@ -39,7 +39,7 @@ REPO = agent_pr_board.REPO
 SITE = "https://drexthealpha.github.io/Knos"
 REPLY_TEMPLATE = "vendor-reply.yml"
 MAX_REPLY = 1200
-INSTALL = "uses: drexthealpha/Knos/.github/workflows/supplier.yml@v0.3.26"
+INSTALL = "uses: drexthealpha/Knos/.github/workflows/supplier.yml@v0.3.27"
 NOT = [
     "It is not a rating of defect-free work: a merged pull request with no failed check can still be wrong.",
     "It is not a rating of the code or of the vendor: it counts what GitHub recorded against what a description said.",
@@ -47,11 +47,11 @@ NOT = [
 ]
 BADGE_STEPS = [
     {"step": "Run the free check on your own pull requests",
-     "how": f"One line in your repository's workflow: `{INSTALL}` (docs/RECORD.md, section 3)",
+     "how": f"One line in your repository's workflow: `{INSTALL}` (docs/reference/RECORD.md, section 3)",
      "gives": "a check receipt for each pull request; the badge stays grey"},
     {"step": "Deliver accepted work under a funded order",
      "how": "A buyer funds an order; the work passes the terms fixed at funding and is paid on a token the forge signed",
-     "gives": "an acceptance receipt for each delivery (docs/RECEIPT.md); the badge turns green, with its sample"},
+     "gives": "an acceptance receipt for each delivery (docs/reference/RECEIPT.md); the badge turns green, with its sample"},
 ]
 
 
@@ -132,13 +132,13 @@ def _row_line(row: dict[str, Any]) -> str:
 
 
 def markdown(doc: dict[str, Any]) -> str:
-    """docs/VENDORS.md."""
+    """docs/reference/VENDORS.md."""
     lines = ["# Vendors in the Agent PR Index", "",
              "<!-- written by scripts/agent_pr_index.py vendors; do not edit by hand -->", "",
              f"One section for each agent the [Agent PR Index](INDEX.md) counts, week of {doc['week']} (read {doc['read']}): its "
              "numbers with their sample, its reply, its disputes, and how it earns the supplier badge. The site shows the "
              f"same as a page per vendor ([{SITE}/#vendor=copilot]({SITE}/#vendor=copilot)); the data is "
-             "[`vendors.json`](vendors.json).", "", "**What the index is not.**", ""]
+             "[`vendors.json`](../vendors.json).", "", "**What the index is not.**", ""]
     lines += [f"- {n}" for n in doc["not"]]
     lines += ["", f"**The rule.** {doc['rule']} A reply or a dispute costs nothing and changes no number by itself; a "
               "dispute that finds a miscount changes the row, and the change is listed in the changelog of "

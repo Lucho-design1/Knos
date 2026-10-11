@@ -1,6 +1,6 @@
 """An outcome that is not code, signed by a workload identity that is not a forge: the data-transformation example
 (examples/outcomes/data-transformation) judged in a Kubernetes Job, and a service-account token of the cluster whose
-audience is the evaluation. docs/OUTCOMES.md, "A Kubernetes cluster signs an outcome", is the page.
+audience is the evaluation. docs/reference/OUTCOMES.md, "A Kubernetes cluster signs an outcome", is the page.
 
     python scripts/outcome_k8s.py job                       IN THE POD: judge, then ask the cluster for the token
     python scripts/outcome_k8s.py collect --log LOG --out DIR   the Job's log -> DIR/token and DIR/verdict.json
@@ -143,7 +143,7 @@ def jwks_rsa(jwks: dict) -> dict[str, int]:
 
 
 def describe_jwks(jwks: dict) -> list[dict]:
-    """Every key of a key set as the table of docs/VERIFIER.md names one: its type, its algorithm, its size."""
+    """Every key of a key set as the table of docs/reference/VERIFIER.md names one: its type, its algorithm, its size."""
     rows = []
     for k in jwks.get("keys", []) if isinstance(jwks, dict) else []:
         bits = None

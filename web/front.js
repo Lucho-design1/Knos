@@ -89,7 +89,7 @@ async function gh(path) {
     const reset = Number(r.headers.get("x-ratelimit-reset")) * 1000;
     throw new RateLimited(reset ? new Date(reset).toLocaleTimeString() : "");
   }
-  if (r.status === 404) throw new Error("not found (private repo, or no such PR)");
+  if (r.status === 404) throw new Error("not found (a private repository, or no such pull request)");
   if (!r.ok) throw new Error(`GitHub said ${r.status}`);
   return r.json();
 }
@@ -202,7 +202,7 @@ jobs:
       statuses: read
       actions: read
       id-token: write
-    uses: drexthealpha/knos-workflows/.github/workflows/fund.yml@59c61e1c97be687d41ab191f9ec706e05875754c
+    uses: drexthealpha/knos-workflows/.github/workflows/fund.yml@18b7bb630848f59795e11268f65418256999332e
     secrets:
       KNOS_RELAY_KEY: \${{ secrets.KNOS_RELAY_KEY }}       # optional: when the repository has none, this passes nothing
 
@@ -223,7 +223,7 @@ jobs:
       statuses: read
       actions: read
       id-token: write
-    uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@59c61e1c97be687d41ab191f9ec706e05875754c
+    uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@18b7bb630848f59795e11268f65418256999332e
     secrets:
       KNOS_RELAY_KEY: \${{ secrets.KNOS_RELAY_KEY }}       # optional, as above
 
@@ -243,7 +243,7 @@ jobs:
       statuses: read
       actions: read
       id-token: write
-    uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@59c61e1c97be687d41ab191f9ec706e05875754c
+    uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@18b7bb630848f59795e11268f65418256999332e
     secrets:
       KNOS_RELAY_KEY: \${{ secrets.KNOS_RELAY_KEY }}       # optional, as above
 `;
@@ -292,7 +292,7 @@ jobs:
       checks: read
       statuses: read
       actions: read
-    uses: drexthealpha/knos-workflows/.github/workflows/check.yml@59c61e1c97be687d41ab191f9ec706e05875754c
+    uses: drexthealpha/knos-workflows/.github/workflows/check.yml@18b7bb630848f59795e11268f65418256999332e
 `;
 
 export function checkUrl(owner, repo, branch) {
@@ -389,7 +389,7 @@ function interval(k, n) {
 }
 
 export function agentRecord(index, agent) {
-  if (!index) return `<p class="fine">Agent PR Index not loaded here (it is built with the site).</p>`;
+  if (!index) return `<p class="fine">The agent pull request index is not on this copy of the site.</p>`;
   const a = agent && index.agents?.[agent];
   if (!a) return `<p class="fine">No record for ${agent ? esc(agent) : "this author"} in the Agent PR Index (${esc(index.date || "")}).</p>`;
   const c = agentCounts(a);
@@ -397,9 +397,9 @@ export function agentRecord(index, agent) {
   const all = c.prs ? `Counting every such pull request: ${c.any} of ${c.prs} (${share(c.any, c.prs)}).` : "";
   const lead = c.repos
     ? `in <strong>${c.repos}</strong> repositories, its first pull request that said tests pass had a failing check of any kind in
-       <strong>${c.repoAny}</strong> (<strong>${share(c.repoAny, c.repos)}</strong>, 95% interval ${interval(c.repoAny, c.repos)}).${tests(c.repoTests, c.repos, "repositories")} ${all}`
+       <strong>${c.repoAny}</strong> (<strong>${share(c.repoAny, c.repos)}</strong>, 95% confidence interval ${interval(c.repoAny, c.repos)}).${tests(c.repoTests, c.repos, "repositories")} ${all}`
     : `said tests pass on <strong>${c.prs}</strong> pull requests with finished CI; a check of any kind had failed on
-       <strong>${c.any}</strong>${c.prs ? ` (<strong>${share(c.any, c.prs)}</strong>, 95% interval ${interval(c.any, c.prs)})` : ""}.${tests(c.tests, c.prs, "pull requests")}`;
+       <strong>${c.any}</strong>${c.prs ? ` (<strong>${share(c.any, c.prs)}</strong>, 95% confidence interval ${interval(c.any, c.prs)})` : ""}.${tests(c.tests, c.prs, "pull requests")}`;
   return `<p><strong>${esc(agent)}</strong> in the Agent PR Index (${esc(index.date)}): ${lead}${index.excluded_self_repo
     ? ` Pull requests on the author's own repositories are left out (${index.excluded_self_repo}).` : ""}</p>`;
 }
@@ -408,7 +408,7 @@ export function agentRecord(index, agent) {
 // tests pass, how many had a failing check, per agent, and each one. No request but index.json.
 function repoRecord(index, ref) {
   const name = `${ref.owner}/${ref.repo}`, single = `Paste a pull request link above to check a single pull request.`;
-  if (!index) return `<div id="repo-record"><p class="fine">Agent PR Index not loaded here (it is built with the site). ${single}</p></div>`;
+  if (!index) return `<div id="repo-record"><p class="fine">The agent pull request index is not on this copy of the site. ${single}</p></div>`;
   const prs = (Array.isArray(index.prs) ? index.prs : []).filter((p) => String(p.repo).toLowerCase() === name.toLowerCase());
   if (!prs.length) {
     return `<div id="repo-record"><p class="status">No agent pull requests for ${esc(name)} in the Agent PR Index (${esc(index.date || "")}).
@@ -431,7 +431,7 @@ async function check(ev) {
   ev?.preventDefault();
   const out = $("pr-result"), ref = parsePr($("pr-url").value), repoRef = ref ? null : parseRepo($("pr-url").value);
   if (repoRef) { out.innerHTML = repoRecord(await loadIndex(), repoRef); return; }
-  if (!ref) { out.innerHTML = `<p class="status bad">Paste a PR link like https://github.com/owner/repo/pull/123, or owner/repo to see a repository's record</p>`; return; }
+  if (!ref) { out.innerHTML = `<p class="status bad">Paste a pull request link like https://github.com/owner/repo/pull/123, or a repository name (owner/repo) to see its record.</p>`; return; }
   out.innerHTML = `<p class="status">Reading GitHub…</p>`;
   const base = `/repos/${ref.owner}/${ref.repo}`;
   try {
@@ -443,33 +443,35 @@ async function check(ev) {
     if (st.sha && st.sha !== sha) {  // pushed to between the reads: read CI at the PR's SHA
       [cr, st] = await Promise.all([gh(`${base}/commits/${sha}/check-runs?per_page=100`), gh(`${base}/commits/${sha}/status`)]);
     }
+    // the verdict's code (data-verdict, read by tests and links) and the words a reader sees
+    const SAID = { "No tests-pass claim in the PR description": "The pull request's description does not say its tests pass", "claim FALSE": "The claim is false",
+      "claim true": "The claim is true", "claim unproven": "The claim is not proven yet" };
     const claim = findClaim(pr.body), ci = ciVerdict(cr.check_runs || [], st.statuses || []), agent = agentOf(pr);
     let verdict, cls;
-    if (!claim) { verdict = "No tests-pass claim in the PR description"; cls = ""; }
+    if (!claim) { verdict = "No tests-pass claim in the PR description"; cls = ""; }      // the code; the words a reader sees are SAID's
     else if (ci.cls === "failed") { verdict = "claim FALSE"; cls = "bad"; }
     else if (ci.cls === "passed") { verdict = "claim true"; cls = "ok"; }
     else { verdict = "claim unproven"; cls = ""; }
     const repo = pr.base.repo;
     out.innerHTML = `
-      <p id="verdict" class="verdict ${cls}" data-verdict="${esc(verdict)}">${esc(verdict)}</p>
+      <p id="verdict" class="verdict ${cls}" data-verdict="${esc(verdict)}">${esc(SAID[verdict])}</p>
       <dl class="facts">
-        <dt>PR</dt><dd><a href="${esc(pr.html_url)}">${esc(repo.full_name)}#${pr.number}</a> by ${esc(pr.user.login)}${agent ? ` (${esc(agent)})` : ""}</dd>
+        <dt>Pull request</dt><dd><a href="${esc(pr.html_url)}">${esc(repo.full_name)}#${pr.number}</a> by ${esc(pr.user.login)}${agent ? ` (${esc(agent)})` : ""}</dd>
         <dt>Claims</dt><dd>${claim ? `“${esc(claim.line)}”` : "nothing about tests passing"}</dd>
-        <dt>CI at <code>${esc(sha.slice(0, 7))}</code></dt><dd>${esc(CI_TEXT[ci.cls])}${ci.failed.length
+        <dt>Checks at commit <code>${esc(sha.slice(0, 7))}</code></dt><dd>${esc(CI_TEXT[ci.cls])}${ci.failed.length
           ? `: ${[...new Set(ci.failed)].slice(0, 8).map(esc).join(", ")}` : ""}</dd>
       </dl>
       ${agentRecord(index, agent)}
       <a class="button" id="check-protect" href="#protect=${encodeURIComponent(`${repo.full_name}@${repo.default_branch}`)}">Protect ${esc(repo.full_name)}</a>
-      <p class="fine">One workflow file makes a funded issue's payment run on this repository: the merged pull request
-        is paid when the funder's checks passed at the merged commit, as the workflow reads them from GitHub, and Solana has
-        checked GitHub's signature of that workflow run. An optional second
+      <p class="fine">Add one workflow file to pay for issues in this repository. A merged pull request is paid when the
+        funder's checks passed, and Solana has checked GitHub's signature of that run. An optional second
         file runs this same check on every pull request. Fee: only when someone is paid, at the rate <a href="#pricing">Pricing</a> reads from the program.</p>`;
   } catch (e) {
     out.innerHTML = e instanceof RateLimited
-      ? `<p class="status bad">GitHub's free limit for this network is used up (60 reads an hour without login).
+      ? `<p class="status bad">GitHub's free limit for your connection is used up (60 reads an hour without signing in).
          Try again after ${esc(e.message || "an hour")}, or open the PR's
          <a href="https://github.com/${esc(ref.owner)}/${esc(ref.repo)}/pull/${ref.number}/checks">checks on GitHub</a>.</p>`
-      : `<p class="status bad">Could not read that PR: ${esc(e.message)}</p>`;
+      : `<p class="status bad">Could not read that pull request: ${esc(e.message)}</p>`;
   }
 }
 
@@ -532,9 +534,9 @@ export const PAGES = {
     const [m, data] = await Promise.all([import("./capabilities.js"), fetch("capabilities.json").then((r) => (r.ok ? r.json() : null)).catch(() => null)]);
     if (!data) return;
     el.innerHTML = `<h2>What Knos can do</h2>
-      <p class="lede">One row per capability, at its proven stage.</p>
-      <div class="cap-links" data-keep><a class="k-btn quiet" id="cap-manifest" href="https://github.com/drexthealpha/Knos/blob/main/docs/MANIFEST.md">What is live, in one page</a>
-        <a id="cap-document" href="https://github.com/drexthealpha/Knos/blob/main/docs/CAPABILITIES.md">As a document</a></div><div class="card" id="capabilities-list"></div>`;
+      <p class="lede">One row per feature, with how far it has been proven.</p>
+      <div class="cap-links" data-keep><a class="k-btn quiet" id="cap-manifest" href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/MANIFEST.md">What is live, in one page</a>
+        <a id="cap-document" href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/CAPABILITIES.md">As a document</a></div><div class="card" id="capabilities-list"></div>`;
     m.renderCapabilities($("capabilities-list"), data);
   } },
   // #buy names its whole graph: a modulepreload fetches one file, not what it imports, and on a slow phone each level waited a round trip
@@ -561,12 +563,12 @@ function initAdded() {
   }
   addEventListener("resize", fitBar);          // and after every route, which is what shows a link (route)
 }
-// THE BAR IS ONE LINE OF SIX WORDS: the first screen's forty count them (tests/web/front_door.mjs). A page added to the
+// THE BAR IS ONE LINE OF SIX WORDS: the first screen's 56 count them (tests/web/front_door.mjs). A page added to the
 // bar takes its words from the links a first visitor needs least, which go under "More", first there: the documents
-// (a link out), the leaderboard (the strip under the box leads to it), then "Check" (the wordmark is the way home).
+// (a link out), Install (the Docs lead to it too), then "Check" (the wordmark is the way home).
 // Where the window is still too narrow, the last link added goes under "More" too. Everything comes back when there
 // is room or the page is gone; on a phone the whole menu is behind one button and nothing moves.
-const YIELD = ['a[href$="/docs"]', 'a[href="#index"]', 'a[href="#check"]'], BAR_WORDS = 6;
+const YIELD = ['a[href$="/docs"]', 'a[href="#install"]', 'a[href="#check"]'], BAR_WORDS = 6;
 let barHome = null;
 function fitBar() {
   const nav = $("nav"), list = $("more-list"), more = $("more"), at = nav?.querySelector('a[href="#pricing"]');
@@ -833,7 +835,7 @@ function initBar() {
 // banner under the bar takes this line's place.
 // Every line is true whenever it is read: before the earliest time one of them can run they are pending; after it the
 // file cannot say whether they ran, so the line says they were approved and that their delay is over. The line is two
-// words and a figure (the count, drawn as a badge): the first screen keeps to its 40 words.
+// words and a figure (the count, drawn as a badge): the first screen keeps to its 56 words.
 export const feedPending = (feed) => (Array.isArray(feed?.entries) ? feed.entries : []).filter((e) => e && e.status === "pending" && typeof e.program === "string");
 export function feedLine(feed, now = Date.now() / 1000) {
   const p = feedPending(feed), n = p.length;
@@ -846,11 +848,11 @@ const utc = (iso) => String(iso || "").replace("T", " ").replace(/:\d\d(\.\d+)?Z
 export function feedBanner(feed) {
   const p = feedPending(feed);
   if (!p.length) return "";
-  return `<p class="fine" id="upgrade-source">Pending when this site was built (${esc(utc(feed.generated))}), as <a href="upgrades.json">upgrades.json</a> records them.
-      The pages that read Solana read the upgrade multisig itself.</p>`
+  return `<p class="fine" id="upgrade-source">Pending when this site was built (${esc(utc(feed.generated))}). <a href="upgrades.json">The file</a>.
+      Pages that read Solana show the live state.</p>`
     + p.map((e) => `<p class="upgrade" data-program="${esc(e.program)}" data-status="${esc(e.squads_status || e.status)}" data-index="${esc(e.index)}">${esc(e.words || `An upgrade of ${e.program} is pending.`)}</p>`).join("")
     + `<p class="fine">Follow every proposal: <a id="upgrade-feed" href="upgrades.xml" type="application/atom+xml">the upgrade feed (Atom)</a>.
-      What the delay protects: <a id="upgrade-security" href="https://github.com/drexthealpha/Knos/blob/main/docs/SECURITY.md#7-the-upgrade-authority" target="_blank" rel="noopener">docs/SECURITY.md</a>, section 7.</p>`;
+      What the delay protects: <a id="upgrade-security" href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/SECURITY.md#7-the-upgrade-authority" target="_blank" rel="noopener">docs/reference/SECURITY.md</a>, section 7.</p>`;
 }
 function initUpgrades() {
   const fold = $("hero-upgrades"), body = $("hero-upgrades-body"), root = document.documentElement;

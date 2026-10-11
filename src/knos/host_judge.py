@@ -136,14 +136,14 @@ def reads(payees, hosts, buyers=(), declared=(), suite: bool = True) -> dict:
 
 
 def says() -> list[str]:
-    """What a host is paid, can do and cannot do, as lines (examples/host_a_judge/README.md and docs/ATTESTOR.md say the same)."""
+    """What a host is paid, can do and cannot do, as lines (examples/host_a_judge/README.md and docs/reference/ATTESTOR.md say the same)."""
     return ["Paid: " + PAID, "A host can:", *("  - " + line for line in CAN), "A host cannot:", *("  - " + line for line in CANNOT)]
 
 
 def main(argv: list[str] | None = None) -> int:
     import argparse
     from pathlib import Path
-    ap = argparse.ArgumentParser(prog="python -m knos.host_judge", description="Host the neutral evaluator in a repository of your own: the links, and the level a receipt then reads.")
+    ap = argparse.ArgumentParser(prog="python -m knos.host_judge", description="Run the neutral evaluator in a repository you own. Prints the setup links and the assurance level a receipt would then show.")
     sub = ap.add_subparsers(dest="what", required=True)
     one = sub.add_parser("link", help="the one click: a repository of your own from the template")
     one.add_argument("--name", default=NAME)

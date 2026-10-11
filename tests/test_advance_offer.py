@@ -1,4 +1,4 @@
-"""`knos advance` (src/knos/advance.py, docs/ADVANCE.md) in the Solana runtime (LiteSVM): a third party advances a
+"""`knos advance` (src/knos/advance.py, docs/reference/ADVANCE.md) in the Solana runtime (LiteSVM): a third party advances a
 supplier the payment of a funded order. One transaction pays the supplier and assigns the order; after that the order
 ends one of three ways and each pays one party once. Knos lends nothing and charges nothing."""
 from __future__ import annotations

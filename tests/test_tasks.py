@@ -118,7 +118,7 @@ def test_the_three_tools_only_read_and_the_install_page_names_them(monkeypatch, 
     by_name = {t["name"]: t for t in mcp.TOOLS}
     for name in ("tasks_open", "task_show", "task_take"):
         assert by_name[name]["annotations"]["readOnlyHint"] is True, name
-    page = (ROOT / "docs" / "INSTALL.md").read_text(encoding="utf-8").split("\n| For |")[0]
+    page = (ROOT / "docs" / "reference" / "INSTALL.md").read_text(encoding="utf-8").split("\n| For |")[0]
     assert all(f"`{t['name']}`" in page for t in mcp.TOOLS)
     assert "tasks_open, task_show and task_take read the public task board and send nothing" in mcp.INSTRUCTIONS
     listed = call("tasks_open", {"limit": 1}, Ledger(), GitHub())                 # the real serve loop, with no board on this machine: one sentence
@@ -132,7 +132,7 @@ def _cli(*argv: str):
     app.command("noop")(lambda: None)
     rows: list = []
     tasks.register(app, rows)
-    assert rows == [("task", "For money", "Take a funded test task; the merge pays. Why a merged pull request was not paid.")]
+    assert rows == [("task", "For suppliers", "Take a funded test task; the merge pays. Why a merged pull request was not paid.")]
     return CliRunner().invoke(app, ["task", *argv])
 
 

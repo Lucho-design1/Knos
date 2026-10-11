@@ -18,7 +18,7 @@ shell, a comment or a sentence. The job that signs runs none of that code and ta
      (`knos.judge.classify_path`), and the hash of the acceptance bundle on the base commit;
   4. and only then lets the next step ask for the token, whose audience that step derives itself.
 
-What it cannot recompute is said in docs/SECURITY.md ("Where untrusted code runs"): that the suite passed is the
+What it cannot recompute is said in docs/reference/SECURITY.md ("Where untrusted code runs"): that the suite passed is the
 judge machine's word. This module shrinks what that word can do to one bit about one pull request at one commit.
 """
 from __future__ import annotations
@@ -63,13 +63,13 @@ def _pairs(pairs: list[tuple[str, Any]]) -> dict:
     out: dict = {}
     for k, v in pairs:
         if k in out:
-            raise ValueError("a key is there twice")
+            raise ValueError("the verdict has the same field twice")
         out[k] = v
     return out
 
 
 def _no(text: str):
-    raise ValueError("not a number a verdict has")
+    raise ValueError("this value is not a number a verdict can hold")
 
 
 def strict(text: str, most: int = MAX) -> dict:
@@ -393,7 +393,7 @@ def main(argv: list[str] | None = None, env: Mapping[str, str] | None = None, gi
     c = sub.add_parser("check", help="the signing job: read VERDICT (or --file), hold it to this run and check it again from GitHub's record")
     c.add_argument("--file", default="", help="the verdict as a file, or a folder that holds verdict.json and nothing else")
     c.add_argument("--offline", action="store_true", help="shape and binding only: nothing is read from GitHub")
-    sub.add_parser("shape", help="attest.yml's signing job: KNOS_RERUN is text any reader reads the same way")
+    sub.add_parser("shape", help="the signing job of attest.yml: check that KNOS_RERUN is plain text with only one possible reading")
     a = p.parse_args(argv)
     try:
         if a.cmd == "emit":

@@ -1,38 +1,45 @@
-"""`knos mcp`: paid work and claim checks for a coding agent, over the Model Context Protocol on stdio.
+"""`knos mcp`: paid work and claim checks for a coding agent, over the Model Context Protocol on stdio. It offers 18
+tools, in four groups.
+
+Read only (public Solana and GitHub data: no key, no wallet, nothing written):
 
     knos_bounties   the open bounties in escrow, largest first: work an agent can take
     knos_bounty     what is in escrow for one issue: each job's state and its terms in words
     knos_check_pr   whether a pull request's "tests pass" is true at its head commit, on GitHub's record
     knos_due        where a GitHub account is paid, what is held for it, its record, and the balances set aside for
                     its repositories
+    knos_quote      what one issue's bounty is worth to whoever does the work, and what stands in the way of payment
+    knos_can_pay    whether a bounty on one issue would be paid when its work is merged
 
-The money tools read both deployments. New funding goes to the second (programs-v2: knos.settle.v2), so that is
-where open work is; a job funded on the first (knos.settle) finishes there, and its rows say `"deployment": 1`.
-Those tools only read public data (Solana and GitHub): no key, no wallet, nothing written. `knos init` registers
-this server with the agents on the machine.
+The exact comment to post (each checks first, then returns the comment; none sends anything):
 
-Four more are the loop an agent runs by itself, with no person in it on an `auto` order:
+    knos_take       reserve a funded issue (`/knos take`)
+    knos_address    name the Solana address a pull request's payment goes to (`/knos address <address>`)
+    knos_fund       put a bounty on an issue (`/knos fund <amount> ...`)
+    knos_settle     have a merged pull request's payment made or tried again (`/knos settle`)
+
+The public test-task board (test USDC, no monetary value; read only):
+
+    tasks_open      the funded test tasks open on the board
+    task_show       one task: amount, the file a solution edits, terms, open pull requests
+    task_take       the steps from a task to being paid
+
+The loop an agent runs by itself, with no person in it on an `auto` order:
 
     knos_find_work    open, unreserved, funded work from the chain, with its terms and the command that judges it locally
     knos_take_work    posts `/knos take` on the issue, as the agent's GitHub account
+    knos_preflight    before a pull request: which changed files the order's terms allow, count or refuse, and why
     knos_submit_work  runs the order's acceptance locally, and only when it passes opens the pull request (`Fixes #<issue>`)
     knos_collect      what is held and what was paid for the agent's account, and binds its payout address when money waits
 
-knos_find_work and the report of knos_collect read only. The three that post (take, submit, the bind in collect) are off
-until the person who runs the agent turns them on (`KNOS_AGENT_ACT=1`, or `knos agent init --allow-actions`), refuse a
-classic GitHub token that carries `repo` unless that was allowed too, and return exactly what they posted. The agent's
-Solana key (knos.agentkey) is only an address here: no tool opens the key file.
+The money tools read both deployments. New funding goes to the second one (programs-v2: knos.settle.v2), so that is
+where open work is. A job funded on the first deployment (Knos 0.3.11 and earlier: knos.settle) finishes there, and
+its rows say `"deployment": 1`. `knos init` registers this server with the agents on the machine.
 
-Whatever a repository or an account wrote (an issue's title and labels, a check's name, the globs in a bounty's terms)
-is returned inside a field named `untrusted`, each string cut to 200 characters, and nowhere else: the server's own
-sentences never repeat it. The instructions tell the agent those fields are data. `KNOS_MCP_REPOS` (owner/name, comma
-or space separated) restricts the tools to those repositories: a listing holds only their bounties, and a tool that
-names another repository refuses it.
-
-The protocol is written out here, with no SDK: one JSON-RPC 2.0 message per line on stdin and stdout, and nothing but
-those messages on stdout. Two eras of clients are answered. One opens with `initialize` and is told the protocol
-version it asked for; the other (revision 2026-07-28) keeps no session and names its version in every request's
-`_meta`. Starting the server opens no connection: the chain and GitHub are asked only when a tool needs them.
+knos_find_work, knos_preflight and the report of knos_collect read only. The three that post (take, submit, the bind in
+collect) are off until the person who runs the agent turns them on (`KNOS_AGENT_ACT=1`, or `knos agent init
+--allow-actions`). They refuse a classic GitHub token that carries `repo` unless that was allowed too, and return exactly
+what they posted. The agent's Solana key (knos.agentkey) is only an address here: no tool opens the key file.
 """
 
 from __future__ import annotations
@@ -129,8 +136,8 @@ TOOLS = [
           ["pr"]),
     _tool("knos_due", "Waiting for a GitHub account",
           "Where a GitHub account is paid (the wallet bound to it), what is held for it until it binds one, its "
-          "public record of payments, the balances set aside for bounties in its repositories, what the first "
-          "deployment still holds for it, and how to claim.",
+          "public record of payments, the balances set aside for bounties in its repositories, what Knos's first "
+          "deployment (0.3.11 and earlier) still holds for it, and how to claim.",
           {"login": {"type": "string", "description": "a GitHub login"}}, ["login"]),
     _tool("knos_quote", "Quote for one issue",
           "What one issue's bounty is worth to whoever does the work: its amount, its terms, what stands in the way of being "
@@ -563,7 +570,7 @@ class Server:
         """`_about` from GitHub's answer for the issue. Raises KeyError or TypeError when it is not an issue."""
         title, names = got["title"], [x["name"] for x in got["labels"]]
         if not isinstance(title, str) or not all(isinstance(n, str) for n in names):
-            raise TypeError("title and label names are text")   # null is "GitHub did not say", never the word None
+            raise TypeError("An issue's title and label names must be text.")   # null is "GitHub did not say", never the word None
         return {"assigned": bool(got.get("assignees") or got.get("assignee")), "untrusted": _cap({"title": title, "labels": names})}
 
     # -- the tools ----------------------------------------------------------------------------------------------
@@ -1273,7 +1280,7 @@ class Server:
             said.append(f"{len(waits)} payment{s(len(waits))} {'is' if len(waits) == 1 else 'are'} held for {login}"
                         + ("" if bound else " until a wallet is bound") + ".")
         if waiting:
-            said.append(f"The first deployment holds {_usdc(total)} USDC for {login}.")
+            said.append(f"The first deployment (Knos 0.3.11 and earlier) holds {_usdc(total)} USDC for {login}.")
         if not waits and not waiting:
             said.append(f"Nothing is waiting for {login}.")
         how = ([] if bound and not waits else

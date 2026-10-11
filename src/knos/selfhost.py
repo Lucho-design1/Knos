@@ -1,4 +1,4 @@
-"""Knos in the buyer's own cloud: one image, three roles, one config file (deploy/, docs/SELFHOST.md).
+"""Knos in the buyer's own cloud: one image, three roles, one config file (deploy/, docs/reference/SELFHOST.md).
 
     knos selfhost check CONFIG [--files]   validate knos.toml; print what will run and which key files it needs
     knos selfhost plan [CONFIG]            the compose services that config starts, and the command that starts them
@@ -263,7 +263,7 @@ def describe(c: Checked, files: bool = False) -> list[str]:
         lines.append("  It protects the site (the approver) and the record API's /records/ and /orders/. Tested with a fake provider only.")
         lines.append("Knos hosts none of this.")
     else:
-        lines.append("Knos hosts none of this. No sign-in: add [sso], or put the ports behind your identity proxy (docs/SELFHOST.md).")
+        lines.append("Knos hosts none of this. No sign-in: add [sso], or put the ports behind your identity proxy (docs/reference/SELFHOST.md).")
     return lines
 
 
@@ -451,7 +451,7 @@ def run(role: str, config: Path) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     import argparse
-    ap = argparse.ArgumentParser(prog="python -m knos.selfhost", description="Knos in the buyer's own cloud (docs/SELFHOST.md).")
+    ap = argparse.ArgumentParser(prog="python -m knos.selfhost", description="Knos in the buyer's own cloud (docs/reference/SELFHOST.md).")
     sub = ap.add_subparsers(dest="what", required=True)
     s = sub.add_parser("check", help="validate the config; print what will run and which key files it needs")
     s.add_argument("config", type=Path)
@@ -484,7 +484,7 @@ def register(app: Any, help_lines: list | None = None) -> None:
     typer = importlib.import_module("typer")
     if help_lines is not None:
         help_lines.append(("selfhost", "For money", "Run the record API, relay and approver in your own cloud."))
-    group = typer.Typer(help="Knos in the buyer's own cloud: one image, three roles, one config file (docs/SELFHOST.md).", no_args_is_help=True)
+    group = typer.Typer(help="Knos in the buyer's own cloud: one image, three roles, one config file (docs/reference/SELFHOST.md).", no_args_is_help=True)
     app.add_typer(group, name="selfhost", rich_help_panel="For money")
 
     @group.command("check")

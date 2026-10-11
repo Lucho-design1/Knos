@@ -52,7 +52,7 @@ Languages (picked from the acceptance bundle's files, or `runner = "..."` in .kn
     blackbox any language, and forgery-proof           acceptance: a `blackbox` script that runs as the judge and
                                                        reaches the pull request's code only through "$KNOS_RUN ..."
 
-What is and is not stopped (docs/SECURITY.md says the same): in the first five runners the code under test shares a
+What is and is not stopped (docs/reference/SECURITY.md says the same): in the first five runners the code under test shares a
 process with the test runner, so a pull request written to forge the runner's report from inside is not stopped by
 the report alone. The blackbox runner closes that: the check never loads the pull request's code, so nothing that
 code does can change the verdict except producing the right output. An implementation that special-cases fixed
@@ -423,7 +423,7 @@ def black_box(files: dict, cfg: dict | None = None) -> str:
     """Why an acceptance bundle is not black-box, in words that finish "its checks ..."; "" when it is.
 
     This is the mechanical test that decides whether a bounty may be paid by its acceptance checks alone, with no
-    merge. docs/TAMPER.md measures why it matters: checks that import the submission into the judge's process were
+    merge. docs/reference/TAMPER.md measures why it matters: checks that import the submission into the judge's process were
     fooled by pull requests that patch the test runner from inside or answer the fixed examples; black-box checks
     (the submission runs as a separate process and only what it prints is compared) were fooled by none. knos.flow
     asks this when a bounty is funded (a bundle that fails it is funded on the merge) and again before the proof of

@@ -22,7 +22,7 @@ anything was noted. GitHub and the chain are stand-ins here too; the relay, its 
 
 What is counted: entries done and dead, sends per entry (every one must be 1), entries the chain took (each once),
 entries that left out of order within their lane, and the entry taken again after the kill. `--write` puts the
-result in docs/load.json (`relay.queue`) and renders docs/LOAD.md (scripts/load.py).
+result in docs/load.json (`relay.queue`) and renders docs/reference/LOAD.md (scripts/load.py).
 """
 from __future__ import annotations
 
@@ -296,7 +296,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--workers", type=int, default=relayq.WORKERS)
     ap.add_argument("--lanes", type=int, default=20, help="payers the entries are spread over")
     ap.add_argument("--seed", type=int, default=SEED)
-    ap.add_argument("--write", action="store_true", help="put the result in docs/load.json and render docs/LOAD.md")
+    ap.add_argument("--write", action="store_true", help="put the result in docs/load.json and render docs/reference/LOAD.md")
     a = ap.parse_args(argv)
     got = run(a.items, a.workers, a.lanes, a.seed)
     swept = sweep()

@@ -1,6 +1,6 @@
 # The data-transformation outcome as a Kubernetes Job, under a named service account that may ask the cluster for
 # one thing: a token of its own. .github/workflows/outcome-k8s.yml applies this file to a kind cluster it starts;
-# scripts/outcome_k8s.py is what the pod runs. docs/OUTCOMES.md, "A Kubernetes cluster signs an outcome".
+# scripts/outcome_k8s.py is what the pod runs. docs/reference/OUTCOMES.md, "A Kubernetes cluster signs an outcome".
 apiVersion: v1
 kind: Namespace
 metadata:

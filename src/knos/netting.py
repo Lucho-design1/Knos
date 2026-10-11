@@ -26,7 +26,7 @@ order under 5.00. So small outcomes accumulate off chain and one release per pay
                 whole value of an unsecured one until the supplier writes it `settled`. `open --max-exposure` bounds
                 it over the whole book, and `add` refuses the line that would pass it.
 
-What the chain enforces and what it does not is ENFORCED below and docs/NETTING.md, word for word.
+What the chain enforces and what it does not is ENFORCED below and docs/reference/NETTING.md, word for word.
 
 Standard library only at import; the fee is knos.settle.v2.pay's own function, asked for when a fee is computed.
 """
@@ -747,7 +747,7 @@ def register(app, help_lines: list | None = None) -> None:
               month: str = typer.Option(..., help="YYYY-MM"),
               cap: str = typer.Option(..., help="the most the period may come to, like 500 or 499.50"),
               unit: str = typer.Option("USDC", help="what the amounts count"),
-              seq: int = typer.Option(None, help="the pair's batch number this month on knos_meter (default: the next this book has not used)"),
+              seq: int = typer.Option(None, help="this buyer and supplier's batch number this month on the meter (default: the next one this book has not used)"),
               reserve: str = typer.Option("", help="the address of the standing order the buyer locked for this pair: the period spends no more than it holds"),
               max_exposure: str = typer.Option("", "--max-exposure", help="without a reserve: the most the supplier may carry unpaid over the whole book "
                                                                            "(default: the cap)")):
@@ -795,7 +795,7 @@ def register(app, help_lines: list | None = None) -> None:
 
     @net.command("settled")
     def settled_(book: Path = typer.Argument(..., help="the book file"),
-                 period: str = typer.Option(..., help="the closed period, like 202610.0"),
+                 period: str = typer.Option(..., help="the closed period, written YYYYMM.N, like 202610.0"),
                  by: str = typer.Option(..., help="what paid it: the order's address or the payment's transaction")):
         """Write a closed period as paid. It leaves the supplier's exposure in this book."""
         with held(book):

@@ -120,7 +120,7 @@ def test_a_reviewed_blob_passes_and_a_changed_one_is_read_again(repo: Path, monk
 
 
 def test_a_reviewed_key_whose_address_becomes_operated_must_be_rotated(repo: Path, monkeypatch):
-    """The review of a spent key does not outlive its address becoming one Knos operates with (docs/LAUNCH.md, row 2)."""
+    """The review of a spent key does not outlive its address becoming one Knos operates with."""
     pytest.importorskip("solders")
     (repo / "target").mkdir()
     (repo / "target" / "spent-keypair.json").write_text(json.dumps(list(keypair_bytes(9))), encoding="utf-8")

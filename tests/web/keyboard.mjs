@@ -69,12 +69,12 @@ for (const reduced of [true, false]) {
     a = await tabTo((x) => x.text === "Supplier: appeal", 20);
     const appeal = await page.evaluate(() => [document.activeElement.closest(".fd-line")?.dataset.line, document.activeElement.parentElement.textContent.trim(), document.activeElement.getAttribute("href")]);
     check(`${tag}: Tab reaches the first owed line's appeal, ringed and in the window, beside "owed to the supplier"`, a.ring && a.seen && appeal[0] === "1"
-      && appeal[1] === "Owed to the supplier: policy met, unauthorised 30 days. Supplier: appeal" && appeal[2].endsWith("docs/DISPUTES.md#the-path"), [a, appeal]);
+      && appeal[1] === "Owed to the supplier: checks passed, nobody approved it in 30 days. Supplier: appeal" && appeal[2].endsWith("docs/reference/DISPUTES.md#the-path"), [a, appeal]);
   }
   a = await tabTo((x) => x.id === "approve", 40);
   check(`${tag}: Tab reaches Approve agreed lines, ringed and scrolled into the window`, a.id === "approve" && a.ring && a.seen, a);
   await page.keyboard.press("Enter");
-  await page.waitForFunction(() => document.querySelector('[data-fd="approved"]').textContent === "Accepted and authorised 2 lines. 5 exceptions left. Not paid.");
+  await page.waitForFunction(() => document.querySelector('[data-fd="approved"]').textContent === "Accepted and approved: 2 lines. Still open: 5 exceptions. Nothing is paid yet.");
   a = await at();
   check(`${tag}: once authorised, no line is owed to the supplier`, await page.$$eval("#front-result [data-fd-owed], #front-result .fd-line[data-owed]", (l) => l.length) === 0);
   check(`${tag}: Enter approves, says so in a live region, and the focus moves on to Download CSV`, a.id === "csv" && a.ring && (await page.getAttribute('[data-fd="approved"]', "aria-live")) === "polite", a);

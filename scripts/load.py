@@ -3,14 +3,14 @@
     python scripts/load.py --local 1000 --write                      # here: the simulator, the committed test builds
     python scripts/load.py --devnet 1000 --issuer-key issuer.pem --wallet ~/.config/solana/id.json --write   # at release
 
-Two tiers, written to docs/load.json and rendered into docs/LOAD.md (`--write`; without it the result is printed).
+Two tiers, written to docs/load.json and rendered into docs/reference/LOAD.md (`--write`; without it the result is printed).
 
   --local N   The test builds of knos_oidc 2.2 and knos_pay 2.2 (tests/fixtures) in LiteSVM, through the tests' own
               harness. N orders on N repositories are funded from one Balance and are all open at once; then they are
               paid in a shuffled order, every 10th token is sent twice and every 50th again after its order closed.
               At the end: every order paid exactly once, paid + fees + refunds == funded, nothing left in any order's
               account, no single-use marker missing. Every transaction's compute units and bytes are recorded per
-              stage, and from those and Solana's limits (LIMITS, sourced in docs/LOAD.md) the time 1,000 orders take on
+              stage, and from those and Solana's limits (LIMITS, sourced in docs/reference/LOAD.md) the time 1,000 orders take on
               a cluster with 1, 4 and 16 relayers is derived. Compute units are exact; cluster time is arithmetic.
 
   --devnet N  Against a cluster, by the operator. GitHub will not sign N tokens on demand, so a test issuer signs
@@ -44,7 +44,7 @@ Two tiers, written to docs/load.json and rendered into docs/LOAD.md (`--write`; 
                   python scripts/load.py measure --relays 4 --orders 40 --wallet <keypair> --write     # the release run
                   python scripts/load.py measure --relays 3 --orders 6 --simulate                      # here: the path, no rate
               What it does not send: PayOrder (see `pay` above). The figure is of funding with and without one
-              shared writable account, not of payments. docs/LOAD.md keeps it apart from the derived bound.
+              shared writable account, not of payments. docs/reference/LOAD.md keeps it apart from the derived bound.
 """
 from __future__ import annotations
 
@@ -76,9 +76,9 @@ from solders.system_program import CreateAccountParams, create_account  # noqa: 
 from knos import chain, fees, terms  # noqa: E402
 from knos.settle.v2 import oidc, pay  # noqa: E402
 
-JSON, DOC = ROOT / "docs" / "load.json", ROOT / "docs" / "LOAD.md"
+JSON, DOC = ROOT / "docs" / "load.json", ROOT / "docs" / "reference" / "LOAD.md"
 SEED = 314
-# Solana's limits, as docs/LOAD.md sources them. `block_cu_before`: the block limit until SIMD-0286 raised it.
+# Solana's limits, as docs/reference/LOAD.md sources them. `block_cu_before`: the block limit until SIMD-0286 raised it.
 LIMITS = {"block_cu": 100_000_000, "block_cu_before": 60_000_000, "account_cu": 12_000_000, "tx_cu": chain.MAX_COMPUTE_UNITS,
           "tx_bytes": chain.MAX_TX_BYTES, "slot_s": 0.4}
 RELAYERS = (1, 4, 16)
@@ -526,20 +526,20 @@ def run_devnet(rpc, wallet: Keypair, issuer_key, n: int, senders: int = 8, url: 
 # == throughput, measured ==============================================================================================
 PHASES = {"apart": "no account written by two relays", "shared": "every transaction also writes one token account, as every release writes the fee account"}
 REDUCES = [
-    ("Several fee payers", "exists: `KNOS_RELAY_KEYS` (docs/RELAY.md). Each owner's tokens always pay from the same one of the keys, so the relays stop "
+    ("Several fee payers", "exists: `KNOS_RELAY_KEYS` (docs/reference/RELAY.md). Each owner's tokens always pay from the same one of the keys, so the relays stop "
                            "sharing the one account that pays the fees: the per-relayer ceiling of section 3 is per key."),
-    ("One release for many small outcomes", "exists: `knos net` (docs/NETTING.md) settles outcomes under 20 USD as one release per payee per period, so "
+    ("One release for many small outcomes", "exists: `knos net` (docs/reference/NETTING.md) settles outcomes under 20 USD as one release per payee per period, so "
                                             "the fee account is written once per payee per period and not once per outcome."),
     ("One transaction for many evaluations", "exists: the meter's RecordBatch counts a period's evaluations in one transaction and moves no money, so it "
                                              "does not write the fee account at all."),
     ("A fee account per mint", "exists by construction: the fee account is the fee owner's token account OF THE ORDER'S MINT, so orders in two mints do not "
                                "share it. Every order Knos has funded is in one mint, so this has not been used."),
-    ("Several fee accounts for one mint", "exists since 0.3.22, with no program change: PayOrder, SettleOrder and Release take any token account of "
+    ("Several fee accounts for one mint", "exists (added in release 0.3.22, no program change): PayOrder, SettleOrder and Release take any token account of "
                                           "the mint that FEE_OWNER owns (order_pay.rs `is_owned(fee_tok, token, mint, FEE_OWNER)`). "
                                           "`knos relay fee-accounts --k K` makes K-1 beside the associated one, and each order's payments use one "
                                           "of K, chosen by the order. Shown in the simulator on the 2.1 and 2.2 builds (tests/test_fee_shards.py); "
                                           "used on devnet by the 4-relay run of 8 Oct 2026 with K = 4 (its row above)."),
-    ("Pay work partitioned by order", "exists since 0.3.22: a token that pays an order travels in that order's lane, so one owner's orders "
+    ("Pay work partitioned by order", "exists (added in release 0.3.22): a token that pays an order travels in that order's lane, so one owner's orders "
                                       "spread over N relays. Before, one owner's tokens were one lane and so one relay. Measured on devnet "
                                       "by the 4-relay run of 8 Oct 2026 (its row above, beside the one-relay row)."),
 ]
@@ -694,7 +694,7 @@ def render_measured(doc: dict) -> list[str]:
                 f"mint `{m.get('mint')}`, shared account `{m.get('shared_account')}`." + (f" Stopped: {m['stopped']}." if m.get("stopped") else ""), ""]
     out += side_by_side(runs) + scenarios(doc, runs)
     if any(m.get("kind") == "pay" for m in runs) and not any(m.get("kind") == "pay" and m.get("lanes") == "order" and m.get("relays", 1) > 1 for m in runs):
-        out += ["**Not measured: payments by order over several relays and K fee accounts.** Since 0.3.22 one owner's orders spread over N "
+        out += ["**Not measured: payments by order over several relays and K fee accounts.** Now one owner's orders spread over N "
                 "relays and each order's fee goes to one of K accounts (shown in the simulator: `python scripts/load_pay.py --relays 4 "
                 "--orders 40 --simulate --fee-accounts 4`, which gives no rate). No cluster run of it is recorded; the command that will "
                 "record one: `python scripts/load.py measure --pay --relays 4 --fee-accounts 4 --tokens <pay tokens GitHub signed> "
@@ -720,7 +720,7 @@ def render_measured(doc: dict) -> list[str]:
 
 
 # == the documents =====================================================================================================
-ABOUT = ("Load measurements; scripts/load.py writes this file and renders docs/LOAD.md from it. local: N orders through the committed test builds in "
+ABOUT = ("Load measurements; scripts/load.py writes this file and renders docs/reference/LOAD.md from it. local: N orders through the committed test builds in "
          "LiteSVM (compute units exact, cluster time derived). runs: what an operator measured on a cluster with a test issuer, newest last.")
 
 
@@ -1052,8 +1052,8 @@ def render_relay(rel: dict) -> list[str]:
                 "level the relay waits for; no payment's finality was recorded.", ""]
         if dec:
             out += [f"What was measured locally: {dec['source']}. Machine: {dec['machine']}. That is the time Knos's own code takes to decide; on a "
-                    "cluster every read of the chain adds a round trip: four runs of the 0.3.18 command on devnet took 4.3 to 32.6 s each; the 0.3.19 "
-                    "command, once on each of 24 real tokens, took a median of 356 ms offline (a new process for each token, so that figure included loading the rules), 854 ms for the chain check and 9.1 s for the whole precheck ([BENCH.md](BENCH.md), \"Decision time\").", ""]
+                    "cluster every read of the chain adds a round trip: four runs of the older one-step command (release 0.3.18) on devnet took 4.3 to 32.6 s each; the two-step "
+                    "command (release 0.3.19), once on each of 24 real tokens, took a median of 356 ms offline (a new process for each token, so that figure included loading the rules), 854 ms for the chain check and 9.1 s for the whole precheck ([BENCH.md](BENCH.md), \"Decision time\").", ""]
         out += ["What is a target and not a measurement: the last column. No decision has been timed on devnet by a benchmark (four `knos decide` runs on real fund tokens of the 0.3.18 release's public rounds took 4.3 to 32.6 s each over the shared public RPC: a first reading, not a sample), no payment has been carried there by the "
                 "0.3.18 relay, and the floor stays above zero: a forge must run a job and sign before there is anything to decide "
                 "([RELAY.md](RELAY.md), \"The floor\").", ""]
@@ -1100,7 +1100,7 @@ def render_relay(rel: dict) -> list[str]:
                 f"| The killed pass's token: sends, times the chain took it | {sw['killed_token_sends']}, {sw['killed_token_taken_by_chain']} "
                 "(the second send was answered \"already\") |",
                 f"| Tokens the chain took, and log lines | {sw['taken_by_chain']}, {sw['log_lines']} |", "",
-                "What changed after this drill was recorded (0.3.18): a pass reads the comments again every 3 s while a worker still waits for a "
+                "What changed after this drill was recorded (in release 0.3.18, October 2026): a pass reads the comments again every 3 s while a worker still waits for a "
                 "confirmation, and a free worker carries what is new, so a comment posted meanwhile no longer waits for the slowest token of the pass "
                 "(`tests/test_relay_speed.py`, on a stand-in chain; not measured on a cluster). The pass itself still returns when its last worker has answered.", ""]
     return out
@@ -1253,8 +1253,8 @@ def main(argv=None) -> int:
     ap.add_argument("--senders", type=int, default=8, metavar="K", help="units in flight at once")
     ap.add_argument("--no-refund", action="store_true", help="leave the orders open (they can be refunded after a minute by anyone)")
     ap.add_argument("--seed", type=int, default=SEED)
-    ap.add_argument("--write", action="store_true", help="write docs/load.json and docs/LOAD.md")
-    ap.add_argument("--render", action="store_true", help="only render docs/LOAD.md again from docs/load.json")
+    ap.add_argument("--write", action="store_true", help="write docs/load.json and docs/reference/LOAD.md")
+    ap.add_argument("--render", action="store_true", help="only render docs/reference/LOAD.md again from docs/load.json")
     ap.add_argument("--stages", metavar="FILE", help="what `scripts/latency_stages.py --json` printed: store its six stages (docs/load.json `relay.stages`) and render")
     ap.add_argument("--stages-source", metavar="TEXT", help="with --stages: where and when the report was made, in words")
     args = list(sys.argv[1:] if argv is None else argv)

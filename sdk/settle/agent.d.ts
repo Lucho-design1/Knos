@@ -10,8 +10,9 @@ export type Connection = string | {
   names?: Record<string, string>;
   /** Unix time to judge deadlines by; the default is the chain's own clock. */
   now?: number;
-  /** What knos_pay answers to its Version instruction (2 from knos_pay 2.2 on, which charges the 0.3.18 fee: 0.30%, at least 0.05; 1 or 0
-   *  before, which charge the 0.3.14 fee). It decides the fee shown for a job; an order holds its own. Default: the 0.3.18 fee. */
+  /** What knos_pay answers to its Version instruction (2 from knos_pay 2.2 on, which charges 0.30%, at least 0.05; 1 or 0
+   *  before, which charge knos_pay 2.1's older fee: `FEE_RULES.old`). It decides the fee shown for a job; an order holds its own.
+   *  Default: the knos_pay 2.2 fee, which the public program has charged since 9 October 2026. */
   feeVersion?: number;
 };
 

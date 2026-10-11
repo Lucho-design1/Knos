@@ -165,7 +165,7 @@ def test_the_six_stages_are_one_table_and_a_stage_nobody_recorded_says_so_never_
     # with nothing timed at all, every cell says so
     assert all(ln.count("not recorded") == 3 for ln in ls.table(ls.report(doc["comments"], doc["events"])["six"])[2:])
     # the page's table is this function's, on the figures docs/bench.json keeps, and its finality row is not a guess
-    page = (ROOT / "docs" / "LOAD.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "LOAD.md").read_text(encoding="utf-8")
     kept = json.loads((ROOT / "docs" / "load.json").read_text(encoding="utf-8"))["relay"]["stages"]
     bench = json.loads((ROOT / "docs" / "bench.json").read_text(encoding="utf-8"))["release"]
     assert all(line in page for line in ls.table(kept["six"], kept["whole"]))
@@ -212,11 +212,11 @@ def test_the_five_clocks_are_separate_rows_each_with_its_own_sample_and_no_numbe
     for ln, row in zip(table[2:], timed):                       # a figure only beside its n
         assert (f"| {row['n']} | " in ln) == bool(row["n"])
     # the page: the table is this function's on what docs/load.json keeps, it says 5 of 41, and it names the machine of the local row
-    page = (ROOT / "docs" / "LOAD.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "LOAD.md").read_text(encoding="utf-8")
     kept = json.loads((ROOT / "docs" / "load.json").read_text(encoding="utf-8"))["relay"]
     assert all(line in page for line in ls.clock_table(ls.clocks(kept["stages"]["six"], kept["decision"], kept["stages"]["whole"])))
     assert "### The five clocks" in page and "Only 5 of those 41 carry stage times" in page and "devnet, 5 of 41 payments" in page
-    assert kept["decision"]["machine"] in page and kept["decision"]["rows"]["fresh, accepted"]["n"] == 40 and "four runs of the 0.3.18 command on devnet took 4.3 to 32.6 s each; the 0.3.19 command, once on each of 24 real tokens" in page and "that has not been measured" not in page
+    assert kept["decision"]["machine"] in page and kept["decision"]["rows"]["fresh, accepted"]["n"] == 40 and "four runs of the older one-step command (release 0.3.18) on devnet took 4.3 to 32.6 s each; the two-step command (release 0.3.19), once on each of 24 real tokens" in page and "that has not been measured" not in page
     assert kept["decision"]["rows"]["fresh, accepted"]["p95"] < 2000 and kept["decision"]["rows"]["cached, accepted"]["p95"] < 200
 
 

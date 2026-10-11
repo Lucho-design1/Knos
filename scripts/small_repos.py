@@ -12,13 +12,13 @@ own files, byte for byte, with nothing in them that is not derived from the sour
                     from (web/task.js, TEMPLATE). It holds Knos's two caller workflows, so that the issue the site then
                     opens can be funded with a comment and the pull request that solves it is judged and paid. It also
                     holds examples/knos-reproduce.yml, so "Use this template" and "Run workflow" are the whole
-                    reproduction (docs/REPRODUCE.md).
+                    reproduction (docs/reference/REPRODUCE.md).
     knos-playground drexthealpha/knos-playground: NOT a template. The one repository where an account that cannot
                     write may fund a test task from the devnet faucet (src/knos/playground.py has the limits). It
                     holds the two callers, an issue template whose text carries the fund line, a starter file, and
                     the starter task's black-box acceptance checks under every issue number from 1 to
                     playground.SLOTS: a stranger's issue gets whatever number is next and cannot add files, and a
-                    task with no checks could only be paid by a merge. docs/PLAYGROUND.md is what a stranger reads.
+                    task with no checks could only be paid by a merge. docs/reference/PLAYGROUND.md is what a stranger reads.
                     It also holds the starting file and the public examples of every task of tasks/ here, and
                     `check.py`, which tries a solution on them. scripts/task_board.py opens those tasks as funded
                     issues and commits each one's checks under its issue's number, with the line in `board.json`:
@@ -72,7 +72,7 @@ What happens here:
 
 To reproduce what Knos says it does, with nothing installed: press **Use this template**, then in your new repository
 open **Actions**, choose **knos reproduce** and press **Run workflow**. GitHub signs the report
-([how](https://github.com/drexthealpha/Knos/blob/main/docs/REPRODUCE.md)).
+([how](https://github.com/drexthealpha/Knos/blob/main/docs/reference/REPRODUCE.md)).
 
 For a task:
 
@@ -118,7 +118,7 @@ in a day (UTC); the faucet serves this repository once a minute; issues 1 to {sl
 from an account that is new to GitHub waits until a maintainer lets its check run.
 
 It is test money: the faucet mints it, nobody can withdraw it from the faucet's balance, and it is worth nothing.
-What is counted, and how: [docs/PLAYGROUND.md](https://github.com/drexthealpha/Knos/blob/main/docs/PLAYGROUND.md).
+What is counted, and how: [docs/reference/PLAYGROUND.md](https://github.com/drexthealpha/Knos/blob/main/docs/reference/PLAYGROUND.md).
 
 On Solana devnet today, in test USDC.
 """
@@ -137,7 +137,7 @@ The task: make `{task}` print the words of a line in reverse order. Anyone may s
 ISSUE_CONFIG = """blank_issues_enabled: false
 contact_links:
   - name: What the playground is, its limits, and how it is counted
-    url: https://github.com/drexthealpha/Knos/blob/main/docs/PLAYGROUND.md
+    url: https://github.com/drexthealpha/Knos/blob/main/docs/reference/PLAYGROUND.md
     about: One screen.
 """
 
@@ -352,7 +352,7 @@ _FAUCET_HEAD = """# .github/workflows/knos-faucet.yml: the test USDC faucet of t
 # Written by scripts/small_repos.py of drexthealpha/Knos: the `faucet` job below is that repository's
 # .github/workflows/worker.yml job of the same name, byte for byte, so a rebuild of this repository keeps it.
 # It answers `/knos faucet <address>` on the issue labelled `faucet` with a fixed amount of test USDC, which has no
-# monetary value (docs/FAUCET.md there has every rule). Secrets: KNOS_FAUCET_KEY (holds test USDC, no SOL) and
+# monetary value (docs/reference/FAUCET.md there has every rule). Secrets: KNOS_FAUCET_KEY (holds test USDC, no SOL) and
 # KNOS_RELAY_KEY (pays the fee). Without both it says so and ends green. No relay runs here.
 name: knos faucet
 run-name: faucet for a comment

@@ -141,10 +141,10 @@ async function page() {
     ok(`${width}px: the sha256 is the Python's`, (await p.textContent('[data-sh="hash"]')) === `sha256 ${http.sha256}`, await p.textContent('[data-sh="hash"]'));
     ok(`${width}px: the downloaded JSON is the Python's bytes`, JSON.stringify(await save(p, "json")) === JSON.stringify(["statement.json", http.json]));
     ok(`${width}px: the downloaded CSV is the Python's bytes`, JSON.stringify(await save(p, "csv")) === JSON.stringify(["statement.csv", http.csv]));
-    ok(`${width}px: the budget is shown`, /^Budget: \d+ of 60 requests left this hour\.$/.test(await p.textContent('[data-sh="budget"]')), await p.textContent('[data-sh="budget"]'));
+    ok(`${width}px: the budget is shown`, /^GitHub lets this page make \d+ more requests this hour \(of 60\)\.$/.test(await p.textContent('[data-sh="budget"]')), await p.textContent('[data-sh="budget"]'));
     ok(`${width}px: a failed check links its run, and no address is a script`, await p.$$eval(".sh-lines a", (as) => as.length > 3 && as.every((a) => a.href.startsWith("https://github.com/"))));
     const said = await statements(p);
-    ok(`${width}px: the three plain sentences are on the page`, ["A failed check is not proof of bad work.", "A green check is not proof of good work.", "Shadow mode changes nothing and holds no money."].every((t) => said.includes(t)), said);
+    ok(`${width}px: the three plain sentences are on the page`, ["A failed check is not proof of bad work.", "A green check is not proof of good work.", "This check changes nothing and holds no money."].every((t) => said.includes(t)), said);
     ok(`${width}px: every statement is twelve words at most`, wordy(said).length === 0, wordy(said));
     ok(`${width}px: the statement does not scroll sideways`, (await measure(p)).over <= 0, await measure(p));
     if (process.env.KNOS_SHADOW_SHOTS) await p.screenshot({ path: join(process.env.KNOS_SHADOW_SHOTS, `shadow-${width}.png`), fullPage: true });     // for someone who wants to look
@@ -162,7 +162,7 @@ async function page() {
   await p.waitForSelector('[data-sh="hash"]');
   ok("the sample is marked: assembled by Knos, nobody's invoice, illustrative amounts", await p.textContent('[data-sh="mark"]') === "Sample assembled by Knos. Not anyone's invoice. Amounts are illustrative.");
   ok("the box holds examples/shadow/sample.csv", await p.inputValue(".shadow textarea") === SAMPLE);
-  ok("with the budget spent it stops and offers the command line", /^Budget spent\. Run knos shadow invoice\.csv for more\.$/.test((await p.innerText('[data-sh="said"]')).trim()), await p.innerText('[data-sh="said"]'));
+  ok("with the budget spent it stops and offers the command line", /^GitHub's hourly limit is used up\. To check more lines, run knos shadow invoice\.csv on your computer\.$/.test((await p.innerText('[data-sh="said"]')).trim()), await p.innerText('[data-sh="said"]'));
   ok("no more was asked than GitHub had left", sent.filter((s) => s.path !== "rate_limit").length <= 5, sent.map((s) => s.path));
   ok("lines it could not read are idle, never judged", (await p.$$eval(".shadow .k-step", (els) => els.map((e) => `${e.dataset.state} ${e.dataset.class}`))).slice(-3).every((s) => s === "idle unreadable"));
   ok("and the statement says they are counted apart", (await p.textContent('[data-sh="partial"]')) === "Unread lines are counted apart, never guessed.");

@@ -133,8 +133,8 @@ def test_each_row_is_two_sentences_of_twelve_words_at_most_and_every_pattern_nam
 
 
 def test_the_document_and_the_site_print_the_table_from_the_module():
-    doc = (ROOT / "docs" / "SUPPLIER.md").read_text(encoding="utf-8")
-    assert ghwords.refusal_table() in doc, "docs/SUPPLIER.md is behind the table: python scripts/supplier_docs.py"
+    doc = (ROOT / "docs" / "reference" / "SUPPLIER.md").read_text(encoding="utf-8")
+    assert ghwords.refusal_table() in doc, "docs/reference/SUPPLIER.md is behind the table: python scripts/supplier_docs.py"
     site = json.loads((ROOT / "web" / "refusals.json").read_text(encoding="utf-8"))
     assert site["rows"] == ghwords.refusal_rows(), "web/refusals.json is behind the table: python scripts/supplier_docs.py"
 

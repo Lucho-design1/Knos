@@ -1,4 +1,4 @@
-"""The market size page and the three flows for judges (docs/submission/MARKET_SIZE.md, FLOWS.md).
+"""The market size page and the three flows for judges (docs/reference/MARKET_SIZE.md, FLOWS.md).
 
 Both open in plain words, as the documents a newcomer opens first do (tests/test_docs_plain.py's rules). The market
 size's arithmetic is what its inputs give, every outside figure carries a link, and nothing gives Knos a share. The
@@ -16,8 +16,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SUB = ROOT / "docs" / "submission"
-PAGES = ("docs/submission/MARKET_SIZE.md", "docs/submission/FLOWS.md")
+DOCS = ROOT / "docs"
+PAGES = ("docs/reference/MARKET_SIZE.md", "docs/reference/FLOWS.md")
 
 _spec = importlib.util.spec_from_file_location("docs_plain", ROOT / "tests" / "test_docs_plain.py")
 plain = importlib.util.module_from_spec(_spec)
@@ -71,13 +71,13 @@ def test_every_relative_link_leads_to_a_file_and_every_anchor_to_a_word(rel):
         if re.match(r"[a-z]+:", target):
             continue
         path, _, anchor = target.partition("#")
-        assert (SUB / path).resolve().exists(), (rel, target)
+        assert ((ROOT / rel).parent / path).resolve().exists(), (rel, target)
         if path.endswith("WORDS.md") and anchor:
             assert f"### {anchor.replace('-', ' ')}" in words, (rel, anchor)
 
 
 def test_the_top_down_arithmetic_is_what_its_inputs_give():
-    page = read("docs/submission/MARKET_SIZE.md")
+    page = read("docs/reference/MARKET_SIZE.md")
     assert "**The base: 7,400 million USD a year.** We add the three revenue figures we have: 4,000 + 2,500 + 900." in page
     base = 4000e6 + 2500e6 + 900e6
     got = rows(page, "| share paid per passed piece")
@@ -89,7 +89,7 @@ def test_the_top_down_arithmetic_is_what_its_inputs_give():
 
 
 def test_the_bottom_up_arithmetic_is_what_its_inputs_give():
-    page = read("docs/submission/MARKET_SIZE.md")
+    page = read("docs/reference/MARKET_SIZE.md")
     got = rows(page, "| case | buyers")
     assert len(got) == 3
     for _case, buyers, each, value, high, low in got:
@@ -98,15 +98,15 @@ def test_the_bottom_up_arithmetic_is_what_its_inputs_give():
 
 
 def test_the_summary_in_market_md_agrees_with_the_page():
-    page, market = read("docs/submission/MARKET_SIZE.md"), read("docs/MARKET.md")
+    page, market = read("docs/reference/MARKET_SIZE.md"), read("docs/reference/MARKET.md")
     part = market.split("### Market size", 1)[1].split("\n## ", 1)[0]
-    assert "](submission/MARKET_SIZE.md)" in part and "7,400 million USD" in part
+    assert "](MARKET_SIZE.md)" in part and "7,400 million USD" in part
     for figure in ("222,000", "5,994,000", "111,000", "2,997,000", "150,000", "6,000,000"):
         assert figure in part and figure in page, figure
 
 
 def test_outside_figures_carry_links_and_knos_claims_no_share():
-    for text in (read("docs/submission/MARKET_SIZE.md"), read("docs/MARKET.md").split("### Market size", 1)[1].split("\n## ", 1)[0]):
+    for text in (read("docs/reference/MARKET_SIZE.md"), read("docs/reference/MARKET.md").split("### Market size", 1)[1].split("\n## ", 1)[0]):
         for item in re.split(r"\n(?=\||- |\n)", text):             # a table row, a list item or a paragraph
             if re.search(r"\bbillion\b", item):                       # only beside a sourced figure about another company
                 assert "https://" in item and "Knos" not in item, item
@@ -116,7 +116,7 @@ def test_outside_figures_carry_links_and_knos_claims_no_share():
 
 
 def test_the_third_flow_prints_what_the_page_says():
-    page = read("docs/submission/FLOWS.md")
+    page = read("docs/reference/FLOWS.md")
     command = "knos meter reconcile examples/meter/buyer.jsonl examples/meter/seller.jsonl"
     assert command in page
     done = subprocess.run([sys.executable, "-m", "knos", *command.split()[1:]], cwd=ROOT, capture_output=True, text=True,

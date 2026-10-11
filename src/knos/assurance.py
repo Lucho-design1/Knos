@@ -51,7 +51,7 @@ def ladder(level: str | None) -> list[dict]:
 
 def _check(level: str | None) -> str | None:
     if level is not None and level not in REACHABLE:
-        raise ValueError(f"assurance level {level} is defined and nothing recorded today reaches it")
+        raise ValueError(f"Nothing recorded today reaches assurance level {level}. The level is defined, but no evidence for it exists yet.")
     return level
 
 

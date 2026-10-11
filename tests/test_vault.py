@@ -41,7 +41,7 @@ def _app():
     lines: list = []
     vault.register(app, lines)
     bundle.register(app, [])
-    assert lines == [("vault", "For money", lines[0][2])] and "outlives devnet" in lines[0][2]
+    assert lines == [("vault", "For money", lines[0][2])] and "checkable if devnet resets" in lines[0][2]
     return app
 
 
@@ -61,9 +61,9 @@ def test_the_primitives_give_their_rfcs_vectors_with_and_without_the_cryptograph
     assert sealed[:16].hex() == "d31a8d34648e60db7b86afbc53ef7ec2" and sealed[-16:].hex() == "1ae10b594f09e26a7e902ecbd0600691"
     assert vc.aead_open(key, nonce, sealed, aad, pure) == plain
     for bad in (sealed[:-1] + bytes([sealed[-1] ^ 1]), bytes([sealed[0] ^ 1]) + sealed[1:]):
-        with pytest.raises(ValueError, match="tag does not hold"):
+        with pytest.raises(ValueError, match="authentication tag does not match"):
             vc.aead_open(key, nonce, bad, aad, pure)
-    with pytest.raises(ValueError, match="tag does not hold"):
+    with pytest.raises(ValueError, match="authentication tag does not match"):
         vc.aead_open(key, nonce, sealed, aad + b"x", pure)
 
 
@@ -139,7 +139,7 @@ def test_a_checkpoint_is_one_hash_anyone_recomputes_signed_when_a_key_is_given_a
     assert not missing and sum("opened with the key and hashed" in line for line in said) == 3
     for change in ({"entries": signed["entries"][:2], "count": 2}, {"root": "0" * 64}, {"at": NOW + 2}, {"previous": None},
                    {"signature": {**signed["signature"], "public": str(Keypair.from_seed(bytes([8]) * 32).pubkey())}}):
-        with pytest.raises(ValueError, match="root is not the hash|signature does not hold"):
+        with pytest.raises(ValueError, match="root is not the hash|signature is not valid"):
             vault.check_checkpoint({**signed, **change})
     (folder / f"{shas[0]}.vault").unlink()                           # a bundle that is gone is named, and the check fails
     assert vault.verify(signed, vault.held_in(folder))[1] == [shas[0]]
@@ -249,9 +249,9 @@ def test_keygen_writes_a_key_once_and_open_gives_the_bundle_back(tmp_path):
 
 def test_the_documents_say_the_format_the_vector_and_the_limits():
     docs = Path(__file__).parents[1] / "docs"
-    page = (docs / "VAULT.md").read_text(encoding="utf-8")
+    page = (docs / "reference" / "VAULT.md").read_text(encoding="utf-8")
     assert VECTOR["sealed_sha256"] in page and VECTOR["checkpoint_root"] in page and "tests/data/vault_v1.json" in page
     assert all(word in page for word in (vault.KEM, vault.AEAD, vault.WRAP_INFO.decode(), vault.ANCHOR, "not constant-time", "RFC 7748", "RFC 8439", "RFC 5869"))
     assert all(f"knos vault {c}" in page for c in ("keygen", "seal", "open", "export", "restore", "retain", "checkpoint", "verify"))
-    assert "devnet is reset and the operator's copies are deleted" in (docs / "DRILLS.md").read_text(encoding="utf-8")
-    assert "VAULT.md" in (docs / "PRIVACY.md").read_text(encoding="utf-8") and "VAULT.md" in (docs / "drills_recovery.md").read_text(encoding="utf-8")
+    assert "devnet is reset and the operator's copies are deleted" in (docs / "reference" / "DRILLS.md").read_text(encoding="utf-8")
+    assert "VAULT.md" in (docs / "reference" / "PRIVACY.md").read_text(encoding="utf-8") and "VAULT.md" in (docs / "reference" / "drills_recovery.md").read_text(encoding="utf-8")

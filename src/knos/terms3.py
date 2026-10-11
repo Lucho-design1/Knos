@@ -1,4 +1,4 @@
-"""Knos Terms 3: acceptance as a versioned contract (docs/TERMS.md, "Knos Terms 3").
+"""Knos Terms 3: acceptance as a versioned contract (docs/reference/TERMS.md, "Knos Terms 3").
 
 A terms 3 document is one JSON object that answers ten questions, each in a required field that holds the facts
 and one plain line (`says`) written from those facts by this module, so a line cannot say one thing while the facts
@@ -723,5 +723,5 @@ TEMPLATES = {
 
 def template(name: str) -> dict:
     if name not in TEMPLATES:
-        raise KeyError(f"there is no terms 3 template named {name}: the templates are {', '.join(TEMPLATES)}")
+        raise KeyError(f"there is no Knos Terms 3 template named {name}: the templates are {', '.join(TEMPLATES)}")
     return TEMPLATES[name]()

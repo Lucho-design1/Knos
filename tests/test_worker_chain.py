@@ -59,7 +59,7 @@ def test_a_500_on_the_start_no_longer_ends_the_chain():
     gh = GitHub([_err(500), _err(502), None])
     assert chain.start("o/r", "80", **gh.kw()) is True
     assert gh.starts == [{"ref": "main", "inputs": {"after": "80"}}] * 3 and gh.slept == [2.0, 4.0]       # the fake clock: nothing random
-    assert "GitHub answered 500 to the start, try 1 of 6: asking again in 2 s" in gh.said and gh.said[-1].startswith("started the next run (try 3)")
+    assert "GitHub answered 500 while starting the next run (try 1 of 6): asking again in 2 s" in gh.said and gh.said[-1].startswith("started the next run (try 3)")
 
 
 def test_the_waits_double_to_a_minute_and_a_rate_limit_names_its_own():

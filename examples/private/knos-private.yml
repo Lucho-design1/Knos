@@ -5,7 +5,7 @@
 # acme/knos-private), with three files beside it that buyer and supplier agreed on:
 #
 #     terms.json        the order's terms (knos terms show; the bytes whose hash both sides hold)
-#     attestors.json    the attestors BOTH parties approved (examples/private/attestors.json; docs/PRIVATE.md)
+#     attestors.json    the attestors BOTH parties approved (examples/private/attestors.json; docs/reference/PRIVATE.md)
 #     .knos/acceptance/<issue>/   in the target repository's default branch: the acceptance checks
 #
 # What leaves the network, and nothing else:
@@ -31,7 +31,7 @@
 # Limits, said plainly. The instance's administrators can sign any claim under its key, so a verdict from this
 # workflow is the word of whoever runs the instance; that is why the supplier approves the attestor beforehand and
 # holds the sealed evidence. This record is not a payment: the escrow on devnet takes its own audiences
-# (docs/OIDC.md), and paying from this record is not built. Nobody with a private repository has run this file.
+# (docs/reference/OIDC.md), and paying from this record is not built. Nobody with a private repository has run this file.
 # The pinned actions must exist on your instance (GitHub Connect, or actions-sync).
 name: knos private
 
@@ -93,7 +93,7 @@ jobs:
           enable-cache: false
           ignore-empty-workdir: true
       - name: install knos, the released wheel
-        run: uv tool install --no-config "knos==0.3.26"
+        run: uv tool install --no-config "knos==0.3.27"
       - name: knos proof judge, in the sandbox
         env:
           ISSUE: ${{ inputs.issue }}

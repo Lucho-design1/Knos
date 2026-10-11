@@ -225,7 +225,7 @@
   }
  ],
  "cannot_show": [
-  "How a platform marks a PAID bounty: neither platform documents what its bot writes on GitHub when it pays. `paid` is the rule in DEFINITIONS; a bounty paid without a bot comment is counted as `unpaid`",
+  "How a platform marks a PAID bounty: neither platform documents what its bot writes on GitHub when it pays. `paid` follows the rule in `DEFINITIONS` of `scripts/backtest_paid.py`; a bounty paid without a bot comment is counted as `unpaid`",
   "Money: no amount is read. A comment can say paid for a tip, and a bounty can be paid in parts",
   "Whether the check was failing when the maintainer merged: CI is read as it is on the day of the run. A check re-run later shows its last result, and a check can fail after a merge (`failed_at_merge`)",
   "Which checks a Knos bounty on these issues would have required: none of them had one. This counts merges with a failed check, not payments refused",

@@ -169,7 +169,7 @@ def test_a_buyers_batches_and_a_sellers_claim_from_file_to_chain_and_back(tmp_pa
     forged = tmp_path / "forged.jsonl"
     forged.write_text(text.replace(line, line.replace('{"accepted":1', '{"accepted":0'), 1), encoding="utf-8")
     rc, said = _meter(capsys, "verify", str(forged), "--rpc", RPC)
-    assert rc == 1 and "does not hold" in said and "the header says" in said
+    assert rc == 1 and "failed the check" in said and "the header says" in said
     other = [e if n != 1 else L.Evaluation(e.buyer, e.seller, e.order, e.artifact, e.policy, e.milestone, False, e.rate) for n, e in enumerate(mine)]
     forged.write_text(L.dump([L.batch(other[:3000], 0, month), L.batch(other[3000:], 1, month)]), encoding="utf-8")
     assert _meter(capsys, "verify", str(forged))[0] == 0                         # it holds by itself

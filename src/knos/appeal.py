@@ -119,7 +119,7 @@ def open_(*, repo: str, pull: int, supplier: str, by: str, reason: str, at: floa
     deliverable = deliverable or ids.deliverable(scope or terms_hash or repo, key if key != "" else pull)
     evaluation = evaluation or ids.evaluation(deliverable, artifact, terms_hash, evaluator, run)
     if ids.kind_of(deliverable) != "deliverable" or ids.kind_of(evaluation) != "evaluation":
-        raise ValueError("an appeal names a deliverable id and an evaluation id (knos.ids)")
+        raise ValueError("An appeal needs a deliverable id and an evaluation id. Give both; `knos appeal --help` shows how.")
     at = float(at)
     return {"kind": KIND, "v": VERSION, "id": evaluation, "deliverable": deliverable, "evaluation": evaluation,
             "repo": str(repo), "pull": int(pull), "terms_hash": str(terms_hash), "mode": mode, "arbiter": str(arbiter),

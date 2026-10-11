@@ -1,6 +1,6 @@
 {
  "says": "Stand-alone verifier on the sample archive: 3 checks hold, 2 notes.",
- "link": "docs/RETENTION.md",
+ "link": "docs/reference/RETENTION.md",
  "sealed": "2026-10-07",
  "evidence_root": "b01bc5120c6a2ccc33bdc571dd0fbff879c2d131c944f7452d53d7c312fc9580",
  "made_from": [

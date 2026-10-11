@@ -1,5 +1,5 @@
 // The playground: two buttons and a live list. A stranger with a GitHub account funds a test task or takes one, with
-// nothing installed. docs/PLAYGROUND.md says what it is, what the limits are and how it is counted.
+// nothing installed. docs/reference/PLAYGROUND.md says what it is, what the limits are and how it is counted.
 //
 //   renderPlayground(el, env)   draws into `el` and keeps the list fresh; returns { refresh, stop }
 //   playgroundHtml(state)       the same as a string, from what was read
@@ -20,7 +20,7 @@
 export const REPO = "drexthealpha/knos-playground";
 export const TEMPLATE = "fund-a-test-task.md";
 export const TASK_FILE = "words.py";
-export const DOC = "https://github.com/drexthealpha/Knos/blob/main/docs/PLAYGROUND.md";
+export const DOC = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/PLAYGROUND.md";
 export const FUND_LABEL = "Fund a test task (one click, then Submit)";
 export const TAKE_LABEL = "Take one";
 export const LABEL_KNOS_FAUCET = "outside funder, Knos repository, faucet money";      // scripts/outsiders.py's own words
@@ -115,7 +115,7 @@ function countsHtml(o) {
     <p class="pg-note" id="pg-faucet" title="${esc(d.funders_in_knos_repositories_faucet || "")}"><strong class="k-num">${n[3] ?? 0}</strong> of those funders: ${esc(LABEL_KNOS_FAUCET)}.</p>`;
 }
 
-// The one click of docs/ATTESTOR.md: a repository of the reader's own from the template (`python -m knos.host_judge link` prints it).
+// The one click of docs/reference/ATTESTOR.md: a repository of the reader's own from the template (`python -m knos.host_judge link` prints it).
 export const HOST_A_JUDGE = "https://github.com/new?template_owner=drexthealpha&template_name=knos-attest&name=knos-judge&visibility=public&owner=@me";
 
 const STYLE = `<style>
@@ -140,7 +140,7 @@ export function playgroundHtml(s = {}) {
   <p class="pg-note">Test USDC, no monetary value.</p>
   <div class="pg-acts"><a class="k-btn" id="pg-fund" href="${fundUrl()}" rel="noopener">${FUND_LABEL}</a>
     <a class="k-btn quiet" id="pg-take" href="${esc(takeUrl(s.tasks, s.board))}" rel="noopener">${TAKE_LABEL}</a>
-    <a class="k-btn quiet" id="pg-host" href="${HOST_A_JUDGE}" rel="noopener">Host a judge</a>
+    <a class="k-btn quiet" id="pg-host" href="${HOST_A_JUDGE}" rel="noopener">Host a checker</a>
     <button class="k-btn quiet" id="pg-again" type="button">Read again</button></div>
   <div id="pg-boarded">${boardHtml(s)}</div>
   <div id="pg-list" aria-live="polite">${listHtml(s)}</div>

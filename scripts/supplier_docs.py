@@ -1,6 +1,6 @@
-"""Write what is printed from knos.ghwords.REFUSALS: the table in docs/SUPPLIER.md (between its two markers) and
+"""Write what is printed from knos.ghwords.REFUSALS: the table in docs/reference/SUPPLIER.md (between its two markers) and
 web/refusals.json, which the site's supplier page reads; and from knos.preflight.PROTECTIONS, the table of the four
-protections in docs/SUPPLIER.md (between its own markers). `--check` writes nothing and exits 1 when either is behind.
+protections in docs/reference/SUPPLIER.md (between its own markers). `--check` writes nothing and exits 1 when either is behind.
 
     python scripts/supplier_docs.py [--check]
 """
@@ -36,7 +36,7 @@ def protections_table() -> str:
 
 
 def main(argv: list[str]) -> int:
-    doc_path, site_path = ROOT / "docs" / "SUPPLIER.md", ROOT / "web" / "refusals.json"
+    doc_path, site_path = ROOT / "docs" / "reference" / "SUPPLIER.md", ROOT / "web" / "refusals.json"
     doc = doc_path.read_text(encoding="utf-8")
     head, rest = doc.split(BEGIN, 1)
     new_doc = head + BEGIN + ghwords.refusal_table() + END + rest.split(END, 1)[1]
@@ -50,7 +50,7 @@ def main(argv: list[str]) -> int:
         return 1 if behind else 0
     doc_path.write_text(new_doc, encoding="utf-8")
     site_path.write_text(new_site, encoding="utf-8")
-    print(f"wrote {len(ghwords.REFUSALS)} refusals and {len(preflight.PROTECTIONS)} protections to docs/SUPPLIER.md, and web/refusals.json")
+    print(f"wrote {len(ghwords.REFUSALS)} refusals and {len(preflight.PROTECTIONS)} protections to docs/reference/SUPPLIER.md, and web/refusals.json")
     return 0
 
 

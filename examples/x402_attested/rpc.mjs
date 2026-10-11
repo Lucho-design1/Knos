@@ -26,7 +26,7 @@ export function chainOf(url, seconds = 60) {
     now: () => chainTime(url),
     account: async (address) => { const a = await accountInfo(url, address); return a && { owner: a.owner, data: a.data }; },
     /** Which knos_pay runs at `program`, asked of the program itself (Version, simulated: nothing is sent or paid): 2 is
-     *  knos_pay 2.2 (the 0.30% fee), 1 is 2.1 and 0 is 2.0 (the 0.3.14 fee), null when the cluster did not say. */
+     *  knos_pay 2.2 (the 0.30% fee), 1 is 2.1 and 0 is 2.0 (the older tiered fee, at least 0.40), null when the cluster did not say. */
     async payVersion(program) {
       try {
         const tx = serializeTx([{ program, data: Uint8Array.of(12), accounts: [] }], FEE_OWNER, SYSTEM);

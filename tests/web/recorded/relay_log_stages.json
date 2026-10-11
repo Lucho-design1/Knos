@@ -1,5 +1,5 @@
 {
- "note": "A sample of the public relay log in the exact format the relay writes (src/knos/proof/ghrelay.py), with the history events and the GitHub answers that go with it. It is constructed, not captured: the repository, the tokens and the signatures are made up, and each slow payment is one of the paths docs/RELAY.md names (a runner queue, a gap between two runs of the worker, sends the endpoint dropped, a run asked for late). tests/test_latency_stages.py and tests/web/status_data.test.mjs read it.",
+ "note": "A sample of the public relay log in the exact format the relay writes (src/knos/proof/ghrelay.py), with the history events and the GitHub answers that go with it. It is constructed, not captured: the repository, the tokens and the signatures are made up, and each slow payment is one of the paths docs/reference/RELAY.md names (a runner queue, a gap between two runs of the worker, sends the endpoint dropped, a run asked for late). tests/test_latency_stages.py and tests/web/status_data.test.mjs read it.",
  "now": 1791105520,
  "comments": [
   {

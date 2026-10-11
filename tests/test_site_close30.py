@@ -1,4 +1,4 @@
-"""Close one invoice in 30 seconds: tests/web/close30.mjs on a build of web/, and docs/FINANCE.md held to what it wrote.
+"""Close one invoice in 30 seconds: tests/web/close30.mjs on a build of web/, and docs/reference/FINANCE.md held to what it wrote.
 
 The node script opens the site at #approve in headless Chromium, on a slow phone (360 px, processor 4 times slower,
 slow 4G) and at 1280 px, with the mouse and with the keyboard alone: the sample, the name and role, Approve, and the
@@ -45,8 +45,8 @@ def test_a_close_takes_four_clicks_at_most_and_under_30_seconds(tmp_path: Path) 
 def test_the_finance_page_states_what_the_script_wrote() -> None:
     close = json.loads((ROOT / "docs" / "perf.json").read_text(encoding="utf-8"))["close"]
     assert close["limit_ms"] == 30_000 and close["most_clicks"] == 4 and "No person was timed" in close["what"]
-    page = (ROOT / "docs" / "FINANCE.md").read_text(encoding="utf-8")
-    section = page.split("## 4b. Close in 30 seconds", 1)[1].split("\n## ", 1)[0]
+    page = (ROOT / "docs" / "reference" / "FINANCE.md").read_text(encoding="utf-8")
+    section = page.split("## 4b. Close one invoice in under 30 seconds (timed by a script)", 1)[1].split("\n## ", 1)[0]
     found = {}
     for screen, how, clicks, script, person in re.findall(r"^\| ([^|]+?) \| (mouse|keyboard) \| (\d+) \| ([\d.]+) s \| ([\d.]+) s \|$", section, re.M):
         found[ROWS[(screen, how)]] = (int(clicks), script, person)

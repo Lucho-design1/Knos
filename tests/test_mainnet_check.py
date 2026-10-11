@@ -116,7 +116,7 @@ def test_the_programs_this_release_adds_are_not_deployed_yet_without_failing_and
     # before the release run deploys them: said, not checked, and no failure
     fetch = world(new=None)
     ok, said = evidence(fetch)[NEW_GATE]
-    assert ok is None and said == "; ".join(f"{n} {IDS[n]}: not deployed yet (the release run deploys it)" for n in mc.NEW_PROGRAMS)
+    assert ok is None and said == "; ".join(f"{n} {IDS[n]}: not deployed on this cluster yet (skipped)" for n in mc.NEW_PROGRAMS)
     assert [ok for ok in results(fetch).values()].count(None) == 1 and False not in results(fetch).values()
     # deployed into anyone else's hands: a failure, named
     other = str(Pubkey.new_unique())
@@ -124,7 +124,7 @@ def test_the_programs_this_release_adds_are_not_deployed_yet_without_failing_and
     assert ok is False and f"upgrade authority {other}, not the upgrade vault {IDS['upgrade_authority']}" in said
     # the same in `knos status`: a line that passes while nothing is there, and fails for what is there in the wrong hands
     got = checks(status_world(new=None))["new programs"]
-    assert got.ok and got.evidence.count("not deployed yet (the release run deploys it)") == 2 and got.todo == ""
+    assert got.ok and got.evidence.count("not deployed on this cluster yet (skipped)") == 2 and got.todo == ""
     got = checks(status_world(new=other))["new programs"]
     assert not got.ok and "not the upgrade vault" in got.evidence and "scripts/deploy_v2.sh" in got.todo
     one = status_world()
@@ -179,7 +179,7 @@ def test_the_multisig_gates_read_the_account_the_squads_program_owns_at_the_pinn
         assert (got[lock], got[auth], got[vault]) == (False, True, True), time_lock
     # a rent collector moves the members along; the time lock is where it was
     assert all(results(world(upgrade=squads_multisig(UPGRADE_KEY, 172_800, rent_collector=Pubkey.new_unique()))).values())
-    # the planned time lock of 8 days (scripts/timelock_plan.py; docs/GOVERNANCE.md, section 2), once its configuration
+    # the planned time lock of 8 days (scripts/timelock_plan.py; docs/reference/GOVERNANCE.md, section 2), once its configuration
     # transaction has executed, is what the design fixes too: no gate fails on it
     assert mc.PLANNED_TIME_LOCK == 691_200 and mc.TIME_LOCKS == (172_800, 691_200)
     assert all(results(world(upgrade=squads_multisig(UPGRADE_KEY, mc.PLANNED_TIME_LOCK))).values())

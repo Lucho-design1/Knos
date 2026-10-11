@@ -1,7 +1,7 @@
 {
   "name": "knos-release-scripts",
   "private": true,
-  "description": "What the release scripts of the second deployment run on: the Squads v4 SDK (governance.mjs) and, as an optional package, an embedded Surfpool (surfnet.mjs, for rehearse_fork.sh). Install with `npm ci --prefix scripts`.",
+  "description": "Node packages for the release scripts of the current Solana programs (programs-v2/): the Squads v4 SDK (governance.mjs) and, optionally, an embedded Surfpool local validator (surfnet.mjs, for rehearse_fork.sh). Install with `npm ci --prefix scripts`.",
   "type": "module",
   "license": "MIT",
   "engines": {

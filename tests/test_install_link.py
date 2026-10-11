@@ -252,7 +252,7 @@ def test_knos_terms_list_and_show():
 
 
 def test_the_install_page_of_the_docs_counts_its_steps():
-    text = (ROOT / "docs" / "INSTALL.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "reference" / "INSTALL.md").read_text(encoding="utf-8")
     part = text.split("## Paid work in a repository: install by pull request")[1].split("\n## ")[0]
     assert [int(n) for n in re.findall(r"^(\d)\. \*\*", part, re.M)] == [1, 2, 3, 4, 5, 6, 7] and "three steps on devnet, seven with real money" in part
     assert "There is no mainnet deployment" in part and str(len(init.install_link("acme/widgets", SHORT.read_text(encoding="utf-8")))) in part.replace(",", "")

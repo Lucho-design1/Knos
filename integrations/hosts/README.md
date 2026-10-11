@@ -1,8 +1,8 @@
 # Knos in each coding agent
 
-When a coding agent says "done, tests pass", Knos runs that check itself. Where the host lets a hook answer the end
-of a turn, a false "done" goes back to the agent with the check that failed, and with what Sibyl remembers of the
-claims Knos refused on this repository before. This page says, host by host, what `knos init --host <name>` writes,
+When a coding agent says "done, tests pass", Knos runs that check itself. Some hosts let a hook answer the end of a
+turn. There, a false "done" goes back to the agent, with the check that failed. It also carries what Knos's local
+memory (Sibyl, a memory library Knos uses) holds about claims it refused on this repository before. This page says, host by host, what `knos init --host <name>` writes,
 whether that host can be made to hold a false "done", which page of the host's own documentation each field was read
 from, and how it was tested.
 
@@ -10,7 +10,7 @@ from, and how it was tested.
 written files are parsed and compared with the fields cited here, and the hook is given an end-of-turn event written
 from the host's documentation (`tests/_host_events.py`). Where the documentation does not state a part Knos depends
 on, the row says `unconfirmed` and so does the name of every test that uses it. Claude Code and Codex, installed for
-the whole machine by plain `knos init`, are in [docs/INSTALL.md](../../docs/INSTALL.md).
+the whole machine by plain `knos init`, are in [docs/reference/INSTALL.md](../../docs/reference/INSTALL.md).
 
 ```bash
 knos init --host cursor            # writes into the current project, and says what it wrote
@@ -41,7 +41,7 @@ All pages were read on 5 October 2026. "Page date" is the date the page itself s
 | Roo Code (`roo`) | MCP: `.roo/mcp.json` (`alwaysAllow`) | **no**: it has no hooks. Its makers ended the product on 15 May 2026; the route is for installs still in use | [MCP in Roo](https://roocodeinc.github.io/Roo-Code/features/mcp/using-mcp-in-roo/) (page date 15 May 2026) | unit test of the file |
 
 Where the answer is "no" or "annotate only", the check that cannot be skipped is the one on the pull request: the
-[GitHub Action](../../docs/INSTALL.md#the-github-action) refuses a description that says "tests pass" over a failed
+[GitHub Action](../../docs/reference/INSTALL.md#the-github-action) refuses a description that says "tests pass" over a failed
 check, whatever the agent was running in.
 
 ## The MCP server, and which tools run unasked
@@ -118,23 +118,6 @@ Three facts about the engine that bound what Knos can promise, each from the pac
 - Search is lexical (SQLite FTS5), with no embedding model. The engine stores entities by category and name, state,
   a journal and reference documents. It has no typed relations between entities: Knos expresses "this supplier,
   under these terms" through the category and the name it chooses, and that stays true of the list below.
-
-### Next uses
-
-What `sibyl-memory-client` 0.8.1 offers that Knos does not call yet, each with the use it would have here. None is
-built. Every one would go through [`knos.proof.history`](../../src/knos/proof/history.py), as everything Knos
-remembers does.
-
-| The engine offers | Knos uses today | The use |
-|---|---|---|
-| `read_events(since=, until=)`: the journal between two times | `read_events(limit=)` only | "What was refused under these terms last quarter": a supplier's record over a statement's period, and a buyer's refusals between two closings |
-| `search(..., tiers=)` and `prefix=`: search held to chosen tiers, and by word prefix | `search(query, limit)` across all tiers | A reviewer's memory of disputes: search the journal alone for an appeal's words without an entity's body answering for it; find `tests/conftest` by its prefix |
-| The verdict on every result (`SearchResults.verdict`: `ok`, `no_match`, `empty_store`, `gated` and others) | the hits only | Preflight could tell "nothing like this was refused here" from "this store is empty" in the engine's own words |
-| The REFERENCE tier (`set_reference`, `get_reference`): a named document | not used | The terms of a standing offer and a rate card, kept whole under their hash, so "what was refused under these terms" recalls the terms and not only their hash |
-| `archive_entity`: out of the active set, still on disk | `set_entity`, `list_entities`, `search_entities(category=)` | A rule a successful appeal overturned is archived with the reason, so it stops deciding and its history stays |
-| Tenants (`set_tenant`, one store, isolated identities) | one tenant per repository; `knos-judge` for a judge's run | A supplier's delivery record across buyers: one tenant the supplier owns, written from each buyer's statement the supplier acknowledged, read by preflight under `--by` |
-| `free_tier_status()` | not used | `knos preflight` and the Stop hook say when the store is near its cap, before a write is refused |
-| `sibyl-memory-mcp` 0.2.1: the store as eight MCP tools | not used | An agent host that already runs Sibyl's server could be pointed at a repository's tenant (the server's Docker instructions pass `SIBYL_TENANT_ID` through) and read Knos's record with no second server. Its tools can also write, so who may write a repository's record has to be decided first |
 
 ## What is not done
 

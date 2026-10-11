@@ -26,10 +26,9 @@ Examples of unacceptable behaviour:
 
 ## Enforcement
 
-Report unacceptable behaviour privately to the maintainer, through GitHub's private vulnerability reporting on
-this repository (Security → Report a vulnerability) or a direct message to @drexthealpha. All complaints
-will be reviewed and investigated promptly and fairly. The maintainer will
-respect the privacy and security of the reporter.
+Report unacceptable behaviour privately to the maintainer: send a direct message to @drexthealpha, or use this
+repository's private report form (Security → Report a vulnerability) and say it is about conduct. The maintainer will
+look into every complaint promptly and fairly, and will respect the privacy and security of the reporter.
 
 Maintainers who do not follow or enforce this Code of Conduct in good faith
 may face temporary or permanent repercussions.

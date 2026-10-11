@@ -400,7 +400,7 @@ def test_knos_due_shows_what_waits_what_was_paid_and_how_to_claim():
     old = got["first_deployment"]
     assert old["waiting"] == [{"mint": str(pay.faucet_mint()), "amount_usdc": "19.50"}] and old["waiting_usdc"] == "19.50"
     assert old["paid"] == {"pull_requests": 3, "repositories": 2, "total_usdc": "61.25"}
-    assert got["said"] == "mona has bound no wallet. The first deployment holds 19.50 USDC for mona."
+    assert got["said"] == "mona has bound no wallet. The first deployment (Knos 0.3.11 and earlier) holds 19.50 USDC for mona."
     assert "knos claim <address>" in got["how"] and "https://drexthealpha.github.io/Knos/#claim" in got["how"] and "knos claim --v1 <address>" in got["how"]
     assert (got["wallet"], got["held"], got["balances"]) == (None, [], []) and got["record"]["paid"] == 0
     github.pages["users/nobody"] = {"id": 5, "login": "nobody"}
@@ -527,7 +527,7 @@ def test_knos_due_shows_the_bound_wallet_what_is_held_the_record_and_the_balance
     assert "counted apart" in record.pop("note")
     assert record == {"paid": 2, "funders": 1, "total_units": 24_375_000, "first": "2026-09-20T14:13:20Z", "last": "2026-09-21T13:13:20Z",
                       "test_paid": 5, "test_total_usdc": "97.50", "self_paid": 1}
-    assert mona["said"] == ("mona has bound no wallet. 1 payment is held for mona until a wallet is bound. The first deployment holds "
+    assert mona["said"] == ("mona has bound no wallet. 1 payment is held for mona until a wallet is bound. The first deployment (Knos 0.3.11 and earlier) holds "
                             "19.50 USDC for mona.")
     assert mona["how"].startswith("Bind a wallet as this GitHub account with `knos claim <address>` or at https://drexthealpha.github.io/Knos/#claim: "
                                   "what is held is sent there") and mona["balances"] == []

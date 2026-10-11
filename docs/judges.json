@@ -1,10 +1,10 @@
 {
- "title": "For judges: one page",
+ "title": "Check every claim yourself (for judges and buyers)",
  "sentence": "The neutral meter for AI agent work: neither side keeps the count.",
  "pitch": "Knos lets buyers and suppliers agree what AI work earned payment, and independently prove that agreement later.",
  "number": "Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check.",
  "claim": "two parties who distrust each other compute the same bill from evidence a third party signed, and the program releases the money on that signature.",
- "why_solana": "Money is released with no custodian, and the count is anchored where neither side can alter it.",
+ "why_solana": "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public.",
  "source": "docs/JUDGES.md",
  "columns": [
   "judged",
@@ -23,14 +23,14 @@
    "id": "potential_impact",
    "thing": "Potential impact",
    "sentence": "A buyer paying per merge on our sample would have paid for 19 pull requests whose checks failed, read again by hand.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/BENCH.md",
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/BENCH.md",
    "label": "the measurement"
   },
   {
    "id": "novelty",
    "thing": "Novelty",
    "sentence": "The black-box check refused all 63 cheating submissions, and plain CI passed 56 of them.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/TAMPER.md",
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/TAMPER.md",
    "label": "the tamper benchmark"
   },
   {
@@ -44,67 +44,67 @@
    "id": "open_source_and_composition",
    "thing": "Open source and composition",
    "sentence": "The code is MIT, and the verifier is a separate program that other Solana programs call.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/COMPOSE.md",
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/COMPOSE.md",
    "label": "how to call it"
   },
   {
    "id": "business_plan",
    "thing": "Business plan",
    "sentence": "Knos earns one fee, on value released against a signed acceptance, and the supplier never pays.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/MARKET.md",
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/MARKET.md",
    "label": "the price book and its costs"
   },
   {
    "id": "founder_and_market_fit",
    "thing": "Founder and market fit",
    "sentence": "The founder placed first of 92 teams at Sibyl Labs in Sep 2026, and has never sold to an invoice approver.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/TEAM.md",
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/TEAM.md",
    "label": "the team, for and against"
   },
   {
    "id": "insight",
    "thing": "Insight",
    "sentence": "Every vendor counts its own outcomes, while the forge already signs a record that neither buyer nor supplier owns.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/WHY.md",
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/WHY.md",
    "label": "why a neutral count"
   },
   {
    "id": "product_and_execution",
    "thing": "Product and execution",
-   "sentence": "Sibyl's memory engine, which the founder's first-place Sibyl Labs product ran on, holds Knos's history; each capability has evidence.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/MANIFEST.md",
+   "sentence": "Every capability names its stage and the test or transaction that shows it.",
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/MANIFEST.md",
    "label": "the release manifest"
   },
   {
    "id": "potential_market_size",
    "thing": "Potential market size",
-   "sentence": "Not counted: no buyer has been asked, and a formula with sources and labelled assumptions only sizes it.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/submission/MARKET_SIZE.md",
-   "label": "the market size"
+   "sentence": "Under labelled assumptions the yearly fee pool is 222,000 to 5,994,000 USD, and Knos has no share of it yet.",
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/MARKET_SIZE.md",
+   "label": "the market size, with its sources"
   },
   {
    "id": "founder_communication",
    "thing": "Founder communication",
    "sentence": "The presentation fits in three minutes: the finding, one transaction, the founder's record, the limits in one sentence, the ask.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/submission/pitch_script.md",
-   "label": "the presentation"
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/STORY.md",
+   "label": "the story"
   },
   {
    "id": "viability",
    "thing": "Viability",
    "sentence": "Each customer's delivery cost is budgeted line by line, only the monthly batch is measured, and nothing has been sold.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/UNIT_COSTS.md",
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/UNIT_COSTS.md",
    "label": "the unit costs"
   },
   {
    "id": "traction",
    "thing": "Traction",
    "sentence": "Outside funders 0, outside repositories 0, interviews 0, revenue 0; one outside payee was paid on tasks Knos funded.",
-   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/submission/NUMBERS.md",
+   "link": "https://github.com/drexthealpha/Knos/blob/main/docs/NUMBERS.md",
    "label": "the outside-use numbers"
   }
  ],
- "wait": "From merge to paid took 26 seconds at the median, over 51 payments on devnet. Days to approve is defined as the days from the day the buyer receives a supplier's invoice to the day a person with authority approves it. Not measured.",
+ "wait": "From merge to paid took 28 seconds at the median, over 56 payments on devnet (10 Oct 2026). Days to approve: from the day a buyer gets a supplier's invoice to the day someone allowed to approve it does. Not measured.",
  "not_real": [
   "Money: Solana devnet and test USDC only.",
   "Buyers: 0 interviews, 0 letters of intent, 0 paying customers, 0 revenue.",
@@ -113,7 +113,7 @@
   "Neutrality: one person holds every key, and that person is the whole team."
  ],
  "entry": {
-  "manifest": "https://github.com/drexthealpha/Knos/blob/main/docs/MANIFEST.md",
+  "manifest": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/MANIFEST.md",
   "witnessed": [
    {
     "label": "funded",

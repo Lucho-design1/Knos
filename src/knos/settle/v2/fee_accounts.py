@@ -53,7 +53,7 @@ def make_ixs(payer: Pubkey, base: Pubkey, rows: list[dict], lamports: int = RENT
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="knos relay fee-accounts", description="Plan, and with --execute make, K fee accounts of FEE_OWNER per mint.")
+    ap = argparse.ArgumentParser(prog="knos relay fee-accounts", description="Show (and with --execute, create) K fee accounts per token for the fee owner.")
     ap.add_argument("--k", type=int, required=True, help=f"fee accounts per mint, 1..{pay.MAX_FEE_SHARDS} (account 0 is the associated one)")
     ap.add_argument("--base", default="", help="the base address the seeded accounts derive from (default: the relay key, KNOS_RELAY_KEY)")
     ap.add_argument("--mint", action="append", default=[], help="an SPL Token mint (repeat; default: Circle's devnet USDC and the faucet's test USDC)")

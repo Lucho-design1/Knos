@@ -60,11 +60,11 @@ def _flat(rel: str) -> str:
     return " ".join((ROOT / rel).read_text(encoding="utf-8").split())
 
 
-def test_the_launch_list_and_the_attestor_page_say_what_the_check_says_about_a_personal_repository():
+def test_the_attestor_page_says_what_the_check_says_about_a_personal_repository():
     source = ("https://docs.github.com/en/enterprise-cloud@latest/repositories/configuring-branches-and-merges-in-your-repository/"
               "managing-rulesets/available-rules-for-rulesets#require-workflows-to-pass-before-merging")
     assert source in (ROOT / "src" / "knos" / "strip_check.py").read_text(encoding="utf-8")
-    for rel in ("docs/LAUNCH.md", "docs/ATTESTOR.md"):
+    for rel in ("docs/reference/ATTESTOR.md",):
         text = _flat(rel)
         assert "**On a personal repository, PARTLY is the most GitHub allows.**" in text, rel
         assert f"Still open: {K.STILL_OPEN}." in text, rel

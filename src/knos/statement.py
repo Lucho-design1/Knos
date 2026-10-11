@@ -40,7 +40,7 @@ the PDF are written from `cells`, so they say the same thing in the same words, 
 
 Approvals and payment status are appended to `<name>.status.json`, never to the statement: the statement does not
 change after it is made. Nothing here moves money. A payment made by bank is recorded with the payer's own reference, or
-through the payment file and the bank's answer to it (knos.rails; docs/RAILS.md).
+through the payment file and the bank's answer to it (knos.rails; docs/reference/RAILS.md).
 """
 from __future__ import annotations
 
@@ -979,7 +979,8 @@ def register(app, help_lines: list | None = None) -> None:
     typer = importlib.import_module("typer")       # the command line's package, named here and not imported: the relay reaches this module on an install without it
 
     sub = typer.Typer(add_completion=False, no_args_is_help=True,
-                      help="The statement for accounts payable: every invoice line: policy met, disputed, duplicate or without enough evidence, then accepted, authorised and settled, as JSON, CSV and PDF.")
+                      help="Make the accounts-payable statement. Each invoice line is marked policy met, disputed, duplicate or not enough "
+                           "evidence, then tracked through accepted, authorised and settled. Output: JSON, CSV and PDF.")
     app.add_typer(sub, name="statement")
     if help_lines is not None:
         help_lines.append(("statement", "For money", "An invoice's statement for accounts payable: JSON, CSV and PDF; approve, record payment, verify."))
@@ -1116,7 +1117,7 @@ def register(app, help_lines: list | None = None) -> None:
              method: str = typer.Option("bank", "--method", help="bank, chain or other"),
              ref: str = typer.Option("", "--ref", help="the payer's own reference, or the transaction"),
              on: str = on_opt, state: str = typer.Option("", "--state", help="payable, paid outside Knos, held, refunded or devnet demonstration"),
-             receipt: Path = typer.Option(None, "--receipt", help="with --method chain: the payment's acceptance receipt (JSON); a quorum of one controller is then said on the line"),
+             receipt: Path = typer.Option(None, "--receipt", help="with --method chain: the payment's acceptance receipt (JSON); the line then says that one controller (a quorum of one) approved the payment"),
              terms_file: Path = typer.Option(None, "--terms-file", help="the order's Knos Terms 3 file: a payment below the assurance level it requires is refused"),
              rail: str = typer.Option("", "--rail", help="bank: write a payment file (ISO 20022 pain.001) for the approved lines whose policy is met. usdc: record a devnet payment of --line (its transaction is --ref)"),
              payer_name: str = typer.Option("", "--payer-name", help="with --rail bank: who pays, as the bank knows them"),
@@ -1128,7 +1129,10 @@ def register(app, help_lines: list | None = None) -> None:
              remember: str = typer.Option("", "--remember", metavar="ORG", help="the buyer organisation whose memory keeps how a line that was set aside ended (paid: accepted on appeal; refunded: refused)"),
              memory_dir: Path = typer.Option(None, "--memory", metavar="DIR", help="with --remember: the directory of the memory store"),
              terms: str = typer.Option("", "--terms", metavar="HASH", help="with --remember: the hash of the terms, as given to `knos statement make`")) -> None:
-        """Record the payment status of one line that was paid, held or refunded outside Knos; or, with --rail bank, write the payment file the payer uploads to their own bank: one transfer per supplier for the lines whose policy is met, approved and still payable, each carrying its settlement id end to end. It moves no money and checks no bank. No bank has taken a file this command wrote: try it in the bank's test channel first."""
+        """Record that one line was paid, held or refunded outside Knos. Or, with --rail bank, write the payment file the
+        payer uploads to their own bank: one transfer per supplier for the approved, payable lines whose
+        policy is met, each with its settlement id. It moves no money and contacts no bank. No bank has
+        accepted a file this command wrote yet: try it in the bank's test channel first."""
         from . import rails
         try:
             st, status = load(file)
@@ -1252,7 +1256,10 @@ def register(app, help_lines: list | None = None) -> None:
     def status_(file: Path = file_arg,
                 source: Path = typer.Option(..., "--from", help="the bank's answer: a payment status report (pain.002 XML), or a CSV: end_to_end_id,status,reference,date,reason"),
                 on: str = on_opt) -> None:
-        """Read the bank's answer to a payment file and record it: each line of a settled transfer becomes paid outside Knos, each line of a rejected one payable again with the bank's reason, each line of an unclear answer (a timeout, \"unknown\") held as unknown until a later answer says paid or returned, and a transfer still with the bank changes nothing. Reading the same answer twice changes nothing. It records what the bank's file says; it asks no bank."""
+        """Read the bank's answer to a payment file and record it. A settled transfer marks its lines paid outside Knos.
+        A rejected one makes its lines payable again, with the bank's reason. An unclear answer (a timeout,
+        \"unknown\") holds its lines as unknown until a later answer. A transfer still with the bank changes
+        nothing. Reading the same answer twice changes nothing. It asks no bank; it only reads the file."""
         from . import rails
         try:
             st, status = load(file)

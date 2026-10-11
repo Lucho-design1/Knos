@@ -11,4 +11,4 @@ library only, it does not import `knos`, and it opens no connection.
 check what they hold. The copy here is byte for byte `src/knos/standalone_verify.py`
 (`tests/test_archive.py::test_the_verifier_is_one_file_of_the_standard_library_with_no_knos_and_no_network`).
 
-What it checks, what it only notes and what it cannot know: [docs/RETENTION.md](../../docs/RETENTION.md).
+What it checks, what it only notes and what it cannot know: [docs/reference/RETENTION.md](../../docs/reference/RETENTION.md).

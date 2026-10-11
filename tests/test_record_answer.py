@@ -1,4 +1,4 @@
-"""What a paid record lookup adds to the free file (src/knos/record_answer.py, docs/RECORD.md section 5): a signature
+"""What a paid record lookup adds to the free file (src/knos/record_answer.py, docs/reference/RECORD.md section 5): a signature
 with an expiry that is checked offline, a summary computed the same way for every supplier, and the supplier's history
 only to a reader the supplier granted. tests/test_record_api.py serves it against a funded order."""
 from __future__ import annotations
@@ -248,7 +248,7 @@ def test_health_says_whether_it_can_answer_whether_it_signs_and_that_nothing_is_
 
 
 def test_the_document_sets_the_free_file_beside_the_paid_answer_and_budgets_no_revenue():
-    text = (ROOT / "docs" / "RECORD.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "reference" / "RECORD.md").read_text(encoding="utf-8")
     for needle in ("| | the free file | the paid answer |", "budget: zero revenue until someone buys it", "knos record verify", "knos record grant",
                    "knos record serve --health", "not granted", "Not a rating of defect-free work", "never pays", ra.ANSWER, ra.GRANT, ra.HISTORY):
         assert needle in text, needle

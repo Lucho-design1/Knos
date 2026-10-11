@@ -382,7 +382,7 @@ def ledger() -> Ledger:
     if c not in CLUSTERS:
         raise Refused(f"Knos runs on devnet (or a localnet) only; {c!r} is not available.")
     # each signed transaction to the endpoint and any second one (KNOS_RPC_SECOND), sent again until its signature is
-    # confirmed: knos.settle.v2.fanout (the 0.3.24 burst paid 22 of 40 when one send's answer was lost)
+    # confirmed: knos.settle.v2.fanout (in a devnet load test of 0.3.24 on 9 Oct 2026, 22 of 40 were paid because single sends lost their answers)
     from .settle.v2.fanout import FanLedger
     return FanLedger(os.environ.get("KNOS_RPC") or CLUSTERS[c])
 

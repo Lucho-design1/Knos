@@ -34,7 +34,7 @@ def run(script: str, timeout: int) -> str:
 
 def test_the_price_book_s_arithmetic_is_the_python_s() -> None:
     out = run("price.mjs", 60)
-    assert "a year: the worked customer" in out and "the worked customer pays 130,240.00 a year" in out and "every line of the price book is a row of docs/MARKET.md" in out
+    assert "a year: the worked customer" in out and "the worked customer pays 130,240.00 a year" in out and "every line of the price book is a row of docs/reference/MARKET.md" in out
 
 
 def test_the_calculator_shows_the_same_numbers_and_moves_the_acceptance_tiers() -> None:

@@ -150,6 +150,3 @@ def test_the_readme_is_30_lines_and_the_example_installs_nothing():
     assert not (HERE / "package.json").exists()
     imports = {m for f in HERE.glob("*.mjs") for m in re.findall(r'from "([^"]+)"', f.read_text(encoding="utf-8"))}
     assert all(i.startswith(("node:", "./", "../x402_attested/")) for i in imports), imports
-    # the 60-second sequence lists its shots, and each shot is a command or a number this test file checks
-    shots = (HERE / "SHOTS.md").read_text(encoding="utf-8")
-    assert len(re.findall(r"^\| \d+ \|", shots, re.M)) >= 6 and "60 seconds" in shots

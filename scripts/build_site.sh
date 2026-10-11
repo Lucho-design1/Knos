@@ -55,7 +55,7 @@ cp docs/agent_weekly.json "$out/agent_weekly.json"
 cp docs/index.json "$out/agent_index.json"
 cp docs/vendors.json "$out/vendors.json"       # the vendor pages (#vendor=<agent>): web/vendor.js reads it; scripts/agent_pr_index.py vendors writes it
 cp docs/index.atom "$out/index.atom"
-# A supplier's public record (docs/RECORD.md): the file and its badge, which the record page reads.
+# A supplier's public record (docs/reference/RECORD.md): the file and its badge, which the record page reads.
 mkdir -p "$out/records" && cp docs/records/*.json "$out/records/"
 # The registry of published terms (terms/, which scripts/terms_registry.py builds): the Terms page reads terms/index.json,
 # and the address `knos terms cite` prints is a file here.
@@ -96,7 +96,7 @@ fi
 "${PYTHON:-python3}" scripts/task_board.py status --json --empty > "$out/tasks.json"
 # PAGES ADDED BY NAME (web/views.js ADDED). Two of them are drawn from a file this build writes:
 #   enforce.json   the enforcement matrix (src/knos/enforce.py: routes, restrictions, cells), for #enforcement; the
-#                  build stops when docs/ENFORCEMENT.md is not what the code gives (`--check`)
+#                  build stops when docs/reference/ENFORCEMENT.md is not what the code gives (`--check`)
 #   judges.json    docs/judges.json, the rows of docs/JUDGES.md (scripts/judges.py holds the file to the page), for #judges
 # A tree without the source writes no file, and the page is then not offered: every line of ADDED whose module or
 # whose json is not in this build is taken out of the build's copy of views.js, so no link leads to nothing.

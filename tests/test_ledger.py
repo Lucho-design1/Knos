@@ -269,8 +269,8 @@ def test_the_example_ledgers_hold_alone_and_disagree_together(capsys):
     assert rc == 1 and "only the seller has" in said and "differs in verdict" in said and r.statement() in said and "The two ledgers differ." in said
     rc, said = _run(capsys, "reconcile", str(EXAMPLES / "seller.jsonl"), str(EXAMPLES / "seller.jsonl"))
     assert rc == 0 and "202610,7,6,12000000,0,0,0,0" in said and "The two ledgers agree." in said
-    # every number docs/METER.md quotes about the example is the example's
-    doc = (ROOT / "docs" / "METER.md").read_text(encoding="utf-8")
+    # every number docs/reference/METER.md quotes about the example is the example's
+    doc = (ROOT / "docs" / "reference" / "METER.md").read_text(encoding="utf-8")
     assert "".join(f"    {line}\n" for line in r.statement().splitlines()) in doc and r.seller_only[0][1].id.hex() in doc and r.disputed[0].id.hex() in doc
     for t in (L.totals(buyer, 202610), L.totals(seller, 202610)):
         assert t.chain.hex() in doc
@@ -299,7 +299,7 @@ def test_the_commands_build_verify_prove_and_export(capsys, tmp_path):
     assert rc == 1 and "count: the ledger gives 5, the chain has 6" in said
     ledger.write_text(ledger.read_text(encoding="utf-8").replace('"accepted":1,"artifact"', '"accepted":0,"artifact"', 1), encoding="utf-8")
     rc, said = _run(capsys, "verify", str(ledger))
-    assert rc == 1 and "does not hold" in said
+    assert rc == 1 and "failed the check" in said
 
     rc, said = _run(capsys, "prove", str(EXAMPLES / "seller.jsonl"), evals[0].id.hex())
     assert rc == 1 and "in no batch" in said

@@ -1,4 +1,4 @@
-"""Signed results from systems other than CI, read as meter lines (docs/SOURCES.md).
+"""Signed results from systems other than CI, read as meter lines (docs/reference/SOURCES.md).
 
 A source is a system that signs a statement about work: "this file was built from this commit by this workflow".
 An adapter does three things, and only these:

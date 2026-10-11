@@ -6,11 +6,11 @@ merged. A Knos bounty pays only when the checks its terms require passed at the 
 the pull requests that were paid a bounty elsewhere, how many had a failed check at the commit that was merged?
 
     GH_TOKEN=... python scripts/backtest_paid.py                 # collect, read, count; write docs/backtest_paid.json
-                                                                  # and the block of docs/BENCH.md
+                                                                  # and the block of docs/reference/BENCH.md
     python scripts/backtest_paid.py --days 270 --windows 9 --per-window 100
 
 Until the release run executes this with a GitHub token, docs/backtest_paid.json says `"status": "not run"` and so does
-the block of docs/BENCH.md: no number is made up, and none is carried over from another measurement.
+the block of docs/reference/BENCH.md: no number is made up, and none is carried over from another measurement.
 
 How a bounty is marked on GitHub (read 3 Oct 2026; the first two are documentation, the rest is what the script assumes
 and the release run checks):
@@ -41,7 +41,7 @@ import agent_pr_index  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "docs", "backtest_paid.json")
-BENCH = os.path.join(ROOT, "docs", "BENCH.md")
+BENCH = os.path.join(ROOT, "docs", "reference", "BENCH.md")
 BLOCK = re.compile(r"<!-- backtest_paid:begin -->.*?<!-- backtest_paid:end -->", re.S)
 
 PLATFORMS = {
@@ -250,7 +250,7 @@ def backtest(records, issues_found):
 def cannot_show(out):
     """What this run cannot work out from GitHub; each line says what is missing."""
     return ["How a platform marks a PAID bounty: neither platform documents what its bot writes on GitHub when it pays. "
-            "`paid` is the rule in DEFINITIONS; a bounty paid without a bot comment is counted as `unpaid`",
+            "`paid` follows the rule in `DEFINITIONS` of `scripts/backtest_paid.py`; a bounty paid without a bot comment is counted as `unpaid`",
             "Money: no amount is read. A comment can say paid for a tip, and a bounty can be paid in parts",
             "Whether the check was failing when the maintainer merged: CI is read as it is on the day of the run. A "
             "check re-run later shows its last result, and a check can fail after a merge (`failed_at_merge`)",
@@ -287,7 +287,7 @@ def _pct(x):
 
 
 def bench_block(out):
-    """The block of docs/BENCH.md, from not_run() or run()."""
+    """The block of docs/reference/BENCH.md, from not_run() or run()."""
     head = ["<!-- backtest_paid:begin -->", "### Paid elsewhere, and a check had failed", "",
             "`python scripts/backtest_paid.py` (with a GitHub token) writes `docs/backtest_paid.json`: of the merged pull "
             "requests that were paid a bounty on Algora or Opire (labels and commands: "
@@ -319,7 +319,7 @@ def bench_block(out):
 
 
 def update_bench(text, out):
-    """docs/BENCH.md with the block replaced (inserted after the block of `### Merged anyway` when there is none)."""
+    """docs/reference/BENCH.md with the block replaced (inserted after the block of `### Merged anyway` when there is none)."""
     block = bench_block(out)
     if BLOCK.search(text):
         return BLOCK.sub(lambda _: block, text)
@@ -332,7 +332,7 @@ def update_bench(text, out):
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=OUT)
-    ap.add_argument("--bench", default=BENCH, help="docs/BENCH.md: its backtest_paid block is rewritten")
+    ap.add_argument("--bench", default=BENCH, help="docs/reference/BENCH.md: its backtest_paid block is rewritten")
     ap.add_argument("--end", help="last day of the newest window, YYYY-MM-DD (default: today)")
     ap.add_argument("--days", type=int, default=30)
     ap.add_argument("--windows", type=int, default=9)

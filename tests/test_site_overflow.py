@@ -25,7 +25,8 @@ ONE = "The neutral meter for AI agent work: neither side keeps the count."
 WORD = re.compile(r"[A-Za-z0-9][\w'’%.,/-]*")
 
 
-OUTCOME = "Pay AI agents only when your checks pass."       # the customer outcome, under the sentence
+OUTCOME = "Pay AI agents only when your checks pass."       # the customer outcome: the h1
+WHO = "For teams and maintainers who pay AI agents or contributors for code."   # who it is for, under the h1
 
 
 def _words(html: str) -> list[str]:
@@ -58,7 +59,7 @@ def test_no_page_scrolls_sideways(tmp_path: Path) -> None:
 
 
 def test_the_budget_of_words_weight_and_motion_holds(tmp_path: Path) -> None:
-    """tests/web/motion.mjs: 40 words on the first screen, the weight of the stylesheet and of what moves, nothing
+    """tests/web/motion.mjs: 56 words on the first screen, the weight of the stylesheet and of what moves, nothing
     running for a reader who asked for no movement, the focus drawn, the contrast of the text, no sideways scroll."""
     _run(tmp_path, "motion.mjs", "motion: every check held")
 
@@ -72,45 +73,46 @@ def test_the_first_screen_says_forty_words_at_most() -> None:
     bar = re.sub(r'<div class="more-list".*?</div>', "", bar, flags=re.S)                 # what More holds is one press away
     # the first screen ends where "How it works" begins (since 0.3.22 it stands under the hero, before the demo's mount)
     hero = page[page.index('<div class="hero'):min(page.index('<section id="demo"'), page.index('<h2 id="how-it-works">'))]
-    assert f'<h1 id="check">{ONE}</h1>' in hero
-    assert len(re.findall(r"<a\b", bar[bar.index("<nav"):bar.index('<div class="more"')])) == 6      # six links in the bar: Check, Demo, Console, Leaderboard, Pricing, Docs
+    assert f'<h1 id="check">{OUTCOME}</h1>' in hero
+    assert len(re.findall(r"<a\b", bar[bar.index("<nav"):bar.index('<div class="more"')])) == 6      # six links in the bar: Check, Demo, Console, Install, Pricing, Docs
     fact = re.search(r'<p class="hero-fact"[^>]*>(.*?)</p>', hero, re.S)
-    assert fact and len(_words(fact[1])) <= 12 and re.sub(r"<[^>]+>", "", fact[1]) == "241 merged agent “tests pass” pull requests: 9 failed tests or builds."
+    assert fact and len(_words(fact[1])) <= 18 and re.sub(r"<[^>]+>", "", fact[1]) == "Of 241 merged agent “tests pass” pull requests: 9 failed a test, build, lint or type check."
     merged = json.loads((ROOT / "docs" / "backtest.json").read_text(encoding="utf-8"))["reviewed"]["overall"]
     assert (merged["prs"], merged["test_or_build_check_failed"]["prs"]) == (241, 9)
     door = hero[hero.index('<form id="front-door"'):hero.index("</form>")]
     assert re.findall(r'data-fd="(\w+)"', door) == ["run", "sample"] and '<textarea id="fd-in"' in door and 'id="mark3d"' in hero
     # two buttons: the one primary action, and the sample beside it (quiet)
-    assert [re.sub(r"<[^>]+>", "", b).strip() for b in re.findall(r"<button\b[^>]*>.*?</button>", hero)] == ["Check", "Try a sample"]
+    assert [re.sub(r"<[^>]+>", "", b).strip() for b in re.findall(r"<button\b[^>]*>.*?</button>", hero)] == ["Check", "Try a sample invoice"]
     assert 'class="k-btn" data-fd="run"' in hero and 'class="k-btn quiet" data-fd="sample"' in hero
     assert 'id="hero-board"' in hero and hero.index('id="hero-board"') > hero.index("</form>")      # the leaderboard strip, directly under the box
     # the demo's mount is in the first view (its own section and #check-one, the check of one pull request, stand inside it)
     assert '<section id="demo" class="mount" aria-label="Demo" hidden></section>' in page.split('id="view-check"')[1].split('<section id="view-')[0]
-    # the 40 words are counted as tests/web/front_door.mjs counts them in a browser: prose (headings, sentences, links),
+    # the 56 words are counted as tests/web/front_door.mjs counts them in a browser: prose (headings, sentences, links),
     # the bar with them. A control (a button) and a figure (.k-num) are the thing itself, not a statement about it. Since
-    # 0.3.19 the customer outcome is one of the lines, inside the same 40.
-    assert f'<p class="hero-outcome" id="hero-outcome">{OUTCOME}</p>' in hero and hero.index(f">{ONE}</h1>") < hero.index(OUTCOME) < hero.index('id="hero-fact"')
+    # the outcome is the h1, and who it is for and the sentence stand under it, inside the same 56.
+    assert f'<p class="hero-who" id="hero-who">{WHO}</p>' in hero and f'<p class="hero-outcome" id="hero-outcome">{ONE}</p>' in hero
+    assert hero.index(f">{OUTCOME}</h1>") < hero.index(WHO) < hero.index(f">{ONE}</p>") < hero.index('id="hero-fact"')
 
     def prose(html: str) -> list[str]:
         html = re.sub(r"<button\b[^>]*>.*?</button>", " ", html, flags=re.S)
         return _words(re.sub(r'<(\w+)\b[^>]*class="[^"]*\bk-num\b[^"]*"[^>]*>.*?</\1>', " ", html, flags=re.S))
     words = prose(bar) + prose(hero)
-    assert 20 <= len(words) <= 40, (len(words), words)
-    assert len(_words(bar) + _words(hero)) <= 48                              # and with every control's label and figure: no more than these
+    assert 20 <= len(words) <= 56, (len(words), words)          # the outcome, who it is for, the sentence, the number, the bar
+    assert len(_words(bar) + _words(hero)) <= 64                              # and with every control's label and figure: no more than these
 
 
 def test_the_figure_on_the_first_screen_is_the_measured_one() -> None:
-    """The second number, under the first screen (#second-fact). 17.8% is the Agent PR Index's count of repositories (docs/BENCH.md): the first pull request by an agent whose
+    """The second number, under the first screen (#second-fact). 17.8% is the Agent PR Index's count of repositories (docs/reference/BENCH.md): the first pull request by an agent whose
     description said tests or CI pass had a failed check in 147 of 826. The line says no more than that."""
-    bench = (ROOT / "docs" / "BENCH.md").read_text(encoding="utf-8")
+    bench = (ROOT / "docs" / "reference" / "BENCH.md").read_text(encoding="utf-8")
     found = re.search(r"in (\d[\d,]*) repositories, the first pull request by an AI coding agent whose description said tests or CI pass had \*\*a failed check of any kind in (\d+) \((\d+\.\d)%\)", bench)
-    assert found, "docs/BENCH.md no longer states the figure in this form"
+    assert found, "docs/reference/BENCH.md no longer states the figure in this form"
     total, failed, share = int(found[1].replace(",", "")), int(found[2]), found[3]
     assert f"{100 * failed / total:.1f}" == share
     page = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
     line = re.sub(r"<[^>]+>", "", re.search(r'<p class="fine" id="second-fact"[^>]*>(.*?)</p>', page, re.S)[1])
-    assert line == f"{share}% of agents' first “tests pass” pull requests had a failed check."
-    assert 'href="https://github.com/drexthealpha/Knos/blob/main/docs/BENCH.md">' + share + "%</a>" in page
+    assert line == f"{share}% of agents' first “tests pass” pull requests had a failed check: {failed} of {total}."
+    assert 'href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/BENCH.md">' + share + "%</a>" in page
 
 
 def test_a_statement_of_the_shell_is_twelve_words_at_most() -> None:

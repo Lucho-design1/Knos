@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""agent_pr_ci.py -- re-runnable market statistic for Knos.
+"""agent_pr_ci.py: the sample behind the Agent PR Index, which anyone can run again.
 
-Question: of PRs authored by AI coding agents whose PR body claims tests/CI
-pass, what share had CI FAILING at the PR's head SHA?
+Question: of the pull requests (PRs) that AI coding agents wrote and that claim the tests or CI pass, what share
+had a FAILED check at the PR's last commit (its head SHA)?
 
 Read-only: only `gh api -X GET` calls. Every answer GitHub would give again is cached under
 ~/.cache/knos-agent-pr-ci/ so reruns are cheap (a server error or a rate limit is not an answer and
 is asked again); each invocation stops after --max-seconds and can be re-run to resume.
 
-Usage (from this directory):
-    py agent_pr_ci.py collect   # search phase (Search API, 30 req/min)
-    py agent_pr_ci.py checks    # per-PR head SHA + checks (core API); then report
-    py agent_pr_ci.py report    # writes docs/agent_pr_ci.json from cache, prints summary
+Usage:
+    python scripts/agent_pr_ci.py collect   # search phase (Search API, 30 requests a minute)
+    python scripts/agent_pr_ci.py checks    # each PR's head commit and its checks (core API), then the report
+    python scripts/agent_pr_ci.py report    # writes docs/agent_pr_ci.json from the cache and prints a summary
 Options: --end YYYY-MM-DD (window end; frozen in cache/config.json on first
 run), --days 90, --windows 9, --per-window 20, --max-seconds 270
 Delete ~/.cache/knos-agent-pr-ci/ to take a fresh sample (e.g. with a new --end).

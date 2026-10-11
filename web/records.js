@@ -84,7 +84,7 @@ export function initRecords(ctx) {
   // A record is shown twice (cache.js): at once from what this tab read before, with its age, then from the files and
   // devnet as they are now. A record seen before is on the page before any request is answered.
   async function record(kind, asked) {
-    say(`Reading records.json…`);
+    say(`Reading the records…`);
     try { await kept.twice((read, pass) => draw(kind, asked, (path) => read(fileKey(path), () => readFile(path)), pass)); }
     catch (e) {
       const note = $("rec-asof");

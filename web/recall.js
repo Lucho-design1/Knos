@@ -94,7 +94,7 @@ ${p ? `<p class="rc-label">${esc(p.label[0].toUpperCase() + p.label.slice(1))}.<
 
 export function recallHtml(rows) {
   const list = ranked(rows);
-  if (!list.length) return `<p class="rc-none">No memory of this exception.</p>`;
+  if (!list.length) return `<p class="rc-none">This exception has not been seen before.</p>`;
   return list.map(rowHtml).join("");
 }
 

@@ -82,7 +82,7 @@ def test_the_page_asks_no_host_and_keeps_nothing():
     for word in ("localStorage", "sessionStorage", "sendBeacon", "XMLHttpRequest", "api.github.com", "devnet.solana"):
         assert word not in source, word
     # the one POST: an audit line to the page's own host, sent only when the self-host bundle's sign-in cookie is set
-    # (ssoOf; docs/SELFHOST.md); tests/web/approver.mjs shows nothing asked without it
+    # (ssoOf; docs/reference/SELFHOST.md); tests/web/approver.mjs shows nothing asked without it
     sso = source.split("export function ssoOf(", 1)[1].split("\n}\n", 1)[0]
     assert source.count("POST") == 2 and sso.count("POST") == 1 and 'fetchFn("/sso/act", { method: "POST"' in sso         # its comment, and the call
     assert "if (typeof fetchFn !== \"function\" || !signedIn()) return null;" in sso and "knos_signed_in=1" in source

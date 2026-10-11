@@ -1,6 +1,6 @@
 """The safety paths of the second deployment, run on the bytes the cluster runs.
 
-    python scripts/drills.py [--rpc URL] [--tokens FILE] [--upgrade-log FILE] [--out docs/DRILLS.md] [--strict]
+    python scripts/drills.py [--rpc URL] [--tokens FILE] [--upgrade-log FILE] [--out docs/reference/DRILLS.md] [--strict]
 
 It reads both programs from the cluster (the ProgramData accounts of knos_oidc and knos_pay, through getAccountInfo),
 prints the sha256 of each with its trailing zeros trimmed (the hash `solana-verify get-program-hash` prints), and loads
@@ -40,7 +40,7 @@ of the RPC that the tests use (tests/), under a clock the drill moves. They say 
 the customer sees, how it recovers, and the recovery measured in simulated seconds. `--dependencies-only` runs these
 alone, reads no cluster, and replaces that one section of --out.
 
-Each drill prints one line: its name, what was checked, and pass or the exact error. The table goes to docs/DRILLS.md
+Each drill prints one line: its name, what was checked, and pass or the exact error. The table goes to docs/reference/DRILLS.md
 with the program hashes and this command. Exit 1 when a row fails (with --strict, also when a row was not run).
 """
 
@@ -105,6 +105,11 @@ class Failed(Exception):
 
 class Skipped(Exception):
     """Why a drill was not run."""
+
+
+def not_run(n: int) -> str:
+    """"1 was not run", "3 were not run": the count with its verb."""
+    return f"{n} {'was' if n == 1 else 'were'} not run"
 
 
 def day(t: int) -> str:
@@ -714,10 +719,10 @@ def a_key_is_refreshed(new, tokens: list[Captured]) -> str:
 
 
 def second_operator(_svm, _tokens) -> str:
-    """Not a drill this script can run: someone who is not the founder follows docs/OPERATOR.md from a clean clone until
+    """Not a drill this script can run: someone who is not the founder follows docs/reference/OPERATOR.md from a clean clone until
     their own relay key has paid or refunded one devnet order. Its definition and what is recorded are in that page
     ("The drill"); until a result is recorded there, the row says so."""
-    raise Skipped("not yet run by a second person (docs/OPERATOR.md, \"The drill\", says who runs it and when it passes)")
+    raise Skipped("not yet run by a second person (docs/reference/OPERATOR.md, \"The drill\", says who runs it and when it passes)")
 
 
 DRILLS: list[tuple[str, str, bool, Callable]] = [       # (name, how its signatures come about, needs tokens, the drill)
@@ -1319,7 +1324,7 @@ def dependency_section(rows: list[Outage]) -> str:
              "simulator's: the drill moves the clock, and the relay makes a pass every " + f"{EVERY} s as the public worker does. No cluster and "
              "no GitHub is touched, and none of these failures has been rehearsed on devnet.", "",
              f"{sum(r.result == 'pass' for r in rows)} of {len(rows)} rows passed, {sum(r.result.startswith('FAIL') for r in rows)} failed, "
-             f"{sum(r.result.startswith('not run') for r in rows)} were not run.", "",
+             f"{not_run(sum(r.result.startswith('not run') for r in rows))}.", "",
              "| Failure | What was broken | What the customer sees | How it recovers | Measured recovery, simulated seconds | Result |", "|---|---|---|---|---|---|"]
     lines += [f"| {cell(r.name)} | {cell(r.broken)} | {cell(r.sees)} | {cell(r.recovers)} | {cell(r.seconds)} | {cell(r.result)} |" for r in rows]
     lines += ["", "These rows alone, with no cluster: `python scripts/drills.py --dependencies-only` (it rewrites this section, and appends the hand-written half of the page anew). "
@@ -1347,7 +1352,7 @@ def document(programs: list[Program], rows: list[Row], rpc: str, cluster: str, n
              "transaction a block explorer can show. The last four rows are the upgrade drill, which this script does not run: "
              "`scripts/drill_upgrade.sh` runs it against a validator on the machine it is run on, with the real Squads program.", "",
              f"{sum(r.result == 'pass' for r in rows)} of {len(rows)} rows passed, {sum(r.result.startswith('FAIL') for r in rows)} failed, "
-             f"{len(rows) - len(ran)} were not run.", "",
+             f"{not_run(len(rows) - len(ran))}.", "",
              "## The programs", "",
              "| Program | Address | ProgramData account | sha256, trailing zeros trimmed | Upgrade authority | Deployed in slot |", "|---|---|---|---|---|---|"]
     lines += [f"| `{p.name}` | `{p.address}` | `{p.data}` | `{p.sha256}` | `{p.authority or 'none'}` | {p.slot} |" for p in programs]
@@ -1389,8 +1394,8 @@ def document(programs: list[Program], rows: list[Row], rpc: str, cluster: str, n
 
 
 def recovery() -> str:
-    """The hand-written half of the page, what a funder does in three failures: docs/drills_recovery.md, appended as it is."""
-    path = ROOT / "docs" / "drills_recovery.md"
+    """The hand-written half of the page, what a funder does in three failures: docs/reference/drills_recovery.md, appended as it is."""
+    path = ROOT / "docs" / "reference" / "drills_recovery.md"
     return "\n" + path.read_text(encoding="utf-8") if path.is_file() else ""
 
 
@@ -1399,7 +1404,7 @@ def main(argv: list[str] | None = None, call: Callable = chain.call, say: Callab
     ap.add_argument("--rpc", default="https://api.devnet.solana.com", help="the cluster the programs are read from")
     ap.add_argument("--tokens", type=Path, help="real GitHub tokens with the key set of their day, JSON Lines (scripts/replay_tokens.py --capture)")
     ap.add_argument("--upgrade-log", type=Path, help="the lines scripts/drill_upgrade.sh wrote (KNOS_DRILL_LOG): its rows go in the table")
-    ap.add_argument("--out", type=Path, default=ROOT / "docs" / "DRILLS.md")
+    ap.add_argument("--out", type=Path, default=ROOT / "docs" / "reference" / "DRILLS.md")
     ap.add_argument("--now", type=int, help="the simulator's clock at the start of a drill without tokens (default: this machine's)")
     ap.add_argument("--strict", action="store_true", help="exit 1 also when a row was not run")
     ap.add_argument("--dependencies-only", action="store_true", help="run only the rows of \"When a dependency fails\" and replace that section of --out; no cluster is read")

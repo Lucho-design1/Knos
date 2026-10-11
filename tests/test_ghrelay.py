@@ -421,7 +421,7 @@ def test_the_line_the_relay_writes_about_itself_is_the_line_the_status_view_read
 
 
 def test_the_page_about_the_relay_states_the_relays_own_constants():
-    doc = (ROOT / "docs" / "RELAY.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "RELAY.md").read_text(encoding="utf-8")
     assert f"up to {ghrelay.SEARCH_EVERY} s (`SEARCH_EVERY`)" in doc and f"{ghrelay.BACKOFF_MOST} s between two tries (`BACKOFF_MOST`)" in doc
     assert f"{ghrelay.CHAIN_NAMES} a pass" in doc and (ghrelay.LATE, ghrelay.HORIZON) == (3600, 70 * 60)
     from knos.settle.v2 import oidc

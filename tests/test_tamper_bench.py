@@ -19,7 +19,7 @@ pytestmark = pytest.mark.skipif(__import__("sys").platform == "darwin",
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / "tests" / "bench_tamper" / "sample"
-DOC = ROOT / "docs" / "TAMPER.md"
+DOC = ROOT / "docs" / "reference" / "TAMPER.md"
 
 
 def _bench():
@@ -48,7 +48,7 @@ def test_the_benchmark_runs_fast_and_only_the_two_stated_limits_fool_an_in_proce
 
 
 def _doc_section(title: str) -> list[str]:
-    """The lines of one repository's section in the committed docs/TAMPER.md."""
+    """The lines of one repository's section in the committed docs/reference/TAMPER.md."""
     doc = DOC.read_text(encoding="utf-8")
     return doc.split(f"## {title}\n", 1)[1].split("\n## ", 1)[0].splitlines()
 
@@ -61,7 +61,7 @@ def _knos_columns(lines: list[str]) -> list[tuple]:
 
 
 # One repository is one data point. The same 21 ideas against the same project in two more languages, on the judge's
-# own platform (prove.yml's judge runs on Linux): what each fools is exactly what docs/TAMPER.md says.
+# own platform (prove.yml's judge runs on Linux): what each fools is exactly what docs/reference/TAMPER.md says.
 @pytest.mark.skipif(os.name == "nt", reason="prove.yml's judge runs on ubuntu-latest")
 @pytest.mark.parametrize("key,ci_fooled,gap", [("node", 20, 1), ("ruby", 19, 0)])
 def test_the_same_attacks_on_a_repository_in_another_language(key, ci_fooled, gap):
@@ -85,7 +85,7 @@ def test_the_same_attacks_on_a_repository_in_another_language(key, ci_fooled, ga
 
 
 def test_the_report_adds_the_repositories_up():
-    """The summary table of docs/TAMPER.md is the sum of its sections (each section is checked against a run above)."""
+    """The summary table of docs/reference/TAMPER.md is the sum of its sections (each section is checked against a run above)."""
     import re
     doc = DOC.read_text(encoding="utf-8")
     rows = re.findall(r"^\| (?!\*\*all)([^|#]+?) \| (\d+) \| (\d+) \| (\d+) \| (\d+) \|$", doc, re.M)
@@ -518,7 +518,7 @@ def test_the_report_states_both_rates_with_their_sample_sizes_and_what_is_still_
     assert f"{sum(b for _, b in cheats)} cheating submissions and {total} honest ones" in block
     assert f"| **all** | **{total}** | **{ci} of {ran}** | **{tests} of {tested}** | **{box} of {total}** |" in block
     assert "on Knos's own tasks" in block and "nobody outside has run either set" in block
-    old = total - sum(1 for r in json.loads((DOC.with_name(bench.ROWS)).read_text(encoding="utf-8"))["rows"] if r["name"] in H.ADDED)
+    old = total - sum(1 for r in json.loads((bench.rows_file(DOC)).read_text(encoding="utf-8"))["rows"] if r["name"] in H.ADDED)
     assert old == 48 and f"it now accepts {old} of {old}" in block          # the set of 0.3.16, of which 39 were accepted
     refused = [ln for ln in block.splitlines() if ln.startswith("| ") and "touches protected path" in ln]
     assert len(refused) == len(H.RULE_REFUSED) and all(f"| {n} |" in ln for (n, _), ln in zip(H.RULE_REFUSED, refused))
@@ -535,7 +535,7 @@ def test_the_page_separates_the_authors_cheats_from_the_outsiders_and_claims_no_
     block = doc.split("<!-- authors:begin -->")[1].split("<!-- authors:end -->")[0]
     cheats = bench.cheat_totals(doc)
     assert bench.outside_cases() == [] and bench.run_outside() == []
-    assert f"| the people who wrote the judge | {sum(b for _, b in cheats)} | {sum(a for a, _ in cheats)} |" in block
+    assert f"| Knos's author | {sum(b for _, b in cheats)} | {sum(a for a, _ in cheats)} |" in block
     assert "| outsiders, through the `tamper` task | 0 | 0 |" in block and "0 of 0, not a rate" in block
     assert "tasks/outside/tamper.json" in block and "outside_cheats" in block
     assert "\n".join(bench.authors_section(cheats, [])) == "<!-- authors:begin -->" + block + "<!-- authors:end -->"
@@ -556,7 +556,7 @@ def test_an_outside_case_is_judged_again_and_listed_with_its_author(monkeypatch)
 
 def test_the_tamper_task_file_states_its_evidence_and_its_counter():
     import json
-    task = json.loads((DOC.parents[1] / "tasks" / "outside" / "tamper.json").read_text(encoding="utf-8"))
+    task = json.loads((ROOT / "tasks" / "outside" / "tamper.json").read_text(encoding="utf-8"))
     assert task["kind"] == "tamper" and task["counter"] == "outside_cheats" and task["amount"] == 5_000_000
-    assert task["currency"] == "test USDC" and "verdict" in task["needs"] and task["doc"] == "docs/TAMPER.md"
+    assert task["currency"] == "test USDC" and "verdict" in task["needs"] and task["doc"] == "docs/reference/TAMPER.md"
     assert "nothing is paid" in task["statement"] and "accepted" in task["evidence"]

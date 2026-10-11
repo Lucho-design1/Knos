@@ -4,7 +4,7 @@ import { KNOS_PAY, SCHEME, decode, encode, feesFor, fundOrderWalletIx, orderAddr
 
 /**
  * `wallet`: { address, token, send(ix) -> signature } (send signs and submits). `limits`: { maxAmount, programs, mints, feeVersion }.
- * `feeVersion`: what the program answered to Version, when the client asked it (2: knos_pay 2.2 and its 0.30% fee; 1: the 0.3.14 fee).
+ * `feeVersion`: what the program answered to Version, when the client asked it (2: knos_pay 2.2 and its 0.30% fee; 1: knos_pay 2.1's tiered fee of 2.5% / 1% / 0.5%, at least 0.40).
  * Not given, the fee of either rule is accepted: the program takes its own, and `maxAmount` caps the price.
  * Returns { status, body, settlement, order, messages } where messages are the exact JSON objects exchanged.
  */

@@ -4,12 +4,14 @@ Fund, top up, refund and read a Knos work order from another Solana program.
 
 `knos_pay` holds a work order's money in escrow and pays it when GitHub signs that the order's terms were met; the
 signature is checked on chain by `knos-oidc`. This crate is what a program needs to be the FUNDER of an order by
-CPI: a DAO treasury that pays for a merged change, a grants program, a vault. It holds the program ids, the
+CPI (a cross-program call: your program calls `knos_pay`): a DAO treasury that pays for a merged change, a grants program, a vault. It holds the program ids, the
 addresses, the three instructions a funder sends and a reader of the Order account. Its only dependency is
 `solana-program`; it carries none of `knos_pay`'s code.
 
 ```toml
-knos-pay-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.3.26" }
+knos-pay-interface = "0.3.14"
+# or the same source from the release tag:
+# knos-pay-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.3.27" }
 ```
 
 ```rust
@@ -32,8 +34,9 @@ if o.amount != amount || o.refund_to != *treasury.key { return Err(ProgramError:
 ```
 
 The treasury is debited `amount + order_fee(amount, FEE_BPS, decimals)`: the payees receive the amount whole and the
-funder pays the fee on top (knos_pay 2.2: 0.30% of the amount, at least 0.05, no maximum; a program still at 2.1
-charges its own older fee, and the order's account holds what was charged). The order is at
+funder pays the fee on top. The fee is 0.30% of the amount, at least 0.05, with no maximum (knos_pay 2.2, live on
+devnet since 9 October 2026). An order funded under 2.1 keeps the older fee it was charged; either way the order's
+account records the fee. The order is at
 `f.address(&knos::ID, treasury.key)` and its money at `knos::ov(&knos::ID, &order)`.
 
 ## What is in it
@@ -52,8 +55,8 @@ Every function takes the program's id, so a deployment on another cluster is ano
 
 1. **The funder is the signer of `fund_order_wallet`.** Only it can top the order up, and a refund goes only to a
    token account it owns. A PDA funder must be a plain system account with no data: it pays the rent of the order
-   and of the order's token account (about 0.0065 SOL together at today's rent: examples/cpi_fund's test measures it), and gets both back when the order
-   closes.
+   and of the order's token account (about 0.0065 SOL together at devnet rent in October 2026, as examples/cpi_fund's test measures), and gets both
+   back when the order closes.
 2. **A refund needs nobody's permission.** After the deadline (`now + work_s` at funding) anyone may send
    `refund_order`; everything the order holds, the fee included, returns to the funder. Nothing your program does
    can lose it and nothing Knos does can keep it.
@@ -63,7 +66,7 @@ Every function takes the program's id, so a deployment on another cluster is ano
    lines say who received what.
 4. **The terms are a JSON document of at most 600 printable ASCII bytes**, hashed into the order and logged. A
    pay token must carry the same hash, so the terms cannot change after funding.
-5. **Bounds.** The amount is 5 to 500 whole units of the mint, the work time 60 seconds to 90 days. A Token-2022
+5. **Bounds.** The amount is 5 to 100,000 whole units of the mint on devnet (`ORDER_MIN_AMOUNT`, `MAX_AMOUNT`), the work time 60 seconds to 90 days. A Token-2022
    mint passes only with extensions that change nothing about who holds how much.
 
 ## How it is checked

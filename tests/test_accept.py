@@ -1,7 +1,7 @@
 """`knos accept init`: a black-box acceptance bundle made from a reference implementation (knos.accept).
 
 The reference here is a slugify command that reads a line on stdin and prints the answer. The bundle made from it is held
-to what docs/TAMPER.md asks of one: `judge.black_box` says it is black-box, the real judge accepts a right fix and rejects
+to what docs/reference/TAMPER.md asks of one: `judge.black_box` says it is black-box, the real judge accepts a right fix and rejects
 a wrong one, the reference passes its own bundle and a command that only echoes does not."""
 
 from __future__ import annotations

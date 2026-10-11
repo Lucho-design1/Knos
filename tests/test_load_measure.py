@@ -1,6 +1,6 @@
 """`scripts/load.py measure`: N relays side by side, each with a fee payer of its own, fund M orders twice, once with
 no account in common and once with one shared writable account; the simulator proves the path and gives no rate, and
-docs/LOAD.md keeps what was measured on devnet apart from what is derived."""
+docs/reference/LOAD.md keeps what was measured on devnet apart from what is derived."""
 from __future__ import annotations
 
 import importlib.util
@@ -96,7 +96,7 @@ def test_the_page_keeps_measured_and_derived_apart_and_says_when_nothing_is_meas
     assert "**Measured on devnet: nothing yet.**" in text and "gives no rate" in text and "Derived bound" not in text
     for way, _state in load.REDUCES:
         assert f"| {way} |" in text
-    assert "needs a program change" not in text and "Several fee accounts for one mint | exists since 0.3.22, with no program change" in text
+    assert "needs a program change" not in text and "Several fee accounts for one mint | exists (added in release 0.3.22, no program change)" in text
     got, _sim = run(2, 4)
     sim_only = "\n".join(load.render_measured({**doc, "measured": [got]}))
     assert "**Measured on devnet: nothing yet.**" in sim_only                                     # a simulated run is never shown as measured
@@ -115,7 +115,7 @@ def test_the_page_keeps_measured_and_derived_apart_and_says_when_nothing_is_meas
     shown = "\n".join(load.render_measured({**doc, "measured": [paid]}))
     assert "#### Measured on devnet, STAGING program ids (not the public ones), 2026-10-09: end-to-end PayOrder" in shown
     assert "Not measured: end-to-end PayOrder capacity" not in shown
-    page = (ROOT / "docs" / "LOAD.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "LOAD.md").read_text(encoding="utf-8")
     assert "### Throughput with relays side by side: measured, and derived" in page and "**Derived bound (not measured).**" in page
 
 
@@ -138,7 +138,7 @@ def test_every_cluster_run_says_which_program_ids_it_ran_on():
     assert load.ids_of({"knos_pay": "FJJtqcRjQ9ATx37sBTCLUBxBqLUA9aQgSTLAsZynqtnH"}).startswith("STAGING")
     assert load.ids_of({"a": public["knos_pay"], "b": "FJJtqcRjQ9ATx37sBTCLUBxBqLUA9aQgSTLAsZynqtnH"}) == "public and STAGING program ids mixed"
     assert load.ids_of(None) == "program ids not recorded"
-    page = (ROOT / "docs" / "LOAD.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "LOAD.md").read_text(encoding="utf-8")
     kept = json.loads((ROOT / "docs" / "load.json").read_text(encoding="utf-8"))
     for r in kept["runs"]:
         assert f"### {r['cluster']}, {load.ids_of(r.get('programs'))}, {r['date']}:" in page

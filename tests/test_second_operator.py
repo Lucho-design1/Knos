@@ -1,5 +1,5 @@
 """scripts/second_operator.py: the second operator's drill as one command. Tested against canned answers: nobody but
-the founder has run the real one, and docs/OPERATOR.md and docs/DRILLS.md say so."""
+the founder has run the real one, and docs/reference/OPERATOR.md and docs/reference/DRILLS.md say so."""
 from __future__ import annotations
 
 import importlib.util
@@ -47,7 +47,7 @@ def test_the_five_steps_run_in_order_with_the_operators_own_key_and_fork():
                         ["gh", "run", "list", "-R", "you/Knos", "--workflow", "worker.yml", "--limit", "5", "--json", "databaseId,status,displayTitle,event"]]
     assert asked[1][1]["KNOS_RELAY_KEY"] == KEY                                   # the relay ran with the operator's key, as the file's contents
     assert "-f" not in cmds[3]                                                    # `after` left empty: that is what starts a chain (worker.yml)
-    assert "fee payer must be Mine111" in said[5] and "docs/DRILLS.md" in said[6]
+    assert "fee payer must be Mine111" in said[5] and "docs/reference/DRILLS.md" in said[6]
     worker = (ROOT / ".github" / "workflows" / "worker.yml").read_text(encoding="utf-8")
     assert "leave it empty to start the chain" in worker and "KNOS_RELAY_KEY" in worker
 
@@ -81,7 +81,7 @@ def test_the_founders_repository_is_not_a_fork_of_ones_own_and_a_simulation_is_n
 
 
 def test_the_page_gives_the_command_its_expected_output_and_says_nobody_has_run_it():
-    page = (ROOT / "docs" / "OPERATOR.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "OPERATOR.md").read_text(encoding="utf-8")
     assert "python scripts/second_operator.py --fork YOU/Knos --key relay.json" in page and "Not yet run by a second person" in page
     for line in ("1 status     ok", "2 fee payer  ok", "3 relay      ok", "4 the fork   ok", "5 the chain  ok"):
         assert line in page

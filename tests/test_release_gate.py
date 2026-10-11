@@ -217,7 +217,7 @@ def test_a_crate_held_at_an_older_version_is_a_green_skip_and_a_version_that_is_
     # held at 0.3.14, release 0.3.15, the crate not on crates.io yet: green, one notice, nothing to publish
     code, said, publish = r.registry_plan("crates", name, "v0.3.15", "0.3.14", fetch=_index(None, asked), root=tmp_path)
     assert (code, publish) == (0, False) and said.startswith("::notice title=crates.io::Skipped: knos-oidc-interface is not on crates.io yet")
-    assert "is published by hand (docs/RELEASE.md)" in said and "held at 0.3.14" in said and "published at its own version" in said
+    assert "is published by hand (docs/reference/RELEASE.md)" in said and "held at 0.3.14" in said and "published at its own version" in said
     assert asked == ["https://index.crates.io/kn/os/knos-oidc-interface"]
     # held, and crates.io has that version already: green, a notice, nothing to publish
     code, said, publish = r.registry_plan("crates", name, "v0.3.15", "0.3.14", fetch=_index(["0.3.13", "0.3.14"]), root=tmp_path)
@@ -259,7 +259,7 @@ def test_the_npm_package_follows_the_same_rule_and_its_version_is_always_the_tag
     def npm(versions):
         return lambda url: None if versions is None else json.dumps({"name": "knos-settle", "versions": {v: {} for v in versions}}).encode()
     code, said, publish = r.registry_plan("npm", "knos-settle", "v0.3.15", None, fetch=npm(None), root=tmp_path)
-    assert (code, publish) == (0, False) and said.startswith("::notice title=npm::Skipped: knos-settle is not on npm yet") and "by hand (docs/RELEASE.md)" in said
+    assert (code, publish) == (0, False) and said.startswith("::notice title=npm::Skipped: knos-settle is not on npm yet") and "by hand (docs/reference/RELEASE.md)" in said
     assert r.registry_plan("npm", "knos-settle", "v0.3.15", None, fetch=npm(["0.3.14"]), root=tmp_path)[::2] == (0, True)
     assert r.registry_plan("npm", "knos-settle", "v0.3.15", None, fetch=npm(["0.3.15"]), root=tmp_path)[::2] == (0, False)
     code, said, publish = r.registry_plan("npm", "knos-settle", "v0.3.16", None, fetch=npm(["0.3.15"]), root=tmp_path)
@@ -405,7 +405,7 @@ def test_the_workers_install_waits_only_for_the_index_to_list_the_release_and_fo
 
 
 def test_the_release_page_says_how_the_worker_chain_is_restarted_and_that_a_rerun_does_not():
-    page = " ".join((ROOT / "docs" / "RELEASE.md").read_text(encoding="utf-8").split())
+    page = " ".join((ROOT / "docs" / "reference" / "RELEASE.md").read_text(encoding="utf-8").split())
     assert "gh workflow run worker.yml --repo drexthealpha/Knos --ref main" in page
     assert "Re-running the failed run restarts nothing" in page
     worker = (WORKFLOWS / "worker.yml").read_text(encoding="utf-8")

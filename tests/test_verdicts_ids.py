@@ -20,7 +20,7 @@ BUYER, SELLER, MONTH = 424242, 555000, 202610
 VECTORS3 = json.loads((ROOT / "docs" / "receipt" / "vectors.json").read_text(encoding="utf-8"))
 VECTORS4 = json.loads((ROOT / "docs" / "receipt" / "vectors.v4.json").read_text(encoding="utf-8"))
 SCHEMA4 = json.loads((ROOT / "docs" / "receipt" / "acceptance-receipt.v4.schema.json").read_text(encoding="utf-8"))
-METER = (ROOT / "docs" / "METER.md").read_text(encoding="utf-8")
+METER = (ROOT / "docs" / "reference" / "METER.md").read_text(encoding="utf-8")
 KINDS = ("deliverable", "evaluation", "invoice_line", "settlement")
 
 
@@ -206,7 +206,7 @@ def test_the_rules_for_a_retry_a_branch_a_reopened_ticket_and_ten_pull_requests(
     assert new != _ev(1).dlv and ids.kind_of(new) == "deliverable" and L.reopened_key(0, 2) != L.reopened_key(0, 1)
     with pytest.raises(L.Bad):
         L.reopened_key(0, 0)
-    # docs/METER.md prints the rules this code keeps: every row of RULES, word for word
+    # docs/reference/METER.md prints the rules this code keeps: every row of RULES, word for word
     for row in L.RULES:
         assert "| " + " | ".join(row) + " |" in METER, row[0]
 

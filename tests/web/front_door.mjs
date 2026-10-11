@@ -3,7 +3,7 @@
 //   node tests/web/front_door.mjs page <site dir>     and the page in headless Chromium, on a build of the site
 //                                                     (scripts/build_site.sh): the control alone, then the first screen
 // With no browser: the four line states are src/knos/ids.py's, the invoice line's id is the Python's, the sample is
-// examples/shadow/ word for word and falls into the four groups. With `page`: the first screen says 40 words at most
+// examples/shadow/ word for word and falls into the four groups. With `page`: the first screen says 56 words at most
 // and holds one control; the sample is answered with no request at all; a pasted invoice with a line billed twice has
 // it flagged; a named repository asks nobody but api.github.com (answered here from tests/data/shadow_cases.json);
 // nothing runs off the side at 320 px. No `playwright` package or no browser: says so and exits 0.
@@ -155,7 +155,7 @@ async function page() {
   const wordy = (list) => list.filter((t) => words(t) > 12);
   const done = (p) => p.waitForSelector("#front-result[data-done]");
 
-  // 1. the first screen of the site itself: 40 words at most, one control, the round below it
+  // 1. the first screen of the site itself: 56 words at most (the outcome, who it is for, the sentence, the number and the bar), one control, the round below it
   for (const [width, height] of [[1280, 800], [390, 844], [320, 640], [768, 1024], [1920, 1080]]) {
     const { ctx, p, strangers } = await visit("", width, { height });
     await p.evaluate(() => document.fonts.ready); await p.waitForFunction(() => !document.getElementById("hero-board").hasAttribute("aria-busy")); await p.waitForTimeout(700);
@@ -175,19 +175,19 @@ async function page() {
       }
       return out;
     });
-    ok(`${width}px: the first screen says 40 words at most`, first.length <= 40 && first.length >= 15, [first.length, first.join(" ")]);
+    ok(`${width}px: the first screen says 56 words at most`, first.length <= 56 && first.length >= 15, [first.length, first.join(" ")]);
     const hero = await p.evaluate(() => ({ h1: document.querySelector("h1").textContent.trim(), fact: document.getElementById("hero-fact").textContent.trim(),
       controls: [...document.querySelectorAll(".hero input, .hero textarea, .hero select, .hero button, .hero-words a:not(.k-num):not(#hero-board a)")].map((e) => e.dataset.fd || e.id),
       below: Boolean(document.querySelector(".hero ~ #how-it-works ~ #demo")), boxTop: document.querySelector("#front-door [data-fd=run]").getBoundingClientRect().bottom, fold: innerHeight }));
-    ok(`${width}px: the sentence, then the number`, hero.h1 === "The neutral meter for AI agent work: neither side keeps the count." && hero.fact === "241 merged agent “tests pass” pull requests: 9 failed tests or builds." && words(hero.fact) <= 12, hero);
-    // under the sentence, one line: what a customer gets; then the number. An orphan: a last line of one word.
-    const outcome = await p.evaluate(() => { const o = document.getElementById("hero-outcome"), h = document.querySelector("h1"), f = document.getElementById("hero-fact");
+    ok(`${width}px: the outcome, then the number`, hero.h1 === "Pay AI agents only when your checks pass." && hero.fact === "Of 241 merged agent “tests pass” pull requests: 9 failed a test, build, lint or type check." && words(hero.fact) <= 18, hero);
+    // under the outcome (the h1): who it is for, then the sentence; then the number. An orphan: a last line of one word.
+    const outcome = await p.evaluate(() => { const o = document.getElementById("hero-outcome"), h = document.querySelector("h1"), f = document.getElementById("hero-fact"), w = document.getElementById("hero-who");
       const lastLine = (el) => { const r = document.createRange(); r.selectNodeContents(el); const rects = [...r.getClientRects()].filter((x) => x.width > 1), last = rects.at(-1).top;
         const t = el.textContent.trim().split(/\s+/), probe = document.createRange(), node = el.lastChild.nodeType === 3 ? el.lastChild : el.lastChild.lastChild; let n = 0;
         for (let i = node.textContent.length; i > 0; i--) { probe.setStart(node, i - 1); probe.setEnd(node, i); if (Math.abs(probe.getBoundingClientRect().top - last) > 4) break; n++; }
         return rects.length > 1 && !node.textContent.trim().slice(-n).trim().includes(" ") && t.length > 1 && node.textContent.trim().slice(-n).trim().split(" ").length < 2 && new Set(rects.map((x) => Math.round(x.top))).size > 1; };
-      return { text: o.textContent.trim(), after: h.nextElementSibling === o, before: o.nextElementSibling === f, orphan: lastLine(o) }; });
-    ok(`${width}px: under the sentence, one line says the customer outcome, and no word is left alone on its last line`, outcome.text === "Pay AI agents only when your checks pass." && outcome.after && outcome.before && !outcome.orphan, outcome);
+      return { text: o.textContent.trim(), who: w.textContent.trim(), after: h.nextElementSibling === w && w.nextElementSibling === o, before: o.nextElementSibling === f, orphan: lastLine(o) }; });
+    ok(`${width}px: under the outcome, one line says who it is for, then the sentence, and no word is left alone on its last line`, outcome.who === "For teams and maintainers who pay AI agents or contributors for code." && outcome.text === "The neutral meter for AI agent work: neither side keeps the count." && outcome.after && outcome.before && !outcome.orphan, outcome);
     const bars = await p.evaluate(() => [...document.querySelectorAll("#hero-board li")].map((li) => { const b = li.querySelector(".bs-bar").getBoundingClientRect(), f = li.querySelector(".bs-fill").getBoundingClientRect(), w = li.querySelector(".bs-whisker").getBoundingClientRect();
       const [k, n] = li.querySelector(".bs-n").textContent.split(" of ").map(Number); return { want: k / n, got: f.width / b.width, whisker: w.width > 1 && getComputedStyle(li.querySelector(".bs-whisker")).opacity === "1" }; }));
     ok(`${width}px: every bar of the strip is filled to its rate, with its whisker drawn`, bars.length === 4 && bars.every((b) => b.got > 0 && Math.abs(b.got - b.want) < 0.02 && b.whisker), bars);
@@ -204,7 +204,7 @@ async function page() {
     ok(`${width}px: the first screen does not scroll sideways`, (await measure(p)).over <= 0, await measure(p));
     await p.focus("#fd-in"); const order = [];
     for (let i = 0; i < 3; i++) { await p.keyboard.press("Tab"); order.push(await p.evaluate(() => { const a = document.activeElement; return a.dataset.fd || (a.closest("#hero-board") ? "strip" : a.id || a.tagName); })); }
-    same(`${width}px: by keyboard, the box, then Check, then Try a sample, then the strip`, order, ["run", "sample", "strip"]);
+    same(`${width}px: by keyboard, the box, then Check, then Try a sample invoice, then the strip`, order, ["run", "sample", "strip"]);
     // the upgrades that are waiting, in one line on the first screen, from upgrades.json (a file of the site): the handle
     // of a fold, two words and a badge (a control, so not among the prose counted above), in the hero's top margin above the sentence, and opened it says each proposal in the file's words
     const feed = JSON.parse(readFileSync(join(built, "upgrades.json"), "utf8")), pending = feed.entries.filter((e) => e.status === "pending");
@@ -271,7 +271,7 @@ async function page() {
     same(`${tag}: four groups with the expected counts`, Object.fromEntries(Object.entries(g).map(([k, v]) => [k, v[0]])), COUNTS);
     same(`${tag}: every line is in its group`, Object.fromEntries(Object.entries(g).map(([k, v]) => [k, v[1]])), { agreed: [1, 5], disputed: [2, 3], duplicate: [4, 6], insufficient_evidence: [7] });
     same(`${tag}: the neutral count beside the supplier's`, await p.$$eval("#front-result .fd-counts > div", (l) => l.map((d) => d.innerText.split("\n").map((t) => t.trim()).filter(Boolean))),
-      [["Supplier's count", "7", "lines, 2900.00 billed"], ["Neutral count", "2", "lines, 650.00 policy met"]]);
+      [["Supplier's count", "7", "lines, 2900.00 billed"], ["Count both sides agree on", "2", "lines whose checks passed, 650.00"]]);
     same(`${tag}: each line answers the seven questions`, await p.$$eval("#front-result .fd-line", (l) => [...new Set(l.map((li) => [...li.querySelectorAll("dt")].map((d) => d.textContent).join()))]), [COLUMNS.map((c) => c[1]).join()]);
     same(`${tag}: it is marked as made up, and nothing is left pending`, [await p.textContent('[data-fd="mark"]'), await p.$$eval('[data-fd="pending"] li', (l) => l.length), await p.textContent('[data-fd="said"]')],
       ["Sample: a made-up invoice from a made-up supplier.", 0, "Checked 7 lines. 5 exceptions."]);
@@ -287,7 +287,7 @@ async function page() {
       await p.click('[data-fd="approve"]');
       same("sample: accepting and authorising moves two steps, and settled stays open", await stepsOf(), ["done done done idle", "done done done idle"]);
       same("sample: approving marks the agreed lines and says what is left", [await p.textContent('[data-fd="approved"]'), await p.$$eval(".fd-line[data-approved]", (l) => l.map((li) => `${li.dataset.line} ${li.querySelector('[data-col="approved_by"]').textContent}`)),
-        await p.$$eval('.fd-line:not([data-approved]) [data-col="approved_by"]', (l) => [...new Set(l.map((d) => d.textContent))])], ["Accepted and authorised 2 lines. 5 exceptions left. Not paid.", ["1 you, 2026-10-06", "5 you, 2026-10-06"], ["nobody yet"]]);
+        await p.$$eval('.fd-line:not([data-approved]) [data-col="approved_by"]', (l) => [...new Set(l.map((d) => d.textContent))])], ["Accepted and approved: 2 lines. Still open: 5 exceptions. Nothing is paid yet.", ["1 you, 2026-10-06", "5 you, 2026-10-06"], ["nobody yet"]]);
       const [d] = await Promise.all([p.waitForEvent("download"), p.click('[data-fd="csv"]')]), csv = readFileSync(await d.path(), "utf8");
       same("sample: Download CSV gives the statement `knos statement make` writes, with the approval: the same bytes", [d.suggestedFilename(), csv], ["statement-sha256-fb61f3411e72ffea.csv", fixture("front_door.csv")]);
       same("sample: its columns are the statement's, and every line is in one of the four states", [csv.split("\n")[10], [...new Set(csv.split("\n").slice(11, 18).map((r) => r.split(",")[3]))].sort()],

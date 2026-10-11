@@ -243,12 +243,12 @@ def test_record_writes_the_manifest_the_documents_and_the_demo_only_for_programs
     assert [feed_now[i] for i in (3, 4, 5, 6)] == ["executed", "executed", "executed", "pending"]
     seen = json.loads((root / "docs" / "provenance.json").read_text(encoding="utf-8"))["programs"]
     assert [seen[n].get("live_slot") for n in ex.PROGRAMS] == [SLOT, SLOT + 1, SLOT + 2, None] and seen["knos_pay"]["on_chain_hash"] == HASH["knos_pay"]
-    page = (root / "docs" / "PROVENANCE.md").read_text(encoding="utf-8")
+    page = (root / "docs" / "reference" / "PROVENANCE.md").read_text(encoding="utf-8")
     row = next(line for line in page.splitlines() if line.startswith("| `") and IDS["knos_pay"] in line)
     assert f"| 4 | {SLOT + 1} |" in row and ev["exercises"]["work_orders"]["signature"] in row and "(`order_pay`)" in row
     assert "not live yet | none: the public id does not run this build yet" in next(line for line in page.splitlines() if line.startswith("| `") and IDS["knos_passkey"] in line)
     # the document: one section with every transaction; the demo: the PUBLIC round, each step its own transaction
-    text = (root / "docs" / "CAPABILITIES.md").read_text(encoding="utf-8")
+    text = (root / "docs" / "reference" / "CAPABILITIES.md").read_text(encoding="utf-8")
     section = text[text.index(ex.BEGIN):text.index(ex.END)]
     assert text.index(ex.BEGIN) < text.index("## The 0.3.14 rehearsal on devnet") and "refused, error 91: a token works once" in section
     assert all(t["signature"] in section for st in ev["rounds"].values() for t in st.get("transactions", []))
@@ -261,7 +261,7 @@ def test_record_writes_the_manifest_the_documents_and_the_demo_only_for_programs
     assert demo["count"] == {"buyer": 6, "seller": 7, "apart": 1, "buyer_tx": [meter_round["batch0"]["signature"], meter_round["batch1"]["signature"]],
                              "seller_tx": [meter_round["claim0"]["signature"], meter_round["claim1"]["signature"]]}
     # recording the same evidence again changes nothing
-    files = ("docs/capabilities.json", "docs/CAPABILITIES.md", "web/demo_data.json", "docs/PROVENANCE.md", "docs/provenance.json", "README.md")
+    files = ("docs/capabilities.json", "docs/reference/CAPABILITIES.md", "web/demo_data.json", "docs/reference/PROVENANCE.md", "docs/provenance.json", "README.md")
     before = {f: (root / f).read_bytes() for f in files}
     assert not [f for f, data in before.items() if b"\r" in data]     # written as the repository keeps them (.gitattributes eol=lf), on Windows too
     ex.record(ev, root, lambda line: None)
@@ -887,7 +887,7 @@ def test_record_moves_the_2_2_capabilities_and_the_versions_only_where_the_hash_
     seen = json.loads((root / "docs" / "provenance.json").read_text(encoding="utf-8"))["programs"]["knos_pay"]
     assert (seen["proposal"], seen["proposal_status"], seen["on_chain_hash"], seen["on_chain_commit"]) == (8, "Executed", NEXT_HASH["knos_pay"], "cd" * 20) and "execution_signature" not in seen
     assert {k: seen["before"][k] for k in ("proposal", "live_slot")} == {"proposal": 4, "live_slot": 508_314_432} and seen["before"].get("read") == prov.get("read")
-    text = (root / "docs" / "CAPABILITIES.md").read_text(encoding="utf-8")
+    text = (root / "docs" / "reference" / "CAPABILITIES.md").read_text(encoding="utf-8")
     assert "**one_rate.** The one rate on chain: 0.05 on an order of 5.00" in text[text.index(ex.BEGIN):text.index(ex.END)]
 
 

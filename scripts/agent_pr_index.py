@@ -9,29 +9,29 @@ Steps, so the Pages build never scans:
     python scripts/agent_pr_index.py gate --rows rows.json --out index.json [--previous last.json]   # may it go out?
     python scripts/agent_pr_index.py check --out index.json    # the root matches the listed records
     python scripts/agent_pr_index.py restate --out index.json  # recount a published index from its own records
-    python scripts/agent_pr_index.py weekly --rows rows.json --out agent_weekly.json [--doc docs/INDEX.md]
+    python scripts/agent_pr_index.py weekly --rows rows.json --out agent_weekly.json [--doc docs/reference/INDEX.md]
                                                                # the same scan by agent and by week (weekly() below)
-    python scripts/agent_pr_index.py weekly --sample docs/agent_pr_ci.json --out docs/agent_weekly.json --doc docs/INDEX.md
+    python scripts/agent_pr_index.py weekly --sample docs/agent_pr_ci.json --out docs/agent_weekly.json --doc docs/reference/INDEX.md
                                                                # offline: the committed sample, by week
     python scripts/agent_pr_index.py sample --week last --rows week.json [--max-requests 500 --max-minutes 50]
                                                                # the weekly run: a bounded, stratified, seeded sample
                                                                # of last week; week.json is its checkpoint (run again
                                                                # to continue); `weekly --into` then adds it, capped or not
-    python scripts/agent_pr_index.py scan --week last --rows week.json          # one whole week, every hit: unbounded,
-                                                               # by hand only (it is what could not finish in 0.3.15)
-    python scripts/agent_pr_index.py weekly --rows week.json --into docs/agent_weekly.json --doc docs/INDEX.md
+    python scripts/agent_pr_index.py scan --week last --rows week.json          # one whole week, every hit, no limit:
+                                                               # by hand only (it can take longer than a scheduled job may run)
+    python scripts/agent_pr_index.py weekly --rows week.json --into docs/agent_weekly.json --doc docs/reference/INDEX.md
                                                                # offline: add that week to the published series
-    python scripts/agent_pr_index.py board [--check]           # offline: the leaderboard into docs/INDEX.md, docs/index.json and
+    python scripts/agent_pr_index.py board [--check]           # offline: the leaderboard into docs/reference/INDEX.md, docs/index.json and
                                                                # docs/index.atom, with the disputes (agent_pr_board.py)
-    python scripts/agent_pr_index.py vendors [--check]         # offline: a page per vendor into docs/VENDORS.md and
+    python scripts/agent_pr_index.py vendors [--check]         # offline: a page per vendor into docs/reference/VENDORS.md and
                                                                # docs/vendors.json: numbers, reply, disputes, badge (vendor_pages.py)
     python scripts/agent_pr_index.py scan --end <Sunday> --days 14 --per-agent N --rows rows.json
-    python scripts/agent_pr_index.py weekly --rows rows.json --add-sample docs/agent_weekly.json --doc docs/INDEX.md
+    python scripts/agent_pr_index.py weekly --rows rows.json --add-sample docs/agent_weekly.json --doc docs/reference/INDEX.md
                                                                # a capped sample of recent weeks, cut by week and
                                                                # marked so (full_week false); a week read whole stays
 
 The weekly publication ("Agent PR Index, week of <Monday>") is the bounded sample (DESIGNS and sample_week below;
-docs/INDEX.md, "The sampling design"). What follows describes the older whole-week scan, kept for a run by hand: each
+docs/reference/INDEX.md, "The sampling design"). What follows describes the older whole-week scan, kept for a run by hand: each
 agent, each day, every page.
 GitHub's search answers 30 requests a minute to a signed-in caller and at most 1,000 results a query
 (docs.github.com/en/rest/search/search), so the week is asked as agents x days (35 queries of up to 10 pages: at most
@@ -868,7 +868,7 @@ def _row(name, place, w):
 
 def weekly_table(series):
     """The newest week as a leaderboard, then every week of the file added up (never ranked), as the Markdown
-    docs/INDEX.md shows between its markers."""
+    docs/reference/INDEX.md shows between its markers."""
     week, least = series.get("latest_week") or latest_week(series), series.get("min_claims_to_rank", MIN_CLAIMS_TO_RANK)
     head = ["| Place | Agent | Verified acceptance rate (95% interval) | Sampled | Claimed passing | Failed a check anyway (95% interval) | "
             "Merged despite a failed check (95% interval) | Also paid through Knos on a black-box check | Sample |",
@@ -1075,7 +1075,7 @@ def main():
     ap.add_argument("--per-stratum", type=int, default=PER_STRATUM, help="sample: pull requests drawn for each agent on each day")
     ap.add_argument("--restate", help="weekly --sample: write this published series (docs/agent_weekly.json) again in today's format; reads nothing")
     ap.add_argument("--sample", help="weekly: reshape this committed sample (docs/agent_pr_ci.json) and read nothing")
-    ap.add_argument("--doc", help="weekly: also write the table between the markers of this file (docs/INDEX.md)")
+    ap.add_argument("--doc", help="weekly: also write the table between the markers of this file (docs/reference/INDEX.md)")
     ap.add_argument("--week", help="scan: one whole week, every hit: the Monday it starts on (YYYY-MM-DD), or `last` for the newest week that has ended")
     ap.add_argument("--into", help="weekly: add the one week in --rows to this published series (docs/agent_weekly.json); reads nothing")
     ap.add_argument("--add-sample", help="weekly: add the weeks of the capped scan in --rows to this published series (docs/agent_weekly.json), "
@@ -1095,10 +1095,10 @@ def main():
         return weekly_main(a)
     if a.step == "board":
         import agent_pr_board
-        return agent_pr_board.main(a.series, a.disputes, a.doc or "docs/INDEX.md", a.feed, a.atom, a.check)
+        return agent_pr_board.main(a.series, a.disputes, a.doc or "docs/reference/INDEX.md", a.feed, a.atom, a.check)
     if a.step == "vendors":
         import vendor_pages
-        return vendor_pages.main(a.series, a.disputes, a.replies, a.doc or "docs/VENDORS.md", "docs/vendors.json", a.check)
+        return vendor_pages.main(a.series, a.disputes, a.replies, a.doc or "docs/reference/VENDORS.md", "docs/vendors.json", a.check)
     if a.step == "sample":
         monday = last_week() if (a.week or "last") == "last" else a.week
         pace = a.pace if a.pace is not None else 0.8 * a.max_minutes * 60 / max(1, a.max_requests)

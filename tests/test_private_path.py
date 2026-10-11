@@ -1,4 +1,4 @@
-"""The private-repository path (src/knos/private.py, examples/private, docs/PRIVATE.md): what may leave a customer's
+"""The private-repository path (src/knos/private.py, examples/private, docs/reference/PRIVATE.md): what may leave a customer's
 network, who both parties approved, what two attestors amount to, and the rules of the workflow a customer installs.
 Tokens are signed with the tests' key, not by any forge: no private-repository customer has run this."""
 from __future__ import annotations
@@ -68,7 +68,7 @@ def test_a_token_counts_only_from_an_attestor_both_parties_approved_and_only_for
                 (doc, _token(doc, repository_id="4712"), RAW, n, "not from an attestor both parties approved"),
                 (doc, _token(doc, iss="https://token.actions.githubusercontent.com"), RAW, n, "not from an attestor both parties approved"),
                 (doc, _token(doc, job_workflow_ref="acme/knos-private/.github/workflows/other.yml@refs/heads/main"), RAW, n, "not from an attestor both parties approved"),
-                (doc, _token(doc), RAW, n + 2, "signature does not hold"),
+                (doc, _token(doc), RAW, n + 2, "signature is not valid"),
                 (doc, _token(doc), RAW + b" ", n, "another attestors file")]
     for d, token, raw, key, why in refusals:
         with pytest.raises(ValueError, match=why):
@@ -126,7 +126,7 @@ def test_what_the_receipt_records_of_each_arrangement_and_where_its_comparison_s
     two_instances_equal_ids = [judge("attestor", 1, 5, 9), judge("neutral", 1, 5, 9)]            # owner 5 on one server and owner 5 on another are two accounts
     assert receipt.independence_of(two_instances_equal_ids)[0] is True and "numbers its own accounts" in private.receipt_shows(two_instances_equal_ids)
     assert judge("attestor", 1, 500, 21)["independent_of_buyer"] is False and judge("attestor", 1, 11, 700)["independent_of_seller"] is False
-    page = (ROOT / "docs" / "PRIVATE.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "PRIVATE.md").read_text(encoding="utf-8")
     assert all(a in page for a in private.ARRANGEMENTS) and "same_controller" in page and "numbers its own accounts" in page
 
 
@@ -171,7 +171,7 @@ def test_the_two_commands_the_workflow_runs_write_a_record_and_check_it(tmp_path
 
 
 def test_the_page_says_how_an_enterprise_issuer_is_admitted_who_opens_sealed_evidence_and_that_nobody_has_run_it():
-    page = (ROOT / "docs" / "PRIVATE.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "PRIVATE.md").read_text(encoding="utf-8")
     for words in ("https://HOSTNAME/_services/token", "/.well-known/openid-configuration", "oauth/discovery/keys", "jwks_uri", "register_private_key_ix",
                   "[VERIFIER.md](VERIFIER.md)", "../examples/issuers", "No private-repository customer has run this", "not legal advice",
                   "examples/private/knos-private.yml", "knos vault open", "test USDC", "ci_id_tokens_issuer_url"):
@@ -243,7 +243,7 @@ def test_a_dispute_is_opened_by_a_party_who_could_open_the_evidence_and_resolved
         private.dispute_check(unsigned, doc, mine)
     opened_by_buyer = private.dispute_sign(unsigned, "buyer", buyer)
     assert private.dispute_check(opened_by_buyer, doc, mine)[1] == private.DISPUTED_MEANS and "not billed" in private.DISPUTED_MEANS
-    with pytest.raises(ValueError, match="buyer's signature is missing or does not hold"):          # the supplier's key under the buyer's name
+    with pytest.raises(ValueError, match="buyer's signature is missing or not valid"):          # the supplier's key under the buyer's name
         private.dispute_check(private.dispute_sign(unsigned, "buyer", supplier), doc, mine)
     # resolving: both sign the SAME outcome. One alone, a stranger, or two who signed different outcomes do not resolve it
     proposed = private.dispute_resolve(opened_by_buyer, "accepted", NOW + 60)
@@ -252,10 +252,10 @@ def test_a_dispute_is_opened_by_a_party_who_could_open_the_evidence_and_resolved
         private.dispute_check(one, doc, mine)
     with pytest.raises(ValueError, match="not a party"):
         private.dispute_sign(one, "knos", stranger)
-    with pytest.raises(ValueError, match="supplier's signature is missing or does not hold"):
+    with pytest.raises(ValueError, match="supplier's signature is missing or not valid"):
         private.dispute_check({**one, "signatures": {**one["signatures"], "supplier": private.dispute_sign(proposed, "supplier", stranger)["signatures"]["supplier"]}}, doc, mine)
     other = private.dispute_sign(private.dispute_resolve(opened_by_buyer, "rejected", NOW + 60), "supplier", supplier)
-    with pytest.raises(ValueError, match="supplier's signature is missing or does not hold"):
+    with pytest.raises(ValueError, match="supplier's signature is missing or not valid"):
         private.dispute_check({**one, "signatures": {**one["signatures"], "supplier": other["signatures"]["supplier"]}}, doc, mine)
     both = private.dispute_sign(one, "supplier", supplier)
     assert private.dispute_check(both, doc, mine)[1] == "the line counts as accepted on the invoice (a private record moves no money)"
@@ -281,5 +281,5 @@ def test_the_run_refuses_what_the_path_refuses_and_takes_a_real_verdict_and_a_gi
     got = private.run(EX, tmp_path / "gl.json", tmp_path / "o3", verdict=VERDICT, terms=TERMS, now=NOW, seed="gl", say=lambda _l: None)
     assert (got["record"]["assurance"], got["record"]["checks_sha256"], got["arrangement"]["arrangement"]) == ("hermetic", "c" * 64, "one attestor")
     assert "project_id" in private._claims(got["token"]) and got["record"]["terms_sha256"] == hashlib.sha256(TERMS).hexdigest()
-    page = (ROOT / "docs" / "PRIVATE.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "PRIVATE.md").read_text(encoding="utf-8")
     assert "python -m knos.private run --repo" in page and "No private customer has run it" in page and "gh workflow run knos-private.yml" in page

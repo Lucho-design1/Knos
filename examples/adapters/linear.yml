@@ -15,8 +15,8 @@
 # Without it in the terms this file only chooses WHEN the payment is tried.
 #
 # Who authenticates what. The chain authenticates the settle run: GitHub's signature over a run of the pinned prove.yml,
-# at the commit the order recorded, in the order's own repository (programs-v2/knos_pay/src/order_judge.rs, judge a;
-# that rule names no event, and the pinned prove.yml settles on `workflow_dispatch`). The chain does NOT authenticate
+# at the commit the order recorded, in the order's own repository (programs-v2/knos_pay/src/order_judge.rs, the first judge
+# rule; it does not check which event started the run, and the pinned prove.yml settles on `workflow_dispatch`). The chain does NOT authenticate
 # Linear.
 # What it sees is a commit status of this repository, as the settle run read it from GitHub's API.
 # So what stays trusted: everyone who can write a commit status here (write access, or a token with `statuses: write`),

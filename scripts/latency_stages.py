@@ -20,7 +20,7 @@ names the last three of a token's transactions, so "first" is the first of those
 without it the two are left out and `chain` stands for both). A stage is measured only where the line carries it:
 every stage prints its own n.
 
-THE FIVE STATES. A payment is received, accepted, submitted, confirmed, finalized (docs/RELAY.md has the table), and
+THE FIVE STATES. A payment is received, accepted, submitted, confirmed, finalized (docs/reference/RELAY.md has the table), and
 the second table says how long each state took to reach from the one before it:
 
     received    the merge                              -> the workflow run's start         (runner_queue: GitHub's)
@@ -30,7 +30,7 @@ the second table says how long each state took to reach from the one before it:
     finalized   the last confirmation                  -> the cluster finalized it         (the settle comment's `knos-states`
                                                           line, when --log holds those comments too; no relay waits for it)
 
-Since 0.3.16 every ok line carries queued_at, seen_at, sent_at and confirmed_at, whoever relayed. A payment whose line
+Every ok line written since release 0.3.16 (October 2026) carries queued_at, seen_at, sent_at and confirmed_at, whoever relayed. A payment whose line
 has none of them (an older line), or whose relay sent nothing itself (`sent_at=-`: someone else carried it first), is
 NOT in that table and is NOT dropped: it is listed under it, by token, with its whole wait.
 
@@ -51,7 +51,7 @@ measurements under the names a reader asks for, each with its own n, p50 and p95
 
 A stage no line recorded prints "not recorded" in every cell. Nothing is filled in from another stage or guessed.
 
-THE FIVE CLOCKS (`--clocks` prints the table; the JSON report carries it as `clocks`; docs/LOAD.md has it). The six
+THE FIVE CLOCKS (`--clocks` prints the table; the JSON report carries it as `clocks`; docs/reference/LOAD.md has it). The six
 stages are one wait cut in six. A reader who asks "how fast is it" asks about five different clocks, and only one of
 them is Knos's own to shorten:
 
@@ -59,7 +59,7 @@ them is Knos's own to shorten:
     evidence availability        the signed token reaches whoever acts on it   relay pickup
     Knos decision processing     the token in hand -> accepted or not          `knos decide` (scripts/decide_bench.py:
                                                                                measured on one machine, no network; on
-                                                                               devnet 4.3 to 32.6 s, four runs of 0.3.18)
+                                                                               devnet 4.3 to 32.6 s, four runs of the release 0.3.18 command, October 2026)
     chain inclusion              the first send -> the paying transaction at   submission, confirmation; and finality,
                                  the commitment level `confirmed`              which is the level `finalized`
     bank availability            not applicable: no bank route                 nothing: Knos pays test USDC on devnet
@@ -67,7 +67,7 @@ them is Knos's own to shorten:
 Every row carries its own n and says where it was measured. A clock nothing measured says so. No row is a sum of
 two others: percentiles of different samples do not add.
 
-THE SIX LATENCIES, EACH ON ITS OWN (`--separate`; 0.3.20; docs/BENCH.md, "Every latency, apart"). The names a buyer
+THE SIX LATENCIES, EACH ON ITS OWN (`--separate`; docs/reference/BENCH.md, "Every latency, apart"). The names a buyer
 asks by, and no row is a sum of others:
 
     evidence arrival      the merge -> the run's start, and the token's comment -> a relay holding it (two rows: two samples)
@@ -82,7 +82,7 @@ asks by, and no row is a sum of others:
     python scripts/latency_stages.py --separate --recorded             # from docs/bench.json: no network
     python scripts/latency_stages.py --separate --rpc URL --write      # THE RELEASE RUN'S ONE COMMAND: measures the live log
                                                                        # and chain, keeps it in docs/bench.json (`stages`)
-                                                                       # and rewrites the block in docs/BENCH.md
+                                                                       # and rewrites the block in docs/reference/BENCH.md
 
 At release time it runs against the live log and chain (GH_TOKEN for GitHub's rate limit; --events is what
 `scripts/network_stats.py --events-out` wrote, else the chain is read). tests/test_latency_stages.py runs it on a
@@ -189,7 +189,7 @@ def clocks(six_rows: list[dict], decision: dict | None = None, whole: dict | Non
     return out
 
 
-BENCH_JSON, BENCH_MD = ROOT / "docs" / "bench.json", ROOT / "docs" / "BENCH.md"
+BENCH_JSON, BENCH_MD = ROOT / "docs" / "bench.json", ROOT / "docs" / "reference" / "BENCH.md"
 SEP_OPEN, SEP_CLOSE = "<!-- latency:separate -->", "<!-- /latency:separate -->"
 RELEASE_COMMAND = "python scripts/latency_stages.py --separate --rpc https://api.devnet.solana.com --write"
 NO_GAP = "not a wait: the paying transaction is the payout"
@@ -325,7 +325,7 @@ def recorded() -> dict:
 
 
 def separate_block(kept: dict) -> list[str]:
-    """The block of docs/BENCH.md between SEP_OPEN and SEP_CLOSE, from `recorded()`'s answer."""
+    """The block of docs/reference/BENCH.md between SEP_OPEN and SEP_CLOSE, from `recorded()`'s answer."""
     st, dec = kept.get("stages") or {}, kept.get("decision") or {}
     w = st.get("whole") or {}
     local = dec.get("local") or {}
@@ -347,7 +347,7 @@ def separate_block(kept: dict) -> list[str]:
 
 
 def write_separate(kept: dict) -> None:
-    """Rewrites the block in docs/BENCH.md; a document that has none yet gets the section at its end."""
+    """Rewrites the block in docs/reference/BENCH.md; a document that has none yet gets the section at its end."""
     doc = BENCH_MD.read_text(encoding="utf-8")
     block = "\n".join([SEP_OPEN, *separate_block(kept), SEP_CLOSE])
     if SEP_OPEN not in doc:
@@ -542,7 +542,7 @@ def main(argv: list[str] | None = None, say: Callable[[str], None] = print) -> i
     ap.add_argument("--clocks", action="store_true", help="print only the five clocks, each row with its own sample, as Markdown (the decision clock is measured by scripts/decide_bench.py, not here)")
     ap.add_argument("--separate", action="store_true", help="print only the six latencies, each on its own (evidence arrival, evaluation, decision, chain confirmation, finality, payout), as Markdown")
     ap.add_argument("--recorded", action="store_true", help="with --separate: from docs/bench.json (the last recorded runs), asking no network")
-    ap.add_argument("--write", action="store_true", help="with --separate: keep what was measured in docs/bench.json (`stages`) and rewrite the block in docs/BENCH.md")
+    ap.add_argument("--write", action="store_true", help="with --separate: keep what was measured in docs/bench.json (`stages`) and rewrite the block in docs/reference/BENCH.md")
     ap.add_argument("--source", default="", help="with --separate --write: the sentence that says when and against what this was measured")
     a = ap.parse_args(argv)
     if a.separate and a.recorded:

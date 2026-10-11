@@ -1,4 +1,4 @@
-"""docs/INVARIANTS.md names the test behind every guarantee. A name that no longer exists is a guarantee nobody checks:
+"""docs/reference/INVARIANTS.md names the test behind every guarantee. A name that no longer exists is a guarantee nobody checks:
 every test file the page names is there, and every test function it names is defined in one of the files it names."""
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DOC = (ROOT / "docs" / "INVARIANTS.md").read_text(encoding="utf-8")
+DOC = (ROOT / "docs" / "reference" / "INVARIANTS.md").read_text(encoding="utf-8")
 FILES = sorted(set(re.findall(r"`(tests/[\w/]+\.py)`", DOC)))
 NAMES = sorted(set(re.findall(r"`(test_\w+)`", DOC)))
 

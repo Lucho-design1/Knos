@@ -12,13 +12,13 @@
  "badge": [
   {
    "step": "Run the free check on your own pull requests",
-   "how": "One line in your repository's workflow: `uses: drexthealpha/Knos/.github/workflows/supplier.yml@v0.3.26` (docs/RECORD.md, section 3)",
+   "how": "One line in your repository's workflow: `uses: drexthealpha/Knos/.github/workflows/supplier.yml@v0.3.27` (docs/reference/RECORD.md, section 3)",
    "gives": "a check receipt for each pull request; the badge stays grey"
   },
   {
    "step": "Deliver accepted work under a funded order",
    "how": "A buyer funds an order; the work passes the terms fixed at funding and is paid on a token the forge signed",
-   "gives": "an acceptance receipt for each delivery (docs/RECEIPT.md); the badge turns green, with its sample"
+   "gives": "an acceptance receipt for each delivery (docs/reference/RECEIPT.md); the badge turns green, with its sample"
   }
  ],
  "rule": "An agent vendor never pays for a row and cannot pay to change one.",

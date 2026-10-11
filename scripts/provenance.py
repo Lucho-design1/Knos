@@ -1,8 +1,8 @@
 """Provenance: for each of the four programs, one chain a stranger can follow from source to a run on chain.
 
     python scripts/provenance.py                 # print the chains, from what this repository records
-    python scripts/provenance.py --write         # rewrite the block of docs/PROVENANCE.md between its markers
-    python scripts/provenance.py --check         # exit 1 when docs/PROVENANCE.md is not what the records give
+    python scripts/provenance.py --write         # rewrite the block of docs/reference/PROVENANCE.md between its markers
+    python scripts/provenance.py --check         # exit 1 when docs/reference/PROVENANCE.md is not what the records give
     python scripts/provenance.py --rpc [URL]     # also read the cluster: the hash each program runs, each proposal's
                                                  # state, the build record of upgrade_gate, the execution transaction
     python scripts/provenance.py --rpc --record  # and keep what was read in docs/provenance.json (the release does)
@@ -38,7 +38,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[1]
-DOC = ROOT / "docs" / "PROVENANCE.md"
+DOC = ROOT / "docs" / "reference" / "PROVENANCE.md"
 RECORD = ROOT / "docs" / "provenance.json"
 PROGRAMS = ("knos_oidc", "knos_pay", "knos_meter", "knos_passkey")
 # The programs this release proposes a new build of, as ONE proposal set, in the order the upgrades execute. Each gets
@@ -283,7 +283,7 @@ def _now(c: dict) -> str:
 
 
 def render(data: dict) -> str:
-    """The block of docs/PROVENANCE.md, markers included."""
+    """The block of docs/reference/PROVENANCE.md, markers included."""
     got = chains(data)
     up = data["upgrades"]
     out = [BEGIN, "",
@@ -408,11 +408,11 @@ def live(data: dict, url: str) -> tuple[dict, list[str]]:
 
 # ---- one proposal, checked by anyone ------------------------------------------------------------------------------------
 
-IMAGE = "solanafoundation/solana-verifiable-build:2.3.11"       # the pinned image of program.yml's verified-build job (docs/ASSURANCE.md)
+IMAGE = "solanafoundation/solana-verifiable-build:2.3.11"       # the pinned image of program.yml's verified-build job (docs/reference/ASSURANCE.md)
 
 
 def rebuild_commands(program: str, commit: str | None, index: int) -> list[str]:
-    """What a stranger runs to make the build themselves, from the commit the gate recorded (docs/ASSURANCE.md)."""
+    """What a stranger runs to make the build themselves, from the commit the gate recorded (docs/reference/ASSURANCE.md)."""
     return [f"git clone https://github.com/{REPO} knos && cd knos && git checkout {commit or '<the proposed commit>'}",
             f"rm -f programs-v2/target/deploy/{program}.so",
             f'solana-verify build "$PWD" --workspace-path "$PWD/programs-v2" --library-name {program} --base-image {IMAGE}',
@@ -506,8 +506,8 @@ def main(argv: list[str] | None = None, say: Callable[[str], None] = print) -> i
     if argv[:1] == ["verify-proposal"]:
         return verify_main(argv[1:], say)
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--write", action="store_true", help="rewrite the block of docs/PROVENANCE.md")
-    ap.add_argument("--check", action="store_true", help="exit 1 when docs/PROVENANCE.md is not what the records give")
+    ap.add_argument("--write", action="store_true", help="rewrite the block of docs/reference/PROVENANCE.md")
+    ap.add_argument("--check", action="store_true", help="exit 1 when docs/reference/PROVENANCE.md is not what the records give")
     ap.add_argument("--rpc", nargs="?", const=DEVNET, help="read the cluster as well (default: devnet's public endpoint)")
     ap.add_argument("--record", action="store_true", help="with --rpc: keep what was read in docs/provenance.json")
     ap.add_argument("--strict", action="store_true", help="exit 1 while any chain is not complete")
@@ -536,7 +536,7 @@ def main(argv: list[str] | None = None, say: Callable[[str], None] = print) -> i
         DOC.write_text(placed(DOC.read_text(encoding="utf-8"), block), encoding="utf-8", newline="")
     elif a.check:
         if not DOC.is_file() or placed(DOC.read_text(encoding="utf-8"), block) != DOC.read_text(encoding="utf-8"):
-            say("docs/PROVENANCE.md is not what the records give: run python scripts/provenance.py --write")
+            say("docs/reference/PROVENANCE.md is not what the records give: run python scripts/provenance.py --write")
             return 1
     else:
         say(block)

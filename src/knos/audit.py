@@ -958,7 +958,7 @@ def register(app, help_lines: list | None = None) -> None:
                 last: str = typer.Option("", "--to", help="last UTC day, like 2026-09-30 (inclusive). Name it: a file with an end is the same whoever exports it"),
                 fmt: str = typer.Option("csv", "--format", help="csv or json (the statement), or a finance system's import: netsuite, sap, coupa, quickbooks, generic"),
                 wallet: list[str] = typer.Option([], "--wallet", help="also the orders this wallet funded itself (repeat for several)"),
-                limit: int = typer.Option(1000, "--limit", help="how many transactions to read of each Balance, order and bounty of the owner (at most 1000)"),
+                limit: int = typer.Option(1000, "--limit", help="how many transactions to read for each of the owner's balances, orders and bounties (at most 1000)"),
                 partial: bool = typer.Option(False, "--partial", help="write the file even when the cluster did not give the whole history; it then says so"),
                 refs: Path = typer.Option(None, "--refs", help="a CSV of your own references: order,ref,paid_outside,dispute (for the finance formats)"),
                 account: str = typer.Option("", "--account", help="finance formats: the expense or general-ledger account every line is booked to"),
@@ -967,7 +967,11 @@ def register(app, help_lines: list | None = None) -> None:
                 date_format: str = typer.Option("", "--date-format", help="finance formats: another date format, like DD/MM/YYYY or M/D/YYYY"),
                 to_file: Path = typer.Option(None, "--out", help="write the file here instead of printing it"),
                 events_log: Path = typer.Option(None, "--events", help="also take the paid lines into this log of events (`knos events`); default: the file KNOS_EVENTS names, else none")) -> None:
-        """Everything an organisation's money paid for, work orders and bounties on issues, one line per payment, refund, revert or open order: what was commissioned, the price, the terms' hash, the artifact, who supplied, which rule evaluated, the verdict, what was paid, held, refunded and reverted, the fee and the transaction. Each row carries the hash of the row before and the file ends with the totals and the head, so two exports of the same period are the same bytes. With --format netsuite, sap, coupa, quickbooks or generic: one line per accepted deliverable in that system's import format, with the statement's hash in the memo. Devnet: test USDC."""
+        """Export everything an organisation's money paid for, one line per payment, refund, revert or open order. Each
+        line says what was bought, the price, the terms' hash, who supplied it, the verdict, the fee and the
+        transaction. Each row carries the hash of the row before it, so two exports of the same period are
+        byte-identical. With --format netsuite, sap, coupa, quickbooks or generic, it writes one line per
+        accepted deliverable in that system's import format. Devnet: test USDC."""
         from . import cli, exports
         if fmt not in ("csv", "json", *exports.FORMATS):
             raise cli.Stop(f"--format is csv or json, or {', '.join(exports.FORMATS)}; {fmt!r} is none of them.")

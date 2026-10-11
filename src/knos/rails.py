@@ -29,7 +29,7 @@ taken there.
 
 What was checked, and what was not. `check` holds a file to the message definition's structure: the namespace, the
 order and presence of every element this module writes, their lengths and patterns, and that the counts and the control
-sum are the transfers'. It is written by hand from the published definition (docs/RAILS.md names the pages read); the
+sum are the transfers'. It is written by hand from the published definition (docs/reference/RAILS.md names the pages read); the
 official schema file is not in this repository and the file was not run through it. NO BANK HAS TAKEN A FILE THIS
 MODULE WROTE. A bank's own rules (which characters, how many remittance lines, which agent identifiers) are narrower
 than the definition and differ by bank.

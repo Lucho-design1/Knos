@@ -444,7 +444,7 @@ jobs:
         workspace: [programs, programs-v2]
         program: [knos_oidc, knos_pay]
         include:
-          # The second deployment's other two programs, and upgrade_gate (examples/upgrade_gate), which 0.3.13 deploys
+          # The second deployment's other two programs, and upgrade_gate (examples/upgrade_gate), which the release deploys
           # with them and which nothing else builds verified. knos-meter reads a token through
           # crates/knos-oidc-interface, which is outside programs-v2, and cargo reads every member of a workspace to
           # build any one of them: so every build of programs-v2 mounts the repository and names the workspace (where

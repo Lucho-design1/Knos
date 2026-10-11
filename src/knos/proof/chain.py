@@ -1,8 +1,8 @@
 """The relay's chain of runs: starting the next run so that one bad answer does not end it, and a watchdog.
 
 The always-on worker (.github/workflows/worker.yml) is a chain: each run starts the next one 30 s before it stops.
-In the 0.3.19 release run GitHub answered HTTP 500 to that start, and the chain was down until a person started it
-again. Two things here, both with nothing but the standard library (the watchdog job installs nothing):
+Once, GitHub answered HTTP 500 to that start (release run of 0.3.19), and the worker stayed down until a person
+restarted it. Two things here, both with nothing but the standard library (the watchdog job installs nothing):
 
     python -m knos.proof.chain start --after <this run>     the handover: asked again after a 5xx, a 429 or no answer,
                                                             waiting 2, 4, 8, ... s (or what Retry-After says)
@@ -14,8 +14,8 @@ run that already took over ends the asking. When the listing fails too the start
 two runs that take over from one run the worker's first step lets the older one go on, and of two runs nobody
 handed over to (two watchdogs, or a watchdog and a person) the older one. Nothing here reads a key.
 
-ALIVE MEANS A HEARTBEAT (0.3.21). In the 0.3.20 release run a run sat in its PyPI install wait, the watchdog counted it
-alive because it existed, and the chain was down until a person restarted it. So "a run exists" is no longer enough:
+ALIVE MEANS A HEARTBEAT. Once (release run of 0.3.20) a run sat waiting on its PyPI install, the watchdog counted it
+alive because it existed, and the worker stayed down until a person restarted it. So "a run exists" is no longer enough:
 
     the heartbeat     the relay job's step HEARTBEAT, run right after the relay showed it starts with what was
                       installed. GitHub lists each step of a job with its status and the time it completed
@@ -147,10 +147,10 @@ def start(repo: str, after: str = "", ref: str = "main", tries: int = TRIES, req
         except (OSError, ValueError) as e:
             why = f"GitHub did not answer ({type(e).__name__})"
         if n >= max(1, tries):
-            say(f"{why} to the start, try {n} of {tries}: given up. The watchdog starts a chain when none is alive.")
+            say(f"{why} while starting the next run (try {n} of {tries}): given up. The watchdog starts a chain when none is alive.")
             return False
         nap = wait_for(n, retry_after)
-        say(f"{why} to the start, try {n} of {tries}: asking again in {nap:.0f} s")
+        say(f"{why} while starting the next run (try {n} of {tries}): asking again in {nap:.0f} s")
         sleep(nap)
         try:        # GitHub may have taken the start it answered with an error
             there = taken_over(runs(repo, request), after)
@@ -225,11 +225,11 @@ def watch(repo: str, me: int = 0, tries: int = TRIES, request: Callable = call, 
             try:
                 beat_at = beat(repo, run["id"], request)
             except (OSError, ValueError, KeyError, TypeError) as e:
-                say(f"the chain is alive as far as can be told (run {run['id']}: GitHub did not list its steps, {type(e).__name__}): nothing to do")
+                say(f"the relay's run sequence is running as far as can be told (run {run['id']}: GitHub did not list its steps, {type(e).__name__}): nothing to do")
                 return "alive"
         if health(run, beat_at, now()) == "alive":
             said = "its heartbeat" if beat_at is not None else "installing" if run["status"] == "in_progress" else run["status"]
-            say(f"the chain is alive (run {run['id']}, {said}): nothing to do")
+            say(f"the relay's run sequence is running (run {run['id']}, {said}): nothing to do")
             return "alive"
         stuck.append(run["id"])
     if stuck:
@@ -255,7 +255,7 @@ def watch(repo: str, me: int = 0, tries: int = TRIES, request: Callable = call, 
 
 def main(argv: list[str] | None = None) -> int:
     import argparse
-    ap = argparse.ArgumentParser(description="The relay's chain of runs: start the next one, or watch that one is alive.")
+    ap = argparse.ArgumentParser(description="The relay's sequence of GitHub Actions runs (each run starts the next): start the next one, or check that one is running.")
     ap.add_argument("command", choices=("start", "watch"))
     ap.add_argument("--after", default="", help="start: the run that hands over (empty: a first run)")
     ap.add_argument("--tries", type=int, default=TRIES)

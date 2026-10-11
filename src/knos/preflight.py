@@ -25,7 +25,8 @@ and it remembers each preflight's result. Memory also changes what it recommends
 under these terms, or by this supplier, ended in a dispute, was won on appeal or was accepted late, the report's
 `recommend` names the protection that covers it (a reserve, an arbiter, a deadline), why, and the recalled evidence
 ids (history.protections_recalled). With the engine absent it works the same, says memory is off and recommends
-nothing from history: delete the memory layer and this answer changes (docs/submission/DEPENDENCY.md).
+nothing from history: delete the memory layer and this answer changes (docs/reference/DEPENDENCY.md says what the memory engine
+is and what Knos depends on it for; tests/test_sibyl_is_load_bearing.py shows it).
 
 `knos keep <order or transaction> --out DIR` writes the supplier's own copy of everything about a deliverable: the
 evidence bundle (`knos bundle make`, called as it is), and what memory holds of their preflights, refusals and appeals.
@@ -123,7 +124,7 @@ PROTECTIONS = (
 )
 NETTED = ("predictable_payment", "Predictable payment", "advisory", "Netted work is covered by a bound reserve.")
 NO_DEADLINE = "These terms have no acceptance deadline: the buyer can wait forever"
-CANCEL_DAYS = 7         # an open order's cancellation moves its deadline to at most this many days away (docs/SECURITY.md)
+CANCEL_DAYS = 7         # an open order's cancellation moves its deadline to at most this many days away (docs/reference/SECURITY.md)
 
 
 def protections(read: dict, *, auto: bool | None = None, arbiter: str = "", netted: bool = False, reserve: bool = False,
@@ -673,9 +674,10 @@ def register(app, help_lines: list | None = None) -> None:
                    netted: bool = typer.Option(False, "--netted", help="the work settles in a netted period, not an order of its own"),
                    reserve: bool = typer.Option(False, "--reserve", help="with --netted: the period is bound to a reserve the buyer funded"),
                    strict: bool = typer.Option(False, "--strict", help="exit 1 when the terms lack a supplier protection, even if the change is ready")) -> None:
-        """Say, before anything is submitted, what the order's terms hold this change to: the protected paths, the named
-        checks, each changed file as allowed, allowed and not counted, or refused (with the line of the terms that says
-        so and what to do), and what was refused before under the same terms. Exit 0 only when ready."""
+        """Before you submit, show what the order's terms require of this change: the protected paths, the named checks,
+        and each changed file as allowed, allowed but not counted, or refused (with the line of the terms that
+        says so and what to do). Also shows what was refused before under the same terms. Exit 0 only when
+        ready."""
         from . import cli
         try:
             report = check(tree, terms_file, issue, base, changed, by, use_memory=not no_memory, auto=auto, arbiter=arbiter, netted=netted, reserve=reserve)

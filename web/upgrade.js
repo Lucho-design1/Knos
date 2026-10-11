@@ -123,7 +123,7 @@ export const hoursToLeave = (t, now) => Math.floor(Math.max(0, t - now) / 3600);
 // What a pending upgrade is, in two sentences. `lock`: the multisig's time lock in seconds. `now`: the chain's clock, or null when it could
 // not be read (then no countdown is given, and nothing is said about the delay being over).
 export function upgradeWords(p, lock, now) {
-  const what = `An upgrade of ${p.name} is pending: it would replace the program's code with the bytes in the buffer`;
+  const what = `An upgrade of ${p.name} is pending: it would replace the program's code with a new build already uploaded to Solana at`;
   if (p.status === "Approved") {
     const delay = now === null ? `it can be run from ${when(p.executesAt)}`
       : now >= p.executesAt ? `its delay is over (${when(p.executesAt)}), so a member can run it now` : `it can be run from ${when(p.executesAt)}, in ${inWords(p.executesAt, now)}`;

@@ -34,7 +34,7 @@ def test_every_place_names_the_version_of_the_package():
     assert named >= {"pyproject.toml", "uv.lock", "server.json", "gemini-extension.json", "plugin/.claude-plugin/plugin.json",
                      "plugin/.codex-plugin/plugin.json", "sdk/settle/package.json", "sdk/settle/README.md",
                      "programs-v2/handlers/Cargo.toml", "programs-v2/handlers/Cargo.lock",
-                     ".github/workflows/prove.yml", ".github/workflows/check.yml", "docs/INSTALL.md",
+                     ".github/workflows/prove.yml", ".github/workflows/check.yml", "docs/reference/INSTALL.md",
                      # what this release added: the outside reproduction's install, and the action a repository calls by tag
                      "examples/knos-reproduce.yml", ".github/workflows/knos-reproduce.yml", ".github/actions/knos-verify/action.yml",
                      "integrations/workflows/knos-verify.yml"}

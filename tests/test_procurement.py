@@ -277,7 +277,7 @@ def test_budget_offer_shows_the_envelope_before_and_after_and_refuses_over_the_l
     assert rc == 0 and "bug-fix 50.00 test USDC per accepted pull request; terms bugfix" in said
     offer.write_text("kind: standing-offer\n", encoding="utf-8")
     rc, said = knos("budget", "offer", offer)
-    assert rc == 1 and "is not a sound standing offer:" in said and "`version` must be 1." in said
+    assert rc == 1 and "is not a valid standing offer:" in said and "`version` must be 1." in said
 
 
 def test_funding_one_task_shows_the_envelope_before_and_after_and_refuses_over_the_limit(repo):

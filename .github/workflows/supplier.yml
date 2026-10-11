@@ -2,12 +2,12 @@ name: knos supplier check (reusable workflow)
 
 # A reusable workflow for a supplier's own repository: the free check on every pull request, its result posted once,
 # and its receipt kept as an artifact. No bounty, no money, no chain, no secret. A repository calls it with one line
-# (examples/knos-supplier.yml, docs/RECORD.md):
+# (examples/knos-supplier.yml, docs/reference/RECORD.md):
 #
 #     uses: drexthealpha/Knos/.github/workflows/supplier.yml@<a release tag, or its full commit sha>
 #
 # What the one job does, and nothing else:
-#   - runs the Knos check (action.yml at the commit pinned below: `knos proof gate`, which runs none of the pull
+#   - runs the Knos check as of v0.3.17 (action.yml at the commit pinned below: `knos proof gate`, which runs none of the pull
 #     request's code): a "tests pass" or "CI is green" in the description is held against GitHub's record of the head
 #     commit's checks, and the repository's CONTRIBUTING rules are read from the base commit;
 #   - writes the receipt: one JSON file with the repository, the pull request, the head commit, the result and the
@@ -19,7 +19,7 @@ name: knos supplier check (reusable workflow)
 #
 # How GitHub runs this: a reusable workflow called from another repository sees the caller's event, repository and
 # token. It takes no inputs and no secret: nothing a caller passes can change which code runs here. The receipt is
-# the check's own record, signed by nobody: it is not an acceptance receipt (docs/RECEIPT.md), and nothing is paid on it.
+# the check's own record, signed by nobody: it is not an acceptance receipt (docs/reference/RECEIPT.md), and nothing is paid on it.
 on:
   workflow_call: {}
 

@@ -1,4 +1,4 @@
-"""A supplier's record as a machine-priced API: pay, then the JSON (examples/record_api, docs/X402.md "Record").
+"""A supplier's record as a machine-priced API: pay, then the JSON (examples/record_api, docs/reference/X402.md "Record").
 
     knos record serve      (python -m knos.record_api) a small server anyone can run. Knos hosts none.
 
@@ -7,7 +7,7 @@
     GET /orders/<order>         how many lookups an order has bought and used
     GET /health                 whether it can answer, whether it signs, and what its operator promises (nothing)
 
-What the paid answer adds to the free file (knos.record_answer, docs/RECORD.md section 5): the operator's signature
+What the paid answer adds to the free file (knos.record_answer, docs/reference/RECORD.md section 5): the operator's signature
 over the record's hash, the time and slot the chain was read and an expiry (`knos record verify` checks it with no
 network); a summary computed the same way for every supplier; and the supplier's history, field by field, only to a
 reader the supplier granted (header Record-Grant). Without a grant the answer says "not granted". With no signing
@@ -32,7 +32,7 @@ files and the order counts, also need a signed-in person (the site's session coo
 `--debug` or KNOS_DEBUG=1 prints the trace to the operator's terminal, never to the caller. The server keeps the
 count of each order in the memory engine (knos.proof.history's store) when it is given one, so a restart does not
 sell a lookup twice. The escrow pays the server when the order's pinned judge signs an acceptance (PayOrder), or
-returns everything to the caller after the deadline (RefundOrder). No judge for a lookup is built: docs/X402.md says so.
+returns everything to the caller after the deadline (RefundOrder). No judge for a lookup is built: docs/reference/X402.md says so.
 
 Standard library at import; solders and knos.settle.v2.pay when a payment is checked.
 """

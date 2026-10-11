@@ -15,23 +15,24 @@ and prints which it used; web/demo.js says it over the demo. A public round's fu
 run's own transactions, each one linked.
 
 The refusal shown is the single-use rule's own: the order's fund token sent a second time, refused with the error
-programs-v2/knos_pay/src/lib.rs calls E_REPLAY ("a token works once"). Until 0.3.16 the demo showed the pay token's
-second use, which the program refuses earlier and for another reason (83: the order is not in the state this needs).
+programs-v2/knos_pay/src/lib.rs calls E_REPLAY ("a token works once"). An older demo showed the pay token sent a
+second time instead. The program refuses that earlier and for another reason (error 83: the order is not in the state
+this needs).
 
 Where each part comes from:
-- fund, paid, replay, count: docs/CAPABILITIES.md, "The 0.3.14 rehearsal on devnet" (parts 1, 2 and 5): transactions
+- fund, paid, replay, count: docs/reference/CAPABILITIES.md, "The 0.3.14 rehearsal on devnet" (parts 1, 2 and 5): transactions
   on devnet at the staging addresses of the 0.3.14 build, in test USDC. The fund and pay transactions are the ones
   docs/capabilities.json names in the notes of `work_orders` and `order_pay`.
-- claim: docs/TAMPER.md, the Python table: a pull request that fixes nothing, what CI said and the check Knos named.
+- claim: docs/reference/TAMPER.md, the Python table: a pull request that fixes nothing, what CI said and the check Knos named.
   How often a first agent pull request that says its tests pass has a failed check: docs/facts.json and
   docs/bench.json (market.index.overall.first_pr_per_repo).
-- fixed: docs/TAMPER.md, the control row (the honest fix), and the claim names of docs/OIDC.md.
+- fixed: docs/reference/TAMPER.md, the control row (the honest fix), and the claim names of docs/reference/OIDC.md.
 - seconds: docs/bench.json, devnet.stats.latency.merge_to_paid (the median of the public relay's payments).
 
-0.3.20, the seven beats (agree, fails, passes, same statement, replay, pay, verify):
+The demo's seven steps (agree, fails, passes, same statement, replay, pay, verify):
 - agree: the price is the funded amount; the days an unpaid order runs are `DAYS` of src/knos/commands.py; the remedy
-  is the sentence docs/CAPABILITIES.md gives the public round ("what nobody proves goes back at the deadline").
-- claim.reason: the judge's own words in docs/TAMPER.md for the refused pull request.
+  is the sentence docs/reference/CAPABILITIES.md gives the public round ("what nobody proves goes back at the deadline").
+- claim.reason: the judge's own words in docs/reference/TAMPER.md for the refused pull request.
 - bank_file: whether this tree has web/rails.js (the payment instruction file for a bank rail); the demo offers the
   file only then. verify: the recorded run of the stand-alone verifier, when docs/archive_verify.json holds one
   ({"says": one sentence, "link": a path of this repository}); left out while no such record exists.
@@ -48,7 +49,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "web" / "demo_data.json"
 VERIFIED = "docs/archive_verify.json"          # the stand-alone verifier's recorded run, when there is one
-SOURCES = ("docs/CAPABILITIES.md", "docs/capabilities.json", "docs/TAMPER.md", "docs/bench.json", "docs/facts.json", "docs/OIDC.md",
+SOURCES = ("docs/reference/CAPABILITIES.md", "docs/capabilities.json", "docs/reference/TAMPER.md", "docs/bench.json", "docs/facts.json", "docs/reference/OIDC.md",
            "programs-v2/knos_pay/src/lib.rs", "src/knos/commands.py") + ((VERIFIED,) if (ROOT / VERIFIED).is_file() else ())
 SIG = r"[1-9A-HJ-NP-Za-km-z]{60,90}"
 TX = rf"\[[^\]]+\]\(https://explorer\.solana\.com/tx/({SIG})\?cluster=devnet\)"
@@ -88,7 +89,7 @@ def ids_used(manifest: dict) -> tuple[str, str]:
 
 
 def build() -> str:
-    cap = _read("docs/CAPABILITIES.md")
+    cap = _read("docs/reference/CAPABILITIES.md")
     start = cap.index("## The 0.3.14 rehearsal on devnet")
     reh = cap[start:]
     manifest = json.loads(_read("docs/capabilities.json"))
@@ -96,7 +97,7 @@ def build() -> str:
     notes = {c["id"]: c.get("note", "") for c in capabilities}
     bench = json.loads(_read("docs/bench.json"))
     facts = json.loads(_read("docs/facts.json"))["facts"]
-    tamper, oidc = _read("docs/TAMPER.md"), _read("docs/OIDC.md")
+    tamper, oidc = _read("docs/reference/TAMPER.md"), _read("docs/reference/OIDC.md")
 
     date = _find(r"On (\d+ \w+ \d{4}), before the release", reh, "the day of the rehearsal")[1]
     comment = _find(r"two `(/knos fund \d+)` comments", reh, "the funding comment")[1]
@@ -106,7 +107,7 @@ def build() -> str:
     once = _find(r"(\d+): (a token works\s+once)", reh, "the single-use error")
     lib = _read("programs-v2/knos_pay/src/lib.rs")
     if int(_find(r"pub const E_REPLAY: u32 = (\d+);", lib, "the single-use error of knos_pay")[1]) != int(once[1]):
-        raise SystemExit("docs/CAPABILITIES.md and programs-v2/knos_pay/src/lib.rs disagree on the single-use error")
+        raise SystemExit("docs/reference/CAPABILITIES.md and programs-v2/knos_pay/src/lib.rs disagree on the single-use error")
     # the order's own fund token, sent again: the first transaction of the FundOrderBalance row's "sent again" cell
     again = _find(rf"\| FundOrderBalance \| {TX}[^|]*\| {TX}[^|]*: (\d+) \|", reh, "the refused second use of the fund token")
     if again[1] != fund[1] or again[3] != once[1]:
@@ -131,7 +132,7 @@ def build() -> str:
         raise SystemExit("docs/facts.json and docs/bench.json disagree on the share")
     for name, _ in CLAIMS:
         if f"`{name}`" not in oidc:
-            raise SystemExit(f"docs/OIDC.md no longer names the claim {name}")
+            raise SystemExit(f"docs/reference/OIDC.md no longer names the claim {name}")
     wait = bench["devnet"]["stats"]["latency"]["merge_to_paid"]
     days = int(_find(r"\nDAYS, MAX_DAYS = (\d+), \d+", _read("src/knos/commands.py"), "the days an unpaid order runs")[1])
     remedy = _find(r"(what nobody proves goes back at the\s+deadline)", cap, "what happens to an order nobody proves")[1]

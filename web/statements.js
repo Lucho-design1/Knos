@@ -12,7 +12,7 @@ import { statementCells, statementCsv, statementDigest, statementExport, stateme
 import { stepRowHtml, stepStyle } from "./line_steps.js";
 import { lineAssurance, assuranceHtml, assuranceWord } from "./assurance_words.js";
 import { erpWrite, TARGETS as ERP_TARGETS } from "./erp.js";
-const APPEAL = "https://github.com/drexthealpha/Knos/blob/main/docs/DISPUTES.md#the-path";
+const APPEAL = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/DISPUTES.md#the-path";
 
 const ROLES = { seller: ["as_seller", "Seller: what the account was paid"], owner: ["as_owner", "Owner: what the account's money paid out"] };
 const KINDS = Object.keys(KIND_WORDS);
@@ -76,7 +76,7 @@ export function initStatements(ctx) {
 
   async function open(asked) {
     if (!isLogin(asked)) return say("Enter a GitHub login: letters, digits and single hyphens.", "bad");
-    say(`Reading records.json…`);
+    say(`Reading the records…`);
     try {
       const index = await jsonFile("records.json").catch(() => null);
       const login = index ? index.accounts.find((x) => x.toLowerCase() === asked.toLowerCase()) : asked;
@@ -121,7 +121,7 @@ export const AUDIT_SUMS = ["paid_units", "fee_units", "refunded_units", "reverte
 export { canonical, auditHash, chained as auditChained, totals as auditTotals, auditWrite, auditExport } from "./finance_data.js";
 
 // ---- the meter's three numbers, from a ledger file dropped onto the page ---------------------------------------------------------------
-// A meter ledger (src/knos/ledger.py, docs/METER.md) is JSON Lines: a batch's header line {"batch": {...}}, then its
+// A meter ledger (src/knos/ledger.py, docs/reference/METER.md) is JSON Lines: a batch's header line {"batch": {...}}, then its
 // evaluations, one line each: {"accepted": 1 or 0, "artifact", "buyer", "deliverable", "id", "milestone", "order", "policy",
 // "rate", "seller"}, then its corrections: {"correction": {"batch", "by", "id", "kind": duplicate | verdict | withdrawn, "accepted"}}.
 // The three numbers are ledger.py's Numbers, by its names: `evaluations` (each id once: the same evidence sent again is
@@ -184,7 +184,7 @@ export function renderOrderStatement(el, env = {}) {
         <dt>Evaluations</dt><dd data-meter="evaluations"><strong>${esc(m.evaluations.toLocaleString("en-US"))}</strong> <span class="fine">billable: each acceptance policy run once on one artifact for one deliverable</span></dd>
         <dt>Accepted outcomes</dt><dd data-meter="accepted_outcomes"><strong>${esc(m.accepted_outcomes.toLocaleString("en-US"))}</strong> <span class="fine">deliverables that passed: one each, however the work was split</span></dd>
         <dt>Rejected</dt><dd data-meter="rejected"><strong>${esc(m.rejected.toLocaleString("en-US"))}</strong> <span class="fine">evaluations that did not pass; they are billable too</span></dd></dl>
-      <p class="fine" id="ost-meter-note" data-fold="What the ledger file held">From ${esc(f.name)}: ${esc(m.batches)} batch${m.batches === 1 ? "" : "es"} whose headers anchored ${esc(m.anchored)} evaluation${m.anchored === 1 ? "" : "s"}, ${esc(m.corrections)} correction${m.corrections === 1 ? "" : "s"}, ${esc(m.accepted)} accepted evaluation${m.accepted === 1 ? "" : "s"}.
+      <p class="fine" id="ost-meter-note" data-fold="What the ledger file held">From ${esc(f.name)}: ${esc(m.batches)} batch${m.batches === 1 ? "" : "es"} whose headers recorded ${esc(m.anchored)} evaluation${m.anchored === 1 ? "" : "s"}, ${esc(m.corrections)} correction${m.corrections === 1 ? "" : "s"}, ${esc(m.accepted)} accepted evaluation${m.accepted === 1 ? "" : "s"}.
         ${m.batches && m.anchored !== m.evaluations ? `The headers and the count differ by ${esc(Math.abs(m.anchored - m.evaluations))}: repeats and withdrawals are counted once or not at all here, or lines are missing from the file. <code>knos meter verify</code> says which.` : ""}
         The statement above and its exports are unchanged by this file.</p>
       ${m.problems.length ? `<ul class="plain" id="ost-meter-problems">${m.problems.slice(0, 5).map((p) => `<li class="status bad">${esc(p)}</li>`).join("")}</ul>` : ""}`
@@ -232,7 +232,7 @@ export function renderOrderStatement(el, env = {}) {
       <div id="ost-objects"></div>
       <h4>For your finance system</h4>
       <p id="ost-exports">${Object.entries(FORMATS).sort(([, a], [, b]) => Number(a.unverified) - Number(b.unverified)).map(([fmt, f]) => `<button type="button" class="ghost small" data-export="${esc(fmt)}" title="${esc(f.name)}">${esc(EXPORT_NAMES[fmt] || fmt)}</button>${f.unverified ? ` <span class="fine" data-unverified="${esc(fmt)}">${esc(UNVERIFIED)}</span>` : ""}`).join(" ")}</p>
-      <p class="fine">Accepted deliverables only. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/FINANCE.md" target="_blank" rel="noopener">What each file holds, and what nobody has imported yet.</a></p>
+      <p class="fine">Accepted deliverables only. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/FINANCE.md" target="_blank" rel="noopener">What each file holds, and what nobody has imported yet.</a></p>
       <p class="fine" id="ost-recompute" data-fold="How the other party recomputes it">How the other party recomputes it: <code>${esc(command)}</code> reads the same period from the chain and prints the same bytes as Export CSV
         (<code>--format json</code> for Export JSON). Compare one hash, the head: <span class="mono" id="ost-head">${esc(head)}</span>. <code>knos audit verify &lt;file&gt;</code>
         checks every row's hash, the totals and the head of a file someone sent you. Test USDC on devnet: not an invoice for real money.</p></div>`;
@@ -278,7 +278,7 @@ export function renderOrderStatement(el, env = {}) {
 }
 
 // ---- the statement of one invoice, for whoever approves it ------------------------------------------------------------------------------------
-// A statement file (`knos statement make`, docs/FINANCE.md) opened in this browser and sent nowhere: its own sha256 is
+// A statement file (`knos statement make`, docs/reference/FINANCE.md) opened in this browser and sent nowhere: its own sha256 is
 // checked, every line shows its state, and the two buttons give the CSV the command line writes (byte for byte:
 // tests/web/statement.mjs) and the browser's print dialog, which saves a PDF. Printing shows the statement alone
 // through the print rules scoped to .k-statement in web/app.css.

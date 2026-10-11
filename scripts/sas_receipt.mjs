@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// Write a Knos acceptance receipt (docs/RECEIPT.md) as a Solana Attestation Service attestation.
+// Write a Knos acceptance receipt (docs/reference/RECEIPT.md) as a Solana Attestation Service attestation.
 //
 //   node scripts/sas_receipt.mjs <receipt.json>                                 dry run: print the instructions as JSON, send nothing
 //   node scripts/sas_receipt.mjs <receipt.json> --send --keypair FILE [--rpc URL]   send them on devnet (the key pays and is the credential's authority)
 //   node scripts/sas_receipt.mjs --init --send --keypair FILE [--rpc URL]           the release step: create the credential and the schema, no receipt
 //
 // Issuing the attestation is on by default wherever Knos issues a receipt (knos.receipt.attest runs this script with
-// --send after the paying transaction is confirmed, and never fails the payment). A receipt of version 1 to 5 is taken;
-// the attestation's fields are the same for all three, and its digest is the digest of the receipt it was given. An order attested already is not an error: {"sent": false, "already": true}.
+// --send after the paying transaction is confirmed, and never fails the payment). Receipts of versions 1 to 5 are accepted,
+// and the attestation has the same fields for all five; and its digest is the digest of the receipt it was given. An order attested already is not an error: {"sent": false, "already": true}.
 //
 // The Solana Attestation Service is program 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG (the same address on devnet and on
 // mainnet); this script builds its instructions with the service's own library, sas-lib 1.0.10 (an optional package of
@@ -46,7 +46,7 @@ export const digest = (receipt) => createHash("sha256").update(canonical(receipt
 
 /** The attestation's data, field by field: what of the receipt goes on chain. A private order has repository_id and issue 0. */
 export function fields(r) {
-  if (r?.type !== "knos.acceptance-receipt" || ![1, 2, 3, 4, 5].includes(r.version)) throw new Refused("this is not a Knos acceptance receipt of version 1 to 5 (docs/RECEIPT.md).");
+  if (r?.type !== "knos.acceptance-receipt" || ![1, 2, 3, 4, 5].includes(r.version)) throw new Refused("this is not a Knos acceptance receipt of version 1 to 5 (docs/reference/RECEIPT.md).");
   // a version 4 receipt of an evaluation nothing was paid for (rejected, insufficient evidence) names no transaction: there is no payment to attest
   if (r.transaction === null) throw new Refused("this receipt names no transaction: nothing was paid, so there is no payment to attest.");
   const bytes = (hexText) => Array.from(Buffer.from(hexText, "hex"));
@@ -89,7 +89,7 @@ export async function plan(receipt, authority) {
     instructions: [
       plain("create credential", sas.getCreateCredentialInstruction({ payer: signer, authority: signer, credential, name: CREDENTIAL, signers: [authority] })),
       plain("create schema", sas.getCreateSchemaInstruction({ payer: signer, authority: signer, credential, schema, name: SCHEMA,
-                                                             description: "Knos acceptance receipt, version 1: docs/RECEIPT.md", layout: localSchema().layout,
+                                                             description: "Knos acceptance receipt, version 1: docs/reference/RECEIPT.md", layout: localSchema().layout,
                                                              fieldNames: FIELDS.map(([name]) => name) })),
       plain("create attestation", sas.getCreateAttestationInstruction({ payer: signer, authority: signer, credential, schema, attestation, nonce: receipt.order,
                                                                        data, expiry: 0 })),
@@ -111,7 +111,7 @@ async function init(o) {
   const instructions = [
     plain("create credential", sas.getCreateCredentialInstruction({ payer: signer, authority: signer, credential, name: CREDENTIAL, signers: [authority] })),
     plain("create schema", sas.getCreateSchemaInstruction({ payer: signer, authority: signer, credential, schema, name: SCHEMA,
-                                                           description: "Knos acceptance receipt, version 1: docs/RECEIPT.md", layout: localSchema().layout,
+                                                           description: "Knos acceptance receipt, version 1: docs/reference/RECEIPT.md", layout: localSchema().layout,
                                                            fieldNames: FIELDS.map(([name]) => name) })),
   ];
   if (!o.send) return console.log(JSON.stringify({ dry_run: true, program: SAS, authority, credential, schema, instructions }, null, 1));

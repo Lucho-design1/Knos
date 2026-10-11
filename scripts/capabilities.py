@@ -5,7 +5,7 @@
     python scripts/capabilities.py check --rpc    also ask devnet: the program is there and runs the version named,
                                                   and every exercised signature exists and succeeded (the release runs this)
     python scripts/capabilities.py render         write the summary between the markers in README.md and the table
-                                                  between the markers in docs/*.md (docs/CAPABILITIES.md)
+                                                  between the markers in docs/*.md (docs/reference/CAPABILITIES.md)
     python scripts/capabilities.py render --check exit 1 when a table is not what the manifest says
     python scripts/capabilities.py reproduction [--live] FILE... [--own FILE...]
                                                   check reproductions someone sent (a pull request's files, as data):
@@ -27,11 +27,11 @@ A capability's `stage` is the highest of five that has evidence, and each stage 
                   checked (`asserted`) and the refusals it saw (`refusals`: transactions that landed and failed with
                   the error named, which `check --rpc` asks devnet about as well)
     reproduced    {"file"}: a file of reproductions/ (the report of `knos reproduce` and the token GitHub signed for it in
-                  someone else's repository, docs/REPRODUCE.md) in which a check that supports this capability passed.
+                  someone else's repository, docs/reference/REPRODUCE.md) in which a check that supports this capability passed.
                   The signature is checked here with the archived key (scripts/github_oidc_keys.json); `check --rpc`
                   also asks GitHub whether it still publishes that key. A link alone is not evidence
 
-A deployment of a build at an address of its own (a staging deployment, such as the 0.3.14 rehearsal's) is never
+A deployment of a build at an address of its own (a staging deployment: a test copy, such as the trial run of Knos 0.3.14) is never
 evidence for `deployed` or `exercised`, and `programs` lists no such address: what ran there is said in the
 capability's note, with its transaction, and the capability stays `tested` until it runs at a public id.
 
@@ -51,13 +51,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = "docs/capabilities.json"
-FULL = "docs/CAPABILITIES.md"      # the whole table; README.md carries the summary
+FULL = "docs/reference/CAPABILITIES.md"      # the whole table; README.md carries the summary
 STAGES = ("implemented", "tested", "deployed", "exercised", "reproduced")
 WORDS = {None: "not built", "implemented": "implemented", "tested": "tested locally", "deployed": "deployed on devnet",
          "exercised": "exercised on devnet", "reproduced": "reproduced by someone else"}
 # said after the stages in README.md: a stage above `tested` is a run at a public program id, and a staging run is not one
-PUBLIC_ONLY = ("Deployed and exercised are counted only at the public program ids; what the 0.3.14 rehearsal ran at staging "
-               "addresses of its own is in the note of each capability it ran, with its transaction.")
+PUBLIC_ONLY = ("Only runs at the public program ids count here. Each capability's row also notes, with its transaction, any "
+               "earlier trial run at separate test addresses (Knos 0.3.14).")
 GATE = "examples/upgrade_gate/src/lib.rs"     # upgrade_gate is an example program: its public id is its own declare_id!
 START, END = "<!-- capabilities:start -->", "<!-- capabilities:end -->"
 DEVNET = "https://api.devnet.solana.com"
@@ -343,7 +343,8 @@ def _evidence(c: dict) -> str:
 
 
 def table(data: dict, prefix: str = "") -> str:
-    """The manifest as a Markdown table. `prefix` leads from the document to the repository's root ("../" in docs/)."""
+    """The manifest as a Markdown table. `prefix` leads from the document to the repository's root ("../" in docs/,
+    "../../" in docs/reference/)."""
     lines = ["| capability | stage | evidence |", "|---|---|---|"]
     for c in data["capabilities"]:
         lines.append(f"| {c['what']} | {WORDS[c['stage']]} | {_evidence(c)} |".replace("](", "](" + prefix).replace("](" + prefix + "https://", "](https://"))
@@ -354,19 +355,27 @@ def table(data: dict, prefix: str = "") -> str:
     return "\n".join(lines)
 
 
+# README.md names at most this many ids at a stage, in the manifest's order, so that the paragraph stays short on a
+# phone; the rest are said to be in the table, which names every one
+SHOWN = 4
+MORE = "and more, each named in the table"
+
+
 def summary(data: dict) -> str:
-    """The manifest in one short paragraph, for README.md: the ids at the stages above `tested`, highest first (a run
-    at a public program id, or someone else's), and where the table with every capability and its evidence is."""
+    """The manifest in one short paragraph, for README.md: the first ids at each stage above `tested`, highest first (a
+    run at a public program id, or someone else's), and where the table with every capability and its evidence is."""
     said = []
     for s in reversed(STAGES[2:]):
         ids = [f"`{c['id']}`" for c in data["capabilities"] if c["stage"] == s]
-        said.append(f"**{WORDS[s].capitalize()}:** {', '.join(ids) if ids else 'none recorded yet'}.")
+        named = ", ".join(ids[:SHOWN]) + (f" {MORE}" if len(ids) > SHOWN else "")
+        said.append(f"**{WORDS[s].capitalize()}:** {named if ids else 'none recorded yet'}.")
     return (" ".join(said) + f" Everything else is tested locally, implemented or not built: [the table with the evidence]({FULL}) has "
             f"one row for each capability, from [`{MANIFEST}`]({MANIFEST}). " + PUBLIC_ONLY)
 
 
 def targets(root: Path = ROOT) -> list[Path]:
-    return [p for p in [root / "README.md", *sorted((root / "docs").glob("*.md"))] if p.is_file() and START in p.read_text(encoding="utf-8")]
+    docs = [*sorted((root / "docs").glob("*.md")), *sorted((root / "docs" / "reference").glob("*.md"))]
+    return [p for p in [root / "README.md", *docs] if p.is_file() and START in p.read_text(encoding="utf-8")]
 
 
 def rendered(text: str, body: str) -> str:
@@ -380,7 +389,7 @@ def render(root: Path = ROOT, check: bool = False) -> list[str]:
     data, changed = load(root), []
     for doc in targets(root):
         old = doc.read_text(encoding="utf-8")
-        new = rendered(old, summary(data) if doc.parent == root else table(data, "../"))
+        new = rendered(old, summary(data) if doc.parent == root else table(data, doc.parent.relative_to(root).as_posix().count("/") * "../" + "../"))
         if new != old:
             changed.append(doc.relative_to(root).as_posix())
             if not check:

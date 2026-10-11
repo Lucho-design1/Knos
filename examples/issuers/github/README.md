@@ -62,7 +62,7 @@ Compare `repository_id`, not `repository`: a name can pass to someone else.
 ## Register its key
 
 Nothing to do on devnet: this issuer has a number of its own, 0 (GitHub), and its keys are kept registered by the
-rotate workflow ([docs/OIDC.md](../../../docs/OIDC.md), "The trust root of the second deployment"). `knos keys` prints the
+rotate workflow ([docs/reference/OIDC.md](../../../docs/reference/OIDC.md), "The trust root of the second deployment"). `knos keys` prints the
 keys the verifier holds now. In a local test:
 
 ```python
@@ -93,5 +93,5 @@ The whole program around these lines is [`examples/oidc_gate/template.rs`](../..
 ## Tested
 
 `tests/test_issuers.py` registers a key for this issuer in the test build of the verifier, verifies a token with exactly
-the claims above and reads them back. That token is signed with a test key derived from a fixed seed, not by the issuer:
-the test shows the program takes this shape, not that the issuer issued anything.
+the claims above and reads them back. That token is signed with a test key derived from a fixed seed, not by the issuer.
+The test shows the verifier accepts a token of this shape. It does not show the issuer ever issued one.

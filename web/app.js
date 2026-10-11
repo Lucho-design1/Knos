@@ -59,7 +59,7 @@ const client = async () => knos.v2.client(await ids());
 async function gh(path) {
   const r = await fetch(GH + path, { headers: { Accept: "application/vnd.github+json" } });
   if ((r.status === 403 || r.status === 429) && r.headers.get("x-ratelimit-remaining") === "0") {
-    throw new Error("GitHub's free limit for this network is used up (60 reads an hour without login). Try again in an hour.");
+    throw new Error("GitHub's free limit for your connection is used up (60 reads an hour without signing in). Try again in an hour.");
   }
   if (r.status === 404) throw new Error("GitHub has no such public repository, issue or user.");
   if (!r.ok) throw new Error(`GitHub said ${r.status}`);
@@ -374,7 +374,7 @@ async function readAccount(ev) {
       <p class="fine">${bind ? "A wallet is bound, so it can be sent there now: comment <code>/knos settle</code> on the merged pull request." : "Bind a wallet before then and it can be sent there. After that date it goes back to the funder."}</p>`).join("")
       : `<p class="status">Nothing is held for ${esc(user.login)} ${oldDues.length || first.error ? "on the second deployment" : "right now"}.</p>`;
     const firstHolds = oldDues.length ? `<section id="due-v1"><h4>First deployment (v1)</h4>${oldDues.map((d) => `<p class="verdict ok">${money(d.amount)} ${esc(moneyName(d.mint, false))} is still held for ${esc(user.login)} on the first deployment.</p>`).join("")}
-      <p class="fine">First authenticate GitHub CLI as ${esc(user.login)} with <code>gh auth login</code>, then send it to an address you choose with <code>knos claim --v1 &lt;address&gt;</code>.</p></section>`
+      <p class="fine">First sign in to the GitHub command line as ${esc(user.login)} (<code>gh auth login</code>), then run <code>knos claim --v1 &lt;address&gt;</code> to send it to an address you choose.</p></section>`
       : first.error ? `<p class="status bad" id="due-v1-unread">Could not read the first deployment just now (${esc(first.error.message)}), so anything still held there is not shown. Try again in a moment.</p>` : "";
     const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
     out.innerHTML = `${bound}${holds}${firstHolds}<h4>The record on Solana</h4><dl class="facts" id="due-record">
@@ -446,12 +446,12 @@ async function programsHtml() {
   const hours = (m) => (m.timeLock % 3600 === 0 ? `${m.timeLock / 3600} hour${m.timeLock === 3600 ? "" : "s"}` : `${m.timeLock} seconds`);
   return `<h3>Who can change the second deployment, read from Solana now</h3>
     <p class="fine">The plan: upgradeable only through a multisig with a public 48-hour delay, until an outside review.
-      What the chain says now:</p>
+      Today one person holds every key of that multisig; no outside key holder has joined. What the chain says now:</p>
     <dl class="facts" id="programs-now">${rows.map((r) => `<dt>${esc(r.name)}</dt><dd>${link("address", r.address)}<br>${verdict(r)}</dd>`).join("")}</dl>
     <dl class="facts" id="multisigs-now">
       <dt>Upgrade multisig</dt><dd>${link("address", all.upgrade_multisig)}<br>${up ? `${esc(member(up))}, and an approved upgrade waits <strong>${esc(hours(up))}</strong> before it can run${up.timeLock === 172800 ? "" : ` <strong class="status bad">(not the 48 hours stated above)</strong>`}.`
         : `<span class="status">not on devnet yet</span>`}</dd>
-      <dt>Guardian multisig</dt><dd>${link("address", all.guardian_multisig)}<br>${guard ? `${esc(member(guard))}; no delay${guard.timeLock ? ` (it reads ${esc(hours(guard))})` : ""}. The guardian can approve or revoke a signing key and pause new funding for at most ${knos.v2.PAUSE_MAX / 86400} days.`
+      <dt>Guardian multisig</dt><dd>${link("address", all.guardian_multisig)}<br>${guard ? `${esc(member(guard))}; no delay${guard.timeLock ? ` (it reads ${esc(hours(guard))})` : ""}. The guardian (a second multisig) can approve or revoke a signing key and pause new funding for at most ${knos.v2.PAUSE_MAX / 86400} days.`
         : `<span class="status">not on devnet yet</span>`}</dd>
     </dl>`;
 }
@@ -477,7 +477,7 @@ async function keysHtml() {
     : now < k.activeAt ? `usable from ${when(k.activeAt)}` : now >= k.expiresAt ? `expired ${when(k.expiresAt)}` : `usable until ${when(k.expiresAt)}`);
   const rows = keys.map((k) => `<tr><td>${esc(KEY_ISSUERS[k.issuer] || `issuer ${k.issuer}`)}</td><td>${k.bits} bits</td><td class="mono">${esc(k.hash)}</td><td>${k.genesis ? "built in" : "attested"}</td>
     <td data-key="${esc(k.hash)}">${esc(label(k))}</td><td>${esc(when(k.expiresAt))}</td></tr>`).join("");
-  return `<h3>The issuers' signing keys on Solana</h3>
+  return `<h3>GitHub's (and other CI systems') signing keys on Solana</h3>
     <p class="fine">A token verifies only against a key listed here as usable, and only until its expiry: a key that nobody attests again stops working then.
       Read from the second deployment's knos-oidc at ${esc(when(now))}.</p>
     ${rows ? `<div class="table-wrap"><table id="keys-table"><tr><th>Issuer</th><th>Size</th><th>Key (start of its hash)</th><th>How it got in</th><th>Now</th><th>Expires</th></tr>${rows}</table></div>`
@@ -506,7 +506,7 @@ async function loadNetwork() {
 
 
 // ---- an upgrade of a program that is waiting: the upgrade multisig's proposals, read from devnet on every load ---------------------------
-const SECURITY = "https://github.com/drexthealpha/Knos/blob/main/docs/SECURITY.md#7-the-upgrade-authority";
+const SECURITY = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/SECURITY.md#7-the-upgrade-authority";
 const upgradesP = (async () => {
   try {
     const { ms, upgrades } = await pendingUpgrades(knos, RPC, await ids());
@@ -532,7 +532,7 @@ upgradesP.then(({ upgrades, ms, now, failed }) => {
   $("upgrade-banner").innerHTML = (upgrades.length > 2 ? `<details id="upgrade-all"><summary><strong>${upgrades.length} upgrades of Knos's programs are pending</strong> (${esc(names)}). ${esc(state)}</summary>${each}</details>` : each)
     + `<details class="k-more" id="upgrade-exit"><summary>Exits: why an upgrade waits, and how to leave</summary><p class="fine">A program's upgrade can change what it does, and the delay is there so that it can be seen coming: the proposal and the new bytes are on chain for anyone to read.
       <code>knos exit --before-upgrade</code> lists what you hold and how to take it out before then.
-      What it protects and what it does not: <a id="upgrade-security" href="${SECURITY}" target="_blank" rel="noopener">docs/SECURITY.md</a>, section 7.</p></details>` + feedLine;
+      What it protects and what it does not: <a id="upgrade-security" href="${SECURITY}" target="_blank" rel="noopener">docs/reference/SECURITY.md</a>, section 7.</p></details>` + feedLine;
   $("upgrade-banner").hidden = false;
 });
 

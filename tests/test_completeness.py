@@ -138,7 +138,7 @@ def test_a_resolution_is_remembered_and_recalled_when_the_same_source_comes_back
     null = history.NullStore()
     C.remember(null, exc, "corrected", "Acme Agents", at=1_790_000_000.0)
     assert C.check(T.sept(), _omitted(), null)["exceptions"][0]["before"] is None
-    with pytest.raises(ValueError, match="resolved"):
+    with pytest.raises(ValueError, match="resolution must be one of: corrected, accepted, refused"):
         C.remember(store, exc, "ignored", "Acme Agents")
 
 

@@ -23,7 +23,7 @@ const STEPS = ["Agree", "Fails", "Passes", "Statement", "Replay", "Pay", "Verify
 const ACTS = ["Agree and fund", "Check the submission", "Push the correction", "Compute both statements", "Send the same token again", `Pay in ${data.money}`, "Verify the export"];
 const READ = [false, true, false, true, false, true, true];          // the beats that show something to read before their action
 const BAD = [1, 4];                                                    // the two refusals: the rejected submission, the token sent again
-const WHY = "Money is released with no custodian, and the count is anchored where neither side can alter it.";
+const WHY = "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 48 hours in public.";
 // the sample statement's root, computed here as src/knos/statement.py does: canonical JSON, the sha256 field empty
 const sample = JSON.parse(readFileSync(join(root, "statement_sample.json"), "utf8"));
 const canon = (d) => (d === null ? "null" : typeof d !== "object" ? JSON.stringify(d) : Array.isArray(d) ? `[${d.map(canon).join(",")}]` : `{${Object.keys(d).sort().map((k) => `${JSON.stringify(k)}:${canon(d[k])}`).join(",")}}`);
@@ -130,10 +130,10 @@ async function round(label, width, opts = {}) {
   const agreed = Number(data.count.apart) === 0;
   check(`${tag}: 4 same statement: the two counts are the recorded ones, not compared and no root shown before the action`, seen[3].before.badges.includes("not compared") && seen[3].before.roots.length === 2 && seen[3].before.roots.every((r) => r[0] === "not computed")
     && both.scene.includes(n(data.count.buyer)) && both.scene.includes(n(data.count.seller))
-    && (agreed ? both.badges.includes("agreed") && !both.badges.includes("disputed") && !both.scene.includes("+0") && both.say === `Agreed: both counted ${n(data.count.buyer)}. One root.`
+    && (agreed ? both.badges.includes("agreed") && !both.badges.includes("disputed") && !both.scene.includes("+0") && both.say === `Agreed: both counted ${n(data.count.buyer)}. Same fingerprint on both sides.`
       : both.badges.includes("disputed") && both.scene.includes(`+${data.count.apart}`)), [seen[3].before.scene, both.scene]);
   check(`${tag}:   two panes, one root: each pane computed the sha256 this script computes, which is the file's own`, both.roots.length === 2 && both.roots.every((r) => r[1] === ROOT && r[0] === shown(ROOT) && r[2] === "ok") && ROOT === sample.sha256
-    && both.badges.includes("same root") && asked.some((u) => u.endsWith("/statement_sample.json")), both.roots);
+    && both.badges.includes("same fingerprint") && asked.some((u) => u.endsWith("/statement_sample.json")), both.roots);
   if (!opts.offline) check(`${tag}:   each count links the transactions that wrote it`, [...data.count.buyer_tx, ...data.count.seller_tx].every((t) => both.links.some((l) => l.includes(t))), both.links);
   const dup = sample.lines.find((l) => l.state === "duplicate");
   check(`${tag}: 5 replay: the token sent again is refused: a token works once, with the error that was recorded, and is not called single-use`, replay.badges.includes("Refused") && replay.say === `Refused: a token works once. Error ${data.replay.error}.`
@@ -144,7 +144,7 @@ async function round(label, width, opts = {}) {
   check(`${tag}:   why a chain is answered where the money moves, in the one line, behind a fold the reader opens`, paid.why === WHY && !paid.whyOpen && seen.every((s, k) => k === 5 || !s.after.why), paid.why);
   const offered = Boolean(opts.bank) || data.bank_file === true;        // a build that holds web/rails.js offers the file in every round
   check(`${tag}:   a bank file is ${offered ? "offered beside the payment" : "not offered: this build has no web/rails.js"}`, offered ? seen[5].before.alt === "Write a bank file instead" : seen[5].before.alt === "" && data.bank_file === false, seen[5].before.alt);
-  check(`${tag}: 7 verify: the export's root is derived again and its totals added again, and both match`, verify.say === "Verified: root and totals match the export." && verify.roots.length === 1 && verify.roots[0][1] === ROOT && verify.roots[0][2] === "ok"
+  check(`${tag}: 7 verify: the export's root is derived again and its totals added again, and both match`, verify.say === "Verified: fingerprint and totals match the export." && verify.roots.length === 1 && verify.roots[0][1] === ROOT && verify.roots[0][2] === "ok"
     && verify.badges.filter((b) => b === "matches").length === 2 && seen[6].before.badges.filter((b) => b === "not checked").length === 2 && verify.alt === "Change one amount", verify);
   check(`${tag}: the last beat ends, it does not go on`, verify.go === "Start over" && verify.step === 6);
   if (!opts.reduce) check(`${tag}: a state change moved something`, verify.animated > 0, verify.animated);
@@ -153,7 +153,7 @@ async function round(label, width, opts = {}) {
   check(`${tag}: Tab reaches the second action of the last beat`, (await read(page)).focus.includes("kd-alt"));
   await page.keyboard.press("Enter");
   const changed = await read(page);
-  check(`${tag}:   one amount changed: not verified, another root, both checks differ`, changed.say === "Not verified: the changed file has another root." && changed.roots[0][1] !== ROOT && /^[0-9a-f]{64}$/.test(changed.roots[0][1]) && changed.roots[0][2] === "bad"
+  check(`${tag}:   one amount changed: not verified, another root, both checks differ`, changed.say === "Not verified: the changed file has another fingerprint." && changed.roots[0][1] !== ROOT && /^[0-9a-f]{64}$/.test(changed.roots[0][1]) && changed.roots[0][2] === "bad"
     && changed.badges.filter((b) => b === "differs").length === 2 && changed.badges.includes("one amount changed") && changed.alt === "Put the amount back" && changed.focus.includes("kd-alt"), changed);
   await page.keyboard.press("Enter");
   check(`${tag}:   put back: verified again`, (await read(page)).say === verify.say);

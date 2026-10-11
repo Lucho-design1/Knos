@@ -3,7 +3,7 @@
     python scripts/truth_check.py            # print every contradiction as file:line, exit 1 when there is one
     python scripts/truth_check.py --json     # the same, as JSON
 
-What is read (`DOCS`): README.md, every docs/*.md, docs/submission/*.md, the site's web/*.js and web/*.html, the README
+What is read (`DOCS`): README.md, every docs/*.md and docs/reference/*.md, the site's web/*.js and web/*.html, the README
 of each SDK (sdk/*/README.md: npm shows it), the notes of docs/capabilities.json, and the `description` of every
 manifest a registry shows (`DESCRIBED`: sdk/*/package.json, server.json, gemini-extension.json, the plugin manifests).
 What they are held
@@ -47,7 +47,7 @@ from pathlib import Path
 from typing import Callable, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
-DOCS = ("README.md", "docs/*.md", "docs/submission/*.md", "web/*.js", "web/*.html", "sdk/*/README.md")
+DOCS = ("README.md", "docs/*.md", "docs/reference/*.md", "web/*.js", "web/*.html", "sdk/*/README.md")
 DESCRIBED = ("sdk/*/package.json", "server.json", "gemini-extension.json", "plugin/.claude-plugin/plugin.json",
              "plugin/.codex-plugin/plugin.json", ".claude-plugin/marketplace.json")
 MANIFEST = "docs/capabilities.json"
@@ -94,11 +94,18 @@ class Problem:
         return f"{self.file}:{self.line}: [{self.rule}] says: {self.said[:220]}\n    against: {self.against}"
 
 
+def order(rel: str) -> str:
+    """The key files are read and reported in: a page in docs/reference/ sorts among docs/ by its name, as it did
+    before the move, so which statement of a fact comes first does not depend on the folder."""
+    return rel.replace("docs/reference/", "docs/", 1)
+
+
 def files(root: Path = ROOT, docs: Iterable[str] = DOCS) -> list[str]:
-    out: list[str] = []
+    groups: dict[str, list[str]] = {}               # docs/*.md and docs/reference/*.md are read as one group
     for pattern in docs:
-        out += sorted(Path(p).relative_to(root).as_posix() for p in glob.glob(str(root / pattern)) if Path(p).is_file())
-    return out
+        groups.setdefault(order(pattern), []).extend(
+            Path(p).relative_to(root).as_posix() for p in glob.glob(str(root / pattern)) if Path(p).is_file())
+    return [rel for group in groups.values() for rel in sorted(dict.fromkeys(group), key=order)]
 
 
 _TAG = re.compile(r"<[^>]+>")
@@ -213,7 +220,7 @@ def stage_problems(stmts: list[Statement], data: dict) -> list[Problem]:
     out: list[Problem] = []
     caps = [(c, names_of(c)) for c in data.get("capabilities", [])]
     for s in stmts:
-        if s.file == "docs/CAPABILITIES.md" and s.text.startswith("|"):
+        if s.file == "docs/reference/CAPABILITIES.md" and s.text.startswith("|"):
             continue                                         # the generated table: scripts/capabilities.py check owns it
         low, undeployed = NOT_BUILT.search(s.text), NOT_DEPLOYED.search(s.text)
         segments = _segments(s.text)
@@ -387,7 +394,7 @@ def version_problems(stmts: list[Statement], data: dict) -> list[Problem]:
     out: list[Problem] = []
     programs = data.get("programs", {})
     for s in stmts:
-        if s.file == MANIFEST or (s.file == "docs/CAPABILITIES.md" and s.text.startswith("|")) or not LIVE.search(s.text) or NOT_LIVE_YET.search(s.text) or PAST.search(s.text):
+        if s.file == MANIFEST or (s.file == "docs/reference/CAPABILITIES.md" and s.text.startswith("|")) or not LIVE.search(s.text) or NOT_LIVE_YET.search(s.text) or PAST.search(s.text):
             continue
         for m in re.finditer(r"\b(knos_[a-z]+|upgrade_gate) (\d+\.\d+)\b", s.text):
             want = programs.get(m.group(1), {}).get("on_chain")
@@ -423,7 +430,7 @@ def count_problems(stmts: list[Statement], data: dict) -> list[Problem]:
                     out.append(Problem("count", s.file, s.line, s.text, f"{MANIFEST} has {rows} capabilities, and this says {n}"))
                 seen.setdefault(n, s)
         if len(seen) > 1:
-            first, *rest = sorted(seen.items(), key=lambda kv: (kv[1].file, kv[1].line))
+            first, *rest = sorted(seen.items(), key=lambda kv: (order(kv[1].file), kv[1].line))
             for n, s in rest:
                 out.append(Problem("count", s.file, s.line, s.text,
                                    f"{first[1].file}:{first[1].line} counts {first[0]} {what} ({first[1].text[:120]}), and this counts {n}"))
@@ -556,7 +563,7 @@ def problems(root: Path = ROOT, docs: Iterable[str] = DOCS) -> list[Problem]:
     found = (stage_problems(stmts, data) + call_problems(stmts, root) + price_problems(stmts, price_book(root), fee_rates(root))
              + version_problems(stmts, data) + count_problems(stmts, data) + release_problems(stmts, current_release(root))
              + live_problems(stmts, data) + published_problems(stmts) + word_problems(stmts))
-    return sorted(set(found), key=lambda p: (p.file, p.line, p.rule, p.against))
+    return sorted(set(found), key=lambda p: (order(p.file), p.line, p.rule, p.against))
 
 
 def main(argv: list[str] | None = None, say: Callable[[str], None] = print, root: Path = ROOT) -> int:

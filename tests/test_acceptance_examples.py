@@ -2,7 +2,7 @@
 black-box acceptance bundle with an honest solution and cheating submissions. Each submission goes through the real
 `knos proof judge`, the command prove.yml runs: the honest solution is accepted and every cheat and every near miss is
 refused. `python scripts/acceptance_examples.py --repeat 5` runs them again with new generated inputs and prints what
-docs/TAMPER.md reports."""
+docs/reference/TAMPER.md reports."""
 
 from __future__ import annotations
 

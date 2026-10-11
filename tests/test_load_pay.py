@@ -89,7 +89,7 @@ def test_a_token_another_relay_carried_first_is_counted_and_never_as_paid():
 
 
 def test_measure_pay_write_keeps_the_cluster_run_and_the_page_prints_it_with_its_denominator(tmp_path, monkeypatch):
-    """`python scripts/load.py measure --pay --relays 4 --tokens FILE --wallet KEY --write`, the command docs/LOAD.md
+    """`python scripts/load.py measure --pay --relays 4 --tokens FILE --wallet KEY --write`, the command docs/reference/LOAD.md
     names: the run of scripts/load_pay.py is appended to docs/load.json and rendered under its own heading."""
     sys.path[:0] = [p for p in (str(ROOT / "scripts"), str(ROOT / "tests")) if p not in sys.path]
     import load
@@ -156,7 +156,7 @@ def test_the_one_relay_run_and_the_four_relay_run_of_8_october_stand_side_by_sid
     four = run[1]
     assert [r["paid"] for r in four["per_relay"]] == [16, 8, 5, 11] and four["per_fee_account"] == [14, 9, 9, 8]
     assert (four["payment_s"]["p50"], four["payment_s"]["p95"], four["payment_s"]["max"], four["lanes"]) == (11.45, 22.61, 34.9, "order")
-    page = (ROOT / "docs" / "LOAD.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "LOAD.md").read_text(encoding="utf-8")
     assert "2026-10-08: end-to-end PayOrder: token verification, then the payment; 1 relay, 40 payments attempted" in page
     assert "2026-10-08: end-to-end PayOrder: token verification, then the payment; 4 relays, 40 payments attempted" in page
     assert "ONE relay carried all of them" in page and "Not measured: payments by order over several relays" not in page
@@ -263,7 +263,7 @@ def test_burst_on_a_cluster_sends_a_relays_payments_at_once_and_hot_funder_needs
 
 
 def test_the_page_says_what_each_scenario_measures_and_which_have_run():
-    page = (ROOT / "docs" / "LOAD.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "LOAD.md").read_text(encoding="utf-8")
     for name, words in load_pay.SCENARIOS.items():
         row = next(line for line in page.splitlines() if line.startswith(f"| {name} | "))
         assert words in row and "local simulator" in row and "every check holds" in row
@@ -452,12 +452,12 @@ def test_the_burst_rerun_with_the_fan_out_stands_beside_the_run_it_reruns():
     assert (new["fanout"]["endpoints"], new["fanout"]["second_endpoints"], new["fanout"]["resend_every_s"], new["fanout"]["confirm_by"]) == (
         1, 0, 2.0, "getSignatureStatuses")
     assert len(set(new["order_ids"])) == 40 and new["github_run"] == "https://github.com/drexthealpha/knos-load/actions/runs/38012410577"
-    page = (ROOT / "docs" / "LOAD.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "LOAD.md").read_text(encoding="utf-8")
     assert ("#### Measured on devnet, public program ids, 2026-10-10: end-to-end PayOrder: token verification, then the payment; 4 relays, "
             "40 payments attempted; scenario burst\n") in page
     assert "| 40 | 40 of 40 | 0 | 0 | 0 | 611.86 | 0.065 | 580.75 | 610.38 | none: fewer than 100 payments | 611.85 |" in page
     assert "To be rerun: done by the 0.3.25 release on 10 Oct 2026: the next burst row." in page
     row = next(line for line in page.splitlines() if line.startswith("| burst | "))
     assert "40 of 40 paid, 0 failures, 73 retries, 0.065 a second" in row and "2026-10-10" in row and "to be rerun" not in row
-    manifest = (ROOT / "docs" / "MANIFEST.md").read_text(encoding="utf-8")       # the run that kept its order ids says so
+    manifest = (ROOT / "docs" / "reference" / "MANIFEST.md").read_text(encoding="utf-8")       # the run that kept its order ids says so
     assert manifest.count("| 40 orders paid by a load run, 4 relays; its 40 order ids are in docs/load.json |") == 1

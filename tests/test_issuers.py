@@ -97,7 +97,7 @@ def test_the_table_says_what_the_program_takes():
 
 
 def test_the_page_the_document_and_the_examples_name_the_same_issuers():
-    doc = (ROOT / "docs" / "VERIFIER.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "VERIFIER.md").read_text(encoding="utf-8")
     page = (ROOT / "web" / "verifier.js").read_text(encoding="utf-8")
     assert BOOK["checked"] in doc and BOOK["checked"] in page
     assert oidc.IDS["knos_oidc"] in doc and oidc.IDS["knos_oidc"] in page

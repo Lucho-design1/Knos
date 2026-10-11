@@ -1,4 +1,4 @@
-"""Knos is paid on acceptance and does not decide it (docs/DISPUTES.md, "Knos is paid on acceptance, and does not
+"""Knos is paid on acceptance and does not decide it (docs/reference/DISPUTES.md, "Knos is paid on acceptance, and does not
 decide it"). Three things are checked on the source itself, with no network:
 
 - in the programs, Knos's fee account (FEE_OWNER) only receives fees and signs SetPlan, which lowers a rate: no
@@ -109,7 +109,7 @@ def test_the_fee_reads_the_amount_and_the_rate_only():
 
 
 def test_the_page_says_what_the_test_checks():
-    page = " ".join((ROOT / "docs" / "DISPUTES.md").read_text(encoding="utf-8").split())
+    page = " ".join((ROOT / "docs" / "reference" / "DISPUTES.md").read_text(encoding="utf-8").split())
     section = page.split("## Knos is paid on acceptance, and does not decide it")[1].split(" ## ")[0]
     assert "tests/test_neutrality.py" in section and "No key of Knos's signs a verdict." in section
     for module in VERDICT_MODULES:
@@ -117,11 +117,11 @@ def test_the_page_says_what_the_test_checks():
     assert "there is no default" in section and "48-hour" in section
 
 
-# == the charter (docs/CHARTER.md) ==================================================================================
+# == the charter (docs/reference/CHARTER.md) ==================================================================================
 # Each right the charter calls "enforced" names one test below (or one elsewhere in tests/); the last two tests hold
 # the page to that and to its own sha256.
 PAY = PROGRAMS / "knos_pay" / "src"
-CHARTER = ROOT / "docs" / "CHARTER.md"
+CHARTER = ROOT / "docs" / "reference" / "CHARTER.md"
 
 
 def _fn(path: Path, name: str) -> str:

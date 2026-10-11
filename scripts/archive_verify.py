@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "archive_verify.json"
 LEDGER, STATEMENT = "examples/meter/buyer.jsonl", "web/statement_sample.json"
 SEALED = "2026-10-07"          # the day of the recorded run: one date, so the archive is the same bytes every time
-LINK = "docs/RETENTION.md"
+LINK = "docs/reference/RETENTION.md"
 
 
 def held_run(blob: bytes, what: str) -> tuple[list[str], re.Match[str], dict]:

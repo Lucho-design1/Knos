@@ -7,17 +7,17 @@ channel", with no detail, and the maintainer will turn private reporting on and 
 
 Anything else (a question, a bug that is not a vulnerability, an idea): open an issue on this repository.
 
-The security model, who must be trusted for what, what a Knos payment's signed statement does and does not cover, and every known limit:
-[docs/SECURITY.md](docs/SECURITY.md). What to do on launch day if a release must be taken back:
-[docs/ROLLBACK.md](docs/ROLLBACK.md).
+Who you must trust, what a payment's signed record proves and does not prove, and every known limit:
+[docs/reference/SECURITY.md](docs/reference/SECURITY.md). How a bad release is taken back: [docs/reference/ROLLBACK.md](docs/reference/ROLLBACK.md).
 
 Knos runs on Solana devnet only, and the money is test USDC. There are two deployments, and a report is handled
 differently for each:
 
-- **The second deployment** (`programs-v2/`), where every new bounty is funded, is upgradeable only through a
-  multisig with a public time lock: 48 hours on chain today, and 8 days once the approved configuration change is
-  executed ([docs/GOVERNANCE.md](docs/GOVERNANCE.md)). A fix there is an upgrade, and it is public for the whole lock
-  before it can run. In the meantime a guardian can pause new funding for at most 7 days at a time and can revoke a
+- **The second deployment** (`programs-v2/`), where every new bounty is funded, can be changed only through a
+  [multisig](docs/WORDS.md#multisig) (several keys that must agree, all held by one person today) after a public wait.
+  The wait is 48 hours today. A longer wait of 8 days is approved but not yet applied
+  ([docs/reference/GOVERNANCE.md](docs/reference/GOVERNANCE.md)). A fix there is an upgrade, and it is public for the whole wait before it
+  can run. In the meantime a guardian can pause new funding for at most 7 days at a time and can revoke a
   signing key. It cannot move money.
 - **The first deployment** (`programs/`) has no upgrade authority. A fault there cannot be patched. What can be done
   is to say so in public and to fix it in the second deployment.
@@ -25,4 +25,5 @@ differently for each:
 There has been no outside review, and `knos mainnet-check` fails on that line until there is one.
 
 Keys and tokens are kept out of the repository: `python scripts/secret_scan.py --history` reads every blob ever
-committed and names each kind of key it finds, never its value ([docs/LAUNCH.md](docs/LAUNCH.md), items 1 and 2).
+committed and names each kind of key it finds, never its value. The one real key ever committed is listed, with why it
+is spent, in [`scripts/secret_scan.py`](scripts/secret_scan.py) (`REVIEWED`).

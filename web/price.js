@@ -1,7 +1,7 @@
 // Price book 3.1 and the arithmetic of the calculators. Pure functions: nothing here reads the page or the network.
 //
 // WHERE THE NUMBERS COME FROM, in one place.
-//   BILL      the price book's own numbers (docs/MARKET.md, "The price book"; src/knos/billing.py holds the same):
+//   BILL      the price book's own numbers (docs/reference/MARKET.md, "The price book"; src/knos/billing.py holds the same):
 //             Meter, Acceptance and its volume rates, Record, Control, Pilot. Contract prices, typed once, here.
 //   on chain  what knos_pay takes at release, in millionths of a whole unit of the mint (USDC has six decimals), as
 //             the program holds it. priceConstants() takes each constant from what sdk/settle exports (settle.js in
@@ -87,11 +87,11 @@ export function feeRate(c, bps = c.feeBps) {
   return `${pct2(bps)} of the first ${(c.tier1 / 1e6).toLocaleString("en-US")}, ${pct2(c.feeBps2)} to ${(c.tier2 / 1e6).toLocaleString("en-US")}, ${pct2(c.feeBps3)} above, at least ${show(c.feeMin)}`;
 }
 /** The fee in plain words, true whichever build is live: as knos.fees.words. `version`: what the program or the feed
- *  answered; null or undefined says both rules and what decides between them. */
+ *  answered; null or undefined (nobody was asked) says the 2.2 fee, live on devnet since 9 October 2026. */
 export function feeWords(version, lib = settle) {
   const now = priceConstants(lib, FEE_VERSION), was = priceConstants(lib, FEE_VERSION - 1);
   if (version === null || version === undefined) {
-    return `Fee: ${feeRate(now)} test USDC, paid by the funder on top, once knos_pay ${now.fee.build} is live; until that upgrade executes the public program charges the fee it charges before the upgrade (${feeRate(was)}). \`knos status\` says which build runs. ${KEEPS}`;
+    return `Fee: ${feeRate(now)} test USDC, paid by the funder on top (knos_pay ${now.fee.build}, live on devnet since 9 October 2026; \`knos status\` says which build runs). ${KEEPS}`;
   }
   if (version >= FEE_VERSION) return `Fee: ${feeRate(now)} test USDC, paid by the funder on top (knos_pay ${now.fee.build} is live). ${KEEPS}`;
   return `Fee today: ${feeRate(was)} test USDC, paid by the funder on top (the fee it charges before the upgrade: knos_pay ${now.fee.build} is not live yet). From knos_pay ${now.fee.build}: ${feeRate(now)}. ${KEEPS}`;
@@ -126,7 +126,7 @@ export function quote(amount, c, bps = c.feeBps) {
 
 // The price book's numbers. Rates are in basis points, money in whole USD unless a name says cents.
 export const BILL = Object.freeze({
-  meterFree: 100_000, meterPerThousandCents: 200,                        // the price book: 0.002 USD an evaluation (2.00 a thousand); the deployed knos_meter takes 0.05 after 10,000
+  meterFree: 100_000, meterPerThousandCents: 200,                        // the price book's PROPOSED Meter price: 0.002 USD an evaluation (2.00 a thousand); the deployed knos_meter takes 0.05 after 10,000
   acceptBps: Object.freeze([30, 20]), acceptAbove: Object.freeze([0, 1_000_000]), acceptFloorCents: 5,      // marginal, by the month; never under 0.20%; no cap
   netBelowCents: 2_000,                                                    // an outcome under 20 USD is netted: one release per payee per period
   recordCents: 10,
@@ -138,7 +138,7 @@ const thousands = (n) => n.toLocaleString("en-US");
 function rate(bps) { return `${(bps / 100).toFixed(2)}%`; }
 const short = (n) => (n >= 1_000_000 ? `${n / 1_000_000}M` : thousands(n));
 export const COLUMNS = Object.freeze(["Line", "Unit", "Price", "Who pays", "Where it is enforced"]);
-// The price book, row by row, in the words of docs/MARKET.md and of src/knos/billing.py (BOOK): the five COLUMNS.
+// The price book, row by row, in the words of docs/reference/MARKET.md and of src/knos/billing.py (BOOK): the five COLUMNS.
 export function priceBook() {
   const k = BILL.control, [r0, r1] = BILL.acceptBps, [, a1] = BILL.acceptAbove, floor = (BILL.acceptFloorCents / 100).toFixed(2), record = (BILL.recordCents / 100).toFixed(2);
   return [
@@ -152,7 +152,7 @@ export function priceBook() {
     ["Pilot", "one buyer, two suppliers, 30 days, one reconciled invoice", `${thousands(BILL.pilot)} USD, credited against year one`, "buyer", "contract"],
   ];
 }
-// The rule the book is published with (docs/MARKET.md, section 3), and the same in five words.
+// The rule the book is published with (docs/reference/MARKET.md, section 3), and the same in five words.
 export const RULE = "Knos never charges the party being rated.";
 export const PAYS = "The rated party never pays.";
 export const CONNECT = "Connecting a supplier costs nothing.";

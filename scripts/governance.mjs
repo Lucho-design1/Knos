@@ -29,13 +29,13 @@
 //   node scripts/governance.mjs set-threshold <N>               the proposal that changes how many members must approve
 //   node scripts/governance.mjs set-time-lock [seconds]         the proposal that sets the UPGRADE multisig's time lock (default 691200,
 //                               8 days: above an order's 7 days of notice and 2 hours of grace; scripts/timelock_plan.py says why).
-//                               With --send it refuses while another proposal of that multisig is open: the change makes it stale
+//                               With --send it refuses while another proposal of that multisig is open, because the change would make that proposal stale.
 //                               Each of the four PRINTS the proposal and what the multisig will be once it has executed (members,
 //                               threshold, how many voting keys the founder holds, whether the founder alone can still approve), and
 //                               sends nothing. With --send it creates that proposal and approves it with the member keys given; then
 //                               `execute <upgrade|guardian> <index>` runs it, after the 172800 s on the upgrade multisig. A new key
 //                               is an outside holder's unless --founder is passed; it gets the permission to vote and no other
-//                               unless --permissions says so. docs/KEYHOLDER.md is the page for whoever holds the new key.
+//                               unless --permissions says so. docs/reference/KEYHOLDER.md is the page for whoever holds the new key.
 //   node scripts/governance.mjs derive                          the addresses the create keys give (no network)
 //   node scripts/governance.mjs inner guardian approve|revoke <issuer> <key hash>, inner guardian pause <seconds>,
 //                               inner upgrade <program> <buffer>   the instruction a proposal would carry, as JSON (no network)

@@ -1,11 +1,11 @@
-# Knos in the buyer's own cloud (docs/SELFHOST.md). One image, built here from deploy/Dockerfile (bases pinned by digest,
+# Knos in the buyer's own cloud (docs/reference/SELFHOST.md). One image, built here from deploy/Dockerfile (bases pinned by digest,
 # packages by hash), run as three services. One config file, knos.toml, beside this file; key files in ./secrets.
 #
 #   python -m knos.selfhost check deploy/knos.toml      what will run, and which key files it reads
 #   python -m knos.selfhost plan deploy/knos.toml       the services to start, and the command that starts them
 #
 # Ports are published on 127.0.0.1 only: put the buyer's identity proxy in front of them, or sign in with [sso]
-# (docs/SELFHOST.md).
+# (docs/reference/SELFHOST.md).
 # Knos runs none of this and hosts nothing.
 
 x-knos: &knos

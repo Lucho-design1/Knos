@@ -29,7 +29,7 @@ every record, and the token's audience is the record's hash, so the issuer signs
 What a receipt (knos.receipt, read here and not changed) shows of each is in `receipt_shows`, with the limit that
 matters across instances: a receipt compares account ids, and ids are numbered by each forge for itself.
 
-`python -m knos.private record|check` are the two commands the workflow in examples/private runs. docs/PRIVATE.md
+`python -m knos.private record|check` are the two commands the workflow in examples/private runs. docs/reference/PRIVATE.md
 is the page. Nobody with a private repository has run this path: it is tested here with keys this repository holds.
 
 `python -m knos.private run --repo FOLDER --attestors FILE` is the whole path as one command, against a simulator: the
@@ -78,7 +78,7 @@ def attestors_of(doc) -> dict:
         assert len({a["name"] for a in doc["attestors"]}) == len(doc["attestors"])
     except Exception:  # noqa: BLE001
         raise ValueError("an attestors file is {type: knos.attestors, version: 1, parties: [two names], attestors: [{name, issuer (https), issuer_run_by: "
-                         "buyer, supplier or third party, repository_id, workflow, administrator, approved_by: [parties]}]} (docs/PRIVATE.md)") from None
+                         "buyer, supplier or third party, repository_id, workflow, administrator, approved_by: [parties]}]} (docs/reference/PRIVATE.md)") from None
     return doc
 
 
@@ -219,7 +219,7 @@ def check(doc: dict, token: str, attestors_raw: bytes, key_n: int | None = None,
     if key_n is None:
         said.append("limit: no key was given, so the issuer's signature was NOT checked; the lines above are the token's own words")
     elif not bundle.rs256(token.strip(), key_n):
-        raise ValueError("the issuer's signature does not hold under the key given")
+        raise ValueError("the issuer's signature is not valid under the key given")
     else:
         said.append("the issuer's RS256 signature holds under the key given")
     for name, data, field in (("terms", terms, "terms_sha256"), ("sealed evidence, opened", evidence, "evidence_sha256")):
@@ -299,7 +299,7 @@ def dispute_check(d, doc: dict, keys: dict) -> list[str]:
         except Exception:  # noqa: BLE001 - not a signature at all
             held = False
         if not held:
-            raise ValueError(f"the {party}'s signature is missing or does not hold" + (": a dispute is resolved by both parties, never by one" if d["state"] == "resolved" else ""))
+            raise ValueError(f"the {party}'s signature is missing or not valid" + (": a dispute is resolved by both parties, never by one" if d["state"] == "resolved" else ""))
     if d["state"] == "open":
         return [f"opened by the {d['opened_by']}, who opened the sealed evidence the record names", DISPUTED_MEANS]
     return [f"opened by the {d['opened_by']}; resolved by both parties ({' and '.join(d['parties'])}) to: {d['outcome']}",

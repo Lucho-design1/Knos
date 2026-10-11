@@ -122,7 +122,7 @@ merge, when this folder is on the default branch before the bounty is funded: \`
 What it does not do: the cases are in this repository, so an implementation can answer exactly them from a table. More
 cases make that more work, not impossible. A check that generates its inputs when it runs and compares them with a
 reference at that time cannot be answered from a table: write that as \`blackbox.py\` yourself if the bounty is worth it
-(Knos's docs/TAMPER.md measures the difference).
+(Knos's docs/reference/TAMPER.md measures the difference).
 `;
 
 // Python's json.dumps(spec, indent=1): one space of indent and every character past ~ written as a \\uXXXX escape
@@ -153,7 +153,7 @@ export const amountWords = (units) => `${Math.trunc(units / 1_000_000)}${units %
 // limits where the escrow holds no work orders yet; the refusal then names each kind's bound.
 const said = (units) => amountWords(units).replace(/^\d+/, (whole) => Number(whole).toLocaleString("en-US"));
 export const boundsWords = (limits) => `A work order holds from ${said(limits.min)} to ${said(limits.max)} test USDC, and \`/knos fund\` opens a work order.`
-  + (limits.job ? ` A bounty of the older kind (2.0) takes from ${said(limits.job.min)} to ${said(limits.job.max)}, where the escrow holds no work orders yet; this page writes the comment for a work order.` : "");
+  + (limits.job ? ` An older bounty (program version 2.0) takes from ${said(limits.job.min)} to ${said(limits.job.max)}. This page writes the comment for a work order.` : "");
 export function check({ title, description, amount, command, login, repo, pairs }, limits) {
   const bad = (error) => ({ error });
   title = String(title ?? "").trim();

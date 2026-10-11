@@ -86,8 +86,6 @@ def test_every_copy_is_the_same_drawing():
     assert "prefers-color-scheme:dark" in icon and "#15171c" in icon and "#e9ebef" in icon
     js = json.loads(_text(BRAND / "mark.js").split("BADGE_MARK = ", 1)[1].rstrip().rstrip(";"))
     assert js == badge.MARK and js["d"] == small[0]                                  # the badge of the site and of `knos badge`
-    card = _text(ROOT / "scripts" / "video" / "sample" / "card.svg")                  # the title card of the sample video
-    assert all(d in card for d in word) and "Sample storyboard" in card
 
 
 def test_the_badge_has_the_mark_at_its_left():
@@ -156,7 +154,8 @@ def test_the_site_names_its_own_files_for_the_icon_and_the_card():
     css = _text(ROOT / "web" / "app.css")
     assert 'url("brand/wordmark.svg")' in css and 'url("brand/mark.svg")' in css
     for slot in ("status", "index", "pilot", "reproduce", "shadow", "verifier", "playground"):      # pages other modules fill: empty, hidden
-        assert f'<section id="{slot}" class="mount" aria-label="{slot.capitalize()}" hidden></section>' in page
+        label = {"shadow": "Check an invoice"}.get(slot, slot.capitalize())
+        assert f'<section id="{slot}" class="mount" aria-label="{label}" hidden></section>' in page
         assert f'<a href="#{slot}" data-mount="{slot}" hidden>' in page and f'"{slot}"' in _text(ROOT / "web" / "front.js")
 
 

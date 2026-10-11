@@ -1,4 +1,4 @@
-"""Single sign-on for the self-host bundle: OpenID Connect, written out with the standard library (docs/SELFHOST.md).
+"""Single sign-on for the self-host bundle: OpenID Connect, written out with the standard library (docs/reference/SELFHOST.md).
 
     [sso] in knos.toml      who the provider is, which email domains and groups may sign in, and each role's groups
     keys.sso_session        a file of 32 or more random characters: it signs the session cookie (site and record read it)

@@ -1,17 +1,20 @@
 # knos-oidc-interface
 
 Read an OIDC token (GitHub Actions, GitLab CI, or any other RS256 issuer) that the knos-oidc program verified on Solana.
+OIDC (OpenID Connect) is the standard a CI service uses to sign a short-lived token saying which run it is.
 
 knos-oidc checks the token's RS256 signature on chain and leaves the result in an account it owns. Your program
 takes that account and reads the claims the issuer signed: which repository, which commit, which workflow file at
-which commit, which audience. There is no CPI and no oracle.
+which commit, which audience. There is no CPI (no call into another program) and no oracle (no outside service that reports the result).
 
 This crate has no dependency and does not allocate, so it builds with solana-program, pinocchio or anchor of any
 version, and off chain. It reads the second deployment of knos-oidc unless you name the first (see below); a token
 account has the same layout under both.
 
 ```toml
-knos-oidc-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.3.26" }
+knos-oidc-interface = "0.3.14"
+# or the same source from the release tag:
+# knos-oidc-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.3.27" }
 ```
 
 ```rust
@@ -75,11 +78,12 @@ taken for an issuer's.
 ## The two deployments
 
 The crate's defaults (`ID`, `Token::read`, `Token::read_any`; `v2::read` is the same by name) read the second
-deployment of knos-oidc. A key that GitHub's signature admits waits a day and a guardian's approval, every key
-expires 30 days after it was last attested, and the guardian can revoke a key. It is upgradeable only through a
-multisig with a public 48-hour delay, until an outside review.
+deployment of knos-oidc. A new key needs GitHub's signature, then waits one day for the guardian's approval (the
+guardian is a key that can approve or revoke keys). Every key expires 30 days after it was last confirmed, and the
+guardian can revoke a key early. The program can be changed only through a multisig, after a public 48-hour delay.
+Today one person holds every key of that multisig, and no outside security review has been done.
 
-The first deployment is immutable: its keys never expire and cannot be revoked. A token account has the same layout
+The first deployment has no upgrade authority, so nobody can change it: its keys never expire and cannot be revoked. A token account has the same layout
 under both, so the same code reads it, but nothing in this crate takes a first-deployment account unless you write
 `v1`:
 
@@ -98,7 +102,7 @@ A program trusts one deployment for a given token account, and says which.
 | instructions and accounts | [`idl/knos_oidc_v2.json`](https://github.com/drexthealpha/Knos/blob/main/idl/knos_oidc_v2.json) |
 | address of the first deployment | `vpWym9azbPU5f2PH2a6n8c4RfmsyUeW2dMuWr1DSHcE` (`v1::ID`, `v1::ID_STR`) |
 | its instructions and accounts | [`idl/knos_oidc.json`](https://github.com/drexthealpha/Knos/blob/main/idl/knos_oidc.json) |
-| how a token gets on chain, and the trust root | [`docs/OIDC.md`](https://github.com/drexthealpha/Knos/blob/main/docs/OIDC.md) |
+| how a token gets on chain, and the trust root | [`docs/reference/OIDC.md`](https://github.com/drexthealpha/Knos/blob/main/docs/reference/OIDC.md) |
 | a complete consumer | [`examples/oidc_gate`](https://github.com/drexthealpha/Knos/tree/main/examples/oidc_gate) |
 
 ## Tests

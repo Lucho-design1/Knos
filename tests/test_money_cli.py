@@ -353,8 +353,8 @@ def test_bounty_and_due_say_what_both_deployments_hold(world, monkeypatch, build
                                                repository_owner_id=str(org), job_workflow_ref=f"{WF_REPO}/.github/workflows/{file}@refs/tags/v0.3.10", job_workflow_sha=WF_SHA))
     assert go1(token1(pay1.fund_audience(3, 5 * USDC), "fund.yml"))["ok"] and go1(token1(pay1.pay_audience(repo, 3, mona, "a" * 40), "prove.yml"))["ok"]
     said = knos("due", "mona")[1].splitlines()
-    assert said[2:] == [f"The first deployment holds 4.88 of {pay1.faucet_mint()} for mona.",
-                        "On the first deployment: paid for 1 pull request(s) in 1 repository, 4.88 in all.",
+    assert said[2:] == [f"The first deployment (Knos 0.3.11 and earlier) holds 4.88 of {pay1.faucet_mint()} for mona.",
+                        "On the first deployment (Knos 0.3.11 and earlier): paid for 1 pull request(s) in 1 repository, 4.88 in all.",
                         "Name a wallet, and what is held is sent there: knos claim <address>   (or in the browser: https://drexthealpha.github.io/Knos/#claim)",
                         "Send what the first deployment holds to any address: knos claim --v1 <address>"], said
     # mona binds a wallet: the held payment follows, and her record says what was test money

@@ -2,7 +2,7 @@
 deployment's knos_pay test build). The buyer funds and then does nothing more. The supplier's own wallet sends the
 proof the forge signed and is paid; the buyer cannot take the money back before the deadline; a rejection is appealed
 while the money stays where it is; and with no proof by the deadline the money goes back to the funder and nobody else.
-docs/FINANCE.md, "When the buyer goes quiet", is this test in words."""
+docs/reference/FINANCE.md, "When the buyer goes quiet", is this test in words."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -90,7 +90,7 @@ def test_with_no_accepted_work_by_the_deadline_the_money_goes_back_to_the_funder
 
 
 def test_the_document_walks_the_same_path():
-    doc = (ROOT / "docs" / "FINANCE.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "FINANCE.md").read_text(encoding="utf-8")
     at = doc.index("When the buyer goes quiet")
     part = doc[at:doc.index("\n## ", at + 5)] if "\n## " in doc[at + 5:] else doc[at:]
     for said in ("tests/test_supplier_completes.py", "/knos appeal", "before the deadline", "supplier's own wallet", "refund", "simulator",

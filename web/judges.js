@@ -1,4 +1,4 @@
-// "For judges" (#judges): the rows of docs/JUDGES.md, as judges.json holds them (scripts/judges.py; copied by
+// "Check every claim yourself" (#judges): the rows of docs/JUDGES.md, as judges.json holds them (scripts/judges.py; copied by
 // scripts/build_site.sh): { entry: { manifest, witnessed: [{ label, link }], yourself }, rows: [{ thing, sentence, link,
 // label }], not_real: [..] }. The entry first (the manifest, then the witnessed transaction's links); then one row a
 // judged thing, one sentence, one link a judge can open; then what is not real yet.
@@ -18,13 +18,13 @@ export function renderJudges(el, { esc, data } = {}) {
   const entry = data.entry && typeof data.entry === "object" ? data.entry : null;
   const link = (href, text) => `<a href="${esc(href)}"${/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : ""}>${esc(text)}</a>`;
   const seen = entry ? (Array.isArray(entry.witnessed) ? entry.witnessed : []).filter((w) => w && w.link) : [];
-  el.innerHTML = `<h2>For judges: one page</h2>
+  el.innerHTML = `<h2>Check every claim yourself (for judges and buyers)</h2>
     ${entry ? `<ol class="kj-entry" id="judges-entry" data-keep>
-      ${entry.manifest ? `<li>${link(entry.manifest, "Open the release manifest")}: source, build, deployment, transactions, fee schedule.</li>` : ""}
+      ${entry.manifest ? `<li>${link(entry.manifest, "Open the release manifest")}: code, build, payments, fees.</li>` : ""}
       ${seen.length ? `<li>Follow the witnessed transaction: ${seen.map((w) => link(w.link, w.label || "Open")).join(", ")}.</li>` : ""}
       ${entry.yourself ? `<li>${link(entry.yourself, "Run it yourself")}.</li>` : ""}
     </ol>` : ""}
-    <p class="lede">One row a judged thing. One link each.</p>
+    <p class="lede">One link for each row.</p>
     <div class="card" data-keep><div class="k-table kj"><table>
       <thead><tr><th scope="col">Judged</th><th scope="col">What exists</th><th scope="col">Evidence</th></tr></thead>
       <tbody>${rows.map((r) => `<tr><th scope="row">${esc(r.thing || "")}</th><td>${esc(r.sentence || "")}</td>

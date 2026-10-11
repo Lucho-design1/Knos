@@ -1,9 +1,9 @@
-"""Every way to install Knos (docs/INSTALL.md) starts one server and one hook, and each file a host reads is what that
+"""Every way to install Knos (docs/reference/INSTALL.md) starts one server and one hook, and each file a host reads is what that
 host's own documentation says it reads:
 
     .claude-plugin/marketplace.json, plugin/   the plugin Claude Code and Codex install (the hook and the server)
     gemini-extension.json                      the Gemini CLI extension (the server)
-    docs/INSTALL.md                            the Cursor and VS Code links, the Codex and Copilot snippets
+    docs/reference/INSTALL.md                            the Cursor and VS Code links, the Codex and Copilot snippets
     action.yml                                 the free check as a GitHub Action, for a `pull_request` workflow
     .github/workflows/release.yml              what a release attaches, and publishes once a registry token exists
     glama.json                                 who may claim the listing on Glama
@@ -61,7 +61,7 @@ def _version() -> str:
 
 def _fences(lang: str) -> list[str]:
     """The bodies of the page's code blocks in one language."""
-    return [body for name, body in re.findall(r"^```(\w*)\n(.*?)^```$", _text("docs", "INSTALL.md"), re.S | re.M) if name == lang]
+    return [body for name, body in re.findall(r"^```(\w*)\n(.*?)^```$", _text("docs", "reference", "INSTALL.md"), re.S | re.M) if name == lang]
 
 
 def _argv(hooks: dict) -> dict:
@@ -148,7 +148,7 @@ def test_the_registries_name_the_same_server_and_its_owner():
     # a registry client turns this into `uvx knos mcp`
     assert (package["registryType"], package["identifier"], package["transport"]) == ("pypi", "knos", {"type": "stdio"})
     assert [a["value"] for a in package["packageArguments"]] == SERVER["args"][1:] and SERVER["args"][0] == package["identifier"]
-    assert server["name"] in _text("docs", "INSTALL.md")
+    assert server["name"] in _text("docs", "reference", "INSTALL.md")
     glama = _json("glama.json")
     assert glama == {"$schema": "https://glama.ai/mcp/schemas/server.json", "maintainers": [REPO.split("/")[0]]}
 
@@ -163,11 +163,11 @@ def test_a_manifest_that_states_a_version_states_the_packages():
     assert not stale, f"pyproject.toml says {_version()}; these do not: {stale}"
 
 
-# ---- docs/INSTALL.md -----------------------------------------------------------------------------------------------
+# ---- docs/reference/INSTALL.md -----------------------------------------------------------------------------------------------
 
 def test_every_link_and_snippet_on_the_install_page_starts_the_same_server():
     from knos import mcp
-    page = _text("docs", "INSTALL.md")
+    page = _text("docs", "reference", "INSTALL.md")
     seen = {}
     for url in re.findall(r"(?:https://|cursor://|vscode:)[^\s)]+", page):
         parts = urlsplit(url)
@@ -215,7 +215,7 @@ def test_every_link_and_snippet_on_the_install_page_starts_the_same_server():
 
 
 def test_the_install_page_names_one_release_and_says_why_two_registries_are_missing():
-    page = _text("docs", "INSTALL.md")
+    page = _text("docs", "reference", "INSTALL.md")
     [(tag, tarball)] = re.findall(
         r"npm install https://github\.com/drexthealpha/Knos/releases/download/v([\d.]+)/knos-settle-([\d.]+)\.tgz", page)
     [crate] = [f for f in _fences("toml") if "dependencies" in f]
@@ -227,7 +227,7 @@ def test_the_install_page_names_one_release_and_says_why_two_registries_are_miss
     # The page is written for the release being built, and pyproject.toml moves at the release itself: until then the
     # page may be ahead of it. It may never name an older release than the package's.
     as_numbers = lambda v: tuple(int(x) for x in v.split("."))  # noqa: E731
-    assert as_numbers(tag) >= as_numbers(_version()), f"docs/INSTALL.md installs {tag}; pyproject.toml is at {_version()}"
+    assert as_numbers(tag) >= as_numbers(_version()), f"docs/reference/INSTALL.md installs {tag}; pyproject.toml is at {_version()}"
     # the same file name and the same crate as the ones the release makes
     assert json.loads(_text("sdk", "settle", "package.json"))["name"] == "knos-settle"
     assert 'name = "knos-oidc-interface"' in _text("crates", "knos-oidc-interface", "Cargo.toml")
@@ -237,7 +237,7 @@ def test_the_install_page_names_one_release_and_says_why_two_registries_are_miss
     assert "is not on npm" not in page and "is not on crates.io" not in page                 # both are published now
     # every link into the repository leads to a file, and every link into the page to a heading
     for target in re.findall(r"\]\((\.\./[^)#]+)\)", page):
-        assert (ROOT / "docs" / target).resolve().exists(), target
+        assert (ROOT / "docs" / "reference" / target).resolve().exists(), target
     slug = lambda h: re.sub(r"[^\w\- ]", "", h.lower()).replace(" ", "-")  # noqa: E731
     headings = {slug(h) for h in re.findall(r"^#+ (.+)$", page, re.M)}
     anchors = re.findall(r"\]\(#([^)]+)\)", page)
@@ -285,7 +285,7 @@ def test_the_action_is_the_free_check_with_a_read_only_token_and_pinned_parts():
     # every action it uses, and every one the install page tells a reader to use, is a commit listed in action_pins.json
     pins = _json("scripts", "action_pins.json")["pins"]
     used = re.findall(r"uses:\s*([\w./-]+)@(\S+)(?:\s+#\s*(\S+))?",
-                      _text("action.yml").split("\nruns:")[1] + _text("docs", "INSTALL.md"))
+                      _text("action.yml").split("\nruns:")[1] + _text("docs", "reference", "INSTALL.md"))
     theirs = [(name, ref, tag) for name, ref, tag in used if name not in (REPO, f"{REPO}/.github/workflows/supplier.yml")]     # (the supplier's one line is Knos's own workflow, at the release's tag)
     assert {name for name, _ref, _tag in theirs} == {"astral-sh/setup-uv"}
     for name, ref, tag in theirs:
@@ -565,11 +565,11 @@ def test_a_release_publishes_to_a_registry_only_when_its_token_exists(tmp_path):
 # ---- one project, one host: `knos init --host` ------------------------------------------------------------------------
 
 def test_the_page_and_the_matrix_list_the_hosts_knos_init_writes_for_and_say_the_same_about_each():
-    """docs/INSTALL.md and integrations/hosts/README.md are read by a person choosing a host. Both name every route of
+    """docs/reference/INSTALL.md and integrations/hosts/README.md are read by a person choosing a host. Both name every route of
     `knos init --host`, neither says a host holds a false "done" that the code says it cannot, and both say that no
     route was run in its host. (tests/test_host_hooks.py holds what each route writes.)"""
     from knos import init
-    page, matrix = _text("docs", "INSTALL.md"), _text("integrations", "hosts", "README.md")
+    page, matrix = _text("docs", "reference", "INSTALL.md"), _text("integrations", "hosts", "README.md")
     section = page.split("## One project, in your coding agent: `knos init --host`")[1].split("\n## ")[0]
     rows = dict(re.findall(r"^\| `(\w+)`[^|]*\|[^|]*\| ([^|]+) \|$", section, re.M))
     assert set(rows) == set(init.ROUTES)

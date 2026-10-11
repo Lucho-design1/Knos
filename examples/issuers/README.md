@@ -2,7 +2,7 @@
 
 `knos-oidc` verifies an RS256 token whoever signed it. Each folder here is one issuer: the documented way to get a
 token there, the claims it signs, which of them a program can gate on, the call that registers its key, and the lines
-of Rust that gate on it. [docs/VERIFIER.md](../../docs/VERIFIER.md) is the one page and the table;
+of Rust that gate on it. [docs/reference/VERIFIER.md](../../docs/reference/VERIFIER.md) is the one page and the table;
 [`issuers.json`](issuers.json) is the same table for a machine.
 
 | issuer | verified by `knos-oidc` |
@@ -19,11 +19,12 @@ of Rust that gate on it. [docs/VERIFIER.md](../../docs/VERIFIER.md) is the one p
 | [Auth0](auth0/README.md) | yes |
 | [Vercel](vercel/README.md) | yes |
 
-"Verified" means the program takes the format: RS256 under a 2048- or 4096-bit key. `tests/test_issuers.py` verifies
+"Yes" means the verifier accepts this token format: RS256, signed with a 2048- or 4096-bit key. `tests/test_issuers.py` verifies
 a token of each issuer's shape in the test build of the verifier, and every one of those tokens is signed with a test
 key, not by the issuer. The claim shapes were read from each issuer's documentation, and the key sizes from its
 published key set, on 2026-10-05 (Vercel's on 2026-10-06). The same test refuses a key used under another issuer's URL, an RS256 key of 1024
-or 3072 bits, and ES256, ES384 and PS256 tokens.
+or 3072 bits, and ES256, ES384 and PS256 tokens checked against an RSA key. ES256 tokens have their own instruction,
+live on devnet since 9 October 2026 ([docs/reference/ES256.md](../../docs/reference/ES256.md)); the folders here cover RS256.
 
 These examples are Knos's own. No program outside this repository is known to read a token yet.
 
@@ -31,6 +32,7 @@ These examples are Knos's own. No program outside this repository is known to re
 
 [`.github/workflows/outcome-k8s.yml`](../../.github/workflows/outcome-k8s.yml) starts a Kubernetes cluster, runs an
 outcome in it and has the cluster's service-account issuer sign the evaluation; `scripts/outcome_k8s.py` checks that
-token with the verifier's rule and carries it to devnet under a private key. [docs/OUTCOMES.md](../../docs/OUTCOMES.md)
+token with the verifier's rule and registers that cluster's key on devnet as a private key (one nobody vouches for) to verify the token
+there. [docs/reference/OUTCOMES.md](../../docs/reference/OUTCOMES.md)
 says what that shows and what it does not. `issuers.json` also records, per issuer, which signing algorithms its own
 discovery document listed on the day it was read (`discovery`).

@@ -234,7 +234,7 @@ def verify_only(ledger, payer: Keypair, jwt: str, jwks: dict | None = None, now:
     """Verifies a token of any audience into its account and leaves it there, for someone else's program to read
     (GitHub's, GitLab's, or one of any issuer the verifier holds a key for: a registered issuer's key before a private one):
     {"ok": True, "kind": "verify", "sigs", "account", "payer", "exp"}. The account is the verifier's
-    ["tok", payer, sha256(token)]: a consumer checks that knos-oidc owns it and reads the claims (docs/OIDC.md). It
+    ["tok", payer, sha256(token)]: a consumer checks that knos-oidc owns it and reads the claims (docs/reference/OIDC.md). It
     stays until an hour past the token's expiry, when `sweep` takes its rent back. The same reads as `submit` come
     first: a token no published key signed, or whose key the chain would refuse, costs nothing."""
     kind = "verify"

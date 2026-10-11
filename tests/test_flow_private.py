@@ -401,7 +401,7 @@ def test_a_token_no_relayer_carried_in_time_is_said_on_the_private_issue_and_the
 def test_the_hidden_pull_number_is_one_knos_pay_parses_and_a_receipt_holds_whatever_the_salt():
     """A private order's pay audience names its pull request by `hidden_pull`; knos_pay reads that field with claims.rs
     parse_u64 (its digit limit is read from the Rust source, not copied here), and a receipt carries it as a JSON number,
-    which holds only integers below 2^53 (docs/RECEIPT.md). Eight bytes of hash made 19 private orders in 20 unpayable."""
+    which holds only integers below 2^53 (docs/reference/RECEIPT.md). Eight bytes of hash made 19 private orders in 20 unpayable."""
     import random
     digits = program_digits()
     assert 15 <= digits <= 19                                        # the source was read, and it is still a u64 parser

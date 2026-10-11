@@ -1,4 +1,4 @@
-"""The upgrade gate for another team's program (docs/GATE.md, examples/upgrade_gate/adopt.py): the commands the page
+"""The upgrade gate for another team's program (docs/reference/GATE.md, examples/upgrade_gate/adopt.py): the commands the page
 gives exist and parse; `init` writes this repository's gate with exactly three lines changed; `record` and `check`
 work against the gate program in LiteSVM; the adopters' list is empty and says how to add a row. And the registry plan
 of scripts/release.py: what would be published where, with no network. Nothing here opens a network connection."""
@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-GATE_DOC = (ROOT / "docs" / "GATE.md").read_text(encoding="utf-8")
+GATE_DOC = (ROOT / "docs" / "reference" / "GATE.md").read_text(encoding="utf-8")
 ME = "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"        # an address that is nobody's: the page's placeholders stand for one
 
 
@@ -66,8 +66,8 @@ def test_every_command_the_page_gives_exists_and_parses():
     assert "node scripts/governance.mjs upgrade execute <index>" in lines and "governance.mjs upgrade execute <index>" in mjs
     assert "timeLock: WHICH[name].timeLock" in mjs and "timeLock: 172_800" in mjs and "172,800 s, 48 hours" in GATE_DOC
     # the three scripts the page links to, and the test it names, are files
-    for rel in re.findall(r"\]\(\.\./([^)#]+)\)", GATE_DOC):
-        assert (ROOT / rel).exists(), rel
+    for rel in re.findall(r"\]\((\.\./[^)#]+)\)", GATE_DOC):
+        assert (ROOT / "docs" / "reference" / rel).resolve().exists(), rel
 
 
 def test_init_writes_this_gate_with_three_lines_changed_and_refuses_what_is_not_an_adopter(tmp_path):
@@ -177,17 +177,17 @@ def test_check_reads_every_pending_upgrade_of_a_multisig_as_devnet_held_them():
 
 
 def test_the_adopters_list_is_empty_and_the_pages_point_at_each_other():
-    compose = (ROOT / "docs" / "COMPOSE.md").read_text(encoding="utf-8")
+    compose = (ROOT / "docs" / "reference" / "COMPOSE.md").read_text(encoding="utf-8")
     part = compose.split("## Who uses the upgrade gate")[1].split("\n## ")[0]
     rows = [r for r in re.findall(r"(?m)^\|(.+)\|$", part) if not set(r) <= set("|- ")]
     assert len(rows) == 2 and rows[1].split("|")[0].strip() == "none yet"          # the header and no adopter
     assert "outside this repository behind the upgrade gate: 0." in part and "open a pull request that adds one row" in part
     assert "(GATE.md)" in part and "time lock above zero" in part
-    gov = (ROOT / "docs" / "GOVERNANCE.md").read_text(encoding="utf-8")
+    gov = (ROOT / "docs" / "reference" / "GOVERNANCE.md").read_text(encoding="utf-8")
     use = gov.split("## Use the gate")[1].split("\n## ")[0]
     assert "(GATE.md)" in use and "Teams that have done it: 0" in use
     assert 'Adopters today: 0 ([COMPOSE.md](COMPOSE.md), "Who uses the upgrade gate")' in GATE_DOC
-    assert "| [GATE.md](GATE.md) |" in (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "| [GATE.md](GATE.md) |" in (ROOT / "docs" / "reference" / "README.md").read_text(encoding="utf-8")
     # the two things the page says the gate has shown are in the files it cites
     feed = json.loads((ROOT / "web" / "upgrades.json").read_text(encoding="utf-8"))
     late = [e["since"] - e["earliest_execution"] for e in feed["entries"] if e["index"] in (3, 4, 5, 6)]
@@ -230,11 +230,11 @@ def test_the_registry_plan_says_what_would_be_published_where_and_publishes_noth
     # a package that does not pack, or a README that points inside the repository, is red
     code, lines = release.registry_overview(run=lambda cmd, **kw: subprocess.CompletedProcess(cmd, 101, stdout="", stderr="error: no such crate\n"))
     assert code == 1 and "pack    FAILED" in "\n".join(lines)
-    assert release.relative_links("[a](../../docs/OIDC.md) [b](https://x.test/y) [c](#here) ![d](img.png)") == ["../../docs/OIDC.md", "img.png"]
+    assert release.relative_links("[a](../../docs/reference/OIDC.md) [b](https://x.test/y) [c](#here) ![d](img.png)") == ["../../docs/reference/OIDC.md", "img.png"]
     for registry, name in release.PACKAGES:
         assert release.relative_links((release.package_dir(registry, name) / "README.md").read_text(encoding="utf-8")) == [], name
     # the one-package question release.yml asks is unchanged, and the bare command is the plan
     assert release.registry_plan("crates", "knos-pay-interface", "v9.9.9", held, fetch=lambda _u: None)[0] == 0
-    compose = (ROOT / "docs" / "COMPOSE.md").read_text(encoding="utf-8").split("## Install from a registry")[1].split("\n## ")[0]
+    compose = (ROOT / "docs" / "reference" / "COMPOSE.md").read_text(encoding="utf-8").split("## Install from a registry")[1].split("\n## ")[0]
     assert "not published" not in compose.lower() and "https://crates.io/crates/knos-oidc-interface" in compose and "python scripts/release.py registry-plan" in compose
     assert f'knos-oidc-interface = "{held}"' in compose and f'knos-pay-interface = "{held}"' in compose and "npm install knos-settle" in compose

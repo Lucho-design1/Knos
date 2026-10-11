@@ -1,7 +1,7 @@
 """Tamper benchmark: test-weakening pull requests against three sample repositories, each judged three ways.
 
-    python scripts/tamper_bench.py [--out docs/TAMPER.md] [--only python|node|ruby]
-    python scripts/tamper_bench.py --real        # only the six real-behaviour tasks: rewrites their block of docs/TAMPER.md
+    python scripts/tamper_bench.py [--out docs/reference/TAMPER.md] [--only python|node|ruby]
+    python scripts/tamper_bench.py --real        # only the six real-behaviour tasks: rewrites their block of docs/reference/TAMPER.md
     python scripts/tamper_bench.py --accept      # only the three non-code tasks (scripts/acceptance_examples.py), same
     python scripts/tamper_bench.py --escape      # only the five escapes from where the submission runs, same
     python scripts/tamper_bench.py --honest      # only the honest submissions (tests/bench_tamper/honest.py), same
@@ -28,13 +28,13 @@ Six more tasks (tests/bench_tamper/real_tasks.py) are taken from behaviour that 
 urllib.parse.urljoin, packaging.version, csv.Sniffer, configparser, datetime.fromisoformat, fnmatch) and checked black
 box against that code on generated inputs. Each has an honest fix, a constant-returning stub and the attacks above that
 apply (attacks_real.py), judged by CI green and by Knos's black box. And three tasks that are not code
-(examples/acceptance/) are run through `knos proof judge` by scripts/acceptance_examples.py. docs/TAMPER.md reports both.
+(examples/acceptance/) are run through `knos proof judge` by scripts/acceptance_examples.py. docs/reference/TAMPER.md reports both.
 
 The honest set (tests/bench_tamper/honest.py) asks the opposite question of every task above: correct work written
 in other ways (another algorithm, another layout, slower, with checks of its own) goes through the same judges, and
 the report says how many each accepted and why each refused one was refused. A refused honest submission is a finding.
 
-Since 0.3.17 a pull request may add test files beside the protected tests: they are allowed and are not counted. The
+A pull request may now add test files beside the protected tests (allowed since release 0.3.17): they are not counted. The
 cheats of tests/bench_tamper/attacks_allowed.py attack exactly that (a test, a conftest.py, a plugin, a fixture, a
 start-up file that would decide if it were loaded), and the report says how many each judge accepted.
 
@@ -206,7 +206,7 @@ def _and(words: list[str]) -> str:
 
 
 def render(results: dict[str, tuple[dict, list[dict]]], extra: list[str] | None = None) -> str:
-    """docs/TAMPER.md from {sample key: (control, rows)}, in SAMPLES' order, and `extra` (the blocks for the real-behaviour
+    """docs/reference/TAMPER.md from {sample key: (control, rows)}, in SAMPLES' order, and `extra` (the blocks for the real-behaviour
     and the non-code tasks) after it."""
     done = [(SAMPLES[k], *results[k]) for k in SAMPLES if k in results]
     total = [r for _, _, rows in done for r in rows]
@@ -293,7 +293,7 @@ def run_real(key: str, only: list[str] | None = None, delegate: bool = True) -> 
 
 
 def real_section(results: dict[str, dict]) -> list[str]:
-    """The block of docs/TAMPER.md for the six real-behaviour tasks, from {task key: run_real(...)}."""
+    """The block of docs/reference/TAMPER.md for the six real-behaviour tasks, from {task key: run_real(...)}."""
     rows = [r for got in results.values() for r in got["rows"]]
     n_tasks, n_attacks = len(results), len(next(iter(results.values()))["rows"])
     ci, kn = sum(r["ci"] for r in rows), sum(r["box"] for r in rows)
@@ -365,7 +365,7 @@ def run_accept(repeat: int = 5) -> dict:
 
 
 def accept_section(results: dict, repeat: int) -> list[str]:
-    """The block of docs/TAMPER.md for the three tasks that are not code, from run_accept()."""
+    """The block of docs/reference/TAMPER.md for the three tasks that are not code, from run_accept()."""
     cheats = [(t, r) for t, got in results.items() for r in got["cheats"]]
     honest = [(t, r) for t, got in results.items() for r in got["honest"]]
     false_accepts = [f"{t}: {r['name']}" for t, r in cheats if r["accepts"]]
@@ -504,6 +504,13 @@ def run_rule_refused() -> list[dict]:
 
 
 ROWS = "tamper_honest.json"       # beside --out: the honest rows of the last runs, part by part
+
+
+def rows_file(out: Path) -> Path:
+    """The rows file of a page: beside it, or in docs/ for a page in docs/reference/ (the data files stay in docs/)."""
+    return (out.parent.parent if out.parent.name == "reference" else out.parent) / ROWS
+
+
 HONEST_PARTS = ("slug", "real", "plain", "rules")
 
 
@@ -511,7 +518,7 @@ def honest_rows(out: Path, group: str | None = None, tasks: tuple = ()) -> tuple
     """(rows, the rule-refused rows, whether every row is from this one run). With no `group` everything is run and
     the rows file is replaced; with one, only that part (and `tasks` of it) is run and the rest is read from the file."""
     import json
-    path = out.with_name(ROWS)
+    path = rows_file(out)
     if group is None:
         rows, ruled = run_honest(), run_rule_refused()
     else:
@@ -545,7 +552,7 @@ def measured(out: Path, ran: list[str]) -> list[str]:
     """The block that says which parts of the page were measured with the judge as it is now: `ran` are recorded as
     measured now (in the rows file), and every other part keeps the judge it was last measured with."""
     import json
-    path = out.with_name(ROWS)
+    path = rows_file(out)
     state = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
     now = judge_id()
     state["measured"] = {**state.get("measured", {}), **{name: now for name in ran}}
@@ -575,7 +582,7 @@ def honest_counts(rows: list[dict]) -> dict:
 
 
 def cheat_totals(doc: str) -> list[tuple[int, int]]:
-    """(accepted by Knos's black box, cheating submissions) for the three groups, read from the tables of docs/TAMPER.md:
+    """(accepted by Knos's black box, cheating submissions) for the three groups, read from the tables of docs/reference/TAMPER.md:
     the 63 attacks on slugify, the attacks on the six real tasks, and the cheats on the tasks that are not code."""
     slug = re.search(r"^\| \*\*all\*\* \| \*\*(\d+)\*\* \| \*\*\d+\*\* \| \*\*\d+\*\* \| \*\*(\d+)\*\* \|$", doc, re.M)
     real = re.search(r"^\| \*\*all\*\* \| \| \| \| \*\*(\d+)\*\* \| \*\*\d+\*\* \| \*\*(\d+)\*\* \|$", doc, re.M)
@@ -605,7 +612,7 @@ def run_allowed() -> tuple[dict, list[dict]]:
 
 
 def allowed_section(control: dict, rows: list[dict]) -> list[str]:
-    """The block of docs/TAMPER.md for the cheats aimed at what a pull request may add."""
+    """The block of docs/reference/TAMPER.md for the cheats aimed at what a pull request may add."""
     n = len(rows)
     ci, kn, bx = _fooled(rows)
     yes = lambda b: "n/a" if b is None else "PASS (fooled)" if b else "fail"  # noqa: E731
@@ -660,7 +667,7 @@ HONEST_GROUPS = (("slug", "slugify, three repositories"), ("real", "real open-so
 
 
 def honest_section(rows: list[dict], cheats: list[tuple[int, int]], ruled: list[dict] | None = None, whole: bool = True) -> list[str]:
-    """The block of docs/TAMPER.md for the honest submissions, from run_honest(), cheat_totals() and run_rule_refused()."""
+    """The block of docs/reference/TAMPER.md for the honest submissions, from run_honest(), cheat_totals() and run_rule_refused()."""
     H = _honest()
     n = honest_counts(rows)
     of = lambda pair: f"{pair[0]} of {pair[1]}" if pair[1] else "n/a"  # noqa: E731
@@ -685,7 +692,7 @@ def honest_section(rows: list[dict], cheats: list[tuple[int, int]], ruled: list[
         g = honest_counts([r for r in rows if r["group"] == group])
         out.append(f"| {title} | {sum(r['group'] == group for r in rows)} | {of(g['ci'])} | {of(g['knos'])} | {of(g['box'])} |")
     out += [f"| **all** | **{len(rows)}** | **{of(n['ci'])}** | **{of(n['knos'])}** | **{of(n['box'])}** |", "",
-            "Both rates are measured on Knos's own tasks, with submissions written by the people who wrote the judge: "
+            "Both rates are measured on Knos's own tasks, with submissions written by Knos's author: "
             f"{sum(b for _, b in cheats)} cheating submissions and {len(rows)} honest ones. Neither is a rate for other "
             "people's repositories or for attacks and solutions somebody else wrote; nobody outside has run either set.", ""]
     if refused:
@@ -703,7 +710,7 @@ def honest_section(rows: list[dict], cheats: list[tuple[int, int]], ruled: list[
              f"{len(other)} refused for another reason: each is a false refusal that is not explained above."), ""]
     before = [r for r in rows if r["name"] not in H.ADDED]
     if len(before) < len(rows):
-        out += [f"{len(before)} of these submissions were the whole set until 0.3.17, when the black box accepted 39 of them; "
+        out += [f"{len(before)} of these submissions made up the whole set until release 0.3.17. Back then the black-box judge accepted 39 of them; "
                 f"it now accepts {honest_counts(before)['box'][0]} of {len(before)}. The other {len(rows) - len(before)} are new: "
                 "more ways to write a regression test in a protected place.", ""]
     with_tests = [r for r in rows if r["name"] in H.WITH_TESTS]
@@ -713,7 +720,7 @@ def honest_section(rows: list[dict], cheats: list[tuple[int, int]], ruled: list[
             "file, a parametrised test, a unittest class, a package of tests with a data file, a fixture in a new "
             f"conftest.py, a seeded property test, describe/it, a spec. Knos accepted {len(took)} of {len(with_tests)}, "
             f"and the verdict of {len(noted)} says what was added and that it was not counted (`contributor tests: N "
-            "files, not counted`). Until 0.3.17 the judge refused every pull request that touched a protected path, and "
+            "files, not counted`). Before release 0.3.17 the judge refused every pull request that touched a protected path, and "
             "the nine of this kind in the set then were the whole of its refusals. The added tests "
             "do not help a submission either: the suite that decides is the base's, and the next section measures what "
             "a cheat gains from adding one.", ""]
@@ -987,7 +994,7 @@ def escape_section(results: dict) -> list[str]:
            "tests/test_tamper_bench.py runs it). **host, no sandbox**: tests mode or black-box on a machine that has no "
            "sandbox and was not told `--sandbox require` (prove.yml passes `require`). **host sandbox**: tests mode and "
            "black-box as prove.yml runs them: another user, an empty environment, no network, the machine read-only but for "
-           "the run's folder, and process, CPU, memory and file size limits (docs/ATTESTOR.md). **hermetic**: black-box "
+           "the run's folder, and process, CPU, memory and file size limits (docs/reference/ATTESTOR.md). **hermetic**: black-box "
            f"with an `image` in the terms, or with none under `--sandbox hermetic` on a machine that runs containers; the "
            f"probe ran in `{ESCAPE_IMAGE}` (judge.DEFAULT_IMAGE).", "",
            "What is expected, from how each place is built:", "",
@@ -1039,16 +1046,16 @@ def run_outside(cases: list | None = None) -> list[dict]:
 
 
 def authors_section(cheats: list[tuple[int, int]], rows: list[dict]) -> list[str]:
-    """The block of docs/TAMPER.md that says who wrote the cheats: `cheats` from cheat_totals (the authors'), `rows`
+    """The block of docs/reference/TAMPER.md that says who wrote the cheats: `cheats` from cheat_totals (the authors'), `rows`
     from run_outside (the outsiders')."""
     mine, took = sum(b for _, b in cheats), sum(a for a, _ in cheats)
     now = sum(bool(r["box"]) or bool(r["knos"]) for r in rows)
     out = ["<!-- authors:begin -->", "## Who wrote the cheats", "",
            "| written by | cheating submissions | accepted by Knos, black box (the tables on this page) |",
            "|---|---|---|",
-           f"| the people who wrote the judge | {mine} | {took} |",
+           f"| Knos's author | {mine} | {took} |",
            f"| outsiders, through the `tamper` task | {len(rows)} | {now} |", "",
-           "Every cheat counted in the first row was written by the people who wrote the judge. An outsider can change that: "
+           "Every cheat counted in the first row was written by Knos's author. An outsider can change that: "
            "the `tamper` task (tasks/outside/tamper.json) pays 5 test USDC for a submission the judge ACCEPTS on a funded "
            "task although it does not do what the task asks; a refused one pays nothing. So every outside cheat was "
            "accepted by the judge it was written against; the second row says how many this tree's judge still accepts. "
@@ -1083,8 +1090,8 @@ def update_block(doc: str, name: str, lines: list[str]) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", default=str(ROOT / "docs" / "TAMPER.md"))
-    ap.add_argument("--only", choices=list(SAMPLES), help="run one sample and print its section (docs/TAMPER.md is not written)")
+    ap.add_argument("--out", default=str(ROOT / "docs" / "reference" / "TAMPER.md"))
+    ap.add_argument("--only", choices=list(SAMPLES), help="run one sample and print its section (docs/reference/TAMPER.md is not written)")
     ap.add_argument("--real", action="store_true", help="run the six real-behaviour tasks and rewrite their block of --out")
     ap.add_argument("--accept", action="store_true", help="run the three non-code tasks and rewrite their block of --out")
     ap.add_argument("--repeat", type=int, default=5, help="with --accept: judgments of each submission (new inputs each time)")
@@ -1133,7 +1140,7 @@ def main(argv=None) -> int:
         return 0
     missing = [s.title for s in SAMPLES.values() if not available(s)]
     if missing:
-        print(f"not installed here: {', '.join(missing)}. docs/TAMPER.md reports every sample, so it is not written; "
+        print(f"not installed here: {', '.join(missing)}. docs/reference/TAMPER.md reports every sample, so it is not written; "
               "run one sample with --only", file=sys.stderr)
         return 1
     extra = [*real_section({k: run_real(k) for k in _real_modules()[0].TASKS}), "",

@@ -2,8 +2,8 @@
 opens on or recommends for somebody else's repository: no merge in the last 30 days, or no answer, and it stops.
 
     python scripts/upstream_check.py x402-foundation/x402                   # one line, exit 0 only if merged in 30 days
-    python scripts/upstream_check.py --docs docs/INTEGRATIONS.md docs/X402.md --list     # the outside repositories those pages name
-    python scripts/upstream_check.py --docs docs/INTEGRATIONS.md docs/X402.md            # check each of them
+    python scripts/upstream_check.py --docs docs/reference/INTEGRATIONS.md docs/reference/X402.md --list     # the outside repositories those pages name
+    python scripts/upstream_check.py --docs docs/reference/INTEGRATIONS.md docs/reference/X402.md            # check each of them
     python scripts/upstream_check.py owner/repo --days 30 --json
 
 `--docs` leaves out what a page has already marked as not active (between `<!-- not-active -->` and

@@ -81,9 +81,9 @@ const menu = () => page.evaluate(() => { const nav = document.getElementById("na
     one: Math.max(...tops) - Math.min(...tops) < 8 && more.right <= tools.left, sections: [...document.querySelectorAll("main > section.mount")].map((x) => x.id), links: [...nav.querySelectorAll("a[data-mount]")].map((a) => a.dataset.mount) }; });
 const at1280 = await menu();
 check("menu: each page has one link with its words and a section of its own", LIST.every((a) => at1280.links.filter((n) => n === a.name).length === 1 && at1280.sections.includes(a.name) && [...at1280.bar, ...at1280.under].includes(a.nav)), at1280);
-check("menu: the bar is six words on one line: a page added to it stands before Pricing, and Docs, Leaderboard and Check make room, first under More", at1280.bar.join() === MENU.bar.join() && barWords(at1280.bar) <= 6 && at1280.one
+check("menu: the bar is six words on one line: a page added to it stands before Pricing, and Docs, Install and Check make room, first under More", at1280.bar.join() === MENU.bar.join() && barWords(at1280.bar) <= 6 && at1280.one
   && at1280.under.slice(0, MENU.first.length).join() === MENU.first.join() && LIST.filter((a) => a.bar).every((a) => at1280.bar.includes(a.nav)), [at1280.bar, at1280.under.slice(0, 4)]);
-check("menu: a page not of the bar is the last under More, and no link of the menu is lost", at1280.under.slice(-MENU.last.length).join() === MENU.last.join() && ["Check", "Demo", "Console", "Leaderboard", "Pricing", "Docs"].every((w) => [...at1280.bar, ...at1280.under].includes(w)), at1280.under);
+check("menu: a page not of the bar is the last under More, and no link of the menu is lost", at1280.under.slice(-MENU.last.length).join() === MENU.last.join() && ["Check", "Demo", "Console", "Install", "Pricing", "Docs"].every((w) => [...at1280.bar, ...at1280.under].includes(w)), at1280.under);
 {
   const tried = [];
   for (const width of [1100, 1000, 940, 900, 870]) { await page.setViewportSize({ width, height: 800 }); await page.waitForTimeout(60); tried.push([width, await menu()]); }
@@ -91,7 +91,7 @@ check("menu: a page not of the bar is the last under More, and no link of the me
   await page.setViewportSize({ width: 390, height: 800 }); await page.waitForTimeout(60);
   await page.click("#menu");
   const phone = await page.evaluate(() => [...document.querySelectorAll("#nav > a")].filter((e) => !e.hidden && e.checkVisibility()).map((e) => e.textContent));
-  check("menu: on a phone nothing has moved: the menu lists the bar's own six and the pages added to it, in place", phone.join() === ["Check", "Demo", "Console", "Leaderboard", ...LIST.filter((a) => a.bar).map((a) => a.nav), "Pricing", "Docs"].join(), phone);
+  check("menu: on a phone nothing has moved: the menu lists the bar's own six and the pages added to it, in place", phone.join() === ["Check", "Demo", "Console", "Install", ...LIST.filter((a) => a.bar).map((a) => a.nav), "Pricing", "Docs"].join(), phone);
   await page.click("#menu");
   await page.setViewportSize({ width: 1280, height: 800 }); await page.waitForTimeout(60);
   const back = await menu();
@@ -101,6 +101,7 @@ check("menu: a page not of the bar is the last under More, and no link of the me
 // the press shows the section at once, with grey bars until the module (held back here until the page is looked at) has drawn
 const one = LIST[0];
 let release; held = new Promise((r) => { release = r; });
+if (!(await page.isVisible(`#nav a[data-mount="${one.name}"]`))) await page.click("#more-button");       // a page not of the bar: under More
 await page.click(`#nav a[data-mount="${one.name}"]`);
 const pending = await page.evaluate((n) => { const el = document.getElementById(n); return { shown: el.checkVisibility(), bars: !!el.querySelector(".k-skeleton"), busy: el.getAttribute("aria-busy"), hash: location.hash, first: document.body.dataset.page === n }; }, one.name);
 check("mount: the press shows the page's section at once, with grey bars, before its module has arrived", pending.shown && pending.bars && pending.busy === "true" && pending.hash === `#${one.name}` && pending.first, pending);
@@ -150,7 +151,7 @@ if (judges) {
   const got = await page.evaluate(() => { const el = document.getElementById("judges"); return { title: el.querySelector("h2").textContent, rows: [...el.querySelectorAll("table")[0].querySelectorAll("tbody tr")].map((r) => [r.cells[0].textContent, r.cells[1].textContent.trim(), r.querySelector("a")?.getAttribute("href") || "", r.querySelectorAll("a").length]),
     zeros: [...el.querySelectorAll("#judges-zeros + .k-table td")].map((t) => t.textContent), doc: el.querySelector("#judges-doc")?.getAttribute("href") }; });
   check("judges: the hash opens it: the file's rows, word for word, one link each", got.rows.length === data.rows.length && data.rows.every((r, i) => got.rows[i][0] === r.thing && got.rows[i][1] === r.sentence && got.rows[i][2] === (r.link || "") && got.rows[i][3] === (r.link ? 1 : 0)), got.rows);
-  check("judges: then what is not real yet, as the file lists it, and the document itself", got.zeros.join("|") === (data.not_real || []).join("|") && got.doc === "https://github.com/drexthealpha/Knos/blob/main/docs/JUDGES.md" && got.title === "For judges: one page", got);
+  check("judges: then what is not real yet, as the file lists it, and the document itself", got.zeros.join("|") === (data.not_real || []).join("|") && got.doc === "https://github.com/drexthealpha/Knos/blob/main/docs/JUDGES.md" && got.title === "Check every claim yourself (for judges and buyers)", got);
   if (data.entry) {      // the entry first: the manifest, then the witnessed transaction's links, above the table
     const first = await page.evaluate(() => { const el = document.getElementById("judges"), e = el.querySelector("#judges-entry"), t = el.querySelector("table");
       return e ? { before: !!(e.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING), links: [...e.querySelectorAll("a")].map((a) => a.getAttribute("href")) } : null; });

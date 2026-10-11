@@ -151,8 +151,8 @@ def aead_open(key: bytes, nonce: bytes, sealed: bytes, aad: bytes, pure: bool = 
         try:
             return native[2](key).decrypt(nonce, sealed, aad)
         except Exception:  # noqa: BLE001 - InvalidTag: one sentence either way
-            raise ValueError("the tag does not hold") from None
+            raise ValueError("the authentication tag does not match: the sealed data was changed, or the key is wrong") from None
     body, tag = sealed[:-16], sealed[-16:]
     if not hmac.compare_digest(tag, _tag(key, nonce, aad, body)):
-        raise ValueError("the tag does not hold")
+        raise ValueError("the authentication tag does not match: the sealed data was changed, or the key is wrong")
     return chacha20(key, 1, nonce, body)

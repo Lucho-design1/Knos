@@ -1,4 +1,4 @@
-"""terms/: the published terms templates, each a file a contract can cite by hash (docs/TERMS.md, "Knos Terms 1").
+"""terms/: the published terms templates, each a file a contract can cite by hash (docs/reference/TERMS.md, "Knos Terms 1").
 
     python scripts/terms_registry.py build             publish what src/knos/terms_templates.py holds and terms/ does not
     python scripts/terms_registry.py build --check     exit 1 when terms/ is not what `build` would leave, or a published file changed

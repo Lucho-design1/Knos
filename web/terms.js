@@ -1,4 +1,4 @@
-// Terms: the published terms templates (terms/, docs/TERMS.md "Knos Terms 1"), as a list a person can browse.
+// Terms: the published terms templates (terms/, docs/reference/TERMS.md "Knos Terms 1"), as a list a person can browse.
 //
 //   renderTerms(el, env)   draws the registry into `el`: one card a template with its sentence, what it trusts, its
 //                          hash, "Cite in a contract" and "Fund with this"; a box that says which published template
@@ -79,7 +79,7 @@ export function newest(index) {
 const JUDGE = { merge: "a maintainer's merge", "in-process": "in-process", "black-box": "black-box", hermetic: "hermetic" };
 export const trustOf = (t) => `Judge: ${JUDGE[t.trust?.judge] || "not said"}. Quorum: ${t.trust?.quorum || 1}.`;
 
-// ---- Knos Terms 3 (docs/TERMS.md): a document that answers ten questions, each in one required field ----------------
+// ---- Knos Terms 3 (docs/reference/TERMS.md): a document that answers ten questions, each in one required field ----------------
 export const STANDARD3 = "Knos Terms 3";
 export const QUESTIONS = [
   ["deliverable", "What is one deliverable?"], ["evidence", "Whose signature counts?"], ["checks", "What decides?"],
@@ -127,7 +127,7 @@ export async function renderTerms(el, env = {}) {
       <p><input id="terms-repo" type="text" placeholder="owner/name" spellcheck="false" autocomplete="off" autocapitalize="off">
         <button type="button" class="k-btn" id="terms-propose-go" style="margin-top:12px">Propose terms</button></p>
       <div id="terms-proposed" hidden></div>
-      <p><a href="https://github.com/drexthealpha/Knos/blob/main/docs/TERMS.md#proposed-from-a-repository">Read how a proposal is made</a></p>
+      <p><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/TERMS.md#proposed-from-a-repository">Read how a proposal is made</a></p>
     </section>
     <div id="terms-list">${rows.map((t, i) => `
       <section class="k-card" data-tilt data-template="${esc(t.name)}">
@@ -167,7 +167,7 @@ export async function renderTerms(el, env = {}) {
         <thead><tr><th>Template</th><th>Version</th><th>sha256</th></tr></thead>
         <tbody>${index.templates.map((t) => `<tr><td><a href="${esc(fileOf(t))}">${esc(t.name)}</a></td><td class="k-num">${t.version}</td><td><code class="k-num">${esc(t.hash)}</code></td></tr>`).join("")}</tbody>
       </table></div>
-      <p><a href="https://github.com/drexthealpha/Knos/blob/main/docs/TERMS.md">Read the standard</a></p>
+      <p><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/TERMS.md">Read the standard</a></p>
     </section>`;
   const text = { hash: (t) => t.hash, cite: citeSentence, fund: (t) => t.comment };
   const done = { hash: "Fingerprint copied", cite: "Sentence copied", fund: "Comment copied" };
@@ -192,7 +192,7 @@ export async function renderTerms(el, env = {}) {
     el.querySelector("#terms3-file").setAttribute("href", file3(t));
     const note = el.querySelector("#terms3-changed");
     note.dataset.changed = String(changed.length);
-    note.textContent = shown ? `${changed.length} of 10 answers changed.` : (doc.built === false ? "Not built: needs a signing system of record." : "");
+    note.textContent = shown ? `${changed.length} of 10 answers changed.` : (doc.built === false ? "Not built yet: it needs a signing service to record each version." : "");
     if (shown) for (const f of changed) moveOnce(answers.querySelector(`[data-field="${f}"]`));
     shown = doc;
     answers.dataset.shown = `${t.name}@${t.version}`;

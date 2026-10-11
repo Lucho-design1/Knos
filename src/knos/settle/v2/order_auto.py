@@ -1,4 +1,5 @@
-"""Two options of a work order that knos_pay reads from its flags (programs-v2/knos_pay/src/order_judge.rs, judge e;
+"""Two options of a work order that knos_pay reads from its flags (programs-v2/knos_pay/src/order_judge.rs, the AUTO judge: the order's
+own black-box suite, no merge;
 order_terms.rs, section 5), and what a relay needs to carry their tokens:
 
   AUTO      the funder chose, at funding, that the first pull request the black-box suite passes is paid without a
@@ -154,7 +155,7 @@ def passed(markers: dict[int, bytes | None], o: pay.Order, audience: str, kind: 
 
 
 # -- both builds ----------------------------------------------------------------------------------------------------------
-# The public program runs 2.1 until the upgrade to 2.2 executes, so whoever carries a token reads the markers as the
+# The public program ran 2.1 until 9 October 2026 (2.2 since); a cluster may still run 2.1, so whoever carries a token reads the markers as the
 # build that is LIVE reads them: `passed21` on 2.1, `passed` (with the presenting run) on 2.2.
 NAMES = {0: "the order's own repository", 1: "the neutral run", 2: "the judge repository"}
 

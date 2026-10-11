@@ -29,7 +29,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CHECKED = ("docs/LOAD.md", "docs/BENCH.md")
+CHECKED = ("docs/reference/LOAD.md", "docs/reference/BENCH.md")
 # Figures in a block another script writes, waiting for its owner: {document: {the figure as check() reports it: the
 # hook}}. A figure leaves this list when its block says what it lacks; tests/test_rate_claims.py fails on one that is
 # fixed and still listed.

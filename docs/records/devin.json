@@ -89,7 +89,7 @@
   "overlaps_above": false,
   "disputed": [],
   "dispute": "https://github.com/drexthealpha/Knos/issues/new?template=dispute-index-row.yml&title=Dispute+a+row%3A+devin%2C+week+of+2026-09-28&agent=devin&week=2026-09-28",
-  "method": "https://github.com/drexthealpha/Knos/blob/main/docs/INDEX.md"
+  "method": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/INDEX.md"
  },
  "limits": [
   "Knos wrote this file and nobody outside Knos has reviewed it: dispute it with the link in it.",
@@ -102,7 +102,7 @@
   "page": "https://drexthealpha.github.io/Knos/#record=devin",
   "file": "https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/records/devin.json",
   "dispute": "https://github.com/drexthealpha/Knos/issues/new?template=dispute-index-row.yml&title=Dispute+a+record%3A+devin&agent=devin&week=2026-09-28",
-  "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/RECORD.md"
+  "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECORD.md"
  },
- "sha256": "62a3fea64b344cf14e60673ba35bd02229a2a6cbe24823a3d03e9ebe7c63051e"
+ "sha256": "29be9b71939a47c3da38ce9c53d9ab757e4b8e45b52ddb2607f9b5842c42aa59"
 }

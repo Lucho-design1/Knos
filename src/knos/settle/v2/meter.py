@@ -2,7 +2,7 @@
 that GitHub signed, for a buyer who pays a vendor by invoice and for a vendor who bills per accepted outcome. It moves
 no customer money: each billable evaluation costs a fee from credits somebody prepaid. Pure instruction builders, the
 audience, account readers and the statement; no network. The program is upgradeable only through a multisig with a
-public 48-hour delay, until an outside review.
+public 48-hour delay. After an outside review the plan is to remove that authority; no outside review exists today.
 
     open_credits_ix(authority, owner_id, mint, wf_repo, wf_sha)   # a wallet prepays for one GitHub owner, and pins the workflows
     deposit_ix(source, owner, credits, mint, amount, decimals)    # a plain token transfer into the credits (anyone)

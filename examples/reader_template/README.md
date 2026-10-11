@@ -2,8 +2,8 @@
 
 A complete Solana program, on its own, that releases once when GitHub signed that one workflow of one repository
 asked this program to. `knos-oidc` checked GitHub's signature on chain; this program reads the result. It takes one
-crate from Knos (`knos-oidc-interface = "0.3.14"` from [crates.io](https://crates.io/crates/knos-oidc-interface), no dependency of its own) and nothing else: no call into Knos, no
-key of Knos's, nobody to ask. Devnet only: the verifier is `FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W`.
+thing from Knos: the crate `knos-oidc-interface = "0.3.14"` from [crates.io](https://crates.io/crates/knos-oidc-interface),
+which has no dependencies. It makes no call into Knos, holds no key of Knos's, and asks nobody. Devnet only: the verifier is `FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W`.
 
 ## Use this template
 
@@ -24,14 +24,14 @@ curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
 ```
 
 Whoever sends your instruction writes that token to `knos-oidc` and has it verified (`verifier(program)` in
-[`sdk/settle`](../../sdk/settle), `knos.settle.v2.oidc` in Python: [docs/VERIFIER.md](../../docs/VERIFIER.md), call
+[`sdk/settle`](../../sdk/settle), `knos.settle.v2.oidc` in Python: [docs/reference/VERIFIER.md](../../docs/reference/VERIFIER.md), call
 2), then sends `Release` with five accounts: payer, the token account, its key account (`readToken(data).key`), the
 record at `["done", sha256(claims)]` under your program, and the system program. Then put your own action where
 `src/lib.rs` says YOUR ACTION.
 
-Built here with `cargo build-sbf` (the fixture was built from the v0.3.14 tag; the crates.io release is the same version) and run in a simulator against the verifier
-(`tests/test_reader_template.py`, 2 tests). It has not been deployed to devnet, and no program outside this
-repository is known to use it. Built something on it? [docs/COMPOSE.md](../../docs/COMPOSE.md) says how to be listed, and the playground's `compose` task
+The test fixture was built with `cargo build-sbf` from the v0.3.14 tag (crates.io has the same version). The test
+runs it in a simulator against the verifier (`tests/test_reader_template.py`, 2 tests). It has not been deployed to devnet, and no program outside this
+repository is known to use it. Built something on it? [docs/reference/COMPOSE.md](../../docs/reference/COMPOSE.md) says how to be listed, and the playground's `compose` task
 ([tasks/outside/compose.json](../../tasks/outside/compose.json)) pays 5 test USDC for one devnet transaction of it.
 
 ## Five mistakes a reader can make, and the line that prevents each

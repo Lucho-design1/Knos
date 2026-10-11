@@ -1,4 +1,4 @@
-"""Every place in the four programs where a panic is written down: docs/UNWRAPS.md is made from this file.
+"""Every place in the four programs where a panic is written down: docs/reference/UNWRAPS.md is made from this file.
 
 A panic in a Solana program aborts the instruction and with it the whole transaction: the runtime keeps none of the
 transaction's account changes, so no state is written and no token moves. What a panic costs is the fee and an error
@@ -12,7 +12,7 @@ What is listed, for programs-v2/knos_{oidc,pay,meter,passkey}/src:
   - for indexing (`d[a..b]`, `d[k]`), which panics out of range: the number of lines that index, by file. They are
     counted, not explained one by one.
 
-    python tests/test_unwraps.py --write     # docs/UNWRAPS.md again, after a program's source changed
+    python tests/test_unwraps.py --write     # docs/reference/UNWRAPS.md again, after a program's source changed
 
 The test fails when the document is not what this file writes today: a new `unwrap()`, one that moved, or a file
 that indexes on more or fewer lines, all change it.
@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DOC = ROOT / "docs" / "UNWRAPS.md"
+DOC = ROOT / "docs" / "reference" / "UNWRAPS.md"
 PROGRAMS = ("knos_oidc", "knos_pay", "knos_meter", "knos_passkey")
 PANICS = re.compile(r"\bunwrap\(\)|\bexpect\(|\bunreachable!|\bpanic!|\btodo!|\bunimplemented!|\b(?:debug_)?assert(?:_eq|_ne)?!")
 INDEX = re.compile(r"[\w)\]]\[(?!\.\.\])")           # d[..]: an index or a range with a bound; `[..]` alone cannot panic
@@ -36,7 +36,7 @@ EXACT = ("A slice of a width written in the same expression (`d[o..o + N]`) made
 # (file, a piece of the line) -> why this place cannot fail, or what happens when it does. Checked from the first to
 # the last; a place takes the first reason whose file and piece it matches.
 WHY: list[tuple[str, str, str]] = [
-    # -- knos_oidc (changed in 0.3.16, and read line by line for this list)
+    # -- knos_oidc (read line by line for this list)
     ("programs-v2/knos_oidc/src/claims.rs", "debug_assert_eq!(w - from, out_len)",
      "A debug assertion: it is not compiled into a release build, which is what `cargo build-sbf` makes. In a test build it says the decoder wrote as many bytes as `b64_len` promised."),
     ("programs-v2/knos_oidc/src/lib.rs", "fn i64_at(",
@@ -47,7 +47,7 @@ WHY: list[tuple[str, str, str]] = [
      EXACT + ". The line before refuses instruction data whose length is not `4 + 4 * l`: it is never shorter."),
     ("programs-v2/knos_oidc/src/lib.rs", "ikey_audience(d[K_HDR + 8 * l..K_HDR + 8 * l + 32]",
      EXACT + ". `key_limbs` accepted the account, and for an issuer number of ISSUER_OTHER or above that requires 64 bytes after the limbs: it is never shorter."),
-    # -- knos_passkey (not changed in 0.3.16; the guard named is the one on the lines just before)
+    # -- knos_passkey (the guard named is the one on the lines just before)
     ("programs-v2/knos_passkey/src/lib.rs", "d[W_KEY..W_KEY + webauthn::KEY_LEN]", EXACT + ". `wallet_key` refuses an account whose length is not `WALLET_LEN` first."),
     ("programs-v2/knos_passkey/src/lib.rs", "d[W_NONCE..W_NONCE + 8]", EXACT + ". `wallet_key` refuses an account whose length is not `WALLET_LEN` first."),
     ("programs-v2/knos_passkey/src/lib.rs", "fund_data[17..25]", EXACT + ". Data shorter than `FUND_MIN` (158 bytes) was refused before the wallet signed anything."),
@@ -55,18 +55,18 @@ WHY: list[tuple[str, str, str]] = [
     ("programs-v2/knos_passkey/src/lib.rs", "data[8..16]", EXACT + ". The line before refuses instruction data shorter than 16 bytes (18 in `fund`)."),
     ("programs-v2/knos_passkey/src/token.rs", "d[o..o + 32]", EXACT + ". `o` is 0 or 32, and the line before returns unless the account is at least `ACCOUNT_LEN` (165) bytes."),
     ("programs-v2/knos_passkey/src/token.rs", "d.get(64..72)", "`get(64..72)` gives eight bytes or nothing, and nothing is answered with InvalidAccountData: the conversion of eight bytes cannot fail."),
-    # -- knos_meter and knos_pay (not changed in 0.3.16)
+    # -- knos_meter and knos_pay
     ("programs-v2/knos_meter/src/gh.rs", "artifact.try_into().unwrap()", "Two lines above, the audience is refused unless `is_hex(artifact, 40)`, which is false for any length but 40: the conversion to 40 bytes cannot fail."),
     ("", "k.chunks(4)", "`k` is a 32-byte public key, so every chunk is four bytes: the conversion cannot fail."),
     ("", "size.len() == 8 =>", "The same match arm requires `size.len() == 8`: the conversion of eight bytes cannot fail."),
     ("programs-v2/knos_pay/src/order.rs", "rest[..32].try_into().unwrap(), rest[32..]", "The line before refuses the instruction unless `rest.len() == 64`: both halves are 32 bytes, and neither conversion can fail."),
     ("programs-v2/knos_pay/src/order_judge.rs", "data[..32].try_into().unwrap(), terms: data[32..]", "Three lines above, the instruction is refused unless `data.len() == 64`: both halves are 32 bytes, and neither conversion can fail."),
-    ("", "pub fn u32_at(", EXACT + ". The helper is called with constant offsets into an account or instruction data; this list does not re-derive each caller's length check for a program 0.3.16 does not change. Short data aborts the transaction."),
+    ("", "pub fn u32_at(", EXACT + ". The helper is called with constant offsets into an account or instruction data; this list does not re-derive each caller's length check. Short data aborts the transaction."),
     ("", "pub fn u64_at(", EXACT + ". As `u32_at`."),
     ("", "pub fn i64_at(", EXACT + ". As `u32_at`."),
     ("", "pub fn key_at(", EXACT + ". As `u32_at`."),
-    # every other `d[A..A + N].try_into().unwrap()` in the three programs 0.3.16 does not change
-    ("", ".try_into().unwrap()", EXACT + ": a constant offset into account data. This list does not re-derive the reader's length check for a program 0.3.16 does not change; short data aborts the transaction."),
+    # every other `d[A..A + N].try_into().unwrap()` in the three other programs
+    ("", ".try_into().unwrap()", EXACT + ": a constant offset into account data. This list does not re-derive the reader's length check; short data aborts the transaction."),
 ]
 
 
@@ -122,9 +122,8 @@ def render() -> str:
            f"the other {unwraps - in_code} are in unit tests and proof harnesses",
            "(`#[cfg(test)]` at the end of each file, and `knos_pay/src/proofs.rs`, which is compiled only for tests and for the Kani model checker), which are in",
            "no build of a program. No program code holds an `expect(`, an `unreachable!`, a `panic!`, a `todo!` or an `assert!`; one `debug_assert_eq!` is listed.",
-           "`knos_oidc` is the one program Knos 0.3.16 changes, and its places were read line by line: none can be reached, so none was replaced. For the three",
-           "programs 0.3.16 does not change (`knos_pay`, `knos_meter`, `knos_passkey`: their builds must stay byte for byte) a reason names the guard where it is",
-           "on the lines just before, and says so where the guard is a caller's.", "",
+           "`knos_oidc`'s places were read line by line: none can be reached, so none was replaced. For the three other programs (`knos_pay`, `knos_meter`,",
+           "`knos_passkey`) a reason names the guard where it is on the lines just before, and says so where the guard is a caller's.", "",
            "## Every written panic in program code", "",
            "| Place | The line | Why it cannot fail, or what happens if it does |", "| --- | --- | --- |"]
     for rel, number, n, text in found:
@@ -137,6 +136,7 @@ def render() -> str:
             "is measured before it is cut; the claim readers and the base64 decoders (`knos_oidc/src/strict.rs` and `claims.rs`) index inside loops bounded by the slice's length, and",
             "are run on 1,560,000 random documents and by two fuzz targets ([ASSURANCE.md](ASSURANCE.md)); the RSA limbs (`rsa.rs`) are vectors sized from the key's",
             "own limb count. An index that is out of range all the same aborts the transaction, as above.", "",
+            "The table's middle column counts every written panic in tests and proofs, not only `unwrap()`.", "",
             "| File | Written panics in program code | In tests and proofs | Lines of program code that index |", "| --- | ---: | ---: | ---: |"]
     out += [f"| `{rel.removeprefix('programs-v2/')}` | {a} | {b} | {c} |" for rel, a, b, c in table]
     out.append(f"| all | {sum(a for _, a, _, _ in table)} | {sum(b for _, _, b, _ in table)} | {sum(c for _, _, _, c in table)} |")
@@ -152,7 +152,7 @@ def test_every_written_panic_in_program_code_has_a_reason_and_every_reason_a_pla
     # the page says in words which kinds there are: unwraps, and one debug assertion
     assert {kind for _, _, _, text in found for kind in PANICS.findall(text)} == {"unwrap()", "debug_assert_eq!"}
     assert sum("debug_assert_eq!" in text for _, _, _, text in found) == 1
-    # in the program this release changes, no reason is the general one: each was read
+    # in knos_oidc, no reason is the general one: each was read
     assert all(why(rel, text) is not WHY[-1][2] for rel, _, _, text in found if "/knos_oidc/" in rel)
 
 

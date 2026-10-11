@@ -421,8 +421,8 @@ def test_with_no_data_the_operations_document_says_so_and_shows_nothing_invented
     md = pages_data.render_operations_md(pages_data.operations_json(None, 0, OWN, {"source": {"summary": ""}, "generated": None}))
     assert "No measurement has been made yet" in md and "No runs to show." in md and "No outside issue or pull request to show." in md
     assert not any(ch.isdigit() for ch in md.split("## How these are counted")[0].replace("30 minutes", "").replace("0.3", "").replace(pages_data.CANARY_REPO, ""))      # the repository's name has a digit; no number is a measurement
-    committed = (ROOT / "docs" / "OPERATIONS.md").read_text(encoding="utf-8")
-    assert committed == md, "docs/OPERATIONS.md is the document for no data: run python scripts/pages_data.py --docs docs/OPERATIONS.md --empty --out <dir> with nothing measured"
+    committed = (ROOT / "docs" / "reference" / "OPERATIONS.md").read_text(encoding="utf-8")
+    assert committed == md, "docs/reference/OPERATIONS.md is the document for no data: run python scripts/pages_data.py --docs docs/reference/OPERATIONS.md --empty --out <dir> with nothing measured"
 
 
 def test_the_operations_document_says_the_relays_attempts_with_the_askers_own_apart_from_failures():
@@ -589,7 +589,7 @@ def test_open_work_orders_are_listed_with_what_they_promise_and_a_split_is_count
 # ---- one number, one pipeline ----------------------------------------------------------------------------------------
 def test_the_documents_and_the_site_state_one_merge_to_paid(tmp_path):
     """merge to paid is measured by network_stats.measure() and by nothing else: latency.json, stats.json (the Numbers
-    page), docs/bench.json (which docs/BENCH.md prints) and docs/facts.json state its output, and bench_docs
+    page), docs/bench.json (which docs/reference/BENCH.md prints) and docs/facts.json state its output, and bench_docs
     .site_disagreements names every number on which any two of them differ."""
     import importlib.util
     spec = importlib.util.spec_from_file_location("bench_docs", ROOT / "scripts" / "bench_docs.py")
@@ -610,8 +610,8 @@ def test_the_documents_and_the_site_state_one_merge_to_paid(tmp_path):
     for rel in ("docs/bench.json", "docs/facts.json"):
         (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / rel).write_bytes((ROOT / rel).read_bytes())
-    slots = tmp_path / "docs" / "submission" / "a.md"        # the sentence the pitch says it in, as a release finds it: with slots
-    slots.parent.mkdir()
+    slots = tmp_path / "docs" / "reference" / "WHY.md"                     # the sentence a document says it in, as a release finds it: with slots
+    slots.parent.mkdir(parents=True, exist_ok=True)
     stats_file = tmp_path / "stats.json"
 
     def release(s):
@@ -646,7 +646,7 @@ def test_the_documents_and_the_site_state_one_merge_to_paid(tmp_path):
 
 
 def test_the_repository_s_documents_agree_on_merge_to_paid():
-    """docs/BENCH.md prints docs/bench.json's block, and every fact that points into it holds the same value."""
+    """docs/reference/BENCH.md prints docs/bench.json's block, and every fact that points into it holds the same value."""
     import importlib.util
     import re
     spec = importlib.util.spec_from_file_location("bench_docs", ROOT / "scripts" / "bench_docs.py")
@@ -654,7 +654,7 @@ def test_the_repository_s_documents_agree_on_merge_to_paid():
     spec.loader.exec_module(bd)
     bench = json.loads((ROOT / "docs" / "bench.json").read_text(encoding="utf-8"))
     assert bd.site_disagreements(bench["devnet"]["stats"], None) == []
-    block = re.search(r"<!-- bench:devnet -->\n(.*?)\n<!-- /bench:devnet -->", (ROOT / "docs" / "BENCH.md").read_text(encoding="utf-8"), re.S).group(1)
+    block = re.search(r"<!-- bench:devnet -->\n(.*?)\n<!-- /bench:devnet -->", (ROOT / "docs" / "reference" / "BENCH.md").read_text(encoding="utf-8"), re.S).group(1)
     assert block == bd.devnet(bench["devnet"])
     m = bench["devnet"]["stats"]["latency"]["merge_to_paid"]
     assert m["definition"] == network_stats.DEFINITIONS["merge_to_paid"].format(most=network_stats.MOST) and m["definition"] in block

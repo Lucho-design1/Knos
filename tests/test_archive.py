@@ -121,7 +121,7 @@ def test_it_verifies_in_an_empty_directory_with_knos_unimportable(tmp_path, key,
     r = _run(alone)
     assert r.returncode == 0, r.stdout + r.stderr
     out = r.stdout
-    assert "VERIFIED:" in out and "No network, no Knos." in out and "DOES NOT HOLD" not in out
+    assert "VERIFIED:" in out and "No network, no Knos." in out and "FAILED:" not in out
     for said in ("the log of events holds: 9 lines", f"owner {SELLER} up to line 7", "1 monthly statements of the log were made again from the log: the same bytes",
                  "ledgers/buyer.jsonl recomputes: 2 batches", "for batch 0 of 202610 in ledgers/buyer.jsonl", "for the audience knos:anything",
                  "its totals are the totals of its 3 lines (3 of them rest on lines of the archived log)", "1 terms files hash to the names they are kept under",
@@ -133,7 +133,7 @@ def test_it_verifies_in_an_empty_directory_with_knos_unimportable(tmp_path, key,
     assert packed.returncode == 0 and "VERIFIED:" in packed.stdout
     (alone / "ledgers" / "buyer.jsonl").write_bytes((alone / "ledgers" / "buyer.jsonl").read_bytes().replace(b'"rate":2000000', b'"rate":9000000', 1))
     r = _run(alone)
-    assert r.returncode == 1 and "DOES NOT HOLD: ledgers/buyer.jsonl is not the file the manifest lists" in r.stdout and "NOT VERIFIED" in r.stdout
+    assert r.returncode == 1 and "FAILED: ledgers/buyer.jsonl is not the file the manifest lists" in r.stdout and "NOT VERIFIED" in r.stdout
 
 
 def test_the_standalone_checks_agree_with_knos_on_every_format(key, jwks):

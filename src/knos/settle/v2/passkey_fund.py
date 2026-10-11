@@ -147,7 +147,7 @@ def read_intent(text: str | dict) -> Intent:
             m = LINE.search(str(text))
             o = json.loads(_unb64(m.group(1) if m else str(text).strip()))
         if o.get("v") != 1 or o.get("program") != str(pk.PASSKEY_ID) or o.get("pay") != str(pay.PAY_ID):
-            raise ValueError("it is for another version or another deployment")
+            raise ValueError("This passkey funding line was made for another version or another deployment of Knos. Sign again on the Buy page.")
         i = Intent(key=pk.compressed(bytes.fromhex(o["key"])), mint=Pubkey.from_string(o["mint"]), token_program=Pubkey.from_string(o["tokenProgram"]),
                    data=_unb64(o["data"]), expiry_slot=int(o["expirySlot"]), nonce=int(o["nonce"]), authenticator_data=_unb64(o["authenticatorData"]),
                    client_data_json=_unb64(o["clientDataJSON"]), signature=pk.raw_signature(_unb64(o["signature"])))

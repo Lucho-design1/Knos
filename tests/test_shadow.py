@@ -362,7 +362,7 @@ def test_the_examples_run_offline_and_the_sample_is_marked(tmp_path: Path):
 
 
 def test_the_document_is_one_screen_and_claims_no_run():
-    doc = (ROOT / "docs" / "SHADOW.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "SHADOW.md").read_text(encoding="utf-8")
     assert len(doc.splitlines()) <= 60 and doc.count("knos shadow ") >= 3 and shadow.NOTE.split(". ")[0] in doc
     assert "Pilot" in doc and "Nobody has run" in doc
 

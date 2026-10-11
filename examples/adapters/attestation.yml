@@ -15,8 +15,8 @@
 # Without it in the terms this file only chooses WHEN the payment is tried.
 #
 # Who authenticates what. The chain authenticates the settle run: GitHub's signature over a run of the pinned prove.yml,
-# at the commit the order recorded, in the order's own repository (programs-v2/knos_pay/src/order_judge.rs, judge a;
-# that rule names no event, and the pinned prove.yml settles on `workflow_dispatch`). The chain does NOT authenticate
+# at the commit the order recorded, in the order's own repository (programs-v2/knos_pay/src/order_judge.rs, the first judge
+# rule; it does not check which event started the run, and the pinned prove.yml settles on `workflow_dispatch`). The chain does NOT authenticate
 # the attestation. `gh attestation verify` checks it here, on the runner: the Sigstore signature, that the signer was
 # a workflow of this repository on a GitHub-hosted runner, and that the source was this commit. The chain verifies
 # none of that.

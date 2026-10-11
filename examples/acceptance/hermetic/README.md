@@ -15,7 +15,10 @@ tag can be pointed at another image after the bounty is funded. Everything the s
 the container has no network, so nothing is installed at judge time.
 
 **2. The terms carry it** ([terms.json](terms.json)): `image` is a field of the terms like `accept`, so it is in the
-hash that is funded and cannot change afterwards.
+hash that is funded and cannot change afterwards. A `fund` comment on the issue reads `image` from `.knos/proof.toml`
+on the default branch and puts it in the terms. `knos fund-wallet` and `knos proof terms` do not read it yet: there,
+build the terms yourself with `knos.terms.build(..., image=...)`, as [terms.json](terms.json) shows. No hermetic
+judgment has been run on devnet yet.
 
 **3. What the submission sees.** Each `$KNOS_RUN <command>` of the check runs in a new container:
 
@@ -43,6 +46,7 @@ the runtime and its version and the limits; under `evidence.artifact` a hash of 
 two folders are those trees, judges them in the same image and prints `agree` or `disagree`. It needs docker or podman
 (`KNOS_CONTAINER` chooses).
 
-What this is not: a promise that no submission can cheat. The black-box check was accepted by 0 of the 63 attacks in
-[docs/TAMPER.md](../../docs/TAMPER.md); the container's own probes are listed there, and were not run on the machine
-that wrote that page. [docs/ASSURANCE.md](../../docs/ASSURANCE.md) has the three assurances side by side.
+What this is not: a promise that no submission can cheat. In [docs/reference/TAMPER.md](../../../docs/reference/TAMPER.md) the
+black-box check accepted none of the 63 attacks in its suite. The container's own probes are listed there too; they
+were not run on the machine that wrote that page. [docs/reference/ASSURANCE.md](../../../docs/reference/ASSURANCE.md) has the three
+assurances side by side.

@@ -9,7 +9,7 @@ three sentences; after them, its rules: the one sentence, then the winning claim
 words outside the table, counting what a reader reads: the summary and every caption count, while a ```mermaid block
 (a diagram's source, which GitHub draws as a picture) and HTML markup such as the mark do not; thirteen rows (the six
 criteria in the rules, then the seven factors Colosseum's hackathon page lists), each one sentence and one link; a definition of days to approve that gives no figure; five
-lines under "What is not real yet". The shape of the file, which the site's "For judges" page (web/judges.js) reads
+lines under "What is not real yet". The shape of the file, which the site's "Check every claim yourself" page (web/judges.js) reads
 as it is (scripts/build_site.sh copies it into the build):
 
     {"title", "sentence", "pitch", "number", "claim", "why_solana", "source": "docs/JUDGES.md", "columns": [...],
@@ -46,9 +46,9 @@ FACTORS = ["Founder and market fit", "Insight", "Product and execution", "Potent
 JUDGED = CRITERIA + FACTORS
 PITCH = ("Knos lets buyers and suppliers agree what AI work earned payment, and independently prove that agreement "
          "later.")
-DAYS = ("Days to approve is defined as the days from the day the buyer receives a supplier's invoice to the day a person "
-        "with authority approves it.")
-WHY_SOLANA = "Money is released with no custodian, and the count is anchored where neither side can alter it."
+DAYS = "Days to approve: from the day a buyer gets a supplier's invoice to the day someone allowed to approve it does."
+WHY_SOLANA = ("Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every "
+              "upgrade key today; a program change waits 48 hours in public.")
 LIMIT_WORDS, ZEROS = 350, 5
 START = "## Start here"
 WITNESSED = ["funded", "wrong work refused", "paid", "replay paid nothing more", "the record"]
@@ -165,7 +165,7 @@ def problems(root: Path = ROOT) -> list[str]:
     if DAYS not in data["wait"] or "Not measured." not in data["wait"] or re.search(r"\d+(\.\d+)? days", data["wait"]):
         out.append(f"{PAGE}: days to approve is defined, said to be not measured, and given no figure")
     first = data["entry"]
-    if not first["manifest"].endswith("docs/MANIFEST.md") or page.find(START) > page.find("\n|"):
+    if not first["manifest"].endswith("docs/reference/MANIFEST.md") or page.find(START) > page.find("\n|"):
         out.append(f"{PAGE}: '{START}' comes before the table, and its first link is the release manifest")
     if [w["label"] for w in first["witnessed"]] != WITNESSED or not first["yourself"]:
         out.append(f"{PAGE}: '{START}' links the witnessed transaction's steps {WITNESSED} and how to run it yourself")

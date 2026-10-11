@@ -4,8 +4,9 @@
 // The Python client (src/knos/settle) is the authority; sdk/settle/test.mjs checks this file against the
 // byte-exact fixtures it wrote (sdk/settle/fixtures.json).
 //
-// The second deployment (programs-v2; upgradeable only through a multisig with a public 48-hour delay, until an
-// outside review; then made immutable) is under `v2`:
+// The second deployment (programs-v2; upgradeable only through a multisig with a public 48-hour delay, whose keys one
+// person holds today; after an outside review, which has not happened, the plan is to remove its upgrade authority)
+// is under `v2`:
 //
 //   import * as knos from "./index.js";
 //   const k = knos.v2.client(ids);                                      // ids: src/knos/settle/v2/program_ids.json
@@ -21,7 +22,7 @@
 // readers under `v2` (v2.readOrder, v2.orderFee), the meter under `meter`, and the 4,096-byte v1 transaction beside
 // the legacy one (serializeTxV1). The embeddable reads for an agent platform are in agent.js.
 //
-// The first deployment (programs/, immutable; jobs funded there finish there) keeps the names it had:
+// The first deployment (programs/, no upgrade authority, so nobody can change it; jobs funded there finish there) keeps the names it had:
 //
 //   const k1 = knos.client({ knos_oidc: "...", knos_pay: "..." });      // src/knos/settle/program_ids.json
 //   const job = knos.parseJob(await knos.account(RPC, await k1.job(repoId, issue)));
@@ -174,7 +175,7 @@ export function parseRep(raw) {
 }
 
 // ---- who can change a program ---------------------------------------------------------------------------------------
-/** The upgrade authority in a program-data account: an address, null when the program is immutable, undefined when
+/** The upgrade authority in a program-data account: an address, null when the program has no upgrade authority, undefined when
  *  the bytes are not a program-data account (the program is not deployed). */
 export function upgradeAuthority(programDataBytes) {
   if (!programDataBytes || programDataBytes.length < 45 || programDataBytes[0] !== 3) return undefined;
@@ -441,13 +442,13 @@ const BALX_LEN = 152, PLAN_LEN = 24, ORDER_LEN = 512, OPTS_LEN = 48;
 const MAX_AMOUNT2 = 100_000_000_000;         // 100,000.00 per job and per order on devnet; a build for real money decides its own cap
 const ORDER_MIN_AMOUNT = 5_000_000, TIP = 50_000, TIP_FIRST = 300_000;
 // THE FEE OF knos_pay, in one place. Two rules exist, and the program that is LIVE decides which is charged:
-//   0.3.18 (knos_pay 2.2, Version logs `knos2:version 2`): jobs and orders alike, FEE_BPS2 (0.30%) of the amount, at
+//   knos_pay 2.2 (Version logs `knos2:version 2`): jobs and orders alike, FEE_BPS2 (0.30%) of the amount, at
 //          least FEE_MIN (0.05); one rate, no tiers; a Plan lowers the rate to no less than PLAN_BPS_MIN (0.10%).
-//   0.3.14 (knos_pay 2.1 and 2.0): an order 2.5% of the first 1,000, 1% from there to 50,000, 0.5% above, at least
+//   knos_pay 2.1 and 2.0: an order 2.5% of the first 1,000, 1% from there to 50,000, 0.5% above, at least
 //          0.40, a Plan lowering the first rate to no less than 0.5%; a job 2.5%, at least 0.05.
-// The public programs charge the 0.3.14 fee until the upgrade to 2.2 executes. v2.feeRule(version) gives the rule of
+// The public programs have charged the 2.2 fee since 9 October 2026. v2.feeRule(version) gives the rule of
 // the version the program answered (web/version.js asks it); orderFee, feeOf and planBps take a rule and default to
-// the 0.3.18 one, which is what the programs in this tree compute. An order's fee is taken at its funding and held
+// the 2.2 one, which is what the programs in this tree compute. An order's fee is taken at its funding and held
 // with it: orders funded before the upgrade keep the rate fixed at their funding.
 const FEE_BPS2 = 30, PLAN_BPS_MIN = 10, FEE_VERSION = 2;
 const FEE_RULES = Object.freeze({
@@ -455,8 +456,8 @@ const FEE_RULES = Object.freeze({
   old: Object.freeze({ release: "0.3.14", build: "2.1", bps: 250, floor: 400_000, planMin: 50, jobBps: 250, jobFloor: 50_000,
     tiers: Object.freeze([Object.freeze([1_000_000_000, 100]), Object.freeze([50_000_000_000, 50])]) }),   // [up to, the rate above it]
 });
-/** The fee rule of the knos_pay that answered `version` (Version's number): the 0.3.18 one from 2 up, the 0.3.14 one
- *  below. null or undefined (nobody was asked) is this tree's own, the 0.3.18 one. */
+/** The fee rule of the knos_pay that answered `version` (Version's number): knos_pay 2.2's from 2 up, 2.1's
+ *  below. null or undefined (nobody was asked) is this tree's own, 2.2's. */
 const feeRule = (version = FEE_VERSION) => (version === null || version === undefined || version >= FEE_VERSION ? FEE_RULES.new : FEE_RULES.old);
 /** The same answer from the upgrade feed (upgrades.json): 2 once a proposal of knos_pay after the 2.1 one (index 4) has
  *  executed, 1 while none has, null when the feed could not be read. The feed is as old as its `generated`. */
@@ -697,7 +698,7 @@ function feeOf2(amount, decimals = 6, rule = FEE_RULES.new) {
 }
 
 /** The fee of an order, which its funder pays on top of the amount, exactly as the program of `rule` computes it
- *  (v2.feeRule): `bps` (the rule's rate, or the owner's Plan) of the amount; under the 0.3.14 rule `bps` is the rate
+ *  (v2.feeRule): `bps` (the rule's rate, or the owner's Plan) of the amount; under the 2.1 rule `bps` is the rate
  *  of the first 1,000 whole units only, with 1% to 50,000 and 0.5% above, each part rounded down. At least the
  *  rule's floor; no maximum. */
 function orderFee(amount, bps, decimals = 6, rule = FEE_RULES.new) {
@@ -1148,7 +1149,7 @@ function client2(ids) {
       return { program: PAY, data: cat(Uint8Array.of(13), u64(dayLimit), u64(totalLimit), ...ids.map(u64), wfSha ? enc.encode(wfSha) : new Uint8Array(40)),
         accounts: [meta(authority, true, true), meta(balance, false, true), meta(await k.balxPda(balance), false, true), meta(SYSTEM, false, false)] };
     },
-    /** FEE_OWNER sets the fee rate of the orders of one repository owner until `expires`: 10 to 30 basis points under the 0.3.18 fee (knos_pay 2.2), 50 to 250 before. */
+    /** FEE_OWNER sets the fee rate of the orders of one repository owner until `expires`: 10 to 30 basis points under knos_pay 2.2 (live since 9 October 2026), 50 to 250 under earlier builds. */
     async setPlanIx({ feeOwner, payer, ownerId, feeBps, expires }) {
       return { program: PAY, data: cat(Uint8Array.of(14), u64(ownerId), u16(feeBps), i64(expires)),
         accounts: [meta(feeOwner, true, false), meta(payer, true, true), meta(await k.planPda(ownerId), false, true), meta(SYSTEM, false, false)] };

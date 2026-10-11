@@ -1,7 +1,7 @@
 # Integrations
 
-What a bounty or work platform, or any repository, can take from Knos. The research behind it and the table of
-platforms are in [`docs/INTEGRATIONS.md`](../docs/INTEGRATIONS.md).
+What a bounty platform, a work platform or any repository can take from Knos and use. The research behind it and the table of
+platforms are in [`docs/reference/INTEGRATIONS.md`](../docs/reference/INTEGRATIONS.md).
 
 | Folder | What |
 | --- | --- |

@@ -1,10 +1,8 @@
-"""docs/README.md is the map of the documents: every file in docs/*.md is on it once, under one of six questions, and
-every link on it leads to a file. docs/STORY.md and web/story.js tell the three-minute demonstration in seven beats, each
-with evidence that exists in the repository; what follows the last beat is an invitation and claims nobody. docs/MANIFEST.md
-is what scripts/release_manifest.py writes from its sources.
-
-Everything here reads files; the one subprocess is node on tests/web/story.mjs, and it opens no network.
-"""
+"""docs/README.md is the front map: the eight pages a stranger reads first, each on it once, and nothing else in docs/*.md.
+docs/reference/README.md is the map of every other document: every file in docs/reference/*.md is on it once, under one
+of six questions, and every link on either map leads to a file. docs/STORY.md and web/story.js tell the three-minute
+demonstration in seven beats, each with evidence that exists in the repository; what follows the last beat is an
+invitation and claims nobody. docs/reference/MANIFEST.md is what scripts/release_manifest.py writes from its sources."""
 
 from __future__ import annotations
 
@@ -18,6 +16,11 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
+REFERENCE = DOCS / "reference"
+# the front of docs/: the map itself and these eight pages; every other document is in docs/reference/
+FRONT = ["STORY.md", "START.md", "PRICING.md", "TRUST.md", "JUDGES.md", "NUMBERS.md", "TRANSACTION.md", "WORDS.md"]
+# the one other file that stays in docs/, and the words the front map says it with: scripts/backtest.py publishes its sha256
+FIXED = {"INDEX_METHOD.md": "the Agent PR Index method, fixed in advance (its hash is published), so it does not move"}
 QUESTIONS = ["Does it work?", "Why does it matter?", "What is new?", "How do I use it?", "How do I build on it?", "How is it run and paid for?"]
 STEPS = 7
 WORDS = re.compile(r"[A-Za-z0-9][\w'%.,/-]*")
@@ -31,38 +34,57 @@ def links(text: str) -> list[str]:
     return re.findall(r"\]\(([^)#\s]+)(?:#[^)]*)?\)", text)
 
 
-def test_every_document_is_on_the_map_once_under_one_of_six_questions():
+ROW = re.compile(r"(?m)^\| \[([^\]]+)\]\(([^)]+)\) \| (.+) \|$")
+
+
+def test_the_front_map_lists_the_eight_front_pages_once_and_docs_holds_nothing_else():
     page = read("docs/README.md")
+    rows = ROW.findall(page.split("\n## Reference\n")[0])
+    assert [target for _name, target, _what in rows] == FRONT and [name for name, _t, _w in rows] == FRONT
+    here = sorted(p.name for p in DOCS.glob("*.md") if p.name != "README.md")
+    assert here == sorted(FRONT + list(FIXED)), "only the eight front pages stay in docs/: move every other document to docs/reference/"
+    for name, why in FIXED.items():                                                         # the one exception, said once on the map
+        assert page.count(f"]({name})") == 1 and f"[{name}]({name}), {why}." in page.split("\n## Reference\n")[1], name
+    assert all(len(WORDS.findall(what)) <= 22 for _n, _t, what in rows), [w for _n, _t, w in rows if len(WORDS.findall(w)) > 22]
+    assert "](reference/README.md)" in page.split("\n## Reference\n")[1]                  # then: every other document
+    for target in links(page):                                                              # every link leads somewhere
+        assert target.startswith("https://") or (DOCS / target).exists(), target
+
+
+def test_every_reference_document_is_on_the_reference_map_once_under_one_of_six_questions():
+    page = read("docs/reference/README.md")
     heads = re.findall(r"(?m)^## (\d)\. (.+)$", page)
     assert [h[1] for h in heads] == QUESTIONS and [int(h[0]) for h in heads] == list(range(1, 7))
     mapped = page.split("\n## What is in this repository")[0]
-    rows = re.findall(r"(?m)^\| \[([^\]]+)\]\(([^)]+)\) \| (.+) \|$", mapped)
-    listed = [target for _name, target, _what in rows]
-    here = sorted(p.name for p in DOCS.glob("*.md") if p.name != "README.md")
-    assert sorted(set(here) - set(listed)) == [], "a document in docs/ is missing from docs/README.md: add one row for it"
-    assert sorted(t for t in listed if listed.count(t) > 1 and t != "STORY.md") == []      # STORY.md is also the first row
+    listed = [target for _name, target, _what in ROW.findall(mapped)]
+    here = sorted(p.name for p in REFERENCE.glob("*.md") if p.name != "README.md")
+    assert sorted(set(here) - set(listed)) == [], "a document in docs/reference/ is missing from its map: add one row for it"
+    assert sorted(set(f"../{name}" for name in FRONT) - set(listed)) == []                  # the front pages are on it too
+    assert sorted(t for t in listed if listed.count(t) > 1) == []
+    assert all(t in here or t in [f"../{name}" for name in FRONT + list(FIXED)] for t in listed), listed  # no row for a file elsewhere
+    rows = ROW.findall(mapped)
     assert all(len(WORDS.findall(what)) <= 22 for _n, _t, what in rows), [w for _n, _t, w in rows if len(WORDS.findall(w)) > 22]
     for target in links(page):                                                              # every link leads somewhere
-        assert target.startswith("https://") or (DOCS / target).exists(), target
+        assert target.startswith("https://") or (REFERENCE / target).exists(), target
 
 
 def test_the_front_page_has_nine_parts_above_the_line_and_three_links_onward():
     readme = read("README.md")
     above, below = readme.split("\n---\n", 1)
     # in plain words: how it works (the bounty is the smallest example), the ten-second check, why nobody can fudge the
-    # count, whether it is real (the table of today's numbers); a judge's one entry (tests/test_judges.py), the number, words,
+    # count, whether it is real (the table of today's numbers); where to check every claim (tests/test_judges.py), the number, words,
     # the questions people search (tests/test_seo.py)
     assert re.findall(r"(?m)^## (.+)$", above) == ["How it works", "Try it in ten seconds", "Why nobody can fudge the count", "Is it real?",
-                                                    "For a judge", "The number", "Words", "Questions", "Read more"]
+                                                    "Check every claim yourself", "The number", "Words", "Questions", "Read more"]
     more = above.split("## Read more")[1]
-    assert links(more) == ["docs/STORY.md", "docs/MANIFEST.md", "docs/README.md"]
+    assert links(more) == ["docs/START.md", "docs/PRICING.md", "docs/TRUST.md", "docs/STORY.md", "docs/JUDGES.md", "docs/README.md"]
     real = [line for line in above.split("## Is it real?")[1].split("<!-- bench:today -->")[0].splitlines() if line.strip()]
-    assert len(real) == 3 and [links(line) for line in real].count(["docs/DISCLOSURE.md"]) == 1      # three plain lines, one link to the limits
+    assert len(real) == 3 and [links(line) for line in real].count(["docs/reference/DISCLOSURE.md"]) == 1      # three plain lines, one link to the limits
     for said in ("devnet", "test USDC", "test money only", "no customers yet", "One person holds every key today"):
         assert said in " ".join(real), said
     assert above.index("## How it works") < above.index("<!-- bench:today -->") and "`/knos fund " in above.split("## How it works")[1].split("\n## ")[0]
     table = above[above.index("<!-- bench:today -->"):above.index("<!-- /bench:today -->")]
-    numbers = read("docs/submission/NUMBERS.md")
+    numbers = read("docs/NUMBERS.md")
     printed = re.findall(r"(?m)^\| \d \| ([^:|]+)[^|]*\| (\d+) \|", numbers)
     assert len(printed) == 9
     for what, value in printed:                                                             # every number that page prints, zeros included
@@ -95,11 +117,25 @@ def test_the_story_is_seven_beats_each_with_evidence_that_exists_and_asks_for_th
     # a link to a run on staging program ids says so in its own words, and the page says which beats
     staged = [int(n) for n, _t, _s, name, _target in steps if "staging program ids" in name]
     assert staged == [] and "The transactions of steps 1, 5 and 6 are one round on the public program ids" in " ".join(story.split())
-    assert "](MANIFEST.md)" in story and "](submission/demo_script.md)" in story
+    assert "](reference/MANIFEST.md)" in story and "](../web/demo.js)" in story
     ask = story.split("## The ask")[1].split("\n## ")[0]
     needs = re.findall(r"(?m)^\d\. (.+)$", ask)
     assert len(needs) == 3 and all(n.startswith("Needed: ") for n in needs)
     assert "outside key holder" in needs[0] and "shadow count" in needs[1] and "outside review" in needs[2]
+
+
+def test_the_front_pages_point_where_a_stranger_can_go_and_name_no_removed_folder():
+    """The story's demo is the site's #demo view, not its first screen (the first screen is the check box); and
+    docs/submission/ is gone, so no front page calls itself "the submission" or links there."""
+    story = read("docs/STORY.md")
+    assert "Its [demo](https://drexthealpha.github.io/Knos/#demo) lets you drive them" in story
+    assert "first screen lets you drive" not in " ".join(story.split())
+    index = read("web/index.html")
+    assert re.search(r'<section id="demo"[^>]*\bhidden\b', index) and index.index('id="demo"') > index.index('id="front-door"')
+    for name in FRONT + ["README.md"]:
+        text = " ".join(read(f"docs/{name}").split())
+        assert "the submission" not in text.lower() and "submission/" not in text, name
+
 
 
 def test_the_page_tells_the_same_seven_beats_and_stands_still_under_reduced_motion():
@@ -143,7 +179,7 @@ def test_the_release_manifest_is_what_its_sources_give_and_states_what_is_live_f
     rm = _manifest()
     said = []
     assert rm.main(["--check"], say=said.append) == 0, said
-    page = read("docs/MANIFEST.md")
+    page = read("docs/reference/MANIFEST.md")
     assert page == rm.render() and page.splitlines()[0] == f"# Release manifest: Knos {rm.version()}"
     for head in ("## Source", "## Programs: what is live at each public id", "## Pending proposals", "## Capabilities: the stage of each, with its evidence",
                  "## Outstanding limits"):
@@ -162,27 +198,27 @@ def test_the_release_manifest_is_what_its_sources_give_and_states_what_is_live_f
             assert f"| {entry['index']} (`{entry['proposal']}`) | {entry['program']} | `{entry['build_hash']}` |" in page
             row = next(line for line in page.splitlines() if line.startswith(f"| {entry['program']} | `"))
             assert f"| {entry['index']}: pending |" in row and "(not the proposal's build)" in row
-    # every capability is a row with its stage; every limit of DISCLOSURE.md is a line, once
+    # every capability is a row with its stage; every limit of reference/DISCLOSURE.md is a line, once
     for c in caps["capabilities"]:
         assert page.count(f"| `{c['id']}` | ") == 1, c["id"]
     limits = rm.limits()
     assert len(limits) == len(set(limits)) >= 10 and all(page.count(line) == 1 for line in limits)
     assert all("\n" not in line and line.startswith("- **") for line in limits)             # one line each
     assert not re.search(r"\b20\d\d-\d\d-\d\d", page)                                       # no time is printed
-    for rel in ("README.md", "docs/README.md", "docs/STORY.md"):
+    for rel in ("README.md", "docs/reference/README.md", "docs/STORY.md"):
         assert "MANIFEST.md" in read(rel), rel
 
 
 def test_the_release_manifest_check_fails_when_a_source_moves(tmp_path):
     rm = _manifest()
     for rel in ("pyproject.toml", "programs-v2/program_ids.json", "docs/capabilities.json", "docs/provenance.json", "web/upgrades.json",
-                "docs/DISCLOSURE.md", "docs/facts.json", "CHANGELOG.md", "docs/MANIFEST.md", "examples/upgrade_gate/src/lib.rs",
+                "docs/reference/DISCLOSURE.md", "docs/facts.json", "CHANGELOG.md", "docs/reference/MANIFEST.md", "examples/upgrade_gate/src/lib.rs",
                 "docs/load.json"):
         (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / rel, tmp_path / rel)
     assert rm.main(["--check"], say=lambda _line: None, root=tmp_path) == 0
-    page = tmp_path / "docs" / "DISCLOSURE.md"
+    page = tmp_path / "docs" / "reference" / "DISCLOSURE.md"
     page.write_text(page.read_text(encoding="utf-8").replace("- **No letter of intent.**", "- **One letter of intent.**"), encoding="utf-8")
     said = []
     assert rm.main(["--check"], say=said.append, root=tmp_path) == 1 and "stale" in said[0]
-    assert rm.main([], say=said.append, root=tmp_path) == 0 and "- **One letter of intent.**" in (tmp_path / "docs" / "MANIFEST.md").read_text(encoding="utf-8")
+    assert rm.main([], say=said.append, root=tmp_path) == 0 and "- **One letter of intent.**" in (tmp_path / "docs" / "reference" / "MANIFEST.md").read_text(encoding="utf-8")

@@ -1,7 +1,7 @@
 """scripts/load.py: fifty orders through the test builds with duplicates and late replays injected, and the
 invariants it must report; the arithmetic that turns compute units into cluster time; the cluster path against an RPC
 that is LiteSVM behind the JSON-RPC methods the script calls (so the programs are the real test builds, and only the
-network is simulated), with transactions dropped and refused on purpose; and that docs/LOAD.md is what the script
+network is simulated), with transactions dropped and refused on purpose; and that docs/reference/LOAD.md is what the script
 renders from docs/load.json."""
 from __future__ import annotations
 

@@ -140,7 +140,7 @@ def user_error(why) -> bool:
 
 # ---- refusals in plain words -------------------------------------------------------------------------------------------
 # Every refusal the judge, the workflow and the programs can give, by code: ONE sentence saying what happened and ONE
-# saying what to do, each of 12 words at most. The command line, the comment writer, docs/SUPPLIER.md and the site's
+# saying what to do, each of 12 words at most. The command line, the comment writer, docs/reference/SUPPLIER.md and the site's
 # table (web/refusals.json, written by scripts/supplier_docs.py) all read this table, so they say the same thing.
 # tests/test_refusals.py fails when a code exists anywhere without its two sentences.
 
@@ -412,7 +412,7 @@ def refusal_rows() -> list[dict]:
 
 
 def refusal_table() -> str:
-    """The table as Markdown, for docs/SUPPLIER.md."""
+    """The table as Markdown, for docs/reference/SUPPLIER.md."""
     cell = lambda s: s.replace("|", "\\|")  # noqa: E731
     return "\n".join(["| Code | What happened | What to do |", "| --- | --- | --- |",
                       *(f"| `{r['code']}` | {cell(r['happened'])} | {cell(r['do'])} |" for r in refusal_rows())]) + "\n"

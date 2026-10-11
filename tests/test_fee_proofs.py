@@ -1,6 +1,6 @@
 """The fee-bounds proofs (programs-v2/fee_proofs) and the adversarial handler tests, held to what the documents say:
 docs/kani.json `fee_proofs` is about the harnesses and the program's lines as they are; a harness counts as proved
-only when Kani verified it within the limit; the words of docs/INVARIANTS.md are the record's; the new crate is in no
+only when Kani verified it within the limit; the words of docs/reference/INVARIANTS.md are the record's; the new crate is in no
 program's build and outside the release's version rules; every transaction the Rust tests name is in the vectors."""
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import kani_fee_record as rec  # noqa: E402
 
 KANI = json.loads((ROOT / "docs" / "kani.json").read_text(encoding="utf-8"))
 FEE = KANI["fee_proofs"]
-PAGE = (ROOT / "docs" / "INVARIANTS.md").read_text(encoding="utf-8")
+PAGE = (ROOT / "docs" / "reference" / "INVARIANTS.md").read_text(encoding="utf-8")
 CRATE = ROOT / "programs-v2" / "fee_proofs"
 
 

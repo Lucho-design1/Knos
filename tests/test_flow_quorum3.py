@@ -299,6 +299,6 @@ def test_each_outcome_has_a_template_whose_terms_are_the_examples_own(name):
     shown = CliRunner().invoke(app, ["terms", "show", name])
     assert shown.exit_code == 0 and all(held[k] in shown.output for k in ("comment", "terms_json", "terms_hash", "sentence"))
     assert name not in terms_templates.TEMPLATES and name in CliRunner().invoke(app, ["terms", "list"]).output
-    text = (ROOT / "docs" / "OUTCOMES.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "reference" / "OUTCOMES.md").read_text(encoding="utf-8")
     assert f"`knos terms show {name}`" in text and held["comment"] in text
     assert "never on devnet" in text and "never by a customer" in text

@@ -185,7 +185,7 @@ export function initAnyIssue(ctx) {
 
   function refresh() {
     $("any-next").hidden = !state.preview;
-    const why = !state.avail ? "Asking devnet which version of knos_pay is live…" : !state.avail.ok ? state.avail.words : !wallet.address ? "Connect a wallet first." : "";
+    const why = !state.avail ? "Checking which version of the payment program runs on devnet…" : !state.avail.ok ? state.avail.words : !wallet.address ? "Connect a wallet first." : "";
     $("any-plan").disabled = !!why;
     $("any-why").textContent = why;
   }

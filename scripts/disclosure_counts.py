@@ -1,4 +1,4 @@
-"""Count what docs/DISCLOSURE.md states about the repository's history, at one commit.
+"""Count what docs/reference/DISCLOSURE.md states about the repository's history, at one commit.
 
 Usage: python scripts/disclosure_counts.py [--repo PATH] [--commit SHA] [--json]
 

@@ -73,8 +73,8 @@ def run(book, st: dict) -> None:
     from knos.settle.v2 import meter
     w = book.w
     sim = w if isinstance(w, ex.Simulated) else None
-    how = (f"on an issue of {w.repository}, the buyer's maintainer comments `{comment('<the supplier login>', w.now())}`; the pinned fund.yml "
-           "(knos 0.3.21 or later) asks GitHub to sign it and carries it")
+    how = (f"on an issue of {w.repository}, the buyer's maintainer comments `{comment('<the supplier login>', w.now())}`; the published fund.yml "
+           "workflow, pinned to one commit (Knos 0.3.21 or later), asks GitHub to sign it and carries it")
     if sim and "issue" not in st:
         st["issue"], st["seller"], st["wallet"] = sim.issue(), sim.o.user(), str(Keypair.from_seed(bytes([47]) * 32).pubkey())
     forge = None

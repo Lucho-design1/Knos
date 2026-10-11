@@ -10,7 +10,7 @@ scripts/bump_version.py) shows each of README.md's diagrams as its picture at th
 
 A diagram is a ```mermaid block in README.md or in a document under docs/. Its picture is
 docs/diagrams/<the file's path as a slug>-<n>.svg, n counting the file's diagrams from 1: README.md's second diagram is
-docs/diagrams/readme-2.svg, docs/METER.md's first is docs/diagrams/docs-meter-1.svg. docs/diagrams/index.json lists
+docs/diagrams/readme-2.svg, docs/reference/METER.md's first is docs/diagrams/docs-reference-meter-1.svg. docs/diagrams/index.json lists
 each one: the file, n, the sha256 of the block's text (the lines between the fences, each ending in a newline) and the
 picture. `render` draws a block again only when that sha256 changed, so a second run draws nothing. `--check` reads
 files only: it needs no Node and no network, and the test suite runs it on the tree (tests/test_diagrams.py).
@@ -67,7 +67,7 @@ class Block(NamedTuple):
 
 
 def slug(source: str) -> str:
-    """A file's path as part of a file name: README.md -> readme, docs/submission/NUMBERS.md -> docs-submission-numbers."""
+    """A file's path as part of a file name: README.md -> readme, examples/witnessed/README.md -> examples-witnessed-readme."""
     return re.sub(r"[^a-z0-9]+", "-", source.lower().removesuffix(".md")).strip("-")
 
 

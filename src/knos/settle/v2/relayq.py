@@ -3,8 +3,8 @@ workers at once, and the entry an event takes into it.
 
     python -m knos.settle.v2.relayq --event "$GITHUB_EVENT_PATH" --event-name "$GITHUB_EVENT_NAME" [--workers 4]
 
-WHY. `knos.proof.ghrelay.once` finds tokens by reading comments on a timer. Until 0.3.16 it carried them one after
-another: one token whose transaction was not confirmed for 60 s held every token behind it. This module is the
+WHY. `knos.proof.ghrelay.once` finds tokens by reading comments on a timer. Before this queue, the relay carried them one
+after another, so one token unconfirmed for 60 s held every token behind it. This module is the
 queue it carries them through now, and the entry an event takes into the same queue:
 
     an event        `repository_dispatch` (type knos-token) or `workflow_run` (completed) names one repository and,
@@ -111,7 +111,7 @@ SINCE 0.3.22, PAY WORK IS PARTITIONED BY ORDER, AND THE FEE ACCOUNT IS ONE OF K.
                        Balance's own account: its lane is `order:<address>`. One owner's orders now spread over N
                        relays (part_of of each order), and one order's tokens still leave one at a time, on one
                        relay. A funding from a Balance keeps the owner's lane: the Balance takes its fundings in the
-                       order GitHub issued them. Measured on 8 Oct, before this: 40 orders of ONE owner, one relay, 0.097 paid a
+                       order GitHub issued them. Measured on 8 October 2026, before this change: 40 orders of ONE owner, one relay, 0.097 paid a
                        second; nothing has been measured with order lanes yet.
     K fee accounts     the program takes any token account of the mint that FEE_OWNER owns as the fee account
                        (`is_owned(fee_tok, token, mint, FEE_OWNER)`). `pay.fee_account_for(order, ...)` picks one of K
@@ -149,7 +149,7 @@ LEASE = 180             # seconds a worker has to answer for an entry (a relay w
 MAX_TRIES = 12          # times an entry is taken before it is given up (the journal's number before this module)
 BACKOFF_MOST = 60       # the longest an entry is left alone between two tries, in seconds
 KEEP = 2000             # entries the file keeps; the oldest closed ones go first, an open one never
-PACE = 10.0             # seconds one entry is taken to need before any was timed (the relay's side of a payment: docs/RELAY.md)
+PACE = 10.0             # seconds one entry is taken to need before any was timed (the relay's side of a payment: docs/reference/RELAY.md)
 RESERVE = 50            # of GitHub's hourly requests, the last ones kept for writing verdicts: nothing is read with them
 REST_MOST = 3600        # the longest to stay away from GitHub because it asked (its hourly limit resets within the hour)
 EVENT_TYPE = "knos-token"                           # the `repository_dispatch` type the worker listens for

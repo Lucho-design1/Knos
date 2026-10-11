@@ -1,4 +1,4 @@
-"""docs/MANIFEST.md, the capability rows: one row for each capability, seven cells, none of them blank, each cell from
+"""docs/reference/MANIFEST.md, the capability rows: one row for each capability, seven cells, none of them blank, each cell from
 the file that owns it (docs/capabilities.json, docs/provenance.json)."""
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 COPIED = ("pyproject.toml", "programs-v2/program_ids.json", "docs/capabilities.json", "docs/provenance.json", "web/upgrades.json",
-          "docs/DISCLOSURE.md", "docs/facts.json", "CHANGELOG.md", "docs/MANIFEST.md", "examples/upgrade_gate/src/lib.rs",
+          "docs/reference/DISCLOSURE.md", "docs/facts.json", "CHANGELOG.md", "docs/reference/MANIFEST.md", "examples/upgrade_gate/src/lib.rs",
           "docs/load.json")
 
 
@@ -30,7 +30,7 @@ def _rows(page: str) -> dict[str, list[str]]:
 
 def test_every_capability_is_one_row_of_seven_cells_and_no_cell_is_blank():
     rm = _tool()
-    page = (ROOT / "docs" / "MANIFEST.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "MANIFEST.md").read_text(encoding="utf-8")
     assert "| capability | stage | source | test | deployed build | transaction | independent reproduction |" in page
     caps = json.loads((ROOT / "docs" / "capabilities.json").read_text(encoding="utf-8"))["capabilities"]
     rows = _rows(page)
@@ -74,8 +74,8 @@ def test_no_reproduction_is_said_as_none_and_one_that_is_recorded_is_linked():
     rm = _tool()
     assert rm.reproduction_of({"evidence": {}}) == "none"
     assert rm.reproduction_of({"evidence": {"reproduced": {"url": "https://example.org/run/1"}}}) == "[outside run](https://example.org/run/1)"
-    assert rm.reproduction_of({"evidence": {"reproduced": {"file": "reproductions/a.json"}}}) == "[`reproductions/a.json`](../reproductions/a.json)"
-    page = (ROOT / "docs" / "MANIFEST.md").read_text(encoding="utf-8")
+    assert rm.reproduction_of({"evidence": {"reproduced": {"file": "reproductions/a.json"}}}) == "[`reproductions/a.json`](../../reproductions/a.json)"
+    page = (ROOT / "docs" / "reference" / "MANIFEST.md").read_text(encoding="utf-8")
     caps = json.loads((ROOT / "docs" / "capabilities.json").read_text(encoding="utf-8"))["capabilities"]
     if not any("reproduced" in c["evidence"] for c in caps):
         assert all(row[6] == "none" for row in _rows(page).values())
@@ -101,14 +101,14 @@ def test_the_check_fails_when_a_capability_gains_evidence_the_page_does_not_show
     said: list[str] = []
     assert rm.main(["--check"], say=said.append, root=tmp_path) == 1 and "stale" in said[0]
     assert rm.main([], say=said.append, root=tmp_path) == 0
-    assert "`test_another_name`" in (tmp_path / "docs" / "MANIFEST.md").read_text(encoding="utf-8")
+    assert "`test_another_name`" in (tmp_path / "docs" / "reference" / "MANIFEST.md").read_text(encoding="utf-8")
 
 
 def test_every_recorded_order_names_the_fee_schedule_that_applied_and_how_it_is_known():
     """A stored fee decides it; else the build live at the transaction's slot; else what its date rules out."""
     rm = _tool()
     data = rm.prov.load()
-    page = (ROOT / "docs" / "MANIFEST.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "MANIFEST.md").read_text(encoding="utf-8")
     body = page.split("## Fee schedule of each recorded order", 1)[1].split("\n## ", 1)[0]
     rows = [line for line in body.splitlines() if line.startswith("| ") and not line.startswith("| order |")]
     assert len(rows) == len(rm.orders(data)) and rows
@@ -145,7 +145,7 @@ def test_every_recorded_order_names_the_fee_schedule_that_applied_and_how_it_is_
 
 
 def test_start_here_gives_each_payment_program_one_line_from_source_to_fee_schedule():
-    page = (ROOT / "docs" / "MANIFEST.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "MANIFEST.md").read_text(encoding="utf-8")
     start = page.split("## Start here", 1)[1].split("\n## ", 1)[0]
     pay = next(line for line in start.splitlines() if line.startswith("- **knos_pay**"))
     # knos_pay 2.2 runs at the public id since proposal 8 executed: its line ends with 2.2's schedule

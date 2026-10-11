@@ -33,13 +33,13 @@ export function answerGitHub(route) {
 // is not in the build is not in the list). They are held to the same width and the same word budget as the rest.
 export const addedPages = (root) => { try { return [...readFileSync(join(root, "views.js"), "utf8").matchAll(/^\s+([\w-]+): \{ file: "/gm)].map((m) => m[1]); } catch { return []; } };
 // The menu this build shows at a laptop's width (web/front.js fitBar): the bar is six words; a page added to the bar
-// takes its words from Docs, then Leaderboard, then Check, which go under More, first there, in the bar's own order.
+// takes its words from Docs, then Install, then Check, which go under More, first there, in the bar's own order.
 export function menuOf(root) {
   let text = ""; try { text = readFileSync(join(root, "views.js"), "utf8"); } catch { /* a build without the list */ }
   const added = [...text.matchAll(/^\s+([\w-]+): \{ file: "[^"]+", draw: "\w+", nav: "([^"]+)"(, bar: true)?/gm)].map((m) => ({ name: m[1], nav: m[2], bar: !!m[3] }));
-  const bar = ["Check", "Demo", "Console", "Leaderboard", ...added.filter((a) => a.bar).map((a) => a.nav), "Pricing", "Docs"], first = [];
+  const bar = ["Check", "Demo", "Console", "Install", ...added.filter((a) => a.bar).map((a) => a.nav), "Pricing", "Docs"], first = [];
   const words = () => bar.join(" ").split(" ").length;
-  if (added.some((a) => a.bar)) for (const y of ["Docs", "Leaderboard", "Check"]) { if (words() <= 6) break; bar.splice(bar.indexOf(y), 1); first.unshift(y); }
+  if (added.some((a) => a.bar)) for (const y of ["Docs", "Install", "Check"]) { if (words() <= 6) break; bar.splice(bar.indexOf(y), 1); first.unshift(y); }
   return { added, bar, first, last: added.filter((a) => !a.bar).map((a) => a.nav) };
 }
 export const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2" };

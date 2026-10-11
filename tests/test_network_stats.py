@@ -104,7 +104,7 @@ def test_the_first_deployments_whole_history_on_devnet_is_knos_paying_itself():
                            "paused": 0}
     assert s["by_deployment"] == {"first": {"funded": 11, "completed": 6}, "second": {"funded": 0, "completed": 0}}
     assert s["funnel"] == {"installed": None, "installed_note": "not measured", "funded": 0, "completed": 0, "funded_again": 0}
-    # what docs/COMPARE.md reports of this history: the median from funding to payment over its 6 payments
+    # what docs/reference/COMPARE.md reports of this history: the median from funding to payment over its 6 payments
     assert s["latency"]["funded_to_paid"] == {"count": 6, "median": 159, "p90": 386, "slowest": 386}
     assert len(s["recent"]) == 6 and s["recent"][0]["kind"] == "own" and s["recent"][0]["issue"] == 17 and s["recent"][0]["seconds"] == 95
     # each event found its job by the job's address among the transaction's accounts: the job that was proven and then

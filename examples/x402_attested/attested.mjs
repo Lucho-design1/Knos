@@ -1,6 +1,6 @@
 // x402 "knos-order": a PROPOSED payment scheme, not part of x402. The payment requirement is a Knos work order: the client
 // puts the amount in escrow (FundOrderWallet), the server delivers, and the escrow pays the seller when a GitHub-signed
-// acceptance arrives (PayOrder), or returns everything to the client after the deadline (RefundOrder). docs/X402.md is
+// acceptance arrives (PayOrder), or returns everything to the client after the deadline (RefundOrder). docs/reference/X402.md is
 // the specification; this file is both roles' logic, with no dependency but Node and sdk/settle (which has none).
 import { ata, b58, findProgramAddress, hex, sha256, unb58, unhex, v2 } from "../../sdk/settle/index.js";
 
@@ -21,7 +21,7 @@ export const decode = (text) => JSON.parse(Buffer.from(text, "base64").toString(
 
 /** The fee a funder pays on top of an order's amount (knos_pay's fee for a 6-decimal mint, no Plan), by the rule of the
  *  build that is LIVE. `version`: what knos_pay answers to its Version instruction (rpc.mjs payVersion). 2, from knos_pay
- *  2.2 on: 0.30% of the amount, at least 0.05. 1 or 0, before that upgrade executes: 2.5% of the first 1,000, 1% from
+ *  2.2 on: 0.30% of the amount, at least 0.05. 1 or 0, from builds before 2.2: 2.5% of the first 1,000, 1% from
  *  there to 50,000, 0.5% above, at least 0.40. Not given: the rule of this tree's build (the 0.30% one). An order keeps
  *  the fee it was funded with: orders funded before the upgrade keep the rate fixed at their funding. */
 export function orderFee(amount, version = undefined) {

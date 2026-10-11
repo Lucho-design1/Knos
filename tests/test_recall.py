@@ -221,7 +221,7 @@ def test_the_site_module_draws_the_same_row(tmp_path):
     assert out["SCHEMA"] == recall.SCHEMA and out["ENDINGS"] == list(history.EXCEPTION_ENDINGS) and out["WORDS"] == recall.ENDING_WORDS
     assert out["took"] == [recall.took(x) for x in (40, 720, 18000, 259200)]
     assert out["html"].count('class="k-card rc-row"') == 2 and 'data-seen="3"' in out["html"] and 'data-seen="0"' in out["html"]
-    assert "evl_0002" in out["html"] and "median <strong>3 days</strong>" in out["html"] and "No memory of this exception." in out["none"]
+    assert "evl_0002" in out["html"] and "median <strong>3 days</strong>" in out["html"] and "This exception has not been seen before." in out["none"]
 
 
 def _open_now(st) -> list[dict]:

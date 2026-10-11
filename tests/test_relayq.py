@@ -1,6 +1,6 @@
 """The relay's queue (knos.settle.v2.relayq): the journal's four states, leases that expire, a token sent twice that
 does one thing once, lanes that keep a payer's order, a full queue that says when to come back, GitHub's quota read
-from its headers, an event carried start to end, and the drill of docs/LOAD.md (200 entries, 4 workers, a kill and a
+from its headers, an event carried start to end, and the drill of docs/reference/LOAD.md (200 entries, 4 workers, a kill and a
 slow confirmation). Every clock here is the test's; the chain is a stand-in that takes a token once."""
 from __future__ import annotations
 
@@ -224,7 +224,7 @@ def test_200_entries_4_workers_one_kill_one_slow_confirmation_each_handled_once_
     assert got["out_of_order"] == 0 and got["workers_killed"] == 1 and got["taken_again"] == 1 and got["taken_again_was_the_killed_one"]
     assert got["others_went_on_while_the_slow_one_was_in_flight"] and got["lanes"] == 20
     # the page prints this run, and says what it is
-    page = (ROOT / "docs" / "LOAD.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "LOAD.md").read_text(encoding="utf-8")
     kept = json.loads((ROOT / "docs" / "load.json").read_text(encoding="utf-8"))["relay"]["queue"]
     assert kept == drill.run(200, 4, 20, drill.SEED, tmp_path / "again") == got
     assert "**This is a local test of the queue, not an end-to-end service benchmark**" in page
@@ -459,7 +459,7 @@ def test_a_full_queue_stops_the_sweep_reading_comments_and_says_when_it_reads_ag
 
 
 def test_the_sweep_carries_12_tokens_of_6_owners_past_one_slow_confirmation_and_a_killed_pass(tmp_path):
-    """`scripts/queue_drill.py`'s second part, which docs/LOAD.md prints: `ghrelay.once` itself, on the queue."""
+    """`scripts/queue_drill.py`'s second part, which docs/reference/LOAD.md prints: `ghrelay.once` itself, on the queue."""
     got = drill.sweep(tmp_path)
     assert got["ok"], got
     # one confirmation took 60 s of the clock: the other 11 were done before it, in the same pass, each sent once
@@ -473,7 +473,7 @@ def test_the_sweep_carries_12_tokens_of_6_owners_past_one_slow_confirmation_and_
     assert got["taken_by_chain"] == 14 == got["log_lines"] and got["lines_after_everything_was_done"] == 0 and got["states"] == ["confirmed"]
     kept = json.loads((ROOT / "docs" / "load.json").read_text(encoding="utf-8"))["relay"]["sweep"]
     assert kept == got == drill.sweep(tmp_path / "again")
-    page = (ROOT / "docs" / "LOAD.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "LOAD.md").read_text(encoding="utf-8")
     assert "| Tokens done before the slow one confirmed | 11 of the other 11 |" in page and "were made by the serial sweep" in page
 
 

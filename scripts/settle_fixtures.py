@@ -784,7 +784,7 @@ def orders(k, bal, token) -> dict:
         # the fee of the build in this tree (knos.fees.NEW: 0.3.18, knos_pay 2.2) ...
         "order fees": {f"{a}/{bps}/{dec}": fees.NEW.order(a, bps, dec) for a in FEE_AMOUNTS for bps, dec in ((30, 6), (20, 6), (10, 6), (30, 9), (30, 2))},
         "fees (decimals)": {f"{a}/{dec}": pay2.fee_of(a, dec) for a in (0, 1, 50_000, 1_000_000, 5_000_000_000) for dec in (2, 6, 9)},
-        # ... and the 0.3.14 fee, which the public program charges until the upgrade to knos_pay 2.2 executes
+        # ... and the 0.3.14 fee, which the public program charged until the upgrade to knos_pay 2.2 executed on 9 Oct 2026 (orders funded under 2.1 keep it)
         "order fees 0.3.14": {f"{a}/{bps}/{dec}": fees.OLD.order(a, bps, dec) for a in FEE_AMOUNTS for bps, dec in ((250, 6), (100, 6), (50, 6), (250, 9), (250, 2))},
         "fees 0.3.14 (decimals)": {f"{a}/{dec}": fees.OLD.job(a, dec) for a in (0, 1, 50_000, 1_000_000, 5_000_000_000) for dec in (2, 6, 9)},
         "fee rules": {name: {**dataclasses.asdict(r), "tiers": [list(t) for t in r.tiers]} for name, r in (("new", fees.NEW), ("old", fees.OLD))},

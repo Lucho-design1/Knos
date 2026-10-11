@@ -352,7 +352,7 @@ def test_the_command_is_registered_by_its_own_module_and_the_document_states_the
     got = CliRunner().invoke(app, ["faucet", "request", A1])
     assert got.exit_code == 0 and f"/knos faucet {A1}" in got.output and "no monetary value" in got.output
     assert CliRunner().invoke(app, ["faucet", "request", "nope"]).exit_code == 2
-    doc = (ROOT / "docs" / "FAUCET.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "FAUCET.md").read_text(encoding="utf-8")
     for fact in ("20 test USDC", "7 days", "200 test USDC", "30 days", "no monetary value", "KNOS_FAUCET_KEY", "faucet tokens", "/knos fund 5"):
         assert fact in doc, fact
     assert json.loads(faucet.marker({"request": "r", "x": 1})[len(faucet.MARK):-4]) == {"request": "r"}

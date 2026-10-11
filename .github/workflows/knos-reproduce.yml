@@ -9,7 +9,7 @@
 #       `knos reproduce`: a named devnet payment is read from Solana and its token verified again from signatures; the
 #       on-chain programs are hashed and held against the builds the release names, with the pending or executed
 #       upgrade read from the chain; `knos check` is run on a named public pull request and held against the recorded
-#       verdict. (The local simulator's tests need a source checkout and are skipped here; docs/REPRODUCE.md says how to
+#       verdict. (The local simulator's tests need a source checkout and are skipped here; docs/reference/REPRODUCE.md says how to
 #       run them.) It writes report.json. The second job asks GitHub for a signed statement (an OIDC token) whose
 #       audience is `knos-repro:<sha256 of report.json>`, and puts the report and the token in one file,
 #       <owner>-<repo>-<run id>.json, uploaded as the run's artifact `knos-reproduction`. The run's page shows the text
@@ -61,7 +61,7 @@ jobs:
           enable-cache: false
           ignore-empty-workdir: true
       - name: install knos, the released wheel
-        run: uv tool install --no-config "knos==0.3.26"
+        run: uv tool install --no-config "knos==0.3.27"
       - name: knos reproduce
         id: report
         env:

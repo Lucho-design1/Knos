@@ -16,11 +16,10 @@ _spec.loader.exec_module(stale)
 
 # Files this check was written with; they must stay clean.
 CLEAN = (
-    "docs/submission/CRITERIA.md",
-    "docs/COMPARE.md",
-    "docs/DISCLOSURE.md",
-    "docs/MARKET.md",
-    "docs/METER.md",
+    "docs/reference/COMPARE.md",
+    "docs/reference/DISCLOSURE.md",
+    "docs/reference/MARKET.md",
+    "docs/reference/METER.md",
 )
 
 
@@ -54,7 +53,10 @@ def test_merge_to_paid() -> None:
     assert rules("From merge to paid takes 25 seconds.") == ["merge-to-paid"]
     assert rules("The median from merge to paid is 25 s.") == ["merge-to-paid"]
     assert rules("The 6 October reading: median 25 s over 42 payments.") == []
-    assert rules("A median of 26 seconds over 51 payments.") == []
+    assert rules("A median of 26 seconds over 51 payments.") == ["merge-to-paid"]
+    assert rules("On 6 Oct 2026 the median was 26 seconds over 51 payments.") == []
+    assert rules("A median of 28 seconds over 56 payments, measured 10 Oct 2026.") == []
+    assert rules("A median of 28 seconds over 56 payments.") == []
 
 
 def test_old_disclosure_counts() -> None:
@@ -87,7 +89,7 @@ def test_meter_constants_match_what_the_documents_say() -> None:
     free = re.search(r"pub const FREE_PER_MONTH: u64 = ([\d_]+);", src)
     assert fee and free
     assert (int(fee.group(1).replace("_", "")), int(free.group(1).replace("_", ""))) == (50_000, 10_000)
-    for name in ("docs/MARKET.md", "docs/METER.md", "docs/COMPARE.md"):
+    for name in ("docs/reference/MARKET.md", "docs/reference/METER.md", "docs/reference/COMPARE.md"):
         text = (ROOT / name).read_text(encoding="utf-8")
         assert "0.05" in text and "10,000" in text, name
 
@@ -97,6 +99,6 @@ def test_who_pays_matches_knos_pay() -> None:
     assert "let net = j.amount - fee;" in src  # a job's fee comes out of the amount
     order = (ROOT / "programs-v2" / "knos_pay" / "src" / "order.rs").read_text(encoding="utf-8")
     assert "n.amount.checked_add(fee)" in order  # an order's fee is paid on top
-    for name in ("docs/MARKET.md", "docs/METER.md", "docs/COMPARE.md"):
+    for name in ("docs/reference/MARKET.md", "docs/reference/METER.md", "docs/reference/COMPARE.md"):
         text = (ROOT / name).read_text(encoding="utf-8")
         assert "on top" in text and "out of" in text, name

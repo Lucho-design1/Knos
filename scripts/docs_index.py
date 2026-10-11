@@ -2,7 +2,8 @@
 
     python scripts/docs_index.py <out file>
 
-One entry a Markdown file directly under docs/: its first `# ` heading and its file name, sorted by file name. A file
+One entry a Markdown file directly under docs/ or docs/reference/: its first `# ` heading and its path under docs/
+(`STORY.md`, `reference/MARKET.md`), the front pages first, each folder sorted by file name. A file
 with no such heading is left out. Nothing else is read and nothing is fetched.
 """
 from __future__ import annotations
@@ -17,10 +18,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def index() -> list[dict[str, str]]:
     out = []
-    for path in sorted((ROOT / "docs").glob("*.md")):
+    docs = ROOT / "docs"
+    for path in [*sorted(docs.glob("*.md")), *sorted((docs / "reference").glob("*.md"))]:
         m = re.search(r"^# +(.+?)\s*$", path.read_text(encoding="utf-8"), re.M)
         if m:
-            out.append({"title": re.sub(r"[`*_]", "", m[1]), "file": path.name})
+            out.append({"title": re.sub(r"[`*_]", "", m[1]), "file": path.relative_to(docs).as_posix()})
     return out
 
 

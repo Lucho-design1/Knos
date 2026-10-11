@@ -1,8 +1,8 @@
 """The acceptance receipt: one JSON document that says who signed what, about which artifact, under which terms, and
 what was paid for it. It is derived from public facts only (the order, the judge's signed token, the program's
-log lines of the paying transaction), so anyone can rebuild it and compare digests. docs/RECEIPT.md is the
-specification; docs/receipt/acceptance-receipt.v2.schema.json (and v1) is the JSON Schema; docs/receipt/vectors.json
-holds the conformance vectors.
+log lines of the paying transaction), so anyone can rebuild it and compare digests. docs/reference/RECEIPT.md is the
+specification; docs/receipt/acceptance-receipt.v1 to v5.schema.json are the JSON Schemas; docs/receipt/vectors.json,
+vectors.v4.json and vectors.v5.json hold the conformance vectors.
 
 Version 3 keeps five things apart, in this order: what the issuer authenticated, what the evaluator observed, which
 policy produced the verdict, who authorised the money and under which limit, and what trust remains; it records who

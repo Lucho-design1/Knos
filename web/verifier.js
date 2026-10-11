@@ -1,6 +1,6 @@
 // The verifier, for someone who builds on it: `renderVerifier(el, env)`.
 //
-// One sentence, then the page itself: the table of issuers (docs/VERIFIER.md and examples/issuers/issuers.json; tests/test_issuers.py
+// One sentence, then the page itself: the table of issuers (docs/reference/VERIFIER.md and examples/issuers/issuers.json; tests/test_issuers.py
 // holds this file to it), each with the algorithms it signs with and, for each algorithm, "accepted today" or "not yet". Below it the
 // three calls as blocks to copy, and a tool that decodes a pasted JWT IN THE PAGE and says what the verifier would read of it.
 // "Accepted" is about the format (RS256 under a 2048- or 4096-bit key): no row says a live token of that issuer was verified.
@@ -14,7 +14,7 @@
 export const PROGRAM = "FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W";      // knos-oidc, second deployment, devnet
 export const CHECKED = "2026-10-05";            // the day the table's claims and key sizes were read
 export const MAX_JWT = 8192, AHEAD = 86_400, LATE = 3600, KEY_BITS = [2048, 4096];
-export const SENTENCE = "Verify any RS256 workload identity on Solana; read it from any program.";
+export const SENTENCE = "Check signed CI identity tokens (RS256) on Solana; other programs read it.";
 const REPO = "https://github.com/drexthealpha/Knos/blob/main";
 
 // name, where its claims were read, what it signs with, whether knos-oidc verifies it, the claims worth gating on, the claims the
@@ -339,7 +339,7 @@ export function renderVerifier(el, env = {}) {
     <p class="fine" id="vf-notyet">Not yet: ES256, ES384, ES512, PS256, EdDSA.</p>
     <p>Find it on devnet: <code class="k-num" id="vf-program" data-copy style="white-space:normal;overflow-wrap:anywhere">${esc(program)}</code> <button type="button" class="k-btn quiet" data-copy="program">Copy</button></p>
     <div class="k-stage" id="vf-calls">${calls}</div>
-    <p class="fine"><a href="${REPO}/docs/VERIFIER.md" target="_blank" rel="noopener">Read the one page.</a>
+    <p class="fine"><a href="${REPO}/docs/reference/VERIFIER.md" target="_blank" rel="noopener">Read the one page.</a>
       <a href="${REPO}/examples/oidc_gate/template.rs" target="_blank" rel="noopener">Copy the 30-line program.</a></p>
     <section class="k-card" id="vf-tool"><p class="k-kicker">Try it</p>
       <h3><label for="vf-jwt">Paste a JWT; see what the verifier reads.</label></h3>

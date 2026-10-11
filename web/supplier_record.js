@@ -1,5 +1,5 @@
 // A supplier's public record, as a page: #record=<slug>. The file is docs/records/<slug>.json (knos.supplier-record/1,
-// docs/RECORD.md), written by `knos record build`; the build puts it at records/<slug>.json beside the site.
+// docs/reference/RECORD.md), written by `knos record build`; the build puts it at records/<slug>.json beside the site.
 //
 //   renderSupplierRecord(el, ctx)   draws the record the address names (or ctx.slug) and follows the address when it
 //                                   changes. ctx: { slug, fetch, base, doc }. Returns { loaded, show }.
@@ -19,7 +19,7 @@ export const SCHEMA = "knos.supplier-record/1";
 export const TILES = ["accepted", "rejected", "insufficient_evidence", "disputed", "overturned", "reverted"];
 export const WORDS = { accepted: "accepted", rejected: "rejected", insufficient_evidence: "insufficient evidence", disputed: "disputed", appealed: "appealed",
   overturned: "overturned on appeal", reverted: "reverted" };
-export const INSTALL = "uses: drexthealpha/Knos/.github/workflows/supplier.yml@v0.3.26";
+export const INSTALL = "uses: drexthealpha/Knos/.github/workflows/supplier.yml@v0.3.27";
 export const slugOf = (name) => String(name ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 64);
 export const slugIn = (hash) => { const m = /^#?record=([^&]*)/.exec(String(hash || "")); return m ? slugOf(decodeURIComponent(m[1])) : ""; };
 
@@ -89,7 +89,7 @@ export function recordHtml(doc) {
     <p class="sr-row"><button type="button" class="k-btn quiet" data-sr="copy">Copy badge Markdown</button></p>
     <p class="fine">Add the free check with one line.</p>
     <pre><code data-sr="install">${esc(INSTALL)}</code></pre>
-    <p class="fine" data-sr="limits">Counts with samples, never a score. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/RECORD.md" target="_blank" rel="noopener">Read the limits.</a></p>
+    <p class="fine" data-sr="limits">Counts with samples, never a score. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECORD.md" target="_blank" rel="noopener">Read the limits.</a></p>
   </section>`;
 }
 

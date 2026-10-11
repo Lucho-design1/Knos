@@ -1,7 +1,7 @@
 """examples/outcomes/: three outcomes that are not a merged pull request (a labelled dataset, a transformation, a
 reproduced result), each a black-box acceptance bundle beside the naive check it replaces. Every submission goes
 through the real `knos proof judge`: the honest one is accepted by both, the cheating one is accepted by the naive
-check (in-process) and refused by the black-box suite. docs/OUTCOMES.md says what each suite cannot check."""
+check (in-process) and refused by the black-box suite. docs/reference/OUTCOMES.md says what each suite cannot check."""
 
 from __future__ import annotations
 
@@ -214,8 +214,8 @@ def test_the_terms_fix_the_suite_and_the_same_evaluation_feeds_the_meter(name):
 
 
 def test_the_document_lists_each_outcome_and_says_what_is_not_built():
-    text = (ROOT / "docs" / "OUTCOMES.md").read_text(encoding="utf-8")
-    assert "each domain needs its own acceptance model" in text.lower()
+    text = (ROOT / "docs" / "reference" / "OUTCOMES.md").read_text(encoding="utf-8")
+    assert "each kind of work needs its own rules for what counts as done (an acceptance model)" in text.lower()
     for name in NAMES:
         assert f"../examples/outcomes/{name}/" in text
     assert "## Support resolutions" in text and "No help-desk\n   adapter is built" in text and "| Back-office processing |" in text

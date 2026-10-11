@@ -343,11 +343,11 @@ def test_funding_stops_with_a_reason_before_anything_is_signed(tmp_path):
     running = said(arrange=lambda w: w.hub.checks.update({w.hub.head: [check("test", None, status="in_progress")]}))
     assert running.startswith("Knos: Checks are still running on the default branch's latest commit (test).") and "`checks: none`" in running
     assert said(arrange=lambda w: setattr(w.hub, "down", ("/check-runs",))) == \
-        "Knos: GitHub did not answer for this repository's checks, so the bounty's terms could not be fixed. Send the command again."
+        "Knos: GitHub did not answer for this repository's checks, so the bounty's terms could not be locked in. Send the command again."
     assert said("/knos fund 20 checks: knos / check").startswith("Knos: `knos / check` is Knos's own job, and a bounty cannot require it.")
     assert said(arrange=lambda w: setattr(w.hub, "down", ("/contents/.knos",)), code=1) == (
         "Knos: GitHub did not answer for this issue's acceptance checks (.knos/acceptance/7/ on the default branch: 502 "
-        f"repos/o/r/contents/.knos/acceptance?ref={sha('main')}), so the bounty's terms could not be fixed and nothing was funded. "
+        f"repos/o/r/contents/.knos/acceptance?ref={sha('main')}), so the bounty's terms could not be locked in and nothing was funded. "
         "Post the comment again.")
     # new funding is paused on chain: said with the date it ends, before GitHub is asked to sign anything
     assert said(arrange=lambda w: w.chain.pause(T0 + 3 * 86_400)) == (

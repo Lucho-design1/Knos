@@ -1,6 +1,6 @@
 // node --test examples/x402_attested/test.mjs
 // The x402 "knos-order" flow end to end on one machine: an HTTP server and a client, the chain replayed from fixtures.json
-// (what the test build of knos_pay did in LiteSVM). The messages exchanged are the ones docs/X402.md prints, exactly.
+// (what the test build of knos_pay did in LiteSVM). The messages exchanged are the ones docs/reference/X402.md prints, exactly.
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync } from "node:fs";
 import test from "node:test";
@@ -30,9 +30,9 @@ async function world() {
   const wallet = { address: fx.buyer, token: fx.buyer_token, send: async (ix) => { sent.push(ix); return chain.send(ix, fx.buyer); } };
   return { chain, srv, url, wallet, sent, base: url.replace("/work/77", ""), close: () => new Promise((r) => srv.close(r)) };
 }
-/** The messages as docs/X402.md prints them, which must also be the committed messages.json. */
+/** The messages as docs/reference/X402.md prints them, which must also be the committed messages.json. */
 const docs = () => {
-  const text = readFileSync(new URL("../../docs/X402.md", import.meta.url), "utf8");
+  const text = readFileSync(new URL("../../docs/reference/X402.md", import.meta.url), "utf8");
   const out = {};
   for (const m of text.matchAll(/<!-- message: (\w+) -->\s*```json\n([\s\S]*?)\n```/g)) out[m[1]] = JSON.parse(m[2]);
   assert.deepEqual(out, JSON.parse(readFileSync(new URL("./messages.json", import.meta.url), "utf8")));
@@ -139,7 +139,7 @@ test("the client refuses an order it did not agree to before it signs anything",
   } finally { await w.close(); }
 });
 
-if (process.argv.includes("--write")) {       // messages.json: the JSON blocks of docs/X402.md
+if (process.argv.includes("--write")) {       // messages.json: the JSON blocks of docs/reference/X402.md
   const w = await world();
   const got = await fetchAttested(w.url, w.wallet, LIMITS);
   w.chain.accept();
@@ -154,7 +154,7 @@ if (process.argv.includes("--write")) {       // messages.json: the JSON blocks 
 
 test("the fee the 402 names follows the build that is live", async () => {
   const { orderFee, feesFor, requirement } = await import("./attested.mjs");
-  // knos_pay 2.2 (Version answers 2): 0.30%, at least 0.05. Before it: the 0.3.14 tiers, at least 0.40.
+  // knos_pay 2.2 (Version answers 2): 0.30%, at least 0.05. Before it: the 2.1 tiers, at least 0.40.
   assert.deepEqual([5_000_000, 20_000_000, 100_000_000, 5_000_000_000].map((a) => String(orderFee(a, 2))), ["50000", "60000", "300000", "15000000"]);
   assert.deepEqual([5_000_000, 20_000_000, 100_000_000, 5_000_000_000].map((a) => String(orderFee(a, 1))), ["400000", "500000", "2500000", "65000000"]);
   assert.equal(String(orderFee(20_000_000)), "60000");                     // nobody asked: the rule of this tree's build

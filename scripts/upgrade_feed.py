@@ -192,9 +192,9 @@ def words(e: Entry, now: int | None = None) -> str:
                  f"{e.approved} of {e.threshold} approvals so far; it can run 48 hours after the vote that approves it.")
         left = hours_to_leave(e, now)
         todo = ((f" {left} hours to leave (at {utc(now)})." if left is not None else "")
-                + " Until then: read the diff at that commit, compare the hash with your own build (docs/ASSURANCE.md), and if you do not "
+                + " Until then: read the diff at that commit, compare the hash with your own build (docs/reference/ASSURANCE.md), and if you do not "
                 "accept it, withdraw a Balance now and cancel a wallet-funded order. An open order whose deadline falls after that time "
-                "cannot be out by then (a cancellation gives 7 days of notice): `knos exit --before-upgrade` lists yours (docs/GOVERNANCE.md).")
+                "cannot be out by then (a cancellation gives 7 days of notice): `knos exit --before-upgrade` lists yours (docs/reference/GOVERNANCE.md).")
     elif e.status == "executed":
         state, todo = f"It ran: {e.program} now runs this build (the multisig marked it executed at {utc(e.since)}).", ""
     elif e.status == "replaced":

@@ -749,7 +749,7 @@ def test_the_rebuild_a_person_is_told_to_run_is_the_command_program_yml_and_depl
         told = said[said.index("solana-verify build"):].rstrip().rstrip(".").rstrip(")")
         assert words(told, "$PWD", "knos_oidc") == want["knos_oidc"], said
     # the documented commands, one per program, run from the repository's root
-    text = (ROOT / "docs" / "ASSURANCE.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "reference" / "ASSURANCE.md").read_text(encoding="utf-8")
     documented = [line for line in text.splitlines() if line.startswith("solana-verify build")]
     assert [words(line, "$PWD", "")[6] for line in documented] == ["knos_pay", "knos_oidc"]
     assert all(words(line, "$PWD", "") == want[words(line, "$PWD", "")[6]] for line in documented), documented
@@ -760,5 +760,5 @@ def test_the_rebuild_a_person_is_told_to_run_is_the_command_program_yml_and_depl
     for where, note in notes.items():
         assert note.count("solana-verify build") == 1, where
         assert 'solana-verify build "$PWD" --workspace-path "$PWD/programs-v2" --library-name <name>' in note, where
-    for text in (script, notes["build_programs_v2.sh"], (ROOT / "docs" / "ASSURANCE.md").read_text(encoding="utf-8"), run):
+    for text in (script, notes["build_programs_v2.sh"], (ROOT / "docs" / "reference" / "ASSURANCE.md").read_text(encoding="utf-8"), run):
         assert "solana-verify build ." not in text and "solana-verify build programs" not in text

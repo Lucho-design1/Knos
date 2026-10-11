@@ -230,15 +230,15 @@ export function renderSupplier(el, ctx = {}) {
     <div data-sp="recommend">${recommendHtml(ctx.preflight)}</div>
     <p class="fine promise" id="sp-promise">Buyers can defend the bill; suppliers can defend what they are owed.</p>
     <details class="k-more" id="sp-reserve"><summary>Reserves: money locked before the work</summary><p class="fine">A buyer locks money for one supplier before the work; netted work draws on it.
-      <a href="https://github.com/drexthealpha/Knos/blob/main/docs/NETTING.md" target="_blank" rel="noopener">Reserves</a>.</p></details>
+      <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/NETTING.md" target="_blank" rel="noopener">Reserves</a>.</p></details>
     <p class="fine">Check all four: <code>knos preflight --strict</code></p>
     <div class="sp-finance" data-sp="finance"></div>
     <h3>Every refusal, in plain words</h3>
     <p class="sp-row"><input type="search" id="sp-q" aria-label="Search refusals" placeholder="Search: protected, pay.83, token" autocomplete="off"></p>
     <p class="fine" data-sp="count"></p>
     <div class="k-table sp-refusals" tabindex="0" role="region" aria-label="Every refusal"><table><thead><tr><th scope="col">Code</th><th scope="col">What happened</th><th scope="col">What to do</th></tr></thead><tbody data-sp="rows"></tbody></table></div>
-    <p class="fine"><a href="https://github.com/drexthealpha/Knos/blob/main/docs/SUPPLIER.md" target="_blank" rel="noopener">Read the supplier's guide.</a> Run <code>knos preflight</code> in your checkout.</p>
-    <p class="fine" data-sp="kit"><a href="#record">See a public record.</a> <a href="https://github.com/drexthealpha/Knos/blob/main/docs/RECORD.md" target="_blank" rel="noopener">Get the badge, the install line and the invoice receipt.</a></p>
+    <p class="fine"><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/SUPPLIER.md" target="_blank" rel="noopener">Read the supplier's guide.</a> Run <code>knos preflight</code> in your checkout.</p>
+    <p class="fine" data-sp="kit"><a href="#record">See a public record.</a> <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECORD.md" target="_blank" rel="noopener">Get the badge, the install line and the invoice receipt.</a></p>
   </section>`;
   const $ = (name) => el.querySelector(`[data-sp="${name}"]`), box = el.querySelector("#sp-in"), pathBox = el.querySelector("#sp-path"), q = el.querySelector("#sp-q");
   let terms = null, refusals = [];
@@ -276,7 +276,7 @@ export function renderSupplier(el, ctx = {}) {
     try { report = JSON.parse(text); } catch { /* terms, or not JSON: readTerms says which */ }
     if (report && report.kind === "knos-preflight") {          // `knos preflight --json`: what memory recommends, beside the four
       $("recommend").innerHTML = recommendHtml(report);
-      return fail(recommended(report).length ? "Read a preflight report." : "Read a preflight report: memory recommends nothing.");
+      return fail(recommended(report).length ? "Read a preflight report." : "Read a preflight report: no earlier case suggests a change.");
     }
     try { return show(readTerms(text), "Read from what you pasted."); } catch (e) { return fail(e.message); }
   };

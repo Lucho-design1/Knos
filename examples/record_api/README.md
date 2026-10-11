@@ -1,17 +1,17 @@
 # A supplier's record as a paid lookup: pay, then the JSON
 
 A small server anyone can run. **Knos hosts none**: whoever runs it is its seller, and its price is its own. It
-sells one thing, the lookup of a supplier's record ([docs/RECORD.md](../../docs/RECORD.md)), for 0.10 test USDC,
-paid through the proposed x402 `knos-order` scheme of [`examples/x402_attested`](../x402_attested)
-([docs/X402.md](../../docs/X402.md), "Record: a lookup priced for machines"). The record file itself stays free.
+sells one thing, the lookup of a supplier's record ([docs/reference/RECORD.md](../../docs/reference/RECORD.md)), for 0.10 test USDC,
+paid through `knos-order`, Knos's proposed scheme for x402 (paying over HTTP with status 402), as in
+[`examples/x402_attested`](../x402_attested)
+([docs/reference/X402.md](../../docs/reference/X402.md), "Record: a lookup priced for machines"). The record file itself stays free.
 
     python -m pytest -q tests/test_record_api.py        # two stand-in agents, the program itself, in LiteSVM
     python -m knos.record_api offer.json --records docs/records --memory .record-api --port 8402 --key operator.json
     python -m knos.record_api offer.json --health        # can it answer, does it sign, what is promised (nothing)
 
-The second line is `knos record serve`. Revenue from lookups is budgeted at zero until someone buys one. It reads the chain from the RPC URL
-every Knos command uses. It has been run against devnet once, on the operator's machine during Knos's own release
-run (0.3.19): a wallet of that run [funded a pack](https://explorer.solana.com/tx/2Z9NtBn78XRfLaY928d34qZQxTFxZrGDxcEbBjwpWm9bqjTjcNgPtSrtFZDC3snMCvuWpWWPWqYnVWRkjZSj5rrd?cluster=devnet)
+The second line is `knos record serve`. It reads the chain from the RPC URL every Knos command uses. It has been run
+against devnet once, by Knos on its own machine while releasing version 0.3.19: a wallet of that run [funded a pack](https://explorer.solana.com/tx/2Z9NtBn78XRfLaY928d34qZQxTFxZrGDxcEbBjwpWm9bqjTjcNgPtSrtFZDC3snMCvuWpWWPWqYnVWRkjZSj5rrd?cluster=devnet)
 at the public knos_pay and got lookup 0 of 50; the same call again and another wallet's call got `402`. The order
 stays in escrow until its deadline, because no judge for lookups exists.
 
@@ -24,12 +24,12 @@ stays in escrow until its deadline, because no judge for lookups exists.
 
 ## What the paid answer adds
 
-The free file is unsigned and says the day it was built. The paid answer ([docs/RECORD.md](../../docs/RECORD.md),
+The free file is unsigned and says the day it was built. The paid answer ([docs/reference/RECORD.md](../../docs/reference/RECORD.md),
 section 5) adds three things, and `knos record verify answer.json` checks it with no network:
 
 - **Signed freshness.** With `--key` the operator signs the record's hash, the cluster time and slot it read, and an
   expiry. Without a key the answer says it is unsigned. Past its expiry it is stale.
-- **A summary.** Every count as `k` of `n` with a 95% Wilson interval, the same for every supplier. No score.
+- **A summary.** Every count as `k` of `n`, with a 95% Wilson interval (the range the true rate likely falls in), the same for every supplier. No score.
 - **History the supplier grants.** `--history <folder>` and `--suppliers <file>`: per-buyer breakdown, disputes and
   appeals, corrections, time to accept. A field is released only against the supplier's signed grant to the paying
   wallet (header `Record-Grant`, written by `knos record grant`). Without one it reads `not granted`.
@@ -46,8 +46,8 @@ The paid answer has been tested in the simulator; the one devnet run above was b
    order's lookups from 0, and asks again with `PAYMENT-SIGNATURE`. It gets the JSON.
 
 One order buys fifty lookups, not one. The smallest order `knos_pay` takes is 5.00, so a single order of 0.10 is
-refused by the program (the test shows it). A pack costs 5.00 plus the order's fee: 0.05 under knos_pay 2.2, and
-0.40 under the build that runs at the public ids until that upgrade executes.
+refused by the program (the test shows it). A pack costs 5.00 plus the order's fee of 0.05 (knos_pay 2.2,
+live on devnet since 9 October 2026).
 
 ## What is refused
 
@@ -79,4 +79,10 @@ returns everything to the caller after the deadline when none arrives (`RefundOr
 What `knos.record_api.offer(...)` returns, as JSON: the seller's wallet and GitHub id, the token, the repository id
 and issue the orders are scoped to, the workflow repository and commit that judges them, and the terms.
 
-    python -c "import json; from knos import record_api as r; print(json.dumps(r.offer('<seller wallet>', <GitHub id>, '<mint>', <repository id>, <issue>, '<owner/workflows>', '<commit>', '<terms JSON>', url='http://127.0.0.1:8402')))" > offer.json
+Fill in your own values, then run this with Python:
+
+    import json
+    from knos import record_api
+    offer = record_api.offer(seller_wallet, github_id, mint, repository_id, issue, "owner/workflows", commit,
+                             terms_json, url="http://127.0.0.1:8402")
+    open("offer.json", "w").write(json.dumps(offer))

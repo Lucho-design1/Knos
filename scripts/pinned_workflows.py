@@ -36,7 +36,7 @@ time, knos itself included. So the cutoff can only be written once PyPI has the 
 committed after that. `cutoff` asks PyPI when it took the locked wheel and writes that time plus MARGIN, with a note
 naming the release and the time. Until the note names the release the workflows install, a locked tree publishes
 nothing (`published`). 0.3.25 set its cutoff by hand to midnight; its wheel went up three hours later, and uv could
-not see it. The order, which docs/RELEASE.md gives with every command (scripts/release.py runs it):
+not see it. The order, which docs/reference/RELEASE.md gives with every command (scripts/release.py runs it):
 
     1. Build the wheel once, reproducibly (`release.py wheel`): SOURCE_DATE_EPOCH fixed, the build backend pinned by
        hash. `lock WHEEL --write`: requirements/sign.txt gets the line `knos==X.Y.Z --hash=sha256:<this wheel>`.

@@ -3,7 +3,7 @@ against the round's cluster. Not a round itself (scripts/exercise_public.py skip
 
 The member keys are <keys>/governance, or the folder <keys>/exercise.json names as "governance_keys": member-1.json,
 member-2.json and payer.json, as governance.mjs reads them. The guardian is 2 of 3 keys, all the founder's
-(docs/GOVERNANCE.md), so one owner can sign for it.
+(docs/reference/GOVERNANCE.md), so one owner can sign for it.
 """
 from __future__ import annotations
 

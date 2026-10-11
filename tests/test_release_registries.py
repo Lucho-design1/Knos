@@ -1,5 +1,5 @@
 """`scripts/release.py registry-plan`: one line per registry, OK or blocked with the reason. "Signed in" is asked
-without starting a sign-in: cargo's stored token, and `npm whoami`. docs/RELEASE.md gives the same commands in order."""
+without starting a sign-in: cargo's stored token, and `npm whoami`. docs/reference/RELEASE.md gives the same commands in order."""
 from __future__ import annotations
 
 import importlib.util
@@ -66,7 +66,7 @@ def test_the_plan_says_ok_or_blocked_per_registry_with_the_reason_and_the_comman
 
 
 def test_the_release_page_says_what_signed_in_means_and_gives_the_commands_in_order():
-    page = (ROOT / "docs" / "RELEASE.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "RELEASE.md").read_text(encoding="utf-8")
     part = page.split("### Registries: is this machine signed in, and the commands in order")[1].split("\nA package is published at ITS OWN version")[0]
     assert "python scripts/release.py registry-plan" in part and "`OK`" in part and "`blocked`" in part
     assert "`CARGO_REGISTRY_TOKEN` is set" in part and "credentials.toml" in part and "`npm whoami` answers with a user name" in part

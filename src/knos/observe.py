@@ -16,7 +16,7 @@ history says of one GitHub id: who it pays, who pays it, how much and how often.
 
 A source of chain data is anything with `transactions(address, limit)` (the successful transactions that named the
 address, oldest first, as `getTransaction` gives them with encoding "json"), `transaction(signature)` and
-`account(address)`: `Rpc` asks a cluster, `Recorded` holds transactions a test recorded. The tables in docs/PRIVACY.md
+`account(address)`: `Rpc` asks a cluster, `Recorded` holds transactions a test recorded. The tables in docs/reference/PRIVACY.md
 are written by `python -m knos.observe --render-doc` from tests/data/observe.json, which tests/test_observe.py records
 from the programs' test builds and holds to them.
 
@@ -40,7 +40,7 @@ from .settle.v2 import pay as pay2
 YES, HASH, NO = "yes", "only a hash", "no"
 PAY, OIDC = str(pay2.PAY_ID), str(oidc.OIDC_ID)
 ROOT = Path(__file__).resolve().parents[2]
-FIXTURE, DOC = ROOT / "tests" / "data" / "observe.json", ROOT / "docs" / "PRIVACY.md"
+FIXTURE, DOC = ROOT / "tests" / "data" / "observe.json", ROOT / "docs" / "reference" / "PRIVACY.md"
 _ACCOUNT = "the order's account, while the order is open"
 RECENT = 200           # how many of an address's newest transactions are read: an order has a handful, a busy Balance more
 SIBLINGS = 50          # how many of a source's newest orders are read for what they paid: each is one more request
@@ -231,9 +231,8 @@ def order_facts(src, target: str, names=None) -> dict:
     if not orders:
         bounty = _bounty(src, target, txs)
         if bounty is not None:
-            raise LookupError(f"{target} is an issue's bounty (repository id {bounty['repo']}, issue {bounty['issue']}), not a work order: its escrow's "
-                              f"lines are knos2:{bounty['event']}, and this table is read from a work order's (knos3) lines. "
-                              f"Its payments are in the graph: knos observe --graph <the funder's GitHub id>.")
+            raise LookupError(f"{target} is an issue's bounty (repository id {bounty['repo']}, issue {bounty['issue']}), not a work order, and this "
+                              f"table covers work orders only. To see its payments, run: knos observe --graph <the funder's GitHub id>")
         raise LookupError(f"No work order was found for {target}: the Knos programs logged nothing about it in the transactions this cluster gave.")
     o = orders[-1]                    # an address is used again once its order is closed: the newest one
     private, source = o["private"], o["source"]
@@ -427,9 +426,9 @@ def graph_text(g: dict) -> list[str]:
     return out + ["An outsider reads this from the escrow's log lines alone. Private orders are in it: their lines name the payee, the amount and the time."]
 
 
-# ---- docs/PRIVACY.md ----------------------------------------------------------------------------------------------------
+# ---- docs/reference/PRIVACY.md ----------------------------------------------------------------------------------------------------
 def doc_blocks(fixture: dict) -> dict[str, str]:
-    """The text between each pair of `<!-- observe:NAME -->` marks of docs/PRIVACY.md, from the recorded fixture."""
+    """The text between each pair of `<!-- observe:NAME -->` marks of docs/reference/PRIVACY.md, from the recorded fixture."""
     src = Recorded(fixture["txs"], fixture["accounts"])
     return {"public": table_md(order_facts(src, fixture["public"])), "private": table_md(order_facts(src, fixture["private"])),
             "graph": graph_md(graph(events_in(fixture["txs"]), fixture["owner"]))}
@@ -439,7 +438,7 @@ def render_doc(text: str, fixture: dict) -> str:
     for name, block in doc_blocks(fixture).items():
         a, b = f"<!-- observe:{name} -->", f"<!-- /observe:{name} -->"
         if a not in text or b not in text:
-            raise ValueError(f"docs/PRIVACY.md has no {a} ... {b} marks")
+            raise ValueError(f"docs/reference/PRIVACY.md has no {a} ... {b} marks")
         text = text[:text.index(a) + len(a)] + "\n" + block + "\n" + text[text.index(b):]
     return text
 
@@ -447,15 +446,15 @@ def render_doc(text: str, fixture: dict) -> str:
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if args[:1] != ["--render-doc"]:
-        print("python -m knos.observe --render-doc [--check]: write the tables of docs/PRIVACY.md from tests/data/observe.json. The command itself is `knos observe`.")
+        print("python -m knos.observe --render-doc [--check]: write the tables of docs/reference/PRIVACY.md from tests/data/observe.json. The command itself is `knos observe`.")
         return 2
     old = DOC.read_text(encoding="utf-8")
     new = render_doc(old, json.loads(FIXTURE.read_text(encoding="utf-8")))
     if "--check" in args:
-        print("docs/PRIVACY.md is current." if new == old else "docs/PRIVACY.md is stale: run python -m knos.observe --render-doc")
+        print("docs/reference/PRIVACY.md is current." if new == old else "docs/reference/PRIVACY.md is stale: run python -m knos.observe --render-doc")
         return int(new != old)
     DOC.write_text(new, encoding="utf-8", newline="\n")
-    print("Wrote the tables of docs/PRIVACY.md." if new != old else "docs/PRIVACY.md was current.")
+    print("Wrote the tables of docs/reference/PRIVACY.md." if new != old else "docs/reference/PRIVACY.md was current.")
     return 0
 
 
@@ -474,7 +473,11 @@ def register(app, help_lines: list | None = None) -> None:
                  offline: bool = typer.Option(False, "--offline", help="do not ask GitHub's public API for the names behind ids"),
                  as_json: bool = typer.Option(False, "--json", help="print JSON"),
                  limit: int = typer.Option(1000, "--limit", help="with --graph: how many of the escrow's newest transactions to read (at most 1000)")) -> None:
-        """Play the outsider: say what anyone can infer about a work order from public data alone (the Knos programs' accounts and transaction logs, and GitHub's public API with no credential), fact by fact: learned, learned only as a hash, or not, and from which account field or log line. For a private order it shows what still leaks: amounts, payees, wallets, timing, the attestor repository and the link between the orders of one Balance. With --graph: the commercial relationships of one GitHub id. A list of what was found, not a privacy guarantee."""
+        """Show what anyone can learn about a work order from public data alone: the Knos programs' accounts and logs,
+        and GitHub's public API without a login. Each fact is marked learned, learned only as a hash, or not
+        learned, with where it came from. For a private order it lists what still leaks: amounts, payees,
+        wallets, timing, the attestor repository, and links between orders paid from one balance. With --graph
+        it shows who one GitHub id pays and is paid by. This is a list of findings, not a privacy guarantee."""
         from . import cli
         url = rpc or cli._ledger().url
         names = None if offline else records.Names(public_github)

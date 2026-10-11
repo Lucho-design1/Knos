@@ -5,7 +5,7 @@ knos_pay, and whether that can happen before a pending upgrade can execute.
     knos exit --before-upgrade --github-id N           the Balances a GitHub account owns, and their orders
               [--rpc URL] [--json] [--upgrade-at UNIX]
 
-An upgrade of a Knos program can execute 48 hours after the multisig approves it (docs/GOVERNANCE.md). Whoever does
+An upgrade of a Knos program can execute 48 hours after the multisig approves it (docs/reference/GOVERNANCE.md). Whoever does
 not accept it has those hours to take their money out. Not every holding can be left that fast, and this command
 says which, from the program's own rules (programs-v2/knos_pay; the constants in knos.settle.v2.pay):
 
@@ -24,7 +24,7 @@ notice that protect the seller are longer than the upgrade's delay. A held order
 either. This is the gap the command shows, with the hours that are missing.
 
 The gap closes for open orders when the upgrade multisig's time lock is at least COVERS (NOTICE + GRACE + 2 seconds):
-scripts/timelock_plan.py plans that change (docs/GOVERNANCE.md). With --before-upgrade the command reads the time lock
+scripts/timelock_plan.py plans that change (docs/reference/GOVERNANCE.md). With --before-upgrade the command reads the time lock
 on chain and says which it is: every open order can leave before any upgrade approved from now on, or not.
 
     holdings(ledger, wallet, github_id)   what the owner holds in knos_pay, read through ledger.program_accounts/infos

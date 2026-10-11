@@ -5,7 +5,7 @@ One chain, three orders of one organisation's Balance: a public one (reserved, t
 judged by an attestor repository (paid to the same supplier) and a public one paid to a second supplier. Every
 transaction is recorded as a cluster's `getTransaction` would give it; knos.observe reads only that record.
 
-tests/data/observe.json is such a record, kept so docs/PRIVACY.md's tables are written from it
+tests/data/observe.json is such a record, kept so docs/reference/PRIVACY.md's tables are written from it
 (`python -m knos.observe --render-doc`). Record it again with `python tests/test_observe.py` from the repository's root."""
 from __future__ import annotations
 
@@ -111,7 +111,7 @@ class World:
         return observe.Recorded(self.c.txs, self.accounts)
 
     def fixture(self) -> dict:
-        """What docs/PRIVACY.md is written from: the transactions an order's history needs (the escrow's own, and the
+        """What docs/reference/PRIVACY.md is written from: the transactions an order's history needs (the escrow's own, and the
         ones that wrote a token), the two orders' accounts while open, and which is which."""
         def needed(tx: dict) -> bool:
             keys = observe.keys_of(tx)
@@ -273,7 +273,7 @@ def shape(fixture: dict) -> list:
 def test_the_tables_in_the_privacy_document_are_the_commands_and_the_record_they_come_from_is_what_the_programs_write():
     fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
     doc = observe.DOC.read_text(encoding="utf-8")
-    assert observe.render_doc(doc, fixture) == doc, "docs/PRIVACY.md is stale: run python -m knos.observe --render-doc"
+    assert observe.render_doc(doc, fixture) == doc, "docs/reference/PRIVACY.md is stale: run python -m knos.observe --render-doc"
     assert observe.main(["--render-doc", "--check"]) == 0 and observe.main([]) == 2
     for name, block in observe.doc_blocks(fixture).items():
         assert block in doc and block.count("\n") > 2, name

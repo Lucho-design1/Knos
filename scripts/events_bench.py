@@ -1,11 +1,11 @@
 """How long the event log takes: ingest, verify, and one month's statement from the index.
 
     python scripts/events_bench.py                    # 2,000 synthetic events: a quick look
-    python scripts/events_bench.py --events 100000    # the figure docs/EVENTS.md quotes
+    python scripts/events_bench.py --events 100000    # the figure docs/reference/EVENTS.md quotes
 
 Synthetic and seeded: evaluations of 12 months and 20 suppliers, one in ten arriving a second time by another mode,
 and one invoice line for every accepted deliverable. Nothing here opens the network. The times are this machine's;
-the script prints them, and docs/EVENTS.md says which machine wrote the ones it quotes.
+the script prints them, and docs/reference/EVENTS.md says which machine wrote the ones it quotes.
 """
 from __future__ import annotations
 

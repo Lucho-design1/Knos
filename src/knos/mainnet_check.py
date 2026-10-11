@@ -24,7 +24,7 @@ evidence it was judged on.
 
 The review is recorded as:
 
-    {"reviewer": "who", "date": "2026-11-20", "report": "https://...", "commit": "<the commit reviewed>",
+    {"reviewer": "who", "date": "YYYY-MM-DD", "report": "https://...", "commit": "<the commit reviewed>",
      "programs": {"knos_oidc": "<executable hash reviewed>", "knos_pay": "<executable hash reviewed>"}}
 
 Exit 1 while any gate fails. A gate that cannot be checked from where the command runs (the verified build and the
@@ -77,9 +77,9 @@ REPO = "drexthealpha/Knos"      # whose program.yml runs `gh` reads, wherever th
 NOT_HERE = "not checked from here: needs a clone"
 NEEDS_GH = NOT_HERE + " (and gh, logged in to GitHub)"
 PROGRAMS = ("knos_oidc", "knos_pay")
-NEW_PROGRAMS = ("knos_meter", "knos_passkey")       # new in 0.3.13: the release run deploys them, so until it has they are "not deployed yet"
+NEW_PROGRAMS = ("knos_meter", "knos_passkey")       # both run at the public ids; a cluster without them yet is skipped, not failed
 TIME_LOCK = 172_800      # seconds between the vote that approves an upgrade and its execution
-# 8 days, once the configuration transaction scripts/timelock_plan.py plans has executed (docs/GOVERNANCE.md, section 2):
+# 8 days, once the configuration transaction scripts/timelock_plan.py plans has executed (docs/reference/GOVERNANCE.md, section 2):
 # longer than an order's 7 days of notice and 2 hours of grace. Either is what the design fixes.
 PLANNED_TIME_LOCK = 691_200
 TIME_LOCKS = (TIME_LOCK, PLANNED_TIME_LOCK)
@@ -502,11 +502,11 @@ def _program(account: Account, address: str) -> tuple[bool, str]:
 
 
 def _new_program(account: Account, address: str, vault: str) -> tuple[bool | None, str]:
-    """A program this release adds (knos_meter, knos_passkey): (None, "not deployed yet") while nothing is at its
-    address, which is how it stands until the release run deploys it; else whether it is deployed, executable and
+    """A program added after the first two (knos_meter, knos_passkey): (None, "not deployed ...") while nothing is at its
+    address on this cluster; else whether it is deployed, executable and
     upgradeable only through the upgrade vault (or by nobody), and what was found in words."""
     if not account(address):
-        return None, "not deployed yet (the release run deploys it)"
+        return None, "not deployed on this cluster yet (skipped)"
     ok, why = _program(account, address)
     if not ok:
         return False, why
@@ -554,9 +554,9 @@ def status(fetch: Fetch, ids: dict | None = None, first: dict | None = None) -> 
                      f"or solana program set-upgrade-authority <program id> --new-upgrade-authority {vault} "
                      "--skip-new-upgrade-authority-signer-check --upgrade-authority <the current authority's key file>"))
 
-    # the programs this release adds: nothing at their addresses until the release run deploys them, which is not a fault
+    # the programs added after the first two: a cluster with nothing at their addresses is not a fault
     new = {name: _new_program(fetch.account, ids[name], vault) for name in NEW_PROGRAMS if ids.get(name)}
-    res.append(Check("new programs: knos_meter and knos_passkey are deployed and executable, upgradeable only through the upgrade vault; or not deployed yet",
+    res.append(Check("new programs: knos_meter and knos_passkey are deployed and executable, upgradeable only through the upgrade vault (a cluster without them yet is skipped)",
                      all(ok is not False for ok, _ in new.values()),
                      "; ".join(f"{name} {ids[name]}: {why}" for name, (_, why) in new.items()) or "none is pinned",
                      "what is at a pinned address must be the program, in the upgrade vault's hands: run scripts/deploy_v2.sh (it deploys what is missing "
@@ -699,7 +699,7 @@ def _last_run(*more: str) -> tuple[int, list[dict]]:
     """(the id of the last program.yml run on main, its jobs). LookupError when there is none."""
     runs = json.loads(_gh("run", "list", "--workflow", "program.yml", "--branch", "main", "--limit", "1", "--json", "databaseId", *more))
     if not runs:
-        raise LookupError("no program.yml run on main")
+        raise LookupError("No run of the program.yml workflow was found on the main branch; run that workflow first.")
     rid = runs[0]["databaseId"]
     return rid, json.loads(_gh("run", "view", str(rid), "--json", "jobs"))["jobs"]
 

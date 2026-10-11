@@ -8,9 +8,9 @@ nothing of a payment's whole path. This does. One payment is what a relay does f
 on chain, verify GitHub's signature (knos_oidc, several transactions), then PayOrder (knos_pay). Each relay has a
 fee payer of its own, and a payment always goes to the relay of its part (`knos.settle.v2.relayq.part_of` of the
 token's lane, the same partition the relay's workers use): two relays never carry one order, and no two relays pay
-from one fee payer. Since 0.3.22 a pay token's lane is its ORDER (`knos.settle.v2.relay.lane`), so the orders of ONE
-owner spread over the relays (the run of 8 Oct had one owner's 40 tokens in one lane, so one relay: 0.097 paid a
-second), and `--fee-accounts K` has each order's fee go to one of K token accounts of FEE_OWNER
+from one fee payer. A pay token now travels in its ORDER's lane (the queue a relay works through, `knos.settle.v2.relay.lane`), so the
+orders of ONE owner spread over the relays. In the run of 8 Oct 2026, before this change, one owner's 40 tokens shared
+one lane and so one relay: 0.097 payments a second. And and `--fee-accounts K` has each order's fee go to one of K token accounts of FEE_OWNER
 (`knos.settle.v2.pay.fee_account_for`), so the payments do not all write one account.
 
 What is recorded, for every run: payments ATTEMPTED (the denominator), paid, refused (with the program's words),
@@ -44,8 +44,8 @@ printed without its denominator and its failures, and p50, p95 and p99 are given
              through knos.settle.v2.fanout.FanLedger: sent to the configured endpoint and to every --second-rpc
              (KNOS_RPC_SECOND), the same bytes again every 2 s until an endpoint takes them, confirmed by its
              signature's status, read in one request for every transaction the run waits on; a dropped
-             connection, a timeout or HTTP 408 is no answer, and the payment is sent again (0.3.24: 22 of 40 paid, the
-             other 18 lost to exactly these, each after ONE send). Sources for the fee: Solana's fee
+             connection, a timeout or HTTP 408 is no answer, and the payment is sent again (in the release 0.3.24 run on
+             devnet, 22 of 40 were paid; the other 18 were lost to exactly these errors, each after ONE send). Sources for the fee: Solana's fee
              structure, https://solana.com/docs/core/fees/fee-structure (prioritization fee = ceil(price x limit /
              1,000,000) lamports).
 --fee-accounts K   fee accounts per mint (default 1: the associated one alone). On a cluster the wallet is their base:

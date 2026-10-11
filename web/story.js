@@ -1,6 +1,6 @@
 // The story on one page: the number, the three-minute demonstration in seven beats that play in order, and what the
 // project needs next. docs/STORY.md says the same seven beats with the same evidence (tests/web/story.mjs holds the two
-// together), docs/submission/demo_script.md is the same seven, timed, and the first screen's round (web/demo.js) plays
+// together), and the first screen's round (web/demo.js) plays
 // them under the same names: Agree, Fails, Passes, Statement, Replay, Pay, Verify.
 //
 //   renderStory(el[, ctx])   draws it into el. ctx: { repo, front, merged, failed, reduced }, each optional
@@ -31,17 +31,17 @@ export const STEPS = [
   { title: "Buyer and supplier agree one task.", says: "Price and acceptance terms come first.", ends: "done",
     evidence: "The funding transaction (devnet, public program ids)", url: `${TX}177CEpZ8N4r5CGNjSEWBEouTTqMDwAao9LFzwSNYiFjJZUfJdtLDeusHbmmawWxzKLp1SozNAyNCEeGxSvvBm5s?cluster=devnet` },
   { title: "A claimed success fails the condition.", says: "Payment is withheld, with the reason.", ends: "bad",
-    evidence: "The tamper benchmark", path: "docs/TAMPER.md" },
+    evidence: "The tamper benchmark", path: "docs/reference/TAMPER.md" },
   { title: "Valid work passes.", says: "The corrected submission meets the same check.", ends: "done",
     evidence: "The test that accepts correct work", path: "tests/test_tamper_bench.py" },
-  { title: "Both sides make the same statement.", says: "Two independent records reconcile.", ends: "done",
+  { title: "Both sides make the same statement.", says: "Two records give one bill.", ends: "done",
     evidence: "The test that reconciles two ledgers", path: "tests/test_ledger.py" },
   { title: "A replay pays nothing.", says: "No second payment.", ends: "done",
     evidence: "The refused replay (devnet, public program ids)", url: `${TX}4hCf7a3FpKiTexPUxX4jvPbYUUQMvgHmyjHSVjbUJ2yqe3srzxLJrsZ8QY4dpT2pt4VFSRJ4j4kQMwEcapvk3Rrp?cluster=devnet` },
   { title: "The payment executes.", says: "The supplier gets a portable receipt.", ends: "done",
     evidence: "The paying transaction (devnet, public program ids)", url: `${TX}59AfaYHTvWHhbAhiiNHCbCfEcGCxG1kCydJwfRNjZqry9bCnMF3ox6bd4P7favA9hjgzB5nk283g2Mdq3LruyNWV?cluster=devnet` },
-  { title: "A verifier checks it offline.", says: "The deployment identity is one page.", ends: "done",
-    evidence: "The release manifest", path: "docs/MANIFEST.md" },
+  { title: "A verifier checks it offline.", says: "One page lists the live code.", ends: "done",
+    evidence: "The release manifest", path: "docs/reference/MANIFEST.md" },
 ];
 export const NEXT = "Check your own invoice";      // after the last beat: the reader's own invoice, at the front door
 
@@ -64,10 +64,10 @@ export function storyHtml(ctx = {}) {
     + `${s.staging ? ` <small class="story-staging">${esc(STAGING)}</small>` : ""}</li>`).join("");
   return `<p class="k-kicker">${esc(SENTENCE)}</p>`
     + `<h2>One task, seven steps</h2>`
-    + `<p class="story-number"><strong class="k-num">${esc(merged)}</strong> merged agent “tests pass” pull requests: <strong class="k-num">${esc(failed)}</strong> failed tests or builds.</p>`
+    + `<p class="story-number">Of <strong class="k-num">${esc(merged)}</strong> merged agent “tests pass” pull requests: <strong class="k-num">${esc(failed)}</strong> failed a test, build, lint or type check.</p>`
     + `<ol class="story-steps k-stage" aria-label="The demonstration in seven steps" data-not-prose data-keep>${steps}</ol>`
     + `<p><a class="k-btn story-next" href="${esc(ctx.front || FRONT)}">${esc(NEXT)}</a> <button type="button" class="k-btn quiet story-play"${ctx.reduced ? " hidden" : ""}>Play again</button></p>`
-    + `<details class="k-more story-ask-fold"><summary>The ask: three needs</summary><ol class="story-ask" data-keep>${ASK.map((a) => `<li>${esc(a)}</li>`).join("")}</ol></details>`;
+    + `<details class="k-more story-ask-fold"><summary>What Knos still needs</summary><ol class="story-ask" data-keep>${ASK.map((a) => `<li>${esc(a)}</li>`).join("")}</ol></details>`;
 }
 
 /** Plays the steps under `root` in order. `wait(ms)` is the clock (a test passes its own). Resolves when the last step
@@ -88,7 +88,7 @@ export async function play(root, { wait = (ms) => new Promise((r) => setTimeout(
 // The cards' look. It is put in the page's head once (never in the story's own markup, which carries no style): a beat is
 // a .k-step whose dot is its number; idle it is dim, live it lifts and takes the accent, done its number turns green,
 // and the refusal turns red and shakes once (web/app.css .k-step). Nothing loops; with reduced motion nothing moves.
-export const STYLE = `.story-number { font-size: var(--s2); color: var(--ink-2); margin: 0 0 20px; } .story-number .k-num { color: var(--ink); }
+export const STYLE = `.story-number { font-size: var(--s1); color: var(--ink-2); margin: 0 0 20px; } .story-number .k-num { color: var(--ink); }
 .story-steps { list-style: none; padding: 0; margin: 0 0 24px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); counter-reset: beat; }
 .story-steps > .k-step { counter-increment: beat; min-width: 0; padding: 16px 18px 16px 56px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--ink);
 overflow-wrap: anywhere; transition: opacity var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease), translate var(--dur-2) var(--ease); }

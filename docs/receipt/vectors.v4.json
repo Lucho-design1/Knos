@@ -1,5 +1,5 @@
 {
- "note": "Conformance vectors of the acceptance receipt, version 4 (docs/RECEIPT.md, Version 4). A reader must accept every receipt of `valid_v4` and compute its digest, and refuse every one of `invalid_v4`: `of` is the index of the valid receipt it was made from and `set` the fields changed (dotted paths). In `valid_v4`, `of` on an accepted receipt is the index in `valid_v3` of docs/receipt/vectors.json it was made from, and on a disputed one the index here of the receipt it contests; `verdict` and `authorises_payment` are what a reader says of each: only an accepted receipt authorises payment.",
+ "note": "Conformance vectors of the acceptance receipt, version 4 (docs/reference/RECEIPT.md, Version 4). A reader must accept every receipt of `valid_v4` and compute its digest, and refuse every one of `invalid_v4`: `of` is the index of the valid receipt it was made from and `set` the fields changed (dotted paths). In `valid_v4`, `of` on an accepted receipt is the index in `valid_v3` of docs/receipt/vectors.json it was made from, and on a disputed one the index here of the receipt it contests; `verdict` and `authorises_payment` are what a reader says of each: only an accepted receipt authorises payment.",
  "valid_v4": [
   {
    "name": "accepted and paid: version 3's first receipt as version 4, with the supplier's invoice line",

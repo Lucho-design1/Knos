@@ -284,7 +284,7 @@ def remember(store, exc: dict, resolution: str, supplier: str, terms: str = "", 
     the resolution is not one of RESOLUTIONS or no terms hash is known."""
     history = _history()
     if resolution not in RESOLUTIONS:
-        raise ValueError(f"an exception is resolved {', '.join(RESOLUTIONS)}")
+        raise ValueError(f"an exception's resolution must be one of: {', '.join(RESOLUTIONS)}")
     t = str(exc.get("terms") or terms).lower()
     when = period.replace("-", "") if period else ""
     return history.exception_resolved(store, t, _reason(exc["kind"]), supplier, exc["source"], RESOLUTIONS[resolution],

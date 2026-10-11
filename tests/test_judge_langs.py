@@ -389,7 +389,7 @@ def test_the_sandbox_reaches_an_interpreter_under_a_private_directory(tmp_path):
 
 def test_black_box_is_a_mechanical_test_that_agrees_with_the_runner_the_judge_picks(tmp_path):
     """knos.judge.black_box decides whether a bounty may be paid by its checks alone. The benchmark's bundles
-    (docs/TAMPER.md): the three black-box ones pass it and the three that import the submission do not, and whatever
+    (docs/reference/TAMPER.md): the three black-box ones pass it and the three that import the submission do not, and whatever
     passes it is run by the blackbox runner."""
     bench = Path(__file__).parent / "bench_tamper"
 

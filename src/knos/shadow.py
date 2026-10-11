@@ -588,7 +588,11 @@ def register(app, help_lines: list | None = None) -> None:
                 events_log: Path = typer.Option(None, "--events", help="also take the invoice's lines and their evaluations into this log of events (`knos events`); default: the file KNOS_EVENTS names, else none"),
                 invoice_name: str = typer.Option("", "--invoice", help="with a log of events: the invoice's own number or name (default: the file's name)"),
                 month: str = typer.Option(None, "--month", help="with a log of events: the month the invoice belongs to, YYYY-MM (default: this month)")) -> None:
-        """Shadow mode: take an invoice that bills per merged change and say which billed changes had a failed check when they were merged, which were not merged, which are billed twice, and which could not be read (those are counted apart, never guessed). Prints the amount in dispute, its share of the invoice and the statement's sha256, so both sides can confirm they hold the same one. It only reads GitHub: nothing is written there, nothing is paid and nothing is held. A failed check at merge is not proof the work is bad, and a green check is not proof it is good."""
+        """Shadow mode: check an invoice that bills per merged change against GitHub. It lists billed changes that had a
+        failed check at merge, were not merged, are billed twice, or could not be read (counted apart, never
+        guessed). It prints the amount in dispute, its share of the invoice, and the statement's sha256 so
+        both sides can confirm they hold the same one. It only reads GitHub: nothing is written, paid or held.
+        A failed check at merge does not prove the work is bad, and a passing one does not prove it is good."""
         from . import cli
         try:
             text = invoice.read_text(encoding="utf-8-sig")

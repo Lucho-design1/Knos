@@ -1,9 +1,9 @@
-"""The registry of published terms (terms/, docs/TERMS.md "Knos Terms 1") and the script that builds and reads it.
+"""The registry of published terms (terms/, docs/reference/TERMS.md "Knos Terms 1") and the script that builds and reads it.
 
 terms/ is what scripts/terms_registry.py publishes from knos.terms_templates; a published version never changes (an
 edit to a listed file fails here, and a changed template becomes the next version); `verify` names the template and
 version of a terms JSON or a hash, or says it is not a published template; `cite` gives the sentence a contract
-carries. docs/TERMS.md states the canonical form knos.terms writes, and its example is a published version. The
+carries. docs/reference/TERMS.md states the canonical form knos.terms writes, and its example is a published version. The
 page that browses the registry (web/terms.js) is run in headless Chromium by tests/web/terms.mjs.
 """
 from __future__ import annotations
@@ -198,7 +198,7 @@ def test_knos_terms_cite_and_verify_read_the_registry_from_the_package(tmp_path,
 
 
 def test_the_standard_states_the_canonical_form_the_code_writes():
-    doc = (ROOT / "docs" / "TERMS.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "reference" / "TERMS.md").read_text(encoding="utf-8")
     assert doc.startswith("# Knos Terms 1\n") and "Acceptance is governed by Knos Terms 1, template <name> version <n>, sha256 <hash>" in doc
     assert f"at most {terms.MAX_BYTES} bytes" in doc
     for key in sorted(terms._KEYS | terms._ORDER_KEYS):                     # every field the reader takes has its line

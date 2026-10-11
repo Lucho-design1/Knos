@@ -1,4 +1,4 @@
-name: hermetic judge (staging)
+name: hermetic judge (runs in Knos's test repository only)
 
 # The hermetic judge end to end in a real container: tests/test_judge_hermetic.py::test_end_to_end_in_a_real_container
 # on a GitHub-hosted Ubuntu runner, where docker answers. The image is pulled by digest (scripts/tamper_bench.py
@@ -9,9 +9,10 @@ name: hermetic judge (staging)
 # The same job then holds the host sandbox to its limits (tests/test_judge_box.py: a fork bomb, a write outside the
 # work directory, a file past the size limit, a CPU loop, a run past its time limit; a skip fails the job) and measures
 # the five escapes in all three places, the container included, into the step summary (scripts/tamper_bench.py
-# --escape on a copy of docs/TAMPER.md).
+# --escape on a copy of docs/reference/TAMPER.md).
 #
-# Staging only (drexthealpha/knos-rc). tests.yml is the release gate and runs every job it has, with no condition
+# It runs only in Knos's private test repository, drexthealpha/knos-rc, because it pulls an image from Docker Hub;
+# in this repository it is always skipped. tests.yml is the release gate and runs every job it has, with no condition
 # (tests/test_release_gate.py), so this job, which pulls an image from Docker Hub, is a workflow of its own.
 on:
   push:
@@ -64,7 +65,7 @@ jobs:
       - name: the five escapes, measured in all three places
         shell: bash
         run: |
-          cp docs/TAMPER.md "$RUNNER_TEMP/TAMPER.md"
+          cp docs/reference/TAMPER.md "$RUNNER_TEMP/TAMPER.md"
           python scripts/tamper_bench.py --escape --out "$RUNNER_TEMP/TAMPER.md"
           sed -n '/<!-- escape:begin -->/,/<!-- escape:end -->/p' "$RUNNER_TEMP/TAMPER.md" | tee -a "$GITHUB_STEP_SUMMARY"
           if grep -q "hermetic (image): not run here" "$RUNNER_TEMP/TAMPER.md"; then echo "::error::the container place did not run"; exit 1; fi

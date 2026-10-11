@@ -28,7 +28,7 @@ task board therefore funds only where the repository calls the public pinned wor
 
 TASKS THAT ARE NOT CODE PUZZLES (KINDS; tasks/outside/<kind>.json holds the same text). Each has evidence a
 machine checks (`accepts`) and one counter it can move. `keyholder` counts an OFFER of a key, never a holder: a key
-is held only once the multisig seats it (docs/KEYHOLDER.md). `witness` is the whole transaction, end to end, in a
+is held only once the multisig seats it (docs/reference/KEYHOLDER.md). `witness` is the whole transaction, end to end, in a
 repository of the stranger's own (examples/witnessed). A counter moves only when the account that did it is not one
 of Knos's own (scripts/own_github_ids.json; scripts/outsiders.py `task_counts` counts, never this module). Every one is
 paid in test USDC from a task Knos funded itself, and every count that comes from them carries that label. None is an
@@ -95,7 +95,7 @@ def fetch(source: str = BOARD, get: Callable[[str], bytes] | None = None) -> dic
     except (OSError, ValueError) as why:
         raise Stop(f"the task board at {source} could not be read: {' '.join(str(why).split())[:160]}") from None
     if not isinstance(doc, dict) or doc.get("v") != 1 or not isinstance(doc.get("tasks"), list):
-        raise Stop(f"{source} is not the task board's document (tasks.json, v 1)")
+        raise Stop(f"{source} is not the task board's document (tasks.json, version 1)")
     return doc
 
 
@@ -298,19 +298,19 @@ KINDS: dict[str, dict] = {
     "reproduce": _kind("Reproduce what Knos says, in your own fork",
                        "Make a repository from the knos-task template, run the `knos reproduce` workflow there, and open a pull request that files the report GitHub signed.",
                        "a file under reproductions/ whose GitHub-signed token names your account and the report's hash (knos.reproduce.verified accepts it)",
-                       "reproductions", ("actor_id", "verified", "file"), "docs/REPRODUCE.md"),
+                       "reproductions", ("actor_id", "verified", "file"), "docs/reference/REPRODUCE.md"),
     "shadow": _kind("Count one invoice against GitHub's record, in a repository you own",
                     "Run `knos shadow` on agent pull requests of a repository you own and publish the statement it writes.",
                     "a published statement (knos.shadow) whose repository's owner is your account, with at least one line and its digest",
-                    "shadow_counts", ("actor_id", "repository_owner_id", "lines", "digest", "url"), "docs/SHADOW.md"),
+                    "shadow_counts", ("actor_id", "repository_owner_id", "lines", "digest", "url"), "docs/reference/SHADOW.md"),
     "fund": _kind("Fund a test task yourself, from the faucet",
                   "Ask the faucet for test USDC, install the workflow in a repository you own, and fund one issue there with `/knos fund 5`.",
                   "a funded job or work order on Solana devnet in a repository that is not Knos's, funded by your account or wallet (scripts/outsiders.py funder_of says outside)",
-                  "funders", ("actor_id", "repository_owner_id", "funded_tx"), "docs/FAUCET.md"),
+                  "funders", ("actor_id", "repository_owner_id", "funded_tx"), "docs/reference/FAUCET.md"),
     "install": _kind("Install the check in a repository you own",
                      "Add the check workflow to a repository you own and let it finish once on a pull request.",
                      "a repository your account owns whose default branch calls the public pinned check workflow, and one finished run of it",
-                     "repositories", ("actor_id", "repository_owner_id", "calls_public_check", "finished_runs"), "docs/INSTALL.md"),
+                     "repositories", ("actor_id", "repository_owner_id", "calls_public_check", "finished_runs"), "docs/reference/INSTALL.md"),
     "judge": _kind("Host a judge",
                    "Make a repository from the host-a-judge template (examples/host_a_judge) and let it judge one order: GitHub signs your run, not Knos's.",
                    "one GitHub-signed attestation run in a repository your account owns, of the workflow the template installs (.github/workflows/knos-attest.yml, a copy of examples/knos-attest.yml)",
@@ -326,18 +326,18 @@ KINDS: dict[str, dict] = {
                   "authority to a Squads multisig, and let your build workflow record one build.",
                   "a devnet transaction in which your gate wrote the record [\"build\", program, executable hash] on a token "
                   "from a workflow of a repository your account owns, and `adopt.py check` on the program exiting 0",
-                  "gates", ("actor_id", "repository_owner_id", "program_id", "gate_id", "record_tx", "checked"), "docs/GATE.md"),
+                  "gates", ("actor_id", "repository_owner_id", "program_id", "gate_id", "record_tx", "checked"), "docs/reference/GATE.md"),
     "keyholder": _kind("Offer to hold one key of the upgrade multisig",
                        "Open the Key holder request issue (.github/ISSUE_TEMPLATE/key_holder.md) on drexthealpha/Knos with your public "
                        "key, a name or handle, and how to reach you. An offer is counted as an offer; a key is held only once it is seated.",
                        "an issue your account opened on drexthealpha/Knos from the key holder template, naming a Solana public key",
-                       "key_offers", ("actor_id", "issue", "public_key", "contact"), "docs/KEYHOLDER.md"),
+                       "key_offers", ("actor_id", "issue", "public_key", "contact"), "docs/reference/KEYHOLDER.md"),
     "tamper": _kind("Fool the judge on a task",
                     "Write a submission meant to make the judge accept work that does not do what the task asks. If the judge "
                     "accepts it, the cheat joins the tamper set as a case written outside Knos. If the judge refuses it, nothing is paid.",
                     "a pull request of yours on a funded task whose judge verdict was accepted, and a maintainer's note that the "
-                    "accepted work does not do what the task asks (docs/TAMPER.md)",
-                    "outside_cheats", ("actor_id", "task", "submission", "verdict", "why_wrong"), "docs/TAMPER.md"),
+                    "accepted work does not do what the task asks (docs/reference/TAMPER.md)",
+                    "outside_cheats", ("actor_id", "task", "submission", "verdict", "why_wrong"), "docs/reference/TAMPER.md"),
     "witness": _kind("Witness one transaction from start to end",
                      "In a repository of your own, run examples/witnessed/witness.py: fix terms and a budget with faucet test USDC, "
                      "submit failing work, then passing work, make the buyer's and the supplier's statements, try a replay, get paid, "
@@ -453,5 +453,5 @@ def register(app, help_lines: list | None = None) -> None:
         show_(KINDS, as_json, [FIRST] + [f"{k}: {v['title']}. Evidence: {v['evidence']}. Counter: {v['counter']} ({LABEL})." for k, v in KINDS.items()])
 
     if help_lines is not None:
-        help_lines.append(("task", "For money", "Take a funded test task; the merge pays. Why a merged pull request was not paid."))
-    app.add_typer(sub, name="task", rich_help_panel="For money")
+        help_lines.append(("task", "For suppliers", "Take a funded test task; the merge pays. Why a merged pull request was not paid."))
+    app.add_typer(sub, name="task", rich_help_panel="For suppliers")

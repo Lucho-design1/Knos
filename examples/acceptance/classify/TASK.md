@@ -1,6 +1,6 @@
 # Hold the risky payments
 
-Budget: 60 USDC, paid when the check passes. No review, no merge: the check below decides.
+Budget: 60 test USDC (devnet, no monetary value), paid when the check passes. No review, no merge: the check below decides.
 
 Our risk team holds some card payments for a person to review before they are captured. We want a classifier that makes
 the same call, so that fewer payments wait.

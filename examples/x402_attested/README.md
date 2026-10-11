@@ -1,12 +1,13 @@
 # x402 "knos-order": a runnable example
 
-A proposal, not part of x402: [docs/X402.md](../../docs/X402.md) is the specification and prints every message.
+Knos's proposed payment scheme for x402 (paying over HTTP with status 402). It is not part of x402.
+[docs/reference/X402.md](../../docs/reference/X402.md) is the specification and shows every message.
 
     node --test examples/x402_attested/test.mjs                    # replayed: no chain, no key
     python -m pytest -q tests/test_x402_attested.py -k live        # the program itself, over JSON-RPC, in LiteSVM
     node examples/x402_attested/live.mjs run --rpc https://api.devnet.solana.com --key buyer.json --offer offer.json
 
-The third line is the devnet run. It has not been run at the public program ids; [docs/X402.md](../../docs/X402.md), "Run it", says what it
+The third line is the devnet run. It has not been run at the public program ids; [docs/reference/X402.md](../../docs/reference/X402.md), "Run it", says what it
 needs and where its transaction signatures are recorded once it has.
 
 | file | what it is |

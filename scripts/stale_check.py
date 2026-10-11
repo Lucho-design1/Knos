@@ -38,15 +38,15 @@ RULES = (
     ),
     Rule(
         "merge-to-paid",
-        r"\b25 seconds\b|(?:median|p50)[^.|]{0,40}\b25 s\b|\|\s*25 s\s*\|",
+        r"\b2[56] seconds\b|(?:median|p50)[^.|]{0,40}\b2[56] s\b|\|\s*2[56] s\s*\|",
         DATED + r"|\b(?:39|4[1-7]) payments\b|\|\s*(?:39|4[1-7])\s*\|\s*25 s|\bwas\b|earlier",
-        "merge to paid is 26 s at the median over 51 payments",
+        "merge to paid is 28 s at the median over 56 payments, measured 10 Oct 2026 (26 s over 51 is an earlier reading: date it)",
     ),
     Rule(
         "disclosure-0.3.11",
         r"\b209 commits\b|\b39,778\b|\b423 of\b|\b98\.9%",
         r"\bAt Knos 0\.3\.11, commit `f3dfd3d`, the same count was\b",
-        "docs/DISCLOSURE.md counts at Knos 0.3.25: 229 commits, 412 of 428,405 lines (0.1%)",
+        "docs/reference/DISCLOSURE.md counts at Knos 0.3.25: 229 commits, 412 of 428,405 lines (0.1%)",
     ),
     Rule(
         "fee-upgrade-pending",

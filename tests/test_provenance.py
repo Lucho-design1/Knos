@@ -1,5 +1,5 @@
 """scripts/provenance.py: one chain per program from source to a run on chain, with every absent link said to be
-missing; docs/PROVENANCE.md held to the committed records; and docs/kani.json held to the harnesses it names."""
+missing; docs/reference/PROVENANCE.md held to the committed records; and docs/kani.json held to the harnesses it names."""
 
 from __future__ import annotations
 

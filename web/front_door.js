@@ -37,7 +37,7 @@ export function repoOf(text) {
 export const LINE_STATES = ["agreed", "disputed", "duplicate", "insufficient_evidence"];
 export const LINE_WORDS = { agreed: "policy met", disputed: "disputed", duplicate: "duplicate", insufficient_evidence: "insufficient evidence" };
 export const ACCEPT_DAYS = 30;            // knos.statement.ACCEPT_DAYS: the acceptance window when none is given
-export const APPEAL = "https://github.com/drexthealpha/Knos/blob/main/docs/DISPUTES.md#the-path";
+export const APPEAL = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/DISPUTES.md#the-path";
 const daysBetween = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
 /** Is a line owed to the supplier on `today`: its policy met, nobody authorised it, and the window after `since` has passed? */
 export const isOwed = (row, since, today, decided = null) => row.class === "clean" && !decided && Boolean(since) && daysBetween(since, today) > ACCEPT_DAYS;
@@ -137,8 +137,8 @@ export function renderFrontDoor(el, env = {}) {
   stepStyle(doc);
   if (!el.querySelector("textarea")) {
     el.classList.add("fd");
-    el.innerHTML = `<textarea id="fd-in" rows="2" spellcheck="false" autocomplete="off" aria-label="An agent's pull request, an invoice, or owner/repo" placeholder="Paste an agent's pull request"></textarea>
-      <p class="actions"><button type="submit" class="k-btn" data-fd="run">Check</button> <button type="button" class="k-btn quiet" data-fd="sample">Try a sample</button></p>`;
+    el.innerHTML = `<textarea id="fd-in" rows="2" spellcheck="false" autocomplete="off" aria-label="An agent's pull request link, an invoice, or a repository name (owner/repo)" placeholder="Paste an agent's pull request"></textarea>
+      <p class="actions"><button type="submit" class="k-btn" data-fd="run">Check</button> <button type="button" class="k-btn quiet" data-fd="sample">Try a sample invoice</button></p>`;
   }
   let out = env.out || doc.getElementById("front-result");
   if (!out) { out = doc.createElement("div"); out.id = "front-result"; el.after(out); }
@@ -153,7 +153,7 @@ export function renderFrontDoor(el, env = {}) {
     out.innerHTML = `<p data-fd="mark" class="fine" hidden>Sample: a made-up invoice from a made-up supplier.</p>
       <p data-fd="said" role="status" aria-live="polite">${esc(said)}</p>
       <div class="fd-counts" data-fd="counts" hidden><div><p class="k-kicker" data-fd="theirs-name">${esc(theirs)}</p><span class="k-num fd-big" data-fd="theirs">0</span><span data-fd="theirs-sum"></span></div>
-        <div><p class="k-kicker">Neutral count</p><span class="k-num fd-big" data-fd="ours">0</span><span data-fd="ours-sum">policy met so far</span></div></div>
+        <div><p class="k-kicker">Count both sides agree on</p><span class="k-num fd-big" data-fd="ours">0</span><span data-fd="ours-sum">lines whose checks passed so far</span></div></div>
       <ol class="fd-pending" data-fd="pending"></ol>
       <div class="fd-groups" data-fd="groups" hidden>${LINE_STATES.map((s) => `<section class="fd-group" data-group="${s}" data-empty><h3><span>${esc(cap(LINE_WORDS[s]))}</span> <span class="k-num" data-count>0</span></h3><ol></ol></section>`).join("")}</div>
       <div data-fd="after" hidden>
@@ -178,7 +178,7 @@ export function renderFrontDoor(el, env = {}) {
       <dl>${COLUMNS.map(([key, name]) => `<div><dt>${esc(name)}</dt><dd data-col="${key}">${link(a[key].href, a[key].text)}</dd></div>`).join("")}</dl>
       ${owed ? owedHtml() : ""}`;
   };
-  const owedHtml = () => `<p class="fd-owed" data-fd-owed>Owed to the supplier: policy met, unauthorised ${ACCEPT_DAYS} days. <a href="${APPEAL}" target="_blank" rel="noopener">Supplier: appeal</a></p>`;
+  const owedHtml = () => `<p class="fd-owed" data-fd-owed>Owed to the supplier: checks passed, nobody approved it in ${ACCEPT_DAYS} days. <a href="${APPEAL}" target="_blank" rel="noopener">Supplier: appeal</a></p>`;
 
   async function run(sample = false, counting = false) {
     const pr = sample ? null : prOf(box.value);      // one pull request: its own check, on its own page (env.go: a test's)
@@ -257,8 +257,8 @@ export function renderFrontDoor(el, env = {}) {
     const st = statement(invoice, facts), agreed = st.lines.filter((r) => stateOf(r) === "agreed"), left = st.lines.length - agreed.length;
     if (priced && st.amounts) {
       $("theirs-sum").textContent = `lines, ${st.amounts.billed} billed`;
-      $("ours-sum").textContent = `lines, ${st.amounts.clean} policy met`;
-    } else $("ours-sum").textContent = agreed.length === 1 ? "line, policy met" : "lines, policy met";
+      $("ours-sum").textContent = `lines whose checks passed, ${st.amounts.clean}`;
+    } else $("ours-sum").textContent = agreed.length === 1 ? "line whose checks passed" : "lines whose checks passed";
     // OWED: the statement's day is the last merge (knos.statement.from_shadow); a line whose policy is met and that nobody
     // authorised within the window after it is owed to the supplier, and says so beside the supplier's appeal
     const merged = st.lines.map((r) => r.merged_at).filter(Boolean).map((t) => t.slice(0, 10)).sort(), since = merged[merged.length - 1] || "";
@@ -309,7 +309,7 @@ export function renderFrontDoor(el, env = {}) {
       if (row) { li.querySelector('[data-col="owed"]').textContent = answers(row, null, false, decided).owed.text; markSteps(li, shadowSteps(row, decided)); }
     }
     const left = mine.st.lines.length - lines.length;
-    $("approved").textContent = `Accepted and authorised ${lines.length} ${lines.length === 1 ? "line" : "lines"}. ${left} ${left === 1 ? "exception" : "exceptions"} left. Not paid.`;
+    $("approved").textContent = `Accepted and approved: ${lines.length} ${lines.length === 1 ? "line" : "lines"}. Still open: ${left} ${left === 1 ? "exception" : "exceptions"}. Nothing is paid yet.`;
     if (doc.activeElement === $("approve")) $("csv").focus();          // the focus is not left on a button that no longer works
     $("approve").disabled = true;
     say(`Authorised ${lines.length} ${lines.length === 1 ? "line" : "lines"}`);

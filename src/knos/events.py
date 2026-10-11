@@ -28,7 +28,7 @@ commits to a set and says nothing about a single record made the week before. Th
                 with a reason) sits under a head a party signed. `across` names a deliverable billed or settled in
                 more than one month: one deliverable id, ever.
 
-What this proves and what it does not is in docs/EVENTS.md. In one line: uniqueness is enforced here and by both
+What this proves and what it does not is in docs/reference/EVENTS.md. In one line: uniqueness is enforced here and by both
 parties' acknowledgements, not on chain.
 
 Standard library only. The adapters import the module of their mode inside the function.

@@ -197,7 +197,7 @@ def test_the_committed_files_are_what_the_script_writes():
 
 
 def test_an_adopter_gets_the_full_feed_for_its_own_programs_and_its_own_gate(tmp_path):
-    """`--ids FILE` and `--gate ADDRESS` (docs/GATE.md): the programs the file names, held to the adopter's own gate."""
+    """`--ids FILE` and `--gate ADDRESS` (docs/reference/GATE.md): the programs the file names, held to the adopter's own gate."""
     their_gate = IDS["guardian"]                                        # any address that is not Knos's gate
     theirs = {"upgrade_multisig": IDS["upgrade_multisig"], "squads_program": SQUADS, "programs": {"their_program": OTHER_PROGRAM}, "upgrade_gate": their_gate}
     h = gate.executable_hash(ELF_NEW)

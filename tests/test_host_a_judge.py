@@ -185,7 +185,7 @@ def test_the_page_says_what_a_host_is_paid_and_what_they_can_and_cannot_do():
     for word in ("rerun", "agreed", "reported", "needs no secret"):
         assert word in readme
     for page in ("ATTESTOR.md", "OPERATOR.md"):
-        assert "host_a_judge" in (ROOT / "docs" / page).read_text(encoding="utf-8")
+        assert "host_a_judge" in (ROOT / "docs" / "reference" / page).read_text(encoding="utf-8")
 
 
 def test_the_site_offers_the_same_one_click():

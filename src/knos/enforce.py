@@ -1,7 +1,7 @@
 """The enforcement matrix: every route that can set money aside or move it, against every restriction a buyer can
 state, and for each pair exactly one answer to "what stops it".
 
-    python -m knos.enforce --write      docs/ENFORCEMENT.md, from the table below
+    python -m knos.enforce --write      docs/reference/ENFORCEMENT.md, from the table below
     python -m knos.enforce --check      ends 1 when that file is not what the table says
     python -m knos.enforce --json       the same table for a page: {routes, restrictions, cells[route][restriction]}
     knos controls matrix [--json]       prints it
@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 CLASSES = ("program", "workflow", "advisory", "outside")
-DOC = "docs/ENFORCEMENT.md"
+DOC = "docs/reference/ENFORCEMENT.md"
 
 
 class Cell(NamedTuple):
@@ -466,7 +466,7 @@ def _cell_md(text: str) -> str:
 
 
 def render() -> str:
-    """docs/ENFORCEMENT.md, whole."""
+    """docs/reference/ENFORCEMENT.md, whole."""
     n = counts()
     total = sum(n.values())
     lines = [

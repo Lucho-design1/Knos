@@ -30,7 +30,7 @@ onboarding time (first order to first payment), so that a second buyer's onboard
 
 The judge's store also holds how each past order in a repository ended, by terms template and policy version (entities
 of category `order`: knos.proof.history.order_outcome), so a funding reply can say which published template
-(docs/TERMS.md) that history supports. No memory, no such line.
+(docs/reference/TERMS.md) that history supports. No memory, no such line.
 """
 
 from __future__ import annotations

@@ -36,7 +36,7 @@ def test_every_stage_has_its_evidence():
     assert cap.main(["check"]) == 0
 
 
-# What the 0.3.14 rehearsal ran on devnet, on staging deployments of this build (docs/CAPABILITIES.md): not the public ids
+# What the 0.3.14 rehearsal ran on devnet, on staging deployments of this build (docs/reference/CAPABILITIES.md): not the public ids
 REHEARSED = {"work_orders", "order_pay", "single_use_tokens", "fee_tiers", "reserve_cancel", "warranty_revert", "order_auto_accept", "tests_mode",
              "order_quorum", "order_challenge", "meter_batch", "meter_seller_claim", "passkey_funder", "passkey_fund_relay", "buyer_page",
              "x402_knos_order"}
@@ -180,15 +180,19 @@ def test_the_chain_is_asked_for_the_version_and_for_every_signature():
 def test_the_readme_and_the_document_are_what_render_writes(tmp_path):
     text, full = (ROOT / "README.md").read_text(encoding="utf-8"), (ROOT / cap.FULL).read_text(encoding="utf-8")
     assert text.count(cap.START) == text.count(cap.END) == full.count(cap.START) == full.count(cap.END) == 1
-    assert cap.rendered(text, cap.summary(DATA)) == text and cap.rendered(full, cap.table(DATA, "../")) == full and cap.render(check=True) == []
+    assert cap.rendered(text, cap.summary(DATA)) == text and cap.rendered(full, cap.table(DATA, "../../")) == full and cap.render(check=True) == []
     # README.md names the capabilities above `tested` under their stage and sends the rest to the document, which has one row each
     block = text[text.index(cap.START):text.index(cap.END)]
-    above = [c for c in DATA["capabilities"] if c["stage"] in cap.STAGES[2:]]
-    assert all(f"`{c['id']}`" in block for c in above) and block.count("`") == 2 * len(above) + 2      # and the manifest's name, once
+    # (at most cap.SHOWN ids a stage, the first in the manifest's order; more than that are said to be in the table)
+    shown = {s: [c["id"] for c in DATA["capabilities"] if c["stage"] == s] for s in cap.STAGES[2:]}
+    above = [cid for ids in shown.values() for cid in ids[:cap.SHOWN]]
+    assert all(f"`{cid}`" in block for cid in above) and block.count("`") == 2 * len(above) + 2      # and the manifest's name, once
+    assert block.count(cap.MORE) == sum(len(ids) > cap.SHOWN for ids in shown.values())
     assert "**Reproduced by someone else:** none recorded yet." in block and f"]({cap.FULL})" in block
     exercised = block[block.index("**Exercised on devnet:**"):block.index("**Deployed on devnet:**")]
-    now = [c["id"] for c in DATA["capabilities"] if c["stage"] == "exercised"]
-    assert all(f"`{cid}`" in exercised for cid in now) and exercised.count("`") == 2 * len(now)
+    now = shown["exercised"]
+    assert all(f"`{cid}`" in exercised for cid in now[:cap.SHOWN]) and exercised.count("`") == 2 * min(len(now), cap.SHOWN)
+    assert (cap.MORE in exercised) == (len(now) > cap.SHOWN)
     assert ("**Exercised on devnet:** none recorded yet." in block) == (not now)       # before a round at the public ids, and after it
     # README.md and the document say that a stage above `tested` is a run at a public program id, and where the rehearsal is
     assert block.count(cap.PUBLIC_ONLY) == 1 and full[full.index(cap.START):full.index(cap.END)].count(cap.PUBLIC_ONLY) == 1
@@ -197,13 +201,14 @@ def test_the_readme_and_the_document_are_what_render_writes(tmp_path):
     # what the rehearsal ran on staging ids is never a stage by that run: README.md names none of it for the rehearsal,
     # and one it ran that a round at the public ids exercised since is named for that run, with its public transaction
     for cid in REHEARSED:
-        assert (f"`{cid}`" in block) == (BY_ID[cid]["stage"] == "exercised" and cap.ids_of(BY_ID[cid]) == "public"), cid
+        public = BY_ID[cid]["stage"] == "exercised" and cap.ids_of(BY_ID[cid]) == "public"
+        assert (f"`{cid}`" in block) == (public and cid in now[:cap.SHOWN]), cid
     assert "`pay_on_merge`" in block and "`order_quorum`" not in block        # deployed; rehearsed and not exercised at a public id
     rows = full[full.index(cap.START):full.index(cap.END)]
     assert all(f"| {BY_ID[cid]['what']} | {'exercised on devnet' if BY_ID[cid]['stage'] == 'exercised' else 'tested locally'} | " in rows
                for cid in REHEARSED) and "_staging" not in rows
     assert all(c["what"] in rows for c in DATA["capabilities"]) and rows.count("\n| ") == len(DATA["capabilities"]) + 1
-    assert "](../programs-v2/knos_pay/src/order.rs)" in rows
+    assert "](../../programs-v2/knos_pay/src/order.rs)" in rows
     # a manifest that changed is seen, written, and then the same again
     for rel in ("README.md", "docs/capabilities.json", cap.FULL):
         (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)

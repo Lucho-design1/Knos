@@ -503,14 +503,14 @@ def test_the_site_shows_both_counts_and_still_reads_an_index_published_before_th
                        encoding="utf-8", check=False)
     assert r.returncode == 0, r.stderr
     now, before = json.loads(r.stdout)
-    assert "in 341 repositories, its first pull request that said tests pass had a failing check of any kind in 85 (24.9%, 95% interval 20.6%–29.8%)" in now
+    assert "in 341 repositories, its first pull request that said tests pass had a failing check of any kind in 85 (24.9%, 95% confidence interval 20.6%–29.8%)" in now
     assert "In 46 of the 341 repositories (13.5%) a failed check was a test or a build, by its name." in now
     assert "Counting every such pull request: 194 of 787 (24.7%)." in now
-    assert "said tests pass on 787 pull requests with finished CI; a check of any kind had failed on 194 (24.7%, 95% interval 21.8%–27.8%)." in before
+    assert "said tests pass on 787 pull requests with finished CI; a check of any kind had failed on 194 (24.7%, 95% confidence interval 21.8%–27.8%)." in before
     assert "test or a build" not in before                                    # that index did not publish the second count
 
 
-# ---- by agent and by week (docs/agent_weekly.json, docs/INDEX.md) -------------------------------------------------
+# ---- by agent and by week (docs/agent_weekly.json, docs/reference/INDEX.md) -------------------------------------------------
 
 def _row(agent, n, day, cls, merged=None, failed=()):
     return {"agent": agent, "repo": f"o/r{n}", "number": n, "created_at": f"{day}T12:00:00Z", "class": cls,
@@ -579,15 +579,15 @@ PUBLISHED_0315 = {"copilot": {"2026-09-21": (121, 39, 35, 7, 4, 1), "2026-09-28"
 def test_the_committed_weekly_file_is_the_committed_sample_cut_by_week_and_the_page_shows_its_table(tmp_path):
     """Nothing in docs/agent_weekly.json is typed by hand: it is docs/agent_pr_ci.json reshaped, with the weeks a later
     scan read put in by the script in place of the sample's (each says the day it was read, and whether that was the
-    whole week), and docs/INDEX.md holds exactly the table the script renders from it, and says what the numbers
+    whole week), and docs/reference/INDEX.md holds exactly the table the script renders from it, and says what the numbers
     cannot say."""
     out, doc = tmp_path / "weekly.json", tmp_path / "INDEX.md"
-    doc.write_text((ROOT / "docs" / "INDEX.md").read_text(encoding="utf-8"), encoding="utf-8")
+    doc.write_text((ROOT / "docs" / "reference" / "INDEX.md").read_text(encoding="utf-8"), encoding="utf-8")
     assert subprocess.run([sys.executable, str(ROOT / "scripts" / "agent_pr_index.py"), "weekly", "--sample", "docs/agent_pr_ci.json",
                            "--out", str(out), "--doc", str(doc)], cwd=ROOT, capture_output=True, text=True).returncode == 0
     reshaped = json.loads(out.read_text(encoding="utf-8"))
     series = json.loads((ROOT / "docs" / "agent_weekly.json").read_text(encoding="utf-8"))
-    page = (ROOT / "docs" / "INDEX.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "INDEX.md").read_text(encoding="utf-8")
     assert agent_pr_index.weekly_table(series) in page
     sample = json.loads((ROOT / "docs" / "agent_pr_ci.json").read_text(encoding="utf-8"))
     assert reshaped["read"] == sample["generated_utc"][:10] and "nothing was read again" in reshaped["source"]
@@ -694,9 +694,9 @@ def test_the_weekly_job_opens_a_pull_request_and_merges_nothing_and_the_job_that
     assert all("@" in s["uses"] and len(s["uses"].split("@")[1]) == 40 for j in (week, job) for s in j["steps"] if "uses" in s)
     assert job["needs"] == "week" and "always()" in job["if"] and "success" not in job["if"]           # a capped or cut week is published all the same
     runs = "\n".join(str(s.get("run", "")) for s in job["steps"])
-    assert "agent_pr_index.py weekly --rows week.json --into docs/agent_weekly.json --doc docs/INDEX.md" in runs
+    assert "agent_pr_index.py weekly --rows week.json --into docs/agent_weekly.json --doc docs/reference/INDEX.md" in runs
     assert runs.index("agent_pr_index.py weekly") < runs.index("agent_pr_index.py board\n") < runs.index("git commit")      # the leaderboard and its feeds, from the new week
-    assert "git commit -m \"Agent PR Index, week of $week\" -- docs/agent_weekly.json docs/INDEX.md docs/index.json docs/index.atom" in runs
+    assert "git commit -m \"Agent PR Index, week of $week\" -- docs/agent_weekly.json docs/reference/INDEX.md docs/index.json docs/index.atom" in runs
     assert runs.count("gh pr create") == 1 and "gh pr merge" not in runs and "Agent PR Index, week of $week" in runs
     assert "origin main" not in runs and "git push --force origin index-weekly" in runs and runs.count("git push") == 1       # one branch, never the default one
     assert job["permissions"] == {"contents": "write", "pull-requests": "write"}
@@ -766,7 +766,7 @@ def test_one_whole_week_is_read_day_by_day_past_the_cap_and_added_to_the_publish
     rows.write_text(json.dumps(got), encoding="utf-8")
     before = json.loads((ROOT / "docs" / "agent_weekly.json").read_text(encoding="utf-8"))
     into.write_text(json.dumps(before), encoding="utf-8")
-    doc.write_text((ROOT / "docs" / "INDEX.md").read_text(encoding="utf-8"), encoding="utf-8")
+    doc.write_text((ROOT / "docs" / "reference" / "INDEX.md").read_text(encoding="utf-8"), encoding="utf-8")
     cli = [sys.executable, str(ROOT / "scripts" / "agent_pr_index.py"), "weekly", "--rows", str(rows), "--into", str(into), "--doc", str(doc)]
     env = {**os.environ, "GH_TOKEN": "", "PATH": ""}                         # no gh to call: this step reads nothing
     r = subprocess.run(cli, capture_output=True, text=True, check=False, env=env)
@@ -992,7 +992,7 @@ def test_the_weekly_command_adds_a_capped_sample_to_the_series_and_never_refuses
     sampled(SampleApi(), ck, max_requests=60, max_minutes=20)
     before = json.loads((ROOT / "docs" / "agent_weekly.json").read_text(encoding="utf-8"))
     into.write_text(json.dumps(before), encoding="utf-8")
-    doc.write_text((ROOT / "docs" / "INDEX.md").read_text(encoding="utf-8"), encoding="utf-8")
+    doc.write_text((ROOT / "docs" / "reference" / "INDEX.md").read_text(encoding="utf-8"), encoding="utf-8")
     cli = [sys.executable, str(ROOT / "scripts" / "agent_pr_index.py"), "weekly", "--rows", str(ck), "--into", str(into), "--doc", str(doc)]
     env = {**os.environ, "GH_TOKEN": "", "PATH": ""}                         # no gh to call: this step reads nothing
     r = subprocess.run(cli, capture_output=True, text=True, encoding="utf-8", check=False, env=env)
@@ -1090,7 +1090,7 @@ def test_the_committed_page_and_feeds_are_what_the_script_writes_and_check_fails
     files = {}
     for name in ("INDEX.md", "index.json", "index.atom", "agent_weekly.json", "index_disputes.json"):
         files[name] = tmp_path / name
-        shutil.copy(ROOT / "docs" / name, files[name])
+        shutil.copy(ROOT / "docs" / ("reference/" + name if name == "INDEX.md" else name), files[name])
     there = ["--series", str(files["agent_weekly.json"]), "--disputes", str(files["index_disputes.json"]), "--doc", str(files["INDEX.md"]),
              "--feed", str(files["index.json"]), "--atom", str(files["index.atom"])]
     page = files["INDEX.md"].read_text(encoding="utf-8")

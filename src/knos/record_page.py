@@ -1,9 +1,9 @@
 """A supplier's public record, the badge it gives, and the receipt a supplier sends with an invoice.
 
-    knos record build <supplier>      writes docs/records/<slug>.json (docs/RECORD.md): what is on record for one agent
+    knos record build <supplier>      writes docs/records/<slug>.json (docs/reference/RECORD.md): what is on record for one agent
                                       builder, agency or vendor, each figure with its sample, period and category
     knos badge record <slug>          an SVG from that file, and the Markdown that links it to the record's page
-    knos record receipt <receipt>     one PDF page and its JSON for an acceptance receipt (docs/RECEIPT.md): what was
+    knos record receipt <receipt>     one PDF page and its JSON for an acceptance receipt (docs/reference/RECEIPT.md): what was
                                       agreed, delivered and accepted, by which evaluator, the evidence, how to check it
 
     python -m knos.record_api         the same files behind a paid lookup, 0.10 test USDC a call (knos.record_api,
@@ -21,7 +21,7 @@ A record has two parts, kept apart and each labelled with where it came from:
               Knos orders. The interval and the dispute link stay beside the rate.
 
 Nothing here is a score, and nothing here reads a payment to Knos: the supplier never pays for a record and cannot
-pay to change one. The file is not signed; the evidence each count links to is (docs/RECORD.md says which).
+pay to change one. The file is not signed; the evidence each count links to is (docs/reference/RECORD.md says which).
 
 Standard library only at import: the script that writes the index (scripts/agent_pr_board.py) imports this module.
 """
@@ -100,7 +100,7 @@ def public_part(index: dict | None, who: str) -> dict | None:
             "claimed_passing": row["claimed_passing"], "sample": row["merged"], "failed_at_merge": row["failed_at_merge"],
             "share": row["share"], "ci95": row["ci95"], "rank": row["rank"], "status": row["status"], "min_sample_to_rank": top.get("min_claims_to_rank"),
             "overlaps_above": row.get("overlaps_above", False), "disputed": row.get("disputed", []), "dispute": row["dispute"],
-            "method": (index.get("links") or {}).get("page", f"{REPO}/blob/main/docs/INDEX.md")}
+            "method": (index.get("links") or {}).get("page", f"{REPO}/blob/main/docs/reference/INDEX.md")}
 
 
 # ---- the orders part: the events log, and the supplier's memory -----------------------------------------------------
@@ -202,7 +202,7 @@ def build(supplier: str, *, index: dict | None = None, log=None, supplier_ids=()
     doc = {"schema": SCHEMA, "supplier": who, "name": str(supplier), "as_of": day, "rule": RULE, "not_a_score": NOT_A_SCORE,
            "orders": orders, "public": public, "limits": list(LIMITS),
            "links": {"page": page_url(who), "file": f"{RAW}/{who}.json", "dispute": dispute_url(who, public["week"] if public else None),
-                     "specification": f"{REPO}/blob/main/docs/RECORD.md"}}
+                     "specification": f"{REPO}/blob/main/docs/reference/RECORD.md"}}
     return {**doc, "sha256": hashlib.sha256(canon(doc).encode()).hexdigest()}
 
 
@@ -296,7 +296,7 @@ def _money(units, decimals: int) -> str:
 
 
 def invoice_receipt(receipt: dict, file_name: str = "receipt.json", invoice: str = "") -> dict:
-    """One acceptance receipt (docs/RECEIPT.md, version 2 or later) as what a finance operator reads: what was agreed,
+    """One acceptance receipt (docs/reference/RECEIPT.md, version 2 or later) as what a finance operator reads: what was agreed,
     delivered and accepted, by which evaluator, the evidence, and the one command that checks the file with no
     network. ValueError for a receipt that does not check: there is nothing to send for it."""
     from . import ids

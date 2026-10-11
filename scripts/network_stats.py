@@ -206,7 +206,7 @@ def summarize(events: list[dict], own: frozenset = OWN, own_wallets: frozenset =
         "apart": {"own": sides["own"], "self": sides["self"], "test": sides["test"]},
         # who outside Knos took part, whichever kind the job is: three numbers that are never added to each other
         "outsiders": outsiders(jobs, own, own_wallets, owner_of=owner_of),
-        # the network loop, link by link: three counters over the same records (docs/MARKET.md, section 7)
+        # the network loop, link by link: three counters over the same records (docs/reference/MARKET.md, section 7)
         "loop": loop(jobs, own, own_wallets, owner_of=owner_of),
         "totals": {"funded": len(jobs), "completed": len(done) + other["unmatched_paid"], "open": state("open") + state("proven"),
                    "held": state("held"), "funded_amount": sum(j["amount"] for j in jobs), "paid_amount": sum(j["net"] for j in done), **other},
@@ -316,7 +316,7 @@ def _day(ts: int) -> str:
 def measure(name: str, lines: list[dict], events: list[dict], get=None, most: int = MOST) -> dict:
     """THE measurement of one wait a person saw (`name`: merge_to_paid or comment_to_funded). Every place that states
     the number takes it from this function's output: stats.json (the site's Numbers page), latency.json and its
-    badges (scripts/pages_data.py), and, through stats.json, docs/BENCH.md, docs/bench.json and docs/facts.json
+    badges (scripts/pages_data.py), and, through stats.json, docs/reference/BENCH.md, docs/bench.json and docs/facts.json
     (scripts/bench_docs.py). The output says what it is over:
 
         n, p50, p95, slowest        the samples, the median, the 95th percentile by nearest rank, the longest (seconds)

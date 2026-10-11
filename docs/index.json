@@ -5,8 +5,8 @@
  "read": "2026-10-07",
  "basis": {
   "counts": "every_merged_claiming_pr",
-  "says": "Basis: every merged pull request that claimed passing tests, so a busy repository counts many times. docs/BENCH.md counts the first such pull request per repository instead; the two shares differ.",
-  "other": "docs/BENCH.md and docs/bench.json `first_pr_per_repo`: the first claiming pull request per repository"
+  "says": "Basis: every merged pull request that claimed passing tests, so a busy repository counts many times. docs/reference/BENCH.md counts the first such pull request per repository instead; the two shares differ.",
+  "other": "docs/reference/BENCH.md and docs/bench.json `first_pr_per_repo`: the first claiming pull request per repository"
  },
  "min_claims_to_rank": 30,
  "rule": "An agent vendor never pays for a row and cannot pay to change one.",
@@ -29,7 +29,7 @@
   "**A failed check is not always a false claim.** The description may be true of the tests its author ran. The row says only that GitHub recorded a failed check on the commit that was merged.",
   "**The row.** Of the merged pull requests that claimed passing tests and whose checks had finished: how many had a failed check, that count over the total, and the 95% Wilson interval of the share.",
   "**The place.** Only agents with at least 30 such pull requests have one: place 1 is the smallest share, equal shares share a place. The others are \"too few to rank\", shown with their counts. \"overlaps\" means the interval reaches into the one above: this sample does not tell those two places apart.",
-  "**The week.** A board is named by a Monday and adds up every week read up to and including it. Each week's own counts, and how it was read, are in [`agent_weekly.json`](agent_weekly.json)."
+  "**The week.** A board is named by a Monday and adds up every week read up to and including it. Each week's own counts, and how it was read, are in [`agent_weekly.json`](../agent_weekly.json)."
  ],
  "limits": [
   "The counts are Knos's own measurement. Nobody outside Knos has reviewed them: dispute a row below.",
@@ -54,7 +54,7 @@
   "reproduce": "python scripts/agent_pr_index.py board --check"
  },
  "links": {
-  "page": "https://github.com/drexthealpha/Knos/blob/main/docs/INDEX.md",
+  "page": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/INDEX.md",
   "json": "https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/index.json",
   "atom": "https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/index.atom",
   "dispute": "https://github.com/drexthealpha/Knos/issues/new?template=dispute-index-row.yml"

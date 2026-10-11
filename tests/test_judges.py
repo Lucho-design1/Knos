@@ -2,8 +2,8 @@
 
 The one sentence, then the pitch line, then the number; at most 350 words and one table; the six criteria in the
 rules and the seven factors Colosseum's page lists, each one sentence and one link; days to approve defined and not
-measured; five lines of what is not real yet, with the numbers docs/submission/NUMBERS.md prints; no fee printed, because the public program ids charge
-what the live build charges. README, STORY, WHY and the presentation say why Solana in the same words.
+measured; five lines of what is not real yet, with the numbers docs/NUMBERS.md prints; no fee printed, because the public program ids charge
+what the live build charges. README, STORY and WHY say why Solana in the same words.
 """
 
 from __future__ import annotations
@@ -15,7 +15,8 @@ import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-WHY_SOLANA = "Money is released with no custodian, and the count is anchored where neither side can alter it."
+WHY_SOLANA = ("Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every "
+              "upgrade key today; a program change waits 48 hours in public.")
 
 
 def _judges():
@@ -61,7 +62,7 @@ def test_a_judge_enters_through_the_manifest_and_the_witnessed_transaction_and_e
     page, data = read("docs/JUDGES.md"), json.loads(read("docs/judges.json"))
     first = data["entry"]
     # "Start here" comes after the four lines and before the table; its first link is the manifest's chain
-    assert page.index("## Start here") < page.index("\n|") and first["manifest"].endswith("docs/MANIFEST.md")
+    assert page.index("## Start here") < page.index("\n|") and first["manifest"].endswith("docs/reference/MANIFEST.md")
     assert "source, build hash, deployed version, transactions, fee schedule" in page
     # the witnessed transaction: each step's link, in the order it happened, on devnet and in its own repository
     assert [w["label"] for w in first["witnessed"]] == j.WITNESSED
@@ -71,17 +72,17 @@ def test_a_judge_enters_through_the_manifest_and_the_witnessed_transaction_and_e
     # what that run was, plainly: an own repository, test money, and what it needed
     start = flat("docs/JUDGES.md").split("## Start here")[1].split("## ")[0]
     assert "own repository, test USDC" in start and "One step fixed by hand" in start and "not yet settled" in start
-    # the README's judge link is the page whose first entry this is, and its "For a judge" part carries the same links
+    # the README's link to it is the page whose first entry this is, and its "Check every claim yourself" part carries the same links
     readme = read("README.md")
     assert "](docs/JUDGES.md)" in readme.split("</h1>", 1)[1].split("\n## ", 1)[0]
-    judge = readme.split("\n## For a judge\n", 1)[1].split("\n## ", 1)[0]
-    assert judge.index("](docs/MANIFEST.md)") < judge.index(first["witnessed"][0]["link"]) and "one step fixed by hand" in judge
+    judge = readme.split("\n## Check every claim yourself\n", 1)[1].split("\n## ", 1)[0]
+    assert judge.index("](docs/reference/MANIFEST.md)") < judge.index(first["witnessed"][0]["link"]) and "one step fixed by hand" in judge
     assert all(f"[{w['label']}]({w['link']})" in judge for w in first["witnessed"]) and len([x for x in judge.splitlines() if x.strip()]) == 3
 
 
 def test_the_zeros_are_the_numbers_page_and_no_fee_or_missing_thing_is_claimed():
     page = flat("docs/JUDGES.md")
-    numbers = read("docs/submission/NUMBERS.md")
+    numbers = read("docs/NUMBERS.md")
     value = {what.split(":")[0].strip(): int(n) for what, n in re.findall(r"(?m)^\| \d \| ([^|]+) \| (\d+) \|", numbers)}
     zeros = page.split("## What is not real yet")[1]
     for said, row in ((r"(\d+) interviews", "Buyer interviews held"), (r"(\d+) letters of intent", "Letters of intent"),
@@ -95,19 +96,20 @@ def test_the_zeros_are_the_numbers_page_and_no_fee_or_missing_thing_is_claimed()
     assert not re.search(r"\d(\.\d+)?\s*(%|bps)", page) and "this page prints no rate" in page
     # the measured time is said with its sample, and the wait a buyer has is said to be unmeasured
     bench = json.loads(read("docs/bench.json"))
-    assert "From merge to paid took 26 seconds at the median, over 51 payments on devnet." in page and "25" in json.dumps(bench)
+    assert "From merge to paid took 28 seconds at the median, over 56 payments on devnet (10 Oct 2026)." in page and "25" in json.dumps(bench)
+    took = bench["devnet"]["stats"]["latency"]["merge_to_paid"]
+    assert (took["median"], took["count"]) == (28, 56)
     assert "it with any buyer" not in page and "Not measured." in page and not re.search(r"\d+(\.\d+)? days", page)
     for word in ("audit", "customer says", "pilot customer", "immutable", "trustless"):
         assert word not in page.lower(), word
 
 
 def test_why_solana_is_said_in_the_same_words_and_the_first_customer_is_explicit():
-    for rel in ("README.md", "docs/STORY.md", "docs/WHY.md", "docs/JUDGES.md"):
+    for rel in ("README.md", "docs/STORY.md", "docs/reference/WHY.md", "docs/JUDGES.md"):
         assert f"Why Solana: {WHY_SOLANA}" in flat(rel) or f"In one line: {WHY_SOLANA}" in flat(rel), rel
-    assert f"Why Solana? {WHY_SOLANA}" in " ".join(line[1:].strip() for line in read("docs/submission/pitch_script.md").splitlines() if line.startswith(">"))
     first = read("README.md").split("</h1>", 1)[1].split("\n## ", 1)[0]
     assert "](docs/JUDGES.md)" in first and "](JUDGES.md)" in read("docs/README.md") and "](JUDGES.md)" in read("docs/STORY.md")
-    why = read("docs/WHY.md").split("## The first customer, and who is not one")[1].split("\n## ")[0]
+    why = read("docs/reference/WHY.md").split("## The first customer, and who is not one")[1].split("\n## ")[0]
     five = re.findall(r"(?m)^\d\. \*\*(.+?)\*\*", why)
     assert five == ["It buys measurable outcomes from several outside suppliers.", "It has recurring disputes or duplicate billing.",
                     "It can define acceptance before delivery.", "It spends enough that the savings exceed the cost.",
@@ -119,11 +121,10 @@ def test_why_solana_is_said_in_the_same_words_and_the_first_customer_is_explicit
 
 def test_the_check_fails_when_the_page_and_the_file_part(tmp_path):
     j = _judges()
-    (tmp_path / "docs").mkdir()
-    (tmp_path / "docs" / "submission").mkdir()
-    for name in ("JUDGES.md", "judges.json", "BENCH.md", "TAMPER.md", "COMPOSE.md", "MARKET.md", "TEAM.md", "WHY.md", "MANIFEST.md",
-                 "UNIT_COSTS.md", "submission/NUMBERS.md", "submission/pitch_script.md",
-                 "submission/MARKET_SIZE.md"):
+    (tmp_path / "docs" / "reference").mkdir(parents=True)
+    for name in ("JUDGES.md", "judges.json", "reference/BENCH.md", "reference/TAMPER.md", "reference/COMPOSE.md", "reference/MARKET.md",
+                 "reference/TEAM.md", "reference/WHY.md", "reference/MANIFEST.md", "reference/UNIT_COSTS.md", "NUMBERS.md", "STORY.md",
+                 "reference/MARKET_SIZE.md"):
         shutil.copy(ROOT / "docs" / name, tmp_path / "docs" / name)
     assert j.problems(tmp_path) == []
     page = tmp_path / "docs" / "JUDGES.md"
@@ -138,7 +139,7 @@ def test_the_check_fails_when_the_page_and_the_file_part(tmp_path):
     assert any("days to approve" in line for line in j.problems(tmp_path))
     page.write_text(text.replace("| Traction |", "| Demand |"), encoding="utf-8")
     assert any("the rows are" in line for line in j.problems(tmp_path))
-    page.write_text(text.replace("[The release manifest](MANIFEST.md)", "[The release manifest](BENCH.md)"), encoding="utf-8")
+    page.write_text(text.replace("[The release manifest](reference/MANIFEST.md)", "[The release manifest](reference/BENCH.md)"), encoding="utf-8")
     assert any("its first link is the release manifest" in line for line in j.problems(tmp_path))
     page.write_text(text.replace("[paid](", "[settled]("), encoding="utf-8")
     assert any("witnessed transaction" in line for line in j.problems(tmp_path))
@@ -153,8 +154,10 @@ def test_the_seven_factors_are_colosseums_and_traction_says_the_zeros():
     traction = factors["Traction"]["sentence"]
     for zero in ("Outside funders 0", "outside repositories 0", "interviews 0", "revenue 0"):
         assert zero in traction, zero
-    assert factors["Traction"]["link"].endswith("docs/submission/NUMBERS.md")
-    assert factors["Potential market size"]["sentence"].startswith("Not counted")
+    assert factors["Traction"]["link"].endswith("docs/NUMBERS.md")
+    size = factors["Potential market size"]
+    assert size["sentence"].startswith("Under labelled assumptions") and "Knos has no share" in size["sentence"]
+    assert size["link"].endswith("docs/reference/MARKET_SIZE.md")
     wait = data["wait"]
     assert j.DAYS in wait and "Not measured." in wait and not re.search(r"\d+(\.\d+)? days", wait)
 
@@ -162,17 +165,13 @@ def test_the_seven_factors_are_colosseums_and_traction_says_the_zeros():
 def test_the_witnessed_record_is_linked_at_its_commit_and_the_impact_row_counts_after_the_second_reading():
     # knos-witness's main moves with every witnessed run: a link to main/witness.json would show a later run's record
     # beside the text of this one. Each page that names the 0.3.23 run links the record at the commit that wrote it.
-    for rel in ("README.md", "docs/JUDGES.md", "docs/submission/TRANSACTION.md", "docs/judges.json"):
+    for rel in ("README.md", "docs/JUDGES.md", "docs/TRANSACTION.md", "docs/judges.json"):
         text = (ROOT / rel).read_text(encoding="utf-8")
         assert "knos-witness/blob/main/" not in text, rel
     assert "knos-witness/blob/acaa854d241c2e030f521b6f5603c8f43c93bab6/witness.json" in (ROOT / "docs/JUDGES.md").read_text(encoding="utf-8")
-    # the scan's 30 is the count before the second reading (docs/index_review.json): the judged sentence and the
-    # submission's measurement give the counts after it, which docs/backtest.json keeps under `reviewed`
+    # the scan's 30 is the count before the second reading (docs/index_review.json): the judged sentence gives the
+    # counts after it, which docs/backtest.json keeps under `reviewed`
     reviewed = json.loads((ROOT / "docs/backtest.json").read_text(encoding="utf-8"))["reviewed"]["overall"]
     row = next(r for r in json.loads((ROOT / "docs/judges.json").read_text(encoding="utf-8"))["rows"] if r["thing"] == "Potential impact")
     assert f"would have paid for {reviewed['any_check_failed']['prs']} pull requests whose checks failed, read again by hand." in row["sentence"]
-    sub = " ".join((ROOT / "docs/submission/SUBMISSION.md").read_text(encoding="utf-8").split())
-    assert (f"of 241 merged agent pull requests whose description said tests pass, {reviewed['test_or_build_check_failed']['prs']} had a failed test, "
-            "build, lint or type-check job at the head commit, each read again by hand.") in sub
-    assert "30 had a failed check" not in sub
 

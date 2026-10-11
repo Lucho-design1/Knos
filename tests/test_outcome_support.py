@@ -151,7 +151,7 @@ def test_the_workflow_signs_in_a_job_that_runs_nothing_from_the_repository_and_t
     sign = jobs["sign"]["steps"]
     assert not any("checkout" in str(s.get("uses", "")) or "pip install" in str(s.get("run", "")) for s in sign)
     assert "knosm:claim:*" in sign[0]["run"] and "scripts/outcome_support.py receipt" in jobs["receipt"]["steps"][-2]["run"]
-    page = (ROOT / "docs" / "OUTCOMES.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "OUTCOMES.md").read_text(encoding="utf-8")
     for words in ("## Support resolutions", "https://www.intercom.com/help/en/articles/8205718-fin-ai-agent-resolutions",
                   "https://support.zendesk.com/hc/en-us/articles/5352026794010", "made-up", "| Customer operations |", "| Back-office processing |",
                   "| Agent services |", "| Data operations |", "| Software delivery |"):

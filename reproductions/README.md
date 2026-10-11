@@ -2,7 +2,7 @@
 
 One JSON file per run of `knos reproduce` that someone outside Knos made in a repository of their own:
 `<owner>-<repo>-<run id>.json`, holding the report and the token GitHub signed for it. How to make one (a fork, one button,
-one link) and what each check proves: [docs/REPRODUCE.md](../docs/REPRODUCE.md).
+one link) and what each check proves: [docs/reference/REPRODUCE.md](../docs/reference/REPRODUCE.md).
 
 **This folder is empty: 0 reproductions. Nobody outside has sent a reproduction yet.** The count of outside
 reproductions, wherever Knos states one, is the number of `.json` files here and nothing else. Knos does not add files here: a run in an
@@ -25,5 +25,6 @@ A capability moves to `reproduced` only by naming a file here in which a check t
 `"reproduced": {"file": "reproductions/<name>.json"}`.
 
 What a file proves: GitHub signed that the run happened in that repository, started by that account, for exactly that
-report. What it does not prove: that the account is independent of Knos (only the listed own accounts are refused), or
-that the workflow file was the example unchanged (the token names the workflow and its commit, which anyone can read).
+report. What it does not prove: that the account is independent of Knos (only Knos's listed accounts are refused).
+Nor does it prove that the workflow file was the example unchanged. The token names the workflow and its commit, so
+anyone can check.

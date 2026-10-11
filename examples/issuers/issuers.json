@@ -1,5 +1,5 @@
 {
- "about": "Which RS256 issuers knos-oidc can verify, the claims each signs (the SHAPE recorded from the issuer's documentation, with example values) and which of them a program can gate on. Key sizes were read from each issuer's published key set on the `checked` day. tests/test_issuers.py verifies a token of each shape, signed by a test key, in the test build of the verifier; it also holds docs/VERIFIER.md and web/verifier.js to this file. `discovery` is what the issuer's own discovery document listed as its signing algorithms on the day `read` (null: not read, and `why`). An issuer with a `checked` of its own was read on that day.",
+ "about": "Which RS256 issuers knos-oidc can verify, the claims each signs (the SHAPE recorded from the issuer's documentation, with example values) and which of them a program can gate on. Key sizes were read from each issuer's published key set on the `checked` day. tests/test_issuers.py verifies a token of each shape, signed by a test key, in the test build of the verifier; it also holds docs/reference/VERIFIER.md and web/verifier.js to this file. `discovery` is what the issuer's own discovery document listed as its signing algorithms on the day `read` (null: not read, and `why`). An issuer with a `checked` of its own was read on that day.",
  "checked": "2026-10-05",
  "accepts": {
   "alg": "RS256",

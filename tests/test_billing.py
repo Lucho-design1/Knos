@@ -41,7 +41,7 @@ def test_the_constants_are_the_price_book():
     assert (b.RECORD_PRICE, b.PILOT, b.BENEFIT_RULE, b.NET_BELOW) == (D(book["record_price"]), D(book["pilot"]), book["benefit_rule"], D(book["net_below"]))
     assert min(rate for _start, rate in b.ACCEPT_TIERS) == D("0.0020") and b.RECORD_PRICE == D("0.10")      # the 0.10% tier is withdrawn
     assert [list(row) for row in b.BOOK] == VECTORS["lines"]
-    market = (ROOT / "docs" / "MARKET.md").read_text(encoding="utf-8")
+    market = (ROOT / "docs" / "reference" / "MARKET.md").read_text(encoding="utf-8")
     for row in b.BOOK:                                  # and the document prints the same six lines, word for word
         assert "| " + " | ".join(row) + " |" in market, row[0]
 
@@ -465,7 +465,7 @@ def test_the_relayers_tip_and_chain_costs_are_counted_once():
     for bad in ((4_999_999, "outside"), (5_000_000, "anyone"), (True, "outside")):
         with pytest.raises(b.BillingError):
             b.release_split(*bad)
-    raw = (ROOT / "docs" / "UNIT_COSTS.md").read_text(encoding="utf-8")
+    raw = (ROOT / "docs" / "reference" / "UNIT_COSTS.md").read_text(encoding="utf-8")
     for relayer, first, label in (("outside", False, "an outside relayer"), ("knos", True, "Knos relays, a payee's first payment")):
         r = b.release_split(1_000_000_000, relayer, first, unit)
         assert f"| {label} | {r['fee']} | {r['tip']} | {r['revenue']} | {r['direct_cost']} | {r['relayer_revenue']} | {r['relayer_cost']} |" in raw
@@ -492,21 +492,21 @@ def test_the_ceilings_at_95_and_what_5000_buys_in_support_hours():
     hours = b.support_hours()
     assert [(h["rate"], h["hours"], h["hours_a_month"]) for h in hours] == [("75.00", "66.7", "5.6"), ("43.20", "115.7", "9.6")]
     assert D("30.24") / D("0.700") == D("43.20")                       # the BLS median wage over wages' share of what an employer pays
-    raw = (ROOT / "docs" / "UNIT_COSTS.md").read_text(encoding="utf-8")
+    raw = (ROOT / "docs" / "reference" / "UNIT_COSTS.md").read_text(encoding="utf-8")
     assert "| 20.00 | 2.00 | 1.00 |" in raw and "| 75 USD, the assumption above | 66.7 | 5.6 |" in raw and "| 43.20 USD, from public wages (the inputs) | 115.7 | 9.6 |" in raw
     assert "https://www.bls.gov/news.release/ecec.nr0.htm" in raw and "Automated onboarding\nis therefore an economic requirement" in raw
 
 
 def test_market_says_defending_the_rate_matters_more_and_that_nothing_defends_it_yet():
     s = b.sensitivity(b.unit_costs(COSTS))
-    raw = (ROOT / "docs" / "MARKET.md").read_text(encoding="utf-8")
+    raw = (ROOT / "docs" / "reference" / "MARKET.md").read_text(encoding="utf-8")
     flat = " ".join(raw.split())
     for a, c in zip(*(x["rows"] for x in s["customers"])):
         rev = lambda r: r["revenue"].replace(".00", "")      # noqa: E731
         assert f"| {a['bps']} bps | {rev(a)} | {a['gross_margin']} | {rev(c)}" in raw and f"| {c['gross_margin']} |" in raw
     assert "Defending the rate matters more than shaving verification time." in flat and "None of the three is measured." in flat
     for kind in ("recoveries", "avoided labour", "financing benefit"):
-        assert kind in flat and kind in " ".join((ROOT / "docs" / "PILOT.md").read_text(encoding="utf-8").split())
+        assert kind in flat and kind in " ".join((ROOT / "docs" / "reference" / "PILOT.md").read_text(encoding="utf-8").split())
     assert "costs the second customer's account 12,000 USD a year; its whole direct cost is 16,208.36" in flat
 
 

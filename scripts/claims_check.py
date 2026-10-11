@@ -3,17 +3,17 @@
     python scripts/claims_check.py --offline   # file-backed facts (the test suite runs this)
     python scripts/claims_check.py             # also the live facts: devnet and GitHub
 
-Pitch-facing text is README.md, the home page's first view (web/index.html), and docs/submission/*.md. Every number in
+Pitch-facing text is README.md and the home page's first view (web/index.html). Every number in
 it must be one a fact in docs/facts.json says ("say"), and every fact must hold:
 
     {"say": ["17.8%"], "what": "...", "json": "docs/bench.json", "path": "market.index.overall.first_pr_per_repo.any_check_failed.share", "equals": 0.178}
-    {"say": ["21"], "what": "...", "file": "docs/TAMPER.md", "has": "fooled 17/21"}
+    {"say": ["21"], "what": "...", "file": "docs/reference/TAMPER.md", "has": "fooled 17/21"}
     {"say": ["1,470"], "what": "...", "source": "https://...", "read": "2026-10-02"}      an outside number, cited
     {"say": [...], "what": "...", "live": "immutable"}                                   checked on devnet (see LIVE)
-    {"say": ["4.03"], "what": "...", "doc": "docs/MARKET.md", "source": "https://...", "read": "..."}   said in a document
+    {"say": ["4.03"], "what": "...", "doc": "docs/reference/MARKET.md", "source": "https://...", "read": "..."}   said in a document
     {"say": ["16"], "what": "...", "claim": "capabilities.exercised"}                    a registered fact (scripts/doc_claims.py)
 
-A fact with "doc" backs a number in a document that is not pitch-facing (docs/MARKET.md, docs/REGULATION.md, ...): the
+A fact with "doc" backs a number in a document that is not pitch-facing (docs/reference/MARKET.md, docs/reference/REGULATION.md, ...): the
 document must still say every number the fact lists, and the fact must hold like any other. Its numbers may be used in
 the pitch-facing text too, so a number has one fact wherever it is said.
 
@@ -21,7 +21,7 @@ A fact with "claim" names a fact of scripts/doc_claims.py's registry, which comp
 capability manifest, the upgrade record, the program ids): "say" must be that value as the registry prints it. No fact is
 a time: when an upgrade can execute is on chain and in the site's upgrades.json, never in a committed sentence.
 
-The one sentence (SENTENCE) must be in README.md, the home page and the submission, word for word; what a work order is
+The one sentence (SENTENCE) must be in README.md and the home page, word for word; what a work order is
 (LONG) on the home page, whatever the line breaks.
 
 Numbers that are not claims are ignored: versions, dates, clock times in the scripts, list numbering, names such as
@@ -42,13 +42,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-PITCH = ["README.md", "web/index.html", "docs/submission/SUBMISSION.md", "docs/submission/pitch_script.md",
-         "docs/submission/demo_script.md", "docs/submission/weekly_update.md", "docs/submission/pitch_script_120.md"]
+PITCH = ["README.md", "web/index.html"]
 SENTENCE = "The neutral meter for AI agent work: neither side keeps the count."
-# what a work order is, in four sentences: on the home page, folded under "What is here"
-LONG = ("A work order is a task, its budget and the terms that decide whether it is done, fixed before the work starts. A bounty "
-        "on an issue is the smallest work order. When the work is merged, a workflow run that GitHub signs says whether the "
-        "terms were met, and a Solana program checks that signature itself before it pays. No person holds the money in between.")
+# what a work order is, in five sentences: on the home page, folded under "What is here"
+LONG = ("A work order is a task, its budget and the terms that decide when it is done. All three are fixed before work "
+        "starts. A bounty on an issue is the smallest work order. When the work is merged, GitHub signs which checks ran. "
+        "A Solana program checks that signature before it pays. No person holds the money in between.")
 NUMBER = re.compile(r"\$?\d[\d,]*(?:\.\d+)?%?")
 NOT_CLAIMS = [
     r"<!-- bench:(\w+) -->.*?<!-- /bench:\1 -->",            # generated; bench_docs.py --check covers it
@@ -225,7 +224,7 @@ def main(argv: list[str] | None = None) -> int:
             if tok not in allowed:
                 fails += 1
                 print(f"FAIL  {path}: {tok!r} has no fact in docs/facts.json: {line}")
-    for path in ("README.md", "docs/submission/SUBMISSION.md", "docs/submission/pitch_script.md", "web/index.html"):
+    for path in ("README.md", "web/index.html"):
         if SENTENCE not in words(path):
             fails += 1
             print(f"FAIL  {path}: the one sentence is missing")

@@ -1,4 +1,4 @@
-# Knos in the buyer's own cloud: one image, three roles (record, relay, site). docs/SELFHOST.md.
+# Knos in the buyer's own cloud: one image, three roles (record, relay, site). docs/reference/SELFHOST.md.
 #
 #   KNOS_COMMIT=$(git rev-parse HEAD) docker compose -f deploy/compose.yaml build
 #
@@ -19,7 +19,7 @@ RUN python -m venv /opt/knos \
  && tail -n 1 sign.txt > knos.txt \
  && grep -Eq '^knos==[0-9][0-9.]* --hash=sha256:[0-9a-f]{64}$' knos.txt \
  && /opt/knos/bin/pip install --no-cache-dir --disable-pip-version-check --require-hashes --no-deps --only-binary :all: -r knos.txt \
- && /opt/knos/bin/python -m knos.selfhost --help > /dev/null    # the wheel must have knos.selfhost (0.3.23 on)
+ && /opt/knos/bin/python -m knos.selfhost --help > /dev/null    # the wheel must have knos.selfhost (Knos 0.3.23 or later)
 
 # The static site, built as the Pages build builds it (scripts/build_site.sh needs the standard library only), from the
 # commit named: the page hands out a workflow only when it is named by a full commit.

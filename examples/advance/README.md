@@ -1,16 +1,17 @@
 # Advance: a financier pays the seller now and collects from the order
 
-A work order with a holdback pays most of its amount when the work is accepted and keeps the rest through a
-warranty. A seller who wants all of it at acceptance can assign the order's payment to a financier. The financier
+A work order with a holdback pays most of its amount when the work is accepted and keeps the rest (the holdback)
+for a warranty period, in case the work has to be undone. A seller who wants all of it at acceptance can assign the order's payment to a financier. The financier
 pays the seller off the order, and the order pays the financier.
 
-This uses what knos_pay has today: `Assign` (instruction 24). Not offered by Knos: a third party can do this today
-with the program as it is. Knos charges nothing for it and takes no part in the deal between the seller and the
-financier. `tests/test_advance.py` runs every step below in the Solana runtime (LiteSVM), with test USDC.
+It uses one instruction the payment program already has: `Assign` (instruction 24). Knos does not offer advances.
+Any third party can make one with the program as it is. Knos charges nothing for it and takes no part in the deal between the seller and the
+financier. `tests/test_advance.py` runs every step below in the Solana runtime (LiteSVM, a local Solana simulator), with test USDC.
 
-[docs/ADVANCE.md](../../docs/ADVANCE.md) is the whole of it: `knos advance offer | take | status`, the one
+[docs/reference/ADVANCE.md](../../docs/reference/ADVANCE.md) is the whole of it: `knos advance offer | take | status`, the one
 transaction that pays the seller and assigns the order together, and the three ends (accepted, rejected, expired).
-This page is the case that page leaves out: an order with a holdback, where the transfer is made apart.
+This page covers the case that page leaves out: an order with a holdback, where the financier pays the seller in a
+separate transfer.
 
 ## What `Assign` does
 
@@ -60,16 +61,16 @@ The seller should assign only to a financier it trusts to make the off-order pay
 
 ## A netting period instead of one order
 
-A supplier paid by netted periods ([docs/NETTING.md](../../docs/NETTING.md)) sells a closed period the same way, when
+A supplier paid by netted periods ([docs/reference/NETTING.md](../../docs/reference/NETTING.md)) sells a closed period the same way, when
 the buyer locked a reserve for it: `knos advance quote advance-offer.json --period BOOK` prices the period's draws on
 its reserve order, and the take assigns that order. The financier then carries the wait for the draws, and the loss
 if none is signed before the reserve's deadline; an unsecured period is refused, because no order holds its money.
-Who carries what, in four rows: [docs/ADVANCE.md](../../docs/ADVANCE.md#who-carries-which-risk).
+Who carries what, in four rows: [docs/reference/ADVANCE.md](../../docs/reference/ADVANCE.md#who-carries-which-risk).
 
 ## What is not built
 
 - An assignment of only the holdback after acceptance. The program would have to let the recorded wallet of a
   holdback hand it on.
 - An escrow for the advance. `knos advance take` puts the financier's payment and the assignment in one transaction,
-  which lands whole or not at all ([docs/ADVANCE.md](../../docs/ADVANCE.md)); nothing holds the money longer than that.
+  which lands whole or not at all ([docs/reference/ADVANCE.md](../../docs/reference/ADVANCE.md)); nothing holds the money longer than that.
 - Nobody has financed an order this way; no financier exists.

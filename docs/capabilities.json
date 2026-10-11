@@ -1,5 +1,5 @@
 {
- "_about": "What Knos can do and how far each thing has got. `stage` is the highest of `stages` that has evidence; scripts/capabilities.py checks the evidence (offline, and against devnet with --rpc) and renders the table in README.md. An exercised signature that no document of this repository gives is left out and filled by the release; nothing is `reproduced` until a document links someone else's run. Only a public program id is evidence for `deployed` and `exercised`: the `knos_*` addresses of programs-v2/program_ids.json and upgrade_gate's own `declare_id!`, each listed under `programs` with the version devnet runs there (`on_chain`). A deployment of a build at an address of its own (the 0.3.14 rehearsal's staging programs) is never evidence: what ran there is said in the capability's note, with its transaction, and the capability stays `tested` until a transaction at a public id exercises it. docs/CAPABILITIES.md lists the rehearsal's transactions.",
+ "_about": "What Knos can do and how far each thing has got. `stage` is the highest of `stages` that has evidence; scripts/capabilities.py checks the evidence (offline, and against devnet with --rpc) and renders the table in README.md. An exercised signature that no document of this repository gives is left out and filled by the release; nothing is `reproduced` until a document links someone else's run. Only a public program id is evidence for `deployed` and `exercised`: the `knos_*` addresses of programs-v2/program_ids.json and upgrade_gate's own `declare_id!`, each listed under `programs` with the version devnet runs there (`on_chain`). A deployment of a build at an address of its own (the 0.3.14 rehearsal's staging programs) is never evidence: what ran there is said in the capability's note, with its transaction, and the capability stays `tested` until a transaction at a public id exercises it. docs/reference/CAPABILITIES.md lists the rehearsal's transactions.",
  "cluster": "devnet",
  "stages": [
   "implemented",
@@ -258,7 +258,7 @@
      "names": "test_any_rs256_issuer_is_admitted_on_githubs_signature"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json). More evidence: tests/test_issuers.py verifies a token of each of eleven documented issuers' shapes (the capability `verifier_issuer_matrix`)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet. More evidence: tests/test_issuers.py verifies a token of each of eleven documented issuers' shapes (the capability `verifier_issuer_matrix`)."
   },
   {
    "id": "key_guardian",
@@ -483,7 +483,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 4zeX8845JQkkBgqvRqUgAYiMPNaSWQJsxDTGyayyKATQ1ZXeDTJDpuTrMzkCd4pT1E9rrbYHw6Z4vWRnb1FKhYCL; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 4zeX8845JQkkBgqvRqUgAYiMPNaSWQJsxDTGyayyKATQ1ZXeDTJDpuTrMzkCd4pT1E9rrbYHw6Z4vWRnb1FKhYCL; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "order_pay",
@@ -513,7 +513,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 63wT5rhYhEKbgmF5k8vEKdexzoCaXZCiDvRG2GQMGSMBBsc9avGfDw3izER9D6LHoe4ucJeinTBiWaWGWpnFWvfq; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 63wT5rhYhEKbgmF5k8vEKdexzoCaXZCiDvRG2GQMGSMBBsc9avGfDw3izER9D6LHoe4ucJeinTBiWaWGWpnFWvfq; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "tests_mode",
@@ -542,7 +542,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 9zUVa8nkpCuizDnLNVZCVVS8FPPoEy6KhXz8RYDUPHH2vNEcvD9fuBtrSTxDKhTNi84e6yuMGcoj6uNAxuaeECd; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 9zUVa8nkpCuizDnLNVZCVVS8FPPoEy6KhXz8RYDUPHH2vNEcvD9fuBtrSTxDKhTNi84e6yuMGcoj6uNAxuaeECd; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "order_auto_accept",
@@ -572,7 +572,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 9zUVa8nkpCuizDnLNVZCVVS8FPPoEy6KhXz8RYDUPHH2vNEcvD9fuBtrSTxDKhTNi84e6yuMGcoj6uNAxuaeECd; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 9zUVa8nkpCuizDnLNVZCVVS8FPPoEy6KhXz8RYDUPHH2vNEcvD9fuBtrSTxDKhTNi84e6yuMGcoj6uNAxuaeECd; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "order_challenge",
@@ -588,7 +588,7 @@
      "names": "test_a_strangers_neutral_failing_run_inside_the_window_stops_the_release_and_after_it_does_not"
     }
    },
-   "note": "Rehearsed on a staging deployment of the knos_pay 2.1 build (signature 5H6mrHjgLhRxgFNWLa8p1R5BVhgzsU22Yj2b6AGbqzANCiaHLKRN6XuVYziRaTiQaqTL4pFwpfTnnRMS3csi3EL5; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"), not on the public program ids: the public knos_pay and knos_oidc carry it only once their upgrade to 2.1 has executed, and no transaction there is recorded yet. The neutral run came from another repository than the order's, inside the warranty; it signed because the paid pull request's merge had been reverted, not by running the checks on the head again. Only what the order still holds returns: what was paid at acceptance stays paid, and after the warranty no challenge is heard."
+   "note": "Rehearsed on a staging deployment of the knos_pay 2.1 build (signature 5H6mrHjgLhRxgFNWLa8p1R5BVhgzsU22Yj2b6AGbqzANCiaHLKRN6XuVYziRaTiQaqTL4pFwpfTnnRMS3csi3EL5; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"), not on the public program ids. Those run it since the upgrade of 9 Oct 2026 (knos_pay 2.2, knos_oidc 2.2), and no transaction there is recorded yet. The neutral run came from another repository than the order's, inside the warranty; it signed because the paid pull request's merge had been reverted, not by running the checks on the head again. Only what the order still holds returns: what was paid at acceptance stays paid, and after the warranty no challenge is heard."
   },
   {
    "id": "order_quorum",
@@ -604,7 +604,7 @@
      "names": "test_two_distinct_judges_pay_and_two_tokens_of_one_kind_count_once"
     }
    },
-   "note": "Rehearsed on a staging deployment of the knos_pay 2.1 build (signature 2R5DKU5gCiuppGkXpNnegZfeCVfPbHpWTWTcj9QYzE3nAc4P5jCMaNPjGJUA1fwwzwn37Wm97bD62CKBG6DgCxuT; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"), not on the public program ids: the public knos_pay and knos_oidc carry it only once their upgrade to 2.1 has executed, and no transaction there is recorded yet. A `quorum 2` order recorded its first judge, then paid on the second. The knos_pay 2.2 build of this tree counts judges by repository owner and binds their markers to the order's funding (`quorum_by_owner`): tested, not deployed."
+   "note": "Rehearsed on a staging deployment of the knos_pay 2.1 build (signature 2R5DKU5gCiuppGkXpNnegZfeCVfPbHpWTWTcj9QYzE3nAc4P5jCMaNPjGJUA1fwwzwn37Wm97bD62CKBG6DgCxuT; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"), not on the public program ids. Those run it since the upgrade of 9 Oct 2026 (knos_pay 2.2, knos_oidc 2.2), and no transaction there is recorded yet. A `quorum 2` order recorded its first judge, then paid on the second. knos_pay 2.2, live at the public id since 9 Oct 2026, counts judges by repository owner and binds their markers to the order's funding (`quorum_by_owner`); not exercised there yet."
   },
   {
    "id": "hermetic_judge",
@@ -665,7 +665,7 @@
      "names": "test_a_revert_inside_the_warranty_returns_the_holdback_and_its_fee_to_the_funder"
     }
    },
-   "note": "Rehearsed on a staging deployment of the knos_pay 2.1 build (signature 3bjQyXi6wPacnkYpwr7GZdoJabs8HnQauTUoofbraJRFHzmyK2sDtC2DJ1JQd1XkSwEVhBxF1vG5cWyRR4YkUgGY; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"), not on the public program ids: the public knos_pay and knos_oidc carry it only once their upgrade to 2.1 has executed, and no transaction there is recorded yet. A revert inside the warranty returned the holdback and its fee, 2.08, to the funder."
+   "note": "Rehearsed on a staging deployment of the knos_pay 2.1 build (signature 3bjQyXi6wPacnkYpwr7GZdoJabs8HnQauTUoofbraJRFHzmyK2sDtC2DJ1JQd1XkSwEVhBxF1vG5cWyRR4YkUgGY; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"), not on the public program ids. Those run it since the upgrade of 9 Oct 2026 (knos_pay 2.2, knos_oidc 2.2), and no transaction there is recorded yet. A revert inside the warranty returned the holdback and its fee, 2.08, to the funder."
   },
   {
    "id": "seller_settle",
@@ -681,7 +681,7 @@
      "names": "test_a_seller_pays_himself_after_the_buyers_repository_deleted_its_workflow"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet."
   },
   {
    "id": "neutral_attest",
@@ -697,7 +697,7 @@
      "names": "test_what_a_neutral_run_cannot_do"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet."
   },
   {
    "id": "arbiter_rule",
@@ -713,7 +713,7 @@
      "names": "test_the_arbiter_an_order_named_rules_who_is_paid"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet."
   },
   {
    "id": "reserve_cancel",
@@ -729,7 +729,7 @@
      "names": "test_a_reservation_a_cancellation_with_notice_and_the_kill_fee"
     }
    },
-   "note": "Rehearsed on a staging deployment of the knos_pay 2.1 build (signature 61oAvGWKUyNrR3V3hCnhh4VLjove6Uz6XyQDbJ1VuikLiZdtQuHX7nwYvM2Ug6L3ETCCmGUGC18fTEuWTFAhwzTP; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"), not on the public program ids: the public knos_pay and knos_oidc carry it only once their upgrade to 2.1 has executed, and no transaction there is recorded yet. The signature is a funder's Cancel; a Reserve is in docs/CAPABILITIES.md."
+   "note": "Rehearsed on a staging deployment of the knos_pay 2.1 build (signature 61oAvGWKUyNrR3V3hCnhh4VLjove6Uz6XyQDbJ1VuikLiZdtQuHX7nwYvM2Ug6L3ETCCmGUGC18fTEuWTFAhwzTP; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"), not on the public program ids. Those run it since the upgrade of 9 Oct 2026 (knos_pay 2.2, knos_oidc 2.2), and no transaction there is recorded yet. The signature is a funder's Cancel; a Reserve is in docs/reference/CAPABILITIES.md."
   },
   {
    "id": "top_up",
@@ -773,7 +773,7 @@
      "names": "test_a_payee_assigns_an_orders_payment_and_only_the_assignee_can_change_it"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet."
   },
   {
    "id": "advance_by_assignment",
@@ -789,7 +789,7 @@
      "names": "test_an_assignment_before_acceptance_pays_the_financier_at_acceptance_and_at_release_and_never_the_seller"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json). What the financier pays the seller is a plain transfer off the order; no advance has been made, and Knos charges nothing for one."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet. What the financier pays the seller is a plain transfer off the order, and Knos charges nothing for one. One advance has run on devnet, between two wallets of Knos's own (docs/reference/ADVANCE.md); no outside advancer exists."
   },
   {
    "id": "standing_order",
@@ -805,7 +805,7 @@
      "names": "test_a_standing_order_pays_its_rate_once_per_pull_request"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet."
   },
   {
    "id": "org_balance_limits",
@@ -821,7 +821,7 @@
      "names": "test_a_balance_with_a_side_account_enforces_all_of_it"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet."
   },
   {
    "id": "org_wallet",
@@ -837,7 +837,7 @@
      "names": "test_a_pull_request_by_a_bot_is_paid_to_its_organisations_wallet"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet."
   },
   {
    "id": "plans",
@@ -853,7 +853,7 @@
      "names": "test_only_the_fee_owner_sets_a_plan_and_only_to_lower_the_rate"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet."
   },
   {
    "id": "fee_tiers",
@@ -869,7 +869,7 @@
      "names": "test_the_014_fee_is_kept_exactly_as_the_public_program_charges_it"
     }
    },
-   "note": "Rehearsed on a staging deployment of the knos_pay 2.1 build (signature 2CuqkJsNDMgE4eGXkEEemq11tS6JNVu5QTyAjRQcASJANVHKYGqZ2pbDAgzkso4qSmM5ZwtXGHKnLCTppkVi4eXy; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"), not on the public program ids: the public knos_pay and knos_oidc carry it only once their upgrade to 2.1 has executed, and no transaction there is recorded yet. An order of 5,000 test USDC was funded with a fee of 65 on top, and one of 100 with 2.50. This is the fee the public program charges until knos_pay 2.2 is live; the 2.2 build of this tree replaces it with one rate (`fee_one_rate`)."
+   "note": "Rehearsed on a staging deployment of the knos_pay 2.1 build (signature 2CuqkJsNDMgE4eGXkEEemq11tS6JNVu5QTyAjRQcASJANVHKYGqZ2pbDAgzkso4qSmM5ZwtXGHKnLCTppkVi4eXy; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"), not on the public program ids. Those run it since the upgrade of 9 Oct 2026 (knos_pay 2.2, knos_oidc 2.2), and no transaction there is recorded yet. An order of 5,000 test USDC was funded with a fee of 65 on top, and one of 100 with 2.50. This was the fee the public program charged until knos_pay 2.2 went live on 9 Oct 2026. 2.2 replaced it with one rate (`fee_one_rate`); orders funded under 2.1 keep their stored fee."
   },
   {
    "id": "single_use_tokens",
@@ -913,7 +913,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 4zeX8845JQkkBgqvRqUgAYiMPNaSWQJsxDTGyayyKATQ1ZXeDTJDpuTrMzkCd4pT1E9rrbYHw6Z4vWRnb1FKhYCL; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 4zeX8845JQkkBgqvRqUgAYiMPNaSWQJsxDTGyayyKATQ1ZXeDTJDpuTrMzkCd4pT1E9rrbYHw6Z4vWRnb1FKhYCL; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "private_attestor",
@@ -929,7 +929,7 @@
      "names": "test_nothing_of_the_private_repository_is_in_any_public_place"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet."
   },
   {
    "id": "meter_single",
@@ -988,7 +988,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 5NVNK5nHiegrQDffQBuziqqrrDEWyN66zWPKfetb3q8tavoBpsD1LwCh4BirwWPTBewuFFYarNPKQrU7RU1t37XX; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 5NVNK5nHiegrQDffQBuziqqrrDEWyN66zWPKfetb3q8tavoBpsD1LwCh4BirwWPTBewuFFYarNPKQrU7RU1t37XX; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "meter_seller_claim",
@@ -1017,7 +1017,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 4KThmRd6XFohHrkX3cqXdUCoLnfMiwuTkt8WigFpB7any9pJpYeBHP3eVg7jsqhaqJNmQ6dYuLK3zhqZMCKRGQup; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 4KThmRd6XFohHrkX3cqXdUCoLnfMiwuTkt8WigFpB7any9pJpYeBHP3eVg7jsqhaqJNmQ6dYuLK3zhqZMCKRGQup; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "passkey_payee_wallet",
@@ -1078,7 +1078,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 3hkcqi1yKqqdWo3vHAXxNPbo8Y41UahExt8M6som7jTBHZeKTD8mazVhSn83infgu5ZKKq9vgnwhKHHRdu4rRi8; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 3hkcqi1yKqqdWo3vHAXxNPbo8Y41UahExt8M6som7jTBHZeKTD8mazVhSn83infgu5ZKKq9vgnwhKHHRdu4rRi8; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "passkey_fund_relay",
@@ -1108,7 +1108,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 3hkcqi1yKqqdWo3vHAXxNPbo8Y41UahExt8M6som7jTBHZeKTD8mazVhSn83infgu5ZKKq9vgnwhKHHRdu4rRi8; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 3hkcqi1yKqqdWo3vHAXxNPbo8Y41UahExt8M6som7jTBHZeKTD8mazVhSn83infgu5ZKKq9vgnwhKHHRdu4rRi8; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "buyer_page",
@@ -1138,7 +1138,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 3hkcqi1yKqqdWo3vHAXxNPbo8Y41UahExt8M6som7jTBHZeKTD8mazVhSn83infgu5ZKKq9vgnwhKHHRdu4rRi8; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 3hkcqi1yKqqdWo3vHAXxNPbo8Y41UahExt8M6som7jTBHZeKTD8mazVhSn83infgu5ZKKq9vgnwhKHHRdu4rRi8; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "gitlab_pay",
@@ -1386,7 +1386,7 @@
      ]
     }
    },
-   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 3nkWX5SusF5TTg5pWHVeeZQTZGP57vzWkburiRZntPQ5o6Q5M5jvY1ubEBhB5dhybhB3h2RVMQmcSSDN7yhD1Yq6; docs/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
+   "note": "Before the upgrade it was rehearsed on a staging deployment (signature 3nkWX5SusF5TTg5pWHVeeZQTZGP57vzWkburiRZntPQ5o6Q5M5jvY1ubEBhB5dhybhB3h2RVMQmcSSDN7yhD1Yq6; docs/reference/CAPABILITIES.md, \"The 0.3.14 rehearsal on devnet\"); the transaction here is at the public program id."
   },
   {
    "id": "cpi_fund",
@@ -1402,7 +1402,7 @@
      "names": "test_a_treasury_funds_an_order_by_cpi_and_gets_it_back_when_nobody_delivers"
     }
    },
-   "note": "Runs at the public ids only once the upgrade to `knos_pay 2.1` and `knos_oidc 2.1` has executed (the live state is in web/upgrades.json)."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet."
   },
   {
    "id": "oidc_gate",
@@ -1779,7 +1779,7 @@
      "names": "test_a_relay_killed_after_the_chain_took_the_token_sends_it_again_and_nobody_is_paid_twice"
     }
    },
-   "note": "Tested against a stand-in for GitHub and the local harness. The public worker runs the 0.3.14 relay until this release is published."
+   "note": "Tested against a stand-in for GitHub and the local harness. Not yet confirmed on the public worker."
   },
   {
    "id": "dependency_drills",
@@ -1795,7 +1795,7 @@
      "names": "test_each_dependency_failure_is_drilled_and_says_what_broke_what_is_seen_how_it_recovers_and_how_long_it_took"
     }
    },
-   "note": "Local drills, not an outage on devnet; docs/DRILLS.md has the rows."
+   "note": "Local drills, not an outage on devnet; docs/reference/DRILLS.md has the rows."
   },
   {
    "id": "workflow_capacity_model",
@@ -1811,7 +1811,7 @@
      "names": "test_each_limit_binds_where_its_arithmetic_says"
     }
    },
-   "note": "Arithmetic on counted requests and published limits (docs/LOAD.md); not a load test at that volume."
+   "note": "Arithmetic on counted requests and published limits (docs/reference/LOAD.md); not a load test at that volume."
   },
   {
    "id": "reproduction_kit",
@@ -1843,7 +1843,7 @@
      "names": "test_the_buyers_checks_say_success_and_the_suite_fails_when_it_is_run_again_so_nothing_is_signed"
     }
    },
-   "note": "For an order paid on its merge there is no suite to run: the run reads the checks' conclusions and its verdict says so. The changed attest.yml is published with this release; until it has run once on GitHub this is tested locally only."
+   "note": "For an order paid on its merge there is no suite to run: the run reads the checks' conclusions and its verdict says so. Until the published attest.yml has run once on GitHub, this is tested locally only."
   },
   {
    "id": "doc_claims_check",
@@ -1898,7 +1898,7 @@
    "stage": "tested",
    "evidence": {
     "implemented": {
-     "path": "docs/OUTCOMES.md",
+     "path": "docs/reference/OUTCOMES.md",
      "names": "examples/outcomes/"
     },
     "tested": {
@@ -1922,7 +1922,7 @@
      "names": "test_the_script_gives_a_verdict_from_githubs_record_of_the_commit"
     }
    },
-   "note": "Tested with a stand-in for GitHub's API. docs/RELEASE.md has the first real run as a step after the push."
+   "note": "Tested with a stand-in for GitHub's API. docs/reference/RELEASE.md has the first real run as a step after the push."
   },
   {
    "id": "webhook_verifier",
@@ -1938,7 +1938,7 @@
      "names": "test_the_typescript_verifier_answers_every_case_as_the_python_one_does"
     }
    },
-   "note": "No platform uses it (docs/INTEGRATIONS.md)."
+   "note": "No platform uses it (docs/reference/INTEGRATIONS.md)."
   },
   {
    "id": "agent_host_routes",
@@ -2223,7 +2223,7 @@
      "names": "test_a_fund_comment_names_the_third_reader_and_the_program_takes_exactly_what_it_signed"
     }
    },
-   "note": "Runs at the public id only once the upgrade to `knos_pay 2.1` has executed (the live state is in web/upgrades.json). Two readers of one owner count as one."
+   "note": "In knos_pay 2.2, which the public id runs since 9 Oct 2026 (proposal 8, executed; web/upgrades.json). Not exercised there yet. Two readers of one owner count as one."
   },
   {
    "id": "outcome_orders",
@@ -2303,7 +2303,7 @@
      "names": "test_honest_submissions_are_accepted_and_one_with_tests_of_its_own_says_they_were_not_counted"
     }
    },
-   "note": "The black-box judge accepted 61 of 61 honest submissions, of which the 48 of the set before, 48 of 48; cheats accepted: 0 of 63, 0 of 102, 0 of 25 on tasks that are not code and 0 of 14 new ones, every figure from one run of the whole benchmark in this release (docs/TAMPER.md, docs/ASSURANCE.md). Knos's own tasks and submissions; nobody outside has run the set."
+   "note": "The black-box judge accepted all 61 honest submissions (including all 48 of the earlier set) and 0 cheats: 0 of 63, 0 of 102, 0 of 25 on tasks that are not code, and 0 of 14 new ones. Every figure is from one run of the whole benchmark in this release (docs/reference/TAMPER.md, docs/reference/ASSURANCE.md). Knos wrote the tasks and submissions; nobody outside has run the set."
   },
   {
    "id": "provenance_chain",
@@ -2319,7 +2319,7 @@
      "names": "test_every_program_has_the_seven_links_and_a_missing_one_gives_its_reason"
     }
    },
-   "note": "No program's chain is complete in the committed record (docs/PROVENANCE.md): the exercised scenario is MISSING for each, the execution transaction is MISSING while its proposal has not executed, and the knos_oidc and knos_pay builds that run at the public ids before the upgrade have no build record."
+   "note": "No program's chain is complete in the committed record (docs/reference/PROVENANCE.md): the exercised scenario is MISSING for each. The proposals of knos_oidc 2.2 and knos_pay 2.2 (7 and 8) have executed, and docs/provenance.json holds their execution transactions; the release run's verified build of each is not recorded yet."
   },
   {
    "id": "conformance_kit",
@@ -2351,7 +2351,7 @@
      "names": "test_a_crate_held_at_an_older_version_is_a_green_skip_and_a_version_that_is_neither_is_red"
     }
    },
-   "note": "Tested against a mocked registry index; the rule first runs for real in the release of 0.3.16."
+   "note": "Tested against a mocked registry index; the rule first ran for real in the release of Knos 0.3.16."
   },
   {
    "id": "oidc_strict_json",
@@ -2404,7 +2404,7 @@
      "names": "test_every_written_panic_in_program_code_has_a_reason_and_every_reason_a_place"
     }
    },
-   "note": "The list is docs/UNWRAPS.md. Indexing is counted by file, not explained line by line."
+   "note": "The list is docs/reference/UNWRAPS.md. Indexing is counted by file, not explained line by line."
   },
   {
    "id": "outcome_not_code",
@@ -2663,7 +2663,7 @@
      ]
     }
    },
-   "note": "A Rust test crate (`cd programs-v2/handlers && cargo test`), run by the program workflow and not by pytest, and the release run's `es256` round at the public id of knos_oidc 2.2 (proposal 7, executed): a P-256 key the run's own wallet registered as its private key, and a token of 740 bytes verified in one transaction. The key's seed is public and it speaks for no issuer: no token of a real ES256 issuer has been verified. A signing input of at most 780 bytes (docs/ES256.md). The Python client is `src/knos/settle/v2/oidc.py`, held to the built program by `tests/test_es256_client.py`."
+   "note": "A Rust test crate (`cd programs-v2/handlers && cargo test`), run by the program workflow and not by pytest, and the release run's `es256` round at the public id of knos_oidc 2.2 (proposal 7, executed): a P-256 key the run's own wallet registered as its private key, and a token of 740 bytes verified in one transaction. The key's seed is public and it speaks for no issuer: no token of a real ES256 issuer has been verified. A signing input of at most 780 bytes (docs/reference/ES256.md). The Python client is `src/knos/settle/v2/oidc.py`, held to the built program by `tests/test_es256_client.py`."
   },
   {
    "id": "contributor_tests_not_counted",
@@ -2679,7 +2679,7 @@
      "names": "test_an_added_test_or_test_configuration_is_allowed_and_cannot_decide"
     }
    },
-   "note": "Measured on Knos's own tasks (docs/TAMPER.md): 61 of 61 honest submissions accepted, 0 of 14 cheats aimed at what a pull request may now add. `knos preflight` and the supplier page give the same answer from the same rule."
+   "note": "Measured on Knos's own tasks (docs/reference/TAMPER.md): 61 of 61 honest submissions accepted, 0 of 14 cheats aimed at what a pull request may now add. `knos preflight` and the supplier page give the same answer from the same rule."
   },
   {
    "id": "procurement_objects",
@@ -2743,7 +2743,7 @@
      "names": "one_pay_token_twice_in_one_transaction_or_in_two_pays_once"
     }
    },
-   "note": "A Rust test crate (`cd programs-v2/handlers && cargo test --release --test adversarial`), not run by pytest. Two of its tests are ignored because the program as built fails them: one account can be two judges of a wallet's order, and a judge's marker outlives its order by a second (docs/SECURITY.md). Neither is fixed in this release."
+   "note": "A Rust test crate (`cd programs-v2/handlers && cargo test --release --test adversarial`), not run by pytest. No test there is ignored. Its two findings of 2.1 (one account as two judges of a wallet's order; a judge's marker outliving its order by a second) were ignored tests until knos_pay 2.2 fixed them."
   },
   {
    "id": "reader_template",
@@ -2771,7 +2771,7 @@
      "names": "export function renderKeyholder"
     }
    },
-   "note": "Outside key holders: 0. One person, the founder, holds every member key of both multisigs (docs/KEYHOLDER.md, docs/GOVERNANCE.md); nobody has asked."
+   "note": "Outside key holders: 0. One person, the founder, holds every member key of both multisigs (docs/reference/KEYHOLDER.md, docs/reference/GOVERNANCE.md); nobody has asked."
   },
   {
    "id": "fee_one_rate",
@@ -2787,7 +2787,7 @@
      "names": "test_the_018_fee_is_one_rate_with_a_floor_and_is_pay_pys_own_numbers"
     }
    },
-   "note": "In knos_pay 2.2, which the public id runs (proposal 8, executed; web/upgrades.json). Not exercised there yet: the release run's `one_rate` round funds orders of 5.00, 100.00 and 1,500.00 for one minute, 1,609.85 test USDC in all, and its wallet held 225.53 (`cannot`). An order funded before the upgrade keeps the fee it was funded with: one funded under 2.1 went back with its stored 0.40 (docs/CAPABILITIES.md, the round on the public program ids)."
+   "note": "In knos_pay 2.2, which the public id runs (proposal 8, executed; web/upgrades.json). Not exercised there yet: the release run's `one_rate` round funds orders of 5.00, 100.00 and 1,500.00 for one minute, 1,609.85 test USDC in all, and its wallet held 225.53 (`cannot`). An order funded before the upgrade keeps the fee it was funded with: one funded under 2.1 went back with its stored 0.40 (docs/reference/CAPABILITIES.md, the round on the public program ids)."
   },
   {
    "id": "quorum_by_owner",
@@ -3061,7 +3061,7 @@
      "names": "test_a_thousand_outcomes_settle_as_one_release_on_the_programs_as_they_are"
     }
    },
-   "note": "`knos net`. Tested in the simulator with the test builds; never run on devnet. The cap, the release, the root and the fee are enforced on chain; each line, the link from the release to the batch, and the buyer's credit inside the period are not (docs/NETTING.md)."
+   "note": "`knos net`. Tested in the simulator with the test builds; never run on devnet. The cap, the release, the root and the fee are enforced on chain; each line, the link from the release to the batch, and the buyer's credit inside the period are not (docs/reference/NETTING.md)."
   },
   {
    "id": "third_party_advance",
@@ -3077,7 +3077,7 @@
      "names": "test_the_take_is_whole_or_nothing_no_assignment_without_the_payment_and_no_payment_without_the_assignment"
     }
    },
-   "note": "`knos advance`, on the program's Assign. Knos lends nothing and charges nothing for it. Tested in the simulator. No advancer exists; one advance ran on devnet at the public ids between two wallets of Knos's own release run (0.3.19), with no outside party (docs/ADVANCE.md)."
+   "note": "`knos advance`, on the program's Assign. Knos lends nothing and charges nothing for it. Tested in the simulator. No advancer exists; one advance ran on devnet at the public ids between two wallets of Knos's own release run (0.3.19), with no outside party (docs/reference/ADVANCE.md)."
   },
   {
    "id": "record_lookup_paid",
@@ -3109,7 +3109,7 @@
      "names": "test_a_crash_between_signing_and_sending_loses_nothing_and_doubles_nothing"
     }
    },
-   "note": "`knos faucet` and `python -m knos.faucet --event`. Test USDC has no monetary value. Tested with a stand-in chain and forge; the faucet key does not exist yet and no grant has been made on devnet (docs/FAUCET.md)."
+   "note": "`knos faucet` and `python -m knos.faucet --event`. Test USDC has no monetary value. Tested with a stand-in chain and forge; the faucet key does not exist yet and no grant has been made on devnet (docs/reference/FAUCET.md)."
   },
   {
    "id": "funded_task_board",
@@ -3141,7 +3141,7 @@
      "names": "test_the_relays_pass_sweeps_only_where_it_may_write_through_its_own_reader_and_says_an_unread_listing_as_an_error"
     }
    },
-   "note": "worker.yml job `claims`, once in every run of the chain; a relay of one's own may sweep in its pass (KNOS_CLAIM_REPOS). Not run on GitHub yet (docs/RELAY.md, \"The claim guard on the worker\")."
+   "note": "worker.yml job `claims`, once in every run of the chain; a relay of one's own may sweep in its pass (KNOS_CLAIM_REPOS). Not run on GitHub yet (docs/reference/RELAY.md, \"The claim guard on the worker\")."
   },
   {
    "id": "relay_notes_log",
@@ -3189,7 +3189,7 @@
      "names": "test_every_level_is_computed_from_the_evidence_and_each_names_who_stays_trusted"
     }
    },
-   "note": "Receipt version 5 (`build5`), written wherever a receipt is made since 0.3.19; none has been written on devnet. Older receipts still verify and read as reported unless their evidence shows more. `attested` is defined and no receipt reaches it: nothing proves what a judge executed (docs/RECEIPT.md)."
+   "note": "Receipt version 5 (`build5`), written wherever a receipt is made since 0.3.19; none has been written on devnet. Older receipts still verify and read as reported unless their evidence shows more. `attested` is defined and no receipt reaches it: nothing proves what a judge executed (docs/reference/RECEIPT.md)."
   },
   {
    "id": "declared_control",
@@ -3221,7 +3221,7 @@
      "names": "test_every_statement_line_says_its_level_and_a_note_matches_three_legs_or_says_the_mismatch"
     }
    },
-   "note": "`knos statement grn`. No buyer's accounts-payable system has taken one (docs/FINANCE.md)."
+   "note": "`knos statement grn`. No buyer's accounts-payable system has taken one (docs/reference/FINANCE.md)."
   },
   {
    "id": "supplier_completes",
@@ -3237,7 +3237,7 @@
      "names": "test_the_supplier_is_paid_on_the_forges_signature_while_the_buyer_does_nothing"
     }
    },
-   "note": "The path that exists in knos_pay, walked in the simulator with the test build; with no accepted work by the deadline the money returns to its funder (docs/FINANCE.md, \"When the buyer goes quiet\")."
+   "note": "The path that exists in knos_pay, walked in the simulator with the test build; with no accepted work by the deadline the money returns to its funder (docs/reference/FINANCE.md, \"When the buyer goes quiet\")."
   },
   {
    "id": "upgrade_gate_adoption",
@@ -3253,7 +3253,7 @@
      "names": "test_record_and_check_against_the_gate_program"
     }
    },
-   "note": "Tested against the gate's test build in the simulator. The adopters list has zero rows (docs/GATE.md, docs/COMPOSE.md)."
+   "note": "Tested against the gate's test build in the simulator. The adopters list has zero rows (docs/reference/GATE.md, docs/reference/COMPOSE.md)."
   },
   {
    "id": "registry_plan",
@@ -3289,7 +3289,7 @@
   },
   {
    "id": "judges_page",
-   "what": "One page for a judge holds six judged things and the seven further factors, one sentence and one link each, then five lines of what is not real yet.",
+   "what": "One page, \"Check every claim yourself\", holds six judged things and the seven further factors, one sentence and one link each, then five lines of what is not real yet.",
    "stage": "tested",
    "evidence": {
     "implemented": {
@@ -3381,7 +3381,7 @@
      "names": "test_the_five_steps_run_in_order_with_the_operators_own_key_and_fork"
     }
    },
-   "note": "docs/OPERATOR.md gives the command and its expected output. Nobody but the founder has run it: second operators 0. A run with --simulate is not a drill and says so."
+   "note": "docs/reference/OPERATOR.md gives the command and its expected output. Nobody but the founder has run it: second operators 0. A run with --simulate is not a drill and says so."
   },
   {
    "id": "bank_rail",
@@ -3477,7 +3477,7 @@
      "names": "test_a_plain_fund_cannot_go_round_the_approval_a_standing_offer_needs"
     }
    },
-   "note": "`knos controls matrix`, docs/ENFORCEMENT.md and the site's #enforcement page. Each enforced cell names a test that tries to get round it. Workflow-enforced means the pinned workflow refuses: a repository that runs another workflow is stopped only by what the program enforces, and the table says which cells those are."
+   "note": "`knos controls matrix`, docs/reference/ENFORCEMENT.md and the site's #enforcement page. Each enforced cell names a test that tries to get round it. Workflow-enforced means the pinned workflow refuses: a repository that runs another workflow is stopped only by what the program enforces, and the table says which cells those are."
   },
   {
    "id": "archive_standalone",
@@ -3637,7 +3637,7 @@
      "names": "test_relays_with_their_own_fee_payers_fund_apart_and_through_one_shared_account_and_leave_nothing"
     }
    },
-   "note": "`python scripts/load.py measure`. Measured once on devnet on 7 October 2026 (4 relays, 40 orders each way, funded by a wallet in a mint made for the run, at the public knos_pay): 0.46 confirmed transactions a second apart and 0.52 through one shared account, 0 retries, 0 failures; docs/LOAD.md prints it apart from the derived bound. One run through one public endpoint, each relay waiting for a confirmation before it sends again: a reading of that day, not a capacity."
+   "note": "`python scripts/load.py measure`. Measured once on devnet on 7 October 2026 (4 relays, 40 orders each way, funded by a wallet in a mint made for the run, at the public knos_pay): 0.46 confirmed transactions a second apart and 0.52 through one shared account, 0 retries, 0 failures; docs/reference/LOAD.md prints it apart from the derived bound. One run through one public endpoint, each relay waiting for a confirmation before it sends again: a reading of that day, not a capacity."
   },
   {
    "id": "site_seven_beats",
@@ -3669,7 +3669,7 @@
      "names": "test_the_build_offers_only_the_pages_it_holds"
     }
    },
-   "note": "Approve, Pay by bank, Enforcement and For judges are added this way. Each is fetched on first opening."
+   "note": "Approve, Pay by bank, Enforcement and Check every claim yourself are added this way. Each is fetched on first opening."
   },
   {
    "id": "truth_check",
@@ -3701,7 +3701,7 @@
      "names": "test_any_other_description_of_the_product_fails_the_check_place_by_place"
     }
    },
-   "note": "`python scripts/public_face.py --check` reads this tree; `--remote` reads what PyPI, the MCP registry and GitHub serve and prints the command that corrects each. Until 0.3.20 is published those places still serve older words; glama.json has no description field."
+   "note": "`python scripts/public_face.py --check` reads this tree; `--remote` reads what PyPI, the MCP registry and GitHub serve and prints the command that corrects each. glama.json has no description field."
   },
   {
    "id": "bill_margin_leaks",
@@ -3717,7 +3717,7 @@
      "names": "test_the_three_leaks_each_with_its_number_and_its_design"
     }
    },
-   "note": "docs/UNIT_COSTS.md. The costs are budgets and local measurements, not a customer's: nothing has been sold."
+   "note": "docs/reference/UNIT_COSTS.md. The costs are budgets and local measurements, not a customer's: nothing has been sold."
   },
   {
    "id": "bill_rails_once",
@@ -3749,7 +3749,7 @@
      "names": "test_a_supplier_paid_by_two_unrelated_buyers_and_the_buyer_that_arrived_through_it"
     }
    },
-   "note": "docs/MARKET.md section 7, and `devnet.stats.loop` of the published statistics. All six read 0 today: with no outside buyer the three chain counters are 0 by arithmetic."
+   "note": "docs/reference/MARKET.md section 7, and `devnet.stats.loop` of the published statistics. All six read 0 today: with no outside buyer the three chain counters are 0 by arithmetic."
   },
   {
    "id": "reserve_by_comment",
@@ -3765,7 +3765,7 @@
      "names": "test_a_reserve_comment_locks_a_standing_order_for_one_supplier_and_says_its_id_amount_deadline_and_how_the_supplier_checks_it"
     }
    },
-   "note": "Runs on the workflow's fakes and, in the round `net-reserve`, on the simulator. Not run at the public ids: the pinned workflows are republished at 0.3.21 by the release run."
+   "note": "Runs on the workflow's fakes and, in the round `net-reserve`, on the simulator. Not yet run at the public ids."
   },
   {
    "id": "enterprise_boundary",
@@ -3797,7 +3797,7 @@
      "names": "test_a_funder_sees_which_orders_can_be_left_before_the_upgrade_and_the_program_agrees"
     }
    },
-   "note": "On the simulator with a pending proposal. Held and warranty money cannot leave before an upgrade, and the command says so (docs/GOVERNANCE.md)."
+   "note": "On the simulator with a pending proposal. Held and warranty money cannot leave before an upgrade, and the command says so (docs/reference/GOVERNANCE.md)."
   },
   {
    "id": "verify_proposal",
@@ -3829,7 +3829,7 @@
      "names": "test_each_dependency_failure_is_drilled_and_says_what_broke_what_is_seen_how_it_recovers_and_how_long_it_took"
     }
    },
-   "note": "On the test builds with the tests' fakes (docs/DRILLS.md). Not drilled at the public ids."
+   "note": "On the test builds with the tests' fakes (docs/reference/DRILLS.md). Not drilled at the public ids."
   },
   {
    "id": "judge_host_limits",
@@ -3845,7 +3845,7 @@
      "names": "test_a_fork_bomb_meets_the_process_limit_and_nothing_it_started_outlives_the_run"
     }
    },
-   "note": "Linux. What macOS and Windows runners can and cannot enforce is in docs/ATTESTOR.md. The hermetic container is the default where the runner has one; the host sandbox is the fallback and the verdict says so."
+   "note": "Linux. What macOS and Windows runners can and cannot enforce is in docs/reference/ATTESTOR.md. The hermetic container is the default where the runner has one; the host sandbox is the fallback and the verdict says so."
   },
   {
    "id": "period_acks",
@@ -3941,7 +3941,7 @@
      "names": "test_the_simulator_pays_every_order_once_each_by_the_relay_of_its_part_with_that_relays_key_alone"
     }
    },
-   "note": "Measured on devnet, public ids, own wallets (n=40 each): priority-fee 40/40, every PayOrder priced (9 Oct); burst 22/40 on 9 Oct (RPC drops, timeouts, HTTP 408), p50 262.5 s; the burst rerun with the fan-out (rpc_fanout) on 10 Oct: 40/40, 0 failures, 73 retries, p50 580.75 s (docs/LOAD.md)."
+   "note": "Measured on devnet, public ids, own wallets (n=40 each): priority-fee 40/40, every PayOrder priced (9 Oct); burst 22/40 on 9 Oct (RPC drops, timeouts, HTTP 408), p50 262.5 s; the burst rerun with the fan-out (rpc_fanout) on 10 Oct: 40/40, 0 failures, 73 retries, p50 580.75 s (docs/reference/LOAD.md)."
   },
   {
    "id": "approval_record",
@@ -4053,7 +4053,7 @@
      "names": "test_pay_order_and_settle_order_take_a_seeded_token_account_of_the_fee_owner_and_nothing_else"
     }
    },
-   "note": "knos_pay takes any token account the fee owner holds for the mint; `knos relay fee-accounts --k N` plans the accounts and `--execute` makes them. Tested in the simulator against the compiled programs. On devnet six seeded fee accounts exist since 8 Oct 2026 (K = 4 for devnet USDC and the faucet's test USDC, owned by the fee owner, made by the project's own relayer key; docs/RELAY.md lists them); the public worker runs with K = 1. Two rates are measured on 8 Oct at the public ids (docs/LOAD.md): 0.097 a second through one relay and one fee account, and 0.189 a second with 4 relays and 4 fee accounts (40 of 40; the fee accounts took 14, 9, 9 and 8 payments)."
+   "note": "knos_pay takes any token account the fee owner holds for the mint; `knos relay fee-accounts --k N` plans the accounts and `--execute` makes them. Tested in the simulator against the compiled programs. On devnet six seeded fee accounts exist since 8 Oct 2026 (K = 4 for devnet USDC and the faucet's test USDC, owned by the fee owner, made by the project's own relayer key; docs/reference/RELAY.md lists them); the public worker runs with K = 1. Two rates are measured on 8 Oct at the public ids (docs/reference/LOAD.md): 0.097 a second through one relay and one fee account, and 0.189 a second with 4 relays and 4 fee accounts (40 of 40; the fee accounts took 14, 9, 9 and 8 payments)."
   },
   {
    "id": "memory_changes_decisions",
@@ -4085,7 +4085,7 @@
      "names": "test_knos_fee_account_only_receives_fees_and_lowers_a_rate"
     }
    },
-   "note": "A check of the source, not an outside review: it shows what the code allows, and docs/DISPUTES.md says how verdicts and appeals stay with the parties' judges and arbiters."
+   "note": "A check of the source, not an outside review: it shows what the code allows, and docs/reference/DISPUTES.md says how verdicts and appeals stay with the parties' judges and arbiters."
   },
   {
    "id": "line_four_steps_owed",
@@ -4116,7 +4116,7 @@
      "names": "test_it_refuses_while_a_proposal_is_open_or_approved_and_not_executed"
     }
    },
-   "note": "The script is tested. The configuration transaction it plans was created and approved on devnet on 9 October 2026: proposal 9 of the upgrade multisig, approved by two member keys in MSTGH4Q99fy6xNWVJ8hTCjs7mJzuVD7rGNF1Ymy6JeuB3cDMThTGnsxKBBKPvv5Q741DEfKLJrecrtBibv45uyQ. The time lock itself is not applied until that transaction executes, which the Squads program allows 48 hours after the approval; docs/GOVERNANCE.md says applied only when a release run records it."
+   "note": "The script is tested. The configuration transaction it plans was created and approved on devnet on 9 October 2026: proposal 9 of the upgrade multisig, approved by two member keys in MSTGH4Q99fy6xNWVJ8hTCjs7mJzuVD7rGNF1Ymy6JeuB3cDMThTGnsxKBBKPvv5Q741DEfKLJrecrtBibv45uyQ. The time lock itself is not applied until that transaction executes, which the Squads program allows 48 hours after the approval; docs/reference/GOVERNANCE.md says applied only when a release run records it."
   },
   {
    "id": "bank_unknown_held",
@@ -4162,7 +4162,7 @@
      "names": "test_compose_parses_and_names_only_pinned_images"
     }
    },
-   "note": "Never deployed: not run in any cloud. Single sign-on through any OpenID Connect provider, tested against a stand-in provider only (sso_oidc; docs/SELFHOST.md)."
+   "note": "Never deployed: not run in any cloud. Single sign-on through any OpenID Connect provider, tested against a stand-in provider only (sso_oidc; docs/reference/SELFHOST.md)."
   },
   {
    "id": "contention_scenarios",
@@ -4178,7 +4178,7 @@
      "names": "test_each_contention_scenario_runs_in_the_simulator_with_its_own_checks_and_no_rate"
     }
    },
-   "note": "Simulated here with injected faults; run on devnet, public ids, 9 Oct (n=40 each): hot-funder 40/40, rpc-faults 40/40, priority-fee 40/40 with version-1 transactions unpriced, burst 13/40; burst 22/40 on 9 Oct after the back-off, 40/40 on 10 Oct with the fan-out (docs/LOAD.md)."
+   "note": "Simulated here with injected faults; run on devnet, public ids, 9 Oct (n=40 each): hot-funder 40/40, rpc-faults 40/40, priority-fee 40/40 with version-1 transactions unpriced, burst 13/40; burst 22/40 on 9 Oct after the back-off, 40/40 on 10 Oct with the fan-out (docs/reference/LOAD.md)."
   },
   {
    "id": "audit_export_fast",
@@ -4321,7 +4321,7 @@
      "names": "test_the_page_in_a_browser_with_a_virtual_passkey"
     }
    },
-   "note": "Not exercised on public ids. 8 clicks, 4 with knos-claim already created; one click needs a program change (docs/PAYEE.md)."
+   "note": "Not exercised on public ids. 8 clicks, 4 with knos-claim already created; one click needs a program change (docs/reference/PAYEE.md)."
   },
   {
    "id": "pypi_description_links",
@@ -4401,7 +4401,7 @@
      "names": "test_a_payment_the_cluster_has_only_processed_or_confirmed_is_never_booked_until_it_is_finalized"
     }
    },
-   "note": "A state-machine test matrix (docs/INVARIANTS.md); offline."
+   "note": "A state-machine test matrix (docs/reference/INVARIANTS.md); offline."
   },
   {
    "id": "secret_scan_history",
@@ -4417,23 +4417,7 @@
      "names": "test_a_key_deleted_from_the_tree_is_still_found_in_history_by_kind_without_its_value"
     }
    },
-   "note": "Run on 9 Oct 2026 (docs/LAUNCH.md, items 1 and 2)."
-  },
-  {
-   "id": "launch_check",
-   "what": "`scripts/launch_check.py` checks the twenty pre-launch rows of docs/LAUNCH.md offline: every file and test named exists, no key in the tree, no analytics script, email sender or AI provider client.",
-   "stage": "tested",
-   "evidence": {
-    "implemented": {
-     "path": "scripts/launch_check.py",
-     "names": "def check"
-    },
-    "tested": {
-     "test": "tests/test_launch_check.py",
-     "names": "test_this_repository_passes_and_every_item_of_the_list_has_its_row"
-    }
-   },
-   "note": "Offline; `--launch-day` fails while any row is partly or not done."
+   "note": "Run on 9 Oct 2026 over the whole history."
   },
   {
    "id": "site_404",
@@ -4497,7 +4481,7 @@
      "names": "test_each_privacy_line_agrees_with_the_code"
     }
    },
-   "note": "No lawyer has read it (docs/REGULATION.md)."
+   "note": "No lawyer has read it (docs/reference/REGULATION.md)."
   },
   {
    "id": "site_share_tags",
@@ -4529,7 +4513,7 @@
      "names": "test_fanned_out_resent_and_confirmed_by_signature_the_burst_pays_40_of_40_once_each"
     }
    },
-   "note": "40 of 40 on a stand-in devnet that drops answers as devnet did; forty transactions waiting ask one status request a poll, not forty. Devnet, public ids, own wallets: burst 22/40 on 9 Oct before the fan-out; 40/40 on 10 Oct with it (0 failures, 73 retries, p50 580.75 s, n=40). A first run on 10 Oct with the fan-out as it was before this fix (each transaction's status asked every 0.5 s) had every status request answered HTTP 429 and was stopped at 11/40 (docs/LOAD.md)."
+   "note": "40 of 40 on a stand-in devnet that drops answers as devnet did; forty transactions waiting ask one status request a poll, not forty. Devnet, public ids, own wallets: burst 22/40 on 9 Oct before the fan-out; 40/40 on 10 Oct with it (0 failures, 73 retries, p50 580.75 s, n=40). A first run on 10 Oct with the fan-out as it was before this fix (each transaction's status asked every 0.5 s) had every status request answered HTTP 429 and was stopped at 11/40 (docs/reference/LOAD.md)."
   },
   {
    "id": "grace_refund_by_another",
@@ -4609,7 +4593,7 @@
      "names": "test_the_same_list_and_seed_give_the_same_bytes_and_another_seed_another_draw"
     }
    },
-   "note": "A plan on paper (docs/PILOT.md): no pilot has run, no buyer has seen it, and nobody outside has agreed to run the analysis again."
+   "note": "A plan on paper (docs/reference/PILOT.md): no pilot has run, no buyer has seen it, and nobody outside has agreed to run the analysis again."
   },
   {
    "id": "judged_files_refused",
@@ -4717,7 +4701,7 @@
      "names": "test_no_cutoff_in_this_tree_is_earlier_than_the_release_it_names"
     }
    },
-   "note": "The cutoff in this tree was written for 0.3.25. The 0.3.26 release run writes its own after the upload (docs/RELEASE.md)."
+   "note": "Each release run writes the cutoff after its upload (docs/reference/RELEASE.md)."
   },
   {
    "id": "seo_pages",
@@ -4733,7 +4717,7 @@
      "names": "test_the_questions_say_the_same_words_on_the_page_in_its_json_ld_and_in_the_readme"
     }
    },
-   "note": "Not yet submitted to a search engine: only the founder can do that (docs/SEO.md)."
+   "note": "Not yet submitted to a search engine."
   },
   {
    "id": "sources_sigstore",
@@ -4749,7 +4733,7 @@
      "names": "test_the_two_recorded_bundles_verify"
     }
    },
-   "note": "Tested on two real npm records recorded here (knos-settle 0.3.25 and sigstore 3.0.0); no outside source feeds a meter yet (docs/SOURCES.md)."
+   "note": "Tested on two real npm records recorded here (knos-settle 0.3.25 and sigstore 3.0.0); no outside source feeds a meter yet (docs/reference/SOURCES.md)."
   },
   {
    "id": "sso_oidc",
@@ -4765,7 +4749,7 @@
      "names": "test_whole_flow_over_the_loopback"
     }
    },
-   "note": "Tested against a stand-in provider only: no real provider has been tried, and the bundle has never been deployed (docs/SELFHOST.md)."
+   "note": "Tested against a stand-in provider only: no real provider has been tried, and the bundle has never been deployed (docs/reference/SELFHOST.md)."
   }
  ],
  "public_round": {

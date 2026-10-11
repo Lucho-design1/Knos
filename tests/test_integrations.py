@@ -1,4 +1,4 @@
-"""What a bounty or work platform takes from this repository (docs/INTEGRATIONS.md): the knos-verify action and its
+"""What a bounty or work platform takes from this repository (docs/reference/INTEGRATIONS.md): the knos-verify action and its
 script against a stand-in for GitHub, the offline receipt verifier in Python and in TypeScript on one set of cases,
 and the badge a platform shows beside a paid bounty."""
 from __future__ import annotations
@@ -248,10 +248,10 @@ def test_the_badge_a_platform_shows_is_the_one_knos_draws_and_links_to_the_repos
 # ---- the document -------------------------------------------------------------------------------------------------------
 
 def test_the_integrations_document_claims_no_platform_uses_knos():
-    text = (ROOT / "docs" / "INTEGRATIONS.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs" / "reference" / "INTEGRATIONS.md").read_text(encoding="utf-8")
     assert "No platform named here uses Knos, has endorsed it or has been asked." in text
     for rel in re.findall(r"\]\((\.\./[^)#]+)", text):
-        assert (ROOT / "docs" / rel).resolve().exists(), rel
+        assert (ROOT / "docs" / "reference" / rel).resolve().exists(), rel
     assert not re.search(r"\b(?:partner|endorsed by|trusted by|used by)\b", text.replace("has endorsed it", ""), re.I)
 
 

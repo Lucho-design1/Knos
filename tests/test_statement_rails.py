@@ -369,7 +369,7 @@ def test_never_a_second_instruction_under_the_same_settlement_id_and_a_double_pa
 
 def test_a_line_paid_on_chain_or_refunded_is_never_in_a_bank_file_and_a_bank_paid_line_never_in_a_second():
     """One economic deliverable, two rails: what the program paid or refunded never goes to the bank, and what the bank
-    paid never goes to it again (docs/INVARIANTS.md, "One economic deliverable pays once")."""
+    paid never goes to it again (docs/reference/INVARIANTS.md, "One economic deliverable pays once")."""
     st = two()
     lines = [ln["invoice_line"] for ln in st["lines"] if ln["state"] == "agreed"]
     s = statement.pay(st, approved(st), lines[0], "chain", "TxOne", "2026-10-03")
