@@ -2590,7 +2590,21 @@ class _Status:
         said = " · ".join(f"{s} {_hms(self.at[s])} UTC (+{max(0, round(self.at[s] - self.since))} s)" for s in STATES if s in self.at)
         data = " ".join([f"since={self.since:.1f}", *(f"{s}={self.at[s]:.1f}" for s in STATES if s in self.at), *([f"tx={self.sig}"] if self.sig else [])])
         lines = "".join(f"\n{ln.replace('--', '- -')}" for ln in self.lines[:4])
-        return f"{STATUS}\n<sub>{said}; seconds are counted from {self.after}.</sub>\n<!-- knos-states {data}{lines}\n-->"
+        final = f"\n<sub>Paid and final {self.final_in()} after it was sent to Solana.</sub>" if self.final_in() else ""
+        return f"{STATUS}\n<sub>{said}; seconds are counted from {self.after}.</sub>{final}\n<!-- knos-states {data}{lines}\n-->"
+
+    def final_in(self) -> str:
+        """"N ms" (or "N s" from 10 s on) from the send to finality, once the payment is final: this process's own
+        measure of the paying transaction when it sent it (knos.platform.finality.timing_of), else the states'."""
+        if "finalized" not in self.at:
+            return ""
+        from .platform import finality
+        mine = finality.timing_of(self.sig)
+        ms = mine["final_ms"] if mine and mine.get("final") else (
+            round((self.at["finalized"] - self.at["submitted"]) * 1000) if "submitted" in self.at else None)
+        if ms is None:
+            return ""
+        return f"in {int(ms)} ms" if ms < 10_000 else f"in {round(ms / 1000)} s"
 
     def write(self, text: str) -> bool:
         body = f"{text}\n\n{self.block()}"
@@ -2689,8 +2703,15 @@ def _settled(run: Run, cases: list) -> None:
 
 
 def _finalized(run: Run, sig: str) -> bool:
-    """Whether the cluster finalized `sig` within FINAL_WAIT seconds. A ledger with no way to ask says nothing."""
+    """Whether the cluster finalized `sig` within FINAL_WAIT seconds (on an Alpenglow cluster, FINAL_WAIT_ALPENGLOW:
+    finality there is the target ~150 ms, not TowerBFT's 12.8 s after confirmation). A payment this process waited for
+    at `finalized` (the default on Alpenglow: knos.platform.finality) is final already: nothing is asked again. A
+    ledger with no way to ask says nothing."""
     try:
+        from .platform import finality
+        mine = finality.timing_of(sig)
+        if mine and mine.get("final"):
+            return True
         ask = getattr(run.ledger, "finalized", None)
         if ask is not None:
             return bool(ask(sig, FINAL_WAIT))
@@ -2698,7 +2719,7 @@ def _finalized(run: Run, sig: str) -> bool:
         if not url:
             return False
         from . import chain
-        chain.wait(str(url), sig, float(FINAL_WAIT), "finalized")
+        chain.wait(str(url), sig, finality.final_wait(str(url)), "finalized")
         return True
     except Exception:  # noqa: BLE001 - not finalized in time, or the cluster did not answer: the state stays unreached
         return False
@@ -2923,7 +2944,8 @@ def _settle_one(run: Run, rp: dict, pull: dict, since: float, after: str, asked:
     before = st.writes if st is not None else 0
     run.say(number, badge.said(run.repo, number, _join(parts), run.now()))       # into the one comment, when it is there (Run.say)
     if st is not None and st.sig and st.writes > before and _finalized(run, st.sig):     # the payment is said already: this adds the last state to the same comment
-        st.reach("finalized")
+        from .platform import finality       # waited for at finalized (Alpenglow): final when it confirmed, not when asked again
+        st.reach("finalized", st.at.get("confirmed") if (finality.timing_of(st.sig) or {}).get("final") else None)
         st.write(st.text)
     setattr(run, "_status", None)
     if cases and run.att is None:       # paid or refused: what this settlement showed goes to the judge's memory, for the next funding

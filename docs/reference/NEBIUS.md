@@ -6,8 +6,23 @@
 alone decides what is kept, and a model's words cannot change that. Tavily looks for copied code and for new tricks,
 and a new trick becomes a rule only if it passes the referee's own test.
 
-Code: `src/knos/nebius/`. Demo and panel: [examples/nebius/](../../examples/nebius/README.md). Tests:
-`tests/test_nebius_clients.py`, `tests/test_nebius_referee.py`, `tests/test_nebius_demo.py`.
+Track: **Coding and Agentic Engineering**. Code: `src/knos/nebius/`. The flow, the demo and the panel:
+[examples/nebius/](../../examples/nebius/README.md). Tests: `tests/test_nebius_clients.py`, `tests/test_nebius_referee.py`,
+`tests/test_nebius_demo.py`, `tests/test_nebius_flow.py`.
+
+## The one flow (v0.3.32)
+
+`python -m knos.nebius flow --out DIR [--wallets DIR]`: a team posts a task (sealed hidden tests; with `--wallets` a
+`knos_pay` escrow on devnet) -> **Nemotron 3 Super on Token Factory writes the code and its tests, the agent runs
+pytest and fixes what fails** (`knos.nebius.agent`) -> the agent pays one check over x402 on devnet -> Tavily
+provenance on the agent's code -> the Knos referee judges that code on the sealed tests (a scripted, labelled
+synthetic cheater is refused on the same task) -> paid (LiteSVM, labelled: `knos_pay` pays only on a GitHub Actions
+OIDC token) -> metered and invoiced (`knos.money.teams`). Devnet signatures, timings, prices and the model:
+[TEAMS.md](TEAMS.md).
+
+In live mode (`NEBIUS_API_KEY`, `TAVILY_API_KEY`) the agent's every turn is a Token Factory chat completion and the
+provenance check is a Tavily `POST /search` per distinctive line, with `include_usage` (tested with a recording
+transport: URL, bearer header, body).
 
 ## What is live and what is MOCK
 

@@ -184,7 +184,7 @@ def _paid_as_recorded(r: dict, call) -> str:
                          "bundle was made on another deployment of the programs (or its receipt was edited to name one), so its wallets cannot be "
                          "compared with that program's lines here. For a staging deployment, verify with its ids: KNOS_PROGRAM_IDS=<its ids file>")
     sig = r["transaction"]["signature"]
-    tx = call("getTransaction", [sig, {"encoding": "json", "commitment": "confirmed", "maxSupportedTransactionVersion": 1}])
+    tx = call("getTransaction", [sig, {"encoding": "json", "commitment": _level(call), "maxSupportedTransactionVersion": 1}])
     if not tx:
         raise ValueError(f"the cluster no longer has the paying transaction {sig}, so the wallets paid cannot be compared with the chain's record; "
                          "give --mirror to compare the receipt with a mirror's copy")
@@ -502,8 +502,14 @@ def _ixs(tx: dict, program: str) -> list[tuple[bytes, list[str]]]:
     return [(_unb58(ix["data"]), [keys[i] for i in ix["accounts"]]) for ix in message["instructions"] if keys[ix["programIdIndex"]] == program]
 
 
+def _level(call) -> str:
+    """The commitment to read at through `call` (knos.platform.finality: finalized on Alpenglow, else confirmed)."""
+    from .platform import finality
+    return finality.of_call(call)
+
+
 def _tx(call, sig: str) -> dict:
-    tx = call("getTransaction", [sig, {"encoding": "json", "commitment": "confirmed", "maxSupportedTransactionVersion": 1}])
+    tx = call("getTransaction", [sig, {"encoding": "json", "commitment": _level(call), "maxSupportedTransactionVersion": 1}])
     if not tx:
         raise Unavailable(f"the cluster no longer has transaction {sig}")
     return tx
@@ -545,7 +551,7 @@ def _copy(call, sig: str | None, tx: dict | None = None) -> dict | None:
     except Exception:  # noqa: BLE001 - older than the cluster keeps: the archive says it has none
         return None
     try:
-        block = call("getBlock", [tx.get("slot") or 0, {"transactionDetails": "none", "rewards": False, "commitment": "confirmed", "maxSupportedTransactionVersion": 1}])
+        block = call("getBlock", [tx.get("slot") or 0, {"transactionDetails": "none", "rewards": False, "commitment": _level(call), "maxSupportedTransactionVersion": 1}])
     except Exception:  # noqa: BLE001 - a cluster that does not serve blocks: the slot is kept, the blockhash is not
         block = None
     return {"signature": sig, "slot": tx.get("slot") or 0, "block_time": tx.get("blockTime") or 0, "blockhash": (block or {}).get("blockhash"),

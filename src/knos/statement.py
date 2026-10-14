@@ -1200,7 +1200,8 @@ def register(app, help_lines: list | None = None) -> None:
             def read(sig: str) -> dict | None:
                 if sig in given or tx:
                     return given.get(sig)
-                return chain.call(url, "getTransaction", [sig, {"encoding": "json", "commitment": "confirmed", "maxSupportedTransactionVersion": 1}], timeout=30)
+                from .platform import finality
+                return chain.call(url, "getTransaction", [sig, {"encoding": "json", "commitment": finality.at(url), "maxSupportedTransactionVersion": 1}], timeout=30)
 
             def find(address: str) -> list[str]:
                 if tx:

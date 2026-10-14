@@ -80,7 +80,7 @@ def units_used(ledger, ixs, payer, signers=None) -> int | None:
     try:
         raw = base64.b64encode(bytes(chain.sign(ixs, payer, signers, Hash.default()))).decode()
         got = chain.call(ledger.url, "simulateTransaction", [raw, {"encoding": "base64", "sigVerify": False,
-                                                                   "replaceRecentBlockhash": True, "commitment": "confirmed"}])["value"]
+                                                                   "replaceRecentBlockhash": True, "commitment": getattr(ledger, "commitment", None) or "confirmed"}])["value"]
     except Exception:  # noqa: BLE001 - no estimate: the caller keeps its own limit
         return None
     if got.get("err") or not isinstance(got.get("unitsConsumed"), int):
@@ -180,9 +180,11 @@ class WS:
         self.sock.close()
 
 
-def wait_ws(url: str, signature: str, within: float = 60.0, commitment: str = "confirmed", connect=None) -> dict:
+def wait_ws(url: str, signature: str, within: float = 60.0, commitment: str | None = None, connect=None) -> dict:
     """signatureSubscribe and wait for its one notification: {"slot", "err"}. TimeoutError when none came in time,
     ValueError when the transaction failed on chain. `connect(ws_url)` gives a WS (tests give a fake)."""
+    from . import finality
+    commitment = commitment or finality.at(url)      # finalized on Alpenglow, else confirmed
     end = time.monotonic() + within
     ws = (connect or (lambda u: WS(u, timeout=min(within, 30.0))))(ws_url(url))
     try:

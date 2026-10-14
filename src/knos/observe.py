@@ -33,6 +33,7 @@ import urllib.request
 from pathlib import Path
 
 from . import chain, records
+from .platform import finality
 from .bundle import _ixs, _unb58
 from .settle.v2 import oidc
 from .settle.v2 import pay as pay2
@@ -82,7 +83,7 @@ class Rpc:
     def transaction(self, sig: str) -> dict | None:
         if sig not in self._seen:
             try:
-                self._seen[sig] = chain.call(self.url, "getTransaction", [sig, {"encoding": "json", "commitment": "confirmed",
+                self._seen[sig] = chain.call(self.url, "getTransaction", [sig, {"encoding": "json", "commitment": finality.at(self.url),
                                                                                "maxSupportedTransactionVersion": 1}], timeout=30)
             except Exception:  # noqa: BLE001 - still throttled after the backoff, or not a signature: counted, never guessed
                 self.unread += 1
@@ -96,7 +97,7 @@ class Rpc:
         return [tx for tx in txs if tx]
 
     def account(self, address: str) -> bytes | None:
-        got = chain.call(self.url, "getAccountInfo", [address, {"encoding": "base64", "commitment": "confirmed"}], timeout=30)
+        got = chain.call(self.url, "getAccountInfo", [address, {"encoding": "base64", "commitment": finality.at(self.url)}], timeout=30)
         value = (got or {}).get("value")
         return base64.b64decode(value["data"][0]) if value else None
 

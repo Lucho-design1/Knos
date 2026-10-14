@@ -135,10 +135,11 @@ class Facilitator:
             return s
         if s.get("errorReason") == "settlement_pending" and s.get("transaction") and confirm is not None:
             try:
-                confirm(s["transaction"])
+                seen = confirm(s["transaction"])
             except Exception as why:  # noqa: BLE001 - not landed, or failed on chain
                 raise Refused(f"the settlement {s['transaction']} did not land: {str(why)[:160]}") from None
-            return {**s, "success": True, "errorReason": None, "errorMessage": None, "confirmedBy": "chain"}
+            return {**s, "success": True, "errorReason": None, "errorMessage": None, "confirmedBy": "chain",
+                    **({"commitment": seen["confirmationStatus"]} if isinstance(seen, dict) and seen.get("confirmationStatus") else {})}
         raise Refused(f"the facilitator did not settle: {s.get('errorReason') or s.get('error') or s}")
 
 
@@ -146,7 +147,7 @@ def confirm_on(url: str | None = None, within: float = 60.0):
     """`confirm` for verify_and_settle: wait for the signature on the cluster (KNOS_RPC or devnet)."""
     def confirm(sig: str) -> dict:
         from .. import chain
-        return chain.wait(url or os.environ.get("KNOS_RPC") or chain.CLUSTERS["devnet"], sig, within, "confirmed")
+        return chain.wait(url or os.environ.get("KNOS_RPC") or chain.CLUSTERS["devnet"], sig, within)     # finalized on Alpenglow
     return confirm
 
 

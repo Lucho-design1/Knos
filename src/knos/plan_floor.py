@@ -56,11 +56,13 @@ def read(address: str, data: bytes, program=None) -> Found | None:
     return Found(address, plan.owner_id, plan.fee_bps, plan.expires, pda == address)
 
 
-def plans(call: Callable[[str, list], Any], program=None) -> list[Found]:
-    """Every Plan of knos_pay `program` (the public id by default) through `call(method, params)`, by address."""
+def plans(call: Callable[[str, list], Any], program=None, commitment: str | None = None) -> list[Found]:
+    """Every Plan of knos_pay `program` (the public id by default) through `call(method, params)`, by address, read at
+    `commitment` (the caller's ledger's: finalized on Alpenglow; else KNOS_COMMITMENT or confirmed)."""
     from .settle.v2 import pay
     prog = program or pay.PAY_ID
-    got = call("getProgramAccounts", [str(prog), {"encoding": "base64", "commitment": "confirmed",
+    from .platform import finality
+    got = call("getProgramAccounts", [str(prog), {"encoding": "base64", "commitment": finality.commitment(commitment),
                                                    "filters": [{"dataSize": pay.PLAN_LEN}]}]) or []
     out = []
     for a in got:
@@ -101,7 +103,7 @@ def register(app, help_lines: list | None = None) -> None:
         0.10% (10 basis points); Knos signs no plan below 0.20%; this command shows which plans exist."""
         from . import chain
         led = chain.ledger()
-        found = plans(lambda method, params: chain.call(led.url, method, params, timeout=30))
+        found = plans(lambda method, params: chain.call(led.url, method, params, timeout=30), commitment=getattr(led, "commitment", None))
         now = led.now()                 # the cluster's clock: the one a Plan's expiry is measured by
         typer.echo("\n".join(lines(found, now)))
         if check and below(found, now):

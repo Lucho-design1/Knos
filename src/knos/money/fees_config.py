@@ -37,7 +37,7 @@ STATUSES = ("live", "proposed", "decided", "placeholder")
 DECIDED_KEYS = ("decided", "rationale", "source")       # a decided price says when, why and on whose word
 PLATFORM_KINDS = ("bounty_platform", "lab_order")       # a whole Knos fee of which an on-chain line is one part
 VALUE_KINDS = ("payout", "bounty", "funding", "graduation", "task_package") + PLATFORM_KINDS
-COUNT_KINDS = ("verification", "x402_check")
+COUNT_KINDS = ("verification", "x402_check", "verified_merge")
 KINDS = VALUE_KINDS + COUNT_KINDS
 ROLES = ("researcher", "agent", "lab", "referee")
 ENV = "KNOS_FEES"
@@ -275,11 +275,19 @@ def validate(doc: Any) -> list[str]:
         p.append("fees.x402_check.usd_each: a proposed paid check costs what a verification costs (the price book)")
     if x_each is not None and x_each <= 0 and x.get("status") != "placeholder":
         p.append("fees.x402_check.usd_each: a paid check has a price above 0")
+    vm = f["verified_merge"]
+    vm_each = usd(vm.get("usd_each"), "fees.verified_merge.usd_each", p)
+    if vm_each is not None and vm_each <= 0 and vm.get("status") != "placeholder":
+        p.append("fees.verified_merge.usd_each: a verified merge has a price above 0")
+    if not _int(vm.get("free_first")) or vm["free_first"] < 0:
+        p.append("fees.verified_merge.free_first: how many verifications of a new team are free, a whole number")
+    if not str(vm.get("collected", "")).strip():
+        p.append("fees.verified_merge.collected: say how a verified merge is billed and paid")
     for kind, key in (("graduation", "rate_bps"), ("task_package", "knos_bps")):
         r = f[kind].get(key)
         if not _int(r) or not 0 <= r <= 10_000:
             p.append(f"fees.{kind}.{key}: basis points, 0 to 10000")
-    for kind in ("graduation", "task_package", "x402_check") + PLATFORM_KINDS:
+    for kind in ("graduation", "task_package", "x402_check", "verified_merge") + PLATFORM_KINDS:
         if f[kind].get("status") == "live":
             p.append(f"fees.{kind}.status: not live (knos_pay charges only the payout fee, {pay.FEE_BPS} bps; more on chain needs a program upgrade)")
     for kind in PLATFORM_KINDS:

@@ -1,0 +1,342 @@
+{
+ "revenue_today_usd": "0",
+ "why": "devnet only: every payment is test money; nothing has been sold",
+ "prices": [
+  {
+   "who": "a team running coding agents",
+   "line": "verified merge",
+   "price": "1.00 USD per verified merge",
+   "free": "first 1 verification free",
+   "status": "decided",
+   "label": "starting price",
+   "paid_with": "USDC on Solana: x402 exact or a knos_pay escrow",
+   "source": "founder decision 14 Oct 2026 (TASK-ALPENGLOW-NEBIUS.md, Part 3: the 1.00 USD per verified merge decided 14 Oct as a starting price)"
+  },
+  {
+   "who": "an agent paying for itself",
+   "line": "raw agent check over x402",
+   "price": "0.02 USD per check",
+   "free": "",
+   "status": "decided",
+   "label": "starting price",
+   "paid_with": "x402 v2 exact on Solana (x402.org facilitator), per call",
+   "source": "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
+  },
+  {
+   "who": "a team posting a bounty",
+   "line": "bounty fee",
+   "price": "5% of the bounty",
+   "free": "",
+   "status": "decided",
+   "label": "starting price",
+   "paid_with": "0.30% (at least 0.05) taken by knos_pay at payout, the rest invoiced",
+   "source": "founder decision 14 Oct 2026 (DECISIONS.md item 2). The comparison with Algora's fee to organisations is the founder's; Algora's pricing page (algora.io/pricing) answered 404 on 14 Oct 2026, so no Algora figure is stated here"
+  },
+  {
+   "who": "an AI lab buying verified tasks",
+   "line": "verified task package",
+   "price": "maintainer 90% / Knos 10%",
+   "free": "",
+   "status": "decided",
+   "label": "starting split",
+   "paid_with": "by contract (not a knos_pay order today)",
+   "source": "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
+  }
+ ],
+ "model": {
+  "label": "MODEL, not a forecast: price x volume at config/fees.yaml's starting prices. No volume here is measured, nobody pays any of these prices yet (devnet: revenue 0), and revenue is not free cash flow (cost per verification not measured).",
+  "inputs": {
+   "verified_merges": 0,
+   "agent_checks": 0,
+   "bounty_volume_usd": 0,
+   "task_packages": 0,
+   "task_package_price_usd": 0
+  },
+  "month": {
+   "verified_merge": "0.00",
+   "agent_checks": "0.00",
+   "bounty_fee": "0.00",
+   "task_packages": "0.00"
+  },
+  "month_total": "0.00",
+  "year_total": "0.00"
+ },
+ "scale": {
+  "label": "ARITHMETIC on the starting prices and the sourced figures; not a forecast, not a plan.",
+  "target_usd_a_year": "1000000000",
+  "each_line_alone": {
+   "verified_merges_a_month": "83333333",
+   "verified_merges_share_of_github_merges": "92.6%",
+   "agent_checks_a_month": "4166666667",
+   "bounty_volume_usd_a_year": "20000000000",
+   "task_packages_a_year_at_200_usd": "50000000",
+   "task_packages_a_year_at_2000_usd": "5000000"
+  },
+  "share_of_github_merges_at_starting_price": [
+   {
+    "share_pct": 1,
+    "verified_merges_a_month": 900000,
+    "usd_a_year": "10800000"
+   },
+   {
+    "share_pct": 5,
+    "verified_merges_a_month": 4500000,
+    "usd_a_year": "54000000"
+   },
+   {
+    "share_pct": 10,
+    "verified_merges_a_month": 9000000,
+    "usd_a_year": "108000000"
+   },
+   {
+    "share_pct": 25,
+    "verified_merges_a_month": 22500000,
+    "usd_a_year": "270000000"
+   },
+   {
+    "share_pct": 50,
+    "verified_merges_a_month": 45000000,
+    "usd_a_year": "540000000"
+   }
+  ],
+  "inputs": {
+   "github_merged_prs_a_month": 90000000,
+   "verified_merge_usd": "1.00",
+   "agent_check_usd": "0.02",
+   "bounty_fee_bps": 500,
+   "task_package_knos_bps": 1000,
+   "lab_task_usd": [
+    200,
+    2000
+   ]
+  },
+  "reading": "At 1.00 USD, verified merges ALONE reach 1B USD a year only at about 83 million a month: more than 90% of every pull request GitHub merges today. So the path is several lines together (merges, agent checks, bounty escrow, lab task packages) and a price that follows the measured cost and value, not one line."
+ },
+ "why_now": {
+  "claim_vs_ci": "1,119 of 3,736 agent pull requests that said tests pass had a failing check (30%)",
+  "merged_anyway": "6,059 of 8,954 agent pull requests that fail a measured Knos check were merged anyway (68%)",
+  "per_1000": "about 87 failing merges per 1,000 agent pull requests in the audit",
+  "source": "docs/reference/SLOP_AUDIT.md (Knos's own audit of the hao-li/AIDev dataset, GitHub check records read 13 Oct 2026)",
+  "volume": "GitHub merges more than 90 million pull requests a month",
+  "volume_source": "GitHub, via Visual Studio Magazine, 30 Jun 2026 (read 14 Oct 2026)",
+  "labs": "labs pay 200 to 2,000 USD per task (mostly) and consistently cite robustness against reward hacking as a quality criterion",
+  "labs_source": "Epoch AI, 12 Jan 2026 (read 14 Oct 2026)"
+ },
+ "sources": {
+  "epoch_tasks": {
+   "said": "labs pay 200 to 2,000 USD per verified task; robustness to reward hacking is the top buying criterion",
+   "source": "Epoch AI, 12 Jan 2026 (An FAQ on reinforcement learning environments, https://epoch.ai/gradient-updates/state-of-rl-envs, read 14 Oct 2026: an interviewed founder saw 200 to 2,000 USD per task mostly; interviewees consistently cite robustness against reward hacking)",
+   "audited": false
+  },
+  "github_merges": {
+   "said": "merged pull requests on GitHub grew from about 25 million a month in January 2023 to more than 90 million a month (GitHub's own figure, in its post on pull request limits)",
+   "source": "Visual Studio Magazine, 30 Jun 2026, https://visualstudiomagazine.com/articles/2026/06/30/github-extends-contribution-controls-from-prs-to-issues.aspx (read 14 Oct 2026)",
+   "audited": false
+  },
+  "slop_audit": {
+   "said": "of agent pull requests whose description said tests pass and whose CI finished, 1,119 of 3,736 (30%) had a failing check at the head commit; 6,059 of the 8,954 agent pull requests that fail a measured Knos check were merged anyway",
+   "source": "docs/reference/SLOP_AUDIT.md (Knos's own audit of the hao-li/AIDev dataset, GitHub check records read 13 Oct 2026)",
+   "audited": false
+  }
+ },
+ "rails": {
+  "today": "USDC on Solana devnet: x402 v2 exact via the public x402.org facilitator (no key), escrow via knos_pay",
+  "later": "card and bank through Airwallex (not built; no account yet). No Stripe."
+ },
+ "onboarding": [
+  "uv tool install knos   (or pipx install knos)",
+  "knos verify --agent \"<your agent>\"   in a checkout with the agent's change committed (first verification free)",
+  "then every agent PR: the GitHub Action (action.yml) on the repository, or the knos_verify tool of `knos mcp` inside the agent"
+ ],
+ "team": {
+  "team": "knos-internal-dogfooding",
+  "generated": "2026-10-14T08:51:18Z",
+  "labels": [
+   "internal dogfooding",
+   "2 synthetic event(s) included (a scripted cheater; the referee's decisions on them are real)"
+  ],
+  "synthetic_events": 2,
+  "totals": {
+   "verifications": 4,
+   "verified": 2,
+   "refused": 2,
+   "cheats_caught": 4,
+   "failing_merges_blocked": 2,
+   "paid_checks": 2,
+   "escrows_funded": 2,
+   "payouts": 2
+  },
+  "money_saved": {
+   "failing_merges_blocked": 2,
+   "means": "pull requests whose agent said its tests pass and the referee refused: each one is a failing merge that did not happen. No dollar value is put on it here (none is sourced)."
+  },
+  "cheats_by_rule": {
+   "test_edited": 2,
+   "assertion_removed": 2
+  },
+  "per_agent": {
+   "nemotron-3-super-agent": {
+    "escrows_funded": 2,
+    "paid_checks": 2,
+    "verifications": 2,
+    "verified": 2,
+    "cheats_caught": 0,
+    "failing_merges_blocked": 0,
+    "payouts": 2
+   },
+   "scripted-cheater (synthetic)": {
+    "verifications": 2,
+    "refused": 2,
+    "cheats_caught": 4,
+    "failing_merges_blocked": 2
+   }
+  },
+  "paid_and_final": {
+   "n": 4,
+   "p50_ms": 2267,
+   "p95_ms": 2897,
+   "max_ms": 2897,
+   "label": "measured: send -> finalized on devnet, Knos's own test traffic"
+  },
+  "invoice": {
+   "team": "knos-internal-dogfooding",
+   "month": "all",
+   "currency": "USD",
+   "lines": [
+    {
+     "at": "2026-10-14T08:35:17Z",
+     "agent": "nemotron-3-super-agent",
+     "task": "parse_duration",
+     "line": "bounty funded into escrow",
+     "usd": "0.00",
+     "held_usd": "5.00",
+     "evidence": "finalized on devnet",
+     "billable": true,
+     "sig": "3ofNVFEyHoodeWAwFW46oygXSaVv7GxRHvsGjTooKiKdvMSbt9twaeEHoiBbXVL4XRo3fZfiKhyjZGGDba4iT9mh",
+     "checked": true,
+     "slot": 510928302,
+     "why": "the team's own money, held by knos_pay until a verdict pays it or the deadline returns it: no charge"
+    },
+    {
+     "at": "2026-10-14T08:35:24Z",
+     "agent": "nemotron-3-super-agent",
+     "task": "parse_duration",
+     "line": "agent check over x402 (paid at the call)",
+     "usd": "0.00",
+     "paid_on_chain_usd": "0.02",
+     "evidence": "finalized on devnet",
+     "billable": true,
+     "sig": "5KtTdsE32va9X1QYwzAVgZEdkiYcQprvXxmTVsSTE14VcJ1RgUsMhV52Yxtt7mAxnzwfdYekeaywjw3ELAGhE6p1",
+     "checked": true,
+     "slot": 510928327,
+     "why": "the agent paid it on chain when it called; never billed again"
+    },
+    {
+     "at": "2026-10-14T08:35:30Z",
+     "agent": "nemotron-3-super-agent",
+     "task": "parse_duration",
+     "line": "verified merge",
+     "usd": "0.00",
+     "status": "decided",
+     "why": "the team's first verification is free"
+    },
+    {
+     "at": "2026-10-14T08:35:31Z",
+     "agent": "scripted-cheater (synthetic)",
+     "task": "parse_duration",
+     "line": "verification (refused)",
+     "usd": "0.00",
+     "why": "a refused change is not a verified merge: no charge",
+     "cheats": [
+      "test_edited",
+      "assertion_removed"
+     ]
+    },
+    {
+     "at": "2026-10-14T08:35:34Z",
+     "agent": "nemotron-3-super-agent",
+     "task": "parse_duration",
+     "line": "bounty paid: Knos bounty fee (5%), off-chain part",
+     "usd": "0.00",
+     "paid_usd": "5.00",
+     "onchain_part_usd": "0.05",
+     "whole_fee_usd": "0.25",
+     "would_bill_usd": "0.20",
+     "evidence": "LiteSVM (testkeys build), not a cluster: shown, never billed",
+     "billable": false,
+     "sig": "tzsH8pBbZfdBMdKt7G7T8Fq8kY9g1b2hVvD5DYEb5kMe9kEMtw1RpCDAqn66ombCMmi1XKEanm4WvtdkfwEdxTy",
+     "why": "5% of the bounty (decided 14 Oct 2026): the program takes its 0.30% (at least 0.05) at payout, the rest is invoiced; not billed: this payout is not a confirmed devnet transaction"
+    },
+    {
+     "at": "2026-10-14T08:35:39Z",
+     "agent": "nemotron-3-super-agent",
+     "task": "parse_duration",
+     "line": "bounty funded into escrow",
+     "usd": "0.00",
+     "held_usd": "5.00",
+     "evidence": "finalized on devnet",
+     "billable": true,
+     "sig": "2dWrwKMfHURPXSLxUgo6UkaCNPGC6t7sik4BgcRNRQZknFMNiyDkU6j1RdYRjy7TTiLy379geZUSHEzXz4nGQdEa",
+     "checked": true,
+     "slot": 510928391,
+     "why": "the team's own money, held by knos_pay until a verdict pays it or the deadline returns it: no charge"
+    },
+    {
+     "at": "2026-10-14T08:35:45Z",
+     "agent": "nemotron-3-super-agent",
+     "task": "parse_duration",
+     "line": "agent check over x402 (paid at the call)",
+     "usd": "0.00",
+     "paid_on_chain_usd": "0.02",
+     "evidence": "finalized on devnet",
+     "billable": true,
+     "sig": "3YXhV5wTRFz6E4q4XxxyqeGgH7zQh1zaEuGSJZDDPUjvbeBGoVrAJkaAsYAa99Hk6gmJudbr1ncFRqapUWWihkw9",
+     "checked": true,
+     "slot": 510928416,
+     "why": "the agent paid it on chain when it called; never billed again"
+    },
+    {
+     "at": "2026-10-14T08:35:50Z",
+     "agent": "nemotron-3-super-agent",
+     "task": "parse_duration",
+     "line": "verified merge",
+     "usd": "1.00",
+     "status": "decided",
+     "why": "1.00 USD per verified merge (decided 14 Oct 2026, starting price)"
+    },
+    {
+     "at": "2026-10-14T08:35:52Z",
+     "agent": "scripted-cheater (synthetic)",
+     "task": "parse_duration",
+     "line": "verification (refused)",
+     "usd": "0.00",
+     "why": "a refused change is not a verified merge: no charge",
+     "cheats": [
+      "test_edited",
+      "assertion_removed"
+     ]
+    },
+    {
+     "at": "2026-10-14T08:35:55Z",
+     "agent": "nemotron-3-super-agent",
+     "task": "parse_duration",
+     "line": "bounty paid: Knos bounty fee (5%), off-chain part",
+     "usd": "0.00",
+     "paid_usd": "5.00",
+     "onchain_part_usd": "0.05",
+     "whole_fee_usd": "0.25",
+     "would_bill_usd": "0.20",
+     "evidence": "LiteSVM (testkeys build), not a cluster: shown, never billed",
+     "billable": false,
+     "sig": "3EBr9suymbL5dG3kYWu17Vy56oUSZP3pB1xAH4RV2FUftXL59NgiuDgwhKsxE88XPaA6R3HhjfBdpEpficSVdeeu",
+     "why": "5% of the bounty (decided 14 Oct 2026): the program takes its 0.30% (at least 0.05) at payout, the rest is invoiced; not billed: this payout is not a confirmed devnet transaction"
+    }
+   ],
+   "due_usd": "1.00",
+   "test_money": true,
+   "pay_with": "USDC on Solana (x402 exact via the x402.org facilitator, or a knos_pay escrow); card and bank via Airwallex later (not built)",
+   "note": "devnet: every amount is test money, and Knos's revenue is 0"
+  },
+  "first_verification_free": 1
+ }
+}

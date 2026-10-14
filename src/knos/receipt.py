@@ -1534,8 +1534,11 @@ def from_chain(target: str, url: str, limit: int = 1000, seconds: float = VERIFY
                 raise late() from None
             raise
 
+    from .platform import finality      # finalized on Alpenglow, else confirmed (TX_VERSION's)
+
     def work() -> dict:
         got = timed("getSignaturesForAddress", [str(pay.PAY_ID), {"limit": limit}]) or []
+        level = finality.of_call(lambda method, params: timed(method, params))     # inside the timed work: it too is answered in time
         window = [s["signature"] for s in reversed(got) if s.get("err") is None]      # oldest first, as records.history gives them
         at = {sig: n for n, sig in enumerate(window)}
         seen["of"] = 0
@@ -1547,7 +1550,7 @@ def from_chain(target: str, url: str, limit: int = 1000, seconds: float = VERIFY
             seen["of"] += len(new)
             for sig in new:
                 try:
-                    tx = timed("getTransaction", [sig, TX_VERSION])
+                    tx = timed("getTransaction", [sig, {**TX_VERSION, "commitment": level}])
                 except NoAnswer:
                     raise
                 except Exception:  # noqa: BLE001 - still throttled after the backoff: counted, never guessed
@@ -1681,10 +1684,12 @@ def _attestation_on_chain(dry: list[str], url: str, run, timeout: float, call=No
     plan = json.loads(run(dry, capture_output=True, text=True, timeout=timeout).stdout)
     address, program = plan["attestation"], plan["program"]
     ask = call or (lambda u, method, params: chain.call(u, method, params, timeout=30))
+    from .platform import finality
+    level = finality.of_call(lambda method, params: ask(url, method, params))
     for wait in waits:
         (sleep or time.sleep)(wait)
         try:
-            got = (ask(url, "getAccountInfo", [address, {"encoding": "base64", "commitment": "confirmed"}]) or {}).get("value")
+            got = (ask(url, "getAccountInfo", [address, {"encoding": "base64", "commitment": level}]) or {}).get("value")
         except Exception:  # noqa: BLE001, S112 - not known yet: ask again
             continue
         if got and got.get("owner") == program:

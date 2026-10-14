@@ -1,0 +1,503 @@
+{
+ "label": "internal dogfooding: Knos finality measurement, our own devnet test traffic (synthetic test mint, no real money)",
+ "cluster": "devnet",
+ "measured_at": "2026-10-14",
+ "consensus": {
+  "active": true,
+  "why": "cert",
+  "slot": 504148999,
+  "block_id": "13f09ed28a3f91b07ef7d727d829e41caa2b976b6b71ea6feaae75113de31677",
+  "signers": 13,
+  "at": 1791967146
+ },
+ "what": "send -> finalized: from the sendTransaction call to the signatureSubscribe notification at finalized (public devnet RPC api.devnet.solana.com, from one machine), Knos's own labelled test transactions: record_anchor (a Knos Record anchor), escrow_fund (knos_pay FundWallet, 60 s deadline, synthetic test mint), escrow_refund (knos_pay Refund after the deadline; the other 11 of the 15 test jobs were refunded first by another relayer). No payout: that needs a GitHub OIDC token.",
+ "source": "scripts/alpenglow_latency.py; every row below is a devnet transaction anyone can look up",
+ "all": {
+  "n": 49,
+  "p50": 1205,
+  "p95": 2449,
+  "min": 1015,
+  "max": 3198
+ },
+ "by_kind": {
+  "escrow_fund": {
+   "n": 15,
+   "p50": 1134,
+   "p95": 2449,
+   "min": 1081,
+   "max": 2449
+  },
+  "escrow_refund": {
+   "n": 4,
+   "p50": 1249,
+   "p95": 1322,
+   "min": 1106,
+   "max": 1322
+  },
+  "record_anchor": {
+   "n": 30,
+   "p50": 1213,
+   "p95": 3040,
+   "min": 1015,
+   "max": 3198
+  }
+ },
+ "skipped": 0,
+ "confirmed": {
+  "n": 49,
+  "p50": 1205,
+  "p95": 2449,
+  "min": 1015,
+  "max": 3199
+ },
+ "knos_wait": {
+  "n": 49,
+  "p50": 1852,
+  "p95": 3798,
+  "min": 1130,
+  "max": 4785
+ },
+ "rows": [
+  {
+   "kind": "record_anchor",
+   "sig": "4kd8hb8SRBHNEa1ZZYuERGo2SfQjX4UuQMDeLnjBdRzwe1F3gcfCTVU2p1UHba9PP6CJqQbPgqaLWuHoNjjVVgrD",
+   "confirmed_ms": 1205,
+   "finalized_ms": 1205,
+   "knos_wait_ms": 2002,
+   "slot": 510927163,
+   "at": "2026-10-14T08:30:45Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "RyGWXSfxKERCjNPTUQapQ3d2xbRXs6294RbHyZhvSzzwqQfEyWeweXuw1WuGempqjJGvCJ9GgejYoqnoTs1R7pG",
+   "confirmed_ms": 1218,
+   "finalized_ms": 1217,
+   "knos_wait_ms": 1849,
+   "slot": 510927187,
+   "at": "2026-10-14T08:30:51Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2ytGv94cFsGN68nFWQt361zCuU6PVVk3N87Ly4hj657XmjSYMCBE5SJtkc3TxenTN1UqqpwM7xuo9QnSLNytenXw",
+   "confirmed_ms": 3199,
+   "finalized_ms": 3198,
+   "knos_wait_ms": 3798,
+   "slot": 510927216,
+   "at": "2026-10-14T08:30:58Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "4nNvxvi3HbuT79tdUaY31vre3fTVe87D1M6i8PmC4vmrEqW1o4Y9a487BSxAnYzNNZVa7C8hEngBbyzCw2ufpctH",
+   "confirmed_ms": 1103,
+   "finalized_ms": 1100,
+   "knos_wait_ms": 1800,
+   "slot": 510927244,
+   "at": "2026-10-14T08:31:05Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2eTSHE8y4RE3RpRvnau8mMjBFVdpkNb7MuMXdrK1RjcfPgmvvZwJG7zR9ad6NxTjrLewuz389bmAYKTQMsVN3FR2",
+   "confirmed_ms": 1209,
+   "finalized_ms": 1209,
+   "knos_wait_ms": 1801,
+   "slot": 510927268,
+   "at": "2026-10-14T08:31:11Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "4qm3rmPnrtT7MzqBuVDed7GX4FA3Dvj8VQcbCoz8Mjx2inX8f12Pann6K5hypaCU6AuJDd25KbAGx87HcUhRFfWn",
+   "confirmed_ms": 1155,
+   "finalized_ms": 1155,
+   "knos_wait_ms": 1994,
+   "slot": 510927291,
+   "at": "2026-10-14T08:31:16Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2zSy165WbFAoXqa3DerczBoAB9iarfmPsXKYDfTVsckaLqgoB6qj3r9btmBMtrwx1YKbATN6iEqkxgyTQBNHJwfA",
+   "confirmed_ms": 1178,
+   "finalized_ms": 1177,
+   "knos_wait_ms": 1734,
+   "slot": 510927315,
+   "at": "2026-10-14T08:31:21Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2Yj8jozFvbmSQQqgBuRvwQHUx6MSnQtBpCHYeBSLrSUoJJv58qUgXiZPY9FFogpU5ohhjktNcJgrJ9zeCgExFZC7",
+   "confirmed_ms": 1355,
+   "finalized_ms": 1354,
+   "knos_wait_ms": 1485,
+   "slot": 510927339,
+   "at": "2026-10-14T08:31:26Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "ZWSGA2wdTzx8YD7smG7KTdwiZ7FbaAAkFy28mEzv5b5oHMMmbisXEqd6o4qt7Tt7fR3sNwBP9cFViHxLRn1bdA2",
+   "confirmed_ms": 1374,
+   "finalized_ms": 1375,
+   "knos_wait_ms": 3843,
+   "slot": 510927363,
+   "at": "2026-10-14T08:31:35Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "5dKYoL6TwyNwaktbDU1RNmRB3x6SShZ1zDc9q1yPKaxgQUPxeaoo7pVguBi77pTdXywa1jZJfmZvHpMvZmE81bS7",
+   "confirmed_ms": 1169,
+   "finalized_ms": 1169,
+   "knos_wait_ms": 2533,
+   "slot": 510927397,
+   "at": "2026-10-14T08:31:42Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "3u7J8tx2Hrzu9FUJCPv5135YgSPzoaJWmiBVWcph8U42PV988v9dzqwECoEpd4PdGbZNiEKeDFwRKsFSrUHvhbsa",
+   "confirmed_ms": 1380,
+   "finalized_ms": 1375,
+   "knos_wait_ms": 3121,
+   "slot": 510927437,
+   "at": "2026-10-14T08:31:52Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2ZjU5dFY1BBYnrRLJqFPEaQpMB3VHuwC3dWgCH41LLU2rwac94pruvmNfzfEzSsd5XfDMDeyjiQPBGgM9T4V8P4H",
+   "confirmed_ms": 1175,
+   "finalized_ms": 1175,
+   "knos_wait_ms": 1794,
+   "slot": 510927467,
+   "at": "2026-10-14T08:31:58Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "DVDNwpm6EbWdBn8QUAqWS6W9B8SEYfC8gAzWrooomrrrxHre3STtaQn2B1DkcoyPQcSXAxxD4AvKkNwRHUj8iCp",
+   "confirmed_ms": 1047,
+   "finalized_ms": 1037,
+   "knos_wait_ms": 1860,
+   "slot": 510927487,
+   "at": "2026-10-14T08:32:03Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "3pFFHLCaNWP5HK4fLh6eP1sKF2TDsvNzesAVApFXxnNDbzd2avXpdS58RSHqHB73xDMWp6NhTYrxWWRHRVhGc2xE",
+   "confirmed_ms": 1309,
+   "finalized_ms": 1309,
+   "knos_wait_ms": 1979,
+   "slot": 510927509,
+   "at": "2026-10-14T08:32:09Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "X3e9tTTga7edhpa2puiiK71oA87PNq4S86kqdmYiB5JoEJsKUttFohXjZLxusUB5BAC59WsQmTHyV78BQsEakXu",
+   "confirmed_ms": 1185,
+   "finalized_ms": 1183,
+   "knos_wait_ms": 1878,
+   "slot": 510927532,
+   "at": "2026-10-14T08:32:14Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2gi6RrKMYpJG5UrbWyTJSkpA1Ji8sodtddw7aJKw4fQay7VjN6gJfMy3P1XaG9VH2eRbfYaPEj33fpmtmbUAtX55",
+   "confirmed_ms": 1115,
+   "finalized_ms": 1115,
+   "knos_wait_ms": 1771,
+   "slot": 510927555,
+   "at": "2026-10-14T08:32:19Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2nxir2xzBttUWHU5KdiMEcqz73NrWGH9ME6TDyfSrn55VVwvLfkjGHC5at4NkZQrBMZ5Y19jZUpPTMNVN8v3Sxq6",
+   "confirmed_ms": 1372,
+   "finalized_ms": 1369,
+   "knos_wait_ms": 2062,
+   "slot": 510927577,
+   "at": "2026-10-14T08:32:24Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2LWQRYDuHFJjBrvKJFyKhvpA9XavEfw3qaNPhY9z8ycxaQ6ecKyUFNZjxxPDzspxR4Hgw2bEuyCYBz4xAUWKbqeN",
+   "confirmed_ms": 1114,
+   "finalized_ms": 1114,
+   "knos_wait_ms": 1723,
+   "slot": 510927600,
+   "at": "2026-10-14T08:32:30Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "APYETvq9ZaCaiPoNdZWbaJdYiJWmJA9Hb2QiE9C2uPrzgK9tsior5XWqkmSuCZc7XVGVGWRrQC3kxhWecLu7wva",
+   "confirmed_ms": 1015,
+   "finalized_ms": 1015,
+   "knos_wait_ms": 1857,
+   "slot": 510927620,
+   "at": "2026-10-14T08:32:35Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "hQ3Nh5ohY2Hw9BRtw8JRCnVxSE1p4Vr8ofFWrKpD18H8eprHewn77QEVsj2dssbT3EX8LCKTaoxjU7YVrHYvZYG",
+   "confirmed_ms": 1153,
+   "finalized_ms": 1152,
+   "knos_wait_ms": 1821,
+   "slot": 510927643,
+   "at": "2026-10-14T08:32:40Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "5nyUbuPQ8aaVSgLGEn87v8ueq6aUfbN8dPxPrFipzJ7GzHEuwpVnwBPfDHgEcUDL5saDHyM38jCb6QJmDMQkQBTU",
+   "confirmed_ms": 1213,
+   "finalized_ms": 1213,
+   "knos_wait_ms": 1939,
+   "slot": 510927664,
+   "at": "2026-10-14T08:32:46Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "5FwBAeR39fRAUUdGhURa38LUq6WdyW5EfAjtTkRzKU2mum2sYCZKNKLNFpkJfGPsAc9hvWpivp4C6wnYUhsiTQnt",
+   "confirmed_ms": 1369,
+   "finalized_ms": 1369,
+   "knos_wait_ms": 2054,
+   "slot": 510927687,
+   "at": "2026-10-14T08:32:51Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "53GZHTjWDJs9d6EwZGFmYer3Sc76pPtjuuNY8G941a8ANRFFqmicxF4iqUz1erX9wT3Hcc6qTvcC1gR9frYinEm5",
+   "confirmed_ms": 1229,
+   "finalized_ms": 1229,
+   "knos_wait_ms": 1840,
+   "slot": 510927709,
+   "at": "2026-10-14T08:32:56Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "3ueXj9fdPCeCsbzketaiScuuazeUFjjzp57TwEQJv4K8xsd8gBKhQhYryynEGtfsR2xGfCYGKm2uR8Womfg8fgi1",
+   "confirmed_ms": 3042,
+   "finalized_ms": 3040,
+   "knos_wait_ms": 3545,
+   "slot": 510927740,
+   "at": "2026-10-14T08:33:03Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2PfVce9NoMbiWSwwwCLtCq3dZgxn1JeuXQc2KX3zBTRghRkc5j6QcfqYeYrrbT5SdnWMBWe1mzDsvDDBUfdBuhAS",
+   "confirmed_ms": 1251,
+   "finalized_ms": 1251,
+   "knos_wait_ms": 1832,
+   "slot": 510927763,
+   "at": "2026-10-14T08:33:09Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "3PEF8BjxXWebuc2ZHp2euPxoUeR5LLUq8dTKaTr254tegSwkx54McRf3Wyjx6iErrbip2bMLuaGs45CpFiQr8vpe",
+   "confirmed_ms": 1175,
+   "finalized_ms": 1175,
+   "knos_wait_ms": 1842,
+   "slot": 510927784,
+   "at": "2026-10-14T08:33:14Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2zrkMBQUhEHA6ovFWrCYaNyayT9HHjPYGf1Hk8Sb5PrjqprL5AVKbvG54ahwi6vcrzekwwHV7bhn6gfTtLr23EzE",
+   "confirmed_ms": 1444,
+   "finalized_ms": 1444,
+   "knos_wait_ms": 1813,
+   "slot": 510927811,
+   "at": "2026-10-14T08:33:20Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "57rcLZwW7jNb3phzGQLQVFBgGBhMusifP3kLPaJJaqqwQ77VdXHRb19nCJZpxr6kGYnfc56X8uBdgQckcNiSzvMq",
+   "confirmed_ms": 1289,
+   "finalized_ms": 1290,
+   "knos_wait_ms": 2047,
+   "slot": 510927832,
+   "at": "2026-10-14T08:33:25Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "5i3wT5rx7eMKBfpzUZTW837fwnGSmW57boPhjBBYFdREscuw8zJLBUCR2iPt7mhCTTT9znPGAoKVvCZeGhF97htf",
+   "confirmed_ms": 1284,
+   "finalized_ms": 1284,
+   "knos_wait_ms": 1789,
+   "slot": 510927856,
+   "at": "2026-10-14T08:33:31Z"
+  },
+  {
+   "kind": "record_anchor",
+   "sig": "2JGsWg1yj7iZNkyL9UJ1Xe4iK7CWWrbZ1udXJrMvtSBSxvrJa9NGBDjZ3kp9kzV4R4MZStNWFVB4s7NB7xc8JYui",
+   "confirmed_ms": 1214,
+   "finalized_ms": 1214,
+   "knos_wait_ms": 2048,
+   "slot": 510927885,
+   "at": "2026-10-14T08:33:38Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "3fjb2MwCA6T8kotjn8BP3DpakNNs13cikr38HEgZpY6Y2qSH5EZnKBzG3Xytr3y3D7XwqfeT4JcJ1miQsX6Cb6Wc",
+   "confirmed_ms": 2449,
+   "finalized_ms": 2449,
+   "knos_wait_ms": 2713,
+   "slot": 510927912,
+   "at": "2026-10-14T08:33:44Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "2iQqMcbDR2R8bnqQVxUv37iL1MPoR5Z9XmFotSLJqT6LFg3N5uneD3znuc7r1frBJFrzU3aJRR5k7Tdgn5hoaNM8",
+   "confirmed_ms": 1493,
+   "finalized_ms": 1493,
+   "knos_wait_ms": 2189,
+   "slot": 510927928,
+   "at": "2026-10-14T08:33:49Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "4tnccFjQnYr4vcNYYjk7vrbpnZKUgKAzLWywfu7Fch4hEdzN9qPeHiggMmJocvZ2UHnxMfR8a12xgMnQsn8bT1Kb",
+   "confirmed_ms": 1207,
+   "finalized_ms": 1207,
+   "knos_wait_ms": 1786,
+   "slot": 510927947,
+   "at": "2026-10-14T08:33:53Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "sB9GHNUnMYyn1RwPbgMWTjspqnrQkUFQbNzGQhcUF3qMVpzD49svjqQNT6ccy94vb8se4Z1KjDasK2CJHyUMar1",
+   "confirmed_ms": 1102,
+   "finalized_ms": 1102,
+   "knos_wait_ms": 1813,
+   "slot": 510927963,
+   "at": "2026-10-14T08:33:57Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "5xNd6TRrdcneYvh7ihnFt2ERphkgSbtFZH2p35gRiVxS6r8ZrxpNhAMS7teNTq55kRZ2Zm6zTKCaei9Mg6NozVVN",
+   "confirmed_ms": 1097,
+   "finalized_ms": 1097,
+   "knos_wait_ms": 1839,
+   "slot": 510927979,
+   "at": "2026-10-14T08:34:00Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "5LCgA7rWksTuS3wYjgrid5zLBEwBZUip5QgWvr68et7wb6y95FmZGye1mx89R3ucem87RRhU2p1ehnfi3CW9ECAG",
+   "confirmed_ms": 1081,
+   "finalized_ms": 1081,
+   "knos_wait_ms": 1815,
+   "slot": 510927996,
+   "at": "2026-10-14T08:34:04Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "4fg7TnDZtbxGyDPLZtmQfZJZMi2XHhDE139M1oYxtNpjKJZs3zzdRAxmxPZ8v8zCDXUu12WN4RmrqENYkRtbJX3q",
+   "confirmed_ms": 1205,
+   "finalized_ms": 1205,
+   "knos_wait_ms": 1869,
+   "slot": 510928013,
+   "at": "2026-10-14T08:34:08Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "krkkhDqKpbNzbHPRiGszi4kXZ9W2t7QiDPMbRCEQoEURHQvoQHj2JzRNAUZf4iVMTnj1K8QxLnrG1e2oH1LfHWV",
+   "confirmed_ms": 1134,
+   "finalized_ms": 1134,
+   "knos_wait_ms": 1822,
+   "slot": 510928029,
+   "at": "2026-10-14T08:34:13Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "5xGN5D7fewVy1qmBmBtZJeQszPFGYfQDVjbygxsnwPigedYVb4Bfse575TH1vcbuSmLXcgNk67v2daNu8h7Km1pT",
+   "confirmed_ms": 1127,
+   "finalized_ms": 1127,
+   "knos_wait_ms": 1130,
+   "slot": 510928045,
+   "at": "2026-10-14T08:34:16Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "4cMHZBCrwdgdbv6KBmVjZy1bF19vaiK4Sxpyxixsb3eE7L6UkxCciv1f4sym5dvn6xYQvCc7VEqLsTKNH71Arrnt",
+   "confirmed_ms": 1449,
+   "finalized_ms": 1449,
+   "knos_wait_ms": 1968,
+   "slot": 510928060,
+   "at": "2026-10-14T08:34:20Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "4w3LsELkHYpMWtEw8qo4tLWXuNNXE6iyP8j6j2CFq9odbJ7L26UmYhx71dZmtexNQqwtKNNseSBbBn1RW1h9yvfz",
+   "confirmed_ms": 1112,
+   "finalized_ms": 1112,
+   "knos_wait_ms": 1839,
+   "slot": 510928076,
+   "at": "2026-10-14T08:34:24Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "4kT6zYSB4RJq1a3BTi159HK1xkFmN8WgZGyZCVEvAooa8HLKs4JmTPVhh9GVDxthanqrhfdXwGfDQz3myHM88Try",
+   "confirmed_ms": 1091,
+   "finalized_ms": 1092,
+   "knos_wait_ms": 1841,
+   "slot": 510928092,
+   "at": "2026-10-14T08:34:28Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "5Surpdfz4qwH4rKfL7ZhGHABowDN4nNiaqvDaeYPBhmAqQ7pvJ9zvajEpHDvqf6RdHKnApfCZ1ZFQFu9gKgnuKYf",
+   "confirmed_ms": 1150,
+   "finalized_ms": 1149,
+   "knos_wait_ms": 1875,
+   "slot": 510928109,
+   "at": "2026-10-14T08:34:32Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "4yZfRvAbUN35EaKncBrNUgW8qfKVu3JdpDXqg4d9iMDk1V2LFXp18xrbFXAgXju38n7ELHTtSfZpVmHUmjCcXs8b",
+   "confirmed_ms": 1144,
+   "finalized_ms": 1144,
+   "knos_wait_ms": 1905,
+   "slot": 510928136,
+   "at": "2026-10-14T08:34:38Z"
+  },
+  {
+   "kind": "escrow_fund",
+   "sig": "2vrtoFwYkkDg3toPzuFGfdpRivQSascht98pJgXSESn3XBWayVdz3x9X6QTQvqqu89PsPcdFq53UaqvTwnZ8JT8",
+   "confirmed_ms": 1118,
+   "finalized_ms": 1118,
+   "knos_wait_ms": 1840,
+   "slot": 510928153,
+   "at": "2026-10-14T08:34:42Z"
+  },
+  {
+   "kind": "escrow_refund",
+   "sig": "2bugVt4HXzaoegy3vaMx8vvHEtgBUDezQYGAxSXV1KD3t2cHNERCZbCP1oCrRJiBDpnaLNAeWBee3SVK8FZdPatX",
+   "confirmed_ms": 1320,
+   "finalized_ms": 1322,
+   "knos_wait_ms": 1852,
+   "slot": 510928444,
+   "at": "2026-10-14T08:35:51Z"
+  },
+  {
+   "kind": "escrow_refund",
+   "sig": "2F6fNxfisk5hjusa6QKVLpVbSziiduG3Ea2rxNqgArpM7YuBjFhRrjQYHptpEgzzjBX3mdGTaD5p8VLdS7RhGRDU",
+   "confirmed_ms": 1299,
+   "finalized_ms": 1299,
+   "knos_wait_ms": 1855,
+   "slot": 510928463,
+   "at": "2026-10-14T08:35:56Z"
+  },
+  {
+   "kind": "escrow_refund",
+   "sig": "5hfX1MzhQzSmnUu69iTLZGq2hZQc1JNFshd8ZekaC3ykRKM6bCDVS85msJgmg8r2wotHuCQRCVTH6Pdh8MwiTnHy",
+   "confirmed_ms": 1106,
+   "finalized_ms": 1106,
+   "knos_wait_ms": 4785,
+   "slot": 510928482,
+   "at": "2026-10-14T08:36:04Z"
+  },
+  {
+   "kind": "escrow_refund",
+   "sig": "29ydLGhDdKC52tj1q1eTV8LUep8W4C2y6UT6xmvFvCZmEGzgKY9YXxe5CSdktX1J3QDLfKR8vYX2pqxuWSQLxWv5",
+   "confirmed_ms": 1250,
+   "finalized_ms": 1249,
+   "knos_wait_ms": 1822,
+   "slot": 510928515,
+   "at": "2026-10-14T08:36:08Z"
+  }
+ ]
+}

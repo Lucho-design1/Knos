@@ -42,7 +42,7 @@ export const explorerLinks = (body) => [...String(body || "").matchAll(/\[([^\]]
 
 // The five states of a payment, in order, and what each means in a few words (docs/reference/RELAY.md has the table).
 export const STATES = [["received", "the merge reached the workflow"], ["accepted", "terms checked, run signed"], ["submitted", "first transaction sent"],
-  ["confirmed", "payment confirmed"], ["finalized", "devnet confirmed it for good"]];
+  ["confirmed", "payment confirmed"], ["finalized", "paid and final"]];
 // What Knos's comment says of them: { since, received, accepted, submitted, confirmed, finalized (ms, or absent), tx } or null.
 export function statesOf(body) {
   const m = /<!-- knos-states ([^\n]*)/.exec(String(body || ""));
@@ -348,6 +348,8 @@ export function renderLive(el, env = {}) {
     if (stopped) return;
     const m = stats?.latency?.merge_to_paid, c = ops?.canary, parts = [];
     if (m && Number.isFinite(m.p50) && m.n) parts.push(`Over ${esc(m.n)} timed payments on devnet, the wait from merge to payment had a median of ${esc(took(Number(m.p50)))} and a 95th percentile of ${esc(took(Number(m.p95)))} (<a href="stats.json">stats.json</a>).`);
+    const f = stats?.finality?.measured?.all;      // send -> finalized of Knos's own test transactions (docs/finality.json)
+    if (f && Number.isFinite(f.p50) && f.n) parts.push(`On ${esc(stats.finality.consensus === "alpenglow" ? "Alpenglow " : "")}devnet, Knos's own labelled test transactions were paid and final in a median of ${esc(f.p50)} ms (95th percentile ${esc(f.p95)} ms, ${esc(f.n)} runs; <a href="stats.json">stats.json</a>).`);
     if (c && c.runs > 0 && c.all_runs_read) parts.push(`Of the canary's ${esc(c.all_runs_read.runs)} finished runs GitHub lists, ${esc(c.all_runs_read.failed)} failed (<a href="operations.json">operations.json</a>).`);
     $("live-measured").innerHTML = parts.join(" ");
   });

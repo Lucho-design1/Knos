@@ -67,6 +67,7 @@ from typing import Callable, Mapping, NamedTuple
 from solders.pubkey import Pubkey
 
 from . import chain
+from .platform import finality
 from .settle.v2 import oidc
 
 LOADER = Pubkey.from_string("BPFLoaderUpgradeab1e11111111111111111111111")
@@ -649,7 +650,7 @@ def status(fetch: Fetch, ids: dict | None = None, first: dict | None = None) -> 
 
 def _rpc(url: str) -> Account:
     def account(addr: str) -> tuple[str, bytes, bool] | None:
-        v = chain.call(url, "getAccountInfo", [addr, {"encoding": "base64", "commitment": "confirmed"}], timeout=30)["value"]
+        v = chain.call(url, "getAccountInfo", [addr, {"encoding": "base64", "commitment": finality.cached(url)}], timeout=30)["value"]
         return (v["owner"], base64.b64decode(v["data"][0]), bool(v.get("executable"))) if v else None
     return account
 

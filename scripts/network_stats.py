@@ -664,6 +664,26 @@ def collect(url: str, get=None, token: str | None = None, limit: int = PAGE, now
     return data
 
 
+FINALITY = ROOT / "docs" / "finality.json"      # scripts/alpenglow_latency.py writes it: Knos's own labelled test transactions
+
+
+def finality_block(url: str, ask=None) -> dict:
+    """stats.json "finality": what the cluster runs now (getAgGenesisCert, knos.platform.finality), the commitment
+    Knos reads and waits at there, and the measured send -> finalized latency of docs/finality.json (p50 / p95, n,
+    the transaction kinds), which is our own test traffic, labelled so. Transaction counts on this page are Knos's
+    own programs' transactions (never the cluster's), so votes leaving blocks under Alpenglow change none of them."""
+    from knos.platform import finality
+    got = finality.detect(url, ask)
+    out = {"consensus": "alpenglow" if got.active else "towerbft", "detected_by": got.why, "genesis_slot": got.slot, "genesis_block_id": got.block_id,
+           "commitment": finality.commitment(None, url, ask)}
+    try:
+        m = json.loads(FINALITY.read_text(encoding="utf-8"))
+        out["measured"] = {k: m.get(k) for k in ("all", "by_kind", "measured_at", "cluster", "label", "what", "knos_wait")}
+    except (OSError, ValueError):
+        out["measured"] = None
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="_site/stats.json")
@@ -678,6 +698,10 @@ def main() -> int:
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN") or None
     data = collect(url, None if a.no_github else (lambda path: github(path, token)), token, min(a.limit, PAGE), events_out=a.events_out,
                    pages=a.pages, budget=a.budget, cache=a.cache)
+    try:
+        data["finality"] = finality_block(url)
+    except Exception as e:  # noqa: BLE001 - the page still ships, and says it
+        data["finality"] = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(data, indent=1), encoding="utf-8")
     print(json.dumps(data, indent=1))

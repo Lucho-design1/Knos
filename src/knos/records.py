@@ -51,6 +51,7 @@ from decimal import Decimal
 from solders.pubkey import Pubkey
 
 from . import chain, ghwords
+from .platform import finality
 from .settle import pay
 from .settle.v2 import meter
 from .settle.v2 import pay as pay2
@@ -121,7 +122,7 @@ def history(url: str, program, limit: int = 1000) -> tuple[list[dict], int, bool
         try:
             # version 1: what the relay sends to a 2.1 cluster. Asked with 0, the cluster refuses each of those, and
             # every payment and evaluation a relay carried would be counted as unread
-            tx = chain.call(url, "getTransaction", [sig, {"encoding": "json", "commitment": "confirmed",
+            tx = chain.call(url, "getTransaction", [sig, {"encoding": "json", "commitment": finality.cached(url),
                                                           "maxSupportedTransactionVersion": 1}], timeout=30)
         except Exception:  # noqa: BLE001 - still throttled after the backoff: counted, never guessed
             unread += 1
@@ -416,7 +417,7 @@ def count_events(url: str, program, event: str, limit: int = 200, workers: int =
 
     def read(sig: str):
         try:
-            return events_of(chain.call(url, "getTransaction", [sig, {"encoding": "json", "commitment": "confirmed", "maxSupportedTransactionVersion": 1}], timeout=30),
+            return events_of(chain.call(url, "getTransaction", [sig, {"encoding": "json", "commitment": finality.cached(url), "maxSupportedTransactionVersion": 1}], timeout=30),
                              {str(program): 2})
         except Exception:  # noqa: BLE001 - throttled or dropped: not read
             return None

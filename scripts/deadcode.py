@@ -32,10 +32,11 @@ SRC = ROOT / "src"
 # knos.platform.claims: the per-claim account check a relay calls before batching claims (docs/reference/PLATFORM.md)
 # knos.repro.example: `python -m knos.repro.example`, the synthetic example repository (docs/reference/REPRODUCED.md)
 # knos.nebius.__main__: `python -m knos.nebius status|demo|rerun|job`, Knos on Nemotron (docs/reference/NEBIUS.md)
+# knos.money.business: `python -m knos.money.business`, writes web/teams_data.json (docs/reference/TEAMS.md)
 ENTRY = ["knos.cli", "knos.__main__", "knos.proof.ghrelay", "knos.settle.v2.passkey_fund", "knos.private", "knos.host_judge", "knos.sources.sigstore",
          "knos.outcomes.__main__", "knos.autoresearch.__main__", "knos.record.__main__", "knos.self.__main__", "knos.gate.app",
          "knos.hermes_plugin", "knos.verify.sealed", "knos.money.x402", "knos.money.revenue", "knos.graduation.devnet", "knos.repro.example", "knos.zk.__main__", "knos.platform.claims",
-         "knos.nebius.__main__"]
+         "knos.nebius.__main__", "knos.money.business"]
 SCRIPTS = [p for p in list((ROOT / "scripts").glob("*.py")) + list((ROOT / "scripts" / "exercise_rounds").glob("*.py")) + list((ROOT / "examples").glob("*.py"))
            if p.name not in ("deadcode.py", "vulture_whitelist.py")]
 

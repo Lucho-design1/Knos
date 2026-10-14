@@ -443,7 +443,7 @@ class DevnetChain:
         from solders.hash import Hash
 
         from . import chain
-        latest = self._call("getLatestBlockhash", [{"commitment": "confirmed"}])["value"]
+        latest = self._call("getLatestBlockhash", [{"commitment": self.ledger.commitment}])["value"]
         tx = chain.sign(self.ixs(to, amount), self.payer, [self.faucet], Hash.from_string(latest["blockhash"]))
         return Signed(str(tx.signatures[0]), int(latest["lastValidBlockHeight"]), tx)
 
@@ -459,10 +459,11 @@ class DevnetChain:
             return "unknown"
         if got.get("err"):
             return "failed"
-        return "landed" if got.get("confirmationStatus") in ("confirmed", "finalized") else "unknown"
+        from .platform import finality
+        return "landed" if finality.reached(got, self.ledger.commitment) else "unknown"     # finalized on Alpenglow
 
     def height(self) -> int:
-        return int(self._call("getBlockHeight", [{"commitment": "confirmed"}]))
+        return int(self._call("getBlockHeight", [{"commitment": self.ledger.commitment}]))
 
     def bound(self, account: int) -> str | None:
         got = self.ledger.infos([self.pay.bind_pda(account)])[0]

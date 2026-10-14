@@ -107,13 +107,16 @@ def memo_instruction(text: str, signer):
 
 
 def send_memo(text: str, keypair, url: str | None = None) -> dict:
-    """Send the memo, wait for confirmation, return {tx, signer, slot}."""
+    """Send the memo, wait for the cluster's commitment (finalized on Alpenglow, else confirmed:
+    knos.platform.finality), return {tx, signer, slot, commitment, final_ms}."""
     from solders.compute_budget import set_compute_unit_limit
     from .. import chain
+    from ..platform import finality
     led = chain.Ledger(url or rpc_url())
     sig = led.send([set_compute_unit_limit(MEMO_UNITS), memo_instruction(text, keypair.pubkey())], keypair)
     got = chain_memo(sig, url)
-    return {"tx": sig, "signer": str(keypair.pubkey()), "slot": got.get("slot")}
+    t = finality.timing_of(sig) or {}
+    return {"tx": sig, "signer": str(keypair.pubkey()), "slot": got.get("slot"), "commitment": led.commitment, "final_ms": t.get("final_ms")}
 
 
 def chain_memo(signature: str, url: str | None = None) -> dict:
@@ -162,4 +165,8 @@ def anchor(root=None, *, keypair=None, send: Callable[[str], dict] | None = None
         sent = send(p["memo"])
     payload = {**{k: p[k] for k in ("first", "last", "count", "root", "head")}, "memo": p["memo"], "program": MEMO_PROGRAM,
                "cluster": name, "tx": sent["tx"], "signer": sent["signer"], "slot": sent.get("slot")}
+    if sent.get("commitment"):      # how deep the anchor was when it was written, and how long that took ("final in N ms")
+        payload["commitment"] = sent["commitment"]
+        if sent.get("final_ms") is not None:
+            payload["final_ms"] = int(sent["final_ms"])
     return journal.append("anchor", payload, root=root, store=store)

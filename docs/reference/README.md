@@ -111,6 +111,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [HERMES.md](HERMES.md) | Knos in Hermes Agent: the skill, the MCP server (stdio and HTTP), the plugin, the referee as GEPA's judge, an Atropos environment |
 | [AUTORESEARCH.md](AUTORESEARCH.md) | autoresearch for anyone: agents change one file, the referee keeps or refuses each run, sealed data decides payment |
 | [NEBIUS.md](NEBIUS.md) | Nemotron models on Nebius Token Factory as Knos coders and cheat explainers, Tavily provenance; the referee still decides |
+| [TEAMS.md](TEAMS.md) | Knos for teams: per verified merge, per agent check, bounty fee, task packages; metering, chain-checked invoices, the dashboard, the 1B USD arithmetic |
 
 ## 5. How do I build on it?
 
@@ -125,6 +126,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [PRIORITY_FEES.md](PRIORITY_FEES.md) | priority fees on a limit sized by simulation, and a WebSocket wait for confirmation |
 | [SELF.md](SELF.md) | Knos builds Knos: agents improve product code, judged by the referee from main, paid on devnet |
 | [ES256.md](ES256.md) | a second kind of signed token (ES256), checked in one transaction; live on devnet since 9 Oct 2026 |
+| [ALPENGLOW.md](ALPENGLOW.md) | how Knos tells a cluster runs Alpenglow, waits until a payment is final there, and how long that took on devnet |
 | [PLATFORM.md](PLATFORM.md) | the programs on today's Solana: sBPF v3 builds, a GitHub token verified in one transaction, v1 transactions, finality, and the upgrade steps |
 | [CONFORMANCE.md](CONFORMANCE.md) | the formats, with test vectors and a runner |
 | [INTEGRATIONS.md](INTEGRATIONS.md) | what a bounty or work platform can take; no platform uses it |

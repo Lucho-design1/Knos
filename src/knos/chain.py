@@ -26,7 +26,7 @@ import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from solders.compute_budget import ID as COMPUTE_BUDGET
@@ -62,10 +62,11 @@ class Refused(Exception):
 
 
 class RpcError(ValueError):
-    def __init__(self, message: str, data: Any = None):
+    def __init__(self, message: str, data: Any = None, code: int | None = None):
         logs = (data or {}).get("logs") if isinstance(data, dict) else None
         super().__init__(message + (" | " + " | ".join(logs[-4:]) if logs else ""))   # a failing program's own words
         self.data = data
+        self.code = code        # the JSON-RPC error code when the endpoint gave one (-32601: Method not found)
 
 
 def call(url: str, method: str, params: list, timeout: float = 10.0) -> Any:
@@ -84,7 +85,7 @@ def call(url: str, method: str, params: list, timeout: float = 10.0) -> Any:
             time.sleep(min(float(asked), 30.0) if asked.isdigit() else wait_s)
     if "error" in got:
         err = got["error"]
-        raise RpcError(str(err.get("message", err)), err.get("data"))
+        raise RpcError(str(err.get("message", err)), err.get("data"), err.get("code") if isinstance(err.get("code"), int) else None)
     return got.get("result")
 
 
@@ -178,11 +179,12 @@ def v1_refused(why: BaseException) -> bool:
                                          "unsupportedversion"))
 
 
-def wait_all(url: str, signatures: list[str], within: float = 60.0, commitment: str = "confirmed") -> list[dict]:
-    """Wait until every signature reaches `commitment`, asking about all of them in one request each time. RpcError
-    if one failed on chain (once all have an answer), TimeoutError if one never landed."""
+def wait_all(url: str, signatures: list[str], within: float = 60.0, commitment: str | None = None) -> list[dict]:
+    """Wait until every signature reaches `commitment` (None: the cluster's, knos.platform.finality.at: finalized on
+    Alpenglow, else confirmed), asking about all of them in one request each time. RpcError if one failed on chain
+    (once all have an answer), TimeoutError if one never landed."""
     end = time.monotonic() + within
-    good = finality.good(commitment)        # processed < confirmed < finalized: a deeper status satisfies a shallower one
+    good = finality.good(commitment or finality.at(url))    # processed < confirmed < finalized: a deeper status satisfies a shallower one
     got: dict[str, dict] = {}
     while True:
         waiting = [s for s in dict.fromkeys(signatures) if s not in got]
@@ -202,11 +204,13 @@ def wait_all(url: str, signatures: list[str], within: float = 60.0, commitment: 
     return [got[s] for s in signatures]
 
 
-def wait(url: str, signature: str, within: float = 60.0, commitment: str = "confirmed") -> dict:
-    """Wait until `signature` reaches `commitment`; RpcError if it failed on chain, TimeoutError if it never landed.
+def wait(url: str, signature: str, within: float = 60.0, commitment: str | None = None) -> dict:
+    """Wait until `signature` reaches `commitment` (None: the cluster's, as `wait_all`); RpcError if it failed on
+    chain, TimeoutError if it never landed.
     KNOS_WS=1: one signatureSubscribe notification instead of polling (knos.platform.priority.wait_ws), with one status
     read first (a transaction may land before the subscription) and polling for whatever time is left if the
     WebSocket cannot be used."""
+    commitment = commitment or finality.at(url)
     if os.environ.get("KNOS_WS", "").strip() == "1":
         from .platform import priority
         start = time.monotonic()
@@ -227,30 +231,66 @@ def wait(url: str, signature: str, within: float = 60.0, commitment: str = "conf
     return wait_all(url, [signature], within, commitment)[0]
 
 
+class _Commitment:
+    """A Ledger's `commitment`: the one given, else chosen on first use for its cluster (knos.platform.finality:
+    KNOS_COMMITMENT, else finalized on an Alpenglow cluster, else confirmed). Chosen on first use, not when the Ledger
+    is made, so making one asks the cluster nothing; the answer is asked through the ledger's own transport
+    (`_consensus_ask`) and kept per RPC URL."""
+
+    def __set_name__(self, owner, name: str) -> None:
+        self.name = "_" + name
+
+    def __get__(self, obj, owner=None):
+        if obj is None:
+            return None     # the dataclass default: none given
+        got = obj.__dict__.get(self.name)
+        if got is None:
+            got = finality.commitment(None, obj.url, obj._consensus_ask())
+            obj.__dict__[self.name] = got
+        return got
+
+    def __set__(self, obj, value) -> None:
+        obj.__dict__[self.name] = None if value is None else finality.commitment(value)
+
+
 @dataclass
 class Ledger:
     """A cluster reached over JSON-RPC."""
     url: str
-    commitment: str = field(default_factory=finality.commitment)    # KNOS_COMMITMENT (knos.platform.finality), else confirmed
+    commitment: str = _Commitment()     # type: ignore[assignment]  # KNOS_COMMITMENT, else finalized on Alpenglow, else confirmed
     takes_v1: bool = True       # v1 transactions (4,096 bytes) may be sent; a relay sets it False once the cluster has refused one
+
+    def _reads(self) -> str:
+        """The commitment of a read: the ledger's own once it was chosen (a send or a wait chose it), else what this
+        process already knows of the cluster (knos.platform.finality.cached), so a ledger that only reads asks the
+        cluster nothing more than its reads."""
+        return self.__dict__.get("_commitment") or finality.cached(self.url)
+
+    def _consensus_ask(self):
+        """How knos.platform.finality asks this ledger's cluster getAgGenesisCert: `call`, with a short timeout."""
+        return lambda method, params: call(self.url, method, params, timeout=finality.DETECT_TIMEOUT_S)
 
     # -- writing ---------------------------------------------------------------------------------------------------
     def _blockhash(self) -> Hash:
-        return Hash.from_string(call(self.url, "getLatestBlockhash", [{"commitment": "confirmed"}])["value"]["blockhash"])
+        return Hash.from_string(call(self.url, "getLatestBlockhash", [{"commitment": self.commitment}])["value"]["blockhash"])
 
     def _submit(self, tx: Transaction | VersionedTransaction) -> str:
         """Hand one signed transaction to the cluster, with preflight: a failing program returns its logs, and costs
         no fee."""
         raw = base64.b64encode(bytes(tx)).decode()
-        return call(self.url, "sendTransaction", [raw, {"encoding": "base64", "preflightCommitment": "confirmed"}])
+        return call(self.url, "sendTransaction", [raw, {"encoding": "base64", "preflightCommitment": self.commitment}])
 
     def send(self, ixs, payer: Keypair, signers: list[Keypair] | None = None, v1: bool = False) -> str:
         """Sign, send (with preflight, so a failing program returns its logs) and wait for `commitment`. `v1`: as a
-        v1 transaction, which holds MAX_V1_BYTES."""
+        v1 transaction, which holds MAX_V1_BYTES. The time from the send to the commitment is kept
+        (knos.platform.finality.timing_of: "final in N ms")."""
         from .platform import priority          # KNOS_PRIORITY: a priority fee and a limit the size of the work
         ixs = [*priority.budget(self, list(ixs), payer, signers), *ixs] if priority.mode() is not None else ixs
-        sig = self._submit(sign(ixs, payer, signers, self._blockhash(), v1))
+        tx = sign(ixs, payer, signers, self._blockhash(), v1)
+        sent = time.monotonic()
+        sig = self._submit(tx)
         wait(self.url, sig, 60.0, self.commitment)
+        finality.timed(sig, sent, time.monotonic(), self.commitment, self.url)
         return sig
 
     def simulate(self, ixs, payer: Keypair, signers: list[Keypair] | None = None, v1: bool = False) -> list[str]:
@@ -258,7 +298,7 @@ class Ledger:
         with the programs' own words, when it would fail."""
         raw = base64.b64encode(bytes(sign(ixs, payer, signers, Hash.default(), v1))).decode()
         got = call(self.url, "simulateTransaction", [raw, {"encoding": "base64", "sigVerify": False, "replaceRecentBlockhash": True,
-                                                           "commitment": self.commitment}])["value"]
+                                                           "commitment": self._reads()}])["value"]
         if got.get("err"):
             raise RpcError(f"transaction failed: {got['err']}", got)
         return list(got.get("logs") or [])
@@ -280,11 +320,16 @@ class Ledger:
                 return self._submit(tx)
             except Exception as why:  # noqa: BLE001 - kept, and raised below once the rest have been waited for
                 return why
+        began = time.monotonic()
         with ThreadPoolExecutor(max_workers=min(len(txs), SIDE_BY_SIDE)) as pool:
             sent = list(pool.map(submit, txs))
         refused = next((s for s in sent if not isinstance(s, str)), None)
         try:
             wait_all(self.url, [s for s in sent if isinstance(s, str)], 60.0, self.commitment)
+            done = time.monotonic()
+            for s in sent:
+                if isinstance(s, str):
+                    finality.timed(s, began, done, self.commitment, self.url)
         except Exception:
             if refused is None:
                 raise
@@ -298,7 +343,7 @@ class Ledger:
         addresses, out = list(addresses), []
         for i in range(0, len(addresses), 100):
             got = call(self.url, "getMultipleAccounts", [[str(a) for a in addresses[i:i + 100]],
-                                                         {"encoding": "base64", "commitment": self.commitment}])
+                                                         {"encoding": "base64", "commitment": self._reads()}])
             out += [(Pubkey.from_string(v["owner"]), base64.b64decode(v["data"][0])) if v else None for v in got["value"]]
         return out
 
@@ -308,7 +353,7 @@ class Ledger:
         return int(call(self.url, "getMinimumBalanceForRentExemption", [int(size)]))
 
     def account(self, address: Pubkey) -> bytes | None:
-        got = call(self.url, "getAccountInfo", [str(address), {"encoding": "base64", "commitment": self.commitment}])
+        got = call(self.url, "getAccountInfo", [str(address), {"encoding": "base64", "commitment": self._reads()}])
         return base64.b64decode(got["value"]["data"][0]) if got["value"] else None
 
     def accounts(self, addresses) -> list[bytes | None]:
@@ -325,14 +370,14 @@ class Ledger:
         given."""
         filters: list[dict] = [{"dataSize": size}] if size is not None else []
         filters += [{"memcmp": {"offset": off, "bytes": b58(raw)}} for off, raw in (memcmp or {}).items()]
-        got = call(self.url, "getProgramAccounts", [str(program), {"encoding": "base64", "commitment": self.commitment,
+        got = call(self.url, "getProgramAccounts", [str(program), {"encoding": "base64", "commitment": self._reads(),
                                                                    "filters": filters}], timeout=30) or []
         return [(Pubkey.from_string(i["pubkey"]), base64.b64decode(i["account"]["data"][0])) for i in got]
 
     def recent(self, address: Pubkey, limit: int = 20) -> list[tuple[str, int | None]]:
         """(signature, unix time) of the successful transactions that touched `address`, newest first: at most `limit`
         of the cluster's rows (failed ones are among the rows and left out here)."""
-        got = call(self.url, "getSignaturesForAddress", [str(address), {"limit": limit, "commitment": self.commitment}]) or []
+        got = call(self.url, "getSignaturesForAddress", [str(address), {"limit": limit, "commitment": self._reads()}]) or []
         return [(g["signature"], g.get("blockTime")) for g in got if g.get("err") is None]
 
     def signatures(self, address: Pubkey, limit: int = 20) -> list[str]:
@@ -344,12 +389,12 @@ class Ledger:
 
     def touched(self, address: Pubkey) -> int | None:
         """When a transaction last named `address` (unix time, failed or not); None when the cluster knows of none."""
-        got = call(self.url, "getSignaturesForAddress", [str(address), {"limit": 1, "commitment": self.commitment}]) or []
+        got = call(self.url, "getSignaturesForAddress", [str(address), {"limit": 1, "commitment": self._reads()}]) or []
         return got[0].get("blockTime") if got else None
 
     def _transaction(self, signature: str) -> dict:
         """One transaction as the cluster gives it (version 1 included); {} when the cluster no longer has it."""
-        return call(self.url, "getTransaction", [signature, {"encoding": "json", "commitment": self.commitment,
+        return call(self.url, "getTransaction", [signature, {"encoding": "json", "commitment": self._reads(),
                                                              "maxSupportedTransactionVersion": 1}], timeout=20) or {}
 
     def logs(self, signature: str) -> list[str]:
@@ -366,7 +411,7 @@ class Ledger:
         request (failed ones are among the rows and left out here), and at most `most` rows in all."""
         before, rows = None, 0
         while rows < most:
-            opts = {"limit": 100, "commitment": self.commitment, **({"before": before} if before else {})}
+            opts = {"limit": 100, "commitment": self._reads(), **({"before": before} if before else {})}
             got = call(self.url, "getSignaturesForAddress", [str(address), opts]) or []
             yield from (g["signature"] for g in got if g.get("err") is None)
             if len(got) < 100:

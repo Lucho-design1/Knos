@@ -847,10 +847,12 @@ def _blocks(url: str, sigs: list[dict], workers: int = WORKERS) -> dict[str, lis
     from concurrent.futures import ThreadPoolExecutor
 
     from . import chain
+    from .platform import finality
+    level = finality.at(url)
 
     def one(sig: str):
         try:
-            return sig, records.events_of(chain.call(url, "getTransaction", [sig, {"encoding": "json", "commitment": "confirmed",
+            return sig, records.events_of(chain.call(url, "getTransaction", [sig, {"encoding": "json", "commitment": level,
                                                                                    "maxSupportedTransactionVersion": 1}], timeout=30))
         except Exception:  # noqa: BLE001 - still throttled after the backoff: counted, never guessed
             return sig, None

@@ -123,11 +123,13 @@ def send(url: str, payer, ixs, *, units: int = 400_000, skip_preflight: bool = F
     from solders.hash import Hash
 
     from .. import chain
+    from ..platform import finality
 
-    blockhash = Hash.from_string(chain.call(url, "getLatestBlockhash", [{"commitment": "confirmed"}])["value"]["blockhash"])
+    level = finality.at(url)        # finalized on Alpenglow, else confirmed
+    blockhash = Hash.from_string(chain.call(url, "getLatestBlockhash", [{"commitment": level}])["value"]["blockhash"])
     tx = chain.sign([set_compute_unit_limit(units), *ixs], payer, [], blockhash)
     sig = chain.call(url, "sendTransaction", [base64.b64encode(bytes(tx)).decode(),
-                                              {"encoding": "base64", "preflightCommitment": "confirmed",
+                                              {"encoding": "base64", "preflightCommitment": level,
                                                "skipPreflight": skip_preflight}])
     try:
         chain.wait(url, sig)
@@ -135,7 +137,7 @@ def send(url: str, payer, ixs, *, units: int = 400_000, skip_preflight: bool = F
         pass  # failed on chain: the error is read from the transaction below
     got = None
     for _ in range(15):
-        got = chain.Ledger(url, commitment="confirmed")._transaction(sig)    # the one reader that asks for version 1
+        got = chain.Ledger(url, commitment=level)._transaction(sig)    # the one reader that asks for version 1
         if got:
             break
         time.sleep(1)

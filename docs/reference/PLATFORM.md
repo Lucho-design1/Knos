@@ -193,8 +193,10 @@ transaction does not run.
 - **Rent.** Devnet's rent-exempt minimum is 5,080 lamports a byte including the 128-byte overhead (`solana rent`,
   13 Oct 2026), where it was 6,960: about 27% less, not the 90% of the proposal. The relay now asks the cluster
   (`getMinimumBalanceForRentExemption`, `Ledger.rent`) instead of using 6,960, so any cut is used the day it is live.
-- **Finality.** `KNOS_COMMITMENT` = processed, confirmed (default) or finalized (`knos.platform.finality`). Every wait
-  in `knos.chain` and the fan-out ledger uses it, so a faster finality (Alpenglow, SIMD-0326) needs no code change.
+- **Finality.** `KNOS_COMMITMENT` = processed, confirmed or finalized (`knos.platform.finality`). Unset, Knos asks
+  each cluster `getAgGenesisCert` once: a certificate (Alpenglow) means `finalized`, null or "Method not found" means
+  `confirmed` as before. Every wait and read in `knos.chain`, the fan-out ledger and the readers uses it. See
+  [ALPENGLOW.md](ALPENGLOW.md).
 
 ## 7. The upgrade
 

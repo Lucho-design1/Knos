@@ -119,6 +119,65 @@ def tavily_responder(body: dict) -> list[dict]:
              "score": 0.71}]
 
 
+CODING_V1 = '''"""Durations for the scheduler."""
+import re
+
+_PART = re.compile(r"(\\d+)([dhms])")
+_SECONDS = {"d": 86400, "h": 3600, "m": 60, "s": 1}
+
+
+def parse_duration(text: str) -> int:
+    t = text.strip().lower()
+    parts = _PART.findall(t)
+    if not parts or _PART.sub("", t).strip():
+        raise ValueError(f"not a duration: {text!r}")
+    return sum(int(n) * _SECONDS[u] for n, u in parts)
+'''
+CODING_V2 = '''"""Durations for the scheduler: "1h30m" -> 5400 seconds."""
+import re
+
+_DURATION = re.compile(r"^(?:(\\d+)d)?\\s*(?:(\\d+)h)?\\s*(?:(\\d+)m)?\\s*(?:(\\d+)s)?$")
+_SECONDS = (86400, 3600, 60, 1)
+
+
+def parse_duration(text: str) -> int:
+    """Whole seconds in `text`: units d, h, m, s, each at most once, largest first; spaces between parts allowed."""
+    m = _DURATION.match(text.strip().lower())
+    if m is None or not any(m.groups()):
+        raise ValueError(f"not a duration: {text!r}")
+    return sum(int(n) * k for n, k in zip(m.groups(), _SECONDS) if n is not None)
+'''
+CODING_TESTS = '''import pytest
+
+from duration import parse_duration
+
+
+def test_hours_and_minutes():
+    assert parse_duration("1h30m") == 5400
+
+
+def test_spaces_and_case():
+    assert parse_duration(" 1H 5m 10s ") == 3910
+
+
+@pytest.mark.parametrize("bad", ["", "10", "5x", "5m1h", "1h1h"])
+def test_bad_input_is_refused(bad):
+    with pytest.raises(ValueError):
+        parse_duration(bad)
+'''
+
+
+def coding_responder(messages: list[dict]) -> str:
+    """The coding agent's MOCK replies: a first try that misses the order and repeat rules (its own tests catch it),
+    then the fix. The tests the agent runs on them are real."""
+    tries = sum(1 for m in messages if m.get("role") == "assistant")
+    if tries == 0:
+        return ("First version: sum every number-unit pair.\n```file path=duration.py\n" + CODING_V1 + "```\n"
+                "```file path=tests/test_duration.py\n" + CODING_TESTS + "```")
+    return ("The order and repeat rules were missing: one anchored pattern, largest unit first.\n```file path=duration.py\n"
+            + CODING_V2 + "```")
+
+
 def responder():
     """One Token Factory responder for every role, dispatching on the system prompt's ROLE line."""
     ar, me = autoresearch_responder(), self_responder()
@@ -134,5 +193,7 @@ def responder():
             return explain_responder(user)
         if system.startswith("ROLE: cheat rule drafter"):
             return rule_responder(user)
+        if system.startswith("ROLE: coding agent"):
+            return coding_responder(messages)
         return sources.MOCK
     return respond

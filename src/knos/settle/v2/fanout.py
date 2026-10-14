@@ -150,13 +150,17 @@ class FanLedger(chain.Ledger):
     def _post(self, url: str, method: str, params: list) -> Any:
         return chain.call(url, method, params)
 
+    def _consensus_ask(self):
+        """getAgGenesisCert through this ledger's own transport (knos.platform.finality)."""
+        return lambda method, params: self._post(self.url, method, params)
+
     def _send_raw(self, raw: str, first: bool) -> bool:
         """The same bytes to every endpoint; only a program's refusal at the first endpoint's preflight is raised.
         Whether an endpoint took them (answered, or said they had landed)."""
         took = False
         for n, url in enumerate(self.endpoints()):
             preflight = first and n == 0
-            opts = {"encoding": "base64", "preflightCommitment": "confirmed"} if preflight else {"encoding": "base64", "skipPreflight": True}
+            opts = {"encoding": "base64", "preflightCommitment": self.commitment} if preflight else {"encoding": "base64", "skipPreflight": True}
             try:
                 self._post(url, "sendTransaction", [raw, opts])
             except Exception as why:  # noqa: BLE001 - sorted below: no answer, landed already, or the program's own refusal
@@ -190,6 +194,9 @@ class FanLedger(chain.Ledger):
         `resend_every` polls the ones no endpoint has taken. RpcError for one that failed on chain; TimeoutError for
         one never confirmed."""
         good = finality.good(self.commitment)      # knos.platform.finality: processed, confirmed or finalized
+        # on Alpenglow most payments are final before a 0.5 s poll: the first look comes sooner (later ones keep POLL_S,
+        # which the public endpoint's 40 requests of one method per 10 s allows)
+        first = finality.FIRST_POLL_ALPENGLOW_S if finality.alpenglow(self.url, self._consensus_ask()) else POLL_S
         shared = board(self.endpoints())
         seen = shared.join(raws)
         began = self.clock()
@@ -200,7 +207,7 @@ class FanLedger(chain.Ledger):
             for n in range(1, self.polls + 1):
                 # a poll waits first: a waiter asks only when no round began while it slept, so one that has just
                 # joined starts no round of its own and rounds come at most once a poll, however many wait
-                self.sleep(POLL_S)
+                self.sleep(first if n == 1 else POLL_S)
                 seen, said = shared.look(self._statuses, seen)
                 for sig in raws:
                     status = said.get(sig)
@@ -226,7 +233,7 @@ class FanLedger(chain.Ledger):
         last: BaseException | None = None
         for url in self.endpoints():
             try:
-                return Hash.from_string(self._post(url, "getLatestBlockhash", [{"commitment": "confirmed"}])["value"]["blockhash"])
+                return Hash.from_string(self._post(url, "getLatestBlockhash", [{"commitment": self.commitment}])["value"]["blockhash"])
             except Exception as why:  # noqa: BLE001
                 if not no_answer(why):
                     raise
@@ -244,8 +251,10 @@ class FanLedger(chain.Ledger):
         from ...platform import priority      # KNOS_PRIORITY (unset: nothing changes)
         ixs = [*priority.budget(self, list(ixs), payer, signers), *ixs] if priority.mode() is not None else ixs
         tx = chain.sign(ixs, payer, signers, self._blockhash(), v1)
+        sent = time.monotonic()
         sig = self._submit(tx)
         self._confirm({sig: base64.b64encode(bytes(tx)).decode()})
+        finality.timed(sig, sent, time.monotonic(), self.commitment, self.url)     # "final in N ms"
         return sig
 
     def send_all(self, groups, payer: Keypair, signers: list[Keypair] | None = None, v1: bool = False) -> list[str]:
@@ -256,6 +265,7 @@ class FanLedger(chain.Ledger):
         txs = [chain.sign(ixs, payer, signers, blockhash, v1) for ixs in groups]
         raws = {str(tx.signatures[0]): base64.b64encode(bytes(tx)).decode() for tx in txs}
         refused: BaseException | None = None
+        sent = time.monotonic()
         for tx in txs:
             try:
                 self._submit(tx)
@@ -264,6 +274,9 @@ class FanLedger(chain.Ledger):
                 raws.pop(str(tx.signatures[0]), None)
         if raws:
             self._confirm(raws)
+            done = time.monotonic()
+            for sig in raws:
+                finality.timed(sig, sent, done, self.commitment, self.url)
         if refused is not None:
             raise refused
         return [str(tx.signatures[0]) for tx in txs]
