@@ -9,12 +9,13 @@
                                                                     --timeout: how long one command may take (default 600 s)
     python examples/witnessed/witness.py check witness.json         the record against the `witness` task's rules (no network)
 
-Everything happens in a repository of YOUR account, made from the public template drexthealpha/knos-task, with your
+Everything happens in a repository of YOUR account, created empty and given the files of templates/knos-task/ of Knos, with your
 own key: Knos opens nothing there. It needs `gh` logged in as you, `git`, and `pip install knos` (for `knos` and the
 key). The steps:
 
-    repo      your repository from the template (it holds the two public caller workflows and nothing secret); run again,
-              the one made before, cloned here, its caller workflows brought to the template's (each release pins them)
+    repo      your repository, created empty, with the files of templates/knos-task/ (the two public caller workflows and
+              nothing secret); run again, the one made before, cloned here, its caller workflows brought to that folder's
+              (each release pins them)
     key       a Solana key made here, kept in DIR/witness-key.json: the address the faucet pays and the budget's owner
     sol       devnet SOL for that key's transaction fees (by hand: https://faucet.solana.com)
     faucet    20 test USDC from the playground's faucet issue, to that address; when the faucet says no (it gives each
@@ -43,7 +44,6 @@ import argparse
 import csv
 import json
 import re
-import shutil
 import subprocess
 import sys
 import time
@@ -51,7 +51,8 @@ import zipfile
 from pathlib import Path
 from typing import Any, Callable
 
-TEMPLATE = "drexthealpha/knos-task"
+TEMPLATE = "templates/knos-task"     # the folder of drexthealpha/Knos a new repository gets its files from (0.3.31: no template repository)
+FOLDER = Path(__file__).resolve().parents[2] / TEMPLATE
 PLAYGROUND = "drexthealpha/knos-playground"
 NAME = "knos-witness"
 FUND, BUDGET = "5", "10"
@@ -162,39 +163,43 @@ def _comment(shell: Shell, repo: str, issue: int, body: str) -> int:
 
 # ---- the steps ----------------------------------------------------------------------------------------------------------
 def repo(s: dict, sh: Shell) -> dict:
-    """The repository made from the template. A second run by one account finds the one it made before (`gh repo create`
-    refuses a name that exists): it is cloned here, unless DIR holds its clone, and its
-    caller workflows are brought to the template's."""
-    work, updated = s["dir"] / NAME, None
+    """The repository: created EMPTY in the account (you ran the command that creates it) and given the files of
+    templates/knos-task/ of this Knos checkout. A second run by one account finds the one it made before (`gh repo
+    create` refuses a name that exists): it is cloned here, unless DIR holds its clone, and its caller workflows are
+    brought to that folder's."""
+    work = s["dir"] / NAME
     if sh.run(["gh", "api", f"repos/{s['repo']}"])[0] != 0:
-        _ok(sh, ["gh", "repo", "create", s["repo"], "--public", "--template", TEMPLATE, "--clone"], s["dir"])
+        _ok(sh, ["gh", "repo", "create", s["repo"], "--public", "--clone"], s["dir"])
+        made = {"callers_added": callers(s, sh, new=True)}
     else:
         if not (work / ".git").exists():
             _ok(sh, ["gh", "repo", "clone", s["repo"], NAME], s["dir"])
-        updated = callers(s, sh)
+        made = {"callers_updated": callers(s, sh)}
     return {"repository": f"https://github.com/{s['repo']}", "repository_owner_id": int(_json(sh, f"repos/{s['repo']}")["owner"]["id"]),
-            "actor_id": int(_json(sh, "user")["id"]), **({} if updated is None else {"callers_updated": updated})}
+            "actor_id": int(_json(sh, "user")["id"]), **made}
 
 
-def callers(s: dict, sh: Shell) -> list[str]:
-    """Bring the repository's caller workflows to the template's as it is now: each release republishes the template
-    with its callers pinned to that release's shared workflows, so a repository made by an earlier run would call an
-    earlier release. The template's files are copied over the clone's main branch, committed and pushed only when one
-    differs. The names of the files that changed."""
-    work, template = s["dir"] / NAME, s["dir"] / "template"
-    shutil.rmtree(template, ignore_errors=True)
-    _ok(sh, ["gh", "repo", "clone", TEMPLATE, str(template), "--", "-q", "--depth", "1"], s["dir"])
-    for argv in (["git", "checkout", "-q", "main"], ["git", "pull", "-q"]):
-        _ok(sh, argv, work)
-    mine, theirs, changed = work / ".github" / "workflows", template / ".github" / "workflows", []
-    mine.mkdir(parents=True, exist_ok=True)
-    for f in sorted(p for p in theirs.iterdir() if p.suffix in (".yml", ".yaml")):
-        now = mine / f.name
+def callers(s: dict, sh: Shell, new: bool = False) -> list[str]:
+    """Bring the repository's files to templates/knos-task/ as this checkout holds it: each release stamps that
+    folder's callers with that release's shared workflows, so a repository made by an earlier run would call an earlier
+    release. A new (empty) repository gets every file of the folder on a first commit of `main`; one made before gets
+    its caller workflows replaced where they differ. Committed and pushed only when one differs. The paths written."""
+    work = s["dir"] / NAME
+    if not FOLDER.is_dir():
+        raise Stop(f"{TEMPLATE} is not here: run this from a checkout of drexthealpha/Knos")
+    _ok(sh, ["git", "checkout", "-q", "-b", "main"], work) if new else [_ok(sh, argv, work) for argv in (["git", "checkout", "-q", "main"], ["git", "pull", "-q"])]
+    theirs = {p.relative_to(FOLDER).as_posix(): p for p in sorted(FOLDER.rglob("*")) if p.is_file()}
+    if not new:
+        theirs = {rel: p for rel, p in theirs.items() if rel.startswith(".github/workflows/") and p.suffix in (".yml", ".yaml")}
+    changed = []
+    for rel, f in theirs.items():
+        now = work / rel
         if not now.exists() or now.read_bytes() != f.read_bytes():
+            now.parent.mkdir(parents=True, exist_ok=True)
             now.write_bytes(f.read_bytes())
-            changed.append(f.name)
+            changed.append(rel if new else f.name)
     if changed:
-        for argv in (["git", "add", ".github/workflows"], ["git", "commit", "-qm", f"Callers as the template {TEMPLATE} writes them"],
+        for argv in (["git", "add", "-A" if new else ".github/workflows"], ["git", "commit", "-qm", f"Callers as Knos's {TEMPLATE} writes them"],
                      ["git", "push", "-q", "origin", "main"]):
             _ok(sh, argv, work)
     return changed

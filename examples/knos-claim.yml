@@ -7,7 +7,7 @@
 #
 #   A run started by hand (`workflow_dispatch`).
 #       Actions > knos claim > Run workflow, and paste your address into the box yourself (or run
-#       `knos claim <address>`, which makes the repository from the template drexthealpha/knos-claim and does this).
+#       `knos claim <address>`, which creates the empty repository in your account, adds this file and does this).
 #       The job asks GitHub for a signed statement that says "the owner of this repository names <address>", posts
 #       it on an issue here and waits for a relayer to carry it to Solana (Knos's public relay does; anyone can).
 #       From then on what your merged pull requests earn is paid to that address, and payments held for you can be

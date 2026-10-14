@@ -17,7 +17,8 @@ github-app/app-manifest.json is the manifest, and this code runs once its id, pr
 
 The workflow file is read from the default branch (a dispatch runs the default branch's copy), so a pull request
 cannot change what judges it. The App's own permissions: checks write, pull requests write, issues write, actions
-write (dispatch) and read (artifacts), contents read, metadata read. Nothing else."""
+write (dispatch) and read (artifacts), contents read, metadata read, security events write (the cheat findings as
+code-scanning alerts, knos.gate.sarif). Nothing else."""
 from __future__ import annotations
 
 import base64
@@ -45,7 +46,7 @@ MANIFEST = {
     "redirect_url": "https://REPLACE-WITH-YOUR-HOST/registered",
     "public": True,
     "default_permissions": {"checks": "write", "pull_requests": "write", "issues": "write", "actions": "write",
-                            "contents": "read", "metadata": "read"},
+                            "contents": "read", "metadata": "read", "security_events": "write"},
     "default_events": ["pull_request", "workflow_run", "check_run"],
 }
 
@@ -95,6 +96,8 @@ def read_artifact(zip_bytes: bytes) -> dict:
         out = {"verdict": json.loads(z.read("verdict.json")), "comment": z.read("comment.md").decode("utf-8")}
         if "receipt.json" in names:
             out["receipt"] = json.loads(z.read("receipt.json"))
+        if "knos-gate.sarif" in names:
+            out["sarif"] = json.loads(z.read("knos-gate.sarif"))
     return out
 
 
@@ -113,8 +116,10 @@ def _no_verdict(gh: Client, wr: dict) -> list[str]:
     return [f"no verdict: check on {m.group(2)[:7]} completed as failure"]
 
 
-def handle(event: str, payload: dict, send, *, download=None, token: str = "", me: str = "knos-gate[bot]") -> list[str]:
-    """One webhook. `send` is a GitHub client's send (installation token). Returns what was done, for the log."""
+def handle(event: str, payload: dict, send, *, download=None, token: str = "", me: str = "knos-gate[bot]",
+           code_scanning: bool = True) -> list[str]:
+    """One webhook. `send` is a GitHub client's send (installation token). Returns what was done, for the log.
+    `code_scanning`: also upload the run's SARIF log (the App's security_events permission); a refusal is logged, never fatal."""
     repo = (payload.get("repository") or {}).get("full_name", "")
     gh = Client(repo, send=send)
     done: list[str] = []
@@ -163,11 +168,19 @@ def handle(event: str, payload: dict, send, *, download=None, token: str = "", m
             gh.upsert_check(v["head"], status="completed", conclusion="neutral", title=f"{CHECK_NAME}: superseded",
                             summary="The pull request has a newer commit; that commit's run decides.")
             return ["verdict for an older head: marked superseded"]
+        from . import sarif
         gh.upsert_check(v["head"], status="completed", conclusion="success" if v["passed"] else "failure",
-                        title=report.title(v), summary=report.summary(v), details_url=wr.get("html_url", ""))
+                        title=report.title(v), summary=report.summary(v), details_url=wr.get("html_url", ""),
+                        annotations=sarif.from_sarif(got["sarif"]) if got.get("sarif") else None)
         gh.upsert_comment(v["pr"], got["comment"], me=me)
         gh.apply(v["pr"], v.get("actions") or {})
         done += [f"check {'success' if v['passed'] else 'failure'} on {v['head'][:7]}", f"comment on #{v['pr']}"]
+        if got.get("sarif") and code_scanning:
+            try:                     # the App's `security_events: write`; a repository without code scanning answers 403/404
+                gh.upload_sarif(v["head"], f"refs/pull/{v['pr']}/head", got["sarif"])
+                done.append("code scanning: findings uploaded")
+            except OSError as why:
+                done.append(f"code scanning: not uploaded ({why})")
     else:
         done.append(f"ignored {event}/{payload.get('action')}")
     return done

@@ -6,8 +6,8 @@ This page is how the first one gets there without anyone taking the maintainer's
 
 ## Two clicks and one button
 
-Three lines for a stranger. Nothing installed, no key, no wallet, no money (no fork? [**Use this template**](https://github.com/new?template_owner=drexthealpha&template_name=knos-task&name=knos-reproduce&visibility=public&owner=@me)
-instead, below):
+Three lines for a stranger. Nothing installed, no key, no wallet, no money (no fork? [**an empty repository**](https://github.com/new?name=knos-reproduce&visibility=public&owner=@me)
+and one file instead, below):
 
 1. [Fork drexthealpha/Knos](https://github.com/drexthealpha/Knos/fork); in the fork open **Actions** and enable workflows.
 2. Choose **knos reproduce** and press **Run workflow**.
@@ -23,10 +23,12 @@ in and for no other ([GitHub's documentation](https://docs.github.com/en/actions
 so a run in your fork cannot open a pull request here. The link is GitHub's own form
 ([query parameters](https://docs.github.com/en/pull-requests/reference/using-query-parameters-to-create-a-pull-request)).
 
-Without a fork: the template makes a repository of your own that already holds
-[`knos-reproduce.yml`](../../examples/knos-reproduce.yml) and has Actions on. Press **Create repository**, then
-**Actions**, **knos reproduce**, **Run workflow**. A repository made from a template is no fork, so no pull request can
-come from it: download the run's artifact `knos-reproduction` and send the file in it ("How to send it").
+Without a fork: create an empty public repository of your own (the link above) and add one file,
+[`knos-reproduce.yml`](../../examples/knos-reproduce.yml) (the same as in [`templates/knos-task`](../../templates/knos-task)),
+as `.github/workflows/knos-reproduce.yml`: **Add file**, **Create new file**, paste, **Commit changes**. Then
+**Actions**, **knos reproduce**, **Run workflow**. No template repository is involved since 0.3.31. A repository that
+is no fork cannot open a pull request here: download the run's artifact `knos-reproduction` and send the file in it
+("How to send it").
 
 ## Knos's own run
 

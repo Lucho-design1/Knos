@@ -115,7 +115,19 @@ try {
     && address === await passkey.wallet(passkey.compressed(Uint8Array.from(Buffer.from(kept.key, "hex"))), ids.knos_passkey), address);
   ok("kept as the Get paid page keeps it: id and public key only", Object.keys(kept).sort().join() === "credentialId,key");
   const href = await page.$eval("#py-go", (a) => a.href);
-  ok("with no knos-claim yet, the link is GitHub's filled-in form", href === `https://github.com/new?template_owner=drexthealpha&template_name=knos-claim&owner=${LOGIN}&name=knos-claim&visibility=public`, href);
+  ok("with no knos-claim yet, the link is GitHub's new-repository form: empty, no template, the name and the owner filled in", href === `https://github.com/new?owner=${LOGIN}&name=knos-claim&visibility=public`, href);
+  // pressed (the new tab is not followed here): the next link adds the one file, filled in, then the run's page
+  const press = () => page.$eval("#py-go", (a) => { a.addEventListener("click", (e) => e.preventDefault(), { once: true }); a.click(); });
+  await press();
+  await page.waitForFunction(() => document.querySelector("#py-go")?.href.includes("/new/main?"));
+  const added = new URL(await page.$eval("#py-go", (a) => a.href));
+  const page_ = { CLAIM_WORKFLOW: await page.evaluate(async () => (await import("/payee.js")).CLAIM_WORKFLOW) };
+  ok("then GitHub's new-file page in that repository, the claim workflow filled in from the Knos tree", added.origin + added.pathname === `https://github.com/${LOGIN}/knos-claim/new/main`
+    && added.searchParams.get("filename") === ".github/workflows/knos-claim.yml" && added.searchParams.get("value") === page_.CLAIM_WORKFLOW
+    && page_.CLAIM_WORKFLOW.includes("drexthealpha/knos-oidc-rotate/.github/workflows/claim.yml@") && added.href.length <= 8191, added.href.length);
+  await press();
+  await page.waitForFunction(() => document.querySelector("#py-go")?.href.includes("/actions/workflows/"));
+  ok("then the claim workflow's page, where Run workflow is", (await page.$eval("#py-go", (a) => a.href)) === `https://github.com/${LOGIN}/knos-claim/actions/workflows/knos-claim.yml`);
   await page.click("#py-check");
   await page.waitForFunction(() => /No address is linked|Bound/.test(document.querySelector("[data-py-done]").textContent));
   ok("Check before the run: not bound", (await page.textContent("[data-py-done]")).startsWith("No address is linked yet"));
@@ -124,7 +136,7 @@ try {
   await page.waitForSelector("[data-py-bound]");
   ok("Check after the run: bound to this passkey", (await page.textContent("[data-py-bound]")) === address && (await page.$eval("#py-done", (n) => n.dataset.state)) === "done");
   const table = await page.$$eval("[data-py-clicks] th", (th) => th.map((n) => n.textContent));
-  ok("the clicks: 13 before, 8 now", JSON.stringify(table) === JSON.stringify(["Before: 13", "Now: 8"]), table);
+  ok("the clicks: 13 before, 10 now", JSON.stringify(table) === JSON.stringify(["Before: 13", "Now: 10"]), table);
   ok("no statement is longer than twelve words", (await longest(page)) <= 12, await longest(page));
 
   // a second visit: the repository exists and the passkey is kept, so the link is the workflow's page at once

@@ -14,7 +14,8 @@
     "issues": "write",
     "actions": "write",
     "contents": "read",
-    "metadata": "read"
+    "metadata": "read",
+    "security_events": "write"
   },
   "default_events": [
     "pull_request",

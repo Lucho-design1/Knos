@@ -1,0 +1,18 @@
+# Qloo rule: response data may be cached privately on a server, never stored in a public repository.
+.cache/
+cache/
+*.qloo.json
+probe.json
+# devnet test wallets and local state
+state/
+*.keypair.json
+wallets/
+.env
+# python
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/

@@ -77,8 +77,12 @@ No wallet? The site's [Get paid](https://drexthealpha.github.io/Knos/#claim) sec
 Install the command, then let it set up every agent it finds:
 
 ```bash
-pip install knos && knos init
+uv tool install knos && knos init        # or: pipx install knos && knos init
 ```
+
+On Ubuntu 24.04, Debian 12 and Homebrew's Python a bare `pip install knos` stops with
+"externally-managed-environment": install it with uv or pipx as above (or `pip install knos` inside a virtual
+environment).
 
 It adds a Stop hook: before your agent may say "done", Knos checks that the tests really passed.
 

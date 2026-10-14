@@ -203,7 +203,27 @@ def wait_all(url: str, signatures: list[str], within: float = 60.0, commitment: 
 
 
 def wait(url: str, signature: str, within: float = 60.0, commitment: str = "confirmed") -> dict:
-    """Wait until `signature` reaches `commitment`; RpcError if it failed on chain, TimeoutError if it never landed."""
+    """Wait until `signature` reaches `commitment`; RpcError if it failed on chain, TimeoutError if it never landed.
+    KNOS_WS=1: one signatureSubscribe notification instead of polling (knos.platform.priority.wait_ws), with one status
+    read first (a transaction may land before the subscription) and polling for whatever time is left if the
+    WebSocket cannot be used."""
+    if os.environ.get("KNOS_WS", "").strip() == "1":
+        from .platform import priority
+        start = time.monotonic()
+        try:
+            now = call(url, "getSignatureStatuses", [[signature]])["value"][0]
+            if now and now.get("confirmationStatus") in finality.good(commitment):
+                if now.get("err"):
+                    raise RpcError(f"transaction failed: {now['err']}", now)
+                return now
+            got = priority.wait_ws(url, signature, within, commitment)
+            return {"slot": got["slot"], "confirmationStatus": commitment, "err": None}
+        except ValueError as failed:
+            if isinstance(failed, RpcError):
+                raise
+            raise RpcError(str(failed)) from None
+        except (OSError, ConnectionError, TimeoutError):
+            within = max(1.0, within - (time.monotonic() - start))
     return wait_all(url, [signature], within, commitment)[0]
 
 
@@ -227,6 +247,8 @@ class Ledger:
     def send(self, ixs, payer: Keypair, signers: list[Keypair] | None = None, v1: bool = False) -> str:
         """Sign, send (with preflight, so a failing program returns its logs) and wait for `commitment`. `v1`: as a
         v1 transaction, which holds MAX_V1_BYTES."""
+        from .platform import priority          # KNOS_PRIORITY: a priority fee and a limit the size of the work
+        ixs = [*priority.budget(self, list(ixs), payer, signers), *ixs] if priority.mode() is not None else ixs
         sig = self._submit(sign(ixs, payer, signers, self._blockhash(), v1))
         wait(self.url, sig, 60.0, self.commitment)
         return sig

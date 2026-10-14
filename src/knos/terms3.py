@@ -662,6 +662,24 @@ def diff_text(a: dict, b: dict, name_a: str = "the first", name_b: str = "the se
 
 WORKFLOWS = "/".join(("drexthealpha", "knos-workflows", ".github", "workflows", ""))     # (joined here: tests/test_workflows2.py lets no file of the package, compiled or not, spell the published path whole)
 PROVE, ATTEST = WORKFLOWS + "prove.yml", WORKFLOWS + "attest.yml"
+# The monorepo's home of the same published commits (its branch `workflows`, docs/reference/MONOREPO.md). Terms name a
+# workflow by its path, and an order keeps the terms it was funded on: terms that name the old home keep paying only
+# runs of the old home. `moved` writes the next version of a terms document for the new home.
+MONOREPO_WORKFLOWS = "/".join(("drexthealpha", "Knos", ".github", "workflows", ""))
+
+
+def moved(doc: dict, to: str = MONOREPO_WORKFLOWS, frm: str = WORKFLOWS) -> dict:
+    """The same terms, every evidence source and evaluator that names a workflow under `frm` naming it under `to`
+    instead, as the next version (a new version is a new hash: orders funded on the old one are not touched)."""
+    got = json.loads(json.dumps(doc))
+    swap = lambda w: to + w[len(frm):] if isinstance(w, str) and w.startswith(frm) else w  # noqa: E731
+    for s in got.get("evidence", {}).get("sources", []):
+        s["workflow"] = swap(s.get("workflow"))
+    for e in got.get("evaluators", {}).get("list", []):
+        e["workflow"] = swap(e.get("workflow"))
+    if got != doc:
+        got["version"] = int(doc.get("version", 1)) + 1
+    return validate(got, strict=False)
 SAMPLE_REPO = "acme/widgets"
 ACTIONS = 15368                 # the GitHub App id of GitHub Actions
 DATASET_ACCEPT = "8445799b6b70bde0dcf4a73465d9a34b0e180a9c88daa305acf4926c5d62acc5"     # examples/outcomes/data-labelling's suite

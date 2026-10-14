@@ -26,6 +26,7 @@ IDS = json.loads((ROOT / "programs-v2" / "program_ids.json").read_text(encoding=
 SOURCES = {"knos-task": {".github/workflows/knos.yml": "examples/knos-workflow.yml", ".github/workflows/knos-check.yml": "examples/knos-check.yml",
                          ".github/workflows/knos-reproduce.yml": "examples/knos-reproduce.yml"},
            "knos-attest": {".github/workflows/knos-attest.yml": "examples/knos-attest.yml"},
+           "knos-claim": {".github/workflows/knos-claim.yml": "examples/knos-claim.yml"},
            "knos-claim-org": {".github/workflows/knos-claim.yml": "examples/knos-claim-org.yml"}}
 
 
@@ -60,7 +61,9 @@ def test_each_repository_is_the_sources_byte_for_byte_and_the_same_every_time(na
 
 def test_the_task_template_is_what_the_site_makes_a_repository_from_and_installs_knos_there():
     task = (ROOT / "web" / "task.js").read_text(encoding="utf-8")
-    assert f'export const TEMPLATE = "{r.OWNER}/knos-task";' in task and "knos-task" in r.REPOS
+    # no template repository (0.3.31): the page adds the callers to an empty repository; Knos keeps the folder
+    assert f'export const FOLDER = "{r.OWNER}/Knos/templates/knos-task";' in task and "knos-task" in r.REPOS and "knos-task" in r.FOLDED
+    assert "template_owner" not in task and "INSTALL_WORKFLOW" in task and "CHECK_WORKFLOW" in task
     files = r.files("knos-task")
     pub = _script("pinned_workflows")
     # the two callers a repository installs, naming the one published commit: an issue there can be funded and judged
@@ -120,10 +123,12 @@ def test_the_task_template_holds_the_reproduction_workflow_so_use_this_template_
     doc = yaml.safe_load(files[".github/workflows/knos-reproduce.yml"].decode("utf-8"))
     assert doc["name"] == "knos reproduce" and set(doc.get(True) or doc.get("on")) == {"workflow_dispatch"}       # by hand only: a new repository runs nothing unasked
     readme, how = files["README.md"].decode("utf-8"), (ROOT / "docs" / "reference" / "REPRODUCE.md").read_text(encoding="utf-8")
-    assert "**Use this template**" in readme and "**knos reproduce**" in readme and "**Run workflow**" in readme
+    # no template repository (0.3.31): an empty repository of one's own and the one file from templates/knos-task/
+    assert "Use this template" not in readme and "**knos reproduce**" in readme and "**Run workflow**" in readme and "templates/knos-task/" in readme
     lead = how.split("## ", 2)[1]
-    assert lead.startswith("Two clicks and one button") and f"https://github.com/new?template_owner={r.OWNER}&template_name=knos-task&name=knos-reproduce&visibility=public&owner=@me" in lead
-    assert lead.index("Use this template") < lead.index("Run workflow") and how.index("Two clicks and one button") < how.index("pipx run")
+    assert lead.startswith("Two clicks and one button") and "https://github.com/new?name=knos-reproduce&visibility=public&owner=@me" in lead and "template_owner" not in how
+    assert lead.index("an empty repository") < lead.index("Run workflow") and how.index("Two clicks and one button") < how.index("pipx run")
+    assert "templates/knos-task" in how and (ROOT / "templates" / "knos-task" / ".github" / "workflows" / "knos-reproduce.yml").read_bytes() == (ROOT / "examples" / "knos-reproduce.yml").read_bytes()
     # the three templates are made templates through the API, and a dry run sends nothing
     assert r.main(["settings", "knos-task"]) == 0
     out = capsys.readouterr().out
@@ -222,12 +227,15 @@ def test_the_tree_id_is_the_one_the_pinned_workflows_script_computes(name):
 def test_the_release_plan_rebuilds_after_the_stamp_every_repository_that_calls_the_pinned_workflows():
     pub, plan = _script("pinned_workflows"), (ROOT / "docs" / "reference" / "RELEASE.md").read_text(encoding="utf-8")
     [step] = [ln for ln in plan.splitlines() if ln.startswith("python scripts/small_repos.py build ")]
+    [fold] = [ln for ln in plan.splitlines() if ln.startswith("python scripts/small_repos.py fold")]
     callers = [name for name in r.REPOS if any(pub.NAMED.search(data.decode("utf-8")) for data in r.files(name).values())]
     assert {"knos-task", "knos-playground", "knos-attest"} <= set(callers)          # each names the commit the stamp writes
-    assert [name for name in callers if name not in step] == [] and plan.index("pinned_workflows.py stamp") < plan.index(step)
-    # and the script's own page says which of them are templates (the playground is not one)
-    first, second, third = (n for n in r.REPOS if r.SETTINGS[n][0][2]["is_template"])
-    assert f"{first}, {second} and {third} are template repositories" in " ".join((r.__doc__ or "").split())
+    # the folded ones are rewritten in this tree (templates/), the playground is built into its own checkout; both after the stamp
+    assert [name for name in callers if name not in (fold if name in r.FOLDED else step)] == []
+    assert plan.index("pinned_workflows.py stamp") < plan.index(fold) < plan.index(step)
+    # and the script's own page says which old homes are template repositories (the playground is not one)
+    names = [n for n in r.REPOS if r.SETTINGS[n][0][2]["is_template"]]
+    assert set(names) == set(r.FOLDED) and f"{', '.join(names[:-1])} and {names[-1]} are template repositories" in " ".join((r.__doc__ or "").split())
 
 
 def test_a_rebuild_of_the_playground_keeps_the_faucet_workflow_and_it_is_the_workers_own_job():

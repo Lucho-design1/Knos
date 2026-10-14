@@ -49,6 +49,11 @@ def main(argv: list[str] | None = None) -> int:
     j.add_argument("--claim", default=None)
     j.add_argument("--kind", default=None)
     j.add_argument("--json", action="store_true")
+    s = sub.add_parser("search", help="search the record in Sibyl (every tier), with the reason for what came back")
+    s.add_argument("query")
+    s.add_argument("--root", default=None, help="the record's folder (default: the one `knos record journal` reads)")
+    s.add_argument("--limit", type=int, default=20)
+    s.add_argument("--json", action="store_true")
     p = sub.add_parser("prove", help="the Merkle audit path of one line")
     p.add_argument("seq", type=int)
     p.add_argument("path", nargs="?", default=None)
@@ -75,6 +80,21 @@ def main(argv: list[str] | None = None) -> int:
             for e in rows:
                 print(json.dumps(e, sort_keys=True) if args.json else
                       f"{e['seq']:>6} {e['ts']} {e['tier']:<9} {e['kind']:<12} {e.get('claim') or '-':<24} {e['hash'][:16]}")
+            return 0
+        if args.cmd == "search":
+            from .search import search
+            got = search(args.query, args.root, limit=args.limit)
+            if args.json:
+                print(json.dumps(got, indent=1, default=str))
+            else:
+                print(got["said"])
+                for r in got["rows"]:
+                    line = ((r.get("body") or {}).get("extra") or {}).get("record") if isinstance(r.get("body"), dict) else None
+                    print("  " + (f"seq {line['seq']} {line['kind']} {line.get('claim') or '-'} {json.dumps(line.get('payload'), sort_keys=True)}"
+                                  if isinstance(line, dict) and "seq" in line else json.dumps(r, sort_keys=True, default=str))[:300])
+                st = got.get("store") or {}
+                if st.get("pct_used") is not None:
+                    print(f"Sibyl store: {st['db_size_bytes']} bytes, {100 * st['pct_used']:.1f}% of the {st['tier']} tier's soft cap.")
             return 0
         if args.cmd == "prove":
             print(json.dumps(_prove(args.path, args.seq), indent=1))

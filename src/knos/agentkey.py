@@ -244,7 +244,7 @@ def register(app) -> None:
             typer.echo(json.dumps(got, indent=1))
             return
         for w in got["work"]:
-            typer.echo(f"{w['amount_usdc'] or w['amount_units']} {w['money']}  {w['repo'] or w['repo_id']}#{w['issue']}  {w['mode']}  "
+            typer.echo(f"{w.get('you_receive_usdc') or w.get('you_receive_units')} {w['money']}  {w.get('repo') or w.get('repo_id')}#{w['issue']}  {w['mode']}  "
                        f"until {w['deadline']}\n    {w['acceptance']['command'] or w['acceptance']['note']}")
         typer.echo(got["said"])
 

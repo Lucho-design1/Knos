@@ -241,6 +241,8 @@ class FanLedger(chain.Ledger):
         return sig
 
     def send(self, ixs, payer: Keypair, signers: list[Keypair] | None = None, v1: bool = False) -> str:
+        from ...platform import priority      # KNOS_PRIORITY (unset: nothing changes)
+        ixs = [*priority.budget(self, list(ixs), payer, signers), *ixs] if priority.mode() is not None else ixs
         tx = chain.sign(ixs, payer, signers, self._blockhash(), v1)
         sig = self._submit(tx)
         self._confirm({sig: base64.b64encode(bytes(tx)).decode()})

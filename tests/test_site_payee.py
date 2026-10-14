@@ -34,7 +34,8 @@ def test_the_page_in_a_browser_with_a_virtual_passkey():
     if run.returncode == 0 and "\nSKIP " in "\n" + run.stdout:
         pytest.skip(run.stdout.split("SKIP ", 1)[1].strip())
     assert run.returncode == 0 and "all passed" in run.stdout, "\n".join(ln for ln in (run.stdout + run.stderr).splitlines() if not ln.startswith("ok"))
-    for said in ("held: a job less its fee", "bound to this passkey", "the clicks: 13 before, 8 now", "390px: no sideways scroll"):
+    for said in ("held: a job less its fee", "bound to this passkey", "the clicks: 13 before, 10 now", "390px: no sideways scroll",
+                 "the claim workflow filled in from the Knos tree"):
         assert said in run.stdout, said
 
 
@@ -55,7 +56,10 @@ def test_the_claim_workflow_is_started_by_hand_only_because_the_program_takes_no
             assert _triggers(where.read_text(encoding="utf-8")) == ["workflow_dispatch"], where
     page = (ROOT / "web" / "payee.js").read_text(encoding="utf-8")
     assert 'WORKFLOW = "knos-claim.yml"' in page and "/knos-claim/actions/workflows/${WORKFLOW}" in page
-    assert 'TEMPLATE_OWNER = "drexthealpha", TEMPLATE_NAME = "knos-claim"' in page
+    # no template repository (0.3.31): an empty repository, then the file from this tree (templates/knos-claim/ holds the same)
+    assert 'NAME = "knos-claim"' in page and "template_owner" not in page and "template_name" not in page
+    assert "export const CLAIM_WORKFLOW = `" in page and "/new/main?filename=" in page
+    assert (ROOT / "templates" / "knos-claim" / ".github" / "workflows" / "knos-claim.yml").read_bytes() == (ROOT / "examples" / "knos-claim.yml").read_bytes()
 
 
 def test_the_page_asks_only_github_and_devnet_and_its_first_view_says_no_wallet_word():

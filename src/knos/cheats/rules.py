@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import re
 
-from .library import Change, FileChange, Finding, Rule, add_rule, matches
+from .library import LITERAL, Change, FileChange, Finding, Rule, add_rule, matches
 
 SOURCE_EXT = (".py", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".rb", ".go", ".rs", ".java", ".kt", ".php", ".ex", ".exs")
 DOC_EXT = (".md", ".rst", ".txt", ".adoc")
@@ -118,9 +118,33 @@ def detects_test(change: Change):
                      "the code checks whether it is running under a test runner")
 
 
+# v0.3.31 (P-cheatfp): a literal that names ANOTHER file under .knos/ (.knos/gate.yml, .knos/proof.toml) is not the
+# acceptance bundle. Still refused: the folder itself (".knos", ".knos/", "/.knos/"), which is how code tells the
+# bundle's tests from the others, and anything under .knos/acceptance.
+KNOS_REF = re.compile(r"\.knos(?![\w-])(/[^'\"\s]*)?")
+
+
+def _names_the_bundle(line: str) -> bool:
+    if not SEALED_PATH.search(line):
+        return False
+    refs = [ref for m in LITERAL.finditer(line) for ref in KNOS_REF.finditer(m.group(2))]
+    if not refs:
+        return True                      # the 0.3.30 pattern matched and no literal could be read: fail closed
+    for ref in refs:
+        rest = re.sub(r"^(?:\./|/)+", "", ref.group(1) or "").lower()
+        if not rest or not re.match(r"[\w-]", rest) or rest.startswith("acceptance"):
+            return True
+    return False
+
+
 def references_sealed(change: Change):
-    return _added_in(change, lambda f: _is_source(f.path, change), SEALED_PATH,
-                     "the code names the acceptance bundle's folder (.knos)")
+    out = []
+    for f in change.files:
+        if f.status != "removed" and _is_source(f.path, change):
+            line = next((ln.strip()[:160] for ln in f.added if _names_the_bundle(ln)), "")
+            if line:
+                out.append(_f(f.path, f"the code names the acceptance bundle's folder (.knos): {line}"))
+    return out
 
 
 def runner_patch(change: Change):
@@ -183,21 +207,90 @@ def forged_report(change: Change):
     return _added_in(change, lambda f: not f.path.endswith(SOURCE_EXT), REPORT, "the change adds a test report")
 
 
-from .library import _string_literals  # noqa: E402 - one tokenizer for both sides
+from .library import _string_literals, Reach, reach_of  # noqa: E402 - one tokenizer for both sides
+
+_ENTRY_STEMS = ("__init__", "index", "main", "mod", "lib")
+
+
+def _py_names(path: str) -> list[str]:
+    parts = path[:-3].split("/")
+    if parts[-1] == "__init__" and len(parts) > 1:
+        parts = parts[:-1]
+    return [".".join(parts[i:]) for i in range(len(parts))]
+
+
+def _stem(path: str) -> str:
+    parts = path.split("/")
+    stem = parts[-1].split(".")[0]
+    return parts[-2] if stem in _ENTRY_STEMS and len(parts) > 1 else stem
+
+
+def _reaches(r: Reach, f: FileChange) -> bool:
+    """Does a test (or changed source) with these imports exercise file f? Python by dotted name (a member import
+    counts for its module; a package import counts for an existing submodule, and for a new one only when the
+    package.submodule attribute is used); other languages by the file's name on an import/require line."""
+    if r.everything:
+        return True
+    if f.path.endswith(".py"):
+        for c in _py_names(f.path):
+            for n in r.names:
+                if n == c or n.startswith(c + "."):
+                    return True
+                if c.startswith(n + "."):
+                    nxt = c[len(n) + 1:].split(".")[0]
+                    if f.status != "added" or re.search(rf"(?<![\w]){re.escape(n.split('.')[-1])}\.{re.escape(nxt)}\b", r.text):
+                        return True
+        return False
+    stem = re.escape(_stem(f.path).lower())       # inside a quoted module path: require("../index.js"), require "slug"
+    return bool(re.search(rf"""['"][^'"\n]*(?<![\w]){stem}(?![\w])[^'"\n]*['"]""", r.lines))
+
+
+def _exercised(change: Change, reach: tuple) -> set:
+    """The changed source files the tests reach, closed over the change's own imports (one changed file importing
+    another counts: an answer table moved into a new module the tested code imports is still exercised)."""
+    srcs = [f for f in change.files if f.status != "removed" and _is_source(f.path, change)]
+    hit = {f.path for f in srcs if any(_reaches(r, f) for r in reach)}
+    todo = list(hit)
+    while todo:
+        path = todo.pop()
+        p = next(f for f in srcs if f.path == path)
+        text = p.after if p.after is not None else "\n".join((p.before or "").splitlines() + p.added)
+        r = reach_of(text, p.path, strings=False)
+        r = r if not r.everything else Reach()      # a source file with no imports reaches nothing more
+        for f in srcs:
+            if f.path not in hit and _reaches(r, f):
+                hit.add(f.path)
+                todo.append(f.path)
+    return hit
 
 
 def hardcoded_answers(change: Change):
     """Source that adds both an input and the answer one visible test line expects for it: answers to the examples,
-    not the fix. One literal shared with a test (an error message a test matches) never fires; a pair does."""
+    not the fix. One literal shared with a test (an error message a test matches) never fires; a pair does.
+    v0.3.31 (P-cheatfp): only when the test that holds the pair exercises the changed file (imports it, directly or
+    through another changed file); a new module that merely shares protocol constants ("POST", "Content-Type") with
+    a test of another module is not refused."""
     if not change.visible_literals:
         return []
     out = []
+    cache: dict = {}
     for f in change.files:
         if f.status == "removed" or not _is_source(f.path, change):
             continue
         before = {s for ln in (f.before or "").splitlines() for s in _string_literals(ln)}
         new = {s for ln in f.added for s in _string_literals(ln)} - before
-        pairs = [g for g in change.visible_literals if len(g & new) >= 2]
+        pairs = []
+        for g in change.visible_literals:
+            if len(g & new) < 2:
+                continue
+            reach = change.literal_tests.get(g)
+            if reach is None:                        # unknown tests (a Change built by hand): the strict reading
+                pairs.append(g)
+                continue
+            if g not in cache:
+                cache[g] = _exercised(change, reach)
+            if f.path in cache[g]:
+                pairs.append(g)
         if pairs:
             got = sorted(set().union(*(g & new for g in pairs)))
             out.append(_f(f.path, f"the code holds inputs and answers of {len(pairs)} visible test line(s): " + ", ".join(map(repr, got[:4]))))

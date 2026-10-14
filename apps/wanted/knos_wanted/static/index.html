@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knos Wanted</title>
+<meta name="description" content="Idea in plain English to a Wanted Report from Qloo taste data, then a Knos devnet pre-order escrow. Directional demand evidence, not a sales forecast.">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>Knos Wanted</div>
+    <div id="modeBadge" class="badge" title="Where the numbers come from">loading</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Who wants it, where, against whom, and is it rising?</h1>
+    <p class="lede">Describe a product idea. Knos Wanted asks Qloo's taste data, writes a Wanted Report, then lets buyers lock
+      pre-orders in a Knos escrow on Solana devnet.</p>
+    <p class="framing" id="framing">Directional demand evidence, not a sales forecast.</p>
+  </section>
+
+  <form id="ideaForm" class="card form" autocomplete="off">
+    <label for="idea">Your idea</label>
+    <textarea id="idea" rows="3" maxlength="500" required placeholder="A late-night oat-milk coffee bar for students in London"></textarea>
+    <div class="row">
+      <div><label for="rivals">Rivals (optional, comma separated)</label><input id="rivals" maxlength="200" placeholder="Starbucks, Pret"></div>
+      <div><label for="place">Place (optional)</label><input id="place" maxlength="60" placeholder="London"></div>
+    </div>
+    <div class="examples" id="examples" aria-label="Examples"></div>
+    <button type="submit" id="go" class="primary">Build the Wanted Report</button>
+  </form>
+
+  <div id="err" class="err" role="alert" hidden></div>
+
+  <section id="report" hidden>
+    <div class="card lean">
+      <div class="lean-head">
+        <div><div class="k">Lean (our rule, see README)</div><div id="leanWord" class="lean-word"></div></div>
+        <div class="srcnote" id="reportLabel"></div>
+      </div>
+      <ul id="leanWhy" class="why"></ul>
+      <div class="plan" id="plan"></div>
+    </div>
+
+    <div class="grid">
+      <article class="card" id="secWho"><h2>Who</h2><div class="body"></div><div class="src"></div></article>
+      <article class="card" id="secWhere"><h2>Where</h2><div class="body"></div><div class="src"></div></article>
+      <article class="card" id="secStrength"><h2>How strong vs rivals</h2><div class="body"></div><div class="src"></div></article>
+      <article class="card" id="secRising"><h2>Rising or not</h2><div class="body"></div><div class="src"></div></article>
+      <article class="card wide" id="secWhy"><h2>Why (explainability)</h2><div class="body"></div><div class="src"></div></article>
+      <article class="card" id="secCompare"><h2>Proxy vs rivals: Qloo compare</h2><div class="body"></div><div class="src"></div></article>
+      <article class="card" id="secCalls"><h2>Qloo calls made</h2><div class="body"></div></article>
+    </div>
+
+    <section class="card lock" id="lock">
+      <h2>Lock pre-orders</h2>
+      <p>Opens a Knos pre-order escrow for this exact report (its sha256 is in the escrow's terms) on <b>Solana devnet</b>,
+        with <b>test units</b> of this app's own test mint. Money is held by the knos_pay program: paid to the maker only on
+        delivery through Knos's judge, refunded to the buyer after the deadline otherwise. No real money.</p>
+      <div class="row tight">
+        <div><label for="units">Test units</label><input id="units" type="number" min="5" max="1000" value="5"></div>
+        <div class="btns">
+          <button id="demoBuy" class="primary" type="button">Lock with the demo buyer (no wallet)</button>
+          <button id="walletBuy" type="button">Lock with my wallet (Phantom, devnet)</button>
+        </div>
+      </div>
+      <div id="lockOut" class="lockout"></div>
+      <div id="poolOut" class="pool"></div>
+      <div class="hash">Report sha256: <code id="hash"></code></div>
+    </section>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p>Qloo-powered: entity and tag search, audience affinity, demographics, heatmap, trending and compare (see README).
+    Pre-orders: Knos (MIT), devnet only. Knos Wanted is MIT licensed.</p>
+</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

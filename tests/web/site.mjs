@@ -59,10 +59,12 @@ const unique = (n) => knos.b58(Uint8Array.from({ length: 32 }, (_, i) => (n * 31
 const ids = JSON.parse(readFileSync(join(root, "program_ids.json"), "utf8"));
 const k = knos.v2.client(ids);
 const FIRST = { oidc: "vpWym9azbPU5f2PH2a6n8c4RfmsyUeW2dMuWr1DSHcE", pay: "9UzPFbh2A4e4sEPgngKG523FfYLnQ3qPfFVfFTTAdfDi" };   // the first deployment, as history
-// the only links of the page to a GitHub page outside drexthealpha's: "Use this template", with nothing of the reader's in
-// it: the claim template, and the playground's "host a judge" (knos-attest; tests/test_host_a_judge.py pins its words)
-const TEMPLATE_LINK = "https://github.com/new?template_owner=drexthealpha&template_name=knos-claim&name=knos-claim&visibility=public&owner=@me";
-const JUDGE_TEMPLATE_LINK = "https://github.com/new?template_owner=drexthealpha&template_name=knos-attest&name=knos-judge&visibility=public&owner=@me";
+// the only links of the page to a GitHub page outside drexthealpha's: GitHub's new-repository form, empty (no template
+// repository since 0.3.31), with nothing of the reader's in it: the claim repository, and the playground's "host a judge"
+// (tests/test_host_a_judge.py pins its words). The file each needs is in drexthealpha/Knos, templates/.
+const TEMPLATE_LINK = "https://github.com/new?name=knos-claim&visibility=public&owner=@me";
+const JUDGE_TEMPLATE_LINK = "https://github.com/new?name=knos-judge&visibility=public&owner=@me";
+const CLAIM_FILE = "https://github.com/drexthealpha/Knos/blob/main/templates/knos-claim/.github/workflows/knos-claim.yml";
 const WALLET = unique(1), OTHER_WALLET = unique(2), USDC = knos.USDC_DEVNET, MINT22 = unique(3), BLOCKHASH = unique(4), BLOCKHASH2 = unique(5), NOW = 1790000000;
 const users = { mona: { id: 4242, type: "User" }, octocat: { id: 583231, type: "User" }, "octo-org": { id: 7000001, type: "Organization" }, carol: { id: 99, type: "User" },
   quiet: { id: 5, type: "User" }, xss: { id: 666, type: "User", login: "<img src=x onerror=alert(1)>" } };
@@ -1136,12 +1138,13 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await settled("#due-result");
   check("account: a link to one account reads it on arrival", (await page.inputValue("#due-login")) === "mona" && (await text(page, "#due-result")).includes("Paid at " + OTHER_WALLET));
 
-  // bind a wallet once, by hand: a plain template link with no address in it, then the Actions tab, or `knos claim`
+  // bind a wallet once, by hand: a plain new-repository link with no address in it, the one file from Knos, then the Actions tab, or `knos claim`
   const steps = await text(page, "#bind-steps");
-  const template = await page.getAttribute("#bind-template", "href");
-  check("bind: the one link is GitHub's new-repository page, from the template, named knos-claim, public, in the account, with no address in it",
-    template === TEMPLATE_LINK && !/description|address/i.test(template), template);
-  check("  it opens in a new tab without handing over the page", (await page.getAttribute("#bind-template", "target")) === "_blank" && (await page.getAttribute("#bind-template", "rel")) === "noopener");
+  const template = await page.getAttribute("#bind-repo", "href");
+  check("bind: the first link is GitHub's new-repository page, empty (no template), named knos-claim, public, in the account, with no address in it",
+    template === TEMPLATE_LINK && !/template|description|address/i.test(template), template);
+  check("  it opens in a new tab without handing over the page", (await page.getAttribute("#bind-repo", "target")) === "_blank" && (await page.getAttribute("#bind-repo", "rel")) === "noopener");
+  check("  the second is the one file, in Knos's own templates/ folder", (await page.getAttribute("#bind-file", "href")) === CLAIM_FILE && steps.includes(".github/workflows/knos-claim.yml"));
   check("  the second step is the Actions tab, 'knos claim', 'Run workflow', and pasting the address yourself",
     steps.includes("Actions") && steps.includes("knos claim") && steps.includes("Run workflow") && steps.includes("paste your Solana address yourself"), steps);
   const claimText = await text(page, "#view-claim");
@@ -2105,8 +2108,15 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await page.waitForSelector("#task-made");
   check("task: the steps say that nothing has been sent, and each is stated in order", (await text(page, "#task-made .status")).includes("Nothing has been sent") && (await page.$$eval("#task-steps > li", (l) => l.map((x) => x.id))).join() === "task-step-1,task-step-2,task-step-3,task-step-4" && githubReads === 0);
   const link = async (sel) => new URL(await page.getAttribute(sel, "href"));
-  check("  step 1 makes a repository from the template drexthealpha/knos-task, named as asked, public, in the person's own account", (await page.getAttribute("#task-repo-link", "href")) === "https://github.com/new?template_owner=drexthealpha&template_name=knos-task&name=knos-task&visibility=public&owner=@me"
-    && (await text(page, "#task-repo-link")).includes("octocat/knos-task from the template drexthealpha/knos-task") && (await page.getAttribute("#task-repo-link", "rel")).includes("noopener"));
+  check("  step 1 makes an empty repository (no template repository), named as asked, public, in the person's own account", (await page.getAttribute("#task-repo-link", "href")) === "https://github.com/new?name=knos-task&visibility=public&owner=@me"
+    && (await text(page, "#task-repo-link")).includes("Create octocat/knos-task, empty") && (await page.getAttribute("#task-repo-link", "rel")).includes("noopener"));
+  const install = await import(pathToFileURL(join(root, "install.js")).href);
+  check("  and adds Knos's two callers to it, each a new file on main with its text in the link: the install page's knos.yml and examples/knos-check.yml",
+    (await page.$$eval("#task-wf-list li", (l) => l.map((x) => x.dataset.file))).join() === ".github/workflows/knos.yml,.github/workflows/knos-check.yml"
+    && (await Promise.all([[".github/workflows/knos.yml", install.INSTALL_WORKFLOW], [".github/workflows/knos-check.yml", install.CHECK_WORKFLOW]].map(async ([path, want]) => {
+      const u = new URL(await page.getAttribute(`#task-wf-list li[data-file="${path}"] a`, "href"));
+      return u.origin + u.pathname === "https://github.com/octocat/knos-task/new/main" && u.searchParams.get("filename") === path && u.searchParams.get("value") === want && want.includes("/.github/workflows/");
+    }))).every(Boolean));
   const issue = await link("#task-issue-link"), body = lib.issueBody(lib.check({ ...good, repo: good["repo-name"], pairs: pairs.map(([input, output]) => ({ input, output })) }, { min: 1_000_000, max: 500_000_000 }).task);
   check("  step 2 opens a new issue of octocat/knos-task with the title and the text filled in; the text is the description and how it is accepted", issue.origin + issue.pathname === "https://github.com/octocat/knos-task/issues/new" && issue.searchParams.get("title") === good.title && issue.searchParams.get("body") === body
     && body.startsWith(good.description) && body.includes("python3 slugify.py") && body.includes("5 recorded cases") && body.includes("`Fixes #`") && (await page.inputValue("#task-issue-text")) === body);

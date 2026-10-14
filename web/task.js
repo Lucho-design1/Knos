@@ -1,7 +1,10 @@
 // A task with no repository: a title, a description, an amount and five or more pairs of an input and the answer it must
 // get. This page makes the files and the text; it sends nothing. Every result is a link to a GitHub page that is already
-// filled in (a repository made from the template, a new issue, three new files) and the comment that funds the issue, and a
-// person presses the last button on GitHub. What is made here:
+// filled in (a new empty repository, its two workflow files, a new issue, three new files) and the comment that funds the
+// issue, and a person presses the last button on GitHub. No GitHub template repository is involved (0.3.31,
+// docs/reference/MONOREPO.md): the two workflow files are Knos's callers as the install page hands them out (web/install.js,
+// written from examples/ by scripts/front_workflow.py); templates/knos-task/ of drexthealpha/Knos holds the same callers.
+// What is made here:
 //
 //   .knos/acceptance/<issue>/blackbox.py, cases.json, README.md
 //
@@ -11,8 +14,11 @@
 // answers given by the person instead of recorded from a reference command: nothing here ran a reference.
 
 import { cache as kept, ghKey } from "./cache.js";
+import { INSTALL_WORKFLOW, CHECK_WORKFLOW } from "./install.js";
 
-export const TEMPLATE = "drexthealpha/knos-task";
+export const FOLDER = "drexthealpha/Knos/templates/knos-task";      // where Knos keeps a task repository's files
+// the two files step 1 adds: the callers that fund an issue from a comment and judge and pay the pull request that solves it
+export const WORKFLOW_FILES = [[".github/workflows/knos.yml", INSTALL_WORKFLOW], [".github/workflows/knos-check.yml", CHECK_WORKFLOW]];
 export const MIN_PAIRS = 5;
 export const MAX_PAIRS = 200;        // src/knos/accept.py MAX_CASES: one run of the command per case, each in the judge's sandbox
 export const MAX_INPUT = 2000;       // src/knos/accept.py MAX_INPUT: characters of one input line
@@ -195,7 +201,7 @@ export function check({ title, description, amount, command, login, repo, pairs 
 
 // ---- the links ---------------------------------------------------------------------------------------------------------------
 const q = encodeURIComponent;
-export const repoLink = (repo) => `https://github.com/new?template_owner=${TEMPLATE.split("/")[0]}&template_name=${TEMPLATE.split("/")[1]}&name=${q(repo)}&visibility=public&owner=@me`;
+export const repoLink = (repo) => `https://github.com/new?name=${q(repo)}&visibility=public&owner=@me`;
 export const issueLink = (login, repo, title, body) => `https://github.com/${login}/${repo}/issues/new?title=${q(title)}&body=${q(body)}`;
 export const issueAddress = (login, repo, n) => `https://github.com/${login}/${repo}/issues/${n}`;
 // A new file on the default branch: with its text in the link when that is short enough to carry, else an empty page to paste it into
@@ -255,8 +261,14 @@ export function initTask(ctx) {
     $("task-result").innerHTML = `<div id="task-made"><p class="status ok">Nothing has been sent. These are the steps, in order; each opens a GitHub page that is filled in, and you press its last button there.</p>
       <ol class="steps" id="task-steps">
         <li id="task-step-1"><strong>Make the repository.</strong>
-          <a id="task-repo-link" class="button" href="${esc(repoLink(t.repo))}" target="_blank" rel="noopener">Create ${esc(where)} from the template ${esc(TEMPLATE)}</a>
-          <span class="fine">GitHub opens its page with the name filled in; keep it public, in your own account, and press its green button.</span></li>
+          <a id="task-repo-link" class="button" href="${esc(repoLink(t.repo))}" target="_blank" rel="noopener">Create ${esc(where)}, empty</a>
+          <span class="fine">GitHub opens its page with the name filled in; keep it public, in your own account, and press its green button. Then add Knos's two workflow files, one link each (press “Commit changes” on GitHub):</span>
+          <ul class="plain" id="task-wf-list">${WORKFLOW_FILES.map(([path, text]) => {
+            const link = fileLink(t.login, t.repo, "main", path, text);
+            return `<li data-file="${esc(path)}"><a class="button quiet" href="${esc(link.href)}" target="_blank" rel="noopener">${link.filled ? "Add" : "Open the new-file page for"} ${esc(path)}</a>
+              ${link.filled ? "" : `<span class="fine">Too long to carry in a link: copy it from the box below and paste it into the page that opens.</span>`}
+              <details><summary>${esc(path)}, to read first</summary><textarea readonly rows="6" spellcheck="false" data-wf="${esc(path)}">${esc(text)}</textarea></details></li>`;
+          }).join("")}</ul></li>
         <li id="task-step-2"><strong>Open the issue.</strong>
           <a id="task-issue-link" class="button" href="${esc(issueLink(t.login, t.repo, t.title, body))}" target="_blank" rel="noopener">Open the issue in ${esc(where)}</a>
           <span class="fine">The title and the text are filled in (below, to read first). Press “Submit new issue” yourself, then look at the end of its address: that number is the issue's.</span>

@@ -314,6 +314,11 @@ def _mint(ledger, given: str | None):
     info = ledger.infos([mint])[0]
     if info is None or info[0] not in (pay.TOKEN, pay.TOKEN_2022) or len(info[1]) < 82:
         raise Stop(f"{mint} is not a token mint on this cluster.")
+    if info[0] == pay.TOKEN_2022:        # an extension that lets someone else move, stop or shrink the escrow's money
+        from .platform import token22
+        risks = token22.mint_risks(bytes(info[1]))
+        if token22.refused(risks):
+            raise Stop(f"Knos does not hold a bounty in {mint}: {token22.words([r for r in risks if r['severity'] == 'refuse'])}.")
     return mint, info[0], info[1][44]
 
 
@@ -697,6 +702,10 @@ def fund_wallet(where: str = typer.Argument(..., metavar="OWNER/REPO#ISSUE"), am
         out.print(f"{_money(units, m, decimals)} is in escrow for {where}. Job {job}.", markup=False)
     for line in [*terms.describe(built.terms, built.source), *built.notes]:
         out.print(f"  {line}", markup=False)
+    if not order:
+        from . import buyer
+        for line in buyer.fee_lines(units, decimals):
+            out.print(f"  {line}", markup=False)
     if order:
         out.print(f"{after} {name} needs no Knos file: after the merge, whoever did the work runs `knos settle --neutral <pull request URL>`, "
                   f"which starts `knos attest` in their own repository knos-attest. Only a signed run of attest.yml of {wf_repo} at {wf_sha[:12]} can pay it.",
@@ -780,7 +789,7 @@ def claim(address: str = typer.Argument(..., help="the Solana address your GitHu
                                                                               "(a bot's or a vendor's pull requests), in <organisation>/knos-claim"),
           wait: int = typer.Option(600, "--wait", help="seconds to wait for a relayer")) -> None:
     """Name the Solana address your GitHub account is paid at. Uses your `gh` login: GitHub signs the claim in your own
-    repository named knos-claim (made from a template with one workflow file if you have none), a relayer carries it
+    repository named knos-claim (created empty in your account, with one workflow file, if you have none), a relayer carries it
     to Solana, and what was held for you is sent to the address. With --org the same for an organisation, in its own
     repository named knos-claim, started by you as its member."""
     from . import claim as claiming

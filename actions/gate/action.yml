@@ -56,6 +56,14 @@ inputs:
     description: the token Gate posts with
     required: false
     default: ${{ github.token }}
+  code-scanning:
+    description: "true: also upload the cheat findings to GitHub code scanning as SARIF (alerts in the Security tab and on the pull request; the job needs `security-events: write`)"
+    required: false
+    default: "false"
+  attest:
+    description: "true: a GitHub artifact attestation (Sigstore) of the signed receipt, so anyone can check with `gh attestation verify receipt.json -R OWNER/REPO` that this repository's Gate run made it (the job needs `id-token: write` and `attestations: write`; public repositories, or private ones on GitHub Enterprise Cloud)"
+    required: false
+    default: "false"
 outputs:
   passed:
     description: "true when the pull request passed Knos Gate"
@@ -148,12 +156,14 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
         REPORT: ${{ inputs.report }}
         SANDBOX: ${{ inputs.sandbox }}
+        CODE_SCANNING: ${{ inputs.code-scanning }}
       run: |
         set -uo pipefail
         hidden=()
         if [ "$HIDDEN_SOURCE" = repo ]; then hidden=(--hidden-dir "$G/hidden");
         elif [ "$HIDDEN_SOURCE" = secret ]; then hidden=(--hidden-env KNOS_GATE_HIDDEN_VALUE); fi
-        post=(); [ "$REPORT" = action ] && post=(--post)
+        post=(); [ "$REPORT" = action ] && post=(--post --annotate)
+        [ "$REPORT" = action ] && [ "$CODE_SCANNING" = true ] && post+=(--code-scanning)
         # the sandbox has a user of its own, so it reads (never writes) the test environment and the pull request's tree
         PATH="$G/testenv/bin:$PATH" VIRTUAL_ENV="$G/testenv" "$G/knos/bin/python" -m knos.gate.cli run \
           --base "$G/base" --pr "$G/pr" --diff "$G/pr.diff" --repo "$GITHUB_REPOSITORY" \
@@ -163,6 +173,7 @@ runs:
         rc=$?
         sudo -n rm -rf "$G/out/work" 2>/dev/null || rm -rf "$G/out/work"   # files the sandbox user made are removed too
         echo "verdict=$G/out/verdict.json" >> "$GITHUB_OUTPUT"
+        [ -f "$G/out/receipt.json" ] && echo "receipt=$G/out/receipt.json" >> "$GITHUB_OUTPUT"
         [ -f "$G/out/summary.md" ] && cat "$G/out/summary.md" >> "$GITHUB_STEP_SUMMARY"
         if [ $rc -eq 0 ]; then echo "passed=true" >> "$GITHUB_OUTPUT"; elif [ $rc -eq 1 ]; then echo "passed=false" >> "$GITHUB_OUTPUT"; fi
         echo "rc=$rc" >> "$GITHUB_OUTPUT"
@@ -178,8 +189,17 @@ runs:
           ${{ env.G }}/out/receipt*.json
           ${{ env.G }}/out/receipt.html
           ${{ env.G }}/out/badge.svg
+          ${{ env.G }}/out/knos-gate.sarif
+          ${{ env.G }}/out/annotations.json
         if-no-files-found: warn
         retention-days: 90
+    - name: an artifact attestation of the signed receipt (Sigstore; `gh attestation verify receipt.json -R OWNER/REPO`)
+      if: always() && inputs.attest == 'true' && steps.gate.outputs.receipt != ''
+      uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+      with:
+        subject-path: ${{ env.G }}/out/receipt.json
+        predicate-type: https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECEIPT.md#knos-receipt-v1
+        predicate-path: ${{ env.G }}/out/receipt.json
     - name: the check's result
       shell: bash
       run: |

@@ -43,7 +43,7 @@ Two parts of the package go into a coding agent:
 
 | For | Do this | It installs |
 |---|---|---|
-| a terminal | [`pip install knos`](#the-command) | the `knos` command |
+| a terminal | [`uv tool install knos`](#the-command) | the `knos` command |
 | every agent on your machine | [`knos init`](#every-agent-on-the-machine-knos-init) | the hook and the server |
 | Claude Code | [two commands](#claude-code) | the hook and the server, as a plugin |
 | Codex | [two commands](#codex) | the hook and the server, as a plugin |
@@ -65,7 +65,9 @@ to the newest one.
 ## The command
 
 ```bash
-pip install knos        # Python 3.10 or newer; pipx install knos and uv tool install knos work too
+uv tool install knos    # Python 3.10 or newer; or: pipx install knos
+pip install knos        # inside a virtual environment; a system Python with PEP 668 (Ubuntu 24.04, Debian 12,
+                        # Homebrew) refuses it with "externally-managed-environment"
 uvx knos --version      # or run it without installing anything: uv fetches it
 ```
 
@@ -476,8 +478,8 @@ knos:
 ## Get paid: bind a wallet, by hand
 
 A person paid for merged work can name the wallet once, and every later task pays it. Binding is by hand, in two
-steps: create a repository from the template [`drexthealpha/knos-claim`](https://github.com/drexthealpha/knos-claim)
-(a personal account's, public, named `knos-claim`), then open its Actions tab, choose "knos claim", press "Run
+steps: create an empty repository (a personal account's, public, named `knos-claim`) and add the one file of
+[`templates/knos-claim`](../../templates/knos-claim) to it, then open its Actions tab, choose "knos claim", press "Run
 workflow" and paste your address yourself. `knos claim <address>` does both. No link, repository description or
 push carries an address in, because an address in a link could be someone else's.
 

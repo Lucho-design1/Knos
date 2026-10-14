@@ -236,6 +236,8 @@ def test_fund_wallet_fixes_the_terms_from_the_repositorys_checks_and_funds_from_
         "  It is paid when a maintainer merges a pull request that closes this issue, if these checks passed at that pull request's last commit: `test` (the checks you named).",
         "  The pull request may not change `.github/**` or `.knos/**`.",
         "  `/knos take` reserves the issue for 7 days.",
+        "  At payout the program takes 0.30% of the amount, at least 0.05: 0.06 here, so the worker receives 19.94.",
+        "  Knos's bounty fee is 5% (decided, config/fees.yaml): the program's fee is part of it; the rest, 0.94, is invoiced off chain, not taken by the program.",
         f"  Unpaid after 14 days, it goes back to this wallet. Only a signed run of prove.yml of {WF_REPO} at {WF_SHA[:12]} can pay it."], said
     j = pay.read_job(c.data(job))
     assert (j.state, j.from_balance, j.amount, j.source, j.terms, j.wf_repo_hash, j.wf_sha, j.deadline) == \
@@ -248,10 +250,12 @@ def test_fund_wallet_fixes_the_terms_from_the_repositorys_checks_and_funds_from_
     # no checks at all, said out loud; other days; the workflows named by hand
     rc, said = knos("fund-wallet", "octo/widgets#8", "1.5", "--checks", "none", "--days", "30", "--reserve", "0", "--paths", "src/**, docs/*.md",
                     "--workflow", "evil/flows@" + "d" * 40, "--mint", mint, "--keypair", c.keyfile)
-    assert rc == 0 and said.splitlines()[1:5] == [
+    assert rc == 0 and said.splitlines()[1:7] == [
         "  You asked for no checks; your merge alone is the acceptance.",
         "  The pull request may not change `.github/**` or `.knos/**`, and may only change files matching `docs/*.md` or `src/**`.",
         "  Nobody can reserve it: the first accepted pull request is paid.",
+        "  At payout the program takes 0.30% of the amount, at least 0.05: 0.05 here, so the worker receives 1.45.",
+        "  Knos's bounty fee is 5% (decided, config/fees.yaml): the program's fee is part of it; the rest, 0.02, is invoiced off chain, not taken by the program.",
         f"  Unpaid after 30 days, it goes back to this wallet. Only a signed run of prove.yml of evil/flows at {'d' * 12} can pay it."], said
     assert pay.read_job(c.data(pay.job_pda(REPO, 8, wallet))).wf_sha == "d" * 40
     # refused before anything is sent
@@ -441,9 +445,12 @@ def test_claim_binds_a_wallet_through_the_accounts_own_knos_claim_repository(wor
     words = f"GitHub user id {mona} is now paid at {wallet}. 1 held payment, {build.pick('4.88', '4.95')} in all, went there."
     assert got == {"login": "mona", "repo": "mona/knos-claim", "created": True, "bound": True, "said": words}
     assert said == [f"1 payment, {build.pick('4.88', '4.95')} in all, is held for mona and will be sent to {wallet}.", "Created mona/knos-claim (public; it holds only the claim workflow).",
+                    f"Added {claiming.WORKFLOW} in mona/knos-claim.",
                     "GitHub is signing the claim in mona/knos-claim; waiting for a relayer to carry it to Solana (up to 10 min).", words]
-    assert ("repo", "create", "mona/knos-claim", "--public", "--template", "drexthealpha/knos-claim", "--description", claiming.ABOUT) in gh.calls
-    assert ("workflow", "run", "knos-claim.yml", "-R", "mona/knos-claim", "-f", f"address={wallet}") in gh.calls and not [a for a in gh.calls if "PUT" in a]
+    # no template repository: an empty repository the user's own command creates, and the release's file committed into it
+    assert ("repo", "create", "mona/knos-claim", "--public", "--description", claiming.ABOUT) in gh.calls and not [a for a in gh.calls if "--template" in a]
+    assert base64.b64decode(gh.files[f"mona/knos-claim/{claiming.WORKFLOW}"]["content"]) == pinned.read_bytes()
+    assert ("workflow", "run", "knos-claim.yml", "-R", "mona/knos-claim", "-f", f"address={wallet}") in gh.calls and len([a for a in gh.calls if "PUT" in a]) == 1
     assert pay.read_bind(c.data(pay.bind_pda(mona))).wallet == wallet and c.balance(pay.ata(wallet, pay.faucet_mint())) == build.pick(4_875_000, 4_950_000)
     # the same address again: the chain already says so, and GitHub is asked for nothing but who is logged in
     gh.calls.clear()

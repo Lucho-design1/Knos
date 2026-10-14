@@ -52,7 +52,8 @@ python scripts/pinned_workflows.py cutoff         # UV_EXCLUDE_NEWER: ten minute
 python scripts/release.py workflows <checkout of knos-workflows>     # the published set with that lock and cutoff, committed there
 git -C <checkout of knos-workflows> push         # the commit must exist on GitHub before anything names it
 python scripts/pinned_workflows.py stamp <that commit>               # the examples, knos.yml, docs/ and the site name it
-python scripts/small_repos.py build knos-task <checkout>             # and knos-playground, knos-attest, knos-claim-org: commit and push each
+python scripts/small_repos.py fold                                   # templates/knos-task, knos-attest, knos-claim, knos-claim-org: in this commit
+python scripts/small_repos.py build knos-playground <checkout>       # the one small repository still published: commit and push it
 python scripts/release.py verify <checkout of knos-workflows>        # versions, the lock, the cutoff, the wheel built again, the pin
 git commit                                        # the ONE commit, with no trailer and no other flag
 ```

@@ -10,7 +10,8 @@
     knos gate receipt page FILE       a receipt as a page and a badge
     knos gate receipt self ...        a public-tests-only receipt for your own pull request, signed by your own key
     knos gate bounty quote AMOUNT     a bounty's fee and where it goes (the one fee config)
-    knos gate bounty treasury MINT    the treasury's fee account for a mint"""
+    knos gate bounty treasury MINT    the treasury's fee account for a mint
+    knos gate require OWNER/REPO      a ruleset that makes the "Knos Gate" check required (--apply to create it)"""
 from __future__ import annotations
 
 import json
@@ -112,7 +113,9 @@ def register(app, help_lines: list | None = None) -> None:
              key_env: str = typer.Option("KNOS_RECEIPT_KEY", "--key-env", help="env var holding the receipt key (JSON array)"),
              key_file: Path = typer.Option(None, "--key-file"), issuer: str = typer.Option("knos-gate", "--issuer"),
              post: bool = typer.Option(False, "--post", help="post the comment and labels with GH_TOKEN"),
-             me: str = typer.Option("github-actions[bot]", "--me", help="the login Gate's comment is posted as")) -> None:
+             me: str = typer.Option("github-actions[bot]", "--me", help="the login Gate's comment is posted as"),
+             code_scanning: bool = typer.Option(False, "--code-scanning", help="with --post: upload the findings as SARIF to GitHub code scanning (needs security-events: write)"),
+             annotate: bool = typer.Option(False, "--annotate", help="print the findings as ::error workflow commands (Action mode: annotations on the check)")) -> None:
         """Judge one pull request. Exit 0 passed, 1 refused, 2 Gate could not run."""
         from . import config, run
         kp = None
@@ -132,8 +135,13 @@ def register(app, help_lines: list | None = None) -> None:
             raise typer.Exit(2) from None
         v = got["verdict"]
         typer.echo(Path(out_dir, "summary.md").read_text(encoding="utf-8"))
+        if annotate and Path(out_dir, "annotations.json").exists():
+            from . import sarif
+            sys.stdout.write(sarif.workflow_commands(json.loads(Path(out_dir, "annotations.json").read_text(encoding="utf-8"))))
         if post:
-            run.post(got, repo, number, me=me)
+            up = run.post(got, repo, number, me=me, code_scanning=code_scanning)
+            if up:
+                typer.echo(f"code scanning: upload {up.get('id', '?')} accepted")
         raise typer.Exit(0 if v["passed"] else 1)
 
     @receipt.command("verify")
@@ -198,6 +206,24 @@ def register(app, help_lines: list | None = None) -> None:
         (out_dir / "badge.svg").write_text(page.badge(env), encoding="utf-8")
         typer.echo(f"{v['passed'] and 'passed' or 'refused'} (public tests only); receipt in {out_dir}")
         raise typer.Exit(0 if v["passed"] else 1)
+
+    @gate.command("require")
+    def require_(repo: str = typer.Argument(..., help="owner/name"),
+                 app_id: int = typer.Option(None, "--app-id", help="only the Knos Gate App's check counts (its App id)"),
+                 apply: bool = typer.Option(False, "--apply", help="create or update the ruleset with GH_TOKEN (needs repository administration)")) -> None:
+        """Make the "Knos Gate" check required to merge into the default branch (a repository ruleset). Without
+        --apply it prints the ruleset and changes nothing."""
+        from .github import Client
+        try:
+            got = Client(repo).require(app_id, apply=apply)
+        except OSError as why:
+            typer.echo(f"GitHub refused the ruleset: {why}. It needs a token with administration on {repo}.")
+            raise typer.Exit(2) from None
+        typer.echo(json.dumps(got["ruleset"], indent=1))
+        if got["sent"] is not None:
+            typer.echo(f"ruleset {got['sent'].get('id', '?')} is active on {repo}: Knos Gate must pass before a merge.")
+        else:
+            typer.echo("Nothing was changed (add --apply).")
 
     @bounty.command("quote")
     def quote_(amount: str = typer.Argument(..., help="in USDC, like 20 or 12.5"),

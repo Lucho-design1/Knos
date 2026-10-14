@@ -3,7 +3,8 @@
     upsert_comment     ONE comment per pull request: the one carrying MARKER and written by `me` is edited in place;
                        a second one Gate finds (an earlier run's duplicate) is deleted
     upsert_check       ONE check run named CHECK_NAME per head commit (App mode only: a GitHub App can write checks,
-                       an Action's own job already is the check)
+                       an Action's own job already is the check), with the refused findings as line annotations
+    upload_sarif       the same findings into GitHub code scanning (POST code-scanning/sarifs)
     label / unlabel / close
     dispatch           workflow_dispatch of the gate workflow (App mode)"""
 from __future__ import annotations
@@ -65,21 +66,54 @@ class Client:
         return got
 
     def upsert_check(self, head: str, *, status: str, conclusion: str | None = None, title: str = "", summary: str = "",
-                     details_url: str = "", external_id: str = "") -> dict:
+                     details_url: str = "", external_id: str = "", annotations: list[dict] | None = None) -> dict:
+        """`annotations`: the refused findings at their lines (knos.gate.sarif.annotations). The Checks API takes 50 a
+        request and adds each request's to the run's, so more than 50 go out in further PATCHes of 50."""
         runs = (self.send("GET", f"repos/{self.repo}/commits/{head}/check-runs?check_name={urllib.parse.quote(CHECK_NAME)}&filter=latest") or {}).get("check_runs", [])
         body: dict = {"name": CHECK_NAME, "head_sha": head, "status": status}
         if conclusion:
             body["conclusion"] = conclusion
+        notes = list(annotations or [])
         if title or summary:
             body["output"] = {"title": title[:250], "summary": summary[:60000]}
+            if notes:
+                body["output"]["annotations"] = notes[:50]
         if details_url:
             body["details_url"] = details_url
         if external_id:
             body["external_id"] = external_id
         if runs:
             body.pop("head_sha")
-            return self.send("PATCH", f"repos/{self.repo}/check-runs/{runs[0]['id']}", body) or {}
-        return self.send("POST", f"repos/{self.repo}/check-runs", body) or {}
+            got = self.send("PATCH", f"repos/{self.repo}/check-runs/{runs[0]['id']}", body) or {}
+        else:
+            got = self.send("POST", f"repos/{self.repo}/check-runs", body) or {}
+        if "output" in body and len(notes) > 50 and got.get("id"):
+            for i in range(50, len(notes), 50):
+                self.send("PATCH", f"repos/{self.repo}/check-runs/{got['id']}",
+                          {"output": {"title": title[:250], "summary": summary[:60000], "annotations": notes[i:i + 50]}})
+        return got
+
+    def upload_sarif(self, commit: str, ref: str, log: dict) -> dict:
+        """Gate's findings into GitHub code scanning: POST code-scanning/sarifs (gzip + base64 of the SARIF log). The
+        token needs `security_events` write (an Action: `permissions: security-events: write`); GitHub answers 202 with
+        the upload's id and url, and the alerts appear in the Security tab and on the pull request."""
+        from .sarif import gzip64          # the category is the log's own automationDetails.id ("knos-gate/")
+        return self.send("POST", f"repos/{self.repo}/code-scanning/sarifs",
+                         {"commit_sha": commit, "ref": ref, "sarif": gzip64(log), "tool_name": CHECK_NAME,
+                          "validate": True}) or {}
+
+    def require(self, integration_id: int | None = None, apply: bool = False) -> dict:
+        """A repository ruleset that makes the check "Knos Gate" required to merge into the default branch (REST
+        POST/PUT /repos/{o}/{r}/rulesets, https://docs.github.com/en/rest/repos/rules, read 14 Oct 2026). With
+        `integration_id` (the Knos Gate App's id) only that App's check counts, so a workflow that names a job
+        "Knos Gate" cannot stand in for it. Returns {"ruleset", "sent"}: without `apply`, the body only."""
+        body = ruleset(integration_id)
+        if not apply:
+            return {"ruleset": body, "sent": None}
+        have = [r for r in (self.send("GET", f"repos/{self.repo}/rulesets?per_page=100") or []) if r.get("name") == RULESET]
+        if have:
+            return {"ruleset": body, "sent": self.send("PUT", f"repos/{self.repo}/rulesets/{have[0]['id']}", body)}
+        return {"ruleset": body, "sent": self.send("POST", f"repos/{self.repo}/rulesets", body)}
 
     def label(self, pr: int, labels: list[str]) -> None:
         if labels:
@@ -103,3 +137,16 @@ class Client:
         self.label(pr, act.get("add_labels") or [])
         if act.get("close"):
             self.close(pr)
+
+
+RULESET = "Knos Gate required"
+
+
+def ruleset(integration_id: int | None = None) -> dict:
+    check: dict = {"context": CHECK_NAME}
+    if integration_id is not None:
+        check["integration_id"] = int(integration_id)
+    return {"name": RULESET, "target": "branch", "enforcement": "active", "bypass_actors": [],
+            "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
+            "rules": [{"type": "required_status_checks",
+                       "parameters": {"required_status_checks": [check], "strict_required_status_checks_policy": False}}]}

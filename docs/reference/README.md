@@ -106,6 +106,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [RETENTION.md](RETENTION.md) | what a root proves and does not, who keeps what, and what still verifies if Knos is gone |
 | [VAULT.md](VAULT.md) | keeping evidence: sealed bundles, export, retention, checkpoints, a restore drill |
 | [PRIVATE.md](PRIVATE.md) | a neutral count for private repositories without showing the code |
+| [BUYER.md](BUYER.md) | post a task as a buyer: spec, sealed hidden tests, the funding command and its fee |
 | [AGENTS.md](AGENTS.md) | an agent finds work, takes it, submits it and is paid |
 | [HERMES.md](HERMES.md) | Knos in Hermes Agent: the skill, the MCP server (stdio and HTTP), the plugin, the referee as GEPA's judge, an Atropos environment |
 | [AUTORESEARCH.md](AUTORESEARCH.md) | autoresearch for anyone: agents change one file, the referee keeps or refuses each run, sealed data decides payment |
@@ -118,6 +119,10 @@ The documents in this folder are listed below, with the eight front pages too.
 | [COMPOSE.md](COMPOSE.md) | the verifier, the escrow and the record, from another program |
 | [GATE.md](GATE.md) | the upgrade gate for your own program: three commands, and what it cannot do |
 | [PR_GATE.md](PR_GATE.md) | Knos Gate: sealed hidden tests and cheat checks on outside pull requests, one check, one comment, a signed receipt |
+| [CODE_SCANNING.md](CODE_SCANNING.md) | Gate's findings as code-scanning alerts and line annotations, an attested receipt, and a required check |
+| [MCP_SERVER.md](MCP_SERVER.md) | knos mcp's resources, prompts and output schema, and the person's confirmation before each post |
+| [TOKEN_SAFETY.md](TOKEN_SAFETY.md) | Token-2022 extensions that would break an escrow or a payout, and the check that refuses them |
+| [PRIORITY_FEES.md](PRIORITY_FEES.md) | priority fees on a limit sized by simulation, and a WebSocket wait for confirmation |
 | [SELF.md](SELF.md) | Knos builds Knos: agents improve product code, judged by the referee from main, paid on devnet |
 | [ES256.md](ES256.md) | a second kind of signed token (ES256), checked in one transaction; live on devnet since 9 Oct 2026 |
 | [PLATFORM.md](PLATFORM.md) | the programs on today's Solana: sBPF v3 builds, a GitHub token verified in one transaction, v1 transactions, finality, and the upgrade steps |
@@ -155,6 +160,8 @@ The documents in this folder are listed below, with the eight front pages too.
 | [REGULATION.md](REGULATION.md) | what has been examined; no lawyer has read it |
 | [DISCLOSURE.md](DISCLOSURE.md) | what was built when, what came from elsewhere, what does not exist |
 | [RELEASE.md](RELEASE.md) | how a release is made: one commit, one push |
+| [MONOREPO.md](MONOREPO.md) | one repository: what was folded into Knos, and what still points at the old repositories |
+| [CUTOVER-0331.md](CUTOVER-0331.md) | the founder's steps to move the trust anchors into Knos (knos-workflows, knos-oidc-rotate with its Squads step) |
 | [ROLLBACK.md](ROLLBACK.md) | how to take a bad release back, surface by surface |
 | [DEPENDENCY.md](DEPENDENCY.md) | what depends on one personal GitHub account, what happens if it is lost, and the plan to end it |
 

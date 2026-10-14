@@ -12,6 +12,10 @@ examples/knos-install.yml (INSTALL_WORKFLOW), examples/knos-attestor.yml without
 with them the file does not fit in a link) and examples/terms/*.json (TERMS, one line), written the same way; after
 `stamp`, run this script once more so that page names the new commit too. A page that declares
 `export const KNOS_WORKFLOWS_SHA = "...";` is given the same value: the commit, for any other place the page shows it.
+web/install.js also carries examples/knos-check.yml (CHECK_WORKFLOW) for the task form (web/task.js), which adds both
+callers to a repository the person has just created, and web/payee.js carries examples/knos-claim.yml (CLAIM_WORKFLOW),
+the one file of a person's knos-claim repository: since 0.3.31 no page makes a repository from a GitHub template, the
+files come from here (templates/ of drexthealpha/Knos holds the same files, docs/reference/MONOREPO.md).
 """
 from __future__ import annotations
 
@@ -24,7 +28,10 @@ ROOT = Path(__file__).resolve().parents[1]
 FRONT = ROOT / "web" / "front.js"
 TEMPLATES = {"WORKFLOW": "knos-workflow.yml", "CHECK_WORKFLOW": "knos-check.yml"}
 INSTALL = ROOT / "web" / "install.js"
-PIN = re.compile(r"drexthealpha/knos-workflows/\.github/workflows/[\w.-]+@(\S+)")
+PAYEE = ROOT / "web" / "payee.js"
+# the published workflows in either home (scripts/pinned_workflows.py HOMES): drexthealpha/knos-workflows until the
+# cutover, the monorepo's branch `workflows` after it (docs/reference/MONOREPO.md)
+PIN = re.compile(r"drexthealpha/(?:knos-workflows/\.github/workflows/[\w.-]+|Knos/\.github/workflows/(?:fund|prove|check|attest)\.yml)@(\S+)")
 
 
 def literal(text: str) -> str:
@@ -33,7 +40,7 @@ def literal(text: str) -> str:
 
 
 def pin(texts: list[str]) -> str:
-    """The one commit of drexthealpha/knos-workflows (or the placeholder) every example names."""
+    """The one commit of the published workflows (or the placeholder) every example names."""
     named = {ref for text in texts for ref in PIN.findall(text)}
     if len(named) != 1:
         raise SystemExit(f"the examples must name drexthealpha/knos-workflows at one commit; they name {sorted(named) or 'none'}")
@@ -60,7 +67,8 @@ def bare(text: str) -> str:
 def install_rewritten(js: str) -> str:
     """web/install.js with its two files and the terms templates as the examples have them."""
     read = lambda rel: (ROOT / "examples" / rel).read_text(encoding="utf-8")      # noqa: E731
-    for name, text in (("INSTALL_WORKFLOW", read("knos-install.yml")), ("ATTESTOR_WORKFLOW", bare(read("knos-attestor.yml")))):
+    for name, text in (("INSTALL_WORKFLOW", read("knos-install.yml")), ("CHECK_WORKFLOW", read("knos-check.yml")),
+                       ("ATTESTOR_WORKFLOW", bare(read("knos-attestor.yml")))):
         pat = re.compile(r"(export const " + name + r" = `).*?(`;\n)", re.DOTALL)
         if not pat.search(js):
             raise SystemExit(f"web/install.js has no `export const {name}` template")
@@ -72,10 +80,19 @@ def install_rewritten(js: str) -> str:
     return re.sub(r"^export const TERMS = .*;$", lambda m: f"export const TERMS = {line};", js, count=1, flags=re.M)
 
 
+def payee_rewritten(js: str) -> str:
+    """web/payee.js with the claim workflow as examples/knos-claim.yml has it: the file the page links a person to add."""
+    pat = re.compile(r"(export const CLAIM_WORKFLOW = `).*?(`;\n)", re.DOTALL)
+    if not pat.search(js):
+        raise SystemExit("web/payee.js has no `export const CLAIM_WORKFLOW` template")
+    text = (ROOT / "examples" / "knos-claim.yml").read_text(encoding="utf-8")
+    return pat.sub(lambda m: m.group(1) + literal(text) + m.group(2), js, count=1)
+
+
 def main(argv: list[str] | None = None) -> int:
     check = "--check" in (argv if argv is not None else sys.argv[1:])
     stale = 0
-    for page, make in ((FRONT, rewritten), (INSTALL, install_rewritten)):
+    for page, make in ((FRONT, rewritten), (INSTALL, install_rewritten), (PAYEE, payee_rewritten)):
         if not page.exists() and page != FRONT:
             continue
         js = page.read_text(encoding="utf-8")

@@ -155,7 +155,7 @@ def test_a_session_client_shakes_hands_lists_the_tools_and_calls_one():
         {"jsonrpc": "2.0", "id": "three", "method": "tools/call", "params": {"name": "knos_due", "arguments": {"login": "mona"}}},
     ], ledger, github)
     assert hello == {"jsonrpc": "2.0", "id": 1, "result": {
-        "protocolVersion": "2025-06-18", "capabilities": {"tools": {}},
+        "protocolVersion": "2025-06-18", "capabilities": {"tools": {}, "resources": {}, "prompts": {}},   # tests/test_mcp_more.py
         "serverInfo": {"name": "knos", "version": version()}, "instructions": mcp.INSTRUCTIONS}}
     assert "knos_bounties" in mcp.INSTRUCTIONS and "only when it is true" in mcp.INSTRUCTIONS
     tools = listed["result"]["tools"]
@@ -189,7 +189,7 @@ def test_a_stateless_client_discovers_lists_and_calls_with_no_handshake():
         {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": meta},
         {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "knos_due", "arguments": {"login": "mona"}, **meta}},
     ], ledger, github)
-    assert found["result"] == {"resultType": "complete", "supportedVersions": ["2026-07-28"], "capabilities": {"tools": {}},
+    assert found["result"] == {"resultType": "complete", "supportedVersions": ["2026-07-28"], "capabilities": {"tools": {}, "resources": {}, "prompts": {}},
                                "instructions": mcp.INSTRUCTIONS,
                                "_meta": {"io.modelcontextprotocol/serverInfo": {"name": "knos", "version": version()}}}
     assert listed["result"]["resultType"] == "complete" and len(listed["result"]["tools"]) == 23
@@ -221,7 +221,7 @@ def test_a_line_that_is_not_json_gets_a_parse_error_and_the_server_keeps_going()
 
 
 def test_unknown_methods_tools_and_shapes_are_json_rpc_errors():
-    replies = talk([{"jsonrpc": "2.0", "id": 1, "method": "resources/list"},
+    replies = talk([{"jsonrpc": "2.0", "id": 1, "method": "completion/complete"},     # (resources/list is served since 0.3.31)
                     {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "knos_pay_me"}},
                     {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"arguments": {}}},
                     {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": ["knos_due"]}])

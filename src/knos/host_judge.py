@@ -10,8 +10,9 @@ Why it matters. A receipt's assurance level (knos.receipt.assurance_of) is compu
     agreed     two such evaluators with different owners and starters each ran it, and the verdict is accepted.
 
 While one account funds, delivers and evaluates, the level stays `reported`. A host changes that, and needs two
-minutes: a repository made from the template (`template_link`), which holds examples/knos-attest.yml and nothing
-else, and one press of "Run workflow". The host needs no secret, no wallet and no key.
+minutes: an empty repository of their own (`template_link`) that they add examples/knos-attest.yml to and nothing
+else (`editor_link` fills GitHub's editor in; templates/knos-attest/ of Knos holds the same file), and one press of
+"Run workflow". The host needs no secret, no wallet and no key. No GitHub template repository is involved (0.3.31).
 
 Two ways an order reaches a host's repository (both exist in knos_pay 2.1; this module adds no rule):
 
@@ -32,7 +33,7 @@ from __future__ import annotations
 import re
 from urllib.parse import quote
 
-TEMPLATE = "drexthealpha/knos-attest"                    # the template repository: it holds examples/knos-attest.yml
+TEMPLATE = "templates/knos-attest"                       # the folder of drexthealpha/Knos that holds the same file
 WORKFLOW_PATH = ".github/workflows/knos-attest.yml"
 NAME = "knos-judge"                                      # what the host's repository is called unless they say otherwise
 URL_LIMIT = 8191                                         # the longest link GitHub's editor takes (web/install.js)
@@ -61,10 +62,9 @@ def parse(spec: str) -> tuple[str, str] | None:
 
 
 def template_link(name: str = NAME) -> str:
-    """The one click: GitHub's "create a repository from this template" form, filled in, public, in the account of
-    whoever follows it (the same form of link web/task.js writes for the task template)."""
-    owner, repo = TEMPLATE.split("/")
-    return f"https://github.com/new?template_owner={owner}&template_name={repo}&name={quote(name, safe='')}&visibility=public&owner=@me"
+    """The first click: GitHub's new-repository form, filled in, empty, public, in the account of whoever follows it.
+    The file then comes from this tree (`editor_link`), not from a template repository."""
+    return f"https://github.com/new?name={quote(name, safe='')}&visibility=public&owner=@me"
 
 
 def short(text: str) -> str:
@@ -145,7 +145,7 @@ def main(argv: list[str] | None = None) -> int:
     from pathlib import Path
     ap = argparse.ArgumentParser(prog="python -m knos.host_judge", description="Run the neutral evaluator in a repository you own. Prints the setup links and the assurance level a receipt would then show.")
     sub = ap.add_subparsers(dest="what", required=True)
-    one = sub.add_parser("link", help="the one click: a repository of your own from the template")
+    one = sub.add_parser("link", help="the first click: an empty repository of your own (then `editor` adds the file)")
     one.add_argument("--name", default=NAME)
     ed = sub.add_parser("editor", help="for a repository you have already: GitHub's editor with the workflow filled in")
     ed.add_argument("repository", help="owner/name")
@@ -161,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if a.what == "link":
             print(template_link(a.name))
+            print(f"then: python -m knos.host_judge editor <you>/{a.name}   (GitHub's editor with {WORKFLOW_PATH} filled in)")
         elif a.what == "editor":
             link = editor_link(a.repository, a.file.read_text(encoding="utf-8"), a.branch)
             if link is None:

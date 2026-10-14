@@ -26,6 +26,52 @@ jobs:
     if: github.event_name != 'issues' && !cancelled() && (github.event_name != 'issue_comment' || needs.command.outputs.settle != '') && (github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
     uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
 `;
+// examples/knos-check.yml, byte for byte: the second file web/task.js adds to a repository the person just created
+export const CHECK_WORKFLOW = `# .github/workflows/knos-check.yml: the Knos check on every pull request. Optional, and it needs no secret: it only
+# reads. Paying for merged work is the other file, knos.yml, which works with or without this one.
+#
+# What starts it, and what it then does:
+#
+#   A pull request is opened, gets new commits, is reopened, or its title or description is edited (\`pull_request\`).
+#       When the description says the tests pass or CI is green, Knos compares that with GitHub's own record of the
+#       head commit and fails the status "check / claims" when a check failed. It also applies this repository's
+#       CONTRIBUTING rules, and for a pull request that closes a funded issue it says what the payment still needs.
+#       It runs none of the pull request's code. The result is the status and the job's summary.
+#
+# What it can do in this repository: read the code, the pull request, the issue it closes, and the checks and
+# workflow runs of its commit. What it cannot do: write anything. Every permission below is read. For a pull
+# request from a fork GitHub gives the run a token that can only read, no secret and no id-token whatever a file asks.
+#
+# How GitHub runs it:
+#   - The first run for a first-time contributor's pull request waits until a maintainer approves it, on the pull
+#     request's page.
+#   - GitHub runs this file as the pull request has it, so a pull request can change the file for its own run. That
+#     is why this check is advice and nothing about money depends on it: knos.yml checks again at the merge, from
+#     the default branch.
+#   - Keep the name "knos check". knos.yml waits for a workflow of that name, to repeat the check where it may
+#     comment on the pull request.
+#
+# To require the check before a merge: Settings > Rules > New branch ruleset > Require status checks > add
+# "check / claims".
+name: knos check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions: {}
+
+jobs:
+  check:
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      checks: read
+      statuses: read
+      actions: read
+    uses: drexthealpha/knos-workflows/.github/workflows/check.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
+`;
 export const ATTESTOR_WORKFLOW = `# .github/workflows/knos-attestor.yml, without its comments: read them in examples/knos-attestor.yml of drexthealpha/Knos
 name: knos attestor
 on:

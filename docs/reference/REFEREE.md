@@ -84,6 +84,30 @@ tree and its `.knos/proof.toml`, never from the files the change adds. A `git di
 test-script change only when an added or removed line names a test script. A rule that crashes, or a diff header that
 cannot be read, is a refusing `rule_error` finding: the library fails closed, never open.
 
+Changed in v0.3.31 (task P-cheatfp, internal dogfooding): two rules refused honest work, and both were narrowed.
+Per [SELF.md](SELF.md), `cheats/` is trusted core, so a referee change is the founder's decision: the founder's
+signature on the release is the gate, and this change waits for it. What changed:
+
+- `hardcoded_answers` counts a visible test line only when the test holding that line exercises the changed file.
+  "Exercises" means the test imports the file (Python by module name; JavaScript and Ruby by the file's name in a
+  `require`/`import` path; the runner's helpers such as `conftest.py` or `test_helper.rb` count for every test), names
+  the file in a string ("calc.py"), or runs it with `-m`. It also covers another changed file that such a file
+  imports, so moving the answers into a new module that the tested code imports is still refused. Field names
+  (`x["amount"]`, `.get("key")`, dict keys) are left out of a test line's literals because they describe the
+  protocol's shape, not an input or an answer. A test with no import line, Go and Rust tests, and a `.json` fixture
+  with no test reading it by name keep the strict 0.3.30 reading.
+- `references_sealed_bundle` passes a literal that names a specific other file under `.knos/` (`.knos/gate.yml`,
+  `.knos/proof.toml`). It still refuses the folder itself (`".knos"`, `".knos/"`), anything under `.knos/acceptance`,
+  dynamic or relative names (`f".knos/{x}"`, `.knos/../`), and a line it cannot read.
+- `red_team()` still catches 63 of 63. Without `hardcoded_answers` the count drops to 60, as before.
+  `tests/test_referee_cheatfp.py` holds the known-good cases and the known-bad ones that are still refused.
+
+Limits that remain: a test that reaches code only through a hub module (a CLI that imports every command) still
+counts as exercising whatever that hub imports. A write guard that names the whole `.knos/` folder reads, as text, the
+same as the forgery, so it is still refused. Measured on three 0.3.31 dogfooding patches (V31CAP, V31FOLD, V31DOG,
+scanned as diffs against a4ea15cf), these two rules refused 22 files before the change and 12 after:
+hardcoded_answers went from 20 to 11 and references_sealed_bundle from 2 to 1.
+
 What is not stopped: the rules read text, so a cheat written in a way no rule names can pass them. That is why the
 sealed black-box tests run after them; the benchmark measures how the two walls do together, and the honest
 submissions of the benchmark are checked against the rules too (none is refused).

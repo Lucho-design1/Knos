@@ -12,6 +12,9 @@ scheme of docs/reference/X402.md and the plumbing of knos.record_api (headers, l
     GET /checks             402: a pack of paid checks at the config's x402_check price (the smallest order is 5.00, so
                             one order buys a pack). Each call after that is signed by the wallet that funded the order
                             over "knos-check:<order>:<n>", n counting from 0; a replay or another wallet's call is refused.
+                            With --exact-asset/--pay-to it also accepts the standard x402 `exact` scheme for ONE check at
+                            that price, settled by a public facilitator (knos.money.x402_exact; x402.org's needs no key),
+                            and every 402 carries the Bazaar discovery extension so agents can find and call it.
 
 The money never reaches this server: it sits in the order's own token account until the judge pays it, or goes back
 to the payer after the deadline. `PAYMENT-RESPONSE` says "escrowed". Standard library at import; solders when a
@@ -57,13 +60,17 @@ class Server:
     restart never sells a call twice; required with an offer."""
 
     def __init__(self, plans: dict[str, dict], chain, mint: str, offer: dict | None = None, cfg: fees_config.FeeConfig | None = None,
-                 limiter: ra.Limiter | None = None, debug: bool = False, state: str | Path | None = None):
+                 limiter: ra.Limiter | None = None, debug: bool = False, state: str | Path | None = None, exact: dict | None = None):
+        """`exact`: {asset, pay_to, decimals, facilitator (x402_exact.Facilitator), confirm (sig -> waits)}: one check
+        paid by the standard `exact` scheme at the x402_check price, beside the pack."""
         self.cfg = cfg or fees_config.load()
         self.plans, self.chain, self.mint, self.debug = dict(plans), chain, mint, debug
         self.limiter = limiter or ra.Limiter()
         self.checks, price = pack(self.cfg)
         self.offer = {**offer, "amount": price, "price": price // self.checks, "lookups": self.checks} if offer else None
-        if self.offer and state is None:
+        self.exact = dict(exact) if exact else None
+        self._fee_payer: str | None = None
+        if (self.offer or self.exact) and state is None:
             raise ValueError("paid checks need a state file: the count of each order must survive a restart")
         self.state = Path(state) if state is not None else None
         self._used: dict[str, int] = self._load()
@@ -113,7 +120,7 @@ class Server:
                     from .. import graduation
                     return 200, {}, {"claim": claim, "pool": graduation.pool(self.chain, p, self.mint), "spec_hash": p["spec_hash"]}
                 return self._preorder(claim, p, h, path)
-            if path == "/checks" and self.offer:
+            if path == "/checks" and (self.offer or self.exact):
                 return self._checks(h, path)
         except ra.Bad as why:
             return 400, {}, {"error": str(why)}
@@ -134,11 +141,60 @@ class Server:
                           "fee": str(self.cfg.fee("payout", amount)), "minAmount": str(amount), "claim": claim, "specHash": p["spec_hash"],
                           "payees": [list(x) for x in p["payees"]], "refund": "after-deadline"}}
 
-    def _required(self, accepts: list, error: str, resource: str, what: str) -> tuple[int, dict, dict]:
+    def _required(self, accepts: list, error: str, resource: str, what: str, bazaar: dict | None = None) -> tuple[int, dict, dict]:
         body = {"x402Version": X402_VERSION, "error": error, "resource": {"url": resource, "description": what, "mimeType": "application/json"},
                 "accepts": accepts, "extensions": {SCHEME: {"info": {"version": 1, "proposal": True, "settles": "on-acceptance",
-                                                                     "refund": "after-deadline", "payerHeader": "Attested-Payer"}}}}
+                                                                     "refund": "after-deadline", "payerHeader": "Attested-Payer"}},
+                                                   **({"bazaar": bazaar} if bazaar else {})}}
         return 402, {"payment-required": ra.encode(body)}, body
+
+    # -- one check by the standard `exact` scheme ---------------------------------------------------------------------
+    def exact_requirement(self) -> dict | None:
+        """The `exact` entry: the x402_check price to pay_to in the asset, with the facilitator's own fee payer (asked once)."""
+        if not self.exact:
+            return None
+        from . import x402_exact as X
+        if self._fee_payer is None:
+            self._fee_payer = self.exact.get("fee_payer") or self.exact["facilitator"].fee_payer(DEVNET)
+        if not self._fee_payer:
+            return None                 # the facilitator offers no exact on this network: the pack alone is sold
+        each = fees_config.micro(self.cfg.doc["fees"]["x402_check"]["usd_each"]) * 10 ** int(self.exact.get("decimals", 6)) // 10 ** 6
+        return X.requirement(each, self.exact["asset"], self.exact["pay_to"], self._fee_payer, timeout=int(self.exact.get("timeout", 60)))
+
+    def bazaar(self) -> dict:
+        from . import x402_exact as X
+        return X.bazaar("GET", description="Knos paid check: the cheat checks, the repository's tests twice and a signed receipt for a "
+                                           "committed change (run by `knos verify`; this endpoint meters it)",
+                        output_example={"paid": True, "n": 0, "left": 0},
+                        output_schema={"type": "object", "properties": {"paid": {"type": "boolean"}, "left": {"type": "integer"}},
+                                       "required": ["paid"]})
+
+    def _pack_requirement(self, payer: str | None) -> dict | None:
+        if not self.offer:
+            return None
+        req = ra.requirement(self.offer, payer)
+        req["extra"].pop("record", None)
+        req["extra"]["checks"] = {"price": str(self.offer["price"]), "count": self.checks, "sign": "knos-check:<order>:<n>"}
+        return req
+
+    def _exact_paid(self, got: dict, resource: str) -> tuple[int, dict, dict]:
+        from . import x402_exact as X
+        req = self.exact_requirement()
+        if req is None or got.get("accepted") != req:
+            return self._required([r for r in (self._pack_requirement(None), req) if r], "the payment does not accept this server's exact requirement",
+                                  resource, "one paid check", self.bazaar())
+        try:
+            s = self.exact["facilitator"].verify_and_settle(got, req, self.exact.get("confirm"))
+        except X.Refused as why:
+            return 402, {}, {"error": str(why)}
+        key = f"exact:{s.get('transaction')}"
+        if not s.get("transaction") or key in self._used:
+            return 409, {}, {"error": "this payment was already used for a check"}
+        self._used[key] = 1
+        self._save()                    # kept before the answer, as for a pack: a restart never sells this call again
+        resp = {"success": True, "network": DEVNET, "transaction": s["transaction"], "payer": s.get("payer", ""), "status": "settled"}
+        return 200, {"payment-response": ra.encode(resp)}, {"paid": True, "scheme": "exact", "transaction": s["transaction"], "n": 0, "left": 0,
+                                                           "run": "knos verify runs the check; this endpoint meters it"}
 
     def _payer(self, h: dict) -> str | None:
         payer = h.get(ra.PAYER_HEADER)
@@ -199,13 +255,22 @@ class Server:
     # -- paid checks ---------------------------------------------------------------------------------------------------
     def _checks(self, h: dict, resource: str) -> tuple[int, dict, dict]:
         off = self.offer
-        assert off is not None
         if "payment-signature" not in h:
-            req = ra.requirement(off, self._payer(h))
-            req["extra"].pop("record", None)
-            req["extra"]["checks"] = {"price": str(off["price"]), "count": self.checks, "sign": "knos-check:<order>:<n>"}
-            return self._required([req], "PAYMENT-SIGNATURE header is required", resource,
-                                  f"a pack of {self.checks} paid checks at {off['price'] / 1e6:g} test USDC each")
+            accepts = [r for r in (self._pack_requirement(self._payer(h)), self.exact_requirement()) if r]
+            each = fees_config.micro(self.cfg.doc["fees"]["x402_check"]["usd_each"])
+            what = " or ".join(x for x in ((f"a pack of {self.checks} paid checks at {each / 1e6:g} test USDC each" if off else ""),
+                                           (f"one paid check at {each / 1e6:g} (exact)" if self.exact else "")) if x)
+            return self._required(accepts, "PAYMENT-SIGNATURE header is required", resource, what, self.bazaar())
+        if self.exact:
+            raw = h.get("payment-signature", "")
+            try:
+                peek = ra.decode(raw) if len(raw) <= 4 * ra.MAX_HEADER else None
+            except (ValueError, TypeError):
+                peek = None
+            if isinstance(peek, dict) and isinstance(peek.get("accepted"), dict) and peek["accepted"].get("scheme") == "exact":
+                return self._exact_paid(peek, resource)
+        if off is None:
+            raise ra.Bad("this server sells checks by the exact scheme only: pay the exact requirement of its 402")
         got, order = self._payment(h)
         n, sig = got["payload"].get("n"), got["payload"].get("signature")
         if not isinstance(n, int) or isinstance(n, bool) or n < 0 or not isinstance(sig, str):
@@ -241,12 +306,23 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8403)
     ap.add_argument("--state", type=Path, default=Path.home() / ".knos" / "x402_checks.json", help="where the count of each order's paid checks is kept")
+    ap.add_argument("--exact-asset", help="also sell ONE check by the x402 `exact` scheme, paid in this mint (devnet USDC: 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU)")
+    ap.add_argument("--exact-decimals", type=int, default=6)
+    ap.add_argument("--pay-to", help="the address whose token account receives `exact` payments (the operator's)")
+    ap.add_argument("--facilitator", default=None, help="the x402 facilitator (default KNOS_X402_FACILITATOR, else https://x402.org/facilitator, no key)")
     a = ap.parse_args(argv)
     doc = json.loads(a.plans.read_text(encoding="utf-8"))
     plans = {c["plan"]["claim_id"]: c["plan"] for c in doc["claims"].values()} if "claims" in doc else doc
     from .. import chain
+    exact = None
+    if a.exact_asset:
+        if not a.pay_to:
+            ap.error("--exact-asset needs --pay-to")
+        from . import x402_exact as X
+        exact = {"asset": a.exact_asset, "pay_to": a.pay_to, "decimals": a.exact_decimals, "facilitator": X.Facilitator(a.facilitator),
+                 "confirm": X.confirm_on()}
     server = Server(plans, chain.ledger(), a.mint, json.loads(a.offer.read_text(encoding="utf-8")) if a.offer else None,
-                    state=a.state)
+                    state=a.state, exact=exact)
     http = ra.serve(server, a.host, a.port)     # type: ignore[arg-type] - the same handle(path, headers, client=, method=)
     print(f"knos money x402 on http://{a.host}:{a.port} ({', '.join(ROUTES)})", file=sys.stderr)
     http.serve_forever()

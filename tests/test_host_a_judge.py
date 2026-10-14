@@ -146,10 +146,11 @@ def test_the_one_click_and_the_file_it_installs_need_no_secret(capsys):
     text = (ROOT / "examples" / "knos-attest.yml").read_text(encoding="utf-8")
     link = host_judge.template_link()
     q = parse_qs(urlsplit(link).query)
-    assert link.startswith("https://github.com/new?") and q == {"template_owner": ["drexthealpha"], "template_name": ["knos-attest"], "name": ["knos-judge"],
-                                                               "visibility": ["public"], "owner": ["@me"]}
+    # no template repository (0.3.31): an empty repository, then the file from this tree through GitHub's editor
+    assert link.startswith("https://github.com/new?") and q == {"name": ["knos-judge"], "visibility": ["public"], "owner": ["@me"]}
     assert link in (ROOT / "examples" / "host_a_judge" / "README.md").read_text(encoding="utf-8")
-    assert '"knos-attest": ("the template' in (ROOT / "scripts" / "small_repos.py").read_text(encoding="utf-8")      # the template repository is one Knos builds
+    assert '"knos-attest": ("what a seller' in (ROOT / "scripts" / "small_repos.py").read_text(encoding="utf-8")      # the folder is one Knos builds
+    assert (ROOT / "templates" / "knos-attest" / ".github" / "workflows" / "knos-attest.yml").read_bytes() == text.encode("utf-8")
     edit = host_judge.editor_link("https://github.com/ada/knos-judge", text)
     assert edit is not None and len(edit) <= host_judge.URL_LIMIT and edit.startswith("https://github.com/ada/knos-judge/new/main?filename=.github%2Fworkflows%2Fknos-attest.yml&value=")
     sent = parse_qs(urlsplit(edit).query)["value"][0]
@@ -164,7 +165,9 @@ def test_the_one_click_and_the_file_it_installs_need_no_secret(capsys):
     assert host_judge.fund_line("20", "ada/knos-judge") == "/knos fund 20 checks: unit quorum 2 judge: ada/knos-judge"
     with pytest.raises(ValueError, match="quorum 2\\|3"):
         host_judge.fund_line("20", "ada/knos-judge", quorum=4)
-    assert host_judge.main(["link"]) == 0 and capsys.readouterr().out.strip() == link
+    assert host_judge.main(["link"]) == 0
+    first, then = capsys.readouterr().out.strip().split("\n")
+    assert first == link and then.startswith("then: python -m knos.host_judge editor <you>/knos-judge")
 
 
 def test_the_line_that_names_a_host_is_one_the_funding_comment_grammar_reads():

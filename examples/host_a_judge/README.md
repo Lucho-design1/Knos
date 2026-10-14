@@ -1,6 +1,6 @@
 # Host a judge
 A judge is a GitHub repository of yours that runs a work order's checks again and asks GitHub to sign the result.
-1. [Make the repository](https://github.com/new?template_owner=drexthealpha&template_name=knos-attest&name=knos-judge&visibility=public&owner=@me) in your own account. It holds one file, [`knos-attest.yml`](../knos-attest.yml), and needs no secret, wallet or key. (A repository you have already: `python -m knos.host_judge editor owner/name` prints the link that opens GitHub's editor with the file filled in.)
+1. [Make an empty repository](https://github.com/new?name=knos-judge&visibility=public&owner=@me) in your own account and add its one file, [`knos-attest.yml`](../knos-attest.yml) (the same as [`templates/knos-attest`](../../templates/knos-attest)), as `.github/workflows/knos-attest.yml`: `python -m knos.host_judge editor <you>/knos-judge` prints the link that opens GitHub's editor with it filled in. It needs no secret, wallet or key.
 2. The buyer names it when funding: `/knos fund 20 checks: unit quorum 2 judge: <you>/knos-judge`. An order funded with neither `judge:` nor `neutral off` also accepts your run.
 3. After the merge: **Actions > knos attest > Run workflow**, with the pull request's repository, its number, the order's address, and `pay`.
 

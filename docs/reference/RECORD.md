@@ -200,3 +200,10 @@ which key, and whether the count of each order survives a restart; it exits 0 on
 - Accepted means the agreed checks passed. It does not show that the work has no defect.
 - Nothing recorded is not the same as nothing done.
 - The supplier's memory is kept by whoever ran the judge: a record built from it is as complete as that memory.
+
+## Search (0.3.31)
+
+`knos record search QUERY [--json]` searches the record in Sibyl's store across its tiers with Sibyl's own cross-tier
+search (sibyl-memory-client 0.8.1, `MemoryClient.search`), which returns a verdict with the rows: how many matched,
+or that nothing matched, or that the store is empty (`verdicts.refine_zero`). It also prints the store's size against
+its tier's soft cap (`free_tier_status`). Tests: `tests/test_record_search.py`.

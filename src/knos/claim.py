@@ -3,11 +3,12 @@
 GitHub will sign "the owner of this repository names <address>" only from Knos's pinned claim workflow, in a run the
 account's owner started by hand in a repository of their own named knos-claim, so the claim has to start there.
 Binding is by hand only: a run started by hand (`workflow_dispatch`) with the address typed in is the one thing that
-counts. In the browser that is: make the repository from the template, open Actions, run the workflow, type the
-address, wait. `bind` does it with the `gh` command you are already logged in with:
+counts. In the browser that is: create an empty public repository named knos-claim, add the one workflow file
+(templates/knos-claim/ of drexthealpha/Knos), open Actions, run the workflow, type the address, wait. `bind` does it
+with the `gh` command you are already logged in with:
 
-    1. uses your `<login>/knos-claim`, made from the template drexthealpha/knos-claim the first time (public; it holds
-       one workflow file)
+    1. uses your `<login>/knos-claim`; the first time it creates it, empty and public, in your account (you ran the
+       command that does), and commits the one workflow file this release ships (no template repository is involved)
     2. starts its workflow by hand with the address (`gh workflow run`); GitHub signs the token and the workflow posts
        it there
     3. waits for a relayer (Knos's public worker, or anyone) to carry it to Solana, and says what the relayer logged
@@ -39,7 +40,6 @@ from typing import Callable
 TEMPLATE = Path(__file__).parent / "settle" / "knos-claim.yml"          # what a knos-claim repository runs
 TEMPLATE_V1 = Path(__file__).parent / "settle" / "knos-claim-v1.yml"    # the first deployment's claim workflow
 TEMPLATE_ORG = Path(__file__).parent / "settle" / "knos-claim-org.yml"  # what an organisation's knos-claim repository runs
-TEMPLATE_REPO = "drexthealpha/knos-claim"
 WORKFLOW = ".github/workflows/knos-claim.yml"
 WORKFLOW_V1 = ".github/workflows/knos-claim-v1.yml"
 ADDRESS = re.compile(r"[1-9A-HJ-NP-Za-km-z]{32,44}")
@@ -87,27 +87,19 @@ def _repository(gh: Callable[..., str], repo: str, say: Callable[[str], None], s
     # the one commit of the claim workflow the escrow takes this bind from
     pinned = f"claim.yml@{pay.IDS['claim_sha_org' if org else 'claim_sha']}"
     template, about = (TEMPLATE_ORG, ABOUT_ORG) if org else (TEMPLATE, ABOUT)
-    made = templated = False
+    made = False
     try:
         gh("api", f"repos/{repo}")
     except Cannot:
-        try:
-            if org:              # the template repository holds a person's file: an organisation's is put there below
-                raise Cannot("no template")
-            gh("repo", "create", repo, "--public", "--template", TEMPLATE_REPO, "--description", about)
-            templated = True
-        except Cannot:           # the template cannot be used from here: an empty repository, and the file below
-            gh("repo", "create", repo, "--public", "--description", about)
+        # an empty repository, and the file below from this release (the same file as templates/knos-claim/ of Knos)
+        gh("repo", "create", repo, "--public", "--description", about)
         made = True
         say(f"Created {repo} (public; it holds only the claim workflow).")
-    have, tries = None, 6 if templated else 1    # a repository made from a template gets its files a moment later
-    for i in range(tries):
-        try:
-            have = json.loads(gh("api", f"repos/{repo}/contents/{WORKFLOW}"))
-            break
-        except Cannot:
-            if i + 1 < tries:
-                sleep(5)
+    have = None
+    try:
+        have = json.loads(gh("api", f"repos/{repo}/contents/{WORKFLOW}"))
+    except Cannot:
+        pass
     text = base64.b64decode(have.get("content", "")).decode("utf-8", "replace") if have else ""
     if pinned not in text or (org and "kind: org" not in text):      # no file yet, or the first deployment's, or one that calls another commit
         _put(gh, repo, WORKFLOW, template, have.get("sha") if have else None)

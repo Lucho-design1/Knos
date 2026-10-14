@@ -163,3 +163,72 @@ def register(ctx) -> None:
         ctx.register_tool(name=t["name"], toolset=TOOLSET,
                           schema={"name": t["name"], "description": t["description"], "parameters": schema},
                           handler=_guard(lambda a, n=t["name"]: money_agent.call(n, a)), description=t["description"])
+
+
+# -- the pre_tool_call hook: stop a write Knos would refuse to pay, before the agent spends the work on it ----------------
+# Hermes plugin hooks (hermes-agent.nousresearch.com/docs/user-guide/features/hooks, read 14 Oct 2026): a callback gets
+# keyword arguments (tool_name, args, task_id, ...) and may return {"action": "block", "message": ...}. Off unless
+# KNOS_HERMES_GUARD=block (or warn: never blocks, logs to stderr). It reads the path a file-writing tool names and
+# applies the rules no maintainer pays past: a workflow (.github/), the Gate config and seal (.knos/), the test runner's
+# configuration, and an existing test file edited (knos.gate.cheatlib's categories). A new test file is not blocked.
+_PATH_KEYS = ("path", "file_path", "filepath", "file", "target", "filename")
+_RUNNER_FILES = ("conftest.py", "pytest.ini", "tox.ini", "setup.cfg", "sitecustomize.py", "usercustomize.py", "noxfile.py")
+
+
+def _paths(args) -> list[str]:
+    if not isinstance(args, dict):
+        return []
+    out = [str(args[k]) for k in _PATH_KEYS if isinstance(args.get(k), str)]
+    for k in ("paths", "files"):
+        if isinstance(args.get(k), list):
+            out += [str(x) for x in args[k] if isinstance(x, str)]
+    return out
+
+
+def refused_write(path: str, root: str | None = None) -> str | None:
+    """Why Knos would refuse a change that writes `path` (repository-relative or absolute under `root`), or None."""
+    import os
+    p = path.replace("\\", "/")
+    if root:
+        r = os.path.abspath(root).replace("\\", "/").rstrip("/") + "/"
+        if os.path.abspath(p).replace("\\", "/").startswith(r):
+            p = os.path.abspath(p).replace("\\", "/")[len(r):]
+    p = p.lstrip("./") if p.startswith("./") else p
+    name = p.rsplit("/", 1)[-1]
+    if p.startswith(".github/") or "/.github/" in p:
+        return "workflow_edited: GitHub would run the pull request's own copy of a workflow; Knos refuses the change"
+    if p.startswith(".knos/") or "/.knos/" in p:
+        return "sealed_tests_changed: .knos/ holds the Gate config and its seal; Knos refuses the change"
+    if name in _RUNNER_FILES or name.endswith(".pth"):
+        return "runner_tampering: this file changes how tests are found or run; Knos refuses the change"
+    is_test = name.startswith("test_") or name.endswith(("_test.py", ".test.js", ".test.ts", ".spec.ts", ".spec.js")) or "/tests/" in f"/{p}"
+    if is_test and root and os.path.exists(os.path.join(root, p)):
+        return "test_edited: an existing test is edited; Knos pays for code that passes the tests, not for changed tests"
+    return None
+
+
+def pre_tool_call(tool_name: str = "", args=None, **kwargs):
+    import os
+    import sys
+    how = (os.environ.get("KNOS_HERMES_GUARD") or "").strip().lower()
+    if how not in ("block", "warn"):
+        return None
+    root = kwargs.get("cwd") or os.getcwd()
+    for p in _paths(args):
+        why = refused_write(p, root)
+        if why:
+            msg = f"Knos: writing {p} would get this work refused ({why}). Change the code under test instead."
+            if how == "block":
+                return {"action": "block", "message": msg}
+            print(msg, file=sys.stderr)
+    return None
+
+
+_register_tools = register
+
+
+def register(ctx) -> None:  # noqa: F811 - the tools, then the hook (a Hermes without register_hook gets the tools only)
+    _register_tools(ctx)
+    hook = getattr(ctx, "register_hook", None)
+    if callable(hook):
+        hook("pre_tool_call", pre_tool_call)

@@ -1,15 +1,23 @@
-"""The four small repositories a release publishes besides the pinned workflows, each written from this repository's
-own files, byte for byte, with nothing in them that is not derived from the sources here.
+"""The small repositories a user makes from Knos's files, each written from this repository's own files, byte for
+byte, with nothing in them that is not derived from the sources here.
+
+Since 0.3.31 (one repository: docs/reference/MONOREPO.md) the four a user copies live in this repository as folders,
+templates/<name>/ (FOLDED): the site and `knos claim` give the user a link that creates an EMPTY repository of their
+own and links (or `gh` calls) that add these files to it; nothing is generated from a GitHub template repository any
+more, and Knos creates no repository unless the user runs the command that does. drexthealpha/knos-task, knos-attest,
+knos-claim and knos-claim-org on GitHub are the old homes: frozen, kept until the founder deletes them.
+knos-playground is still a repository of its own (a live service: its issues are where strangers fund test tasks).
 
     python scripts/small_repos.py list                 the repositories and what each is for
+    python scripts/small_repos.py fold                 write templates/<name>/ for every folded one (after `stamp`)
     python scripts/small_repos.py build NAME DIR       write the repository NAME into DIR (a checkout of it, or any folder)
     python scripts/small_repos.py check NAME DIR       exit 1 unless DIR holds exactly that
     python scripts/small_repos.py tree NAME            the git tree id a commit of it must have
     python scripts/small_repos.py settings NAME        the GitHub API calls that give NAME its settings (a dry run: it
                                                        prints them); with --apply it makes them through `gh api`
 
-    knos-task       drexthealpha/knos-task: the template the site's "a task with no repository" makes a repository
-                    from (web/task.js, TEMPLATE). It holds Knos's two caller workflows, so that the issue the site then
+    knos-task       templates/knos-task/: what the site's "a task with no repository" puts into the user's new
+                    repository (web/task.js, FOLDER). It holds Knos's two caller workflows, so that the issue the site then
                     opens can be funded with a comment and the pull request that solves it is judged and paid. It also
                     holds examples/knos-reproduce.yml, so "Use this template" and "Run workflow" are the whole
                     reproduction (docs/reference/REPRODUCE.md).
@@ -26,14 +34,15 @@ own files, byte for byte, with nothing in them that is not derived from the sour
                     that is not code, `outside-<kind>`, has no checks: its issue number's starter checks are left out).
                     And `.github/workflows/knos-faucet.yml`: the worker's `faucet` job alone (`faucet_workflow`), so
                     a rebuild keeps the faucet.
-    knos-attest     drexthealpha/knos-attest: the template a seller makes his own `knos-attest` repository from. It
+    knos-attest     templates/knos-attest/: what a seller puts into his own `knos-attest` repository. It
                     holds examples/knos-attest.yml: a run by hand there asks GitHub to sign that an order's terms
                     were met (`knos settle --neutral` and the site start it).
-    knos-claim-org  drexthealpha/knos-claim-org: the template an ORGANISATION makes its `knos-claim` repository from. It
-                    holds examples/knos-claim-org.yml, which calls the pinned claim workflow with kind org. (A person's
-                    template is drexthealpha/knos-claim, which `knos claim` uses.)
+    knos-claim      templates/knos-claim/: what a PERSON puts into his own `knos-claim` repository (examples/knos-claim.yml,
+                    which `knos claim` commits there itself).
+    knos-claim-org  templates/knos-claim-org/: what an ORGANISATION puts into its `knos-claim` repository. It
+                    holds examples/knos-claim-org.yml, which calls the pinned claim workflow with kind org.
 
-knos-task, knos-attest and knos-claim-org are template repositories on GitHub (`settings` sets `is_template` through PATCH /repos/{owner}/{repo},
+The old homes knos-task, knos-attest, knos-claim and knos-claim-org are template repositories on GitHub (`settings` sets `is_template` through PATCH /repos/{owner}/{repo},
 https://docs.github.com/en/rest/repos/repos#update-a-repository). Build them AFTER `pinned_workflows.py stamp`:
 the callers name the commit of the published workflows, and a caller that still held the placeholder would call
 nothing. The output has no date and no name in it: the same sources give the same tree (scripts/pinned_workflows.py,
@@ -65,14 +74,15 @@ def _pub():
 
 TASK_README = """# knos-task
 
-A repository for one piece of paid work, made from this template by the "task with no repository" form on the
-[Knos](https://github.com/drexthealpha/Knos) site.
+The files of a repository for one piece of paid work: the "task with no repository" form on the
+[Knos](https://github.com/drexthealpha/Knos) site has you create an empty public repository of your own and add
+these files to it, one link each. They are kept in Knos itself, as `templates/knos-task/`.
 
 What happens here:
 
-To reproduce what Knos says it does, with nothing installed: press **Use this template**, then in your new repository
-open **Actions**, choose **knos reproduce** and press **Run workflow**. GitHub signs the report
-([how](https://github.com/drexthealpha/Knos/blob/main/docs/reference/REPRODUCE.md)).
+To reproduce what Knos says it does, with nothing installed: create an empty public repository of your own, add
+`.github/workflows/knos-reproduce.yml` from this folder to it, then open **Actions**, choose **knos reproduce** and press
+**Run workflow**. GitHub signs the report ([how](https://github.com/drexthealpha/Knos/blob/main/docs/reference/REPRODUCE.md)).
 
 For a task:
 
@@ -198,9 +208,11 @@ if __name__ == "__main__":
 ATTEST_README = """# knos-attest
 
 Ask GitHub to sign that a [Knos](https://github.com/drexthealpha/Knos) work order's terms were met, so that the person
-who did the work can ask for the payment himself.
+who did the work can ask for the payment himself. These files are kept in Knos itself, as `templates/knos-attest/`.
 
-1. Press **Use this template** and create the repository in **your own account**, named `knos-attest`, public.
+1. Create an empty repository in **your own account**, named `knos-attest`, public, and add
+   `.github/workflows/knos-attest.yml` from this folder to it (GitHub's **Add file > Create new file**, or the link
+   `python -m knos.host_judge editor <you>/knos-attest` prints).
 2. In your new repository open **Actions**, choose **knos attest**, press **Run workflow**, and say which repository
    the pull request is in, its number, and the order (its address is on the order's page). Or run
    `knos settle --neutral <pull request url>`, which starts the same run.
@@ -214,12 +226,35 @@ It needs no secret, checks out no code and changes nothing anywhere. What it can
 On Solana devnet today, in test USDC.
 """
 
+CLAIM_README = """# knos-claim
+
+Name the Solana address that [Knos](https://github.com/drexthealpha/Knos) pays your GitHub account at. These files
+are kept in Knos itself, as `templates/knos-claim/`.
+
+1. Create an empty repository in **your own account** (not an organisation), named `knos-claim`, public, and add
+   `.github/workflows/knos-claim.yml` from this folder to it. Or let one command do it: `knos claim <address>` (it
+   needs the GitHub CLI, `gh`, signed in, and creates the repository in your account because you ran it).
+2. In your new repository open **Actions**, choose **knos claim**, press **Run workflow**, and paste your Solana address yourself.
+3. The run asks GitHub for a signed statement that the owner of the repository names that address, and posts it on
+   an issue. A relayer carries it to Solana. From then on what your merged pull requests earn through Knos is paid to
+   that address.
+
+Run the workflow again with another address to change it. Nothing else starts a claim: no push, no link, no
+repository description. An address that arrives in a link could be someone else's, so the address must be one you typed.
+
+The workflow needs no secret and cannot read or change code. What it can do is written at the top of
+[the file](.github/workflows/knos-claim.yml).
+
+On Solana devnet today, in test USDC.
+"""
+
 CLAIM_ORG_README = """# knos-claim (for an organisation)
 
 Name the Solana address that [Knos](https://github.com/drexthealpha/Knos) pays your GitHub **organisation** at.
-A personal account uses [drexthealpha/knos-claim](https://github.com/drexthealpha/knos-claim) instead.
+A personal account uses `templates/knos-claim/` instead. These files are kept in Knos itself, as `templates/knos-claim-org/`.
 
-1. Press **Use this template** and create the repository in **the organisation**, named `knos-claim`.
+1. Create a repository in **the organisation**, named `knos-claim`, and add `.github/workflows/knos-claim.yml` from
+   this folder to it (or run `knos claim --org <organisation> <address>`, which does both because you ran it).
 2. Give write access to it only to the people you trust with where the organisation's payments go: everyone who can
    start a workflow by hand here can name the address.
 3. In the new repository open **Actions**, choose **knos claim**, press **Run workflow**, and paste the address
@@ -239,7 +274,7 @@ On Solana devnet today, in test USDC.
 
 # name -> (what it is for, {path in the repository: a source file here, or the text itself})
 REPOS: dict[str, tuple[str, dict[str, str | Path]]] = {
-    "knos-task": ("the template the site's task form makes a repository from, and the one-click reproduction", {
+    "knos-task": ("what the site's task form puts into a new repository, and the reproduction", {
         ".github/workflows/knos.yml": Path("examples/knos-workflow.yml"),
         ".github/workflows/knos-check.yml": Path("examples/knos-check.yml"),
         ".github/workflows/knos-reproduce.yml": Path("examples/knos-reproduce.yml"),
@@ -251,10 +286,13 @@ REPOS: dict[str, tuple[str, dict[str, str | Path]]] = {
         ".github/ISSUE_TEMPLATE/config.yml": ISSUE_CONFIG,
         ".github/pull_request_template.md": PULL_TEMPLATE,
         "words.py": STARTER, "check.py": CHECK, "README.md": PLAYGROUND_README, "LICENSE": Path("LICENSE")}),
-    "knos-attest": ("the template a seller makes his attest repository from", {
+    "knos-attest": ("what a seller's attest repository holds", {
         ".github/workflows/knos-attest.yml": Path("examples/knos-attest.yml"),
         "README.md": ATTEST_README, "LICENSE": Path("LICENSE")}),
-    "knos-claim-org": ("the template an organisation makes its knos-claim repository from", {
+    "knos-claim": ("what a person's knos-claim repository holds", {
+        ".github/workflows/knos-claim.yml": Path("examples/knos-claim.yml"),
+        "README.md": CLAIM_README, "LICENSE": Path("LICENSE")}),
+    "knos-claim-org": ("what an organisation's knos-claim repository holds", {
         ".github/workflows/knos-claim.yml": Path("examples/knos-claim-org.yml"),
         "README.md": CLAIM_ORG_README, "LICENSE": Path("LICENSE")}),
 }
@@ -266,10 +304,34 @@ REPOS: dict[str, tuple[str, dict[str, str | Path]]] = {
 # https://docs.github.com/en/rest/actions/permissions, "Set fork PR contributor approval permissions for a repository".
 _TEMPLATE = [("PATCH", "", {"is_template": True, "has_issues": True})]
 SETTINGS: dict[str, list[tuple[str, str, dict]]] = {
-    "knos-task": _TEMPLATE, "knos-attest": _TEMPLATE, "knos-claim-org": _TEMPLATE,
+    "knos-task": _TEMPLATE, "knos-attest": _TEMPLATE, "knos-claim": _TEMPLATE, "knos-claim-org": _TEMPLATE,
     "knos-playground": [("PATCH", "", {"is_template": False, "has_issues": True, "has_wiki": False, "has_projects": False}),
                         ("PUT", "/actions/permissions/fork-pr-contributor-approval", {"approval_policy": "first_time_contributors_new_to_github"})],
 }
+
+
+# The repositories whose files live in this repository as templates/<name>/ (0.3.31). The playground does not: it is a
+# live repository of its own, not something a user copies.
+FOLDED = ("knos-task", "knos-attest", "knos-claim", "knos-claim-org")
+FOLDER = ROOT / "templates"
+
+
+def fold(root: Path | None = None) -> list[str]:
+    """Write templates/<name>/ for every FOLDED repository, exactly its files (anything else in the folder is removed).
+    Returns the folders written."""
+    out = []
+    for name in FOLDED:
+        folder = (root or FOLDER) / name
+        want = files(name)
+        if folder.is_dir():
+            for p in sorted(folder.rglob("*")):
+                if p.is_file() and p.relative_to(folder).as_posix() not in want:
+                    p.unlink()
+        for rel, data in want.items():
+            (folder / rel).parent.mkdir(parents=True, exist_ok=True)
+            (folder / rel).write_bytes(data)
+        out.append(folder.relative_to(root or FOLDER).as_posix() if root else f"templates/{name}")
+    return out
 
 
 def _playground():
@@ -438,9 +500,10 @@ def wrong(name: str, out: dict[str, bytes]) -> list[str]:
         for workflow, ref in pub.NAMED.findall(text):
             if ref != pub.pin():
                 said.append(f"{rel} calls {workflow} at {ref}, and the examples name {pub.pin()}")
+        whose, key = ("a person's", "claim_sha") if name == "knos-claim" else ("an organisation's", "claim_sha_org")
         for ref in re.findall(r"knos-oidc-rotate/\.github/workflows/claim\.yml@(\w+)", text):
-            if ref != ids["claim_sha_org"]:
-                said.append(f"{rel} calls the claim workflow at {ref}, and the escrow takes an organisation's claim at {ids['claim_sha_org']}")
+            if ref != ids[key]:
+                said.append(f"{rel} calls the claim workflow at {ref}, and the escrow takes {whose} claim at {ids[key]}")
     return said
 
 
@@ -464,7 +527,7 @@ def settings(name: str, apply: bool = False, run=subprocess.run) -> int:
             if got.returncode:
                 print(f"GitHub refused it: {(got.stderr or got.stdout).strip()[:300]}")
                 return 1
-    template = SETTINGS[name][0][2]["is_template"]
+    template = SETTINGS[name][0][2]["is_template"]      # the old homes on GitHub, until the founder deletes them
     print(f"{'Set' if apply else 'A dry run: nothing was sent. With --apply this sets'} {OWNER}/{name}: "
           f"{'a template repository' if template else 'not a template'}, issues on.")
     return 0
@@ -474,6 +537,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Write and check the small repositories a release publishes.")
     sub = ap.add_subparsers(dest="command", required=True)
     sub.add_parser("list", help="the repositories and what each is for")
+    sub.add_parser("fold", help="write templates/<name>/ for every repository whose files live in Knos")
     for command, text in (("build", "write the repository into a folder"), ("check", "exit 1 unless the folder holds exactly the repository"), ("tree", "print its git tree id"),
                           ("settings", "print the GitHub API calls that set the repository's settings; --apply makes them")):
         one = sub.add_parser(command, help=text)
@@ -485,6 +549,10 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     if a.command == "settings":
         return settings(a.name, a.apply)
+    if a.command == "fold":
+        for folder in fold():
+            print(f"Wrote {folder}.")
+        return 0
     if a.command == "list":
         for name, (what, _files) in REPOS.items():
             print(f"{OWNER}/{name}: {what} ({len(files(name))} files, tree {tree_id(files(name))})")

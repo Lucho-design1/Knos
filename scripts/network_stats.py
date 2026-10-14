@@ -86,7 +86,10 @@ from knos.records import PROGRAMS, events_of, history, jobs_of, meter_months, or
 # any of these is "own", never "outside".
 _OWN = json.loads((ROOT / "scripts" / "own_github_ids.json").read_text(encoding="utf-8"))
 OWN = frozenset(_OWN["ids"])
-OWN_WALLETS = frozenset(_OWN.get("wallets", []))
+# Internal dogfooding (Knos buying its own work, v0.3.31): its wallets are Knos's own, so its escrows and payouts are
+# never outside use and never in a public volume number.
+DOGFOOD = _OWN.get("internal_dogfooding") or {}
+OWN_WALLETS = frozenset(_OWN.get("wallets", [])) | frozenset(DOGFOOD.get("wallets", []))
 OWN_REPOS = frozenset(_OWN.get("repositories", []))      # repository ids; a repository whose owner is in OWN needs no entry
 RELAY_LOG_REPO = "drexthealpha/Knos"
 # Workflow files that call Knos's reusable workflows or its Action, as GitHub's code search finds them.

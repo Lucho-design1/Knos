@@ -49,6 +49,9 @@ SITE = "https://drexthealpha.github.io/Knos"
 BOARD = SITE + "/tasks.json"
 FIRST = "Test USDC, no monetary value."
 PUBLIC_WORKFLOWS = "drexthealpha/knos-workflows"       # the one workflow repository the public worker's runs are signed for
+# The same published commits as the branch `workflows` of the monorepo (docs/reference/MONOREPO.md): an order funded
+# through drexthealpha/Knos/.github/workflows/<file>@<sha> pins that name, and is as public as one pinned to the old home.
+PUBLIC_WORKFLOW_HOMES = (PUBLIC_WORKFLOWS, "drexthealpha/Knos")
 ADDRESS_LINE = "/knos address <your Solana address>"
 PAYS = ("A maintainer merges a pull request that passes the check, and the merge pays the author's GitHub account in test USDC on "
         f"Solana devnet. Comment `{ADDRESS_LINE}` on the pull request to say where it goes; without an address or a bound wallet "
@@ -93,7 +96,9 @@ def fetch(source: str = BOARD, get: Callable[[str], bytes] | None = None) -> dic
             raw = Path(source).read_bytes()
         doc = json.loads(raw.decode("utf-8"))
     except (OSError, ValueError) as why:
-        raise Stop(f"the task board at {source} could not be read: {' '.join(str(why).split())[:160]}") from None
+        raise Stop(f"the task board at {source} could not be read: {' '.join(str(why).split())[:160]}. The escrow itself is on "
+                   "Solana: `knos bounty OWNER/REPO#ISSUE` reads what is funded on an issue without the board (a task "
+                   "funded since the site was last built is not on the board yet)") from None
     if not isinstance(doc, dict) or doc.get("v") != 1 or not isinstance(doc.get("tasks"), list):
         raise Stop(f"{source} is not the task board's document (tasks.json, version 1)")
     return doc
@@ -240,10 +245,10 @@ def facts(where: str, orders: list, now: int, *, pull: dict | None = None, uses:
     the reusable workflows the default branch calls (None: not read), `logins` {GitHub id: login} for a held payee."""
     m = _REF.fullmatch(where)
     issue = int(m.group(2)) if m else 0
-    public = repo_hash(PUBLIC_WORKFLOWS)
+    public = {repo_hash(home) for home in PUBLIC_WORKFLOW_HOMES}
     rows_ = []
     for o in orders:
-        is_public = bytes(o.wf_repo_hash) == public
+        is_public = bytes(o.wf_repo_hash) in public
         called = None if uses is None else any(repo_hash(u[1]) == bytes(o.wf_repo_hash) and u[3] == o.wf_sha for u in uses)
         rows_.append({"state": o.state, "wf_public": is_public, "wf_sha": o.wf_sha, "called": called, "past": o.state == "open" and o.deadline <= now,
                       "payee": (logins or {}).get(getattr(o, "payee_id", 0), "")})
@@ -296,7 +301,7 @@ def _kind(title: str, do: str, evidence: str, counter: str, needs: tuple[str, ..
 
 KINDS: dict[str, dict] = {
     "reproduce": _kind("Reproduce what Knos says, in your own fork",
-                       "Make a repository from the knos-task template, run the `knos reproduce` workflow there, and open a pull request that files the report GitHub signed.",
+                       "Fork drexthealpha/Knos, run the `knos reproduce` workflow in the fork, and open a pull request that files the report GitHub signed.",
                        "a file under reproductions/ whose GitHub-signed token names your account and the report's hash (knos.reproduce.verified accepts it)",
                        "reproductions", ("actor_id", "verified", "file"), "docs/reference/REPRODUCE.md"),
     "shadow": _kind("Count one invoice against GitHub's record, in a repository you own",
@@ -400,7 +405,7 @@ def register(app, help_lines: list | None = None) -> None:
     """`knos task ...` on the command line (typer is named here only: an MCP session never loads it)."""
     import importlib
     typer = importlib.import_module("typer")
-    sub = typer.Typer(no_args_is_help=True, help="Take a funded test task; the merge pays. Test USDC, no monetary value.")
+    sub = typer.Typer(no_args_is_help=True, help="Take a funded test task; the merge pays (`post`: post one, as a buyer). Test USDC, no monetary value.")
     board = typer.Option(BOARD, "--board", help="tasks.json: a file or a URL")
 
     def said(fn):
@@ -440,6 +445,32 @@ def register(app, help_lines: list | None = None) -> None:
         got = said(lambda: submit(fetch(board), ref, address, login, branch, send))
         show_(got, as_json, [FIRST, f"Pull request: {got['pull_request']['url']}", f"Comment on it: {got['address_comment']}",
                              "Both were posted as your account." if got["sent"] else "Nothing was sent. With --send, gh posts both as you."])
+
+    @sub.command("post")
+    def _post(spec: str = typer.Argument(..., help="the task's spec, a Markdown file; its first heading is the title"),
+              tests: str = typer.Option(..., "--tests", help="the folder of hidden tests, kept outside every repository (`knos accept init` makes one)"),
+              repo: str = typer.Option(..., "--repo", help="OWNER/NAME where the task is posted as an issue"),
+              amount: str = typer.Option(..., "--amount", help="how much, like 20 or 12.5"),
+              issue: int = typer.Option(0, "--issue", help="an issue that already holds the spec (default: open one)"),
+              days: int = typer.Option(14, "--days", help="days until unpaid money goes back to the wallet (1 to 90)"),
+              mint: str = typer.Option("", "--mint", help="the token's mint (default: test USDC)"),
+              keypair: str = typer.Option("", "--keypair", help="the funding wallet's keypair file"),
+              checks: str = typer.Option("none", "--checks", help="GitHub checks the escrow also requires, comma-separated, or none"),
+              reruns: int = typer.Option(1, "--reruns", help="how many times the referee judges again before a verdict stands"),
+              send: bool = typer.Option(False, "--send", help="open the issue and post the seal with gh, as you (money is never moved here)"),
+              as_json: bool = typer.Option(False, "--json")) -> None:
+        """Post a task as a buyer: the spec as an issue, your hidden tests sealed, the exact funding command and its fee."""
+        from . import buyer
+
+        def go():
+            try:
+                p = buyer.plan(spec, tests, repo, amount, issue=issue or None, days=days, mint=mint or None,
+                               keypair=keypair or None, checks=checks, reruns=reruns)
+                return buyer.send(p) if send else p
+            except (buyer.Refused, OSError) as why:
+                raise Stop(str(why)) from None
+        got = said(go)
+        show_(got, as_json, buyer.lines(got))
 
     @sub.command("why")
     def _why(where: str, pull: int = typer.Option(0, "--pull", help="the merged pull request's number"), as_json: bool = typer.Option(False, "--json")) -> None:

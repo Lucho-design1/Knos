@@ -166,19 +166,13 @@ class World(W.Shell):
             (Path(cwd) / W.NAME).mkdir()
             self.exists = True
             return 0, ""
-        if a[:3] == ["gh", "repo", "clone"]:          # the repository an earlier run made (its callers at an earlier pin), or the template
+        if a[:3] == ["gh", "repo", "clone"]:          # the repository an earlier run made (its callers at an earlier pin); no template repository is cloned any more
             if a[3] == f"{LOGIN}/{W.NAME}" and self.exists:
                 calls = Path(cwd) / a[4] / ".github" / "workflows"
                 calls.mkdir(parents=True)
                 (Path(cwd) / a[4] / ".git").mkdir()
                 (calls / "knos.yml").write_text(OLD_CALLER, encoding="utf-8")
                 (calls / "fund.yml").write_text(CALLER, encoding="utf-8")
-                return 0, ""
-            if a[3] == W.TEMPLATE:
-                calls = Path(a[4]) / ".github" / "workflows"
-                calls.mkdir(parents=True)
-                for name in ("knos.yml", "fund.yml"):
-                    (calls / name).write_text(CALLER, encoding="utf-8")
                 return 0, ""
             return 1, f"GraphQL: Could not resolve to a Repository with the name '{a[3]}'."
         if a[:2] == ["gh", "api"]:
@@ -247,6 +241,18 @@ class World(W.Shell):
         return TOPUP
 
 
+@pytest.fixture(autouse=True)
+def folder(tmp_path_factory, monkeypatch):
+    """templates/knos-task/ as a release would stamp it: the callers at the current pin, a README beside them."""
+    got = tmp_path_factory.mktemp("templates") / "knos-task"
+    (got / ".github" / "workflows").mkdir(parents=True)
+    for name in ("knos.yml", "fund.yml"):
+        (got / ".github" / "workflows" / name).write_text(CALLER, encoding="utf-8")
+    (got / "README.md").write_text("# knos-task\n", encoding="utf-8")
+    monkeypatch.setattr(W, "FOLDER", got)
+    return got
+
+
 def _key(state: dict, folder: Path) -> None:
     """The key step without solders' randomness: a fixed key."""
     from solders.keypair import Keypair
@@ -259,7 +265,11 @@ def test_the_whole_sequence_runs_in_order_leaves_a_link_for_each_step_and_the_re
     _key({}, tmp_path)
     s = W.run(LOGIN, tmp_path, world, state={"day": DAYS})
     assert s["done"] == [n for n, _f, _w in W.STEPS]
-    assert ["gh", "repo", "create", f"{LOGIN}/{W.NAME}", "--public", "--template", W.TEMPLATE, "--clone"] in world.said and "callers_updated" not in s
+    # an empty repository the user's run creates (no template repository), given the folder's files on a first commit of main
+    assert ["gh", "repo", "create", f"{LOGIN}/{W.NAME}", "--public", "--clone"] in world.said and "callers_updated" not in s
+    assert s["callers_added"] == [".github/workflows/fund.yml", ".github/workflows/knos.yml", "README.md"] and not any("--template" in a for a in world.said)
+    assert (tmp_path / W.NAME / ".github" / "workflows" / "knos.yml").read_text(encoding="utf-8") == CALLER
+    assert ["git", "checkout", "-q", "-b", "main"] in world.said and not any(a[:3] == ["gh", "repo", "clone"] for a in world.said)
     assert (s["funded_tx"], s["paid_tx"], s["faucet_tx"], s["budget_tx"]) == (FUNDED, PAID, FAUCET, DEPOSIT)
     assert s["funded_order"] == ORDER and s["funded_reply"].endswith("#issuecomment-105")      # 104 is the token comment
     assert s["statements_agree"] is True and s["payments"] == 1
@@ -280,7 +290,8 @@ def test_the_whole_sequence_runs_in_order_leaves_a_link_for_each_step_and_the_re
     assert bodies.index("/knos settle") > bodies.index(f"Paid 5 test USDC to @{LOGIN}. {tx(PAID)}")
     assert [j["conclusion"] for r in world.reviews for j in r["jobs"] if j["name"].endswith("judge")] == ["failure", "success"]
     assert [r[0]["conclusion"] for r in world.runs.values()] == ["success", "success"]        # "knos check" passed the wrong work too
-    assert s["failed_run"] == "https://github.com/run/c2" and s["passed_run"] == "https://github.com/run/c3"
+    # c1 is the first commit of main (the folder's files, 0.3.31), so the wrong work is c3 and the right work c4
+    assert s["failed_run"] == "https://github.com/run/c3" and s["passed_run"] == "https://github.com/run/c4"
     # every comment the stranger posted is a command as knos.commands reads it, in the place it belongs
     assert [type(c).__name__ for c in world.parsed] == ["Faucet", "Fund", "Address", "Settle"]
     assert world.parsed[1] == commands.Fund(units=5_000_000, checks=(), auto=True)
@@ -333,7 +344,7 @@ def test_a_second_run_uses_the_repository_made_before_with_the_templates_callers
     calls = tmp_path / W.NAME / ".github" / "workflows"
     assert {f.name: f.read_text(encoding="utf-8") for f in calls.iterdir()} == {"knos.yml": CALLER, "fund.yml": CALLER}
     assert s["callers_updated"] == ["knos.yml"]                           # fund.yml was the template's already
-    synced = world.said.index(["git", "commit", "-qm", f"Callers as the template {W.TEMPLATE} writes them"])
+    synced = world.said.index(["git", "commit", "-qm", f"Callers as Knos's {W.TEMPLATE} writes them"])
     assert world.said[synced + 1] == ["git", "push", "-q", "origin", "main"] and synced < world.said.index(["git", "add", ".knos"])
     assert ["git", "push", "-q", "-u", "origin", "witness-work-1"] in world.said
     assert not any("witness-work" in a for a in world.said)              # never the bare name an earlier run's pull request holds

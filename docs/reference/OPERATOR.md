@@ -15,7 +15,7 @@ test; until a second person has run it, every step here is the founder's descrip
 | Keep the verifier's signing keys from expiring (`Refresh`) | **yes, while the pinned rotate workflow can be fetched** | anyone may run it by hand from a repository of their own ([GOVERNANCE.md](GOVERNANCE.md), section 8). |
 | Serve the site | **yes, at another address** | `bash scripts/build_site.sh` writes a static folder; any host serves it. |
 | Fund and pay an order in a repository of their own | **yes** | install, comment, merge ([INSTALL.md](INSTALL.md)). |
-| Host the neutral evaluator for someone else's order | **yes** | a repository made from a template and one button; no secret ([`examples/host_a_judge`](../../examples/host_a_judge/README.md)). It is what lets a receipt read `rerun`. |
+| Host the neutral evaluator for someone else's order | **yes** | an empty repository with one file from [`templates/knos-attest`](../../templates/knos-attest) and one button; no secret ([`examples/host_a_judge`](../../examples/host_a_judge/README.md)). It is what lets a receipt read `rerun`. |
 | Restart the relay (a series of workflow runs, each starting the next) | **yes, in their own fork** | `gh workflow run worker.yml -R YOU/Knos`, or the timer within 5 minutes (section 3). |
 | Register a new signing key of an issuer | **no** | the verifier takes that attestation only from repositories of one GitHub account, id 142920951 (`ATTEST_OWNER_ID` in [`pins.rs`](../../programs-v2/knos_oidc/src/pins.rs)). |
 | Approve, cancel or execute an upgrade; revoke a key; pause funding | **no** | all three member keys of both multisigs are the founder's. Outside key holders today: 0 ([KEYHOLDER.md](KEYHOLDER.md)). |

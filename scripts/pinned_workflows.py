@@ -52,8 +52,17 @@ not see it. The order, which docs/reference/RELEASE.md gives with every command 
     is a new requirements/sign.txt, a new release and the four steps again.
 
 `stamp` replaces the placeholder KNOS_WORKFLOWS_SHA (or the commit named before) in examples/, in Knos's own knos.yml
-and knos-check.yml, in docs/ and in the JavaScript client's README, and regenerates the site's templates (scripts/front_workflow.py writes
-web/front.js from the examples). `check` says every place that disagrees.
+and knos-check.yml, in templates/ (the files a new repository copies), in docs/ and in the JavaScript client's README, and
+regenerates the site's templates (scripts/front_workflow.py writes web/front.js from the examples). `check` says every
+place that disagrees.
+
+Where the published set lives (docs/reference/MONOREPO.md). Until the cutover it is drexthealpha/knos-workflows (REPO).
+The same commits, with the same shas and trees, can live in the monorepo as its branch `workflows` (HOME, BRANCH): a
+caller then says `drexthealpha/Knos/.github/workflows/prove.yml@<sha>`, and an order funded through it pins
+sha256("drexthealpha/Knos") and that sha on chain. knos_pay compares the order's pin with the token's
+job_workflow_ref, whatever the repository is called, so both homes pay the orders pinned to them and neither pays the
+other's. `home` says which home the examples name; `move HOME` names the other one everywhere `stamp` writes;
+`branch` prints the git commands that put the published commits into the monorepo's branch (it runs nothing).
 
 The jobs that sign nothing (review and judge in prove.yml, and check.yml) install knos as the exact PyPI release they
 name, with dependencies no newer than UV_EXCLUDE_NEWER (step 2). Before that release exists nothing can install it, so a staging
@@ -78,7 +87,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO = "drexthealpha/knos-workflows"
+REPO = "drexthealpha/knos-workflows"                # the published set's home until the cutover (docs/reference/MONOREPO.md)
+HOME = "drexthealpha/Knos"                          # its home after the cutover: the monorepo's branch BRANCH, the same commits
+BRANCH = "workflows"
+HOMES = (REPO, HOME)
 PACKAGE = ROOT / "src"                              # what the wheel is built from: where a module a published job runs must be
 WORKFLOWS = ("fund.yml", "prove.yml", "check.yml", "attest.yml")
 PLACEHOLDER = "KNOS_WORKFLOWS_SHA"                  # stands for the published commit until `stamp` names it
@@ -93,9 +105,18 @@ HEREDOC_END = re.compile(r"^(?P<indent> +)LOCK\n", re.M)         # the line afte
 WHEEL = re.compile(r"knos-(?P<release>\d+\.\d+\.\d+)-py3-none-any\.whl")
 REQ = re.compile(r"[A-Za-z0-9][A-Za-z0-9 @+:/._=<>~!,\[\]-]*")      # one requirement; nothing a shell or YAML would read
 KNOS_LINE = re.compile(r"knos==(?P<release>\d+\.\d+\.\d+) --hash=sha256:(?P<hash>[0-9a-f]{64})")   # the lock's last line: the wheel
-RAW = re.compile(re.escape(REPO) + r"/(\w+)/" + re.escape(SIGN))      # the published lock, as a file at a commit
+# The published set named at a commit in either home. The monorepo's own name counts only before a full sha or the
+# placeholder: drexthealpha/Knos/.github/workflows/<file>@refs/... in docs/receipt/vectors.json is a token's claim, not a pin.
+# The monorepo holds workflows of its own too (supplier.yml, a copy of rotate.yml in a folder): its name counts only
+# before one of the four published files.
+_PINNED = r"(?:[0-9a-f]{40}|KNOS_WORKFLOWS_SHA)\b"
+_FILES = r"(?:fund|prove|check|attest)\.yml"
+_HOME = r"(?:" + re.escape(REPO) + r"|" + re.escape(HOME) + r"(?=/\.github/workflows/" + _FILES + r"@" + _PINNED + r"))"
+_HOME_RAW = r"(?:" + re.escape(REPO) + r"|" + re.escape(HOME) + r"(?=/" + _PINNED + r"/" + re.escape(SIGN) + r"))"
+RAW = re.compile(_HOME_RAW + r"/(\w+)/" + re.escape(SIGN))      # the published lock, as a file at a commit
 RUNS = re.compile(r"-m (knos(?:\.\w+)+)(?: (\w+))?")    # a module of the installed release that a published job runs: `python -m knos.x cmd`
-NAMED = re.compile(re.escape(REPO) + r"/\.github/workflows/([\w.-]+)@(\w+)")
+NAMED = re.compile(_HOME + r"/\.github/workflows/([\w.-]+)@(\w+)")
+HOMED = re.compile(r"(" + re.escape(REPO) + r"|" + re.escape(HOME) + r"(?=/\.github/workflows/" + _FILES + r"@))/\.github/workflows/[\w.-]+@" + _PINNED)
 # The cutoff of a job that signs nothing, and the note beside it: which release reached PyPI when. uv takes no file
 # uploaded after the cutoff (https://docs.astral.sh/uv/reference/settings/#exclude-newer), knos itself included.
 CUTOFF = re.compile(r'^(?P<lead> +UV_EXCLUDE_NEWER: )"(?P<cutoff>[^"\n]*)"(?P<note>[^\n]*)$', re.M)
@@ -110,7 +131,7 @@ def _front():
     spec = importlib.util.spec_from_file_location("front_workflow", Path(__file__).with_name("front_workflow.py"))
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    mod.ROOT, mod.FRONT = ROOT, ROOT / "web" / "front.js"       # the same tree as this script works on
+    mod.ROOT, mod.FRONT, mod.INSTALL = ROOT, ROOT / "web" / "front.js", ROOT / "web" / "install.js"       # the same tree as this script works on
     return mod
 
 
@@ -430,7 +451,8 @@ def naming() -> list[Path]:
     """Every file that names the published commit as plain text: the examples, Knos's own copies of them, and the
     documents. (The site's templates are written from the examples by scripts/front_workflow.py.)"""
     docs = [p for p in sorted((ROOT / "docs").rglob("*")) if p.is_file()] + [ROOT / "sdk" / "settle" / "README.md"]
-    return [*sorted((ROOT / "examples").glob("*.yml")), *((ROOT / ".github" / "workflows" / own) for own in OWN.values()), *docs]
+    copies = sorted(p for p in (ROOT / "templates").rglob("*.yml") if p.is_file()) if (ROOT / "templates").is_dir() else []
+    return [*sorted((ROOT / "examples").glob("*.yml")), *((ROOT / ".github" / "workflows" / own) for own in OWN.values()), *copies, *docs]
 
 
 def in_the_wheel() -> list[str]:
@@ -451,6 +473,59 @@ def in_the_wheel() -> list[str]:
 def pin() -> str:
     """The commit (or the placeholder) the examples name."""
     return _front().pin([(ROOT / "examples" / example).read_text(encoding="utf-8") for example in OWN])
+
+
+def home() -> str:
+    """The home (REPO or HOME) the examples name the published set in. Raises when they name both or neither."""
+    named = {h for example in OWN for h in HOMED.findall((ROOT / "examples" / example).read_text(encoding="utf-8"))}
+    if len(named) != 1:
+        raise SystemExit(f"the examples must name the published workflows in one home ({' or '.join(HOMES)}); they name {sorted(named) or 'none'}")
+    return named.pop()
+
+
+def move(to: str) -> list[str]:
+    """Name the published set in the home `to` (REPO or HOME) everywhere `stamp` writes, at the same commit. Returns
+    what changed. The commit must exist in that home before a caller can use it (`branch` prints how)."""
+    if to not in HOMES:
+        raise SystemExit(f"the published workflows live in {' or '.join(HOMES)}, not {to}")
+    old = home()
+    changed: list[str] = []
+    if old == to:
+        return changed
+    front = _front()
+    for path in naming():
+        text = _text(path)
+        if text is None:
+            continue
+        new = HOMED.sub(lambda m: to + m.group(0)[len(m.group(1)):], text)
+        new = re.sub(re.escape(old) + r"/(" + _PINNED + r")/" + re.escape(SIGN), lambda m: f"{to}/{m.group(1)}/{SIGN}", new)
+        if new != text:
+            path.write_text(new, encoding="utf-8", newline="\n")
+            changed.append(path.relative_to(ROOT).as_posix())
+    for page, make in ((front.FRONT, front.rewritten), (front.INSTALL, front.install_rewritten)):    # the site hands out the examples
+        if not page.exists():
+            continue
+        js = page.read_text(encoding="utf-8")
+        new = make(js)
+        if new != js:
+            page.write_text(new, encoding="utf-8", newline="\n")
+            changed.append(page.relative_to(ROOT).as_posix())
+    return changed
+
+
+def branch_commands(sha: str) -> list[str]:
+    """The git commands that give the monorepo the published commits of REPO, up to `sha`, as its branch BRANCH: the
+    same objects, so the same shas and trees (nothing is rewritten), and a tag per release so they stay reachable.
+    Printed for the founder; nothing here runs them."""
+    if not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise SystemExit("branch takes the full sha of the published commit: 40 hex digits")
+    return [f"git fetch https://github.com/{REPO}.git main",
+            f"git merge-base --is-ancestor {sha} FETCH_HEAD        # the pinned commit is in that history",
+            f"git branch {BRANCH} FETCH_HEAD",
+            f"git tag {BRANCH}-{sha[:12]} {sha}",
+            f"git push origin {BRANCH} {BRANCH}-{sha[:12]}",
+            f"python scripts/pinned_workflows.py check <a worktree of {BRANCH}>      # the tree is the published set, byte for byte",
+            f"python scripts/pinned_workflows.py move {HOME}                     # then the callers name {HOME}/.github/workflows/<file>@{sha}"]
 
 
 def stamp(sha: str) -> list[str]:
@@ -521,6 +596,15 @@ def inconsistencies() -> list[str]:
         said += [line for line in [cutoff_pending(sources())] if line]
     if named != PLACEHOLDER and not re.fullmatch(r"[0-9a-f]{40}", named):
         said.append(f"the examples name {REPO} at {named}: a full commit sha, or {PLACEHOLDER} until the release")
+    try:
+        where = home()
+    except SystemExit as why:
+        said.append(str(why))
+        where = REPO
+    for path in [*naming(), front.FRONT]:
+        for other in sorted(set(HOMED.findall(_text(path) or "")) - {where}):
+            said.append(f"{path.relative_to(ROOT).as_posix()} names the published workflows in {other}; the examples name them in {where}: "
+                        f"python scripts/pinned_workflows.py move {where}")
     for path in [*naming(), front.FRONT]:
         text, rel = _text(path), path.relative_to(ROOT).as_posix()
         for name, ref in sorted(set(NAMED.findall(text or ""))):
@@ -559,6 +643,11 @@ def main(argv: list[str] | None = None) -> int:
                    ).add_argument("--pypi", metavar="FILE", help="PyPI's JSON page of the release, saved (default: ask PyPI)")
     sub.add_parser("stamp", help="name the published commit in the examples, Knos's own files, the site and the documents"
                    ).add_argument("sha", help=f"the commit of {REPO} that holds the published set")
+    sub.add_parser("home", help=f"print the home the examples name the published set in ({' or '.join(HOMES)})")
+    sub.add_parser("move", help="name the published set in the other home everywhere stamp writes, at the same commit"
+                   ).add_argument("to", choices=HOMES)
+    sub.add_parser("branch", help=f"print the git commands that put the published commits into {HOME} as its branch {BRANCH} (runs nothing)"
+                   ).add_argument("sha", nargs="?", help="the published commit (default: the one the examples name)")
     check = sub.add_parser("check", help="exit 1 unless every file names one commit and the copies are their sources")
     check.add_argument("dir", nargs="?", help=f"also compare this checkout of {REPO} with the published set")
     check.add_argument("--lock", metavar="FILE", help=f"the checkout holds the published set made with this lock (default: {SIGN})")
@@ -586,7 +675,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if a.command == "stamp":
         changed = stamp(a.sha)
-        print(f"Named {REPO}@{a.sha} in {len(changed)} file(s)" + (": " + ", ".join(changed) if changed else "") + ".")
+        print(f"Named {home()}@{a.sha} in {len(changed)} file(s)" + (": " + ", ".join(changed) if changed else "") + ".")
+        return 0
+    if a.command == "home":
+        print(home())
+        return 0
+    if a.command == "move":
+        changed = move(a.to)
+        print(f"The published workflows are named in {a.to} at {pin()} in {len(changed)} file(s)" + (": " + ", ".join(changed) if changed else "") + ".")
+        return 0
+    if a.command == "branch":
+        for line in branch_commands(a.sha or pin()):
+            print(line)
         return 0
     if a.command == "check":
         if (a.source or a.lock) and not a.dir:
@@ -606,7 +706,7 @@ def main(argv: list[str] | None = None) -> int:
         for line in said:
             print(line)
         if not said:
-            print(f"Consistent: every file names {REPO} at {pin()}" + (f", and {a.dir} is {what}, byte for byte." if a.dir else "."))
+            print(f"Consistent: every file names {home()} at {pin()}" + (f", and {a.dir} is {what}, byte for byte." if a.dir else "."))
         return 1 if said else 0
     if not a.source and not a.lock:
         a.lock = _own_lock()

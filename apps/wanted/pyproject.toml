@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "knos-wanted"
+version = "0.1.0"
+description = "Idea in plain English -> a Wanted Report from Qloo taste data -> a Knos devnet pre-order escrow. Directional demand evidence, not a sales forecast."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "drexthealpha" }]
+dependencies = []   # the report and the web app use the Python standard library only
+
+[project.optional-dependencies]
+# the "lock pre-orders" button: Knos's graduation pre-order pool. This app is apps/wanted/ of the Knos monorepo:
+# install Knos from the same checkout beside it (`pip install . "./apps/wanted[escrow]"` at the root), so the app and
+# the escrow code are always one commit.
+escrow = ["knos", "solders>=0.29"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+knos-wanted = "knos_wanted.__main__:main"
+
+[tool.setuptools]
+packages = ["knos_wanted"]
+
+[tool.setuptools.package-data]
+knos_wanted = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

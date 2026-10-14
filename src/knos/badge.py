@@ -301,7 +301,11 @@ def register(app) -> None:
                    as_of: str = typer.Option(None, "--as-of", help="build: the day to write in the file, YYYY-MM-DD"),
                    invoice: str = typer.Option("", "--invoice", help="receipt: the number of the invoice it goes with"),
                    as_json: bool = typer.Option(False, "--json", help="the record as JSON (what web/badge.js renderRecord reads)")) -> None:
-        """A payee's record as knos_pay keeps it on Solana: paid, distinct funders, first and last, with test money and self-paid shown apart."""
+        """A payee's record as knos_pay keeps it on Solana: paid, distinct funders, first and last, with test money and self-paid shown apart.
+
+        Knos Record, the hash-chained journal of verdicts, escrows and payouts (docs/reference/KNOS_RECORD.md), is
+        `knos record journal DIR`, `knos record anchor DIR`, `knos record verify DIR` and `knos record prove SEQ DIR`
+        (each with a folder after it; `python -m knos.record ...` is the same)."""
         if who == "serve":      # knos record serve <offer file>: the machine-priced API anyone can run (src/knos/record_api.py); Knos hosts none
             # named and not imported: the relay reaches this module, and the server's store is the memory engine's, which a relay's install lacks
             # what this command's own options took (--memory) goes back; the server's own (--key, --history, --health, ...) pass through

@@ -24,9 +24,14 @@ jobs:
       contents: read          # the base and the pull request's head
       pull-requests: write    # the one comment, labels, closing (on_fail: close)
       issues: write           # labels live on the issue side of a pull request
+      # security-events: write  # with `code-scanning: "true"`: the cheat findings as code-scanning alerts
+      # id-token: write         # with `attest: "true"`: a Sigstore attestation of the signed receipt
+      # attestations: write
     steps:
       # no actions/checkout: the action fetches the base and the head itself and runs nothing from the head
       - uses: drexthealpha/Knos/actions/gate@<full commit sha of a Knos release>
         with:
           hidden-tests: ${{ secrets.KNOS_GATE_HIDDEN }}
           receipt-key: ${{ secrets.KNOS_RECEIPT_KEY }}
+          # code-scanning: "true"
+          # attest: "true"

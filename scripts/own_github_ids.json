@@ -1,5 +1,5 @@
 {
- "note": "What counts as Knos's own. `ids`: GitHub account ids of the maintainer and of the accounts its live tests run as. `wallets`: every devnet wallet Knos itself uses, since a wallet has no GitHub id. They are the test buyer, the command line and deploy payers, the relay key, the wallets the maintainer linked, the passkey test wallet, the supplier and advancer test wallets, the faucet key, and the relay fee payers that `scripts/load.py measure` derives from its wallet. A repository owned by one of these ids is Knos's too (GitHub is asked who owns it). scripts/network_stats.py never counts any of their activity as outside use.",
+ "note": "What counts as Knos's own. `ids`: GitHub account ids of the maintainer and of the accounts its live tests run as. `wallets`: every devnet wallet Knos itself uses, since a wallet has no GitHub id. They are the test buyer, the command line and deploy payers, the relay key, the wallets the maintainer linked, the passkey test wallet, the supplier and advancer test wallets, the faucet key, the relay fee payers that `scripts/load.py measure` derives from its wallet, and the wallets of the agents that built 0.3.29 to 0.3.31 on devnet. A repository owned by one of these ids is Knos's too (GitHub is asked who owns it). scripts/network_stats.py never counts any of their activity as outside use.",
  "ids": [
   142920951
  ],
@@ -18,6 +18,42 @@
   "8yDmQNFynGvC6vnxBKn2jBTHXvQ2229nditAQayWFcve",
   "CaA4rWEF77JT8XCYSB3U8jcj3dGETDNBk5eyXgurNJAp",
   "DEzBx5xkBbuEfzoRgJGTDdrfhnodXX8djdgBknYW5Jd",
-  "56QGy4NsYspMUVfqfVbC2JcjLgFprbu1RZS7GcbGywvK"
- ]
+  "56QGy4NsYspMUVfqfVbC2JcjLgFprbu1RZS7GcbGywvK",
+  "H3iUwqY9aKKD1H9m5MmTYNcwcv8xUkGDDDfps6XjXtBP",
+  "GLwgcPamQXdVKSBpp4o2sUPAvv5BJJb7mu4iMAKh8HMu",
+  "249ygjquFnii5c99burRKkMVJqPDaNRSPuehbaeiCyDt",
+  "E4Aqaw68PCvP4PhqfumXsPwvrubgbV173f7qJnGNwvUh",
+  "2x1YKK5uHktXLkg5aq6Z5nRV95AYg62dwLNp5YEAYBHu",
+  "HB1276Mmah49KJPdashNDPsbYti3C3HU8K7WPTJ7vjNZ",
+  "EH47nFA5jaWNPQrbBgQbCct6BwZchqZAJZMhYPv7dsK8",
+  "42agkcTx6hoGWGo3PrdgVYwdjGjibP4maacMPofPd4PZ",
+  "8aukezen9sAALWShcZKK3hi8WawBi4vR6qmLf764PGBv",
+  "EK7H81j97oaupJijuzaK2WZvaLVKgJosbxyCiqWPupHs",
+  "3gQxtRxsuuicL7gkcoaGZwVtP8RverKwn1wGEpd3uYDM",
+  "3EUxYm3bhvUt66WrpPwEL957otAfoNAcjFZvEgYhvZZS",
+  "GCwDckc2GudYaUPstyZX6KPUufBKv8x9e1gRtMh8MzUm",
+  "ETR3wGE3kPnStyAAzGCmhW2tHe9jWYUwWqk1jXybnZQ5",
+  "4gMAzHhf7JyHfNgYtAmm2E3j6ymBabTTAsw6Naabd262",
+  "DqH5N34nJQydHFDMjiMyWjfSsQUnKrcjwDhcWdMgk5Cp"
+ ],
+ "internal_dogfooding": {
+  "label": "internal dogfooding",
+  "note": "Knos buying its own work as its first customer (v0.3.31 Part C): escrows funded by these wallets (the buyer, and the workers' payee wallets), in these mints, and every payment to them are Knos's own and never outside use. scripts/network_stats.py adds the wallets to the own list.",
+  "wallets": [
+   "BVG9LGYgz5MXMxYrZfsqyTiRJfrTytvckGiY6jGVxUU7",
+   "46trbyHqwgy3RYBaEN5J3fdngiJzPEWmHcNUZLCtgBpp",
+   "4gMAzHhf7JyHfNgYtAmm2E3j6ymBabTTAsw6Naabd262",
+   "CKM9YFKWMHR5a8Lm6TMmYjtLLq7vQNerDNhJ3EBfZ68R",
+   "9o1nXkmSDbkcv8nxwN7TdZTyffTj5iCVunqTj4y5SAAE"
+  ],
+  "mints": [
+   "FrSNZ9Lhf1gEE5SfmY6AjF4GxisqoX5Jd8S9VX27ZUyL"
+  ],
+  "tasks": [
+   "drexthealpha/knos-e2e#276",
+   "drexthealpha/knos-e2e#277",
+   "drexthealpha/knos-e2e#278",
+   "drexthealpha/knos-e2e#281"
+  ]
+ }
 }

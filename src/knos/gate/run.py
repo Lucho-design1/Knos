@@ -68,7 +68,7 @@ def run(*, base: Path, pr_dir: Path, diff: str, repo: str, pr: int, head: str, b
     cfg = config.load(base)
     if cfg["outside_only"] and not V.outside(author_association):
         v = V.skipped(repo, pr, head, base_sha, f"the author is a {author_association.lower()} of this repository")
-        return _finish(v, cfg, out, None, set(), keypair, issuer_name, env, None, pull)
+        return _finish(v, cfg, out, None, set(), keypair, issuer_name, env, None, pull, diff)
     findings = cheatlib.scan(diff, cfg, base, lib=cheat_lib)
     lib_name = cheatlib.library() if cheat_lib is None else "knos.cheats"
     hidden = public = rerun_said = None
@@ -108,10 +108,10 @@ def run(*, base: Path, pr_dir: Path, diff: str, repo: str, pr: int, head: str, b
                                 timeout=cfg["public_tests"]["timeout"], sandbox=sandbox)
     v = V.decide(cfg, findings, hidden, public, repo=repo, pr=pr, head=head, base=base_sha, run_url=run_url,
                  library=lib_name, error=error)
-    return _finish(v, cfg, out, rerun_said, hidden_lines, keypair, issuer_name, env, cheat_lib, pull)
+    return _finish(v, cfg, out, rerun_said, hidden_lines, keypair, issuer_name, env, cheat_lib, pull, diff)
 
 
-def _finish(v, cfg, out: Path, rerun_said, hidden_lines, keypair, issuer_name, env, cheat_lib, pull) -> dict:
+def _finish(v, cfg, out: Path, rerun_said, hidden_lines, keypair, issuer_name, env, cheat_lib, pull, diff: str = "") -> dict:
     from ..receipt2 import core as rc
     from ..receipt2 import page
     envelope = None
@@ -143,13 +143,27 @@ def _finish(v, cfg, out: Path, rerun_said, hidden_lines, keypair, issuer_name, e
     (out / "verdict.json").write_text(json.dumps(v, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     (out / "comment.md").write_text(text, encoding="utf-8")
     (out / "summary.md").write_text(report.summary(v), encoding="utf-8")
+    log = None
     if not v.get("skipped"):
+        from . import sarif as S         # code scanning (SARIF) and check annotations: the same refused findings, nothing more
+        from .. import version
+        log, notes = S.sarif(v, diff, version()), S.annotations(v, diff)
+        if sealed.leaks(json.dumps(log) + json.dumps(notes), hidden_lines):
+            log, notes = S.sarif({**v, "findings": []}, "", version()), []
+        (out / "knos-gate.sarif").write_text(json.dumps(log, indent=1) + "\n", encoding="utf-8")
+        (out / "annotations.json").write_text(json.dumps(notes, indent=1) + "\n", encoding="utf-8")
         _record(v)
-    return {"verdict": v, "comment": text, "receipt": envelope}
+    return {"verdict": v, "comment": text, "receipt": envelope, "sarif": log}
 
 
-def post(result: dict, repo: str, pr: int, *, me: str | None = "github-actions[bot]", client=None) -> None:
+def post(result: dict, repo: str, pr: int, *, me: str | None = "github-actions[bot]", client=None,
+         code_scanning: bool = False) -> dict | None:
+    """The comment and the labels; with `code_scanning`, the SARIF log too (POST code-scanning/sarifs for the head
+    commit, ref refs/pull/<pr>/head; the token needs `security-events: write`). Returns GitHub's answer to the upload."""
     from .github import Client
     c = client or Client(repo)
     c.upsert_comment(pr, result["comment"], me=me)
     c.apply(pr, result["verdict"]["actions"])
+    if code_scanning and result.get("sarif") is not None and not result["verdict"].get("skipped"):
+        return c.upload_sarif(result["verdict"]["head"], f"refs/pull/{pr}/head", result["sarif"])
+    return None

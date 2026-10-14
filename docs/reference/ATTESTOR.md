@@ -197,8 +197,9 @@ when two such judges have different owners. One account that funds, delivers and
 however often it runs the suite: that is every receipt so far. So the judge has to be hosted by someone else, and
 [`examples/host_a_judge`](../../examples/host_a_judge/README.md) makes that one link and one button:
 
-- **The host** makes a repository from the template (one file, [`examples/knos-attest.yml`](../../examples/knos-attest.yml);
-  no secret, wallet or key) and presses Run workflow after the merge. `python -m knos.host_judge link` prints the link.
+- **The host** makes an empty repository and adds one file, [`examples/knos-attest.yml`](../../examples/knos-attest.yml)
+  (the same as [`templates/knos-attest`](../../templates/knos-attest); no secret, wallet or key), and presses Run
+  workflow after the merge. `python -m knos.host_judge link` prints the first link, `editor <you>/knos-judge` the second.
 - **The buyer** names it: `/knos fund 20 checks: unit quorum 2 judge: <host>/knos-judge`. An order funded without
   `judge:` and without `neutral off` takes the host's run as its neutral run.
 - **What the host is paid.** Nothing by the order: the program has no judge's share. The relayer's tip (0.05 test

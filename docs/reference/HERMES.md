@@ -174,3 +174,11 @@ bundle at `base/.knos/acceptance/<issue>/` (knos.verify.sealed). Demo only: no r
 - Submit the plugin to the Hermes plugin catalog (`plugin-catalog/<name>.yaml` in hermes-agent, a human-reviewed PR
   pinned to a 40-character commit SHA).
 - Ask for `TRUSTED_REPOS` status in Hermes's Skills Guard (a Hermes core PR); until then Knos installs as community.
+
+## A hook that stops a refused write (0.3.31)
+
+`register(ctx)` also adds a `pre_tool_call` hook when Hermes offers `register_hook`
+([hooks](https://hermes-agent.nousresearch.com/docs/user-guide/features/hooks), read 14 Oct 2026). With
+`KNOS_HERMES_GUARD=block` a tool call that would write a workflow (`.github/`), `.knos/`, the test runner's
+configuration, or an existing test file is blocked with the reason, before the agent spends work Knos would refuse to
+pay for; `warn` prints the reason and blocks nothing; unset, the hook does nothing. Tests: `tests/test_hermes_hook.py`.

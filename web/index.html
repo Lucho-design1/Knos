@@ -540,15 +540,18 @@
         <li>
           <details class="k-more" id="bind-once">
 <summary>Or bind a wallet once</summary>
-          <p>A bound wallet comes first, whatever a pull request says. Two steps, by hand:</p>
+          <p>A bound wallet comes first, whatever a pull request says. Three steps, by hand:</p>
           <ol class="steps" id="bind-steps">
-            <li><a id="bind-template" href="https://github.com/new?template_owner=drexthealpha&amp;template_name=knos-claim&amp;name=knos-claim&amp;visibility=public&amp;owner=@me" target="_blank" rel="noopener">Create a repository from the template drexthealpha/knos-claim</a>
-              (&ldquo;Use this template&rdquo;). Keep the name <code>knos-claim</code> and make it public, in your own
-              account (a personal account, not an organisation).</li>
+            <li><a id="bind-repo" href="https://github.com/new?name=knos-claim&amp;visibility=public&amp;owner=@me" target="_blank" rel="noopener">Create an empty repository named knos-claim</a>.
+              Keep the name <code>knos-claim</code> and make it public, in your own account (a personal account, not an
+              organisation).</li>
+            <li>Add its one file: <a id="bind-file" href="https://github.com/drexthealpha/Knos/blob/main/templates/knos-claim/.github/workflows/knos-claim.yml" target="_blank" rel="noopener">knos-claim.yml</a>
+              from Knos, as <code>.github/workflows/knos-claim.yml</code> (<strong>Add file</strong>, <strong>Create new
+              file</strong>, paste, <strong>Commit changes</strong>). The payout page, <code>#payee=YOUR_LOGIN</code>, fills it in for you.</li>
             <li>Open that repository's <strong>Actions</strong> tab and choose <strong>knos claim</strong>.
               Press <strong>Run workflow</strong> and paste your Solana address yourself.</li>
           </ol>
-          <p>Or from a terminal, one command does both steps:</p>
+          <p>Or from a terminal, one command does all three:</p>
           <pre>knos claim YOUR_SOLANA_ADDRESS</pre>
 <p class="fine">Why by hand: an address carried in a link could be someone else's, so you type it. GitHub signs that the
   repository's owner names that address; the escrow takes that signature only from a run started by hand, by the

@@ -4,12 +4,16 @@
 //
 // Why it is not one click (programs-v2/knos_pay/src/pay.rs `bind`, deployed 2.1 and 2.2 alike): a Bind token counts only
 // from the pinned claim workflow, in the person's own repository named knos-claim, in a run they started by hand
-// (`workflow_dispatch`, first attempt). A push does not count, not even the first push of a repository made from the
-// template: a link can fill GitHub's new-repository form, so a push could carry an address someone else chose. So the
-// address reaches GitHub as the run's input, pasted by its owner. Clicks, counted in CLICKS below:
+// (`workflow_dispatch`, first attempt). A push does not count, not even the commit that adds the workflow file: a link
+// can fill GitHub's forms, so a push could carry an address someone else chose. So the address reaches GitHub as the
+// run's input, pasted by its owner. Since 0.3.31 no template repository is involved (docs/reference/MONOREPO.md): the
+// person creates an EMPTY public repository named knos-claim, and a second link opens GitHub's new-file page in it with
+// the claim workflow filled in (CLAIM_WORKFLOW, examples/knos-claim.yml byte for byte; templates/knos-claim/ of
+// drexthealpha/Knos holds the same file). Clicks, counted in CLICKS below:
 //   before (docs, `knos claim` page): a wallet app and its seed phrase, the template, Actions, the run, the address.
-//   after (this page): Make a passkey (the address is copied), Create repository (once), Run workflow, paste, Run.
-//   13 steps before, 8 now; 4 once the repository exists (CLICKS.again).
+//   after (this page): Make a passkey (the address is copied), Create repository (once), Commit the file (once), Run
+//   workflow, paste, Run. 13 steps before, 10 now (8 while a template repository did the file); 4 once the repository
+//   exists (CLICKS.again).
 //
 // What it reads, and only when opened: api.github.com (the login's numeric id, whether <login>/knos-claim exists) and
 // Solana devnet (held jobs and orders by payee id, the Bind account). The passkey's id and public key are kept where
@@ -19,8 +23,57 @@ import * as passkey from "./passkey.js";
 
 export const RPC = "https://api.devnet.solana.com";
 export const GITHUB = "https://api.github.com";
-export const TEMPLATE_OWNER = "drexthealpha", TEMPLATE_NAME = "knos-claim";
-export const WORKFLOW = "knos-claim.yml";         // src/knos/settle/knos-claim.yml: what the template repository holds
+export const NAME = "knos-claim";                // the name knos_pay's Bind takes the run from (pay.rs `bind`)
+export const WORKFLOW = "knos-claim.yml";         // src/knos/settle/knos-claim.yml: the one file of that repository
+export const FILE = `.github/workflows/${WORKFLOW}`;
+// examples/knos-claim.yml, byte for byte (scripts/front_workflow.py writes it here): what the new-file link fills in
+export const CLAIM_WORKFLOW = `# .github/workflows/knos-claim.yml: name the Solana address that Knos pays your GitHub account at.
+#
+# Put this file in a repository named knos-claim that YOU own: your personal account's, not an organisation's.
+# It needs no secret.
+#
+# Binding a wallet is by hand only. There is one way to start it:
+#
+#   A run started by hand (\`workflow_dispatch\`).
+#       Actions > knos claim > Run workflow, and paste your address into the box yourself (or run
+#       \`knos claim <address>\`, which creates the empty repository in your account, adds this file and does this).
+#       The job asks GitHub for a signed statement that says "the owner of this repository names <address>", posts
+#       it on an issue here and waits for a relayer to carry it to Solana (Knos's public relay does; anyone can).
+#       From then on what your merged pull requests earn is paid to that address, and payments held for you can be
+#       sent there. Run it again with another address to change it.
+#
+# Nothing else starts it: no push, and no address read from the repository's description or from a link. An address
+# that arrives in a link could be someone else's, so the address must be one you typed here.
+#
+# What it can do in this repository: open an issue and comment on it, and ask GitHub for that one signed statement
+# (id-token). What it cannot do: read or change code, or change settings. It has no access to the repository's
+# contents.
+#
+# Why nobody else can name an address for your account: the escrow on Solana takes the statement only when GitHub's
+# signature says it came from the workflow named below, at exactly that commit, in a run that the owner of the
+# repository started by hand, in a repository named knos-claim. The address reaches that workflow as an input, never
+# a shell.
+name: knos claim
+
+on:
+  workflow_dispatch:
+    inputs:
+      address:
+        description: Solana address that receives this GitHub account's Knos payments
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  claim:
+    permissions:
+      id-token: write
+      issues: write
+    uses: drexthealpha/knos-oidc-rotate/.github/workflows/claim.yml@80e796d341f65060767939c4e65a38ede5fa1ac8
+    with:
+      address: \${{ inputs.address }}
+`;
 export const STORE = "knos-passkey";              // claim.js and buyer.js keep the same passkey under this key
 const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
 const JOB_LEN = 320, ORDER_LEN = 512, JOB_PAYEE = 56, ORDER_PAYEE = 152, ORDER_HELD = 3;
@@ -30,8 +83,8 @@ export const CLICKS = {
   before: ["install a wallet app", "create a wallet, write down its seed phrase", "copy its address", "open the template",
     "Use this template", "Create a new repository", "type the name knos-claim", "Create repository", "Actions", "knos claim",
     "Run workflow", "paste the address", "Run workflow"],
-  after: ["Make a passkey", "confirm on the device", "Create knos-claim on GitHub", "Create repository", "Run knos claim on GitHub",
-    "Run workflow", "paste the address", "Run workflow"],
+  after: ["Make a passkey", "confirm on the device", "Create knos-claim on GitHub", "Create repository", "Add the claim workflow",
+    "Commit changes", "Run knos claim on GitHub", "Run workflow", "paste the address", "Run workflow"],
   // a person whose knos-claim exists already (an earlier bind, or a change of address): only the run is left
   again: ["Run knos claim on GitHub", "Run workflow", "paste the address", "Run workflow"],
 };
@@ -43,9 +96,11 @@ export function parseArg(arg) {
   return { login, id: /^\d{1,19}$/.test(id || "") ? Number(id) : null };
 }
 
-/** GitHub's new-repository form, filled in: the template, the owner, the name the program needs, public. */
-export const newRepoLink = (login) => `https://github.com/new?template_owner=${TEMPLATE_OWNER}&template_name=${TEMPLATE_NAME}`
-  + `&owner=${encodeURIComponent(login)}&name=knos-claim&visibility=public`;
+/** GitHub's new-repository form, filled in: the owner, the name the program needs, public, empty (no template). */
+export const newRepoLink = (login) => `https://github.com/new?owner=${encodeURIComponent(login)}&name=${NAME}&visibility=public`;
+/** GitHub's new-file page in that repository, with the claim workflow filled in: "Commit changes" adds it. */
+export const fileLink = (login) => `https://github.com/${encodeURIComponent(login)}/${NAME}/new/main?filename=${encodeURIComponent(FILE)}`
+  + `&value=${encodeURIComponent(CLAIM_WORKFLOW)}`;
 /** The claim workflow's page in the person's repository: "Run workflow" is there. */
 export const runLink = (login) => `https://github.com/${encodeURIComponent(login)}/knos-claim/actions/workflows/${WORKFLOW}`;
 
@@ -135,11 +190,15 @@ export function renderPayee(el, ctx = {}) {
     const out = $("[data-py-link]");
     if (!me || !who) return;
     try { repo ??= (await fetch(`${github}/repos/${encodeURIComponent(who.login)}/knos-claim`)).ok; } catch { repo = null; }
-    const href = repo === false ? newRepoLink(who.login) : runLink(who.login);
-    out.innerHTML = `<a class="k-btn" id="py-go" href="${esc(href)}" target="_blank" rel="noopener">${repo === false
-      ? "Create knos-claim on GitHub" : "Run knos claim on GitHub"}</a> ${repo === false ? "Then press Run workflow there." : "Paste the address, press Run workflow."}`;
+    // repo: false (none yet), "made" (created here, the file not added yet), true (there), null (not known: the run's page)
+    const [href, label, then] = repo === false ? [newRepoLink(who.login), "Create knos-claim on GitHub", "Empty and public. Then add its one file."]
+      : repo === "made" ? [fileLink(who.login), "Add the claim workflow", "Press Commit changes there. Then run it."]
+        : [runLink(who.login), "Run knos claim on GitHub", "Paste the address, press Run workflow."];
+    out.innerHTML = `<a class="k-btn" id="py-go" href="${esc(href)}" target="_blank" rel="noopener">${label}</a> ${then}`;
     step("py-link", "live");
-    $("#py-go").addEventListener("click", () => { if (repo === false) { repo = true; setTimeout(link, 0); } });
+    $("#py-go").addEventListener("click", () => {
+      if (repo === false) { repo = "made"; setTimeout(link, 0); } else if (repo === "made") { repo = true; setTimeout(link, 0); }
+    });
   }
 
   async function showKey() {

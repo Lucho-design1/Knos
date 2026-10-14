@@ -115,8 +115,9 @@ function countsHtml(o) {
     <p class="pg-note" id="pg-faucet" title="${esc(d.funders_in_knos_repositories_faucet || "")}"><strong class="k-num">${n[3] ?? 0}</strong> of those funders: ${esc(LABEL_KNOS_FAUCET)}.</p>`;
 }
 
-// The one click of docs/reference/ATTESTOR.md: a repository of the reader's own from the template (`python -m knos.host_judge link` prints it).
-export const HOST_A_JUDGE = "https://github.com/new?template_owner=drexthealpha&template_name=knos-attest&name=knos-judge&visibility=public&owner=@me";
+// The first click of docs/reference/ATTESTOR.md: an empty repository of the reader's own (`python -m knos.host_judge link`
+// prints it; its one file, examples/knos-attest.yml, is added next: templates/knos-attest/ of Knos, no template repository).
+export const HOST_A_JUDGE = "https://github.com/new?name=knos-judge&visibility=public&owner=@me";
 
 const STYLE = `<style>
 .playground{overflow-wrap:anywhere;min-width:0}

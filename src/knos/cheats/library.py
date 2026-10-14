@@ -85,6 +85,9 @@ class Change:
     claim: bool = True              # the change claims to do the work (a bounty, a sealed task): a no-op is a cheat
     visible_literals: frozenset = frozenset()   # groups of string literals, one per line of the tests the author could read
     errors: list = field(default_factory=list)  # what could not be read (an unparseable diff header): each refuses
+    # group -> the Reach of the test files that hold it (what those tests import). A group with no entry here is
+    # taken to exercise every file (the strict reading of 0.3.30, for a Change built by hand).
+    literal_tests: dict = field(default_factory=dict)
 
     def paths(self) -> list[str]:
         return [f.path for f in self.files]
@@ -164,24 +167,136 @@ def visible_literals(base: Path | None, test_dirs: Iterable[str]) -> frozenset:
     """The string literals of the tests an author could read, one group per line that holds two or more (an input
     and the answer a test expects for it): the base's test directories and the acceptance bundles that are in the
     repository. A sealed bundle kept outside the repository is not visible, and is not read here."""
+    return frozenset(visible_literal_tests(base, test_dirs))
+
+
+# ---- what a test exercises (v0.3.31, P-cheatfp): the modules it imports, requires or runs -------------------------------
+
+@dataclass(frozen=True)
+class Reach:
+    """What one test file (with the runner's helpers) reaches: Python dotted names it imports, its import/require
+    lines (lower case, for the other languages), its text. `everything`: no way to tell, so it exercises every file."""
+    names: frozenset = frozenset()
+    lines: str = ""
+    text: str = ""
+    everything: bool = False
+
+
+_PY_IMPORT = re.compile(r"^[ \t]*import[ \t]+([\w.]+(?:[ \t]+as[ \t]+\w+)?(?:[ \t]*,[ \t]*[\w.]+(?:[ \t]+as[ \t]+\w+)?)*)", re.M)
+_PY_FROM = re.compile(r"^[ \t]*from[ \t]+(\.*[\w.]*)[ \t]+import[ \t]+(\([^)]*\)|[^\n#]+)", re.M)
+_PY_DYNAMIC = re.compile(r"""(?:import_module|__import__)\(\s*['"]([\w.]+)""")
+# an import/require line of JavaScript or Ruby (Python's are read by name above)
+_IMPORT_LINE = re.compile(r"""^\s*(import\b|export\b.*\bfrom\b|load\s+['"])|\brequire(_relative)?\b\s*\(?\s*['"]|\bimport\s*\(\s*['"]""")
+_RUNS_PROGRAM = re.compile(r"\bsubprocess\b|\bPopen\b|\bos\.system\(|child_process|\bexec(File)?Sync\(|\bspawnSync\(|\bOpen3\b|%x\(")
+# what a program-running test names: a source file ("calc.py", "bin/x.js") or a module after -m ("-m", "knos")
+_PROGRAM_FILE = re.compile(r"^(\./)?[A-Za-z_][\w./-]*\.(py|js|mjs|cjs|ts|rb)$")
+_DASH_M = re.compile(r"""['"]-m['"]\s*,\s*['"]([\w.]+)['"]|-m\s+([\w.]+)""")
+HELPER_NAME = re.compile(r"(^|/)(conftest\.py|test_helper\.rb|spec_helper\.rb|[^/]*helpers?\.[cm]?[jt]s|setup[^/]*\.[cm]?[jt]s)$")
+
+
+def reach_of(text: str, path: str = "", strings: bool = True) -> Reach:
+    """What a test (or a source file, for the one-hop closure) imports. Data files and Go/Rust tests (which reach
+    their package without an import line) exercise everything, as does a file with no import line at all.
+    `strings`: a test also reaches the source files its strings name ("calc.py", "web/task.js": a page a browser
+    loads, a script it runs) and, when it runs a program, the module after -m. Off for the runner's helpers (their
+    set-up commands are not the code under test) and for source files (the closure follows imports only)."""
+    if path.endswith((".json", ".go", ".rs")):
+        return Reach(text=text, everything=True)
+    names: set = set()
+    for m in _PY_IMPORT.finditer(text):
+        names |= {part.split()[0] for part in m.group(1).split(",") if part.strip()}
+    for m in _PY_FROM.finditer(text):
+        mod = m.group(1).lstrip(".")
+        for item in m.group(2).strip().strip("()").split(","):
+            item = item.split()[0] if item.strip() else ""
+            if item == "*" or (mod and not item):
+                names.add(mod)
+            elif item:
+                names.add(f"{mod}.{item}" if mod else item)
+    names |= set(_PY_DYNAMIC.findall(text))
+    lines = [ln for ln in text.splitlines() if _IMPORT_LINE.search(ln)]
+    if strings:
+        for s in {m.group(2) for ln in text.splitlines() for m in LITERAL.finditer(ln) if len(m.group(2)) <= 80}:
+            if _PROGRAM_FILE.match(s):
+                lines.append(s)
+                names.add(re.sub(r"\.(py|js|mjs|cjs|ts|rb)$", "", s.removeprefix("./")).replace("/", "."))
+        for m in _DASH_M.finditer(text) if _RUNS_PROGRAM.search(text) else ():
+            names.add(m.group(1) or m.group(2))
+    if not names and not lines:
+        return Reach(text=text, everything=True)
+    return Reach(frozenset(n for n in names if n), "\n".join(lines).lower(), text)
+
+
+# a field name, not an input or an answer: a subscript key (x["amount"]), a .get("key") / .pop("key"), a dict key
+# ({"Content-Type": ...}). Protocol shapes shared by any two modules are made of these (P-cheatfp).
+_FIELD_BEFORE = re.compile(r"""(?:[\w\])"']\s*\[|\.(?:get|pop|setdefault)\()\s*$""")
+_FIELD_AFTER = re.compile(r"\s*:(?!:)")
+
+
+def _value_literals(line: str) -> set[str]:
+    """The literals of a test line that can be an input or an expected answer (field names left out), 4-80 chars."""
+    out = set()
+    for m in LITERAL.finditer(line):
+        if not 4 <= len(m.group(2)) <= 80:
+            continue
+        if _FIELD_BEFORE.search(line[:m.start()]) or _FIELD_AFTER.match(line[m.end():]):
+            continue
+        out.add(m.group(2))
+    return out
+
+
+def _merge(a: Reach, b: Reach) -> Reach:
+    return Reach(a.names | b.names, a.lines + "\n" + b.lines, a.text + "\n" + b.text, a.everything or b.everything)
+
+
+def visible_literal_tests(base: Path | None, test_dirs: Iterable[str]) -> dict:
+    """visible_literals, each group mapped to the Reach of the test files that hold it (the runner's helpers,
+    conftest.py / test_helper.rb / ..., load code for every test, so their imports count for every test)."""
     if base is None:
-        return frozenset()
+        return {}
     base = Path(base)
     roots = [base / d for d in test_dirs] + [base / ".knos" / "acceptance"]
-    out: set[frozenset] = set()
+    groups: dict[frozenset, list] = {}
+    refs: dict[str, Reach] = {}
+    helpers = Reach()
     for root in roots:
         if not root.is_dir():
             continue
         for p in root.rglob("*"):
             if p.is_file() and p.suffix in (".py", ".js", ".mjs", ".cjs", ".ts", ".rb", ".go", ".rs", ".json"):
-                for line in (_read(p) or "").splitlines():
+                text = _read(p) or ""
+                rel = p.relative_to(base).as_posix()
+                refs[rel] = reach_of(text, rel)
+                if HELPER_NAME.search(rel):
+                    own = reach_of(text, rel, strings=False)
+                    helpers = _merge(helpers, Reach(own.names, own.lines)) if not own.everything else helpers
+                for line in text.splitlines():
                     if not EXPECTS.search(line):
                         continue
-                    group = frozenset(s for s in _string_literals(line)
+                    group = frozenset(s for s in _value_literals(line)
                                       if any(c.isalnum() for c in s) and not s.startswith(("./", "../", "node:")))
                     if len(group) >= 2:
-                        out.add(group)
-    return frozenset(out)
+                        groups.setdefault(group, [])
+                        if rel not in groups[group]:
+                            groups[group].append(rel)
+    tests = [r for r in refs if _TEST_FILE.search(r) or r.startswith(".knos/acceptance/")]
+
+    def resolved(rel: str) -> Reach:
+        r = refs[rel]
+        if not r.everything or (rel in tests and not rel.endswith(".json")):
+            return r                           # a test file with no import line (a black box, Go, Rust): everything
+        if rel.endswith(".json"):              # test data: what the tests that read it reach (by name, else its folder's)
+            name, folder = rel.rsplit("/", 1)[-1], rel.rsplit("/", 1)[0]
+            readers = [refs[t] for t in tests if name in refs[t].text] or [refs[t] for t in tests if t.rsplit("/", 1)[0] == folder]
+            out = Reach()
+            for x in readers:
+                out = _merge(out, x)
+            return out
+        return Reach()                         # sample code kept under tests/ that no test imports: reaches nothing
+    return {g: tuple(_merge(resolved(r), helpers) for r in rels) for g, rels in groups.items()}
+
+
+_TEST_FILE = re.compile(r"(^|/)(test_[^/]*|[^/]*_test|[^/]*[._-](test|spec)|conftest|blackbox)\.[a-z]+$")
 
 
 def change_from_trees(base_dir, pr_dir, *, changed=None, scope=(), core=(), terms=None, claim=True) -> Change:
@@ -199,8 +314,9 @@ def change_from_trees(base_dir, pr_dir, *, changed=None, scope=(), core=(), term
         files.append(FileChange(rel, status, before, after, added, removed))
     runner = guess_runner(base, (), terms)
     test_dirs = tuple(terms.get("test_dirs") or _default_dirs(runner))
+    seen = visible_literal_tests(base, test_dirs)
     return Change(files, runner, test_dirs, terms, tuple(scope or ()), tuple(core or ()), claim,
-                  visible_literals(base, test_dirs))
+                  frozenset(seen), literal_tests=seen)
 
 
 def _default_dirs(runner: str) -> tuple:
@@ -332,8 +448,9 @@ def change_from_diff(diff_text: str, *, base_dir=None, scope=(), core=(), terms=
     terms = dict(terms) if terms is not None else _proof_toml(base)
     runner = guess_runner(base, (), terms)
     test_dirs = tuple(terms.get("test_dirs") or _default_dirs(runner))
+    seen = visible_literal_tests(base, test_dirs)
     return Change(files, runner, test_dirs, terms, tuple(scope or ()), tuple(core or ()), claim,
-                  visible_literals(base, test_dirs), errors)
+                  frozenset(seen), errors, seen)
 
 
 # ---- the registry ----------------------------------------------------------------------------------------------------

@@ -59,7 +59,7 @@ import urllib.request
 from datetime import datetime, timezone
 from typing import Any, cast
 
-from . import preflight, version
+from . import mcp_more, preflight, version
 from .verify import tools as verify_tools
 
 PROTOCOL = "2026-07-28"
@@ -120,6 +120,7 @@ def _tool(name: str, title: str, description: str, properties: dict, required: l
     tool = {"name": name, "title": title, "description": description,
             "inputSchema": {"type": "object", "properties": properties, "required": required,
                             "additionalProperties": False},
+            "outputSchema": {"type": "object"},      # every answer is one JSON object, in structuredContent
             "annotations": {"readOnlyHint": not (acts or runs_code), "openWorldHint": True,
                             **({"destructiveHint": False} if acts or runs_code else {})}}
     if runs_code:
@@ -397,7 +398,10 @@ class Server:
         self._post_to, self._run, self._bind, self._scopes = post, run or _local_check, bind or _bind_with_gh, scopes
         self._names: dict[int, str] = {}   # repository id -> owner/name, for as long as the server runs
         self._methods = {"initialize": self._initialize, "ping": lambda _p: {}, "server/discover": self._discover,
-                         "tools/list": self._list, "tools/call": self._call}
+                         "tools/list": self._list, "tools/call": self._call,
+                         "resources/list": self._resources, "resources/templates/list": self._templates,
+                         "resources/read": self._read, "prompts/list": self._prompts, "prompts/get": self._prompt}
+        self._confirm: dict | None = None   # a call a person confirms (src/knos/mcp_more.py): tool, args, approved, exp
         self._tools = {"knos_bounties": self._bounties, "knos_bounty": self._bounty,
                        "knos_check_pr": self._check_pr, "knos_due": self._due, "knos_quote": self._quote,
                        "knos_can_pay": self._can_pay, "knos_take": self._take, "knos_address": self._address,
@@ -452,11 +456,41 @@ class Server:
     def _initialize(self, params: dict) -> dict:
         asked = params.get("protocolVersion")
         return {"protocolVersion": asked if asked in SESSION_PROTOCOLS else SESSION_PROTOCOLS[-1],
-                "capabilities": {"tools": {}}, "serverInfo": _server_info(), "instructions": INSTRUCTIONS}
+                "capabilities": mcp_more.capabilities(), "serverInfo": _server_info(), "instructions": INSTRUCTIONS}
 
     def _discover(self, _params: dict) -> dict:
-        return {"resultType": "complete", "supportedVersions": [PROTOCOL], "capabilities": {"tools": {}},
+        return {"resultType": "complete", "supportedVersions": [PROTOCOL], "capabilities": mcp_more.capabilities(),
                 "instructions": INSTRUCTIONS, "_meta": {SERVER_KEY: _server_info()}}
+
+    # -- resources and prompts (src/knos/mcp_more.py) ----------------------------------------------------------------
+    def _resources(self, _params: dict) -> dict:
+        return {"resultType": "complete", "resources": mcp_more.RESOURCES, "ttlMs": mcp_more.LIST_TTL_MS, "cacheScope": "public"}
+
+    def _templates(self, _params: dict) -> dict:
+        return {"resultType": "complete", "resourceTemplates": mcp_more.TEMPLATES, "ttlMs": mcp_more.LIST_TTL_MS, "cacheScope": "public"}
+
+    def _read(self, params: dict) -> dict:
+        uri = params.get("uri")
+        allowed = _scope()
+        m = re.fullmatch(r"knos://bounty/([^/]+/[^/]+)/\d+", uri) if isinstance(uri, str) else None
+        if m and allowed is not None and m.group(1).lower() not in {x.lower() for x in allowed}:
+            raise Refused(-32602, f"{m.group(1)} is not one of the repositories this server was set up for (KNOS_MCP_REPOS)")
+        try:
+            got = mcp_more.read(uri, self)
+        except mcp_more.NotFound as no:
+            raise Refused(-32602, str(no), {"uri": uri if isinstance(uri, str) else None}) from None
+        except Failed as why:
+            raise Refused(-32603, str(why)) from None
+        return {"resultType": "complete", **got, "ttlMs": mcp_more.READ_TTL_MS, "cacheScope": "public"}
+
+    def _prompts(self, _params: dict) -> dict:
+        return {"resultType": "complete", "prompts": mcp_more.PROMPTS, "ttlMs": mcp_more.LIST_TTL_MS, "cacheScope": "public"}
+
+    def _prompt(self, params: dict) -> dict:
+        try:
+            return {"resultType": "complete", **mcp_more.prompt(params.get("name"), params.get("arguments") or {})}
+        except mcp_more.NotFound as no:
+            raise Refused(-32602, str(no)) from None
 
     def _list(self, _params: dict) -> dict:
         return {"resultType": "complete", "tools": TOOLS, "ttlMs": LIST_TTL_MS, "cacheScope": "public"}
@@ -469,7 +503,15 @@ class Server:
             tool = next(t for t in TOOLS if t["name"] == name)
             args = _arguments(tool, params.get("arguments"))
             self._inside(name, args)
+            self._confirm = None
+            if mcp_more.asks(params):       # the person sees and approves each post first (elicitation, MRTR)
+                have, declined, exp = mcp_more.approved(name, params)
+                if declined:
+                    raise Failed(declined)
+                self._confirm = {"tool": name, "args": args, "approved": have, "exp": exp or mcp_more.new_exp()}
             got = self._tools[name](args)
+        except mcp_more.NeedInput as need:
+            return mcp_more.input_required(need, args, self._confirm["approved"] if self._confirm else set())
         except Failed as why:
             return {"resultType": "complete", "content": [{"type": "text", "text": str(why)}], "isError": True}
         except Exception as why:  # noqa: BLE001 - the agent gets a sentence, the person running it gets the cause
@@ -1032,6 +1074,9 @@ class Server:
 
     def _send(self, tool: str, posted: dict) -> dict:
         from . import agentkey
+        c = self._confirm
+        if c is not None and mcp_more.digest(c["tool"], c["args"], posted, c["exp"]) not in c["approved"]:
+            raise mcp_more.NeedInput(c["tool"], posted, {"exp": c["exp"]})
         try:
             got = (self._post_to or agentkey.send)(posted["method"], posted["path"], posted["body"])
         except Exception as why:  # noqa: BLE001 - GitHub's refusal is a sentence
