@@ -1,0 +1,138 @@
+# Knos builds Knos: what `knos self` works on (docs/reference/SELF.md).
+#
+# FOUNDER-OWNED. This file is trusted core (CODEOWNERS names the founder for it): no agent pull request may change it,
+# and the loop reads it only from main, never from a candidate. Every number below is a setting the founder chose for
+# the loop, not a measurement and not a price.
+#
+# Three tiers of tests per target:
+#   public   tests in the repository, which agents read and run
+#   sealed   a hidden bundle kept outside the repository (its sha256 is here); the referee from main runs it and the
+#            agent learns pass/fail only, never a log
+#   audit    a second hidden bundle that never decides a merge; `knos self audit` runs it on a schedule over the
+#            accepted versions to catch work that fits the sealed tests and nothing else
+
+version: 1
+founder: "drexthealpha"
+
+loop:
+  branch: "self-loop"
+  auto_merge_to_main: false
+  daily_merge_cap: 3
+  rollout:
+    - sealed
+    - shadow
+    - canary
+    - main
+  canary_bounty_max_usd: "5.00"
+  network: "devnet"
+  referee_change:
+    red_team: "at_least_current"
+    shadow_jobs_min: 3
+    approval_keys: []
+
+# Trusted core: agents can never write these. The same list is in CODEOWNERS (a test keeps the two equal).
+core:
+  - programs/**
+  - programs-v2/**
+  - crates/**
+  - idl/**
+  - src/knos/judge.py
+  - src/knos/referee/**
+  - src/knos/cheats/**
+  - src/knos/gate/**
+  - src/knos/receipt2/**
+  - src/knos/settle/**
+  - src/knos/money/**
+  - src/knos/graduation/**
+  - src/knos/splits/**
+  - src/knos/record/**
+  - src/knos/self/**
+  - src/knos/billing.py
+  - src/knos/fees.py
+  - src/knos/agentkey.py
+  - config/**
+  - .github/**
+  - actions/**
+  - action.yml
+  - deploy/**
+  - scripts/deploy_v2.py
+  - scripts/deploy_v2.sh
+  - scripts/build_programs.sh
+  - scripts/build_programs_v2.sh
+  - tests/bench_tamper/**
+  - pyproject.toml
+  - uv.lock
+  - "*.lock"
+  - "**/package-lock.json"
+  - targets.yml
+  - CODEOWNERS
+
+# Product: what agents may change (everything else is refused as outside the product, unless a target's scope says so).
+product:
+  - web/**
+  - sdk/**
+  - docs/**
+  - skills/**
+  - hermes/**
+  - integrations/**
+  - plugin/**
+  - examples/**
+  - src/knos/**
+  - tests/**
+  - README.md
+
+targets:
+  - id: mcp-cold-start
+    what: "fewer Python modules loaded when an agent starts the Knos MCP server (import knos.mcp)"
+    kind: product
+    metric: "modules imported by `import knos.mcp` in a fresh interpreter, minus those of an empty one (python -X importtime)"
+    direction: lower
+    min_gain: 1
+    implausible_gain_rel: 0.6
+    tolerance_abs: 0
+    bounty_usd: "1.00"
+    status: open
+    scope:
+      - src/knos/mcp.py
+      - src/knos/preflight.py
+      - src/knos/enforce.py
+      - src/knos/ghwords.py
+      - src/knos/terms.py
+    public_tests:
+      - tests/test_mcp.py
+    shadow_tests:
+      - tests/test_mcp.py
+      - tests/test_tasks.py
+      - tests/test_host_hooks.py
+      - tests/test_cli_help.py
+    sealed:
+      sha256: "ea1e2bb0504100f24424a258fdde3f82f92b8f32ec6156e7aaeab338afa923a6"
+      metric: "metric.py"
+      tests: "test_sealed.py"
+    audit:
+      sha256: "de98fc8a9afb38f4efce3a700ac63c592f4b307e2bf24967eafcb8519e258208"
+      tests: "test_audit.py"
+  - id: cli-cold-start
+    what: "fewer Python modules loaded by `import knos.cli` (every knos command pays it)"
+    kind: product
+    metric: "modules imported by `import knos.cli` in a fresh interpreter, minus those of an empty one (python -X importtime)"
+    direction: lower
+    min_gain: 1
+    implausible_gain_rel: 0.6
+    tolerance_abs: 0
+    bounty_usd: "1.00"
+    status: proposed
+    scope:
+      - src/knos/cli.py
+    public_tests:
+      - tests/test_cli_help.py
+    shadow_tests:
+      - tests/test_cli_help.py
+  - id: red-team-catch-rate
+    what: "the referee refuses more of the fixed red-team cheat set (knos.cheats.red_team)"
+    kind: referee
+    metric: "red-team cases refused"
+    direction: higher
+    min_gain: 0
+    bounty_usd: "0"
+    status: founder-only

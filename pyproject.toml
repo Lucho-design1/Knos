@@ -48,6 +48,11 @@ dev = [
 [project.scripts]
 knos = "knos.__main__:main"
 
+# Hermes Agent loads this as a plugin (hermes_cli/plugins_discovery.py, group "hermes_agent.plugins"): knos_verify,
+# knos_receipt, knos_bounty_claim, knos_outcome_check (src/knos/hermes_plugin.py). Inert unless Hermes is installed.
+[project.entry-points."hermes_agent.plugins"]
+knos = "knos.hermes_plugin:register"
+
 [project.urls]
 Homepage = "https://github.com/drexthealpha/Knos"
 Repository = "https://github.com/drexthealpha/Knos"
@@ -59,11 +64,13 @@ packages = ["src/knos"]
 # the registry of published terms, which `knos terms cite` and `knos terms verify` read (src/knos/terms_registry.py)
 [tool.hatch.build.targets.wheel.force-include]
 "terms" = "knos/_terms"
+# the one fee config (config/fees.yaml), which knos.money.fees_config reads when the tree is not there
+"config/fees.yaml" = "knos/_config/fees.yaml"
 
 [tool.hatch.build.targets.sdist]
 # anchored at the root: a bare name would also take every README.md and tests/ folder below it (the crates', the
 # JavaScript client's, which the stamp of the pinned workflows writes), and the sdist must not change with the stamp
-include = ["/src/knos", "/terms", "/tests", "/README.md", "/LICENSE"]
+include = ["/src/knos", "/terms", "/config/fees.yaml", "/tests", "/README.md", "/LICENSE"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

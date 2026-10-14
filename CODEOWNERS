@@ -1,0 +1,52 @@
+# Knos trusted core: only the founder changes these paths.
+#
+# With branch protection on main ("Require a pull request", "Require review from Code Owners", no bypass), a pull
+# request that touches any path below cannot merge without the founder's review. `knos self` refuses an agent's pull
+# request that touches one before any of its code runs (docs/reference/SELF.md). targets.yml lists the same paths
+# under `core`; tests/test_self_trust.py keeps the two lists equal.
+#
+# Everything not listed here is product: site, SDK, CLI, docs, skills, adapters. Agents may change product paths.
+
+# Solana programs and their interfaces
+/programs/                      @drexthealpha
+/programs-v2/                   @drexthealpha
+/crates/                        @drexthealpha
+/idl/                           @drexthealpha
+
+# The referee: judge, cheat library, sealed-test runner, receipts
+/src/knos/judge.py              @drexthealpha
+/src/knos/referee/              @drexthealpha
+/src/knos/cheats/               @drexthealpha
+/src/knos/gate/                 @drexthealpha
+/src/knos/receipt2/             @drexthealpha
+/tests/bench_tamper/            @drexthealpha
+
+# Money: settlement, treasury, escrow, fees, splits, keys
+/src/knos/settle/               @drexthealpha
+/src/knos/money/                @drexthealpha
+/src/knos/graduation/           @drexthealpha
+/src/knos/splits/               @drexthealpha
+/src/knos/billing.py            @drexthealpha
+/src/knos/fees.py               @drexthealpha
+/src/knos/agentkey.py           @drexthealpha
+/config/                        @drexthealpha
+
+# The public record and the self-improvement loop's own code and config
+/src/knos/record/               @drexthealpha
+/src/knos/self/                 @drexthealpha
+/targets.yml                    @drexthealpha
+/CODEOWNERS                     @drexthealpha
+
+# Pinned workflows, actions, deploy scripts, packaging and lockfiles
+/.github/                       @drexthealpha
+/actions/                       @drexthealpha
+/action.yml                     @drexthealpha
+/deploy/                        @drexthealpha
+/scripts/deploy_v2.py           @drexthealpha
+/scripts/deploy_v2.sh           @drexthealpha
+/scripts/build_programs.sh      @drexthealpha
+/scripts/build_programs_v2.sh   @drexthealpha
+/pyproject.toml                 @drexthealpha
+/uv.lock                        @drexthealpha
+*.lock                          @drexthealpha
+**/package-lock.json            @drexthealpha

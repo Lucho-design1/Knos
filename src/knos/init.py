@@ -446,9 +446,18 @@ def read_only_tools() -> list[str]:
     return [t["name"] for t in mcp.TOOLS if t["annotations"]["readOnlyHint"]]
 
 
-def posting_tools() -> list[str]:
+def unread_tools() -> list[str]:
+    """Every tool that is not read-only: the three that post and knos_verify, which runs the repository's tests. A host
+    that runs every enabled tool without asking (opencode, Windsurf) gets these switched off."""
     from . import mcp
     return [t["name"] for t in mcp.TOOLS if not t["annotations"]["readOnlyHint"]]
+
+
+def posting_tools() -> list[str]:
+    """The tools that post to GitHub as the agent's account. (knos_verify, which runs the repository's tests, is in
+    neither list: no host is told to run it unasked, and it is not disabled either: the host asks each time.)"""
+    from . import mcp
+    return [t["name"] for t in mcp.TOOLS if not t["annotations"]["readOnlyHint"] and not (t.get("_meta") or {}).get(mcp.RUNS_CODE)]
 
 
 def portable_argv() -> list[str]:
@@ -631,7 +640,7 @@ def _opencode(root: Path, home: Path | None, argv: list[str], rep: dict) -> None
     def change(d: dict) -> None:
         d.setdefault("$schema", "https://opencode.ai/config.json")
         _table(d, "mcp", f).update(knos={"type": "local", "command": [*argv, "mcp"], "enabled": True})
-        _table(d, "tools", f).update({f"knos_{t}": False for t in posting_tools()})   # opencode names a tool <server>_<tool>
+        _table(d, "tools", f).update({f"knos_{t}": False for t in unread_tools()})   # opencode names a tool <server>_<tool>
     rep["files"].append((f, "MCP server, with the tools that post turned off", _edit(f, change)))
     f = root / ".opencode" / "plugins" / "knos.js"
     rep["files"].append((f, "session.idle plugin", _own(f, OPENCODE_PLUGIN % json.dumps(argv))))
@@ -662,7 +671,7 @@ def _windsurf(root: Path, home: Path | None, argv: list[str], rep: dict) -> None
     entry = {"command": hook, "powershell": hook, "show_output": True}
     rep["files"].append((f, "post_cascade_response hook", _edit(f, lambda d: _hooks(d, f, {"post_cascade_response": entry}))))
     rep["manual"].append("Its MCP servers are read from your home only (mcp_config.json). Add this under mcpServers there:\n"
-                         + json.dumps({"knos": _server(argv, disabledTools=posting_tools())}, indent=2))
+                         + json.dumps({"knos": _server(argv, disabledTools=unread_tools())}, indent=2))
 
 
 def _hermes(root: Path, home: Path | None, argv: list[str], rep: dict) -> None:

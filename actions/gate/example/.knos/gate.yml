@@ -1,0 +1,23 @@
+# An example Knos Gate config (synthetic): a Python repository whose hidden tests live in the secret KNOS_GATE_HIDDEN.
+version: 1
+hidden_tests:
+  source: secret
+  secret: KNOS_GATE_HIDDEN
+  sha256: "0000000000000000000000000000000000000000000000000000000000000000"   # replace: `knos gate seal DIR` prints it
+  into: tests/hidden
+  command: python -m pytest -q tests/hidden
+  timeout: 600
+public_tests:
+  command: python -m pytest -q tests
+setup: python -m pip install --quiet pytest
+scope:
+  allow: ["src/**", "tests/**", "README.md"]
+  deny: []
+protect: ["data/**"]
+on_fail: label
+label: knos-gate-failed
+pass_label: knos-verified       # opt in: a bypass signal for Vouch or GitHub's outside-PR caps
+outside_only: true
+receipt: true
+bounties:
+  enabled: false

@@ -1,0 +1,85 @@
+name: prove
+
+# The buyer's prove.yml for a measured outcome (docs/reference/MEASURED.md), kept as prove.yml.in so that it is not read
+# as a workflow of this repository. Install it as .github/workflows/prove.yml,
+# beside outcome.yaml and outcome.lock.json, commit, and fund one order per tier pinned to that commit
+# (knos_pay requires the token's workflow file to be prove.yml at the pinned commit).
+#
+#   measure   the reusable knos-outcome.yml: reads the window's data, measures, passes only when the bar is reached.
+#             No token, no secret but the data source's.
+#   sign      only when measure passed. Checks every audience against the lock (the tier's order, its terms hash, the
+#             spec's seller), asks GitHub for one token per passed tier and one for the result's hash, and uploads them.
+#             It runs no code from the repository: it reads two JSON files with jq.
+#
+# Anyone may then relay the tokens (knos_oidc verifies each, knos_pay pays the tier); a tier not signed for goes back
+# to the buyer after its deadline. Start it by hand at the pinned commit, after the window has closed:
+#   gh workflow run prove.yml --ref <the branch that holds the pinned commit>
+#
+# In the Knos demo the measuring workflow is the copy in the same repository (`uses: ./.github/workflows/...`) and
+# the measuring code a copy at .knos/vendor; a buyer names Knos's own file at a commit instead:
+#   drexthealpha/Knos/.github/workflows/knos-outcome.yml at a commit, with knos: "knos==<version>"
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: knos-outcome
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    uses: ./.github/workflows/knos-outcome.yml
+    with:
+      knos: "path:.knos/vendor"
+    permissions:
+      contents: read
+
+  sign:
+    needs: measure
+    if: needs.measure.outputs.passed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AUDIENCES: ${{ needs.measure.outputs.audiences }}
+      RESULT: ${{ needs.measure.outputs.result_hash }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            outcome.lock.json
+          sparse-checkout-cone-mode: false
+      - name: check each audience against the lock, then ask GitHub to sign it
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$RESULT" in *[!0-9a-f]*|"") echo "::error::result hash"; exit 1 ;; esac
+          mkdir -p signed
+          seller="$(jq -r .payee outcome.lock.json)"
+          ask() { curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" --get --data-urlencode "audience=$1" "$ACTIONS_ID_TOKEN_REQUEST_URL" \
+                    | jq -r .value; }
+          i=0
+          for aud in $(jq -r '.[]' <<<"$AUDIENCES"); do
+            [[ "$aud" =~ ^knos3:pay:([1-9A-HJ-NP-Za-km-z]{32,44}):[0-9a-f]{40}:([0-9a-f]{64}):0:([0-9]+):([0-9]+\.10000\.[1-9A-HJ-NP-Za-km-z]{32,44})$ ]] \
+              || { echo "::error::not a pay audience: $aud"; exit 1; }
+            order="${BASH_REMATCH[1]}"; terms="${BASH_REMATCH[2]}"; issue="${BASH_REMATCH[3]}"; payee="${BASH_REMATCH[4]}"
+            [ "$issue" = "$(jq -r .issue outcome.lock.json)" ] || { echo "::error::the issue is not the lock's"; exit 1; }
+            jq -e --arg o "$order" --arg t "$terms" '.orders[] | select(.address == $o and .terms_hash == $t)' outcome.lock.json > /dev/null \
+              || { echo "::error::$order with terms $terms is not a tier of the lock"; exit 1; }
+            [ "$payee" = "$seller" ] || { echo "::error::the payee is not the spec's seller"; exit 1; }
+            ask "$aud" > "signed/tier-$i.jwt"; echo "$aud" > "signed/tier-$i.aud"; i=$((i + 1))
+          done
+          ask "knos-outcome:result:$RESULT" > signed/result.jwt
+          curl -sSf https://token.actions.githubusercontent.com/.well-known/jwks > signed/jwks.json
+          echo "signed $i tier(s) and the result $RESULT" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: knos-outcome-signed
+          path: signed/
+          if-no-files-found: error
+          retention-days: 7

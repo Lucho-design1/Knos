@@ -7,9 +7,9 @@ A panic in a Solana program aborts the instruction and with it the whole transac
 changes: no state is written and no token moves. What a panic costs is the transaction fee and an error that names no cause. So the question for
 each place below is whether it can be reached, and the answer wanted is no.
 
-The four programs' source holds 102 `unwrap()` calls. 39 are in program code, on the 34 lines listed below; the other 63 are in unit tests and proof harnesses
+The four programs' source holds 103 `unwrap()` calls. 40 are in program code, on the 35 lines listed below; the other 63 are in unit tests and proof harnesses
 (`#[cfg(test)]` at the end of each file, and `knos_pay/src/proofs.rs`, which is compiled only for tests and for the Kani model checker), which are in
-no build of a program. No program code holds an `expect(`, an `unreachable!`, a `panic!`, a `todo!` or an `assert!`; one `debug_assert_eq!` is listed.
+no build of a program. No program code holds an `expect(`, an `unreachable!`, a `panic!`, a `todo!` or an `assert!`; two `debug_assert_eq!` are listed.
 `knos_oidc`'s places were read line by line: none can be reached, so none was replaced. For the three other programs (`knos_pay`, `knos_meter`,
 `knos_passkey`) a reason names the guard where it is on the lines just before, and says so where the guard is a caller's.
 
@@ -28,8 +28,10 @@ no build of a program. No program code holds an `expect(`, an `unreachable!`, a 
 | `knos_oidc/src/claims.rs:43` | `debug_assert_eq!(w - from, out_len);` | A debug assertion: it is not compiled into a release build, which is what `cargo build-sbf` makes. In a test build it says the decoder wrote as many bytes as `b64_len` promised. |
 | `knos_oidc/src/lib.rs:265` | `fn i64_at(d: &[u8], at: usize) -> i64 { i64::from_le_bytes(d[at..at + 8].try_into().unwrap()) }` | A slice of a width written in the same expression (`d[o..o + N]`) made into an array of that width: the conversion cannot fail. The slicing before it panics if the data is shorter than `o + N`. Every caller reads `K_ACTIVE` (8) or `K_EXPIRES` (16) of a key account after `key_limbs` accepted it, which requires its length to be `K_HDR` (40) plus the limbs: it is never shorter. |
 | `knos_oidc/src/lib.rs:303` | `Ok(Key { issuer: d[K_ISSUER], l, n0inv: u32::from_le_bytes(d[K_N0INV..K_N0INV + 4].try_into().unwrap()), n, r2, tail })` | A slice of a width written in the same expression (`d[o..o + N]`) made into an array of that width: the conversion cannot fail. The slicing before it panics if the data is shorter than `o + N`. `load_key` runs `key_limbs` first, so the account holds at least its 40-byte header: it is never shorter. |
-| `knos_oidc/src/lib.rs:547` | `let n0inv = u32::from_le_bytes(rest[0..4].try_into().unwrap());` | A slice of a width written in the same expression (`d[o..o + N]`) made into an array of that width: the conversion cannot fail. The slicing before it panics if the data is shorter than `o + N`. The line before refuses instruction data whose length is not `4 + 4 * l`: it is never shorter. |
-| `knos_oidc/src/lib.rs:575` | `pins::ISSUER_OTHER => ikey_audience(d[K_HDR + 8 * l..K_HDR + 8 * l + 32].try_into().unwrap(), &kh),` | A slice of a width written in the same expression (`d[o..o + N]`) made into an array of that width: the conversion cannot fail. The slicing before it panics if the data is shorter than `o + N`. `key_limbs` accepted the account, and for an issuer number of ISSUER_OTHER or above that requires 64 bytes after the limbs: it is never shorter. |
+| `knos_oidc/src/lib.rs:549` | `let n0inv = u32::from_le_bytes(rest[0..4].try_into().unwrap());` | A slice of a width written in the same expression (`d[o..o + N]`) made into an array of that width: the conversion cannot fail. The slicing before it panics if the data is shorter than `o + N`. The line before refuses instruction data whose length is not `4 + 4 * l`: it is never shorter. |
+| `knos_oidc/src/lib.rs:577` | `pins::ISSUER_OTHER => ikey_audience(d[K_HDR + 8 * l..K_HDR + 8 * l + 32].try_into().unwrap(), &kh),` | A slice of a width written in the same expression (`d[o..o + N]`) made into an array of that width: the conversion cannot fail. The slicing before it panics if the data is shorter than `o + N`. `key_limbs` accepted the account, and for an issuer number of ISSUER_OTHER or above that requires 64 bytes after the limbs: it is never shorter. |
+| `knos_oidc/src/modexp.rs:67` | `debug_assert_eq!(v as u32, n0inv32);` | A debug assertion: it is not compiled into a release build, which is what `cargo build-sbf` makes. In a test build it says the 64-bit Montgomery inverse agrees with the 32-bit one the key account holds. |
+| `knos_oidc/src/rsa64.rs:16` | `for (i, o) in out.iter_mut().enumerate() { *o = u64::from_le_bytes(d[8 * i..8 * i + 8].try_into().unwrap()); }` | A slice of a width written in the same expression (`d[o..o + N]`) made into an array of that width: the conversion cannot fail. The slicing before it panics if the data is shorter than `o + N`. The slice is read from the same account range `rsa::load` reads for the same number (two 32-bit limbs per 64-bit limb); an index past its end would panic, which ends the transaction with nothing written. |
 | `knos_passkey/src/lib.rs:208` | `let key: [u8; webauthn::KEY_LEN] = d[W_KEY..W_KEY + webauthn::KEY_LEN].try_into().unwrap();` | A slice of a width written in the same expression (`d[o..o + N]`) made into an array of that width: the conversion cannot fail. The slicing before it panics if the data is shorter than `o + N`. `wallet_key` refuses an account whose length is not `WALLET_LEN` first. |
 | `knos_passkey/src/lib.rs:209` | `(key, d[W_BUMP], u64::from_le_bytes(d[W_NONCE..W_NONCE + 8].try_into().unwrap()))` | A slice of a width written in the same expression (`d[o..o + N]`) made into an array of that width: the conversion cannot fail. The slicing before it panics if the data is shorter than `o + N`. `wallet_key` refuses an account whose length is not `WALLET_LEN` first. |
 | `knos_passkey/src/lib.rs:243` | `let amount = u64::from_le_bytes(data[0..8].try_into().unwrap());` | A slice of a width written in the same expression (`d[o..o + N]`) made into an array of that width: the conversion cannot fail. The slicing before it panics if the data is shorter than `o + N`. The line before refuses instruction data shorter than 16 bytes (18 in `fund`). |
@@ -73,9 +75,11 @@ The table's middle column counts every written panic in tests and proofs, not on
 | `knos_meter/src/token.rs` | 1 | 17 | 8 |
 | `knos_oidc/src/claims.rs` | 1 | 64 | 20 |
 | `knos_oidc/src/es256.rs` | 0 | 23 | 44 |
-| `knos_oidc/src/lib.rs` | 4 | 40 | 87 |
+| `knos_oidc/src/lib.rs` | 4 | 40 | 88 |
+| `knos_oidc/src/modexp.rs` | 1 | 0 | 2 |
 | `knos_oidc/src/pins.rs` | 0 | 0 | 2 |
 | `knos_oidc/src/rsa.rs` | 0 | 0 | 51 |
+| `knos_oidc/src/rsa64.rs` | 1 | 3 | 37 |
 | `knos_oidc/src/strict.rs` | 0 | 64 | 35 |
 | `knos_passkey/src/lib.rs` | 7 | 9 | 17 |
 | `knos_passkey/src/token.rs` | 2 | 25 | 9 |
@@ -92,4 +96,4 @@ The table's middle column counts every written panic in tests and proofs, not on
 | `knos_pay/src/proofs.rs` | 0 | 46 | 0 |
 | `knos_pay/src/state.rs` | 8 | 10 | 22 |
 | `knos_pay/src/token.rs` | 1 | 26 | 8 |
-| all | 40 | 518 | 431 |
+| all | 42 | 521 | 471 |

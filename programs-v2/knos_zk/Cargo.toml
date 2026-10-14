@@ -1,0 +1,29 @@
+[package]
+name = "knos_zk"
+version = "0.3.14"
+edition = "2021"
+rust-version = "1.84"
+license = "MIT"
+description = "Groth16 (BN254) verification of a Knos private-score proof on Solana, through the alt_bn128 syscalls; records a verified verdict in a PDA a payout can check."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+# A workspace of its own (empty table below): the four programs' workspace and lockfile know nothing of this one, and
+# its dependencies (groth16-solana and the arkworks crates it reads keys with) never enter their build.
+[workspace]
+
+[dependencies]
+solana-program = "=2.2.1"
+groth16-solana = "=0.2.0"
+
+[features]
+no-entrypoint = []
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+
+[lints.rust]
+unexpected_cfgs = { level = "allow" }

@@ -1,0 +1,33 @@
+# .github/workflows/knos-gate.yml for App mode: the Knos Gate App dispatches this on every pull request and reads its
+# artifact. A dispatched run belongs to the default branch, so it adds no check to the pull request: the App's check
+# "Knos Gate" is the only one, and the App posts the one comment.
+name: Knos Gate (app)
+run-name: "Knos Gate #${{ inputs.pr }} ${{ inputs.head }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: the pull request
+        required: true
+      head:
+        description: the head commit the App asked about
+        required: true
+
+permissions: {}
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: drexthealpha/Knos/actions/gate@<full commit sha of a Knos release>
+        with:
+          report: app
+          pr: ${{ inputs.pr }}
+          head: ${{ inputs.head }}
+          hidden-tests: ${{ secrets.KNOS_GATE_HIDDEN }}
+          receipt-key: ${{ secrets.KNOS_RECEIPT_KEY }}

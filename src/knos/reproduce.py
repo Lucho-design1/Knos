@@ -2,6 +2,7 @@
 
     knos reproduce [--only ID ...] [--rpc URL] [--out report.json] [--own-repo OWNER/NAME]
     knos reproduce --verify <run URL | file | artifact .zip | folder> [--keys jwks.json]
+    knos reproduce PATH [--spec knos.yml] [--heldout DIR] [--out DIR]     a research repository's knos.yml (knos.repro)
 
 Five checks, each timed, each naming the capabilities of docs/capabilities.json it supports:
 
@@ -787,11 +788,18 @@ def register(app, help_lines: list | None = None) -> None:
     @app.command("reproduce")
     def reproduce(only: list[str] = typer.Option([], "--only", help=f"run only this check, or the checks behind this capability id (repeat for several); the checks: {', '.join(EVERY)}"),
                   rpc: str = typer.Option("", "--rpc", help="the Solana JSON-RPC URL (default: KNOS_RPC, then devnet)"),
-                  out_file: Path = typer.Option(Path("report.json"), "--out", help="where to write the report"),
+                  out_file: Path = typer.Option(None, "--out", help="where to write the report (default report.json); with PATH, the folder for the result (default PATH/.knos-repro)"),
                   own: str = typer.Option("", "--own-repo", help="OWNER/NAME of a repository of yours with Knos installed: also run one funded round there (test USDC; it opens and merges a pull request). Needs GH_TOKEN"),
                   verify: str = typer.Option("", "--verify", help="check a signed reproduction instead of making one: a run's URL, the file, the artifact's .zip or its folder"),
-                  keys: str = typer.Option("", "--keys", help="with --verify: GitHub's keys as a JWKS file (default: the checkout's archive, else read from GitHub)")) -> None:
-        """Re-run, from this install and against public things only, what Knos says it does: a named devnet payment verified again from signatures, the on-chain programs against the hashes the release names, the local simulator's money invariants (from a source checkout), and the claim check on a public pull request. Writes a report; examples/knos-reproduce.yml has GitHub sign it in your repository. Exit 1 when a check fails. Devnet: test USDC."""
+                  keys: str = typer.Option("", "--keys", help="with --verify: GitHub's keys as a JWKS file (default: the checkout's archive, else read from GitHub)"),
+                  target: str = typer.Argument("", help="a research repository's folder holding knos.yml: re-run its claims on a second machine and a held-out split (docs/reference/REPRODUCED.md)"),
+                  spec: str = typer.Option("", "--spec", help="with PATH: the knos.yml to use (default: PATH/knos.yml)"),
+                  heldout: str = typer.Option("", "--heldout", help="with PATH: a sealed held-out data folder (default: the spec's generator with a seed Knos picks)")) -> None:
+        """Re-run, from this install and against public things only, what Knos says it does: a named devnet payment verified again from signatures, the on-chain programs against the hashes the release names, the local simulator's money invariants (from a source checkout), and the claim check on a public pull request. Writes a report; examples/knos-reproduce.yml has GitHub sign it in your repository. Exit 1 when a check fails. Devnet: test USDC. With PATH: a research repository's knos.yml claims instead; only a clean reproduction gets the "Reproduced by Knos" badge, a contested one stays private."""
+        if target or spec:      # research mode: knos.yml (src/knos/repro)
+            from .repro import cli as research
+            raise typer.Exit(research.main(target, spec, heldout, str(out_file) if out_file is not None else "", typer.echo))
+        out_file = out_file if out_file is not None else Path("report.json")
         if verify:
             root = checkout()
             try:

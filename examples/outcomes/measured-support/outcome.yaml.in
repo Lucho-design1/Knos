@@ -1,0 +1,65 @@
+version: 1
+# SYNTHETIC data: made-up support tickets for the Knos outcome demo. Devnet, a test token.
+title: AI agent resolves support tickets without a human (SYNTHETIC data)
+synthetic: true
+parties:
+  buyer:
+    github: drexthealpha
+    id: 142920951
+  seller:
+    github: drexthealpha
+    id: 142920951
+    address: EH47nFA5jaWNPQrbBgQbCct6BwZchqZAJZMhYPv7dsK8
+metric:
+  name: resolved_without_human
+  formula: "1 if status == 'solved' and escalated == 0 and reopened == 0 else 0"
+  aggregate: mean
+  direction: higher
+  lift: relative
+data:
+  source: file
+  path: tickets.csv
+  format: csv
+  id_field: ticket_id
+  time_field: created_at
+  arm_field: handled_by
+  treated_value: agent
+  synthetic: true
+  ref: outcome-data
+window:
+  start: "2026-10-13T17:05:12Z"
+  end: "2026-10-13T17:15:12Z"
+# A public salt, fixed before the window opened.
+control:
+  share: 0.2
+  salt: "8d4a8727b002e57920e3d5fbf24efa12"
+success:
+  min_lift: 0.05
+  confidence: 0.95
+bootstrap:
+  resamples: 1000
+  seed: 20261013
+price:
+  currency: test-USDC
+  unit_price: 1.0
+  cap: 30.0
+tiers:
+  - name: lift-5
+    min_lift: 0.05
+    amount: 5.0
+  - name: lift-10
+    min_lift: 0.1
+    amount: 10.0
+  - name: lift-20
+    min_lift: 0.2
+    amount: 15.0
+dispute_window_days: 7
+escrow:
+  cluster: devnet
+  repository: drexthealpha/knos-v0329-outcomes
+  repository_id: 1417494699
+  issue: 1
+  funder: HB1276Mmah49KJPdashNDPsbYti3C3HU8K7WPTJ7vjNZ
+  mint: J8Z1RvteeJRGaT1tdcK5C4XZSG3EWUD1Quqnv4CxkYd1
+  seq_start: 10752
+  work_seconds: 2760

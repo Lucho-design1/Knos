@@ -1,0 +1,33 @@
+{
+ "about": "SYNTHETIC fixture for tests/test_slop_audit.py: eight made-up pull requests in the shape of AIDev rows (no real repository, no real data). Each one exercises one rule.",
+ "issue_links": [[2, 100], [3, 100], [6, 101]],
+ "prs": [
+  {"id": 1, "agent": "AgentA", "merged": true, "repo": "example/one", "number": 1,
+   "body": "Fix the parser. All tests pass.", "ci": "failed",
+   "files": [{"filename": "src/parser.py", "status": "modified", "patch": "@@ -1 +1 @@\n-a = 1\n+a = 2"}]},
+  {"id": 2, "agent": "AgentA", "merged": true, "repo": "example/one", "number": 2,
+   "body": "Adds a feature. CI is green.", "ci": "passed",
+   "files": [{"filename": "src/feature.py", "status": "added", "patch": "@@ -0,0 +1 @@\n+def f(): return 1"},
+             {"filename": "tests/test_feature.py", "status": "added", "patch": "@@ -0,0 +2 @@\n+def test_f():\n+    assert f() == 1"}]},
+  {"id": 3, "agent": "AgentA", "merged": false, "repo": "example/one", "number": 3,
+   "body": "Make the build pass.", "ci": "failed",
+   "files": [{"filename": "tests/test_old.py", "status": "removed", "patch": "@@ -1,2 +0,0 @@\n-def test_old():\n-    assert old() == 2"}]},
+  {"id": 4, "agent": "AgentB", "merged": true, "repo": "example/two", "number": 4,
+   "body": "Fix flaky behaviour.",
+   "files": [{"filename": "src/app.test.ts", "status": "modified",
+              "patch": "@@ -1,3 +1,3 @@\n-it('works', () => {\n+it.skip('works', () => {\n   expect(run()).toBe(1)\n })"}]},
+  {"id": 5, "agent": "AgentB", "merged": true, "repo": "example/two", "number": 5,
+   "body": "Speed up CI.",
+   "files": [{"filename": ".github/workflows/ci.yml", "status": "modified",
+              "patch": "@@ -1,2 +1,3 @@\n   - run: npm ci\n-  - run: npm test\n+  - run: npm run build\n+    continue-on-error: true"}]},
+  {"id": 6, "agent": "AgentB", "merged": false, "repo": "example/two", "number": 6,
+   "body": "Refactor the client. Added unit tests for the retry path.",
+   "files": [{"filename": "src/client.go", "status": "modified", "patch": "@@ -1 +1 @@\n-x := 1\n+x := 2"}]},
+  {"id": 7, "agent": "AgentB", "merged": true, "repo": "example/two", "number": 7,
+   "body": "Tighten checks. Tests should pass once CI runs.",
+   "files": [{"filename": "pkg/thing_test.go", "status": "modified",
+              "patch": "@@ -1,3 +1,2 @@\n func TestThing(t *testing.T) {\n-  assert.Equal(t, 1, thing())\n-  assert.Equal(t, 2, other())\n+  assert.Equal(t, 1, thing())"}]},
+  {"id": 8, "agent": "AgentB", "merged": false, "repo": "example/two", "number": 8,
+   "body": "Docs only.", "files": []}
+ ]
+}

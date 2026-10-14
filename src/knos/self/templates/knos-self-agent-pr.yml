@@ -1,0 +1,40 @@
+# Template (not active): the CI job an agent's pull request may trigger in the self loop. Copy it to .github/workflows/
+# only by a founder pull request (.github/ is trusted core).
+#
+# It runs on `pull_request` (a fork's run gets NO secrets) with a read-only token, checks out main's targets.yml and
+# CODEOWNERS (never the PR's), and refuses any PR that touches a core path or cheats, before any of its code runs.
+# The sealed and audit tiers and every payout run on the loop operator's machine (`knos self run`), never in a CI an
+# agent can trigger: no key, no hidden test and no wallet is ever in this job.
+name: knos-self-agent-pr
+on:
+  pull_request:
+    branches: [self-loop]
+permissions:
+  contents: read
+jobs:
+  trust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: main (the trusted checkout)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7 (scripts/action_pins.json)
+        with:
+          ref: main
+          path: main
+          persist-credentials: false
+      - name: the pull request (read as data)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7 (scripts/action_pins.json)
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7 (scripts/action_pins.json)
+        with:
+          python-version: "3.12"
+      - name: refuse core paths and cheats (main's referee)
+        working-directory: main
+        run: |
+          python -m pip install --quiet -e .
+          git -C ../pr diff --binary "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > ../pr.diff
+          python -m knos.self check-pr ../pr.diff --root .

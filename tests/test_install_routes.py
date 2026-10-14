@@ -194,7 +194,7 @@ def test_every_link_and_snippet_on_the_install_page_starts_the_same_server():
     # Copilot runs an allowed tool without asking, so the page allows by name the tools that only read, every one of
     # them, and never the three that post as the agent's account: those a person is asked about each time
     assert copilot["type"] == "local" and copilot["tools"] == reads
-    assert [t for t in tools if t not in reads] == ["knos_take_work", "knos_submit_work", "knos_collect"]
+    assert [t for t in tools if t not in reads] == ["knos_take_work", "knos_submit_work", "knos_collect", "knos_verify"]   # knos_verify runs the tests
     assert "knos_find_work" in reads and not set(copilot["tools"]) & {"knos_take_work", "knos_submit_work", "knos_collect"}
     assert all(f"`{t}`" in page.split("\n| For |")[0] for t in tools)      # and the page's opening names each of them
     # every command line that carries the server

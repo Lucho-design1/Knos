@@ -9,6 +9,7 @@ platforms are in [`docs/reference/INTEGRATIONS.md`](../docs/reference/INTEGRATIO
 | [`workflows/knos-verify.yml`](workflows/knos-verify.yml) | a workflow that uses it, to copy into `.github/workflows/` |
 | [`webhook/`](webhook/README.md) | `verify(evidence, jwks)`: check a Knos receipt offline, in Python or TypeScript, with no dependency |
 | [`badge/`](badge/README.md) | "paid on proof" beside a bounty: the picture and the link |
+| [`skills/openclaw/knos-verify/`](skills/openclaw/knos-verify/SKILL.md) | the OpenClaw skill: run `knos verify` before a pull request, obey the repository's AI policy, attach the receipt |
 
 The action's verdict, as its `verdict` output and in the file its `json` output names:
 

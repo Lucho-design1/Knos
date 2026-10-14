@@ -10,6 +10,9 @@ three whose deliverable is a file a suite judges, and [support resolutions](#sup
 ticket's own record on made-up tickets. One of the first three is also signed by an issuer that is not a forge:
 [a Kubernetes cluster](#a-kubernetes-cluster-signs-an-outcome).
 
+A fifth kind pays for a result only data can show (more tickets solved without a person, more trial users who buy),
+measured against a control group chosen by a hash and paid in tiers under a cap: [MEASURED.md](MEASURED.md).
+
 ## Five kinds of work, and the evidence each needs
 
 | Kind of work | An outcome | The evidence an acceptance needs | Runs today |

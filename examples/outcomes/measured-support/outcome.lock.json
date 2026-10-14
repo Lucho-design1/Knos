@@ -1,0 +1,46 @@
+{
+  "control_share": 0.2,
+  "data_hashes": {
+    "history": "abbdcc5ff24cdaf84fbed8a0fb942620ed6e4753c60c06e0cf470c7dd72512b7"
+  },
+  "measurement_commit": "c2ab19ff8c9dc5e94b1ec295b46d9a292fb703fafd8ea2276b567b274aa29411",
+  "mode": 0,
+  "orders": [
+    {
+      "address": "4mhbCwE9ULqXDEkYD7wJFnTgPkkSK6ibRppn7MBkoRdH",
+      "amount": 5000000,
+      "fee": 50000,
+      "name": "lift-5",
+      "seq": 10752,
+      "terms_hash": "ccf0a0bdddb6a8260abbbd11d4faa8df3a1f6dc69f94a7044566fc2d6c1ddb12",
+      "tier": 0
+    },
+    {
+      "address": "DDwp9yCEQwSA8F8c1WBTc8owwJz6gaZMywyQrS2yUsnn",
+      "amount": 10000000,
+      "fee": 50000,
+      "name": "lift-10",
+      "seq": 10753,
+      "terms_hash": "fc48315773abe4d6093fefd61fe17a7048b85d44be5823b628248f09cfbf82f4",
+      "tier": 1
+    },
+    {
+      "address": "EWSPd3rZmbntgqPrAdV8bfWf5MytLChj4AqgRhoErfdR",
+      "amount": 15000000,
+      "fee": 50000,
+      "name": "lift-20",
+      "seq": 10754,
+      "terms_hash": "af42948ecd2b6b6648983bb91290d2a717ca1dc9260c345e53e206b135647c03",
+      "tier": 2
+    }
+  ],
+  "payee": "142920951.10000.EH47nFA5jaWNPQrbBgQbCct6BwZchqZAJZMhYPv7dsK8",
+  "salt": "8d4a8727b002e57920e3d5fbf24efa12",
+  "spec_hash": "1812b0de5e01c6252c78500ba50fb676f180b7abd9b4b44d5720165e11fdb361",
+  "synthetic": true,
+  "v": 1,
+  "window": {
+    "end": "2026-10-13T17:15:12Z",
+    "start": "2026-10-13T17:05:12Z"
+  }
+}

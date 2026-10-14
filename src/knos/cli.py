@@ -9,7 +9,8 @@
   for a repository's workflows
     knos command | settle | review | check --event E --repo R    what a repository's workflow runs: one command per job (knos.flow)
     knos relay                carry GitHub-signed tokens to Solana (what the always-on worker runs; anyone can)
-    knos mcp                  paid bounties and claim checks for a coding agent, over MCP (knos init registers it)
+    knos mcp                  paid bounties and claim checks for a coding agent, over MCP (knos init registers it); --http PORT for a URL
+    knos verify               before a pull request: the repository's AI policy, cheat checks, its tests twice, a signed receipt
     knos proof ...            the same checks by hand; and the judge GitHub runs on a bounty's pull request
     knos accept init          scaffold a black-box acceptance bundle from a reference implementation
 
@@ -132,9 +133,13 @@ def hook_cmd(ctx: typer.Context, which: str = typer.Argument(...)) -> None:
 
 
 @_app.command()
-def mcp() -> None:
+def mcp(http: str = typer.Option("", "--http", help="serve MCP's Streamable HTTP on [HOST:]PORT instead of stdio (default host 127.0.0.1)"),
+        path: str = typer.Option("/mcp", "--path", help="with --http: the URL path")) -> None:
     """Paid bounties and claim checks for a coding agent, over MCP on stdio. Read-only: no key, no wallet. An agent
-    host starts this; `knos init` registers it."""
+    host starts this; `knos init` registers it. `--http 8808` serves the same tools at http://127.0.0.1:8808/mcp."""
+    if http:
+        from . import mcp_http
+        raise typer.Exit(mcp_http.main(http if ":" in http else f"127.0.0.1:{http}", path))
     from . import mcp as server
     raise typer.Exit(server.main())
 
@@ -1154,6 +1159,12 @@ _MODULES = (    # (the commands it adds, how); in the order they were always reg
     (("assurance",), lambda: _mod("assurance").register(_app, _HELP)),            # knos assurance FILE: the level behind a receipt or each statement line (src/knos/assurance.py)
     (("fees",), lambda: _mod("plan_floor").register(_app, _HELP)),                # knos fees plans --check: every fee Plan on the cluster against the 20 bps floor (src/knos/plan_floor.py)
     (("protect",), lambda: _mod("strip_check").register(_app, _HELP)),            # knos protect --check-strip OWNER/REPO: whether the workflow-strip hole is closed (src/knos/strip_check.py)
+    (("referee", "cheats"), lambda: _mod("referee.cli").register(_app, _HELP)),   # knos referee seal | works | wanted | makeable | maintainer, knos cheats list | red-team (src/knos/referee/)
+    (("self",), lambda: _mod("self.cli").register(_app, _HELP)),             # knos self run | status | archive | rollback (src/knos/self/)
+    (("outcome",), lambda: _mod("outcomes.cli").register(_app, _HELP)),           # knos outcome draft | validate | tiers | lock | measure | sign ... (src/knos/outcomes/)
+    (("gate",), lambda: _mod("gate.cli").register(_app, _HELP)),                  # knos gate: Knos Gate, receipts, bounty quotes (src/knos/gate/cli.py)
+    (("verify",), lambda: _mod("verify.cli").register(_app, _HELP)),               # knos verify: AI policy, cheat checks, tests twice, a signed receipt (src/knos/verify/)
+    (("taskpack",), lambda: _mod("taskpack").register(_app, _HELP)),              # knos taskpack export | verify | grade | rows (src/knos/taskpack/)
 )
 _OWN = frozenset(name for name, _p, _s in _HELP) | {"hook", "badge", "record", "proof"}     # commands this module (or one it imports anyway) defines
 _loaded: set[int] = set()
@@ -1168,7 +1179,7 @@ def load(command: str | None = None) -> None:
         if i not in _loaded:
             _loaded.add(i)
             _MODULES[i][1]()
-    tail = [row for name in ("meter", "audit", "budget", "observe", "reproduce", "shadow", "events", "bill", "preflight", "keep", "appeal", "vault", "archive", "approve", "decide", "net", "advance", "faucet", "controls", "recall", "task", "exit", "boundary", "selfhost", "assurance", "fees", "protect") for row in _HELP if row[0] == name]   # the lines modules append: in this order always
+    tail = [row for name in ("meter", "audit", "budget", "observe", "reproduce", "shadow", "events", "bill", "preflight", "keep", "appeal", "vault", "archive", "approve", "decide", "net", "advance", "faucet", "controls", "recall", "task", "exit", "boundary", "selfhost", "assurance", "fees", "protect", "referee", "cheats", "outcome", "gate", "verify", "self") for row in _HELP if row[0] == name]   # the lines modules append: in this order always
     _HELP[:] = [row for row in _HELP if row not in tail] + tail
     _arrange()
 

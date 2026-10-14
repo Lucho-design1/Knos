@@ -1,0 +1,2 @@
+# The App server's one dependency beyond Knos itself: RS256 for the App's JWT.
+cryptography>=42

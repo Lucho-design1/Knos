@@ -104,3 +104,34 @@ give the account nothing but the fork and `knos-claim`, so that there is nothing
 - It first ran in a test run on 4 Oct 2026, at staging addresses: an agent found, took and submitted an `auto` order with these tools and was paid with no merge ([CAPABILITIES.md](CAPABILITIES.md), "The 0.3.14 rehearsal on devnet"). The same path has since paid at the public program ids ([CAPABILITIES.md](CAPABILITIES.md), round `auto`). The loop, the funding and the payment are also tested against stand-ins for the chain and GitHub (`tests/test_agentkey.py`, `tests/test_flow_orders.py`, `tests/test_order_auto.py`).
 - `knos_submit_work` does not push the branch: the agent pushes to its fork first.
 - `knos_collect` binds through the `gh` command; without `gh` it reports what is held and says to run `knos claim <address>`.
+
+## Before any pull request: `knos verify`
+
+Paid or not, an agent runs Knos on its change before it opens a pull request, and attaches what Knos says.
+`knos verify` (the `knos_verify` tool of `knos mcp`, and of the Hermes plugin) does four things on the committed
+HEAD of a checkout (src/knos/verify/):
+
+1. **The repository's AI policy, read at the base commit** (`AI_POLICY.md`, then `CONTRIBUTING.md` and the usual
+   places; a line `ai-contributions: banned | conditional | disclose | allowed` wins over prose). `banned`: the
+   verdict is `refused` (exit 3), no test runs, and the agent must not open the pull request; nothing overrides it.
+   `conditional` (for example "without human review will be closed"): refused unless the person running the agent
+   passes `--human-confirmed`. The policy's sentences come back inside `untrusted`.
+2. **The cheat checks on the diff** against the base: the referee's cheat library (knos.cheats) when installed, else
+   local rules for an edited or deleted test, a removed assertion, an added skip marker, a changed fixture or
+   snapshot, a changed CI workflow or `.knos/` file, and a file outside the scope `.knos/gate.yml` declares.
+3. **The repository's own tests, twice**, in a throwaway clone (the checkout is not touched), with no token or secret
+   from the environment. The re-run must agree. A local run covers public tests only; a repository's hidden tests run
+   in its Knos Gate on the pull request.
+4. **A receipt**, signed with an ed25519 key of this machine (`knos verify --key` prints it), written to
+   `.git/knos/receipt.json`, plus the Markdown for the pull request's description, which discloses AI use. The
+   signature binds the words; it does not attest that the tests ran (`runner.attestation` says so).
+   `knos verify --check FILE` checks one.
+
+| Verdict | Exit | Meaning |
+| --- | --- | --- |
+| `pass` | 0 | open the pull request with the receipt's Markdown |
+| `fail` | 1 | fix what `reasons` names; never weaken a test |
+| `refused` | 3 | the AI policy forbids this pull request: do not open it |
+
+The same rule ships as a skill for Claude Code (`plugin/skills/knos-verify/`, loaded with the Knos plugin), OpenClaw
+(`integrations/skills/openclaw/knos-verify/`) and Hermes Agent (`hermes/knos/`, see [HERMES.md](HERMES.md)).

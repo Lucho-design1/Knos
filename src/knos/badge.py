@@ -307,6 +307,14 @@ def register(app) -> None:
             # what this command's own options took (--memory) goes back; the server's own (--key, --history, --health, ...) pass through
             importlib.import_module("knos.record_api").main([*([what] if what else []), *ctx.args, *(["--memory", str(memory)] if memory else [])])
             return
+        if (who in ("anchor", "journal", "prove") and (what or ctx.args or as_json)) or (who == "verify" and (not what or what.endswith(".jsonl") or Path(what).is_dir())):
+            # Knos Record (src/knos/record/): the hash-chained journal, its devnet anchors and its verifier; a paid answer is a .json file.
+            # anchor/journal/prove only with something after them (a folder, a seq, an option): `knos record anchor` alone is
+            # the record of the GitHub login "anchor", as before; `python -m knos.record anchor` needs no argument
+            code = importlib.import_module("knos.record.cli").main([who, *([what] if what else []), *ctx.args, *(["--json"] if as_json and who in ("verify", "journal") else [])])
+            if code:
+                raise typer.Exit(code)
+            return
         if who in ("verify", "grant", "history"):     # the paid answer's three commands (src/knos/record_answer.py)
             back = [*(["--out", str(out)] if out else []), *(["--as-of", as_of] if as_of and who == "history" else [])]
             if who == "history":

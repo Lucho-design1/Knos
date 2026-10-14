@@ -105,7 +105,7 @@
 pub mod claims;
 pub mod strict;
 pub mod pins;
-pub mod rsa; pub mod es256;
+pub mod rsa; pub mod es256; pub mod rsa64; pub mod modexp;
 
 use claims::{err, number, text};
 use strict::fields;
@@ -448,27 +448,29 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
             let mut s = vec![0u32; l];
             rsa::be_to_limbs(&sig, &mut s);
             if rsa::geq(&s, &k.n) { return Err(err(E_SIG)); }
-            let mut t = vec![0u32; 2 * l + 2];
-            let (mut x, mut y) = (vec![0u32; l], vec![0u32; l]);
+            // the power, in this build's arithmetic (modexp.rs): 64-bit limbs on sBPF v2+, where one call does all 16
+            let mut p = modexp::Pow::new(&k.n, k.n0inv, &s);
             if d[T_STAGE] == 0 {
-                rsa::mont_mul(&mut x, &s, &k.r2, &k.n, k.n0inv, &mut t); // s in Montgomery form
+                p.enter(&k.r2); // s in Montgomery form
                 d[T_STAGE] = 1; d[T_DONE] = 0; d[T_ISSUER] = k.issuer; d[T_LIMBS] = l as u8;
                 d[T_KEY..T_KEY + 32].copy_from_slice(key.key.as_ref());
             } else {
                 if d[T_KEY..T_KEY + 32] != key.key.as_ref()[..] { return Err(err(E_KEY)); }
-                rsa::load(&d[T_X..], &mut x);
+                p.load(&d[T_X..]);
             }
             let todo = (rest[32] as usize).min(16 - d[T_DONE] as usize);
-            for _ in 0..todo {
-                rsa::mont_sqr(&mut y, &x, &k.n, k.n0inv, &mut t);
-                core::mem::swap(&mut x, &mut y);
-            }
+            #[cfg(feature = "big_mod_exp")]
+            let todo = 16 - d[T_DONE] as usize; // the syscall does the whole power below, whatever was asked
+            #[cfg(not(feature = "big_mod_exp"))]
+            p.square(todo);
             d[T_DONE] += todo as u8;
-            rsa::store(&mut d[T_X..], &x);
+            p.store(&mut d[T_X..T_X + 4 * l]);
             if d[T_DONE] < 16 { return Ok(()); }
             // x = (s^65536) in Montgomery form; times s (plain) gives s^65537
-            rsa::mont_mul(&mut y, &x, &s, &k.n, k.n0inv, &mut t);
-            rsa::limbs_to_be(&y, &mut sig);
+            #[cfg(not(feature = "big_mod_exp"))]
+            p.finish(&mut sig);
+            #[cfg(feature = "big_mod_exp")]
+            { let mut n_be = vec![0u8; 4 * l]; rsa::limbs_to_be(&k.n, &mut n_be); let s_be = sig.clone(); modexp::syscall(&s_be, &n_be, &mut sig); }
             let digest = hashv(&[&d[T_JWT..T_JWT + pp.1]]).to_bytes();
             if !rsa::pkcs1_sha256_ok(&sig, &digest) { return Err(err(E_BADSIG)); }
             let hl = claims::b64_len(hp.1 - hp.0).ok_or_else(|| err(claims::E_B64))?;

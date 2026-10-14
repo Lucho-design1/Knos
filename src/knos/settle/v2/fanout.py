@@ -45,6 +45,7 @@ from solders.hash import Hash
 from solders.keypair import Keypair
 
 from ... import chain
+from ...platform import finality
 
 POLL_S = 0.5            # between two looks at the signatures' status
 RESEND_EVERY = 4        # polls: bytes no endpoint has taken are sent again every 2 s
@@ -188,7 +189,7 @@ class FanLedger(chain.Ledger):
         """Polls the board until every signature of `raws` is at this ledger's commitment, sending again every
         `resend_every` polls the ones no endpoint has taken. RpcError for one that failed on chain; TimeoutError for
         one never confirmed."""
-        good = ("finalized",) if self.commitment == "finalized" else ("confirmed", "finalized")
+        good = finality.good(self.commitment)      # knos.platform.finality: processed, confirmed or finalized
         shared = board(self.endpoints())
         seen = shared.join(raws)
         began = self.clock()

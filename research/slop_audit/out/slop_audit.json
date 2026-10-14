@@ -1,0 +1,1175 @@
+{
+ "all": {
+  "any_cheat_rule": {
+   "ci95": [
+    0.0964,
+    0.1008
+   ],
+   "k": 6866,
+   "n": 69654,
+   "share": 0.0986
+  },
+  "cheat_rules": {
+   "asserts_removed": {
+    "ci95": [
+     0.019,
+     0.0211
+    ],
+    "k": 1393,
+    "n": 69654,
+    "share": 0.02
+   },
+   "ci_test_cmd_removed": {
+    "ci95": [
+     0.0029,
+     0.0037
+    ],
+    "k": 228,
+    "n": 69654,
+    "share": 0.0033
+   },
+   "ci_weakened": {
+    "ci95": [
+     0.0091,
+     0.0105
+    ],
+    "k": 681,
+    "n": 69654,
+    "share": 0.0098
+   },
+   "skip_added": {
+    "ci95": [
+     0.0232,
+     0.0255
+    ],
+    "k": 1696,
+    "n": 69654,
+    "share": 0.0243
+   },
+   "test_deleted": {
+    "ci95": [
+     0.0545,
+     0.0579
+    ],
+    "k": 3912,
+    "n": 69654,
+    "share": 0.0562
+   }
+  },
+  "claimants_ci": {
+   "blocked-awaiting-approval": 7,
+   "error": 315,
+   "failed": 1119,
+   "no-ci": 3334,
+   "other": 112,
+   "passed": 2617,
+   "pending": 104
+  },
+  "claimants_ci_read": 7608,
+  "claims_tests_added": {
+   "ci95": [
+    0.1572,
+    0.1626
+   ],
+   "k": 11135,
+   "n": 69654,
+   "share": 0.1599
+  },
+  "claims_tests_added_but_changes_no_test_file": {
+   "ci95": [
+    0.1038,
+    0.1154
+   ],
+   "k": 1219,
+   "n": 11135,
+   "share": 0.1095
+  },
+  "claims_tests_pass_or_ci_green": {
+   "ci95": [
+    0.1039,
+    0.1084
+   ],
+   "k": 7608,
+   "n": 71677,
+   "share": 0.1061
+  },
+  "fails_a_measured_knos_check": {
+   "ci95": [
+    0.1261,
+    0.1311
+   ],
+   "k": 8954,
+   "n": 69654,
+   "share": 0.1285
+  },
+  "false_claim_of_read": {
+   "ci95": [
+    0.1393,
+    0.1552
+   ],
+   "k": 1119,
+   "n": 7608,
+   "share": 0.1471
+  },
+  "false_claim_of_settled": {
+   "ci95": [
+    0.285,
+    0.3144
+   ],
+   "k": 1119,
+   "n": 3736,
+   "share": 0.2995
+  },
+  "merged_although_failing_a_check": {
+   "ci95": [
+    0.6669,
+    0.6863
+   ],
+   "k": 6059,
+   "n": 8954,
+   "share": 0.6767
+  },
+  "merged_without_a_test_file": {
+   "ci95": [
+    0.5277,
+    0.5366
+   ],
+   "k": 25744,
+   "n": 48379,
+   "share": 0.5321
+  },
+  "modifies_an_existing_test_file": {
+   "ci95": [
+    0.3251,
+    0.332
+   ],
+   "k": 22884,
+   "n": 69654,
+   "share": 0.3285
+  },
+  "prs": 71677,
+  "prs_merged": 48451,
+  "prs_with_file_list": 69654,
+  "touches_a_test_file": {
+   "ci95": [
+    0.4618,
+    0.4692
+   ],
+   "k": 32425,
+   "n": 69654,
+   "share": 0.4655
+  }
+ },
+ "by_agent": {
+  "Claude_Code": {
+   "any_cheat_rule": {
+    "ci95": [
+     0.1703,
+     0.2052
+    ],
+    "k": 358,
+    "n": 1913,
+    "share": 0.1871
+   },
+   "cheat_rules": {
+    "asserts_removed": {
+     "ci95": [
+      0.0484,
+      0.0694
+     ],
+     "k": 111,
+     "n": 1913,
+     "share": 0.058
+    },
+    "ci_test_cmd_removed": {
+     "ci95": [
+      0.0076,
+      0.0174
+     ],
+     "k": 22,
+     "n": 1913,
+     "share": 0.0115
+    },
+    "ci_weakened": {
+     "ci95": [
+      0.019,
+      0.0331
+     ],
+     "k": 48,
+     "n": 1913,
+     "share": 0.0251
+    },
+    "skip_added": {
+     "ci95": [
+      0.0479,
+      0.0688
+     ],
+     "k": 110,
+     "n": 1913,
+     "share": 0.0575
+    },
+    "test_deleted": {
+     "ci95": [
+      0.0808,
+      0.1069
+     ],
+     "k": 178,
+     "n": 1913,
+     "share": 0.093
+    }
+   },
+   "claimants_ci": {
+    "blocked-awaiting-approval": 0,
+    "error": 36,
+    "failed": 102,
+    "no-ci": 248,
+    "other": 3,
+    "passed": 198,
+    "pending": 5
+   },
+   "claimants_ci_read": 592,
+   "claims_tests_added": {
+    "ci95": [
+     0.2158,
+     0.2537
+    ],
+    "k": 448,
+    "n": 1913,
+    "share": 0.2342
+   },
+   "claims_tests_added_but_changes_no_test_file": {
+    "ci95": [
+     0.0759,
+     0.1318
+    ],
+    "k": 45,
+    "n": 448,
+    "share": 0.1004
+   },
+   "claims_tests_pass_or_ci_green": {
+    "ci95": [
+     0.2848,
+     0.3257
+    ],
+    "k": 592,
+    "n": 1942,
+    "share": 0.3048
+   },
+   "fails_a_measured_knos_check": {
+    "ci95": [
+     0.2284,
+     0.2671
+    ],
+    "k": 473,
+    "n": 1913,
+    "share": 0.2473
+   },
+   "false_claim_of_read": {
+    "ci95": [
+     0.144,
+     0.2048
+    ],
+    "k": 102,
+    "n": 592,
+    "share": 0.1723
+   },
+   "false_claim_of_settled": {
+    "ci95": [
+     0.2887,
+     0.3953
+    ],
+    "k": 102,
+    "n": 300,
+    "share": 0.34
+   },
+   "merged_although_failing_a_check": {
+    "ci95": [
+     0.5749,
+     0.6621
+    ],
+    "k": 293,
+    "n": 473,
+    "share": 0.6195
+   },
+   "merged_without_a_test_file": {
+    "ci95": [
+     0.4299,
+     0.485
+    ],
+    "k": 573,
+    "n": 1253,
+    "share": 0.4573
+   },
+   "modifies_an_existing_test_file": {
+    "ci95": [
+     0.4419,
+     0.4866
+    ],
+    "k": 888,
+    "n": 1913,
+    "share": 0.4642
+   },
+   "prs": 1942,
+   "prs_merged": 1271,
+   "prs_with_file_list": 1913,
+   "touches_a_test_file": {
+    "ci95": [
+     0.5275,
+     0.5721
+    ],
+    "k": 1052,
+    "n": 1913,
+    "share": 0.5499
+   }
+  },
+  "Copilot": {
+   "any_cheat_rule": {
+    "ci95": [
+     0.109,
+     0.1175
+    ],
+    "k": 2437,
+    "n": 21537,
+    "share": 0.1132
+   },
+   "cheat_rules": {
+    "asserts_removed": {
+     "ci95": [
+      0.0265,
+      0.0309
+     ],
+     "k": 616,
+     "n": 21537,
+     "share": 0.0286
+    },
+    "ci_test_cmd_removed": {
+     "ci95": [
+      0.0035,
+      0.0053
+     ],
+     "k": 93,
+     "n": 21537,
+     "share": 0.0043
+    },
+    "ci_weakened": {
+     "ci95": [
+      0.0166,
+      0.0202
+     ],
+     "k": 394,
+     "n": 21537,
+     "share": 0.0183
+    },
+    "skip_added": {
+     "ci95": [
+      0.0152,
+      0.0186
+     ],
+     "k": 362,
+     "n": 21537,
+     "share": 0.0168
+    },
+    "test_deleted": {
+     "ci95": [
+      0.0612,
+      0.0678
+     ],
+     "k": 1387,
+     "n": 21537,
+     "share": 0.0644
+    }
+   },
+   "claimants_ci": {
+    "blocked-awaiting-approval": 7,
+    "error": 225,
+    "failed": 955,
+    "no-ci": 2342,
+    "other": 105,
+    "passed": 2319,
+    "pending": 98
+   },
+   "claimants_ci_read": 6051,
+   "claims_tests_added": {
+    "ci95": [
+     0.263,
+     0.2748
+    ],
+    "k": 5790,
+    "n": 21537,
+    "share": 0.2688
+   },
+   "claims_tests_added_but_changes_no_test_file": {
+    "ci95": [
+     0.097,
+     0.1128
+    ],
+    "k": 606,
+    "n": 5790,
+    "share": 0.1047
+   },
+   "claims_tests_pass_or_ci_green": {
+    "ci95": [
+     0.252,
+     0.2632
+    ],
+    "k": 6051,
+    "n": 23496,
+    "share": 0.2575
+   },
+   "fails_a_measured_knos_check": {
+    "ci95": [
+     0.1715,
+     0.1817
+    ],
+    "k": 3802,
+    "n": 21537,
+    "share": 0.1765
+   },
+   "false_claim_of_read": {
+    "ci95": [
+     0.1489,
+     0.1672
+    ],
+    "k": 955,
+    "n": 6051,
+    "share": 0.1578
+   },
+   "false_claim_of_settled": {
+    "ci95": [
+     0.2764,
+     0.3075
+    ],
+    "k": 955,
+    "n": 3274,
+    "share": 0.2917
+   },
+   "merged_although_failing_a_check": {
+    "ci95": [
+     0.5626,
+     0.594
+    ],
+    "k": 2199,
+    "n": 3802,
+    "share": 0.5784
+   },
+   "merged_without_a_test_file": {
+    "ci95": [
+     0.534,
+     0.5519
+    ],
+    "k": 6454,
+    "n": 11887,
+    "share": 0.5429
+   },
+   "modifies_an_existing_test_file": {
+    "ci95": [
+     0.3888,
+     0.4018
+    ],
+    "k": 8513,
+    "n": 21537,
+    "share": 0.3953
+   },
+   "prs": 23496,
+   "prs_merged": 11935,
+   "prs_with_file_list": 21537,
+   "touches_a_test_file": {
+    "ci95": [
+     0.4662,
+     0.4795
+    ],
+    "k": 10184,
+    "n": 21537,
+    "share": 0.4729
+   }
+  },
+  "Cursor": {
+   "any_cheat_rule": {
+    "ci95": [
+     0.0677,
+     0.084
+    ],
+    "k": 306,
+    "n": 4054,
+    "share": 0.0755
+   },
+   "cheat_rules": {
+    "asserts_removed": {
+     "ci95": [
+      0.0159,
+      0.0245
+     ],
+     "k": 80,
+     "n": 4054,
+     "share": 0.0197
+    },
+    "ci_test_cmd_removed": {
+     "ci95": [
+      0.0044,
+      0.0094
+     ],
+     "k": 26,
+     "n": 4054,
+     "share": 0.0064
+    },
+    "ci_weakened": {
+     "ci95": [
+      0.0107,
+      0.0179
+     ],
+     "k": 56,
+     "n": 4054,
+     "share": 0.0138
+    },
+    "skip_added": {
+     "ci95": [
+      0.0102,
+      0.0173
+     ],
+     "k": 54,
+     "n": 4054,
+     "share": 0.0133
+    },
+    "test_deleted": {
+     "ci95": [
+      0.0364,
+      0.0488
+     ],
+     "k": 171,
+     "n": 4054,
+     "share": 0.0422
+    }
+   },
+   "claimants_ci": {
+    "blocked-awaiting-approval": 0,
+    "error": 3,
+    "failed": 21,
+    "no-ci": 40,
+    "other": 0,
+    "passed": 12,
+    "pending": 1
+   },
+   "claimants_ci_read": 77,
+   "claims_tests_added": {
+    "ci95": [
+     0.0535,
+     0.0682
+    ],
+    "k": 245,
+    "n": 4054,
+    "share": 0.0604
+   },
+   "claims_tests_added_but_changes_no_test_file": {
+    "ci95": [
+     0.1402,
+     0.2369
+    ],
+    "k": 45,
+    "n": 245,
+    "share": 0.1837
+   },
+   "claims_tests_pass_or_ci_green": {
+    "ci95": [
+     0.0152,
+     0.0236
+    ],
+    "k": 77,
+    "n": 4059,
+    "share": 0.019
+   },
+   "fails_a_measured_knos_check": {
+    "ci95": [
+     0.0823,
+     0.1
+    ],
+    "k": 368,
+    "n": 4054,
+    "share": 0.0908
+   },
+   "false_claim_of_read": {
+    "ci95": [
+     0.1858,
+     0.3812
+    ],
+    "k": 21,
+    "n": 77,
+    "share": 0.2727
+   },
+   "false_claim_of_settled": {
+    "ci95": [
+     0.4662,
+     0.7781
+    ],
+    "k": 21,
+    "n": 33,
+    "share": 0.6364
+   },
+   "merged_although_failing_a_check": {
+    "ci95": [
+     0.5005,
+     0.6016
+    ],
+    "k": 203,
+    "n": 368,
+    "share": 0.5516
+   },
+   "merged_without_a_test_file": {
+    "ci95": [
+     0.7189,
+     0.7563
+    ],
+    "k": 1569,
+    "n": 2126,
+    "share": 0.738
+   },
+   "modifies_an_existing_test_file": {
+    "ci95": [
+     0.2039,
+     0.2293
+    ],
+    "k": 877,
+    "n": 4054,
+    "share": 0.2163
+   },
+   "prs": 4059,
+   "prs_merged": 2127,
+   "prs_with_file_list": 4054,
+   "touches_a_test_file": {
+    "ci95": [
+     0.2588,
+     0.2862
+    ],
+    "k": 1104,
+    "n": 4054,
+    "share": 0.2723
+   }
+  },
+  "Devin": {
+   "any_cheat_rule": {
+    "ci95": [
+     0.0901,
+     0.1049
+    ],
+    "k": 599,
+    "n": 6160,
+    "share": 0.0972
+   },
+   "cheat_rules": {
+    "asserts_removed": {
+     "ci95": [
+      0.0323,
+      0.0417
+     ],
+     "k": 226,
+     "n": 6160,
+     "share": 0.0367
+    },
+    "ci_test_cmd_removed": {
+     "ci95": [
+      0.0017,
+      0.0044
+     ],
+     "k": 17,
+     "n": 6160,
+     "share": 0.0028
+    },
+    "ci_weakened": {
+     "ci95": [
+      0.006,
+      0.0105
+     ],
+     "k": 49,
+     "n": 6160,
+     "share": 0.008
+    },
+    "skip_added": {
+     "ci95": [
+      0.0196,
+      0.0271
+     ],
+     "k": 142,
+     "n": 6160,
+     "share": 0.0231
+    },
+    "test_deleted": {
+     "ci95": [
+      0.047,
+      0.0581
+     ],
+     "k": 322,
+     "n": 6160,
+     "share": 0.0523
+    }
+   },
+   "claimants_ci": {
+    "blocked-awaiting-approval": 0,
+    "error": 50,
+    "failed": 36,
+    "no-ci": 620,
+    "other": 3,
+    "passed": 74,
+    "pending": 0
+   },
+   "claimants_ci_read": 783,
+   "claims_tests_added": {
+    "ci95": [
+     0.156,
+     0.1746
+    ],
+    "k": 1017,
+    "n": 6160,
+    "share": 0.1651
+   },
+   "claims_tests_added_but_changes_no_test_file": {
+    "ci95": [
+     0.1307,
+     0.1748
+    ],
+    "k": 154,
+    "n": 1017,
+    "share": 0.1514
+   },
+   "claims_tests_pass_or_ci_green": {
+    "ci95": [
+     0.1188,
+     0.1354
+    ],
+    "k": 783,
+    "n": 6172,
+    "share": 0.1269
+   },
+   "fails_a_measured_knos_check": {
+    "ci95": [
+     0.1181,
+     0.1347
+    ],
+    "k": 777,
+    "n": 6160,
+    "share": 0.1261
+   },
+   "false_claim_of_read": {
+    "ci95": [
+     0.0334,
+     0.063
+    ],
+    "k": 36,
+    "n": 783,
+    "share": 0.046
+   },
+   "false_claim_of_settled": {
+    "ci95": [
+     0.2467,
+     0.4195
+    ],
+    "k": 36,
+    "n": 110,
+    "share": 0.3273
+   },
+   "merged_although_failing_a_check": {
+    "ci95": [
+     0.5273,
+     0.5969
+    ],
+    "k": 437,
+    "n": 777,
+    "share": 0.5624
+   },
+   "merged_without_a_test_file": {
+    "ci95": [
+     0.676,
+     0.7071
+    ],
+    "k": 2352,
+    "n": 3400,
+    "share": 0.6918
+   },
+   "modifies_an_existing_test_file": {
+    "ci95": [
+     0.3086,
+     0.3319
+    ],
+    "k": 1972,
+    "n": 6160,
+    "share": 0.3201
+   },
+   "prs": 6172,
+   "prs_merged": 3400,
+   "prs_with_file_list": 6160,
+   "touches_a_test_file": {
+    "ci95": [
+     0.3503,
+     0.3743
+    ],
+    "k": 2231,
+    "n": 6160,
+    "share": 0.3622
+   }
+  },
+  "Google_Jules": {
+   "any_cheat_rule": {
+    "ci95": [
+     0.054,
+     0.1008
+    ],
+    "k": 36,
+    "n": 486,
+    "share": 0.0741
+   },
+   "cheat_rules": {
+    "asserts_removed": {
+     "ci95": [
+      0.0127,
+      0.0401
+     ],
+     "k": 11,
+     "n": 486,
+     "share": 0.0226
+    },
+    "ci_test_cmd_removed": {
+     "ci95": [
+      0.0057,
+      0.0267
+     ],
+     "k": 6,
+     "n": 486,
+     "share": 0.0123
+    },
+    "ci_weakened": {
+     "ci95": [
+      0.0,
+      0.0078
+     ],
+     "k": 0,
+     "n": 486,
+     "share": 0.0
+    },
+    "skip_added": {
+     "ci95": [
+      0.0032,
+      0.021
+     ],
+     "k": 4,
+     "n": 486,
+     "share": 0.0082
+    },
+    "test_deleted": {
+     "ci95": [
+      0.0317,
+      0.07
+     ],
+     "k": 23,
+     "n": 486,
+     "share": 0.0473
+    }
+   },
+   "claimants_ci": {
+    "blocked-awaiting-approval": 0,
+    "error": 0,
+    "failed": 0,
+    "no-ci": 1,
+    "other": 0,
+    "passed": 2,
+    "pending": 0
+   },
+   "claimants_ci_read": 3,
+   "claims_tests_added": {
+    "ci95": [
+     0.0142,
+     0.0427
+    ],
+    "k": 12,
+    "n": 486,
+    "share": 0.0247
+   },
+   "claims_tests_added_but_changes_no_test_file": {
+    "ci95": [
+     0.047,
+     0.448
+    ],
+    "k": 2,
+    "n": 12,
+    "share": 0.1667
+   },
+   "claims_tests_pass_or_ci_green": {
+    "ci95": [
+     0.0021,
+     0.018
+    ],
+    "k": 3,
+    "n": 487,
+    "share": 0.0062
+   },
+   "fails_a_measured_knos_check": {
+    "ci95": [
+     0.0575,
+     0.1055
+    ],
+    "k": 38,
+    "n": 486,
+    "share": 0.0782
+   },
+   "false_claim_of_read": {
+    "ci95": [
+     0.0,
+     0.5615
+    ],
+    "k": 0,
+    "n": 3,
+    "share": 0.0
+   },
+   "false_claim_of_settled": {
+    "ci95": [
+     0.0,
+     0.6576
+    ],
+    "k": 0,
+    "n": 2,
+    "share": 0.0
+   },
+   "merged_although_failing_a_check": {
+    "ci95": [
+     0.4472,
+     0.744
+    ],
+    "k": 23,
+    "n": 38,
+    "share": 0.6053
+   },
+   "merged_without_a_test_file": {
+    "ci95": [
+     0.6807,
+     0.783
+    ],
+    "k": 208,
+    "n": 283,
+    "share": 0.735
+   },
+   "modifies_an_existing_test_file": {
+    "ci95": [
+     0.2068,
+     0.2828
+    ],
+    "k": 118,
+    "n": 486,
+    "share": 0.2428
+   },
+   "prs": 487,
+   "prs_merged": 283,
+   "prs_with_file_list": 486,
+   "touches_a_test_file": {
+    "ci95": [
+     0.2437,
+     0.3235
+    ],
+    "k": 137,
+    "n": 486,
+    "share": 0.2819
+   }
+  },
+  "OpenAI_Codex": {
+   "any_cheat_rule": {
+    "ci95": [
+     0.0853,
+     0.0912
+    ],
+    "k": 3130,
+    "n": 35504,
+    "share": 0.0882
+   },
+   "cheat_rules": {
+    "asserts_removed": {
+     "ci95": [
+      0.0089,
+      0.0109
+     ],
+     "k": 349,
+     "n": 35504,
+     "share": 0.0098
+    },
+    "ci_test_cmd_removed": {
+     "ci95": [
+      0.0014,
+      0.0023
+     ],
+     "k": 64,
+     "n": 35504,
+     "share": 0.0018
+    },
+    "ci_weakened": {
+     "ci95": [
+      0.0032,
+      0.0045
+     ],
+     "k": 134,
+     "n": 35504,
+     "share": 0.0038
+    },
+    "skip_added": {
+     "ci95": [
+      0.0272,
+      0.0306
+     ],
+     "k": 1024,
+     "n": 35504,
+     "share": 0.0288
+    },
+    "test_deleted": {
+     "ci95": [
+      0.0493,
+      0.0539
+     ],
+     "k": 1831,
+     "n": 35504,
+     "share": 0.0516
+    }
+   },
+   "claimants_ci": {
+    "blocked-awaiting-approval": 0,
+    "error": 1,
+    "failed": 5,
+    "no-ci": 83,
+    "other": 1,
+    "passed": 12,
+    "pending": 0
+   },
+   "claimants_ci_read": 102,
+   "claims_tests_added": {
+    "ci95": [
+     0.0989,
+     0.1052
+    ],
+    "k": 3623,
+    "n": 35504,
+    "share": 0.102
+   },
+   "claims_tests_added_but_changes_no_test_file": {
+    "ci95": [
+     0.0919,
+     0.1115
+    ],
+    "k": 367,
+    "n": 3623,
+    "share": 0.1013
+   },
+   "claims_tests_pass_or_ci_green": {
+    "ci95": [
+     0.0024,
+     0.0035
+    ],
+    "k": 102,
+    "n": 35521,
+    "share": 0.0029
+   },
+   "fails_a_measured_knos_check": {
+    "ci95": [
+     0.0954,
+     0.1016
+    ],
+    "k": 3496,
+    "n": 35504,
+    "share": 0.0985
+   },
+   "false_claim_of_read": {
+    "ci95": [
+     0.0211,
+     0.1097
+    ],
+    "k": 5,
+    "n": 102,
+    "share": 0.049
+   },
+   "false_claim_of_settled": {
+    "ci95": [
+     0.1328,
+     0.5313
+    ],
+    "k": 5,
+    "n": 17,
+    "share": 0.2941
+   },
+   "merged_although_failing_a_check": {
+    "ci95": [
+     0.8179,
+     0.8427
+    ],
+    "k": 2904,
+    "n": 3496,
+    "share": 0.8307
+   },
+   "merged_without_a_test_file": {
+    "ci95": [
+     0.49,
+     0.5014
+    ],
+    "k": 14588,
+    "n": 29430,
+    "share": 0.4957
+   },
+   "modifies_an_existing_test_file": {
+    "ci95": [
+     0.2915,
+     0.301
+    ],
+    "k": 10516,
+    "n": 35504,
+    "share": 0.2962
+   },
+   "prs": 35521,
+   "prs_merged": 29435,
+   "prs_with_file_list": 35504,
+   "touches_a_test_file": {
+    "ci95": [
+     0.4938,
+     0.5042
+    ],
+    "k": 17717,
+    "n": 35504,
+    "share": 0.499
+   }
+  }
+ },
+ "issue_linked": {
+  "issues": 4577,
+  "issues_with_a_merged_and_an_unmerged_agent_pr": 104,
+  "linked_prs_failing_a_measured_check": {
+   "ci95": [
+    0.1582,
+    0.1799
+   ],
+   "k": 774,
+   "n": 4585,
+   "share": 0.1688
+  },
+  "linked_prs_merged": {
+   "ci95": [
+    0.4702,
+    0.4982
+   ],
+   "k": 2375,
+   "n": 4905,
+   "share": 0.4842
+  },
+  "of_those_merged_fix_changed_tests": 64,
+  "prs_linking_an_issue": 4905,
+  "unmerged_attempts_judgeable_by_those_tests": 117
+ },
+ "meta": {
+  "ci_read_on": "2026-10-13",
+  "dataset": "hao-li/AIDev (AIDev-pop: repositories with more than 100 stars)",
+  "dataset_cutoff": "Nov 2025 (dataset card); PRs created 2024-12-24 to 2025-10-24",
+  "dataset_license": "CC BY 4.0 (source repositories keep their own licences)",
+  "dataset_revision": "bc7996907b404359f581c43d5160afe6ed599a14",
+  "dataset_version": "v4",
+  "files": {
+   "pr_commit_details.parquet": "203facbd403304312e9b8542b593b5aae0a83a96007f1693393d9185bd8c77b3",
+   "pull_request.parquet": "c0b8e81e1d099905ef9ea420bf907d45179771ff5972afce6c219d8cafcef3e8"
+  },
+  "issue_links_from": {
+   "dataset_revision": "3ca0045773097b138b064550dfd6e72229f40bee",
+   "dataset_version": "v3",
+   "related_issue.parquet": "34ed28d8294956d68eecc4665acfd4059ce31565c42e8bc1e4950accc81b12c9"
+  },
+  "method_version": 1,
+  "paper": "arXiv:2507.15003"
+ }
+}

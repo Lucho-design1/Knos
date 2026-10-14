@@ -47,6 +47,10 @@ WHY: list[tuple[str, str, str]] = [
      EXACT + ". The line before refuses instruction data whose length is not `4 + 4 * l`: it is never shorter."),
     ("programs-v2/knos_oidc/src/lib.rs", "ikey_audience(d[K_HDR + 8 * l..K_HDR + 8 * l + 32]",
      EXACT + ". `key_limbs` accepted the account, and for an issuer number of ISSUER_OTHER or above that requires 64 bytes after the limbs: it is never shorter."),
+    ("programs-v2/knos_oidc/src/modexp.rs", "debug_assert_eq!(v as u32, n0inv32)",
+     "A debug assertion: it is not compiled into a release build, which is what `cargo build-sbf` makes. In a test build it says the 64-bit Montgomery inverse agrees with the 32-bit one the key account holds."),
+    ("programs-v2/knos_oidc/src/rsa64.rs", "u64::from_le_bytes(d[8 * i..8 * i + 8].try_into().unwrap())",
+     EXACT + ". The slice is read from the same account range `rsa::load` reads for the same number (two 32-bit limbs per 64-bit limb); an index past its end would panic, which ends the transaction with nothing written."),
     # -- knos_passkey (the guard named is the one on the lines just before)
     ("programs-v2/knos_passkey/src/lib.rs", "d[W_KEY..W_KEY + webauthn::KEY_LEN]", EXACT + ". `wallet_key` refuses an account whose length is not `WALLET_LEN` first."),
     ("programs-v2/knos_passkey/src/lib.rs", "d[W_NONCE..W_NONCE + 8]", EXACT + ". `wallet_key` refuses an account whose length is not `WALLET_LEN` first."),
@@ -121,7 +125,7 @@ def render() -> str:
            f"The four programs' source holds {unwraps} `unwrap()` calls. {in_code} are in program code, on the {sum(1 for _, _, _, t in found if 'unwrap()' in t)} lines listed below; "
            f"the other {unwraps - in_code} are in unit tests and proof harnesses",
            "(`#[cfg(test)]` at the end of each file, and `knos_pay/src/proofs.rs`, which is compiled only for tests and for the Kani model checker), which are in",
-           "no build of a program. No program code holds an `expect(`, an `unreachable!`, a `panic!`, a `todo!` or an `assert!`; one `debug_assert_eq!` is listed.",
+           "no build of a program. No program code holds an `expect(`, an `unreachable!`, a `panic!`, a `todo!` or an `assert!`; two `debug_assert_eq!` are listed.",
            "`knos_oidc`'s places were read line by line: none can be reached, so none was replaced. For the three other programs (`knos_pay`, `knos_meter`,",
            "`knos_passkey`) a reason names the guard where it is on the lines just before, and says so where the guard is a caller's.", "",
            "## Every written panic in program code", "",
@@ -149,9 +153,9 @@ def test_every_written_panic_in_program_code_has_a_reason_and_every_reason_a_pla
     # a reason that no place takes is stale (a place takes the first reason it matches)
     taken = {next(k for k, (file, piece, _) in enumerate(WHY) if rel.endswith(file) and piece in text) for rel, _, _, text in found}
     assert taken == set(range(len(WHY))), [WHY[k][:2] for k in set(range(len(WHY))) - taken]
-    # the page says in words which kinds there are: unwraps, and one debug assertion
+    # the page says in words which kinds there are: unwraps, and two debug assertions
     assert {kind for _, _, _, text in found for kind in PANICS.findall(text)} == {"unwrap()", "debug_assert_eq!"}
-    assert sum("debug_assert_eq!" in text for _, _, _, text in found) == 1
+    assert sum("debug_assert_eq!" in text for _, _, _, text in found) == 2
     # in knos_oidc, no reason is the general one: each was read
     assert all(why(rel, text) is not WHY[-1][2] for rel, _, _, text in found if "/knos_oidc/" in rel)
 

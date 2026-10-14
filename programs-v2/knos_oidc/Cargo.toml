@@ -24,6 +24,9 @@ hex = "0.4"
 # the deployed program is built with no features.
 testkeys = []
 no-entrypoint = []
+# big_mod_exp: s^65537 mod n by the runtime syscall (one call). ONLY for a cluster where the syscall is active: devnet
+# does not have it (docs/reference/PLATFORM.md), and a program that names an inactive syscall does not load.
+big_mod_exp = []
 
 [lints.rust]
 unexpected_cfgs = { level = "allow" }

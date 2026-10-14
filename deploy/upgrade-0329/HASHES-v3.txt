@@ -1,0 +1,8 @@
+# sBPF v3 deploy builds of programs-v2 (scripts/build_sbf.sh v3 deploy)
+# source: 99cc4e3e37251a59227b24bd150c7e199e620527 + uncommitted changes in programs-v2
+# toolchain: cargo-build-sbf 4.4.0, platform-tools v1.57, rustc 1.99.0
+# name  e_flags  bytes  sha256(file)  solana-verify executable hash
+knos_oidc  3  169280  2a86ed44f96d27c0bec6d0ec56fe2e07207ea057178518cbb78e33988e001f76  14dfede29c059c4ad3cf8eb7ee3f7754c1d21a21838f0f59e2bb83a932e067e3
+knos_pay  3  362512  06e31b32eb1752de2842baec004af12958a92cafd22ae4325997eeb2a5e7d856  95fa02b2b16e6336a5a9cd8cb1fe1a8246c55a2176e8a875b7099d49b86d6fb5
+knos_meter  3  158368  b9249cf32053b7593584d31f5e88b89134fe4a515fd7ed69776426b723b76fc4  faaaa6952905ee0266868fd6817f35ebf898136b87b00fbd7bce35cdb2c50cbe
+knos_passkey  3  108232  71656639861bffbd307ab8f99933c82fe9caedd8f7b552b6d242eb474f52fc6f  d5a5db160eab9fbfdd70712f14898b06daeb1b068eaa1f442f82fe492e5b1c73

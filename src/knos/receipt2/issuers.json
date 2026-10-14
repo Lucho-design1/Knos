@@ -1,0 +1,11 @@
+{
+  "what": "Public keys whose Knos Receipts this package names. A valid signature by a key not listed here shows only that the key's holder signed.",
+  "issuers": [
+    {
+      "key": "GLwgcPamQXdVKSBpp4o2sUPAvv5BJJb7mu4iMAKh8HMu",
+      "name": "knos-gate-demo (v0.3.29)",
+      "note": "a key generated for the v0.3.29 Gate demo on the owner's private test repository. Not a founder key, holds no money, signs receipts only.",
+      "since": "2026-10-13"
+    }
+  ]
+}

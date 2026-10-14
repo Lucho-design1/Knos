@@ -1,0 +1,24 @@
+# The knos_zk program in LiteSVM: a real proof verifies, tampered ones are refused, and the compute units are measured.
+#
+#   cargo build-sbf --manifest-path programs-v2/knos_zk/Cargo.toml --sbf-out-dir <dir>
+#   KNOS_ZK_SO=<dir>/knos_zk.so KNOS_ZK_CU_OUT=cu.json cargo test --release --manifest-path zk/litesvm_cu/Cargo.toml
+#
+# A crate of its own (empty [workspace]) for the reason programs-v2/handlers gives: litesvm's tree cannot be in a
+# workspace cargo build-sbf reads. litesvm 0.7.1 is the release on the solana 2.x crates the program is built from.
+[package]
+name = "knos-zk-litesvm"
+version = "0.3.29"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dev-dependencies]
+litesvm = "=0.7.1"
+solana-program = "=2.2.1"
+solana-transaction = { version = "2.2", features = ["serde", "bincode"] }
+solana-transaction-error = "2.2"
+solana-keypair = "2.2"
+solana-signer = "2.2"
+serde_json = "1"
+hex = "0.4"

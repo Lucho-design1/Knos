@@ -20,7 +20,14 @@ Two parts of the package go into a coding agent:
   publishes (`tasks.json`), with no chain and no key: `tasks_open` (the funded test tasks, each with its amount, its
   acceptance terms and how the merge pays), `task_show` (one of them) and `task_take` (the pull request link that
   already says `Closes #N`, and the `/knos address <address>` comment that says where the payment goes; it sends
-  nothing). `knos task list | show | take | submit | why` is the same on the command line. The command is `knos mcp`. With
+  nothing). `knos task list | show | take | submit | why` is the same on the command line. Before a pull request,
+  `knos_receipt` checks a receipt, and `knos_verify` makes one (the repository's AI policy, the cheat checks and its
+  tests twice, in a throwaway clone; `knos verify` on the command line). `knos_verify` runs the repository's test
+  command on your machine, so it is not read-only and no allowlist on this page or written by `knos init` names it:
+  the host asks before each call. Over HTTP it is served only when `KNOS_MCP_HTTP_TOKEN` is set. With the money engine installed, three more quote and plan and sign nothing: `knos_fees`,
+  `knos_graduate` and `knos_preorder`. The command is `knos mcp`
+  (`knos mcp --http 8808` serves the same tools over HTTP at http://127.0.0.1:8808/mcp; an address other than loopback
+  needs `KNOS_MCP_HTTP_TOKEN`). With
   these it reads public data from GitHub and Solana and your own checkout, and holds no key and no wallet.
 
   Three tools post, and only for an agent that was given a GitHub token of its own and told it may act
@@ -243,7 +250,7 @@ servers**, and saves it.
       "type": "local",
       "command": "uvx",
       "args": ["knos", "mcp"],
-      "tools": ["knos_bounties", "knos_bounty", "knos_check_pr", "knos_due", "knos_quote", "knos_can_pay", "knos_take", "knos_address", "knos_fund", "knos_settle", "knos_find_work", "tasks_open", "task_show", "task_take", "knos_preflight"]
+      "tools": ["knos_bounties", "knos_bounty", "knos_check_pr", "knos_due", "knos_quote", "knos_can_pay", "knos_take", "knos_address", "knos_fund", "knos_settle", "knos_find_work", "tasks_open", "task_show", "task_take", "knos_preflight", "knos_receipt", "knos_fees", "knos_graduate", "knos_preorder"]
     }
   }
 }

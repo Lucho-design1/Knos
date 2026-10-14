@@ -1,0 +1,83 @@
+{
+  "bootstrap": {
+    "method": "percentile, groups resampled separately, numpy 'lower' quantile",
+    "resamples": 1000,
+    "rng": "random.Random (MT19937) .choices",
+    "seed": 20261013,
+    "used": 1000
+  },
+  "cluster": "devnet",
+  "code_hash": "c2ab19ff8c9dc5e94b1ec295b46d9a292fb703fafd8ea2276b567b274aa29411",
+  "confidence": 0.95,
+  "control": {
+    "metric": 0.445993031358885,
+    "n": 2009
+  },
+  "data": {
+    "in_window": 10000,
+    "name": "b59b30f3706987ea7a3426917add1ac9a19662d2",
+    "rows": 10300,
+    "sha256": "bdb12d9e6569dd986bfa34741134a1f8c457b944ac6f3caed6850aceb20a2fe8",
+    "source": "file"
+  },
+  "direction": "higher",
+  "findings": [],
+  "interval": [
+    0.11942082339970052,
+    0.24769532390606097
+  ],
+  "kind": "knos-outcome-result",
+  "lift": 0.18099952290076335,
+  "lift_kind": "relative",
+  "lower_bound": 0.1303901099262986,
+  "measured_at": 1791911755,
+  "metric": "resolved_without_human",
+  "normal_interval": [
+    0.11841313679862696,
+    0.24358590900289973
+  ],
+  "passed": true,
+  "refused": false,
+  "result_hash": "4f7a28b12790c709212323aebc30d80aa6280f5dbf093793d580f97f01713951",
+  "spec_hash": "1812b0de5e01c6252c78500ba50fb676f180b7abd9b4b44d5720165e11fdb361",
+  "synthetic": true,
+  "tiers": [
+    {
+      "amount": 5.0,
+      "audience": "knos3:pay:4mhbCwE9ULqXDEkYD7wJFnTgPkkSK6ibRppn7MBkoRdH:b59b30f3706987ea7a3426917add1ac9a19662d2:ccf0a0bdddb6a8260abbbd11d4faa8df3a1f6dc69f94a7044566fc2d6c1ddb12:0:1:142920951.10000.EH47nFA5jaWNPQrbBgQbCct6BwZchqZAJZMhYPv7dsK8",
+      "min_lift": 0.05,
+      "name": "lift-5",
+      "order": "4mhbCwE9ULqXDEkYD7wJFnTgPkkSK6ibRppn7MBkoRdH",
+      "passed": true,
+      "tier": 0
+    },
+    {
+      "amount": 10.0,
+      "audience": "knos3:pay:DDwp9yCEQwSA8F8c1WBTc8owwJz6gaZMywyQrS2yUsnn:b59b30f3706987ea7a3426917add1ac9a19662d2:fc48315773abe4d6093fefd61fe17a7048b85d44be5823b628248f09cfbf82f4:0:1:142920951.10000.EH47nFA5jaWNPQrbBgQbCct6BwZchqZAJZMhYPv7dsK8",
+      "min_lift": 0.1,
+      "name": "lift-10",
+      "order": "DDwp9yCEQwSA8F8c1WBTc8owwJz6gaZMywyQrS2yUsnn",
+      "passed": true,
+      "tier": 1
+    },
+    {
+      "amount": 15.0,
+      "min_lift": 0.2,
+      "name": "lift-20",
+      "order": "EWSPd3rZmbntgqPrAdV8bfWf5MytLChj4AqgRhoErfdR",
+      "passed": false,
+      "tier": 2
+    }
+  ],
+  "title": "AI agent resolves support tickets without a human (SYNTHETIC data)",
+  "treated": {
+    "metric": 0.5267175572519084,
+    "n": 7991
+  },
+  "v": 1,
+  "why": [],
+  "window": {
+    "end": "2026-10-13T17:15:12Z",
+    "start": "2026-10-13T17:05:12Z"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "synthetic-rings-classifier",
+  "synthetic": true,
+  "editable": "train.py",
+  "metric": "accuracy",
+  "direction": "max",
+  "time_budget_s": 20,
+  "keep_delta": 0.003,
+  "rerun_tolerance": 0.03,
+  "min_lift": 0.05,
+  "seeds": [1, 2],
+  "data": {"kind": "synthetic", "public_seed": 20261013, "n_train": 600, "n_val": 300, "n_dev": 400, "n_final": 1000},
+  "sealed": {"file": "referee/sealed.json", "sha256": "4915a8cddfea0dadb4e41143934cc77b9c596fc97da35ff5c8b13e5ffbdcce6d"},
+  "bounty": {"amount": 100000000, "currency": "test USDC (devnet), micro-units; a demo amount, not a price",
+             "shares": {"researcher": 6000, "agent": 2500, "referee": 1500}},
+  "contributors": {"researcher": "<researcher's GitHub id>", "referee": "<referee operator>"}
+}

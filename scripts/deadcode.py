@@ -19,7 +19,21 @@ SRC = ROOT / "src"
 # the round `judge` of scripts/exercise_rounds/ reads a host's level through it.
 # knos.sources.sigstore: the adapter docs/reference/SOURCES.md gives a caller to use in its own code (verify, then knos.sources.line);
 # nothing in the package calls it yet, and tests/test_sources.py holds it to two recorded npm build records.
-ENTRY = ["knos.cli", "knos.__main__", "knos.proof.ghrelay", "knos.settle.v2.passkey_fund", "knos.private", "knos.host_judge", "knos.sources.sigstore"]
+# knos.outcomes.__main__: `python -m knos.outcomes measure|audiences|check-audience`, what .github/workflows/knos-outcome.yml runs
+# with the standard library alone (tests/test_outcome_workflow.py runs it the same way).
+# knos.autoresearch.__main__: `python -m knos.autoresearch run <task>`, the autoresearch loop (docs/reference/AUTORESEARCH.md)
+# knos.record.__main__, knos.self.__main__: `python -m knos.record|self ...` (docs/reference/KNOS_RECORD.md, SELF.md)
+# knos.gate.app: the GitHub App's webhook handler that github-app/server.py runs (docs/reference/PR_GATE.md)
+# knos.hermes_plugin: the `hermes_agent.plugins` entry point in pyproject.toml; knos.verify.sealed: the sealed scorer that
+# hermes/gepa and hermes/atropos import (docs/reference/HERMES.md)
+# knos.money.x402: `python -m knos.money.x402`, the x402 endpoint; knos.money.revenue: writes web/revenue_data.json;
+# knos.graduation.devnet: the devnet demo of the escrow and pre-order pool (docs/reference/MONEY.md)
+# knos.zk.__main__: `python -m knos.zk verify DIR`, the Groth16 checker (docs/reference/ZK.md)
+# knos.platform.claims: the per-claim account check a relay calls before batching claims (docs/reference/PLATFORM.md)
+# knos.repro.example: `python -m knos.repro.example`, the synthetic example repository (docs/reference/REPRODUCED.md)
+ENTRY = ["knos.cli", "knos.__main__", "knos.proof.ghrelay", "knos.settle.v2.passkey_fund", "knos.private", "knos.host_judge", "knos.sources.sigstore",
+         "knos.outcomes.__main__", "knos.autoresearch.__main__", "knos.record.__main__", "knos.self.__main__", "knos.gate.app",
+         "knos.hermes_plugin", "knos.verify.sealed", "knos.money.x402", "knos.money.revenue", "knos.graduation.devnet", "knos.repro.example", "knos.zk.__main__", "knos.platform.claims"]
 SCRIPTS = [p for p in list((ROOT / "scripts").glob("*.py")) + list((ROOT / "scripts" / "exercise_rounds").glob("*.py")) + list((ROOT / "examples").glob("*.py"))
            if p.name not in ("deadcode.py", "vulture_whitelist.py")]
 

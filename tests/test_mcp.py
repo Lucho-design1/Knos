@@ -161,10 +161,14 @@ def test_a_session_client_shakes_hands_lists_the_tools_and_calls_one():
     tools = listed["result"]["tools"]
     assert [t["name"] for t in tools] == ["knos_bounties", "knos_bounty", "knos_check_pr", "knos_due", "knos_quote", "knos_can_pay", "knos_take",
                                           "knos_address", "knos_fund", "knos_settle", "knos_find_work", "tasks_open", "task_show", "task_take",       # the task board (tests/test_tasks.py)
-                                          "knos_take_work", "knos_submit_work", "knos_preflight", "knos_collect"]
+                                          "knos_take_work", "knos_submit_work", "knos_preflight", "knos_collect",
+                                          "knos_verify", "knos_receipt",                # before a pull request (tests/test_agents_verify.py)
+                                          "knos_fees", "knos_graduate", "knos_preorder"]  # the money engine's (knos.money.agent)
     assert listed["result"]["ttlMs"] == 300_000 and listed["result"]["cacheScope"] == "public"
     for t in tools:
-        acts = t["name"] in ("knos_take_work", "knos_submit_work", "knos_collect")       # the three that post (tests/test_agentkey.py)
+        acts = t["name"] in ("knos_take_work", "knos_submit_work", "knos_collect",       # the three that post (tests/test_agentkey.py)
+                             "knos_verify")                                              # and the one that runs the repository's tests
+        assert (t.get("_meta") or {}).get(mcp.RUNS_CODE, False) is (t["name"] == "knos_verify")
         assert t["annotations"] == ({"readOnlyHint": False, "openWorldHint": True, "destructiveHint": False} if acts else
                                     {"readOnlyHint": True, "openWorldHint": True}) and t["title"] and t["description"]
         assert t["inputSchema"]["type"] == "object" and t["inputSchema"]["additionalProperties"] is False
@@ -188,7 +192,7 @@ def test_a_stateless_client_discovers_lists_and_calls_with_no_handshake():
     assert found["result"] == {"resultType": "complete", "supportedVersions": ["2026-07-28"], "capabilities": {"tools": {}},
                                "instructions": mcp.INSTRUCTIONS,
                                "_meta": {"io.modelcontextprotocol/serverInfo": {"name": "knos", "version": version()}}}
-    assert listed["result"]["resultType"] == "complete" and len(listed["result"]["tools"]) == 18
+    assert listed["result"]["resultType"] == "complete" and len(listed["result"]["tools"]) == 23
     result = called["result"]
     assert result["resultType"] == "complete" and result["isError"] is False
     assert result["content"] == [{"type": "text", "text": json.dumps(result["structuredContent"], indent=1)}]

@@ -38,7 +38,8 @@ from solders.pubkey import Pubkey
 from . import load_ids
 from .. import oidc as _first
 from ..oidc import (CHUNK, GITHUB, GITLAB, ISSUERS, JWKS, LATE, MAX_JWT, SYSTEM, T_JWT, Token, jwks_keys, key_hash, key_params,  # noqa: F401
-                    modulus_bytes, read_token, step_plan, token_id)
+                    modulus_bytes, read_token, token_id)
+from ...platform import verify as _verify
 
 IDS = load_ids()            # the pinned ids, or a staging deployment named by KNOS_PROGRAM_IDS
 OIDC_ID = Pubkey.from_string(IDS["knos_oidc"])
@@ -54,6 +55,12 @@ PRIVATE = 3                 # the issuer number of a private key and of a token 
 PRIVATE_FLAG = 8            # and its flag in the key account
 MAX_ISS = 200               # the longest issuer URL
 T_IHASH = 114               # in such a token account once VERIFIED: sha256(issuer URL), then the registrant (zero: none)
+
+
+def step_plan(bits: int) -> list[int]:
+    """Squarings per Step transaction (knos.platform.verify.plan): the two-step plan of every deployed build unless
+    KNOS_OIDC_VERIFY=one asks for one Step (a build for sBPF v2 or later: one transaction for a 2048-bit key)."""
+    return _verify.plan(bits)
 
 
 def token_pda(payer: Pubkey, tid: bytes, program: Pubkey = OIDC_ID) -> Pubkey:

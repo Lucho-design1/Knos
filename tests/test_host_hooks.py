@@ -87,7 +87,7 @@ def _opencode(p: Path, rep: dict) -> list[str]:
     got = _json(p, "opencode.json")
     assert got["$schema"] == "https://opencode.ai/config.json"
     assert got["mcp"] == {"knos": {"type": "local", "command": ["uvx", "knos", "mcp"], "enabled": True}}
-    assert got["tools"] == {f"knos_{t}": False for t in POSTS}    # every tool that posts is off; the rest are the reads
+    assert got["tools"] == {f"knos_{t}": False for t in [*POSTS, "knos_verify"]}    # every tool that posts, and knos_verify (runs the tests), is off; the rest are the reads
     plugin = (p / ".opencode" / "plugins" / "knos.js").read_text(encoding="utf-8")
     assert 'const KNOS = ["uvx", "knos"]' in plugin and "export const Knos = async ({ client, $, directory })" in plugin
     assert 'event.type !== "session.idle"' in plugin and "hook proof --client opencode" in plugin

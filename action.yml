@@ -35,6 +35,32 @@ branding:
 # is the job's own conclusion and summary. Knos is installed from this action's own commit (the one the caller
 # pinned), with exactly the dependencies uv.lock names. Nothing is written to the workspace. The base commit, the diff
 # and the evidence are kept under the runner's temp directory.
+#
+# Free maintainer mode (off unless asked for; still no money, no wallet, no chain). With `maintainer-mode: label`
+# the check also reads the diff with Knos's cheat library (src/knos/cheats) and labels a pull request that edits
+# existing tests, touches files outside `scope`, or fails the check ("knos: edits tests", "knos: out of scope",
+# "knos: cheat", "knos: checks failed"); `close` also closes it with one comment saying which rule; `comment` only
+# comments. None of the pull request's code runs. The job then needs `pull-requests: write` and `issues: write`:
+#
+#         permissions:
+#           contents: read
+#           checks: read
+#           pull-requests: write
+#           issues: write
+#         steps:
+#           - uses: drexthealpha/Knos@<a release tag, or its full commit sha>
+#             with:
+#               maintainer-mode: label        # or close, or comment
+#               scope: "src/** docs/**"       # optional: the paths outside pull requests may touch
+inputs:
+  maintainer-mode:
+    description: "off (default), comment, label or close: the free maintainer mode"
+    required: false
+    default: "off"
+  scope:
+    description: "space-separated path globs an outside pull request may touch (maintainer mode); empty: no scope rule"
+    required: false
+    default: ""
 outputs:
   passed:
     description: "true when the pull request's claims and the repository's rules hold"
@@ -96,6 +122,9 @@ runs:
         HEAD: ${{ github.event.pull_request.head.sha }}
         AUTHOR: ${{ github.event.pull_request.user.login }}
         GH_TOKEN: ${{ github.token }}
+        MAINTAINER_MODE: ${{ inputs.maintainer-mode }}
+        SCOPE: ${{ inputs.scope }}
+        NUM: ${{ github.event.pull_request.number }}
       run: |
         work="$RUNNER_TEMP/knos-check"
         echo "evidence=$work/evidence.json" >> "$GITHUB_OUTPUT"
@@ -115,6 +144,35 @@ runs:
         if jq -e '.evidence.checks_seen == null' "$work/evidence.json" > /dev/null; then
           why="Knos could not read GitHub's record of this commit's checks, so what the description claims was not checked."
           echo "::warning title=Knos check::$why Give the job the permission checks: read, then run it again."
+        fi
+        # The free maintainer mode (off unless the caller asked): the cheat library on the same diff, then the labels,
+        # comment or close it decided, applied with the job's own token. None of the pull request's code runs.
+        if [ "${MAINTAINER_MODE:-off}" != off ]; then
+          # the scope's globs are words passed as they are: `read -a` splits on spaces and never expands a glob
+          read -r -a globs <<< "${SCOPE:-}"
+          args=()
+          for g in "${globs[@]}"; do args+=(--scope "$g"); done
+          if [ "$passed" = true ]; then checks=passed; else checks=failed; fi
+          uv run --quiet --frozen --no-sync --project "$KNOS" knos referee maintainer --base "$work/base" \
+            --diff "$work/pr.diff" --mode "$MAINTAINER_MODE" --checks "$checks" "${args[@]}" \
+            --out "$work/maintainer.json" > /dev/null
+          # Knos's own labels whose cause a later push removed come off again
+          jq -r '.remove_labels[]' "$work/maintainer.json" | while read -r label; do
+            gh pr edit "$NUM" --repo "$GITHUB_REPOSITORY" --remove-label "$label" > /dev/null 2>&1 || true
+          done
+          if [ "$(jq -r '.refused' "$work/maintainer.json")" = true ]; then
+            jq -r '.comment' "$work/maintainer.json" > "$work/maintainer.md"
+            jq -r '.labels[]' "$work/maintainer.json" | while read -r label; do
+              gh label create "$label" --repo "$GITHUB_REPOSITORY" --color B60205 2>/dev/null || true
+              gh pr edit "$NUM" --repo "$GITHUB_REPOSITORY" --add-label "$label"
+            done
+            if [ "$(jq -r '.close' "$work/maintainer.json")" = true ]; then
+              gh pr close "$NUM" --repo "$GITHUB_REPOSITORY" --comment "$(cat "$work/maintainer.md")"
+            else
+              gh pr comment "$NUM" --repo "$GITHUB_REPOSITORY" --body-file "$work/maintainer.md"
+            fi
+            cat "$work/maintainer.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
         fi
         if [ "$passed" = false ]; then
           {

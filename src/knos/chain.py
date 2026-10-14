@@ -26,7 +26,7 @@ import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from solders.compute_budget import ID as COMPUTE_BUDGET
@@ -36,6 +36,8 @@ from solders.keypair import Keypair
 from solders.message import Message, MessageV1, TransactionConfig
 from solders.pubkey import Pubkey
 from solders.transaction import Transaction, VersionedTransaction
+
+from .platform import finality
 
 CLUSTERS = {"devnet": "https://api.devnet.solana.com", "localnet": "http://127.0.0.1:8899"}
 MAX_COMPUTE_UNITS = 1_400_000   # the most one transaction may use
@@ -180,7 +182,7 @@ def wait_all(url: str, signatures: list[str], within: float = 60.0, commitment: 
     """Wait until every signature reaches `commitment`, asking about all of them in one request each time. RpcError
     if one failed on chain (once all have an answer), TimeoutError if one never landed."""
     end = time.monotonic() + within
-    good = ("finalized",) if commitment == "finalized" else ("confirmed", "finalized")
+    good = finality.good(commitment)        # processed < confirmed < finalized: a deeper status satisfies a shallower one
     got: dict[str, dict] = {}
     while True:
         waiting = [s for s in dict.fromkeys(signatures) if s not in got]
@@ -209,7 +211,7 @@ def wait(url: str, signature: str, within: float = 60.0, commitment: str = "conf
 class Ledger:
     """A cluster reached over JSON-RPC."""
     url: str
-    commitment: str = "confirmed"
+    commitment: str = field(default_factory=finality.commitment)    # KNOS_COMMITMENT (knos.platform.finality), else confirmed
     takes_v1: bool = True       # v1 transactions (4,096 bytes) may be sent; a relay sets it False once the cluster has refused one
 
     # -- writing ---------------------------------------------------------------------------------------------------
@@ -277,6 +279,11 @@ class Ledger:
                                                          {"encoding": "base64", "commitment": self.commitment}])
             out += [(Pubkey.from_string(v["owner"]), base64.b64decode(v["data"][0])) if v else None for v in got["value"]]
         return out
+
+    def rent(self, size: int) -> int:
+        """The lamports that keep an account of `size` bytes, as the cluster says today (so a rent cut is used as soon
+        as it is live: knos.platform, v0.3.29)."""
+        return int(call(self.url, "getMinimumBalanceForRentExemption", [int(size)]))
 
     def account(self, address: Pubkey) -> bytes | None:
         got = call(self.url, "getAccountInfo", [str(address), {"encoding": "base64", "commitment": self.commitment}])

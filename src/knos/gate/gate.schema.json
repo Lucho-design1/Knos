@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/drexthealpha/Knos/src/knos/gate/gate.schema.json",
+  "title": "Knos Gate config (.knos/gate.yml)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "hidden_tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "command"
+      ],
+      "properties": {
+        "source": {
+          "enum": [
+            "secret",
+            "repo"
+          ]
+        },
+        "secret": {
+          "type": "string",
+          "pattern": "^[A-Z_][A-Z0-9_]{0,99}$"
+        },
+        "repo": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}$"
+        },
+        "ref": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "token_secret": {
+          "type": "string",
+          "pattern": "^[A-Z_][A-Z0-9_]{0,99}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "into": {
+          "type": "string"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 3600
+        }
+      }
+    },
+    "public_tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command"
+      ],
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 3600
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allow": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deny": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "protect": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "core": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "setup": {
+      "type": "string"
+    },
+    "on_fail": {
+      "enum": [
+        "comment",
+        "label",
+        "close"
+      ]
+    },
+    "label": {
+      "type": "string"
+    },
+    "pass_label": {
+      "type": "string"
+    },
+    "outside_only": {
+      "type": "boolean"
+    },
+    "receipt": {
+      "type": "boolean"
+    },
+    "bounties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "cluster": {
+          "enum": [
+            "devnet",
+            "localnet"
+          ]
+        },
+        "mint": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

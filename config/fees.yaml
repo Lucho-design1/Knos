@@ -1,0 +1,119 @@
+# THE one fee config of Knos. Everything that states, charges, quotes or charts a Knos fee reads this file through
+# knos.money.fees_config (load, validate). Nothing else types a fee.
+#
+# Three kinds of line, and every line says which it is in `status`:
+#   live         the deployed knos_pay program charges it on devnet today. The program's numbers are compiled into it
+#                (knos.settle.v2.pay: FEE_BPS, FEE_MIN, TIP, TIP_FIRST, ORDER_MIN_AMOUNT, MAX_PAYEES); this file mirrors
+#                them and the loader REFUSES the file when one differs, so the two cannot drift apart.
+#   proposed     the price book (knos.billing, docs/PRICING.md): a plan nobody pays yet. The loader refuses a mismatch.
+#   placeholder  a number only the founder can set. It is here so the code, the quotes and the dashboard have a shape;
+#                it is not a price. `knos.money.fees_config.load().placeholders()` lists every one.
+#
+# Money is a decimal string in USD (one test USDC on devnet), never a float. Rates are basis points (1 bps = 0.01%).
+# On devnet every fee is test money: Knos's revenue is 0.
+
+version: 1
+currency: "USD"
+network: "solana devnet"
+revenue_today: "0"
+
+treasury:
+  what: "the fee owner: Knos's Squads vault (a program-derived address of the Squads program). Every fee the program takes lands in a token account it owns."
+  fee_owner: "4G3cznCnwCUPBCZwzKiLupjdgB5pSoCcGWNGuFv4TYFo"
+  squads_program: "SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf"
+  moves_by: "a Squads proposal of the vault; nothing in Knos signs for it"
+
+onchain:
+  status: "live"
+  program: "knos_pay"
+  build: "2.2"
+  rate_bps: 30
+  floor_usd: "0.05"
+  plan_floor_bps: 20
+  relayer_tip_usd: "0.05"
+  relayer_tip_first_usd: "0.30"
+  order_min_usd: "5.00"
+  max_payees: 4
+
+fees:
+  verification:
+    status: "proposed"
+    what: "one verification (an evaluation of a pull request or a result) on runners Knos hosts"
+    public_repos_usd: "0"
+    self_host_usd: "0"
+    free_per_month: 100000
+    usd_each: "0.002"
+    note: "Checking stays free for public repositories and on your own runners; this is the Meter line of the price book."
+  payout:
+    status: "live"
+    what: "the fee on every release from escrow to a payee (the Acceptance line): the funder pays it on top of the amount"
+    rate_bps: 30
+    floor_usd: "0.05"
+    payer: "funder, on top of the amount"
+  bounty:
+    status: "live"
+    what: "a bounty is a knos_pay work order: the same fee, taken by the program and sent to the treasury at payout"
+    rate_bps: 30
+    floor_usd: "0.05"
+    to: "treasury"
+    refund: "a bounty refunded after its deadline returns the amount and the fee"
+  funding:
+    status: "live"
+    what: "opening an escrow (a graduation milestone or a pre-order): the program holds the payout fee with the money and takes it only at release"
+    rate_bps: 0
+  graduation:
+    status: "placeholder"
+    what: "a fee on the value of the milestone escrow and the pre-order pool released after a claim graduates, above the payout fee"
+    rate_bps: 50
+    collected: "by contract, off chain, until a knos_pay build carries it; on chain today only the payout fee is taken"
+  task_package:
+    status: "placeholder"
+    what: "Knos's share of a sale of a sealed task package (issue + hidden tests + cheat rules); the maintainer keeps the rest"
+    knos_bps: 1000
+    market: "labs pay 200 to 2,000 USD per task (Epoch AI, 12 Jan 2026); robustness to reward hacking is the top buying criterion (same source)"
+  x402_check:
+    status: "proposed"
+    what: "a paid check bought by an agent over x402 (knos-order scheme): the verification price, sold in packs because the smallest order is 5.00"
+    usd_each: "0.002"
+
+splits:
+  status: "placeholder"
+  what: "the fixed share of every payout each contributor role receives, in basis points; one order pays at most 4 payees, so 4 roles"
+  rounding: "each share is rounded down; the last payee receives what is left, exactly as knos_pay pays (order_pay.rs)"
+  roles:
+    researcher: 6000
+    agent: 2500
+    lab: 1000
+    referee: 500
+
+cloud:
+  status: "placeholder"
+  what: "Knos Cloud: paid credits for hosted verification (runners, sealed-test storage, receipts, Gate for private repositories). Everything stays open source (MIT) and self-hosting stays free."
+  credit_usd: "0.002"
+  consumes:
+    hosted_verification: 1
+    sealed_test_storage_gb_month: 50
+    receipt: 0
+    private_repo_gate_check: 1
+  tiers:
+    - name: "Starter"
+      usd_month: "20"
+      credits_month: 10000
+    - name: "Pro"
+      usd_month: "100"
+      credits_month: 55000
+    - name: "Team"
+      usd_month: "200"
+      credits_month: 120000
+  enterprise: "by contract (the Control line of the price book)"
+  shape_from: "Nous Research's Portal sells $20/$100/$200 monthly tiers (TechCrunch, 7 Oct 2026, citing the WSJ; unaudited). Knos copies the shape, not the prices: every Knos number here is a placeholder."
+
+sources:
+  nous:
+    said: "Nous Research: open core (MIT) plus hosted subscriptions with credits (Portal $20/$100/$200 tiers) plus enterprise; about $36M annualized revenue by mid-September 2026; raised $90M at a $1.5B valuation"
+    source: "TechCrunch, 7 Oct 2026, citing the Wall Street Journal"
+    audited: false
+  epoch_tasks:
+    said: "labs pay 200 to 2,000 USD per verified task; robustness to reward hacking is the top buying criterion"
+    source: "Epoch AI, 12 Jan 2026"
+    audited: false

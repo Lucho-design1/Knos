@@ -1,0 +1,100 @@
+{
+  "cluster": "devnet",
+  "data_commit": "b59b30f3706987ea7a3426917add1ac9a19662d2",
+  "issue": 1,
+  "measurement": {
+    "bootstrap": {
+      "method": "percentile, groups resampled separately, numpy 'lower' quantile",
+      "resamples": 1000,
+      "rng": "random.Random (MT19937) .choices",
+      "seed": 20261013,
+      "used": 1000
+    },
+    "confidence": 0.95,
+    "control": {
+      "metric": 0.445993031358885,
+      "n": 2009
+    },
+    "lift": 0.18099952290076335,
+    "lower_bound": 0.1303901099262986,
+    "passed": true,
+    "refused": false,
+    "result_hash": "4f7a28b12790c709212323aebc30d80aa6280f5dbf093793d580f97f01713951",
+    "treated": {
+      "metric": 0.5267175572519084,
+      "n": 7991
+    }
+  },
+  "mint": "J8Z1RvteeJRGaT1tdcK5C4XZSG3EWUD1Quqnv4CxkYd1",
+  "pinned_commit": "509485fb3b690a946e2a260079cf51cca307f1b5",
+  "program": "5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k",
+  "read_at": "2026-10-13T17:49:02Z",
+  "repository": "drexthealpha/knos-v0329-outcomes",
+  "repository_id": 1417494699,
+  "run": {
+    "conclusion": "success",
+    "head": "509485fb3b690a946e2a260079cf51cca307f1b5",
+    "id": 38437227091,
+    "jobs": {
+      "measure / measure": "success",
+      "sign": "success"
+    },
+    "url": "https://github.com/drexthealpha/knos-v0329-outcomes/actions/runs/38437227091"
+  },
+  "seller_balance": 15000000,
+  "spec_hash": "1812b0de5e01c6252c78500ba50fb676f180b7abd9b4b44d5720165e11fdb361",
+  "synthetic": true,
+  "tiers": [
+    {
+      "amount": 5000000,
+      "fee": 50000,
+      "fund_tx": "bz6GBzKFoDdsjApdK1L9v6k534vjHxL3VLoiKgSdZWzyTY9h8r3gbULWLdwNh9vFiiis7Zzsm2QhadeqxRj5S3K",
+      "measured_pass": true,
+      "min_lift": 0.05,
+      "order": "4mhbCwE9ULqXDEkYD7wJFnTgPkkSK6ibRppn7MBkoRdH",
+      "pay_tx": "3jwVAHzY34Kg2pfHNwHDgy5B2iw4BeQPZP5YBrBxH2TmVR2DnegSyKDnKjXx8W6qbiJRgDW9g6t9vuxnJimBc93c",
+      "state": "paid",
+      "terms_hash": "ccf0a0bdddb6a8260abbbd11d4faa8df3a1f6dc69f94a7044566fc2d6c1ddb12",
+      "tier": "lift-5",
+      "verify_txs": [
+        "62fqUyLZ2jWbXvL5B9tB6phBeCWrxamhsMjPqJt1VQU1iEK2zeJuVQU3RjPsrzU9CsLecW6vsiG6VVX3NWDqokVx",
+        "3ADtQduR7Rwzw8VQu54NAm978zTo5iQQUb23Er6mkF2MvFyHa7gMYWKqkNhrU9zZy7ASosG4h4RgkXT4EzAqYsN6"
+      ]
+    },
+    {
+      "amount": 10000000,
+      "fee": 50000,
+      "fund_tx": "5vvjknjCVra5cRAwktQp3s1mi2GWwRMYjAwi58b153GK9hQM8sMfuD4vec89sPzRMU1HpN6bvvQmYmJuKoWxCNrq",
+      "measured_pass": true,
+      "min_lift": 0.1,
+      "order": "DDwp9yCEQwSA8F8c1WBTc8owwJz6gaZMywyQrS2yUsnn",
+      "pay_tx": "MNtvKckRKTzDde9ZwhXK634ZCLpyRJ7tMLnVr1Rus4T5TF5Ceegwp24anVcyF2mzdDmHJTaXsUdq1jaGx4BoZGv",
+      "state": "paid",
+      "terms_hash": "fc48315773abe4d6093fefd61fe17a7048b85d44be5823b628248f09cfbf82f4",
+      "tier": "lift-10",
+      "verify_txs": [
+        "Arq1HjX38w7Q41hLg34xYwBh2ELjxcMQJi4aCpnm9U3WbAeSkjAAmYCXfRDrP8gkhgFsPFg3jhY2e2ALHJwvFKn",
+        "3ciU6jyBN1utGrEoYFKT4k3pHVV8pnGnEwVveV9q2PWHgZfoftjbxpPB9sSne7VTDnDzrtMuHPNSsVVGewD7f8FA"
+      ]
+    },
+    {
+      "amount": 15000000,
+      "fee": 50000,
+      "fund_tx": "2yQrtp97tq92scSJxsnhjHjEacz4AJwHuyAvYqeUXih8w511F9dwMMdaRCiMBNpysmwdeEE3jqfavy1hwip7e7iZ",
+      "measured_pass": false,
+      "min_lift": 0.2,
+      "order": "EWSPd3rZmbntgqPrAdV8bfWf5MytLChj4AqgRhoErfdR",
+      "refund_tx": "2js1rHv2jrGMNjVLQftczVWs59SyQj6oxyBE15dmGGFrqsEkqRdjHTZvigqVZivmDyMrP9BUH1EMj3nr99rqu1Kt",
+      "refunded_by": "5zGQCyrtK4gv61EYpUvoKApWAxvbPucpHABA1vdhAJ9V",
+      "state": "refunded",
+      "terms_hash": "af42948ecd2b6b6648983bb91290d2a717ca1dc9260c345e53e206b135647c03",
+      "tier": "lift-20"
+    }
+  ],
+  "verifier": "FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W",
+  "what": "SYNTHETIC support tickets; a devnet test token minted for this demo stands in for USDC and is worth nothing",
+  "window": {
+    "end": "2026-10-13T17:15:12Z",
+    "start": "2026-10-13T17:05:12Z"
+  }
+}

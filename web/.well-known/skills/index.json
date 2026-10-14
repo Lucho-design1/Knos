@@ -1,0 +1,15 @@
+{
+  "skills": [
+    {
+      "name": "knos",
+      "description": "Run Knos before opening a pull request - obey the repository's AI policy, run the cheat checks and its tests, and attach a signed receipt.",
+      "files": [
+        "SKILL.md",
+        "references/ai-policy.md",
+        "references/receipt.md",
+        "references/tools.md",
+        "scripts/knos-verify.sh"
+      ]
+    }
+  ]
+}

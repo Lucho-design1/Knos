@@ -1,0 +1,24 @@
+{
+  "name": "Knos Gate",
+  "url": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/PR_GATE.md",
+  "description": "Runs a maintainer's sealed hidden tests and the Knos cheat checks on every outside pull request. One check, one comment, a signed receipt.",
+  "hook_attributes": {
+    "url": "https://REPLACE-WITH-YOUR-HOST/webhook",
+    "active": true
+  },
+  "redirect_url": "https://REPLACE-WITH-YOUR-HOST/registered",
+  "public": true,
+  "default_permissions": {
+    "checks": "write",
+    "pull_requests": "write",
+    "issues": "write",
+    "actions": "write",
+    "contents": "read",
+    "metadata": "read"
+  },
+  "default_events": [
+    "pull_request",
+    "workflow_run",
+    "check_run"
+  ]
+}

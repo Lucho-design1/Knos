@@ -64,9 +64,16 @@ def withdraw(ledger, payer: Keypair, request: str | bytes) -> dict:
         return _failed(kind, why)
 
 
-def _rent(size: int) -> int:
-    """The lamports that keep an account of `size` bytes: 3,480 a byte and year, two years, 128 bytes of overhead
-    (the cluster's rent parameters, the same on every public cluster)."""
+def _rent(size: int, ledger=None) -> int:
+    """The lamports that keep an account of `size` bytes: what the cluster says (`ledger.rent`, getMinimumBalanceFor
+    RentExemption: a rent cut is used the day it is live, v0.3.29), else the old parameters: 3,480 a byte and year, two
+    years, 128 bytes of overhead."""
+    ask = getattr(ledger, "rent", None)
+    if ask is not None:
+        try:
+            return int(ask(size))
+        except Exception:  # noqa: BLE001 - no answer: the old parameters, which are never less than the cluster asks
+            pass
     return (128 + size) * 6960
 
 
@@ -118,7 +125,7 @@ def passkey_fund(ledger, payer: Keypair, request: str | bytes | dict, repo_id: i
             raise _no(kind, f"the wallet holds less of this mint than the order's amount and its fee ({need} of its smallest units); "
                             "put more in the wallet, then post the same line again while its slot lasts")
         ixs = [*([passkey.open_ix(me, q.key)] if state is None else []),
-               *pkfund.rent_ixs(me, order, ov, _rent(pkfund.ORDER_LEN), _rent(165)), *q.ixs()]
+               *pkfund.rent_ixs(me, order, ov, _rent(pkfund.ORDER_LEN, ledger), _rent(165, ledger)), *q.ixs()]
         ask = getattr(ledger, "simulate", None)
         if ask is None:
             raise _no(kind, "this relay's ledger cannot simulate, and a passkey's funding is never sent unchecked")

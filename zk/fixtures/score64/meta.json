@@ -1,0 +1,7 @@
+{
+  "constraints": 47484,
+  "measured_on": "WSL2 Ubuntu-24.04, 4 vCPU, 4 GB VM (the founder's build box)",
+  "prove_ms": 9551,
+  "public_inputs": 3,
+  "setup_ms": 13400
+}

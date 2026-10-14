@@ -1,0 +1,32 @@
+# .github/workflows/knos-gate.yml: Knos Gate with the Action alone (no App). Copy this file, add .knos/gate.yml
+# (`knos gate init`), seal your hidden tests (`knos gate seal tests-hidden --secret-out hidden.b64`) and store them:
+# `gh secret set KNOS_GATE_HIDDEN < hidden.b64`. Pin the action to a full commit sha.
+#
+# The job's name is the one status check ("Knos Gate"); the action edits one comment in place.
+name: Knos Gate
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+concurrency:
+  group: knos-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Knos Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read          # the base and the pull request's head
+      pull-requests: write    # the one comment, labels, closing (on_fail: close)
+      issues: write           # labels live on the issue side of a pull request
+    steps:
+      # no actions/checkout: the action fetches the base and the head itself and runs nothing from the head
+      - uses: drexthealpha/Knos/actions/gate@<full commit sha of a Knos release>
+        with:
+          hidden-tests: ${{ secrets.KNOS_GATE_HIDDEN }}
+          receipt-key: ${{ secrets.KNOS_RECEIPT_KEY }}

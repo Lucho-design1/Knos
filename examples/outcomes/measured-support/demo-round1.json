@@ -1,0 +1,66 @@
+{
+  "cluster": "devnet",
+  "data_commit": "9f3b5022f90c282aa38295d04e5f290059638a22",
+  "issue": 1,
+  "measurement": null,
+  "mint": "J8Z1RvteeJRGaT1tdcK5C4XZSG3EWUD1Quqnv4CxkYd1",
+  "pinned_commit": "aa9e366ccb25931b523591564f4f8a450a278f54",
+  "program": "5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k",
+  "read_at": "2026-10-13T17:25:17Z",
+  "repository": "drexthealpha/knos-v0329-outcomes",
+  "repository_id": 1417494699,
+  "run": {
+    "conclusion": "failure",
+    "head": "aa9e366ccb25931b523591564f4f8a450a278f54",
+    "id": 38434541776,
+    "jobs": {
+      "measure / measure": "failure",
+      "sign": "skipped"
+    },
+    "url": "https://github.com/drexthealpha/knos-v0329-outcomes/actions/runs/38434541776"
+  },
+  "seller_balance": 15000000,
+  "spec_hash": "0de84f7c162ac1423f7caa4eab07033b488ace9f45e482b5e313ed0eb656f9de",
+  "synthetic": true,
+  "tiers": [
+    {
+      "amount": 5000000,
+      "fee": 50000,
+      "fund_tx": "5brNzGdFL4PpuLrnHtHDgoJuQ4vGywQzXvX3MwDwYxzQcLurT5Q6fZsNBZsacVnidtJNN5YQRaqfMKWogESu8DtP",
+      "order": "8UrfMKuyGQ8vgW57bt3HGmuBtprfy95yaSxHuFkvjBwr",
+      "refund_tx": "2Yybb2U8s1We45ffSiErHWq9yQjdwAZU55D5xZQKdZnRHNMqQD5XV1bmKmxkn3PT49QgE4uYcvjErszAPcwfBAnV",
+      "refunded_by": "5zGQCyrtK4gv61EYpUvoKApWAxvbPucpHABA1vdhAJ9V",
+      "state": "refunded",
+      "terms_hash": "373fa625ed074e63001b6784d27fb272aa39932080215dc2041c51b7733944bd",
+      "tier": "lift-5"
+    },
+    {
+      "amount": 10000000,
+      "fee": 50000,
+      "fund_tx": "2MCbMFKmr1JmisDfwE8CFFJCUyFcjZwJcmUAzXxdawe1kezAqMd9SJFyGL6GXJ3Ygnfbry7EWG7d7xUDe3if4V84",
+      "order": "87dmPvH6XuCgFhzu3hJkzkBmAEYC6AQnR91PJrUURg6J",
+      "refund_tx": "3xMZmNpLJ3s5CL3iTjAKcpEiUiuddmnjEgcDKGmne8h2dzQq2kAPrMrGTfSL8r5hxTt8g3Ewgs1LHxcwuNnsbUeJ",
+      "refunded_by": "5zGQCyrtK4gv61EYpUvoKApWAxvbPucpHABA1vdhAJ9V",
+      "state": "refunded",
+      "terms_hash": "cacc23f9f120e4bd167523007a8d56679885480400285aa35f1de48b1a05ded7",
+      "tier": "lift-10"
+    },
+    {
+      "amount": 15000000,
+      "fee": 50000,
+      "fund_tx": "3CuEwb6qCaf2SpPRm1oB67J3SLvTgZVRiczszsppm2LKYmtt8ThkssTwjPdGRXCGQHNnxXjafcRi3L8SLafCESQV",
+      "order": "52GmwEg8fYLsrCgHttEafxkxnDAyA4wmGHCCvjn6Fvhc",
+      "refund_tx": "3yngRhuCPk2Q6cVCrX7CFekNRamMtKFQsvCkqVdRHh6gfP73yUA2H6FZAGVJ9vQCvfc4dP4PomRrEFbd8mz39c3i",
+      "refunded_by": "5zGQCyrtK4gv61EYpUvoKApWAxvbPucpHABA1vdhAJ9V",
+      "state": "refunded",
+      "terms_hash": "eee82cae5dd2996b5a594e08e9087c5528b95c3d31767e01ad592bc2e109fb56",
+      "tier": "lift-20"
+    }
+  ],
+  "verifier": "FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W",
+  "what": "SYNTHETIC support tickets; a devnet test token minted for this demo stands in for USDC and is worth nothing",
+  "window": {
+    "end": "2026-10-13T16:51:45Z",
+    "start": "2026-10-13T16:41:45Z"
+  }
+}
