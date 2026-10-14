@@ -18,7 +18,7 @@ Three kinds, decided from what reads them:
 
 | Repository | Kind | Where it is now | Status | Still points at the old repository |
 | --- | --- | --- | --- | --- |
-| knos-wanted | a | [`apps/wanted/`](../../apps/wanted) | folded; its 36 tests run against this tree (`tests/test_fold_wanted.py`) | nothing in Knos; the public repository is the old copy |
+| knos-wanted | a | [`apps/wanted/`](../../apps/wanted) | folded; its tests run against this tree (`tests/test_fold_wanted.py`); since 0.3.33 it is Knos's demand check ([DEMAND_CHECK.md](DEMAND_CHECK.md)) | nothing in Knos; the public repository is the old copy |
 | knos-task | c | [`templates/knos-task/`](../../templates/knos-task) | folded; the site's task form adds the callers to an empty repository (`web/task.js`) | the live site until this release deploys; old copies of `witness.py` |
 | knos-attest | c | [`templates/knos-attest/`](../../templates/knos-attest) | folded; `python -m knos.host_judge link` then `editor` | the live site until this release deploys |
 | knos-claim | c | [`templates/knos-claim/`](../../templates/knos-claim) | folded; `knos claim` creates the empty repository and commits the file; `#payee` links to both steps | knos 0.3.28 and older try the template first and fall back to the same empty repository and file |

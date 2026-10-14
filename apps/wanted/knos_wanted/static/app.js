@@ -2,13 +2,12 @@
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (n, d = 2) => (typeof n === "number" ? n.toFixed(d) : "n/a");
-let current = null;
+let maker = null, report = null, buyerS = null, lockHash = null, status = null;
 
 const EXAMPLES = [
-  { idea: "A late-night oat-milk coffee bar for students in London", rivals: "", place: "London" },
-  { idea: "A true-crime podcast for women about unsolved art heists", rivals: "", place: "" },
-  { idea: "A vegan Nigerian street-food truck for young professionals in New York", rivals: "", place: "New York" },
-  { idea: "Recycled-plastic trail running shoes for parents", rivals: "Allbirds, Salomon", place: "" },
+  { idea: "A late-night oat-milk coffee bar for students in London", variants: "", rivals: "Starbucks, Pret", place: "London" },
+  { idea: "A vegan Nigerian street-food truck for young professionals in New York", variants: "", rivals: "", place: "New York" },
+  { idea: "A true-crime podcast for women about unsolved art heists", variants: "", rivals: "", place: "Los Angeles" },
 ];
 
 async function api(path, body) {
@@ -17,52 +16,118 @@ async function api(path, body) {
   if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
   return j;
 }
-function showErr(msg) { const e = $("#err"); e.textContent = msg; e.hidden = !msg; }
+function showErr(msg) { const e = $("#err"); e.textContent = msg || ""; e.hidden = !msg; }
+async function busy(btn, label, fn) {
+  const old = btn.textContent; btn.disabled = true; btn.textContent = label; showErr("");
+  try { await fn(); } catch (e) { showErr(e.message || String(e)); }
+  btn.disabled = false; btn.textContent = old;
+}
 
-async function status() {
+async function loadStatus() {
   try {
-    const s = await api("/api/status");
-    const b = $("#modeBadge");
-    b.textContent = s.label;
-    b.classList.toggle("live", s.mode === "live");
-    $("#framing").textContent = s.framing;
-    if (!s.escrow) { $("#demoBuy").disabled = true; $("#walletBuy").disabled = true; $("#lockOut").textContent = "Escrow unavailable on this server (the knos package is not installed)."; }
-    else if (!s.demo_wallet) { $("#demoBuy").disabled = true; $("#walletBuy").disabled = true; $("#lockOut").textContent = "Escrow unavailable: this server has no devnet test wallet configured."; }
+    status = await api("/api/status");
+    const b = $("#modeBadge"); b.textContent = status.label; b.classList.toggle("live", status.mode === "live");
+    $("#framing").textContent = status.framing;
+    $("#reason").textContent = `Qloo: ${status.mode.toUpperCase()} (${status.reason}). Transport: ${status.transport}; ${status.tools.length} MCP tools listed.`;
+    $("#targets").innerHTML = status.targets.map((t, i) => `<label class="tick"><input type="checkbox" value="${esc(t)}" ${i < 2 ? "checked" : ""}> ${esc(t.replace("_", " "))}</label>`).join("");
+    if (!status.escrow || !status.demo_wallet) {
+      $("#demoBuy").disabled = true; $("#walletBuy").disabled = true;
+      $("#lockOut").textContent = !status.escrow ? "Escrow unavailable on this server (the knos package is not installed)." : "Escrow unavailable: this server has no devnet test wallet configured.";
+    }
   } catch (e) { $("#modeBadge").textContent = "server unreachable"; }
 }
 
-function sectionStatus(sec) {
-  const words = { mock: "", live: "", "not served": "Not served by this Qloo key.", failed: "The Qloo call failed.", "no data": "Qloo answered without data for this.", "no input": sec.note || "Not enough input." };
-  return `<p class="status">${esc(words[sec.status] ?? sec.status)}${sec.note && sec.status !== "no input" ? " " + esc(sec.note) : ""}</p>`;
+function tab(which) {
+  $("#maker").hidden = which !== "maker"; $("#buyer").hidden = which !== "buyer";
+  $("#tabMaker").classList.toggle("on", which === "maker"); $("#tabBuyer").classList.toggle("on", which === "buyer");
+  $("#tabMaker").setAttribute("aria-selected", which === "maker"); $("#tabBuyer").setAttribute("aria-selected", which === "buyer");
 }
+$("#tabMaker").addEventListener("click", () => tab("maker"));
+$("#tabBuyer").addEventListener("click", () => tab("buyer"));
+
+// ---- the trail -----------------------------------------------------------------------------------------------
+function renderTrail(trail) {
+  $("#trailBox").hidden = !trail?.length;
+  $("#trail").innerHTML = `<table class="tbl"><tr><th>#</th><th>Step</th><th>Tool</th><th>Request (redacted: no key, no personal data)</th><th>Why</th><th>Result</th></tr>${
+    trail.map((t, i) => `<tr class="${t.tool ? "" : "confirmed"}"><td>${i + 1}</td><td>${esc(t.step)}</td><td>${t.tool ? `<code>${esc(t.tool)}</code>` : "<b>you confirmed</b>"}</td>
+      <td>${t.request ? `<code class="req">${esc(JSON.stringify(t.request))}</code>` : t.chosen ? `chosen: <code>${esc(t.chosen)}</code>` : ""}</td>
+      <td>${esc(t.why)}</td><td>${esc(t.status)}${t.result_count != null ? ` (${esc(t.result_count)})` : ""}${t.cached ? " cached" : ""}${t.attempts > 1 ? ` after ${t.attempts} tries` : ""}${t.error ? ` ${esc(t.error)}` : ""}${t.label ? ` <span class="mockchip">MOCK</span>` : ""}</td></tr>`).join("")}</table>`;
+}
+
+// ---- questions (confirm the match) ---------------------------------------------------------------------------
+function renderQs(el, s, onSearch) {
+  el.innerHTML = s.questions.map((q, qi) => {
+    const kindWord = { tag: "taste", proxy: "closest existing product", rival: "rival", like: "you like", vibe: "vibe" }[q.kind] || q.kind;
+    const type = q.pick === "many" ? "checkbox" : "radio";
+    const opts = q.candidates.map((c, ci) => `<label class="cand"><input type="${type}" name="q${qi}" value="${esc(c.id)}" ${ci === 0 && q.kind !== "tag" ? "" : ""}>
+        ${esc(c.name)} <span class="cid">${esc(c.type || "")} ${esc(c.id)}</span></label>`).join("");
+    return `<fieldset class="q"><legend>${esc(kindWord)}: "${esc(q.input)}" <span class="status">${esc(q.status)}${q.summary ? ": " + esc(q.summary) : ""}</span></legend>
+      ${opts || "<p class='status'>Qloo found no candidate.</p>"}
+      <label class="cand"><input type="${type}" name="q${qi}" value=""> none of these</label>
+      ${onSearch ? `<div class="again"><input placeholder="Try another name" data-qi="${qi}"><button type="button" data-qi="${qi}">Look up</button></div>` : ""}</fieldset>`;
+  }).join("");
+  if (onSearch) el.querySelectorAll(".again button").forEach((b) => b.addEventListener("click", () => onSearch(Number(b.dataset.qi), el.querySelector(`.again input[data-qi="${b.dataset.qi}"]`).value, b)));
+}
+function choices(el, s) {
+  const out = {};
+  s.questions.forEach((q, qi) => {
+    const picked = [...el.querySelectorAll(`input[name="q${qi}"]:checked`)].map((x) => x.value).filter(Boolean);
+    if (picked.length) out[q.key] = q.pick === "many" ? picked : picked[0];
+  });
+  return out;
+}
+
+// ---- maker ----------------------------------------------------------------------------------------------------
+$("#examples").innerHTML = EXAMPLES.map((e, i) => `<button type="button" data-i="${i}">${esc(e.idea.slice(0, 40))}...</button>`).join("");
+$("#examples").addEventListener("click", (ev) => {
+  const i = ev.target?.dataset?.i; if (i == null) return;
+  const e = EXAMPLES[i]; $("#idea").value = e.idea; $("#variants").value = e.variants; $("#rivals").value = e.rivals; $("#place").value = e.place;
+});
+function makerSearch(qi, name, btn) {
+  return busy(btn, "...", async () => {
+    const r = await api("/api/maker/search", { session: maker.id, key: maker.questions[qi].key, name });
+    maker.questions[qi] = r.question; maker.trail = r.trail;
+    renderQs($("#makerQs"), maker, makerSearch); renderTrail(maker.trail);
+  });
+}
+$("#makerForm").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  busy($("#makerGo"), "Asking Qloo...", async () => {
+    maker = await api("/api/maker/start", { idea: $("#idea").value, variants: $("#variants").value, rivals: $("#rivals").value, place: $("#place").value });
+    $("#report").hidden = true; $("#makerConfirm").hidden = false;
+    renderQs($("#makerQs"), maker, makerSearch);
+    renderTrail(maker.trail);
+    $("#makerConfirm").scrollIntoView({ behavior: "smooth" });
+  });
+});
+$("#makerConfirmGo").addEventListener("click", () => busy($("#makerConfirmGo"), "Asking Qloo...", async () => {
+  report = await api("/api/maker/confirm", { session: maker.id, choices: choices($("#makerQs"), maker) });
+  renderReport(report); renderTrail(report.trail);
+}));
+
 function bar(label, v, min, max, cls = "") {
   const span = max - min || 1, zero = ((0 - min) / span) * 100, pos = ((v - min) / span) * 100;
-  const left = Math.min(zero, pos), width = Math.abs(pos - zero);
-  return `<div class="barrow"><span class="lbl" title="${esc(label)}">${esc(label)}</span><span class="track"><span class="fill ${v < 0 ? "neg" : ""} ${cls}" style="left:${left}%;width:${Math.max(width, 1)}%"></span></span><span class="num">${fmt(v)}</span></div>`;
+  return `<div class="barrow"><span class="lbl" title="${esc(label)}">${esc(label)}</span><span class="track"><span class="fill ${v < 0 ? "neg" : ""} ${cls}" style="left:${Math.min(zero, pos)}%;width:${Math.max(Math.abs(pos - zero), 1)}%"></span></span><span class="num">${fmt(v)}</span></div>`;
 }
 function fill(id, sec, html) {
   const el = document.querySelector(id);
-  el.querySelector(".body").innerHTML = sec.status === "ok" ? html() : sectionStatus(sec);
-  el.querySelector(".src").textContent = sec.source ? `Source: ${sec.source}` : "";
+  el.querySelector(".body").innerHTML = sec.status === "ok" ? html() : `<p class="status">${esc(sec.note || ({ needs_input: "Qloo needs a clearer input.", empty: "Qloo returned nothing.", error: "The Qloo call failed." }[sec.status] || sec.status))}</p>`;
+  el.querySelector(".src").textContent = sec.source ? `Source: ${sec.source}. Aggregate taste, not a prediction about one person.` : "";
 }
-
-function render(r) {
-  current = r;
-  $("#report").hidden = false;
-  const lw = $("#leanWord");
-  lw.textContent = r.lean.word;
-  lw.className = "lean-word " + (r.lean.word === "leans wanted" ? "leans" : r.lean.word === "weak" ? "weak" : r.lean.word === "mixed" ? "mixed" : "");
+function renderReport(r) {
+  $("#makerConfirm").hidden = true; $("#report").hidden = false;
+  const lw = $("#leanWord"); lw.textContent = r.lean.word;
+  lw.className = "lean-word " + ({ "leans wanted": "leans", weak: "weak", mixed: "mixed" }[r.lean.word] || "");
   $("#leanWhy").innerHTML = r.lean.why.map((w) => `<li>${esc(w)}</li>`).join("") || "<li>Not enough sections with data.</li>";
-  const lab = $("#reportLabel"); lab.textContent = `${r.label}. ${r.framing}`; lab.classList.toggle("live", r.mode === "live");
-  const p = r.plan, inp = r.inputs;
-  $("#plan").innerHTML = `Planner: ${esc(p.planner)} | category ${esc(p.category)} | proxies ${inp.proxies.map((e) => `<span class="chip">${esc(e.name)}</span>`).join("") || "none"}
-    rivals ${inp.rivals.map((e) => `<span class="chip">${esc(e.name)}</span>`).join("") || "none"} tags ${inp.tags.map((t) => `<span class="chip">${esc(t.name)}</span>`).join("") || "none"}
-    ${p.audience.age.length ? "| audience ages " + p.audience.age.map(esc).join(", ") : ""} ${p.audience.gender ? "| " + esc(p.audience.gender) : ""} ${p.location ? "| place " + esc(p.location) : ""}`;
-
+  const lab = $("#reportLabel"); lab.textContent = `${r.label}. ${r.framing} ${r.aggregate[0].toUpperCase()}${r.aggregate.slice(1)}.`; lab.classList.toggle("live", r.mode === "live");
+  const chips = (xs) => xs.map((x) => `<span class="chip">${esc(x.name)}</span>`).join("") || "none";
+  $("#chosen").innerHTML = `You confirmed: taste ${chips(r.chosen.tags)} | stands for the idea ${chips(r.chosen.proxies)} | rivals ${chips(r.chosen.rivals)} ${r.place ? "| place " + esc(r.place) : ""}`;
   fill("#secWho", r.who, () => {
-    const segs = r.who.segments, m = Math.max(0.5, ...segs.map((s) => Math.abs(s.score)));
-    const g = Object.entries(r.who.gender || {}).map(([k, v]) => bar(k, v, -m, m)).join("");
-    return `<div class="bars">${segs.map((s) => bar(s.label, s.score, -m, m)).join("")}${g}</div><p class="status">Above 0: leans in more than average; below 0: less (Qloo demographic affinity).</p>`;
+    const m = Math.max(0.5, ...r.who.segments.map((s) => Math.abs(s.score)));
+    return `<div class="bars">${r.who.segments.map((s) => bar(s.label, s.score, -m, m)).join("")}${Object.entries(r.who.gender || {}).map(([k, v]) => bar(k, v, -m, m)).join("")}</div>
+      <p class="status">Above 0: this audience leans in more than average.</p>
+      <p>Taste concepts: ${r.who.tags.map((t) => `<span class="chip ${r.who.tag_match.includes(t.name) ? "match" : ""}">${esc(t.name)}</span>`).join("")}</p>
+      ${r.who.tag_match.length ? `<p class="status">Your confirmed taste appears among them: ${r.who.tag_match.map(esc).join(", ")}.</p>` : ""}`;
   });
   fill("#secWhere", r.where, () => {
     const cs = r.where.cells.filter((c) => c.lat != null && c.lon != null);
@@ -70,48 +135,76 @@ function render(r) {
     const la = cs.map((c) => c.lat), lo = cs.map((c) => c.lon);
     const [a0, a1, o0, o1] = [Math.min(...la), Math.max(...la), Math.min(...lo), Math.max(...lo)];
     const X = (v) => 20 + ((v - o0) / ((o1 - o0) || 1)) * 360, Y = (v) => 180 - ((v - a0) / ((a1 - a0) || 1)) * 160;
-    const dots = cs.map((c, i) => `<circle cx="${X(c.lon).toFixed(1)}" cy="${Y(c.lat).toFixed(1)}" r="${(4 + 10 * (c.affinity || 0)).toFixed(1)}" fill="var(--bar)" fill-opacity="${(0.25 + 0.6 * (c.affinity || 0)).toFixed(2)}"><title>${esc(c.geohash)} affinity ${fmt(c.affinity)}</title></circle>${i < 3 ? `<text x="${(X(c.lon) + 8).toFixed(1)}" y="${(Y(c.lat) - 8).toFixed(1)}" font-size="11" fill="var(--ink)">#${i + 1} ${esc(c.geohash)}</text>` : ""}`).join("");
-    return `<svg viewBox="0 0 400 200" role="img" aria-label="Heatmap cells around ${esc(r.where.location)}"><rect x="0" y="0" width="400" height="200" rx="8" fill="var(--bg)"/>${dots}</svg>
-      <p class="status">${esc(r.where.location)}: ${cs.length} cells, bigger and darker = higher affinity. Top cell geohash ${esc(cs[0].geohash)} (affinity ${fmt(cs[0].affinity)}).</p>`;
+    return `<svg viewBox="0 0 400 200" role="img" aria-label="Heatmap cells around ${esc(r.where.place)}"><rect width="400" height="200" rx="8" fill="var(--bg)"/>${cs.map((c, i) => `<circle cx="${X(c.lon).toFixed(1)}" cy="${Y(c.lat).toFixed(1)}" r="${(4 + 10 * (c.affinity || 0)).toFixed(1)}" fill="var(--bar)" fill-opacity="${(0.25 + 0.6 * (c.affinity || 0)).toFixed(2)}"><title>${esc(c.geohash)} affinity ${fmt(c.affinity)}</title></circle>${i < 3 ? `<text x="${Math.min(X(c.lon) + 8, 330).toFixed(1)}" y="${(Y(c.lat) - 8).toFixed(1)}" font-size="11" fill="var(--ink)">#${i + 1} ${esc(c.geohash)}</text>` : ""}`).join("")}</svg>
+      <p class="status">${esc(r.where.place)}: ${cs.length} cells; bigger and darker = higher affinity.</p>`;
   });
-  fill("#secStrength", r.strength, () => {
-    const rows = r.strength.rows, m = Math.max(0.01, ...rows.map((x) => x.affinity || 0));
-    return `<div class="bars">${rows.map((x) => x.affinity == null ? `<div class="barrow"><span class="lbl">${esc(x.name)}</span><span class="status">no score</span><span></span></div>` : bar(`${x.role === "rival" ? "rival: " : "idea: "}${x.name}`, x.affinity, 0, m, x.role === "rival" ? "rival" : "")).join("")}</div>
-      ${r.strength.note ? `<p class="status">${esc(r.strength.note)}</p>` : ""}<p class="status">Qloo affinity of each for the idea's taste tags and audience.</p>`;
-  });
-  fill("#secRising", r.rising, () => {
-    const s = r.rising.series, v = s.map((x) => x.percentile), lo = Math.min(...v), hi = Math.max(...v);
-    const pts = s.map((x, i) => `${(10 + (i / Math.max(1, s.length - 1)) * 380).toFixed(1)},${(110 - ((x.percentile - lo) / ((hi - lo) || 1)) * 90).toFixed(1)}`).join(" ");
-    return `<svg viewBox="0 0 400 120" role="img" aria-label="Trend line"><polyline points="${pts}" fill="none" stroke="var(--bar)" stroke-width="2.5"/></svg>
-      <p><b>${esc(r.rising.direction)}</b>: ${r.rising.change_points >= 0 ? "+" : ""}${fmt(r.rising.change_points)} percentile points for ${esc(r.rising.entity)} (${esc(s[0].date)} to ${esc(s[s.length - 1].date)}).</p>`;
-  });
-  fill("#secWhy", r.why, () => `<table class="tbl"><tr><th>This audience also likes</th><th>Affinity</th><th>Driven by (Qloo explainability)</th></tr>${r.why.neighbours.map((n) => `<tr><td>${esc(n.name)}</td><td class="num">${fmt(n.affinity)}</td><td>${n.drivers.map((d) => `<span class="chip">${esc(d.input)} ${fmt(d.score)}</span>`).join("") || "<span class='status'>none returned</span>"}</td></tr>`).join("")}</table>${r.why.warning ? `<p class="status">${esc(r.why.warning)}</p>` : ""}`);
-  fill("#secCompare", r.compare, () => r.compare.items.length ? `<ol>${r.compare.items.map((i) => `<li>${esc(i.name)}</li>`).join("")}</ol><p class="status">What Qloo's compare returns for the idea's proxies (A) against the rivals (B).</p>` : "<p class='status'>Nothing returned.</p>");
-  $("#secCalls .body").innerHTML = `<table class="tbl"><tr><th>Endpoint</th><th>Result</th></tr>${r.calls.map((c) => `<tr><td>${esc(c.endpoint)}</td><td>${esc(c.status)}${c.http ? " (HTTP " + esc(c.http) + ")" : ""}</td></tr>`).join("")}</table>`;
+  fill("#secRising", r.rising, () => r.rising.series.map((s) => {
+    const v = s.points.map((p) => p.percentile), lo = Math.min(...v), hi = Math.max(...v);
+    const pts = s.points.map((p, i) => `${(10 + (i / Math.max(1, s.points.length - 1)) * 380).toFixed(1)},${(50 - ((p.percentile - lo) / ((hi - lo) || 1)) * 40).toFixed(1)}`).join(" ");
+    return `<div class="spark"><svg viewBox="0 0 400 56" role="img" aria-label="Trend of ${esc(s.name)}"><polyline points="${pts}" fill="none" stroke="${s.role === "rival" ? "var(--muted)" : "var(--bar)"}" stroke-width="2.5"/></svg>
+      <p>${s.role === "rival" ? "rival " : ""}<b>${esc(s.name)}</b>: ${esc(s.direction)} (${s.change_points >= 0 ? "+" : ""}${fmt(s.change_points)} percentile points)</p></div>`;
+  }).join(""));
+  fill("#secFit", r.fit, () => `<ol class="rank">${r.fit.rows.map((x) => `<li class="${x.role}">${x.role === "rival" ? "rival: " : "your idea: "}<b>${esc(x.name)}</b> <span class="num">${fmt(x.affinity)}</span></li>`).join("")}</ol>
+      <p class="status">Ranked for ${esc(r.fit.audience || "people")} in ${esc(r.fit.place)}. ${esc(r.fit.note)}</p>`);
+  fill("#secRivals", r.rivals, () => r.rivals.items.length ? `<p>${r.rivals.items.map((i) => `<span class="chip">${esc(i.name)}</span>`).join("")}</p><p class="status">What Qloo's audience comparison returns for your idea's proxies (A) against the rivals (B).</p>` : "<p class='status'>Nothing returned.</p>");
   $("#hash").textContent = r.hash;
-  $("#lockOut").innerHTML = ""; $("#poolOut").innerHTML = "";
-  $("#report").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("#recordLine").textContent = r.record?.recorded ? `claim ${r.record.claim} (WARM line ${r.record.warm_seq}, COLD line ${r.record.cold_seq}; anchored on devnet with the next pre-order)` : `not recorded (${r.record?.why || "unknown"})`;
+  $("#publishOut").textContent = "";
+  $("#report").scrollIntoView({ behavior: "smooth" });
 }
+$("#publishGo").addEventListener("click", () => busy($("#publishGo"), "Listing...", async () => {
+  const r = await api("/api/maker/publish", { hash: report.hash, title: $("#title").value });
+  $("#publishOut").textContent = `Listed "${r.product.title}". Buyers will find it under "I want something".`;
+  openLock(report.hash, r.product.title);
+}));
 
+// ---- buyer ----------------------------------------------------------------------------------------------------
+$("#buyerForm").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  busy($("#buyerGo"), "Asking Qloo...", async () => {
+    const targets = [...document.querySelectorAll("#targets input:checked")].map((x) => x.value);
+    buyerS = await api("/api/buyer/start", { likes: $("#likes").value, vibes: $("#vibes").value, targets });
+    $("#buyerOut").hidden = true; $("#buyerConfirm").hidden = false;
+    renderQs($("#buyerQs"), buyerS, null); renderTrail(buyerS.trail);
+  });
+});
+$("#buyerConfirmGo").addEventListener("click", () => busy($("#buyerConfirmGo"), "Asking Qloo...", async () => {
+  const r = await api("/api/buyer/confirm", { session: buyerS.id, choices: choices($("#buyerQs"), buyerS) });
+  $("#buyerConfirm").hidden = true; $("#buyerOut").hidden = false;
+  const lab = $("#buyerLabel"); lab.textContent = `${r.label}. Results describe ${r.aggregate}.`; lab.classList.toggle("live", r.mode === "live");
+  $("#products").innerHTML = r.products.length ? `<table class="tbl"><tr><th>Product (not built yet)</th><th>Type</th><th>Rank in type</th><th>Fit (Qloo affinity of its proxy)</th><th></th></tr>${r.products.map((p) => `<tr><td><b>${esc(p.title)}</b>${p.synthetic ? ' <span class="mockchip">MOCK report</span>' : ""}<br><span class="status">stands in Qloo as ${esc(p.proxy)}; maker's report: ${esc(p.lean)}</span></td><td>${esc(p.type)}</td><td>${esc(p.rank_in_type ?? "-")}</td><td class="num">${fmt(p.affinity)}</td><td><button type="button" data-h="${esc(p.report_hash)}" data-t="${esc(p.title)}">Pre-order</button></td></tr>`).join("")}</table><p class="status">${esc(r.why_rank_by_type)}</p>` : `<p class="status">${esc(r.note || "Nothing ranked.")}</p>`;
+  $("#products").querySelectorAll("button[data-h]").forEach((b) => b.addEventListener("click", () => openLock(b.dataset.h, b.dataset.t)));
+  $("#recs").innerHTML = r.recommendations.map((g) => `<p><b>${esc(g.target_type.replace("_", " "))}</b>: ${g.items.map((i) => `<span class="chip">${esc(i.name)} ${fmt(i.affinity)}</span>`).join("") || `<span class="status">${esc(g.status)}</span>`}</p>`).join("");
+  renderTrail(r.trail);
+}));
+
+// ---- pre-orders (Knos devnet escrow) --------------------------------------------------------------------------
+async function openLock(hash, title) {
+  lockHash = hash; $("#lock").hidden = false; $("#lockTitle").textContent = title; $("#lockOut").innerHTML = ""; $("#poolOut").innerHTML = "";
+  quote(); pool(); $("#lock").scrollIntoView({ behavior: "smooth" });
+}
+async function quote() {
+  try {
+    const q = await api(`/api/quote?units=${encodeURIComponent($("#units").value)}`);
+    $("#quote").textContent = q.available ? `${fmt(q.at_lock.units, 3)} at lock (${q.at_lock.line}); ${fmt(q.at_release.units, 3)} at release (${q.at_release.line}, ${q.at_release.status}, paid by the ${q.at_release.payer}); ${fmt(q.on_graduation.units, 3)} Knos graduation fee (${q.on_graduation.status}, off chain). Demand report: ${q.demand_report.status}.` : q.why;
+  } catch (e) { $("#quote").textContent = e.message; }
+}
+$("#units").addEventListener("change", quote);
 async function pool() {
   try {
-    const p = await api(`/api/pool?hash=${encodeURIComponent(current.hash)}`);
+    const p = await api(`/api/pool?hash=${encodeURIComponent(lockHash)}`);
     $("#poolOut").innerHTML = `Pool for this report (read from devnet): <b>${p.buyers}</b> buyer(s), <b>${fmt(p.locked_units)}</b> test units locked in ${p.orders} order(s).`;
   } catch (e) { $("#poolOut").textContent = `Pool: ${e.message}`; }
 }
 function done(res, who) {
-  $("#lockOut").innerHTML = `Locked ${esc(res.amount_units ?? "")} test units (+ ${esc(res.fee_units ?? "")} fee) as ${esc(who)}. Transaction: <a href="${esc(res.explorer)}" target="_blank" rel="noopener">${esc(res.signature)}</a>${res.order_explorer ? `<br>Escrow order: <a href="${esc(res.order_explorer)}" target="_blank" rel="noopener">${esc(res.order)}</a>` : res.order ? `<br>Escrow order: ${esc(res.order)}` : ""}`;
+  const rec = res.record?.recorded ? `Knos Record: COLD line ${res.record.cold_seq}, WARM line ${res.record.warm_seq}.` : `Not recorded: ${esc(res.record?.why || "")}`;
+  const anc = res.anchor?.anchored ? ` Anchored on devnet: <a href="${esc(res.anchor.explorer)}" target="_blank" rel="noopener">${esc(res.anchor.tx)}</a>.` : res.anchor ? ` Anchor: ${esc(res.anchor.why)}` : "";
+  $("#lockOut").innerHTML = `Locked ${esc(res.amount_units ?? "")} test units as ${esc(who)}. Transaction: <a href="${esc(res.explorer)}" target="_blank" rel="noopener">${esc(res.signature)}</a>${res.order ? `<br>Escrow order: ${esc(res.order)}` : ""}<br>${rec}${anc}`;
   pool();
 }
-
-$("#demoBuy").addEventListener("click", async () => {
-  if (!current) return;
-  const b = $("#demoBuy"); b.disabled = true; $("#lockOut").textContent = "Sending to Solana devnet...";
-  try { done(await api("/api/preorder/demo", { hash: current.hash, units: Number($("#units").value) }), "the demo buyer (devnet test wallet)"); }
-  catch (e) { $("#lockOut").textContent = e.message; }
-  b.disabled = false;
-});
-
+$("#demoBuy").addEventListener("click", () => busy($("#demoBuy"), "Sending to Solana devnet...", async () => {
+  done(await api("/api/preorder/demo", { hash: lockHash, units: Number($("#units").value) }), "the demo buyer (devnet test wallet)");
+}));
 function loadWeb3() {
   return new Promise((ok, no) => {
     if (window.solanaWeb3) return ok(window.solanaWeb3);
@@ -121,38 +214,18 @@ function loadWeb3() {
     document.head.appendChild(s);
   });
 }
-$("#walletBuy").addEventListener("click", async () => {
-  if (!current) return;
+$("#walletBuy").addEventListener("click", () => busy($("#walletBuy"), "Waiting for the wallet...", async () => {
   const provider = window.phantom?.solana || window.solana;
-  if (!provider) { $("#lockOut").innerHTML = 'No Solana wallet found. Install Phantom, switch it to devnet (Settings, Developer settings, Testnet mode), or use the demo buyer.'; return; }
-  const b = $("#walletBuy"); b.disabled = true;
-  try {
-    const web3 = await loadWeb3();
-    const owner = (await provider.connect()).publicKey.toString();
-    $("#lockOut").textContent = "Sending test units and a little devnet SOL to your wallet...";
-    await api("/api/preorder/faucet", { owner }).catch((e) => { $("#lockOut").textContent = `Faucet: ${e.message} (continuing)`; });
-    const units = Number($("#units").value);
-    const t = await api("/api/preorder/tx", { hash: current.hash, owner, units });
-    $("#lockOut").textContent = "Approve the pre-order in your wallet...";
-    const tx = web3.Transaction.from(Uint8Array.from(atob(t.transaction), (c) => c.charCodeAt(0)));
-    const signed = await provider.signTransaction(tx);
-    const raw = btoa(String.fromCharCode(...signed.serialize()));
-    const res = await api("/api/preorder/submit", { transaction: raw, owner });
-    done({ ...res, order: t.order, amount_units: t.amount_units, fee_units: t.fee_units }, `your wallet ${owner}`);
-  } catch (e) { $("#lockOut").textContent = e.message || String(e); }
-  b.disabled = false;
-});
+  if (!provider) throw new Error("No Solana wallet found. Install Phantom and switch it to devnet, or use the demo buyer.");
+  const web3 = await loadWeb3();
+  const owner = (await provider.connect()).publicKey.toString();
+  await api("/api/preorder/faucet", { owner }).catch(() => {});
+  const units = Number($("#units").value);
+  const t = await api("/api/preorder/tx", { hash: lockHash, owner, units });
+  const tx = web3.Transaction.from(Uint8Array.from(atob(t.transaction), (c) => c.charCodeAt(0)));
+  const signed = await provider.signTransaction(tx);
+  const raw = btoa(String.fromCharCode(...signed.serialize()));
+  done(await api("/api/preorder/submit", { transaction: raw, owner, hash: lockHash, units, order: t.order }), `your wallet ${owner}`);
+}));
 
-$("#ideaForm").addEventListener("submit", async (ev) => {
-  ev.preventDefault(); showErr("");
-  const go = $("#go"); go.disabled = true; go.textContent = "Asking Qloo...";
-  try { render(await api("/api/report", { idea: $("#idea").value, rivals: $("#rivals").value, location: $("#place").value })); }
-  catch (e) { showErr(e.message); }
-  go.disabled = false; go.textContent = "Build the Wanted Report";
-});
-$("#examples").innerHTML = EXAMPLES.map((e, i) => `<button type="button" data-i="${i}">${esc(e.idea.slice(0, 48))}${e.idea.length > 48 ? "..." : ""}</button>`).join("");
-$("#examples").addEventListener("click", (ev) => {
-  const i = ev.target?.dataset?.i; if (i == null) return;
-  const e = EXAMPLES[i]; $("#idea").value = e.idea; $("#rivals").value = e.rivals; $("#place").value = e.place;
-});
-status();
+loadStatus();

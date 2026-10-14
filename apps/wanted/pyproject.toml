@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "knos-wanted"
-version = "0.1.0"
-description = "Idea in plain English -> a Wanted Report from Qloo taste data -> a Knos devnet pre-order escrow. Directional demand evidence, not a sales forecast."
+name = "knos-demand-check"
+version = "0.3.33"
+description = "Knos's demand check: an idea -> Qloo taste evidence (via qloo mcp) the maker confirms -> a demand report in the Knos Record -> pre-orders in a Knos devnet escrow. Directional demand evidence, not a sales forecast."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
@@ -20,7 +20,7 @@ escrow = ["knos", "solders>=0.29"]
 dev = ["pytest>=8"]
 
 [project.scripts]
-knos-wanted = "knos_wanted.__main__:main"
+knos-demand-check = "knos_wanted.__main__:main"
 
 [tool.setuptools]
 packages = ["knos_wanted"]

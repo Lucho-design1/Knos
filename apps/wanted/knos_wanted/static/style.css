@@ -73,3 +73,31 @@ svg { width: 100%; height: auto; display: block; }
   .barrow { grid-template-columns: 96px 1fr 48px; }
   .badge { font-size: 11px; }
 }
+/* Knos demand check (0.3.33): tabs, confirm steps, the request-to-result trail */
+:root[data-theme="dark"] {
+  --bg: #121418; --card: #1b1e24; --ink: #e9eaee; --muted: #a2a8b3; --line: #2c3038;
+  --accent: #7b9cff; --accent-ink: #0e1117; --good: #4cc38a; --bad: #ff7f66; --warn: #f0b44c;
+  --bar: #7b9cff; --bar2: #3a4252; --mock-bg: #3a2c0c; --mock-ink: #ffd27a; --live-bg: #0f3324; --live-ink: #8fe3b9;
+}
+.brand .sub { font-weight: 400; color: var(--muted); }
+.agg { color: var(--muted); font-weight: 500; }
+.reason { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+.tabs { display: flex; gap: 8px; margin: 0 0 14px; }
+.tabs button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.step, #report, #buyerOut, .trail { margin-top: 14px; }
+fieldset.q { border: 1px solid var(--line); border-radius: 8px; margin: 0 0 10px; padding: 8px 12px; }
+fieldset.q legend { font-weight: 600; padding: 0 4px; }
+label.cand, label.tick { display: flex; gap: 8px; align-items: baseline; font-size: 14px; color: var(--ink); margin: 4px 0; }
+label.cand input, label.tick input { width: auto; }
+.targets { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.cid { font-size: 11px; color: var(--muted); word-break: break-all; }
+.again { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 6px; }
+.chip.match { border-color: var(--good); color: var(--good); }
+.mockchip { font-size: 11px; padding: 1px 6px; border-radius: 999px; background: var(--mock-bg); color: var(--mock-ink); }
+code.req { font-size: 11px; word-break: break-all; }
+.trail .tbl td { font-size: 13px; }
+.trail tr.confirmed td { background: var(--live-bg); color: var(--live-ink); }
+.trail { overflow-x: auto; }
+ol.rank li.rival { color: var(--muted); }
+.spark p { margin: 2px 0 10px; font-size: 14px; }
+@media (max-width: 720px) { .trail .tbl th:nth-child(4), .trail .tbl td:nth-child(4) { display: none; } }

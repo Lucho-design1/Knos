@@ -1,5 +1,7 @@
-"""Knos Wanted: an idea in plain English -> a Wanted Report from Qloo's taste data -> a Knos devnet pre-order escrow.
+"""Knos's demand check (apps/wanted/ of the Knos monorepo): an idea -> Qloo taste evidence the maker confirms ->
+a demand report recorded in the Knos Record -> pre-orders locked in a Knos devnet escrow; and a buyer agent that
+ranks not-yet-built products against tastes the buyer chooses. Qloo is reached only through `qloo mcp`.
 
-Directional demand evidence, not a sales forecast.
+Aggregate taste, not a prediction about one person. Directional demand evidence, not a sales forecast.
 """
-__version__ = "0.1.0"
+__version__ = "0.3.33"

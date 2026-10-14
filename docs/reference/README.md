@@ -110,6 +110,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [AGENTS.md](AGENTS.md) | an agent finds work, takes it, submits it and is paid |
 | [HERMES.md](HERMES.md) | Knos in Hermes Agent: the skill, the MCP server (stdio and HTTP), the plugin, the referee as GEPA's judge, an Atropos environment |
 | [AUTORESEARCH.md](AUTORESEARCH.md) | autoresearch for anyone: agents change one file, the referee keeps or refuses each run, sealed data decides payment |
+| [DEMAND_CHECK.md](DEMAND_CHECK.md) | the demand check on Qloo's MCP server: a maker's demand report, a buyer agent, pre-orders in a devnet escrow |
 | [NEBIUS.md](NEBIUS.md) | Nemotron models on Nebius Token Factory as Knos coders and cheat explainers, Tavily provenance; the referee still decides |
 | [TEAMS.md](TEAMS.md) | Knos for teams: per verified merge, per agent check, bounty fee, task packages; metering, chain-checked invoices, the dashboard, the 1B USD arithmetic |
 

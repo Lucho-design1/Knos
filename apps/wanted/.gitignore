@@ -16,3 +16,7 @@ build/
 dist/
 .venv/
 .pytest_cache/
+# the official MCP SDK beside the bridge (sh bridge/install.sh); no package.json is kept
+node_modules/
+package.json
+package-lock.json

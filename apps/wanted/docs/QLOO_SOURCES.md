@@ -1,31 +1,42 @@
-# Qloo API: what this app calls, and where each detail is documented
+# Qloo: what the demand check uses, and where each detail comes from
 
-Every endpoint, parameter and response field the app uses was checked against Qloo's official documentation at
-docs.qloo.com on 14 Oct 2026. "Updated" is the page's own last-updated stamp at that time. Nothing here is Qloo
-response data.
+Read 14 Oct 2026. Nothing here is Qloo response data.
 
-| What the app uses | Qloo page (updated) |
+## The supported stack (the only one used)
+
+| What | Source |
 |---|---|
-| Base URL `https://hackathon.api.qloo.com`; header `X-Api-Key`; hackathon keys fail (401) on staging and production URLs; `/recommendations` and `/recs` not supported; a 403 means the entity type is not available; private server-side caching allowed, never response data in a public repository | [Qloo Agentic Hackathon Developer Guide](https://docs.qloo.com/reference/qloo-llm-hackathon-developer-guide) (2026-10-07) |
-| `GET /search` with `query`, `types`, `take`; response `results[]` of entities | [Search Entities](https://docs.qloo.com/reference/get-search) (2026-07-20) |
-| `GET /v2/tags` with `filter.query`, `take`; response `results.tags[]` | [Search Tags](https://docs.qloo.com/reference/search-tags) (2026-07-08) |
-| Tag object fields `tag_id`, `name`, `types`, `subtype` | [Taste Analysis](https://docs.qloo.com/reference/taste-analysis) (2025-11-12) |
-| `GET /v2/insights` with `filter.type` (required), `signal.interests.entities`, `signal.interests.tags`, `signal.demographics.age` (values such as `24_and_younger`, `25_to_29`, `30_to_34`, `35_to_44`, `45_to_54`, `55_and_older`), `signal.demographics.gender` (`male`, `female`), `filter.results.entities` ("often used to assess the affinity of an entity towards input"), `take` (max 50); response `results.entities[]` | [Insights API Deep Dive](https://docs.qloo.com/reference/insights-api-deep-dive) (2026-07-08) |
-| `feature.explainability=true`: per result `query.explainability` (input contributions, normalised 0 to 1); top-level `query.explainability` (average influence over top-N subsets); `query.explainability.warning` when it cannot be computed | same page (2026-07-08) |
-| Entity fields `name`, `entity_id`, `subtype`, `popularity`, `tags[]`, `query.measurements.audience_growth` | [Recommendation Insights](https://docs.qloo.com/reference/basic-insights-use-case) (2025-10-27) |
-| `filter.type=urn:demographics` with `signal.interests.entities` or `.tags`; response `results.demographics[].query.age.*` and `.gender.*`, positive = stronger than average | [Demographic Insights](https://docs.qloo.com/reference/demographics-use-case) (2025-10-27) |
-| `filter.type=urn:heatmap` with `filter.location.query`; response `results.heatmap[]` with `location.latitude/longitude/geohash` and `query.affinity/affinity_rank/popularity` | [Heatmap Insights](https://docs.qloo.com/reference/heatmaps-use-case) (2026-07-08) |
-| `filter.location.query`: fuzzy locality name | [Parameter Reference](https://docs.qloo.com/reference/parameters) (2026-07-08) |
-| `GET /v2/trending` with `filter.type`, `signal.interests.entities`, `filter.start_date`, `filter.end_date` (YYYY-MM-DD); response `results.trending[]` with `date`, `population_percentile`, `population_rank`, `population_rank_velocity`, `velocity_fold_change`, `population_percent_delta` | [Get Trending Data](https://docs.qloo.com/reference/get-trending) (2026-07-08) |
-| `GET /v2/analysis/compare` with `a.signal.interests.entities`, `b.signal.interests.entities`, `take`; response `results[]` of entity objects; 404 "no results", 429 rate limit | [Analysis Compare](https://docs.qloo.com/reference/analysis-compare) (2026-07-08) |
+| Supported surfaces `qloo explore`, `qloo exec`, `qloo api`, `qloo mcp`; minimum harness 0.1.26; excluded: integrate/plan/build modes, hosted MCP endpoints, legacy `qloo api mcp` | [qloo/qloo-hackathon-kit](https://github.com/qloo/qloo-hackathon-kit) `README.md` and `manifest.json` (commit 0db91b8d, 23 Sep 2026) |
+| `qloo mcp` is a local stdio server with no hosted URL; start it from a backend with the official MCP SDK and `env: process.env` so `QLOO_API_KEY` reaches it; the chain find_tags/describe -> confirm -> recommend/rank/where_popular; six statuses ok/empty/needs_input/partial/degraded/error; retry only when `error.retryable` | kit `starter/mcp-client/README.md` and `backend.mjs`; SDK pin `@modelcontextprotocol/sdk` 1.30.1 in `starter/mcp-client/package.json` |
+| Key only on the server, never in a repository, browser bundle, public MCP config or recording; smallest request; cache only what is needed; bounded retries; no bulk scraping | kit `docs/API_ACCESS.md` |
+| No personal data to Qloo (names, e-mails, device ids, account ids, location histories); results are aggregate affinities, not evidence about a person; ask for clarification when an entity or tag choice changes the result | kit `docs/SAFE_USE.md` |
+| The six submission items | kit `docs/SUBMISSION.md` |
+| `QLOO_BASE_URL` and `QLOO_TRUSTED_BASE_URL` set to the same URL to trust a gateway for one invocation; `qloo setup --status --json`; `qloo mcp` advertises `qloo_capabilities` plus nine workflows and with no credential fails calls with `QLOO_AUTH` | `@qloo/qloo-harness` 0.1.26 `README.md` (npm package, installed 14 Oct 2026) |
 
-## Where the docs leave a gap, and what the app does
+## The tools, as `qloo mcp` lists them (harness 0.1.26, `tools/list` without a key, 14 Oct 2026)
 
-- The per-result `query.explainability` object's exact layout is described in words, without a JSON example. The
-  app reads any list or mapping of input ids to scores (`report.drivers`); the mock uses a list per signal.
-- The items of `/v2/analysis/compare` are documented only as entity objects; the app shows their names in order and
-  claims nothing more about them.
-- The hackathon guide lists `urn:entity:video_game` and `urn:entity:destination`; the Insights reference lists
-  `urn:entity:videogame` and `urn:entity:locality`. The probe tests both spellings and records the status codes.
-- `urn:demographics` and `urn:heatmap` are documented in their use-case pages; whether the hackathon key serves
-  them is exactly what `python -m knos_wanted probe` records.
+`qloo_capabilities`, `qloo_recommend`, `qloo_rank`, `qloo_describe`, `qloo_where_popular`, `qloo_compare_audiences`,
+`qloo_entity_tags`, `qloo_audience_demographics`, `qloo_trends`, `qloo_find_tags`. Inputs the demand check relies on:
+
+| Tool | Inputs used | Notes from the schema / the harness's builders (dist/qloo-tools.js) |
+|---|---|---|
+| `qloo_find_tags` | `query`, `limit` (1-20) | `GET /v2/tags`, `feature.semantic_search` true by default; results `{id, name, type, popularity, affinity}` |
+| `qloo_describe` | `entity`, `type` | names are resolved; an ambiguous name returns `needs_input` with `resolution.issues[].candidates[] {id, name, type, rank, ...}`; an id resolves as `match: identifier` |
+| `qloo_audience_demographics` | `entity`, `entity_type`, `limit` | `filter.type=urn:demographics`; results `results.demographics[]` as Qloo returns them |
+| `qloo_entity_tags` | `entities` (1-10), `entity_type`, `limit` | `filter.type=urn:tag` |
+| `qloo_where_popular` | `entity`, `entity_type`, `within`, `limit` | `filter.type=urn:heatmap` + `filter.location.query`; cells sorted by `query.affinity` |
+| `qloo_trends` | `entities` (1-5), `entity_type`, `start_date`, `end_date`, `limit` | one `GET /v2/trending` per entity; result `series[] {entity, points[]}` |
+| `qloo_compare_audiences` | `group_a`, `group_b`, `target_type`, `limit` | `GET /v2/analysis/compare` |
+| `qloo_rank` | `options` (1-10), `option_type`, `signals` or `signal_location` (+ `demographic`) | `filter.results.entities` = options; a demographic needs `signal_location`; "scores from separate calls are not comparable" |
+| `qloo_recommend` | `target_type`, `signals`, `signal_tags`, `limit`, `explain` | `feature.explainability=true` by default |
+
+Entity types: Insights types `artist, book, brand, movie, person, place, podcast, tv_show, videogame`; search types add
+`locality, actor, album, author, director`.
+
+## Where a detail is not documented, and what Knos does
+
+- The exact `results` layout of `qloo_audience_demographics` and `qloo_compare_audiences` is passed through from
+  Qloo (`boundedValue(response.results)`). Knos reads `query.age.*` / `query.gender.*` for demographics (Qloo's
+  Demographic Insights page) and entity names for compare, and claims nothing more.
+- Envelope `schema_version` is `1.0-preview.1`: a preview contract. Knos reads only documented fields and
+  degrades a section (it says "error", "empty" or "needs input") rather than guess.

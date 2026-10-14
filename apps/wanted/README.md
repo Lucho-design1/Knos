@@ -1,125 +1,115 @@
-# Knos Wanted
+# Knos demand check (apps/wanted/)
 
-This app lives in the Knos monorepo at `apps/wanted/` (it was the separate repository drexthealpha/knos-wanted until
-Knos 0.3.31; that repository is no longer where it is kept). Every command below runs from this folder.
+Part of Knos, in the Knos monorepo at `apps/wanted/`. Before anyone builds, Knos checks demand: a maker describes an
+idea, Qloo's taste data answers who wants it, where, against which rivals and whether interest is rising, the maker
+confirms every match Qloo proposes, and the demand report goes into the Knos Record. Buyers then lock pre-orders for
+that exact report in a Knos escrow on Solana devnet, and a buyer agent ranks the products that are not built yet
+against tastes the buyer chooses.
 
-Describe a product idea in plain English. Knos Wanted asks Qloo's taste data who would want it, where, how it stands
-against its rivals and whether interest is rising, and explains why. Then it lets buyers lock pre-orders for that
-exact report in a Knos escrow on Solana devnet.
+**Directional demand evidence, not a sales forecast.** Every Qloo result describes
+aggregate taste, not a prediction about one person. The report does not predict units, revenue or price.
 
-**Directional demand evidence, not a sales forecast.** The report shows how an audience's tastes line up with the
-idea's closest existing proxies. It does not predict units, revenue or price.
+Full reference: [docs/reference/DEMAND_CHECK.md](../../docs/reference/DEMAND_CHECK.md).
 
 ## Try it
 
 ```bash
-python -m knos_wanted serve            # http://127.0.0.1:8080, no login, no key needed
-python -m knos_wanted report "A late-night oat-milk coffee bar for students in London"
+# once: Qloo's harness (Node 22.19+) and the official MCP SDK beside the bridge
+npm install --global @qloo/qloo-harness          # qloo --version must be 0.1.26 or newer
+sh apps/wanted/bridge/install.sh                 # @modelcontextprotocol/sdk 1.30.1, as Qloo's starter pins it
+
+# from the root of the Knos checkout
+PYTHONPATH=src:apps/wanted python -m knos_wanted status                     # live or MOCK, and why (no Qloo call)
+PYTHONPATH=src:apps/wanted python -m knos_wanted serve                      # http://127.0.0.1:8080, no login
+PYTHONPATH=src:apps/wanted python -m knos_wanted maker "A late-night oat-milk coffee bar for students in London" \
+    --rival Starbucks --rival Pret --pick first                             # the maker flow in a terminal
 ```
 
-With no `QLOO_API_KEY` the app runs on **MOCK (synthetic, not real Qloo data)** responses shaped from Qloo's public
-docs. The mode is shown on the page header, on every report and in every API answer.
+Without a Qloo credential on the server the demand check runs on Knos's **MOCK (synthetic, not real Qloo data)** MCP
+server, which lists the same ten tools and answers in the same envelope. The mode and the reason are on the page
+header, on every report, on every row of the trail and in every API answer.
 
 ## What is Qloo-powered
 
-Every number in a Wanted Report comes from one Qloo call (or, in MOCK mode, from a synthetic body in the same shape).
-Each report section names its call. The agent around the calls is ours: the planner, the lean rule, the page and
-the escrow.
+Qloo is reached only from the server, only through Qloo's canonical local MCP server `qloo mcp`
+(@qloo/qloo-harness), started by `bridge/qloo_bridge.mjs` with the official MCP SDK exactly as Qloo's starter
+`starter/mcp-client/backend.mjs` does. Nine workflows, each where it answers a question of the product:
 
-| Report part | Qloo call | What Qloo provides |
+| Step | Tool | Why |
 |---|---|---|
-| Proxies and rivals | `GET /search` | the Qloo entity ids for the existing brands, places or works that stand for the idea and for its rivals |
-| Taste tags | `GET /v2/tags` | the Qloo tag ids for the idea's keywords |
-| **Who** | `GET /v2/insights?filter.type=urn:demographics` | age and gender affinity of the idea's proxies and tags (above 0 = leans in more than average) |
-| **Where** | `GET /v2/insights?filter.type=urn:heatmap&filter.location.query=...` | affinity and popularity per geohash cell around the named place |
-| **How strong vs rivals** | `GET /v2/insights` with the idea's tags and audience as signals and `filter.results.entities` = proxies and rivals | each entity's affinity for the same audience |
-| **Rising or not** | `GET /v2/trending` | population percentile over the last 12 weeks for the main proxy |
-| **Why** | `GET /v2/insights` with `feature.explainability=true` | what else this audience likes, and which of the idea's inputs drove each result |
-| **Compare** | `GET /v2/analysis/compare` (A = proxies, B = rivals) | the entities Qloo returns for that comparison |
+| Maker: the idea's taste words | `qloo_find_tags` | turn "oat-milk", "late-night" into tag URNs the maker picks from |
+| Maker: what stands for the idea, and its rivals | `qloo_describe` | resolve existing products to one Qloo entity each; ambiguous names come back as candidates the maker confirms |
+| Who | `qloo_audience_demographics`, `qloo_entity_tags` | aggregate age and gender affinity of the proxy's audience; the concepts that characterise it (and whether the maker's chosen taste is among them) |
+| Where | `qloo_where_popular` | heatmap cells around the maker's place |
+| Rising or not | `qloo_trends` | population percentile over 12 weeks for the proxy and the rivals |
+| Vs rivals | `qloo_compare_audiences` | the proxy's audience against the rivals' |
+| Fit | `qloo_rank` | which variant of the idea or rival fits this place and audience best |
+| Buyer: what this taste also likes | `qloo_recommend` | per target type the buyer picks, from the buyer's confirmed signals |
+| Buyer: which unbuilt product fits | `qloo_rank` | the confirmed proxies of the products open for pre-order, against the buyer's signals |
 
-Not Qloo-powered: turning the idea into search words (keyword rules by default, or any OpenAI-compatible LLM you
-configure; it proposes words only, never numbers), the one-word lean, the page, and the pre-order escrow (Knos).
+`qloo api` is not used: the workflows cover every question. Not Qloo-powered: the planner that proposes search words
+(keyword rules by default, or any OpenAI-compatible LLM you configure; it proposes words only, never numbers), the
+one-word lean, the page, the Knos Record and the pre-order escrow (Knos).
 
-Every endpoint, parameter and field above is checked against Qloo's docs, with page dates, in
-[docs/QLOO_SOURCES.md](docs/QLOO_SOURCES.md).
+## How the lean is decided (Knos's rule, not Qloo's)
 
-## How the lean is decided (our rule, not Qloo's)
-
-- **Strength:** +1 if the idea's best proxy scores at or above its strongest rival for the audience, else -1.
-- **Trend:** +1 if the population percentile rose by 2 points or more over 12 weeks, -1 if it fell by 2 or more.
+- **Fit:** +1 if a variant of the idea ranks above every rival in `qloo_rank` for the place and audience, else -1.
+- **Trend:** +1 if the proxy's population percentile rose by 2 points or more over 12 weeks, -1 if it fell by 2 or more.
 - **Audience:** +1 if one age segment leans in with a demographic affinity above 0.1.
 
 Two or more points: "leans wanted". 0 or 1: "mixed". Below 0: "weak". Fewer than two of these sections with data:
-"insufficient evidence". The thresholds are choices of this app, stated here so anyone can disagree with them.
+"insufficient evidence". The thresholds are choices of Knos, stated here so anyone can disagree with them.
 
-## Lock pre-orders (Knos, Solana devnet, test money)
+## Record and money
 
-Each report gets its own pre-order pool, built with Knos's graduation code (`knos.graduation`, Knos 0.3.29): the
-scope, private options and terms come from `knos.graduation.scope / options / terms`, every order is built by
-`knos.graduation.preorder_ix` (a `knos_pay` FundOrderWallet), and the pool is read back with `knos.graduation.pool`.
-The terms carry the report's sha256, so the money is locked against that exact report.
+- Every demand report: a WARM claim `demand:<report hash>` and a COLD `experiment` event in the Knos Record
+  (`knos.record`, Sibyl). Every pre-order: a COLD `funding` event and the claim's new state. After each pre-order
+  the unanchored lines are anchored on Solana devnet (`knos.record.anchor`, signed by the app's devnet test wallet);
+  `python -m knos_wanted anchor` does it on demand. The record holds hashes, statuses, tool names, addresses and
+  amounts: never the idea text (only its sha256), never a buyer's tastes, never a Qloo result.
+- Pre-orders use Knos's graduation pre-order pool (`knos.graduation.preorder_ix`, knos_pay FundOrderWallet): money
+  is paid to the maker only on delivery through Knos's judge, and refunded after the deadline (14 days) otherwise.
+- Fees come from `config/fees.yaml` (`knos.money.fees_config`): `funding` 0 at lock, `payout` taken by knos_pay at
+  release, `graduation` decided and collected off chain. The demand report has no fee line: it is free until the
+  founder sets one. Devnet only, test units of a mint this app creates, no real money.
 
-- The buyer's test units plus the knos_pay fee move into the knos_pay program. They are paid to the maker only on
-  delivery, through Knos's judge workflow, and go back to the buyer after the deadline (14 days) otherwise. This
-  app never pays anyone out.
-- **Demo buyer (no wallet):** the app's own devnet TEST wallet signs, so anyone can see a real devnet escrow.
-- **Your wallet:** Phantom on devnet signs in the browser; the app sends a few test units and a little devnet SOL
-  first, builds the unsigned transaction, and relays only a single knos_pay pre-order signed by that wallet.
-- Devnet only (`knos.chain` refuses mainnet), test units of a mint this app creates, no real money.
+## Qloo data and personal data
 
-First devnet run (14 Oct 2026, on a MOCK report, so the report itself is synthetic; the transactions are real devnet
-transactions on the public knos_pay program `5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k`):
-
-- demo buyer pre-order, 5 test units: [`9J3xrEAF...`](https://explorer.solana.com/tx/9J3xrEAFB68UtYsYqk8oHpvK1BZZ8Tcnf9BHWiRSvvMjGd2px1woQs1PcSCJgTKJNC8to2k42YC1XsrBuzcgJy9?cluster=devnet)
-- a second wallet signing its own pre-order, 6 test units: [`3BHzsWyg...`](https://explorer.solana.com/tx/3BHzsWygneRcbQQ6Ho6wKjLtk6uwj5uCcuvvycKr1s1mhUBq7nMCMZvPzaG4ZhjvZKyMe8UjHXxjThy829Snu75?cluster=devnet)
-- the pool read back from devnet: 2 buyers, 11 test units locked.
-
-## Which Qloo endpoints does my key serve?
-
-```bash
-QLOO_API_KEY=... python -m knos_wanted probe
-```
-
-calls each endpoint once with documented parameters and writes only HTTP status codes to `.cache/probe.json`
-(git-ignored). The app then skips what the key does not serve and marks that section "not served"; the rest of the
-report still stands.
-
-## Qloo data rule
-
-Qloo allows private server-side caching and forbids storing its response data in a public repository. Live
-responses are cached under `KNOS_WANTED_CACHE` (default `.cache/qloo`, git-ignored) and never committed. The tests
-use synthetic bodies only.
+- The key lives only in the server's environment (`QLOO_API_KEY`) or the harness's private config (`qloo setup
+  --qloo`). It never reaches the browser, the repository, a log or a recording.
+- No personal data goes to Qloo: `knos_wanted.privacy` refuses e-mails, phone numbers, handles, links, addresses
+  and sentences about a person before any call. Buyers name things they like, never who they are.
+- Smallest requests (limits of 3 to 12), bounded retries (only when Qloo says `retryable`, at most 2 more, with
+  backoff), and a minimal private cache (live answers only, 15 minutes, at most 200 files under `.cache/`,
+  git-ignored). No Qloo response is ever committed; the tests use synthetic bodies only.
 
 ## Deploy (one service)
 
 ```bash
-# from the root of the Knos checkout: the image installs Knos and this app from the same tree
-docker build -f apps/wanted/Dockerfile -t knos-wanted .
-docker run -p 8080:8080 --env-file apps/wanted/.env knos-wanted
+# from the root of the Knos checkout: the image installs Knos, this app, Node, the harness and the MCP SDK
+docker build -f apps/wanted/Dockerfile -t knos-demand .
+docker run -p 8080:8080 --env-file apps/wanted/.env knos-demand
 ```
-
-or without Docker, from the root of the Knos checkout: `pip install . "./apps/wanted[escrow]" && HOST=0.0.0.0 python -m knos_wanted serve`. The page and the API are
-the same process. `/healthz` answers `{"ok": true}`.
 
 | Variable | Needed for | Without it |
 |---|---|---|
-| `QLOO_API_KEY` | live Qloo data | MOCK (synthetic) data, labelled |
-| `KNOS_WANTED_DEVNET_KEYPAIR` | lock pre-orders (a devnet test wallet with a little devnet SOL; path or JSON byte array) | escrow buttons explain what is missing |
-| `KNOS_WANTED_MINT` | keeping the same test mint across restarts | a test mint is created on first use |
+| `QLOO_API_KEY` (+ `QLOO_BASE_URL`, `QLOO_TRUSTED_BASE_URL` = `https://hackathon.api.qloo.com`) | live Qloo data | MOCK (synthetic) data, labelled |
+| `KNOS_WANTED_DEVNET_KEYPAIR` | pre-orders and anchoring (a devnet test wallet with a little devnet SOL; path or JSON byte array) | escrow buttons explain what is missing |
+| `KNOS_WANTED_MINT` | the same test mint across restarts | a test mint is created on first use |
+| `KNOS_WANTED_RECORD` | where the Knos Record lives | `~/.knos/record` |
 | `KNOS_WANTED_LLM_BASE_URL`, `_API_KEY`, `_MODEL` | LLM planner (OpenAI-compatible) | keyword planner |
 | `KNOS_RPC` | a devnet RPC of your choice | `https://api.devnet.solana.com` |
-
-The rest are in [.env.example](.env.example). Per-address rate limits keep a public demo from draining the test wallet.
 
 ## Tests
 
 ```bash
-# from the root of the Knos checkout, against the Knos of the same commit
+# from the root of the Knos checkout; no network, no key: Knos's MOCK server is the fake MCP server
 PYTHONPATH=src:apps/wanted python -m pytest -q apps/wanted/tests
 ```
 
-Knos's own suite runs these too (`tests/test_fold_wanted.py`). Without `knos` and `solders` importable the escrow
-tests are skipped and the rest run on the standard library.
+`tests/test_bridge.py` drives the real Node bridge and SDK against the MOCK server as a separate process; it is
+skipped, with the reason, where Node or the SDK is not installed. Knos's own suite runs these too
+(`tests/test_fold_wanted.py`).
 
 ## License
 

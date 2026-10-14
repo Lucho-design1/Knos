@@ -1,6 +1,6 @@
-"""Lock pre-orders: one Knos devnet pre-order escrow per Wanted Report, built with Knos's own graduation code.
+"""Lock pre-orders: one Knos devnet pre-order escrow per demand report, built with Knos's own graduation code.
 
-A Wanted Report is evidence that people may want a product; a pre-order is a buyer putting test money where that
+A demand report is evidence that people may want a product; a pre-order is a buyer putting test money where that
 evidence points. Each report opens a pre-order POOL in the sense of `knos.graduation` (Knos 0.3.29): the order scope,
 private salted options and terms come from `knos.graduation.scope / options / terms`, every order is built by
 `knos.graduation.preorder_ix` (a knos_pay FundOrderWallet), and the pool is read back with `knos.graduation.pool`.
@@ -15,7 +15,7 @@ Who signs:
   wallet mode  the buyer's own browser wallet signs; the server only builds the unsigned transaction and relays it.
   demo mode    a devnet TEST wallet of this app (KNOS_WANTED_DEVNET_KEYPAIR) signs as a demo buyer, so judges without
                a wallet can see a real devnet escrow. It is never a founder key and holds no real money.
-`knos` is an optional dependency (pip install "knos-wanted[escrow]"); without it the report still works and the button
+`knos` is an optional dependency (pip install "./apps/wanted[escrow]"); without it the report still works and the button
 says the escrow is unavailable.
 """
 from __future__ import annotations
@@ -31,6 +31,7 @@ MINT_LEN = 82
 DEFAULT_JUDGE_REPO = 1401439243        # drexthealpha/knos-e2e: the judge repository of Knos's devnet demos
 DEFAULT_MAKER_GITHUB_ID = 142920951    # drexthealpha: the maker paid on delivery (set KNOS_WANTED_MAKER_GITHUB_ID)
 POOL_DAYS = 14
+CLAIM_PREFIX = "knos-demand:"     # the pre-order pool of one demand report (Knos 0.3.31 used "knos-wanted:")
 FAUCET_UNITS = 20
 _lock = threading.Lock()
 
@@ -44,7 +45,7 @@ def knos():
         from knos import chain, graduation
         from knos.settle.v2 import pay
     except Exception as why:  # noqa: BLE001 - knos missing or broken: the escrow is off, the report is not
-        raise EscrowUnavailable(f"the knos package is not installed ({type(why).__name__}); pip install 'knos-wanted[escrow]'") from None
+        raise EscrowUnavailable(f"the knos package is not installed ({type(why).__name__}); pip install './apps/wanted[escrow]'") from None
     return chain, graduation, pay
 
 
@@ -65,7 +66,7 @@ def ledger():
 
 
 def claim_id(report_hash: str) -> str:
-    return "knos-wanted:" + report_hash[:40]
+    return CLAIM_PREFIX + report_hash[:40]
 
 
 def plan(report_hash: str, *, repo_id: int | None = None, maker_github_id: int | None = None, pool_days: int = POOL_DAYS) -> dict:
