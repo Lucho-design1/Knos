@@ -48,9 +48,9 @@ bytes), so no ExtendProgram is needed:
 
 | program | e_flags (sBPF) | bytes | executable hash (`solana-verify get-executable-hash`) |
 |---|---|---|---|
-| knos_oidc | 3 | 169,280 | `14dfede29c059c4ad3cf8eb7ee3f7754c1d21a21838f0f59e2bb83a932e067e3` |
+| knos_oidc | 3 | 172,952 | `d565487fc00c71b6b03a441915067075eb710d6509f6b8108aa31eaa9975298a` |
 | knos_pay | 3 | 362,512 | `95fa02b2b16e6336a5a9cd8cb1fe1a8246c55a2176e8a875b7099d49b86d6fb5` |
-| knos_meter | 3 | 158,368 | `faaaa6952905ee0266868fd6817f35ebf898136b87b00fbd7bce35cdb2c50cbe` |
+| knos_meter | 3 | 158,368 | `0c400e6bb0f975e9a7af633a0b6e3d7e2af3528109431154799b946c7d0cc80c` |
 | knos_passkey | 3 | 108,232 | `d5a5db160eab9fbfdd70712f14898b06daeb1b068eaa1f442f82fe492e5b1c73` |
 
 These are built from this release's source with the PLATFORM changes uncommitted; the hashes change if anything in
@@ -69,12 +69,17 @@ of the multiplications. One Step(16) then does everything in one transaction. Th
 running power is the same bytes in both arithmetics, so a token stepped halfway under one build finishes under the
 other (an upgrade between two Steps changes nothing; `tests/test_platform_verify.py`).
 
-**sBPF v3 cannot do this today.** The v3 that Agave 4.4 runs (SIMD-0178, SIMD-0189, SIMD-0377) has no high-half
-multiply: a v3 build of platform-tools v1.57 holds `mul64` and no `uhmul64` (`llvm-objdump -d`), where the v2 build holds
-21 `uhmul64`. So on v3 a 128-bit product is emulated, and 64-bit limbs are slower than 32-bit ones: measured below, a
-v3 build with 64-bit limbs took 1,027,779 + 1,086,730 compute units for Step(8), Step(8) and ran out on Step(16).
-`build.rs` therefore uses 64-bit limbs for v2 only; the v3 builds keep the 32-bit arithmetic and the two-step plan.
-One-transaction verification on devnet today needs the v2 build of knos_oidc (a founder decision: section 7).
+**sBPF v3 (v0.3.30): one transaction too, for a token of up to 5,000 bytes.** The v3 that Agave 4.4 runs (SIMD-0178,
+SIMD-0189, SIMD-0377) has no high-half multiply: a v3 build of platform-tools v1.57 holds `mul64` and no `uhmul64`
+(`llvm-objdump -d`), where the v2 build holds 21 `uhmul64`, and LLVM compiles a u128 product for v3 into a call to
+compiler-rt's `__multi3`. The first v3 build with 64-bit limbs (v0.3.29) did exactly that and was slower than 32-bit
+limbs (table below). v0.3.30 keeps the same 64-bit-limb Montgomery code (same rows, same reductions, same token
+bytes) and only changes how each t + a b + c is formed on v3 (`rsa64.rs`, module `h`; `build.rs` sets `knos_mulhi32`
+for an sBPF v3 target): four inline 32 x 32 -> 64-bit `mul64`s on halves that are loaded and stored as 32-bit words
+(`ldxw`/`stxw`, one instruction each, instead of shifts), summed in an order in which no u64 can overflow, so there
+are no carry tests (the bounds are written beside the code). The v3 deploy build holds 90 `mul64`, no `uhmul64` and
+no `__multi3` call. The v0 and v2 builds are byte for byte what they were (same sha256 as the knos-0.3.29 source, built
+with the same toolchain), and a native test checks the v3 arithmetic against the u128 one limb for limb.
 
 `big_mod_exp` is not active on devnet, so no deployed build uses it. The crate feature `big_mod_exp` does the power
 in one syscall for a cluster where it is active; a program that names an inactive syscall does not load.
@@ -122,12 +127,31 @@ active, including SIMD-0500 and SIMD-0385), each test build at its own program i
 |---|---|---|---|
 | sBPF v0, 32-bit limbs (today) | 761,805 + 826,794 | out of compute units (1,399,850 consumed) | out of compute units |
 | sBPF v2, 64-bit limbs | 421,797 + 488,638 | **881,415** | **896,314** (2,279 bytes) |
-| sBPF v3, 32-bit limbs (the v3 deploy builds) | 719,805 + 781,472 | out of compute units | out of compute units |
-| sBPF v3, 64-bit limbs (first attempt, discarded) | 1,027,779 + 1,086,730 | out of compute units | out of compute units |
+| sBPF v3, 32-bit limbs (the v0.3.29 v3 deploy builds) | 719,805 + 781,472 | out of compute units | out of compute units |
+| sBPF v3, 64-bit limbs via `__multi3` (v0.3.29 attempt, discarded) | 1,027,779 + 1,086,730 | out of compute units | out of compute units |
+| **sBPF v3, 64-bit limbs, products from 32-bit halves (v0.3.30)** | 631,262 + 691,200 | **1,291,845** (1,952-byte token) | **1,301,807** (2,308 bytes) |
+
+**sBPF v3, v0.3.30, by token size** (local `solana-test-validator` 4.4.0-beta.0 from the Agave 4.4 release, nothing
+on devnet; the knos_oidc v3 test build at a fresh program id; `v0329/agents/V30PLAT/val.sh` drives `val_v3.py`;
+synthetic tokens signed by the tests' seed keys; 14 Oct 2026):
+
+| 2048-bit key, Step(16) in one transaction | 1,952 bytes | 3,500 | 4,000 | 4,500 | 5,000 | 5,500 | 8,192 (MAX_JWT) |
+|---|---|---|---|---|---|---|---|
+| compute units | 1,291,845 | 1,343,659 | 1,361,438 | 1,373,076 | 1,390,608 | out of compute units | out of compute units |
+
+A token the v1 transaction carries whole is about 3,600 bytes at most, so every one-transaction (Write + Step(16))
+verification fits; the margin for other instructions is about 98,000 compute units at the usual size and shrinks with
+the token. `knos.platform.verify.plan(..., "auto", elf, token_bytes)` takes one Step for a v3 build up to
+`V3_ONE_STEP_MAX` = 4,000 bytes and Step(8), Step(8) above (8,192 bytes: 667,386 + 891,286). A 4096-bit key keeps the
+two-step plan on v3 (six Steps, at most 1,031,214 compute units a transaction for a 2,409-byte token and 1,071,940
+for 8,191 bytes): its Step(4) runs out. A forged signature is refused (1,237,747 consumed, error, nothing verified).
+The v3 deploy build of knos_oidc is now `deploy/upgrade-0329/HASHES-v3.txt`'s line (executable hash `d565487f…`):
+the v3 buffer written on 13-14 Oct for the old build no longer matches it.
 
 So: **before** 761,637 + 826,670 = 1,588,307 compute units in two transactions (LiteSVM, today's v0 test build,
 1,893-byte token; 761,805 + 826,794 in the validator); **after**, with the v2 build, 882,519 in ONE transaction on
-devnet (`44AdiYqa…` above). The v3 build is about 5% cheaper than v0 and still needs two transactions.
+devnet (`44AdiYqa…` above), and with the v0.3.30 v3 build 1,291,845 in ONE transaction on a local Agave 4.4 validator
+(not measured on devnet).
 
 The client keeps the old path: `KNOS_OIDC_VERIFY=two` (the default until the upgrade has executed) sends Step(8),
 Step(8), which every build takes; `one` sends Step(16); `auto` reads the deployed build's sBPF version
@@ -184,8 +208,9 @@ will refuse v0, v1 and v2 deployments once active; programs already deployed kee
 
 - The verified (docker) build of the v3 programs: no docker on this machine. The program.yml change (`--arch v3`, a
   4.4 toolchain image) is a change outside PLATFORM's paths: REQ INTEG / founder.
-- One-transaction RSA on sBPF v3: not possible with today's v3 (no 128-bit multiply); the 32-bit arithmetic could be made
-  cheaper (Karatsuba, a 16-bit-limb product with 64-bit accumulation); not attempted.
+- One-transaction RSA on sBPF v3 (v0.3.30): measured on a local validator only, not on devnet. It does not cover a
+  2048-bit token over 5,000 bytes nor a 4096-bit key in four Steps; those keep more Steps. More room would come from
+  limbs below 32 bits (e.g. 28-bit, so products are summed without carries) or a hand-scheduled row loop; not attempted.
 - `big_mod_exp`: inactive on devnet; the crate feature is written but no build of it was compiled or run here.
 - The relay still estimates the last Step's compute units with the two-step figures (`_LAST_STEP`); with
   `KNOS_OIDC_VERIFY=one` a Step(16) that does not fit beside other instructions is sent alone (the relay's existing

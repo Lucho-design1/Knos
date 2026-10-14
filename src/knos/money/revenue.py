@@ -26,8 +26,10 @@ from . import fees_config
 
 MODEL_INPUTS = {        # volumes a month; every default is 0: a model with no inputs says 0
     "verifications": 0,          # hosted verifications (the month's free ones are taken first)
-    "payout_volume_usd": 0,      # value released from escrow (bounties and orders included)
+    "payout_volume_usd": 0,      # value released from escrow (bounties and lab orders included)
     "payouts": 0,                # how many releases (each pays at least the floor)
+    "bounty_volume_usd": 0,      # bounties paid (also in payout_volume_usd): the 5% bounty fee's off-chain rest
+    "lab_order_volume_usd": 0,   # lab orders paid (also in payout_volume_usd): the 3% lab order fee's off-chain rest
     "graduation_volume_usd": 0,  # escrow + pre-order value released after graduation
     "task_package_sales_usd": 0,
     "cloud_subscribers": {},     # {tier name: subscribers}
@@ -54,6 +56,11 @@ def model(inputs: dict | None = None, cfg: fees_config.FeeConfig | None = None) 
     lines["verification"] = max(Decimal(0), _d(x["verifications"]) - free) * _d(f["verification"]["usd_each"])
     rate = Decimal(f["payout"]["rate_bps"]) / 10_000
     lines["payout"] = max(_d(x["payout_volume_usd"]) * rate, _d(x["payouts"]) * _d(f["payout"]["floor_usd"]))
+    for kind, key in (("bounty_platform", "bounty_volume_usd"), ("lab_order", "lab_order_volume_usd")):
+        # the whole fee less its on-chain part, which the payout line already counts (at the standard rate; an order
+        # whose on-chain fee is the floor leaves a smaller rest)
+        rest = max(0, f[kind]["rate_bps"] - f[f[kind]["onchain_line"]]["rate_bps"])
+        lines[kind] = _d(x[key]) * Decimal(rest) / 10_000
     lines["graduation"] = _d(x["graduation_volume_usd"]) * Decimal(f["graduation"]["rate_bps"]) / 10_000
     lines["task_package"] = _d(x["task_package_sales_usd"]) * Decimal(f["task_package"]["knos_bps"]) / 10_000
     tiers = {t["name"]: _d(t["usd_month"]) for t in cfg.credit_tiers}
@@ -64,7 +71,7 @@ def model(inputs: dict | None = None, cfg: fees_config.FeeConfig | None = None) 
     lines["cloud"] = sum((tiers[n] * _d(c) for n, c in subs.items()), Decimal(0))
     cents = {k: str(v.quantize(Decimal("0.01"), ROUND_HALF_UP)) for k, v in lines.items()}
     total = sum(lines.values(), Decimal(0)).quantize(Decimal("0.01"), ROUND_HALF_UP)
-    status = {k: f[k]["status"] for k in ("verification", "payout", "graduation", "task_package")} | {"cloud": cfg.doc["cloud"]["status"]}
+    status = {k: f[k]["status"] for k in ("verification", "payout", "bounty_platform", "lab_order", "graduation", "task_package")} | {"cloud": cfg.doc["cloud"]["status"]}
     return {"label": MODEL_LABEL, "inputs": x, "month": cents, "month_total": str(total), "year_total": str(total * 12), "status": status}
 
 
@@ -76,6 +83,9 @@ def one_billion(cfg: fees_config.FeeConfig | None = None) -> dict:
            "fees_usd": str(TARGET)}
     out["payout_volume_usd_year"] = str((TARGET * 10_000 / f["payout"]["rate_bps"]).quantize(Decimal(1)))
     out["verifications_year"] = str((TARGET / _d(f["verification"]["usd_each"])).quantize(Decimal(1)))
+    for kind, key in (("bounty_platform", "bounty_volume_usd_year"), ("lab_order", "lab_order_volume_usd_year")):
+        if f[kind]["rate_bps"]:
+            out[key] = str((TARGET * 10_000 / f[kind]["rate_bps"]).quantize(Decimal(1)))
     if f["graduation"]["rate_bps"]:
         out["graduation_volume_usd_year"] = str((TARGET * 10_000 / f["graduation"]["rate_bps"]).quantize(Decimal(1)))
     if f["task_package"]["knos_bps"]:
@@ -83,7 +93,9 @@ def one_billion(cfg: fees_config.FeeConfig | None = None) -> dict:
     top = max(cfg.credit_tiers, key=lambda t: _d(t["usd_month"]))
     out["cloud_subscribers_at_top_tier"] = str((TARGET / (_d(top["usd_month"]) * 12)).quantize(Decimal(1)))
     out["cloud_top_tier"] = top["name"]
-    out["placeholders_used"] = [p for p in cfg.placeholders() if p.startswith(("fees.graduation", "fees.task_package", "cloud.tiers"))]
+    used = ("fees.bounty_platform", "fees.lab_order", "fees.graduation", "fees.task_package")
+    out["placeholders_used"] = [p for p in cfg.placeholders() if p.startswith(used) or (p.startswith("cloud.tiers") and "credits" not in p)]
+    out["decided_used"] = [p for p in cfg.decided() if p.startswith(used + ("cloud.tiers",))]
     return out
 
 

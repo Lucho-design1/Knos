@@ -109,6 +109,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [AGENTS.md](AGENTS.md) | an agent finds work, takes it, submits it and is paid |
 | [HERMES.md](HERMES.md) | Knos in Hermes Agent: the skill, the MCP server (stdio and HTTP), the plugin, the referee as GEPA's judge, an Atropos environment |
 | [AUTORESEARCH.md](AUTORESEARCH.md) | autoresearch for anyone: agents change one file, the referee keeps or refuses each run, sealed data decides payment |
+| [NEBIUS.md](NEBIUS.md) | Nemotron models on Nebius Token Factory as Knos coders and cheat explainers, Tavily provenance; the referee still decides |
 
 ## 5. How do I build on it?
 

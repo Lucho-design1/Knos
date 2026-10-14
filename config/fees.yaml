@@ -1,11 +1,15 @@
 # THE one fee config of Knos. Everything that states, charges, quotes or charts a Knos fee reads this file through
 # knos.money.fees_config (load, validate). Nothing else types a fee.
 #
-# Three kinds of line, and every line says which it is in `status`:
+# Four kinds of line, and every line says which it is in `status`:
 #   live         the deployed knos_pay program charges it on devnet today. The program's numbers are compiled into it
 #                (knos.settle.v2.pay: FEE_BPS, FEE_MIN, TIP, TIP_FIRST, ORDER_MIN_AMOUNT, MAX_PAYEES); this file mirrors
 #                them and the loader REFUSES the file when one differs, so the two cannot drift apart.
 #   proposed     the price book (knos.billing, docs/PRICING.md): a plan nobody pays yet. The loader refuses a mismatch.
+#   decided      a starting price the founder set on 14 Oct 2026 (to revisit once the cost per verification is
+#                measured). Nobody pays it yet, and it is NOT compiled into knos_pay: where it is more than the program
+#                takes, the difference is collected off chain until a program upgrade carries it. Every decided line
+#                carries `decided`, `rationale` and `source`; the loader refuses one without them.
 #   placeholder  a number only the founder can set. It is here so the code, the quotes and the dashboard have a shape;
 #                it is not a price. `knos.money.fees_config.load().placeholders()` lists every one.
 #
@@ -52,34 +56,66 @@ fees:
     payer: "funder, on top of the amount"
   bounty:
     status: "live"
-    what: "a bounty is a knos_pay work order: the same fee, taken by the program and sent to the treasury at payout"
+    what: "a bounty is a knos_pay work order: the same fee, taken by the program and sent to the treasury at payout (the on-chain part of the bounty fee, bounty_platform)"
     rate_bps: 30
     floor_usd: "0.05"
     to: "treasury"
     refund: "a bounty refunded after its deadline returns the amount and the fee"
+  bounty_platform:
+    status: "decided"
+    what: "the Knos bounty fee: 5% of the bounty, paid by the funder; the on-chain bounty fee (0.30%, at least 0.05) is part of it, not added to it"
+    rate_bps: 500
+    onchain_line: "bounty"
+    collected: "the program takes the on-chain bounty fee at payout; the rest (5% minus that fee) is invoiced off chain, because knos_pay's fee is compiled into the program (0.30%) and charging 5% on chain needs a program upgrade through the Squads vault"
+    decided: "14 Oct 2026"
+    rationale: "5% of the bounty: a starting price, to revisit once the cost per verification is measured"
+    source: "founder decision 14 Oct 2026 (DECISIONS.md item 2). The comparison with Algora's fee to organisations is the founder's; Algora's pricing page (algora.io/pricing) answered 404 on 14 Oct 2026, so no Algora figure is stated here"
+  lab_order:
+    status: "decided"
+    what: "the Knos fee on a lab order paid through a Knos escrow (the lab is paid when its protocol and QC verdict passes): 3% of the order; the on-chain payout fee (0.30%, at least 0.05) is part of it, not added to it"
+    rate_bps: 300
+    onchain_line: "payout"
+    collected: "the program takes the payout fee at release; the rest (3% minus that fee) is invoiced off chain until a program upgrade carries it. Who bears it (the buyer on top, or deducted from the lab's payment) is not set by the decision"
+    decided: "14 Oct 2026"
+    rationale: "labs already pay 2% to 3% of an invoice just to be paid sooner; Knos's 3% buys payment from escrow on a verdict"
+    source: "founder decision 14 Oct 2026 (DECISIONS.md item 2). Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45), 2.00% (NET60), https://www.scientist.com/scipay/ (read 14 Oct 2026)"
   funding:
     status: "live"
     what: "opening an escrow (a graduation milestone or a pre-order): the program holds the payout fee with the money and takes it only at release"
     rate_bps: 0
   graduation:
-    status: "placeholder"
+    status: "decided"
     what: "a fee on the value of the milestone escrow and the pre-order pool released after a claim graduates, above the payout fee"
     rate_bps: 50
-    collected: "by contract, off chain, until a knos_pay build carries it; on chain today only the payout fee is taken"
+    collected: "by contract, off chain, until a knos_pay build carries it (a program upgrade); on chain today only the payout fee is taken"
+    decided: "14 Oct 2026"
+    rationale: "0.5% of money raised: a starting price, to revisit once the cost per verification is measured"
+    source: "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
   task_package:
-    status: "placeholder"
+    status: "decided"
     what: "Knos's share of a sale of a sealed task package (issue + hidden tests + cheat rules); the maintainer keeps the rest"
     knos_bps: 1000
     market: "labs pay 200 to 2,000 USD per task (Epoch AI, 12 Jan 2026); robustness to reward hacking is the top buying criterion (same source)"
+    collected: "off chain, by contract (a sale of a task package is not a knos_pay order today)"
+    decided: "14 Oct 2026"
+    rationale: "the maintainer who wrote the task keeps 90%; Knos keeps 10%"
+    source: "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
   x402_check:
-    status: "proposed"
-    what: "a paid check bought by an agent over x402 (knos-order scheme): the verification price, sold in packs because the smallest order is 5.00"
-    usd_each: "0.002"
+    status: "decided"
+    what: "a paid check bought by an agent over x402 (knos-order scheme), in devnet USDC (test money), sold in packs because the smallest order is 5.00"
+    usd_each: "0.02"
+    mint: "devnet USDC (test money) until the cost per verification is measured"
+    decided: "14 Oct 2026"
+    rationale: "a per-check price for agents paying over x402, apart from the hosted Meter line of the price book (0.002 after the free month)"
+    source: "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
 
 splits:
-  status: "placeholder"
+  status: "decided"
   what: "the fixed share of every payout each contributor role receives, in basis points; one order pays at most 4 payees, so 4 roles"
   rounding: "each share is rounded down; the last payee receives what is left, exactly as knos_pay pays (order_pay.rs)"
+  decided: "14 Oct 2026"
+  rationale: "60 researcher / 25 agents / 10 labs / 5 referees"
+  source: "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
   roles:
     researcher: 6000
     agent: 2500
@@ -87,8 +123,14 @@ splits:
     referee: 500
 
 cloud:
-  status: "placeholder"
+  status: "decided"
   what: "Knos Cloud: paid credits for hosted verification (runners, sealed-test storage, receipts, Gate for private repositories). Everything stays open source (MIT) and self-hosting stays free."
+  decided: "14 Oct 2026"
+  rationale: "three monthly tiers of 20, 100 and 200 USD, each with 10% bonus credit (22, 110 and 220 USD of credit a month)"
+  source: "founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure"
+  bonus_bps: 1000
+  units_status: "placeholder"
+  units_what: "what one credit is worth and what each use consumes are not decided: credit_usd, consumes and so each tier's credit count are placeholders"
   credit_usd: "0.002"
   consumes:
     hosted_verification: 1
@@ -98,15 +140,18 @@ cloud:
   tiers:
     - name: "Starter"
       usd_month: "20"
-      credits_month: 10000
+      credit_usd_month: "22"
+      credits_month: 11000
     - name: "Pro"
       usd_month: "100"
+      credit_usd_month: "110"
       credits_month: 55000
     - name: "Team"
       usd_month: "200"
-      credits_month: 120000
+      credit_usd_month: "220"
+      credits_month: 110000
   enterprise: "by contract (the Control line of the price book)"
-  shape_from: "Nous Research's Portal sells $20/$100/$200 monthly tiers (TechCrunch, 7 Oct 2026, citing the WSJ; unaudited). Knos copies the shape, not the prices: every Knos number here is a placeholder."
+  shape_from: "Nous Research's Portal sells $20/$100/$200 monthly tiers (TechCrunch, 7 Oct 2026, citing the WSJ; unaudited). Knos's tier prices match it by founder decision (14 Oct 2026); the credit unit is a placeholder."
 
 sources:
   nous:
@@ -116,4 +161,8 @@ sources:
   epoch_tasks:
     said: "labs pay 200 to 2,000 USD per verified task; robustness to reward hacking is the top buying criterion"
     source: "Epoch AI, 12 Jan 2026"
+    audited: false
+  scipay:
+    said: "Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45) or 2.00% (NET60) to be paid early, plus 0.75% for currencies other than USD"
+    source: "https://www.scientist.com/scipay/ (read 14 Oct 2026)"
     audited: false

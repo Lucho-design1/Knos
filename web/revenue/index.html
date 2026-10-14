@@ -21,7 +21,7 @@
 .rev th, .rev td { text-align: left; padding: 6px 8px; border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent); vertical-align: top; }
 .rev td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rev .tag { font-size: 12px; padding: 1px 6px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; }
-.rev .tag.placeholder { color: #c0392b; } .rev .tag.proposed { color: #b9770e; } .rev .tag.live { color: #1e8449; }
+.rev .tag.placeholder { color: #c0392b; } .rev .tag.proposed { color: #b9770e; } .rev .tag.live { color: #1e8449; } .rev .tag.decided { color: #1f618d; }
 .rev .model { border: 2px dashed #b9770e; padding: 12px 16px; border-radius: 8px; }
 .rev .model label { display: inline-block; margin: 4px 16px 4px 0; } .rev .model input { width: 9em; }
 .rev .big { font-size: 28px; font-weight: 600; } .rev code { word-break: break-all; }
@@ -47,12 +47,12 @@
 
     <h2>The fee schedule</h2>
     <p>From <code>config/fees.yaml</code>, the one fee config. <span class="tag live">live</span> the program charges it on devnet;
-       <span class="tag proposed">proposed</span> the price book, nobody pays it yet; <span class="tag placeholder">placeholder</span> only the founder can set it.</p>
+       <span class="tag proposed">proposed</span> the price book, nobody pays it yet; <span class="tag decided">decided</span> a starting price the founder set on 14 Oct 2026, nobody pays it yet, collected off chain where it is more than the program takes; <span class="tag placeholder">placeholder</span> only the founder can set it.</p>
     <table id="rev-fees"><thead><tr><th>Line</th><th>What</th><th>Rate or price</th><th>Status</th></tr></thead><tbody></tbody></table>
     <h3>Contributor split of every payout</h3>
     <table id="rev-split"><thead><tr><th>Role</th><th class="num">Share</th></tr></thead><tbody></tbody></table>
     <h3>Knos Cloud credits (hosted verification; self-hosting stays free)</h3>
-    <table id="rev-cloud"><thead><tr><th>Tier</th><th class="num">USD a month</th><th class="num">Credits a month</th><th>Status</th></tr></thead><tbody></tbody></table>
+    <table id="rev-cloud"><thead><tr><th>Tier</th><th class="num">USD a month</th><th class="num">Credit a month (USD, 10% bonus)</th><th class="num">Credits a month</th><th>Status</th></tr></thead><tbody></tbody></table>
     <p class="fine" id="rev-cloud-shape"></p>
 
     <h2>Model</h2>

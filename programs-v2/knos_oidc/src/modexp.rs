@@ -1,10 +1,10 @@
-//! s^65537 mod n for Step, in whichever arithmetic this build has (v0.3.29).
-//!
-//!   - sBPF v2 build (build.rs sets `knos_pqr`) and native builds: rsa64.rs, 64-bit limbs. One 2048-bit
+//! s^65537 mod n for Step, in whichever arithmetic this build has (v0.3.29; v3 since v0.3.30).
+//!   - sBPF v2 and v3 builds (build.rs sets `knos_wide`) and native builds: rsa64.rs, 64-bit limbs. One 2048-bit
 //!     verification fits ONE transaction: Step(16) does the Montgomery entry, all 16 squarings, the last product and
-//!     the token's checks in one call.
-//!   - sBPF v0, v1 and v3 builds: rsa.rs, 32-bit limbs, as before (two transactions for a 2048-bit key: Step(8),
-//!     Step(8)). The v3 of Agave 4.4 has no 64 x 64 -> 128-bit multiply (no `uhmul64`), see build.rs.
+//!     the token's checks in one call. The v3 of Agave 4.4 has no `uhmul64`: there each 128-bit product is four 32-bit
+//!     ones (rsa64::h), and Step(16) fits a token of up to 5,000 bytes, not MAX_JWT (docs/reference/PLATFORM.md).
+//!   - sBPF v0 and v1 builds: rsa.rs, 32-bit limbs, as before (two transactions for a 2048-bit key: Step(8),
+//!     Step(8)).
 //!   - feature `big_mod_exp`: the runtime's sol_big_mod_exp syscall does the whole power in one call. Only for a
 //!     cluster where that syscall is active: on one where it is not, a program that names it does not even load.
 //!     Devnet does not have it active (docs/reference/PLATFORM.md), so no deployed build enables this feature.
@@ -12,13 +12,13 @@
 //! The running power is kept in the token account (T_X) as the same 512 little-endian bytes in every arithmetic,
 //! so the steps of one token may run under different builds of this program (an upgrade between two Steps).
 
-#[cfg(any(knos_pqr, not(target_os = "solana")))]
+#[cfg(any(knos_wide, not(target_os = "solana")))]
 use crate::rsa64 as w;
-#[cfg(any(knos_pqr, not(target_os = "solana")))]
+#[cfg(any(knos_wide, not(target_os = "solana")))]
 type Limb = u64;
-#[cfg(not(any(knos_pqr, not(target_os = "solana"))))]
+#[cfg(not(any(knos_wide, not(target_os = "solana"))))]
 use crate::rsa as w;
-#[cfg(not(any(knos_pqr, not(target_os = "solana"))))]
+#[cfg(not(any(knos_wide, not(target_os = "solana"))))]
 type Limb = u32;
 
 /// Which arithmetic this build runs: "u64" (sBPF v2+ and native) or "u32".
@@ -57,21 +57,21 @@ impl Pow {
     }
 }
 
-#[cfg(any(knos_pqr, not(target_os = "solana")))]
+#[cfg(any(knos_wide, not(target_os = "solana")))]
 fn conv(x: &[u32], l: usize) -> Vec<u64> { let mut o = vec![0u64; l]; crate::rsa64::from32(x, &mut o); o }
-#[cfg(any(knos_pqr, not(target_os = "solana")))]
+#[cfg(any(knos_wide, not(target_os = "solana")))]
 fn back(x: &[u64], o: &mut [u32]) { crate::rsa64::to32(x, o) }
-#[cfg(any(knos_pqr, not(target_os = "solana")))]
+#[cfg(any(knos_wide, not(target_os = "solana")))]
 fn n0_of(n: &[u64], n0inv32: u32) -> u64 {
     let v = crate::rsa64::n0inv64(n[0]);
     debug_assert_eq!(v as u32, n0inv32);
     v
 }
-#[cfg(not(any(knos_pqr, not(target_os = "solana"))))]
+#[cfg(not(any(knos_wide, not(target_os = "solana"))))]
 fn conv(x: &[u32], _l: usize) -> Vec<u32> { x.to_vec() }
-#[cfg(not(any(knos_pqr, not(target_os = "solana"))))]
+#[cfg(not(any(knos_wide, not(target_os = "solana"))))]
 fn back(x: &[u32], o: &mut [u32]) { o.copy_from_slice(x) }
-#[cfg(not(any(knos_pqr, not(target_os = "solana"))))]
+#[cfg(not(any(knos_wide, not(target_os = "solana"))))]
 fn n0_of(_n: &[u32], n0inv32: u32) -> u32 { n0inv32 }
 
 /// s^65537 mod n by the runtime's syscall (feature `big_mod_exp`), big-endian, as long as n.

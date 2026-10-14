@@ -45,11 +45,31 @@
    },
    "bounty": {
     "status": "live",
-    "what": "a bounty is a knos_pay work order: the same fee, taken by the program and sent to the treasury at payout",
+    "what": "a bounty is a knos_pay work order: the same fee, taken by the program and sent to the treasury at payout (the on-chain part of the bounty fee, bounty_platform)",
     "rate_bps": 30,
     "floor_usd": "0.05",
     "to": "treasury",
     "refund": "a bounty refunded after its deadline returns the amount and the fee"
+   },
+   "bounty_platform": {
+    "status": "decided",
+    "what": "the Knos bounty fee: 5% of the bounty, paid by the funder; the on-chain bounty fee (0.30%, at least 0.05) is part of it, not added to it",
+    "rate_bps": 500,
+    "onchain_line": "bounty",
+    "collected": "the program takes the on-chain bounty fee at payout; the rest (5% minus that fee) is invoiced off chain, because knos_pay's fee is compiled into the program (0.30%) and charging 5% on chain needs a program upgrade through the Squads vault",
+    "decided": "14 Oct 2026",
+    "rationale": "5% of the bounty: a starting price, to revisit once the cost per verification is measured",
+    "source": "founder decision 14 Oct 2026 (DECISIONS.md item 2). The comparison with Algora's fee to organisations is the founder's; Algora's pricing page (algora.io/pricing) answered 404 on 14 Oct 2026, so no Algora figure is stated here"
+   },
+   "lab_order": {
+    "status": "decided",
+    "what": "the Knos fee on a lab order paid through a Knos escrow (the lab is paid when its protocol and QC verdict passes): 3% of the order; the on-chain payout fee (0.30%, at least 0.05) is part of it, not added to it",
+    "rate_bps": 300,
+    "onchain_line": "payout",
+    "collected": "the program takes the payout fee at release; the rest (3% minus that fee) is invoiced off chain until a program upgrade carries it. Who bears it (the buyer on top, or deducted from the lab's payment) is not set by the decision",
+    "decided": "14 Oct 2026",
+    "rationale": "labs already pay 2% to 3% of an invoice just to be paid sooner; Knos's 3% buys payment from escrow on a verdict",
+    "source": "founder decision 14 Oct 2026 (DECISIONS.md item 2). Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45), 2.00% (NET60), https://www.scientist.com/scipay/ (read 14 Oct 2026)"
    },
    "funding": {
     "status": "live",
@@ -57,27 +77,41 @@
     "rate_bps": 0
    },
    "graduation": {
-    "status": "placeholder",
+    "status": "decided",
     "what": "a fee on the value of the milestone escrow and the pre-order pool released after a claim graduates, above the payout fee",
     "rate_bps": 50,
-    "collected": "by contract, off chain, until a knos_pay build carries it; on chain today only the payout fee is taken"
+    "collected": "by contract, off chain, until a knos_pay build carries it (a program upgrade); on chain today only the payout fee is taken",
+    "decided": "14 Oct 2026",
+    "rationale": "0.5% of money raised: a starting price, to revisit once the cost per verification is measured",
+    "source": "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
    },
    "task_package": {
-    "status": "placeholder",
+    "status": "decided",
     "what": "Knos's share of a sale of a sealed task package (issue + hidden tests + cheat rules); the maintainer keeps the rest",
     "knos_bps": 1000,
-    "market": "labs pay 200 to 2,000 USD per task (Epoch AI, 12 Jan 2026); robustness to reward hacking is the top buying criterion (same source)"
+    "market": "labs pay 200 to 2,000 USD per task (Epoch AI, 12 Jan 2026); robustness to reward hacking is the top buying criterion (same source)",
+    "collected": "off chain, by contract (a sale of a task package is not a knos_pay order today)",
+    "decided": "14 Oct 2026",
+    "rationale": "the maintainer who wrote the task keeps 90%; Knos keeps 10%",
+    "source": "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
    },
    "x402_check": {
-    "status": "proposed",
-    "what": "a paid check bought by an agent over x402 (knos-order scheme): the verification price, sold in packs because the smallest order is 5.00",
-    "usd_each": "0.002"
+    "status": "decided",
+    "what": "a paid check bought by an agent over x402 (knos-order scheme), in devnet USDC (test money), sold in packs because the smallest order is 5.00",
+    "usd_each": "0.02",
+    "mint": "devnet USDC (test money) until the cost per verification is measured",
+    "decided": "14 Oct 2026",
+    "rationale": "a per-check price for agents paying over x402, apart from the hosted Meter line of the price book (0.002 after the free month)",
+    "source": "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
    }
   },
   "splits": {
-   "status": "placeholder",
+   "status": "decided",
    "what": "the fixed share of every payout each contributor role receives, in basis points; one order pays at most 4 payees, so 4 roles",
    "rounding": "each share is rounded down; the last payee receives what is left, exactly as knos_pay pays (order_pay.rs)",
+   "decided": "14 Oct 2026",
+   "rationale": "60 researcher / 25 agents / 10 labs / 5 referees",
+   "source": "founder decision 14 Oct 2026 (DECISIONS.md item 2)",
    "roles": {
     "researcher": 6000,
     "agent": 2500,
@@ -86,8 +120,14 @@
    }
   },
   "cloud": {
-   "status": "placeholder",
+   "status": "decided",
    "what": "Knos Cloud: paid credits for hosted verification (runners, sealed-test storage, receipts, Gate for private repositories). Everything stays open source (MIT) and self-hosting stays free.",
+   "decided": "14 Oct 2026",
+   "rationale": "three monthly tiers of 20, 100 and 200 USD, each with 10% bonus credit (22, 110 and 220 USD of credit a month)",
+   "source": "founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure",
+   "bonus_bps": 1000,
+   "units_status": "placeholder",
+   "units_what": "what one credit is worth and what each use consumes are not decided: credit_usd, consumes and so each tier's credit count are placeholders",
    "credit_usd": "0.002",
    "consumes": {
     "hosted_verification": 1,
@@ -99,21 +139,24 @@
     {
      "name": "Starter",
      "usd_month": "20",
-     "credits_month": 10000
+     "credit_usd_month": "22",
+     "credits_month": 11000
     },
     {
      "name": "Pro",
      "usd_month": "100",
+     "credit_usd_month": "110",
      "credits_month": 55000
     },
     {
      "name": "Team",
      "usd_month": "200",
-     "credits_month": 120000
+     "credit_usd_month": "220",
+     "credits_month": 110000
     }
    ],
    "enterprise": "by contract (the Control line of the price book)",
-   "shape_from": "Nous Research's Portal sells $20/$100/$200 monthly tiers (TechCrunch, 7 Oct 2026, citing the WSJ; unaudited). Knos copies the shape, not the prices: every Knos number here is a placeholder."
+   "shape_from": "Nous Research's Portal sells $20/$100/$200 monthly tiers (TechCrunch, 7 Oct 2026, citing the WSJ; unaudited). Knos's tier prices match it by founder decision (14 Oct 2026); the credit unit is a placeholder."
   },
   "sources": {
    "nous": {
@@ -125,19 +168,36 @@
     "said": "labs pay 200 to 2,000 USD per verified task; robustness to reward hacking is the top buying criterion",
     "source": "Epoch AI, 12 Jan 2026",
     "audited": false
+   },
+   "scipay": {
+    "said": "Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45) or 2.00% (NET60) to be paid early, plus 0.75% for currencies other than USD",
+    "source": "https://www.scientist.com/scipay/ (read 14 Oct 2026)",
+    "audited": false
    }
   },
+  "decided": [
+   "fees.bounty_platform.rate_bps = 500 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2). The comparison with Algora's fee to organisations is the founder's; Algora's pricing page (algora.io/pricing) answered 404 on 14 Oct 2026, so no Algora figure is stated here)",
+   "fees.lab_order.rate_bps = 300 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2). Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45), 2.00% (NET60), https://www.scientist.com/scipay/ (read 14 Oct 2026))",
+   "fees.graduation.rate_bps = 50 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2))",
+   "fees.task_package.knos_bps = 1000 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2))",
+   "fees.x402_check.usd_each = 0.02 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2))",
+   "splits.roles.researcher = 6000 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2))",
+   "splits.roles.agent = 2500 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2))",
+   "splits.roles.lab = 1000 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2))",
+   "splits.roles.referee = 500 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2))",
+   "cloud.tiers.Starter = 20 USD/month, 22 USD of credit (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure)",
+   "cloud.tiers.Pro = 100 USD/month, 110 USD of credit (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure)",
+   "cloud.tiers.Team = 200 USD/month, 220 USD of credit (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure)"
+  ],
   "placeholders": [
-   "fees.graduation.rate_bps = 50",
-   "fees.task_package.knos_bps = 1000",
-   "splits.roles.researcher = 6000",
-   "splits.roles.agent = 2500",
-   "splits.roles.lab = 1000",
-   "splits.roles.referee = 500",
    "cloud.credit_usd = 0.002",
-   "cloud.tiers.Starter = 20 USD/month, 10000 credits",
-   "cloud.tiers.Pro = 100 USD/month, 55000 credits",
-   "cloud.tiers.Team = 200 USD/month, 120000 credits"
+   "cloud.consumes.hosted_verification = 1",
+   "cloud.consumes.sealed_test_storage_gb_month = 50",
+   "cloud.consumes.receipt = 0",
+   "cloud.consumes.private_repo_gate_check = 1",
+   "cloud.tiers.Starter.credits_month = 11000",
+   "cloud.tiers.Pro.credits_month = 55000",
+   "cloud.tiers.Team.credits_month = 110000"
   ]
  },
  "treasury": {
@@ -235,6 +295,8 @@
    "verifications": 0,
    "payout_volume_usd": 0,
    "payouts": 0,
+   "bounty_volume_usd": 0,
+   "lab_order_volume_usd": 0,
    "graduation_volume_usd": 0,
    "task_package_sales_usd": 0,
    "cloud_subscribers": {}
@@ -242,6 +304,8 @@
   "month": {
    "verification": "0.00",
    "payout": "0.00",
+   "bounty_platform": "0.00",
+   "lab_order": "0.00",
    "graduation": "0.00",
    "task_package": "0.00",
    "cloud": "0.00"
@@ -251,9 +315,11 @@
   "status": {
    "verification": "proposed",
    "payout": "live",
-   "graduation": "placeholder",
-   "task_package": "placeholder",
-   "cloud": "placeholder"
+   "bounty_platform": "decided",
+   "lab_order": "decided",
+   "graduation": "decided",
+   "task_package": "decided",
+   "cloud": "decided"
   }
  },
  "one_billion": {
@@ -261,16 +327,21 @@
   "fees_usd": "1000000000",
   "payout_volume_usd_year": "333333333333",
   "verifications_year": "500000000000",
+  "bounty_volume_usd_year": "20000000000",
+  "lab_order_volume_usd_year": "33333333333",
   "graduation_volume_usd_year": "200000000000",
   "task_package_sales_usd_year": "10000000000",
   "cloud_subscribers_at_top_tier": "416667",
   "cloud_top_tier": "Team",
-  "placeholders_used": [
-   "fees.graduation.rate_bps = 50",
-   "fees.task_package.knos_bps = 1000",
-   "cloud.tiers.Starter = 20 USD/month, 10000 credits",
-   "cloud.tiers.Pro = 100 USD/month, 55000 credits",
-   "cloud.tiers.Team = 200 USD/month, 120000 credits"
+  "placeholders_used": [],
+  "decided_used": [
+   "fees.bounty_platform.rate_bps = 500 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2). The comparison with Algora's fee to organisations is the founder's; Algora's pricing page (algora.io/pricing) answered 404 on 14 Oct 2026, so no Algora figure is stated here)",
+   "fees.lab_order.rate_bps = 300 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2). Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45), 2.00% (NET60), https://www.scientist.com/scipay/ (read 14 Oct 2026))",
+   "fees.graduation.rate_bps = 50 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2))",
+   "fees.task_package.knos_bps = 1000 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2))",
+   "cloud.tiers.Starter = 20 USD/month, 22 USD of credit (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure)",
+   "cloud.tiers.Pro = 100 USD/month, 110 USD of credit (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure)",
+   "cloud.tiers.Team = 200 USD/month, 220 USD of credit (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure)"
   ]
  }
 }

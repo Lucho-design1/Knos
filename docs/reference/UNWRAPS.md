@@ -79,7 +79,7 @@ The table's middle column counts every written panic in tests and proofs, not on
 | `knos_oidc/src/modexp.rs` | 1 | 0 | 2 |
 | `knos_oidc/src/pins.rs` | 0 | 0 | 2 |
 | `knos_oidc/src/rsa.rs` | 0 | 0 | 51 |
-| `knos_oidc/src/rsa64.rs` | 1 | 3 | 37 |
+| `knos_oidc/src/rsa64.rs` | 1 | 5 | 61 |
 | `knos_oidc/src/strict.rs` | 0 | 64 | 35 |
 | `knos_passkey/src/lib.rs` | 7 | 9 | 17 |
 | `knos_passkey/src/token.rs` | 2 | 25 | 9 |
@@ -96,4 +96,4 @@ The table's middle column counts every written panic in tests and proofs, not on
 | `knos_pay/src/proofs.rs` | 0 | 46 | 0 |
 | `knos_pay/src/state.rs` | 8 | 10 | 22 |
 | `knos_pay/src/token.rs` | 1 | 26 | 8 |
-| all | 42 | 521 | 471 |
+| all | 42 | 523 | 495 |

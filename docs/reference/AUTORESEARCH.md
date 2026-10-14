@@ -100,9 +100,10 @@ score above came out the same. The budget is wall-clock time, as in the original
 a run that a quiet one passes; a hosted referee runs on a machine of its own.
 
 The split plan, from a re-run in the merged v0.3.29 tree (same scores; 106.9 s at load average 10.9) with its fee
-config (the shares are placeholders until the founder sets them; config/fees.yaml says which): bounty 100 test USDC
+config (the shares were placeholders then; the founder decided the same 60/25/10/5 on 14 Oct 2026, config/fees.yaml): bounty 100 test USDC
 (a demo amount) split researcher 66.68, agent 27.77, referee 5.55; the payout fee 0.30 is the funder's, on top, so the
-funder pays 100.30. No transaction.
+funder pays 100.30 on chain (the 5% bounty fee decided on 14 Oct 2026 includes that 0.30; its off-chain rest is not
+part of this plan: see MONEY.md). No transaction.
 
 ## What is not done here
 

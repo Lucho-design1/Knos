@@ -49,7 +49,7 @@ def test_count_lines_take_the_free_month_first_and_public_repos_pay_nothing(cfg)
     assert cfg.price("verification", 10, used=free - 4) == 6 * each
     assert cfg.price("verification", 10, used=free + 7) == 10 * each
     assert cfg.price("verification", 10 ** 6, used=free, public=True) == 0
-    assert cfg.price("x402_check", 3) == 3 * each
+    assert cfg.doc["fees"]["x402_check"]["usd_each"] == "0.02" and cfg.price("x402_check", 3) == 3 * 20_000      # decided 14 Oct 2026
     with pytest.raises(ValueError):
         cfg.fee("verification", 5)
     with pytest.raises(ValueError):
@@ -63,15 +63,57 @@ def test_the_split_and_the_task_package_add_up(cfg):
         got = cfg.split(a)
         assert sum(x for _, x in got) == a and [r for r, _ in got] == list(cfg.roles)
     tp = cfg.task_package(2_000 * 10 ** 6)
-    assert tp["knos"] + tp["maintainer"] == 2_000 * 10 ** 6 and tp["status"] == "placeholder"
+    assert tp["knos"] + tp["maintainer"] == 2_000 * 10 ** 6 and tp["status"] == "decided"
+    assert (tp["knos"], tp["maintainer"]) == (200 * 10 ** 6, 1_800 * 10 ** 6)                                  # 90 / 10, decided
+    assert cfg.roles == {"researcher": 6000, "agent": 2500, "lab": 1000, "referee": 500}
 
 
 def test_every_placeholder_is_listed_and_marked(cfg):
     ph = cfg.placeholders()
-    for needle in ("fees.graduation.rate_bps", "fees.task_package.knos_bps", "splits.roles.researcher", "cloud.tiers.Starter", "cloud.credit_usd"):
+    for needle in ("cloud.credit_usd", "cloud.consumes.hosted_verification", "cloud.tiers.Starter.credits_month"):
         assert any(p.startswith(needle) for p in ph), needle
-    assert cfg.doc["cloud"]["status"] == "placeholder"
+    # the prices decided on 14 Oct 2026 are no longer placeholders, and nothing else left the placeholder list
+    assert not any(p.startswith(("fees.", "splits.")) for p in ph) and not any(p.startswith("cloud.tiers") and "USD/month" in p for p in ph)
+    assert cfg.doc["cloud"]["status"] == "decided" and cfg.doc["cloud"]["units_status"] == "placeholder"
     assert all(cfg.doc["fees"][k]["status"] == "live" for k in ("payout", "bounty", "funding"))
+
+
+def test_the_decided_prices_are_the_founders_with_their_sources(cfg):
+    f = cfg.doc["fees"]
+    assert (f["bounty_platform"]["rate_bps"], f["lab_order"]["rate_bps"], f["graduation"]["rate_bps"], f["task_package"]["knos_bps"]) == (500, 300, 50, 1000)
+    assert f["x402_check"]["usd_each"] == "0.02" and "devnet USDC" in f["x402_check"]["mint"]
+    assert [(t["name"], t["usd_month"], t["credit_usd_month"]) for t in cfg.credit_tiers] == [("Starter", "20", "22"), ("Pro", "100", "110"), ("Team", "200", "220")]
+    assert cfg.doc["cloud"]["bonus_bps"] == 1000
+    lines = [f[k] for k in ("bounty_platform", "lab_order", "graduation", "task_package", "x402_check")] + [cfg.doc["splits"], cfg.doc["cloud"]]
+    for line in lines:
+        assert line["status"] == "decided" and line["decided"] == "14 Oct 2026" and "founder decision 14 Oct 2026" in line["source"], line
+    # an outside figure only with its page and the date it was read; Algora's page could not be read, so no Algora number
+    assert "https://www.scientist.com/scipay/ (read 14 Oct 2026)" in f["lab_order"]["source"]
+    assert "9%" not in CONFIG.read_text(encoding="utf-8")
+    d = cfg.decided()
+    for needle in ("fees.bounty_platform.rate_bps = 500", "fees.lab_order.rate_bps = 300", "fees.graduation.rate_bps = 50",
+                   "fees.task_package.knos_bps = 1000", "fees.x402_check.usd_each = 0.02", "splits.roles.referee = 500", "cloud.tiers.Team = 200"):
+        assert any(x.startswith(needle) and "14 Oct 2026" in x for x in d), needle
+    assert cfg.public()["decided"] == d
+
+
+def test_the_bounty_fee_is_five_percent_of_which_the_program_takes_its_compiled_fee(cfg):
+    """knos_pay's fee is compiled into the program (0.30%): the 5% bounty fee is that on-chain fee plus an off-chain rest,
+    never 5% on chain and never 5% on top of the 0.30%."""
+    for a in (5_000_000, 20_000_000, 1_000_000_000, 10 ** 11 + 7):
+        b = cfg.platform("bounty_platform", a)
+        assert b["onchain"] == pay.order_fee(a) == cfg.bounty(a)["fee"] and b["fee"] == a * 500 // 10_000
+        assert b["onchain"] + b["offchain"] == b["fee"] and b["status"] == "decided" and "program upgrade" in b["collected"]
+        lab = cfg.platform("lab_order", a)
+        assert lab["onchain"] == cfg.fee("payout", a) and lab["onchain"] + lab["offchain"] == lab["fee"] == a * 300 // 10_000
+    b = cfg.platform("bounty_platform", 20_000_000)
+    assert (b["fee"], b["onchain"], b["offchain"]) == (1_000_000, 60_000, 940_000)
+    plan = cfg.platform("bounty_platform", 10 ** 9, bps=20)                                   # an order on a Plan: the rest grows
+    assert (plan["fee"], plan["onchain"], plan["offchain"]) == (50_000_000, 2_000_000, 48_000_000)
+    lab = cfg.platform("lab_order", 1)
+    assert (lab["fee"], lab["onchain"], lab["offchain"]) == (50_000, 50_000, 0)               # the floor covers it all
+    with pytest.raises(ValueError):
+        cfg.platform("payout", 5)
     text = CONFIG.read_text(encoding="utf-8")
     assert "TechCrunch, 7 Oct 2026" in text and "WSJ" in text and "unaudited" in text and "Epoch AI, 12 Jan 2026" in text
 
@@ -112,6 +154,20 @@ def _broken(cfg, change) -> list[str]:
     (lambda d: d["sources"]["nous"].__setitem__("audited", True), "sources.nous"),
     (lambda d: d["cloud"]["tiers"].append({"name": "Pro", "usd_month": "5", "credits_month": 1}), "cloud.tiers"),
     (lambda d: d["cloud"]["tiers"][0].__setitem__("usd_month", "-20"), "cloud.tiers.Starter.usd_month"),
+    (lambda d: d["fees"]["bounty_platform"].__setitem__("status", "live"), "fees.bounty_platform.status: not live"),
+    (lambda d: d["fees"]["graduation"].__setitem__("status", "live"), "fees.graduation.status: not live"),
+    (lambda d: d["fees"]["bounty_platform"].__setitem__("rate_bps", 20), "fees.bounty_platform.rate_bps: at least"),
+    (lambda d: d["fees"]["lab_order"].__setitem__("onchain_line", "graduation"), "fees.lab_order.onchain_line"),
+    (lambda d: d["fees"]["lab_order"].__setitem__("collected", ""), "fees.lab_order.collected"),
+    (lambda d: d["fees"]["bounty_platform"].__setitem__("source", ""), "fees.bounty_platform.source"),
+    (lambda d: d["fees"]["x402_check"].pop("decided"), "fees.x402_check.decided"),
+    (lambda d: d["splits"].__setitem__("rationale", " "), "splits.rationale"),
+    (lambda d: d["cloud"].pop("source"), "cloud.source"),
+    (lambda d: d["fees"]["x402_check"].__setitem__("status", "proposed"), "fees.x402_check.usd_each"),
+    (lambda d: d["fees"]["x402_check"].__setitem__("usd_each", "0"), "fees.x402_check.usd_each"),
+    (lambda d: d["cloud"]["tiers"][1].__setitem__("credit_usd_month", "120"), "cloud.tiers.Pro.credit_usd_month"),
+    (lambda d: d["cloud"]["tiers"][2].__setitem__("credits_month", 120000), "cloud.tiers.Team.credits_month"),
+    (lambda d: d["cloud"].__setitem__("bonus_bps", -1), "cloud.bonus_bps"),
 ])
 def test_a_config_that_drifts_is_refused(cfg, change, said):
     problems = _broken(cfg, change)

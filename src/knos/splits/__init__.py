@@ -1,7 +1,7 @@
 """Contributor splits: who receives which share of a payout, as the payees of one knos_pay order.
 
 The researcher, the agents, the lab and the referee each get a fixed share of every payout. The shares are in
-config/fees.yaml (`splits.roles`, read through knos.money.fees_config: placeholders until the founder sets them).
+config/fees.yaml (`splits.roles`, read through knos.money.fees_config: 60/25/10/5, decided by the founder on 14 Oct 2026).
 On chain a share is a payee of the order: an order pays one to four payees (pay.MAX_PAYEES), each `(GitHub id,
 basis points, address or None)`, named by the pay token the order's pinned judge workflow asks GitHub to sign
 (pay.order_pay_audience). The program divides the amount itself: each share rounded down, the last payee the rest

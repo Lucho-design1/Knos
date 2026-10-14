@@ -52,9 +52,16 @@ def test_the_builds_say_their_sbpf_version_and_the_plan_follows_the_setting(monk
     assert verify.plan(2048) == oidc.step_plan(2048) == [8, 8] and verify.plan(4096) == [2, 3, 3, 3, 4, 1]
     assert verify.plan(2048, "one") == [16] and verify.plan(2048, "auto", FAST.read_bytes()) == [16]
     assert verify.plan(2048, "auto", (FIX / SLOW).read_bytes()) == [8, 8] and verify.plan(2048, "auto") == [8, 8]
-    # the sBPF v3 of Agave 4.4 has no 128-bit multiply: a v3 build keeps 32-bit limbs and the two-step plan
+    # v0.3.30: the sBPF v3 of Agave 4.4 has no 128-bit multiply; a v3 build makes it from 32-bit products on 64-bit
+    # limbs: one Step for a 2048-bit token up to V3_ONE_STEP_MAX bytes (measured on a local Agave 4.4 validator,
+    # docs/reference/PLATFORM.md), two for a larger one, and the two-step plan for a 4096-bit key
     v3 = bytearray(FAST.read_bytes()[:64]); v3[48:52] = (3).to_bytes(4, "little")
-    assert verify.sbpf_version(bytes(v3)) == 3 and verify.plan(2048, "auto", bytes(v3)) == [8, 8]
+    assert verify.sbpf_version(bytes(v3)) == 3 and verify.fast(bytes(v3))
+    assert verify.plan(2048, "auto", bytes(v3)) == [16] and verify.plan(2048, "auto", bytes(v3), verify.V3_ONE_STEP_MAX) == [16]
+    assert verify.plan(2048, "auto", bytes(v3), verify.V3_ONE_STEP_MAX + 1) == [8, 8] == verify.plan(2048, "two", bytes(v3))
+    assert verify.plan(4096, "auto", bytes(v3)) == [2, 3, 3, 3, 4, 1] and verify.plan(4096, "auto", FAST.read_bytes()) == [4, 4, 4, 4]
+    v1 = bytearray(v3); v1[48:52] = (1).to_bytes(4, "little")
+    assert not verify.fast(bytes(v1)) and verify.plan(2048, "auto", bytes(v1)) == [8, 8]
     monkeypatch.setenv("KNOS_OIDC_VERIFY", "one")
     assert oidc.step_plan(2048) == [16] and sum(oidc.step_plan(4096)) == 16
     with pytest.raises(ValueError):

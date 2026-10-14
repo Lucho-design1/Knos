@@ -15,16 +15,19 @@ lock, can put a buffer's bytes into a program. No founder key signed anything to
   feature activates, or the next fix to any program cannot land until it is rebuilt as v3 and waits 8 more days.
 - A v3 buffer is accepted before and after SIMD-0500. Programs already deployed keep running either way: SIMD-0500
   stops deployments, not execution.
-- The v3 builds do NOT give one-transaction RSA: the sBPF v3 of Agave 4.4 has no 128-bit multiply, so knos_oidc v3
-  still verifies a 2048-bit GitHub token in two transactions (719,805 + 781,472 compute units, about 5% less than the
-  v0 build). One transaction needs the sBPF v2 build of knos_oidc (882,519 compute units on devnet). See the decision
-  below.
+- Since v0.3.30 the v3 knos_oidc verifies a 2048-bit GitHub token in ONE transaction too: the sBPF v3 of Agave 4.4
+  has no 128-bit multiply, so its 64-bit limbs make each product from four 32-bit ones. Measured on a local Agave 4.4
+  validator (not on devnet): Step(16) 1,291,845 compute units for a 1,952-byte token, Write + Step(16) in one v1
+  transaction 1,301,807; up to 5,000-byte tokens fit (1,390,608), larger ones and 4096-bit keys keep more Steps. The
+  v2 build does it in 882,519 on devnet. See the decision below and docs/reference/PLATFORM.md section 3.
+- The knos_oidc v3 buffer begun on 13-14 Oct (`5LogeN…`, below) holds the OLD v3 build (executable hash `14dfede2…`):
+  it no longer matches HASHES-v3.txt. Close it or write the new build to a new buffer; never propose it.
 
 ## Founder decision: knos_oidc as v3 or as v2
 
-- **v3 (recommended for safety):** all four programs v3. Every later upgrade stays possible after SIMD-0500. RSA stays
-  two transactions until a later build makes the 32-bit arithmetic cheaper or the runtime gains a 128-bit multiply or
-  `big_mod_exp`.
+- **v3 (recommended for safety; DECISIONS 14 Oct: chosen):** all four programs v3. Every later upgrade stays possible
+  after SIMD-0500. Since v0.3.30 RSA is one transaction for a 2048-bit token of up to 5,000 bytes (about 1.29M compute
+  units at the usual size, against 0.88M on v2), two above that.
 - **v2 for knos_oidc only:** one-transaction RSA now. v2 is deployable today, but SIMD-0500 also refuses v2
   deployments once active, so the NEXT upgrade of knos_oidc after activation must be a v3 build (two transactions
   again unless the arithmetic improves). The v2 buffer is listed below when the PLATFORM wallet had the SOL to write
@@ -44,9 +47,9 @@ The builds and their executable hashes (`HASHES-v3.txt`; propose nothing whose h
 
 | program | sBPF | bytes | executable hash |
 |---|---|---|---|
-| knos_oidc | v3 | 169,280 | `14dfede29c059c4ad3cf8eb7ee3f7754c1d21a21838f0f59e2bb83a932e067e3` |
+| knos_oidc | v3 | 172,952 | `d565487fc00c71b6b03a441915067075eb710d6509f6b8108aa31eaa9975298a` |
 | knos_pay | v3 | 362,512 | `95fa02b2b16e6336a5a9cd8cb1fe1a8246c55a2176e8a875b7099d49b86d6fb5` |
-| knos_meter | v3 | 158,368 | `faaaa6952905ee0266868fd6817f35ebf898136b87b00fbd7bce35cdb2c50cbe` |
+| knos_meter | v3 | 158,368 | `0c400e6bb0f975e9a7af633a0b6e3d7e2af3528109431154799b946c7d0cc80c` |
 | knos_passkey | v3 | 108,232 | `d5a5db160eab9fbfdd70712f14898b06daeb1b068eaa1f442f82fe492e5b1c73` |
 | knos_oidc (alternative, one-transaction RSA) | v2 | 209,928 | `a4279958310110a28c0ed06da1b83f46939dfa34ea2ddf95384bc04d302100e4` |
 

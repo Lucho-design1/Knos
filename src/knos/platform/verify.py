@@ -3,12 +3,15 @@
 knos-oidc's Step instruction does `squarings` of the 16 squarings of s^65537 mod n per call. A build of knos-oidc
 for sBPF v2 does its arithmetic on 64-bit limbs (programs-v2/knos_oidc/src/rsa64.rs: the PQR instructions
 make a 64 x 64 -> 128-bit product two instructions), so ONE Step(16) verifies a 2048-bit GitHub token inside one
-transaction's 1,400,000 compute units. A build for sBPF v0 (what devnet runs today) or
-v3 (whose Agave 4.4 form has no 128-bit multiply) still needs two: Step(8), Step(8).
+transaction's 1,400,000 compute units. Since v0.3.30 a build for sBPF v3 does too: the v3 of Agave 4.4 has no
+128-bit multiply, so its 64-bit limbs make each product from four 32-bit ones (rsa64.rs `h`); measured on a local
+Agave 4.4 validator, ONE Step(16) fits a 2048-bit token of up to V3_ONE_STEP_MAX bytes (not the largest, MAX_JWT),
+and a 4096-bit key keeps the two-step plan. A build for sBPF v0 (what devnet runs today) still needs two: Step(8),
+Step(8).
 
     KNOS_OIDC_VERIFY   two (default: the old two-step plan, what every deployed build takes)
-                       one (one Step for a 2048-bit key: only against a build for sBPF v2)
-                       auto (ask the build: `plan(bits, "auto", elf)` reads its sBPF version)
+                       one (one Step for a 2048-bit key: only against a build for sBPF v2 or v3)
+                       auto (ask the build: `plan(bits, "auto", elf, token_bytes)` reads its sBPF version)
 
 A v1 transaction (SIMD-0385, 4,096 bytes) carries a token of the usual size whole: `one_transaction_ixs` gives the
 Write and the Step(16) that verify it in ONE transaction (knos.chain.Ledger.send(..., v1=True)).
@@ -24,6 +27,9 @@ MODES = ("two", "one", "auto")
 ENV = "KNOS_OIDC_VERIFY"
 TWO_STEP = {2048: [8, 8], 4096: [2, 3, 3, 3, 4, 1]}      # the plans every build takes (knos.settle.oidc.step_plan)
 ONE_STEP = {2048: [16], 4096: [4, 4, 4, 4]}               # a build for sBPF v2: see PLATFORM.md for the 4096-bit numbers
+# sBPF v3 (Agave 4.4): Step(16) took 1,361,438 compute units for a 4,000-byte token, 1,390,608 for 5,000 and ran out at
+# 5,500 (docs/reference/PLATFORM.md); auto takes one Step only up to this size. Its 4096-bit Step(4) runs out.
+V3_ONE_STEP_MAX = 4_000
 
 
 def mode(value: str | None = None) -> str:
@@ -42,25 +48,32 @@ def sbpf_version(elf: bytes | None) -> int | None:
 
 
 def fast(elf: bytes | None) -> bool:
-    """Whether this build of knos-oidc does its RSA on 64-bit limbs (built for sBPF v2: the v3 of Agave 4.4 has no 128-bit multiply, so a v3 build keeps 32-bit limbs)."""
+    """Whether this build of knos-oidc does its RSA on 64-bit limbs: built for sBPF v2 (`uhmul64`) or, since v0.3.30,
+    v3 (four 32-bit products per 128-bit one: slower than v2, faster than 32-bit limbs)."""
     v = sbpf_version(elf)
-    return v == 2
+    return v in (2, 3)
 
 
-def plan(bits: int, how: str | None = None, elf: bytes | None = None) -> list[int]:
+def plan(bits: int, how: str | None = None, elf: bytes | None = None, token_bytes: int | None = None) -> list[int]:
     """Squarings per Step transaction for a key of `bits`. `how`: two, one or auto (KNOS_OIDC_VERIFY); auto needs the
-    build's `elf` and falls back to the two-step plan without it."""
+    build's `elf` and falls back to the two-step plan without it. For a v3 build auto takes one Step only for a
+    2048-bit key and a token of at most V3_ONE_STEP_MAX bytes (`token_bytes`; unknown counts as the usual size)."""
     if bits not in TWO_STEP:
         raise ValueError(f"knos-oidc takes 2048- and 4096-bit keys, not {bits}")
     m = mode(how)
-    if m == "one" or (m == "auto" and fast(elf)):
+    if m == "one":
         return list(ONE_STEP[bits])
+    if m == "auto" and fast(elf):
+        if sbpf_version(elf) == 2:
+            return list(ONE_STEP[bits])
+        if bits == 2048 and (token_bytes is None or token_bytes <= V3_ONE_STEP_MAX):
+            return [16]
     return list(TWO_STEP[bits])
 
 
 def one_transaction_ixs(payer: Pubkey, jwt: str | bytes, key: Pubkey, program: Pubkey | None = None) -> list[Instruction]:
     """Write (the whole token, one chunk) and Step(16): what verifies a token under a 2048-bit key in ONE v1
-    transaction, against a build for sBPF v2. The caller adds the compute-unit limit (the v1 message
+    transaction, against a build for sBPF v2 or v3. The caller adds the compute-unit limit (the v1 message
     carries it: knos.chain.message_v1)."""
     from ..settle.v2 import oidc
     raw = jwt if isinstance(jwt, bytes) else jwt.encode()

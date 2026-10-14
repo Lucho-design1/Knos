@@ -13,7 +13,8 @@ How the money moves:
 
 **Revenue today: 0.** Knos runs on Solana devnet only. Every fee the program takes there is test money, and nothing
 has been sold. Every price below says whether it is **live** (the deployed program charges it on devnet), **proposed**
-(the price book, nobody pays it yet) or a **placeholder** (a number only the founder can set).
+(the price book, nobody pays it yet), **decided** (a starting price the founder set on 14 Oct 2026, to revisit once the
+cost per verification is measured; nobody pays it yet) or a **placeholder** (a number only the founder can set).
 
 ## The one fee config: `config/fees.yaml`
 
@@ -27,22 +28,50 @@ cfg.bounty(20_000_000)                   # amount, fee, total the funder pays, f
 cfg.price("verification", 10, used=0)    # count-based lines take the month's free uses first
 cfg.split(100_000_003)                   # the contributor split, rounded as the program rounds
 cfg.task_package(2_000_000_000)          # Knos's share and the maintainer's
+cfg.platform("bounty_platform", 20_000_000)   # the 5% bounty fee: 60_000 on chain + 940_000 off chain = 1_000_000
+cfg.decided()                            # every starting price the founder set, with its date and source
 cfg.placeholders()                       # every number the founder has not set
 ```
 
 The live lines repeat numbers compiled into `knos_pay` (`knos.settle.v2.pay`) and the proposed lines repeat the price
 book (`knos.billing`). The loader **refuses** the file when one of them differs, so the file, the program and the price
-book cannot drift apart: changing a live fee means upgrading the program through the multisig.
+book cannot drift apart: changing a live fee means upgrading the program through the multisig. A decided line must say
+when it was decided, why, and its source, and it can never be marked live.
 
 | line | rate or price | status | who pays, and where it goes |
 |---|---|---|---|
 | verification | 0.002 USD each after 100,000 a month; public repositories and self-hosting free | proposed | the buyer of hosted checks |
 | payout | 0.30% of the amount, at least 0.05 | live | the funder, on top; the program sends it to the treasury at release |
-| bounty | 0.30%, at least 0.05 (a bounty is a work order) | live | the funder, on top; to the treasury; returned on a refund |
+| bounty (on chain) | 0.30%, at least 0.05 (a bounty is a work order) | live | the funder, on top; to the treasury; returned on a refund |
+| bounty fee | 5% of the bounty, the 0.30% on-chain bounty fee included | decided | the funder; 0.30% by the program at payout, the rest (4.70%) invoiced off chain |
+| lab order | 3% of the order, the 0.30% on-chain payout fee included | decided | 0.30% by the program at release, the rest (2.70%) invoiced off chain; who bears it is not decided |
 | funding | 0 at funding: the program holds the payout fee and takes it only at release | live | nobody, until a release |
-| graduation | 0.50% of the value released after graduation | placeholder | by contract, off chain, until a knos_pay build carries it |
-| task package | 10% to Knos, the rest to the maintainer | placeholder | the lab that buys the package |
-| x402 check | 0.002 USD each, sold in packs | proposed | the agent that calls `/checks` |
+| graduation | 0.50% of the money released after graduation | decided | by contract, off chain, until a knos_pay build carries it |
+| task package | 10% to Knos, 90% to the maintainer | decided | the lab that buys the package; off chain, by contract |
+| x402 check | 0.02 USD each, in devnet USDC (test money), sold in packs of 250 (one 5.00 order) | decided | the agent that calls `/checks` |
+
+Where each decided price comes from (all: founder decision 14 Oct 2026, DECISIONS.md item 2):
+
+- **bounty fee 5%**: the founder's starting price. The founder compared it with what Algora charges organisations;
+  Algora's pricing page (algora.io/pricing) answered 404 when read on 14 Oct 2026, so this page states no Algora figure.
+- **lab order fee 3%**: labs already pay to be paid sooner: on Scientist.com SciPay suppliers pay 3.00% (NET30), 2.50%
+  (NET45) or 2.00% (NET60) ([scientist.com/scipay](https://www.scientist.com/scipay/), read 14 Oct 2026).
+- **graduation 0.5%**, **task package 90/10**, **split 60/25/10/5**, **x402 0.02 per check**: founder decision 14 Oct 2026.
+- **Knos Cloud 20/100/200 USD a month with 10% bonus credit**: founder decision 14 Oct 2026, on the Nous Portal pattern
+  (below). The 10% bonus is the founder's, not a sourced Nous figure.
+
+### Why the 5% bounty fee is not on chain (it needs a program upgrade)
+
+knos_pay's fee is compiled into the deployed program: 0.30% of each release, at least 0.05 (`knos.settle.v2.pay`
+FEE_BPS and FEE_MIN). The loader refuses a live line that says anything else, and no config can change what the program
+takes. So the bounty fee is modelled as two parts of one 5%: the program takes its 0.30% on chain at payout (the live
+`bounty` line, sent to the treasury), and the rest is a `bounty_platform` line marked decided, collected off chain by
+invoice to the funder. The funder pays 5% in all, not 5% on top of 0.30%. The lab order fee works the same way on the
+`payout` line. Taking the whole 5% (or 3%) on chain needs a **program upgrade** of knos_pay through the Squads vault;
+until then `cfg.platform(kind, amount)` says how much of each fee is on chain and how much is off chain. An order on an
+owner's Plan pays a lower on-chain rate, so its off-chain rest is larger; when the 0.05 floor alone exceeds the whole
+fee, the off-chain rest is 0. Nothing collects the off-chain part today: there is no invoicing code, and on devnet all
+of it is test money.
 
 **The treasury** is the program's fee owner, `4G3cznCnwCUPBCZwzKiLupjdgB5pSoCcGWNGuFv4TYFo`, a vault of the Squads
 program. Fees land in token accounts it owns (`pay.fee_accounts(mint)`: the associated account and any seeded
@@ -52,7 +81,8 @@ sends the payment keeps its tip (0.05, or 0.30 on a payee's first payment); the 
 
 ## Contributor splits
 
-Every payout is shared among four roles, by fixed basis points (`splits.roles`, placeholders):
+Every payout is shared among four roles, by fixed basis points (`splits.roles`, decided 14 Oct 2026: 60 researcher /
+25 agents / 10 labs / 5 referees):
 
 | role | basis points |
 |---|---|
@@ -117,7 +147,7 @@ Knos hosts none), on the proposed `knos-order` scheme of [X402.md](X402.md):
 - `GET /fees` and `GET /pool/<claim>`: free.
 - `GET /preorder/<claim>`: `402` with a requirement to fund a pre-order in the pool; asked again with
   `PAYMENT-SIGNATURE` naming the order, `200` "escrowed" once the chain shows it in that pool.
-- `GET /checks`: `402` for a pack of paid checks (the smallest order is 5.00); each call is signed by the funding
+- `GET /checks`: `402` for a pack of paid checks (the smallest order is 5.00, so a pack is 250 checks at 0.02); each call is signed by the funding
   wallet over `knos-check:<order>:<n>`, and a replay or a stranger's call is refused. The count of each order is kept
   in a state file (`--state`), written before the call is answered, so a restart does not sell a call again.
 
@@ -130,32 +160,37 @@ Knos hosts none), on the proposed `knos-order` scheme of [X402.md](X402.md):
 - **schedule**: this config, each line with its status.
 - **model**: revenue for volumes the reader types, at the config's rates. It is labelled a MODEL, its inputs start at
   0, and a model with no inputs says 0. Its payout line is a lower bound: the floor is charged on each release, and the
-  model sees only the month's total and count. Its "1B USD question" is arithmetic on the rates (for example, 0.30% of
+  model sees only the month's total and count. Bounties and lab orders are typed twice: in the value released (their
+  on-chain 0.30% is in the payout line) and on their own lines, which count only the off-chain rest of the 5% and 3%. Its "1B USD question" is arithmetic on the rates (for example, 0.30% of
   333,333,333,333 USD released in a year), not a forecast.
 
-## Knos Cloud credits (placeholders)
+## Knos Cloud credits
 
 Everything stays open source (MIT) and self-hosting stays free. Knos Cloud would sell credits for hosted verification:
-runners, sealed-test storage, receipts, and Gate for private repositories. The tiers are placeholders:
+runners, sealed-test storage, receipts, and Gate for private repositories. The tier prices and the 10% bonus credit are
+decided (14 Oct 2026); what one credit is worth (0.002 USD) and what each use consumes are still placeholders, so the
+credit counts are too:
 
-| tier | USD a month | credits a month |
-|---|---|---|
-| Starter | 20 | 10000 |
-| Pro | 100 | 55000 |
-| Team | 200 | 120000 |
+| tier | USD a month | USD of credit a month (10% bonus) | credits a month (placeholder) |
+|---|---|---|---|
+| Starter | 20 | 22 | 11000 |
+| Pro | 100 | 110 | 55000 |
+| Team | 200 | 220 | 110000 |
 
 The shape is copied from Nous Research, which sells open-core software (MIT) with hosted subscriptions on credits
 (Portal tiers of $20, $100 and $200) and enterprise deals; it reported about $36M annualized revenue by mid-September
-2026 and raised $90M at a $1.5B valuation (TechCrunch, 7 Oct 2026, citing the Wall Street Journal; unaudited). Knos
-copies the shape, not the numbers. Labs pay 200 to 2,000 USD per verified task (Epoch AI, 12 Jan 2026), which is
+2026 and raised $90M at a $1.5B valuation (TechCrunch, 7 Oct 2026, citing the Wall Street Journal; unaudited). Knos's
+tier prices match it by founder decision; the bonus and the credit unit are Knos's own. Labs pay 200 to 2,000 USD per verified task (Epoch AI, 12 Jan 2026), which is
 where a task package would sell.
 
 ## Decisions only the founder can make
 
-- Every placeholder: the graduation rate, Knos's share of a task package, the split's basis points, the credit price
-  and the three tiers (`cfg.placeholders()` lists them).
-- Whether a graduation fee is charged off chain by contract or added to a knos_pay build (an upgrade through the
-  multisig).
+- The remaining placeholders: what one Knos Cloud credit is worth and what each use consumes (`cfg.placeholders()`
+  lists them). The prices of 14 Oct 2026 are decided (`cfg.decided()`); revisit them once the cost per verification
+  is measured.
+- Whether the bounty fee's off-chain 4.70%, the lab order fee's 2.70% and the graduation fee stay off chain by invoice
+  and contract or go into a knos_pay build (a program upgrade through the multisig).
+- Who bears the lab order fee: the buyer on top, or deducted from the lab's payment.
 - Any token that pays backers out of revenue: not built (securities law).
 - Fiat rails for buyers, and selling task packages.
 - Which Squads multisig holds the treasury vault, for the record (the vault's address is fixed in the program).

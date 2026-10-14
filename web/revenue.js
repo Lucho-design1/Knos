@@ -12,6 +12,8 @@ export const INPUTS = [
   ["verifications", "Hosted verifications a month"],
   ["payout_volume_usd", "Value released from escrow a month (USD)"],
   ["payouts", "Releases a month"],
+  ["bounty_volume_usd", "Bounties paid a month (USD, also in the value released)"],
+  ["lab_order_volume_usd", "Lab orders paid a month (USD, also in the value released)"],
   ["graduation_volume_usd", "Value released after graduation a month (USD)"],
   ["task_package_sales_usd", "Task package sales a month (USD)"],
 ];
@@ -21,6 +23,10 @@ export function model(inputs, schedule) {
   const month = {};
   month.verification = Math.max(0, usd(x.verifications) - usd(f.verification.free_per_month)) * usd(f.verification.usd_each);
   month.payout = Math.max(usd(x.payout_volume_usd) * f.payout.rate_bps / 10000, usd(x.payouts) * usd(f.payout.floor_usd));
+  for (const [kind, key] of [["bounty_platform", "bounty_volume_usd"], ["lab_order", "lab_order_volume_usd"]]) {
+    const rest = Math.max(0, f[kind].rate_bps - f[f[kind].onchain_line].rate_bps);
+    month[kind] = usd(x[key]) * rest / 10000;
+  }
   month.graduation = usd(x.graduation_volume_usd) * f.graduation.rate_bps / 10000;
   month.task_package = usd(x.task_package_sales_usd) * f.task_package.knos_bps / 10000;
   const subs = x.cloud_subscribers || {};
@@ -49,7 +55,7 @@ function row(doc, cells) {
 }
 
 function rate(line) {
-  if (line.rate_bps !== undefined) return `${line.rate_bps / 100}%` + (line.floor_usd ? `, at least ${line.floor_usd}` : "");
+  if (line.rate_bps !== undefined) return `${line.rate_bps / 100}%` + (line.floor_usd ? `, at least ${line.floor_usd}` : "") + (line.onchain_line ? `, of which the ${line.onchain_line} fee on chain, the rest off chain` : "");
   if (line.knos_bps !== undefined) return `${line.knos_bps / 100}% to Knos, the rest to the maintainer`;
   if (line.usd_each !== undefined) return `${line.usd_each} USD each` + (line.free_per_month ? `, ${Number(line.free_per_month).toLocaleString("en-US")} a month free; public repositories free` : "");
   return "";
@@ -77,12 +83,12 @@ export function renderRevenue(doc, d) {
     $("rev-demo").textContent = "No graduation demo has run.";
   }
   const fb = $("rev-fees").querySelector("tbody");
-  for (const [k, line] of Object.entries(s.fees)) fb.appendChild(row(doc, [k.replace("_", " "), line.what, rate(line), { tag: line.status }]));
+  for (const [k, line] of Object.entries(s.fees)) fb.appendChild(row(doc, [k.replaceAll("_", " "), line.what, rate(line), { tag: line.status }]));
   const sb = $("rev-split").querySelector("tbody");
   for (const [r, b] of Object.entries(s.splits.roles)) sb.appendChild(row(doc, [r, { text: `${b / 100}%`, cls: "num" }]));
   sb.appendChild(row(doc, ["status", { tag: s.splits.status }]));
   const cb = $("rev-cloud").querySelector("tbody");
-  for (const t of s.cloud.tiers) cb.appendChild(row(doc, [t.name, { text: t.usd_month, cls: "num" }, { text: Number(t.credits_month).toLocaleString("en-US"), cls: "num" }, { tag: s.cloud.status }]));
+  for (const t of s.cloud.tiers) cb.appendChild(row(doc, [t.name, { text: t.usd_month, cls: "num" }, { text: t.credit_usd_month || t.usd_month, cls: "num" }, { text: Number(t.credits_month).toLocaleString("en-US") + (s.cloud.units_status === "placeholder" ? " (placeholder)" : ""), cls: "num" }, { tag: s.cloud.status }]));
   $("rev-cloud-shape").textContent = s.cloud.shape_from;
 
   const form = $("rev-inputs");
@@ -91,8 +97,8 @@ export function renderRevenue(doc, d) {
     const m = model(values, s);
     const ob = $("rev-out").querySelector("tbody");
     ob.textContent = "";
-    const st = { verification: s.fees.verification.status, payout: s.fees.payout.status, graduation: s.fees.graduation.status, task_package: s.fees.task_package.status, cloud: s.cloud.status };
-    for (const [k, v] of Object.entries(m.month)) ob.appendChild(row(doc, [k.replace("_", " "), { text: money(Number(v)), cls: "num" }, { tag: st[k] }]));
+    const st = { verification: s.fees.verification.status, payout: s.fees.payout.status, bounty_platform: s.fees.bounty_platform.status, lab_order: s.fees.lab_order.status, graduation: s.fees.graduation.status, task_package: s.fees.task_package.status, cloud: s.cloud.status };
+    for (const [k, v] of Object.entries(m.month)) ob.appendChild(row(doc, [k.replaceAll("_", " "), { text: money(Number(v)), cls: "num" }, { tag: st[k] }]));
     ob.appendChild(row(doc, ["total (MODEL)", { text: money(Number(m.month_total)), cls: "num" }, ""]));
   };
   const field = (key, label, set) => {
@@ -111,9 +117,11 @@ export function renderRevenue(doc, d) {
   const items = [
     [`Released from escrow a year at the payout rate`, b.payout_volume_usd_year, "USD"],
     [`Hosted verifications a year at the verification price`, b.verifications_year, "verifications"],
-    [`Value released after graduation a year at the graduation rate (placeholder)`, b.graduation_volume_usd_year, "USD"],
-    [`Task package sales a year at Knos's share (placeholder)`, b.task_package_sales_usd_year, "USD"],
-    [`Subscribers to the ${b.cloud_top_tier} tier for a year (placeholder price)`, b.cloud_subscribers_at_top_tier, ""],
+    [`Bounties paid a year at the whole bounty fee (decided)`, b.bounty_volume_usd_year, "USD"],
+    [`Lab orders paid a year at the whole lab order fee (decided)`, b.lab_order_volume_usd_year, "USD"],
+    [`Value released after graduation a year at the graduation rate (decided)`, b.graduation_volume_usd_year, "USD"],
+    [`Task package sales a year at Knos's share (decided)`, b.task_package_sales_usd_year, "USD"],
+    [`Subscribers to the ${b.cloud_top_tier} tier for a year (decided price)`, b.cloud_subscribers_at_top_tier, ""],
   ];
   for (const [what, n, unit] of items) if (n !== undefined) $("rev-target").appendChild(el(doc, "li", `${what}: ${Number(n).toLocaleString("en-US")} ${unit}`.trim()));
   for (const src of Object.values(s.sources)) $("rev-sources").appendChild(el(doc, "li", `${src.said}. Source: ${src.source}. Not audited.`));

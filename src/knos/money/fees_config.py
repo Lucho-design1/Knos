@@ -3,14 +3,18 @@
     cfg = load()                        the file (KNOS_FEES, else the tree's config/fees.yaml, else the wheel's copy),
                                         validated: a problem raises FeeConfigError with one line per problem
     cfg.fee(kind, amount)               the fee of a value-based line, in the same units as `amount` (6-decimal base
-                                        units of USDC: micro-units): payout, bounty, funding, graduation, task_package
+                                        units of USDC: micro-units): payout, bounty, funding, graduation, task_package,
+                                        bounty_platform, lab_order
+    cfg.platform(kind, amount)          a whole Knos fee (bounty_platform 5%, lab_order 3%) split into the on-chain part
+                                        knos_pay takes and the off-chain rest (the program's rate is compiled in)
     cfg.price(kind, count, used=0)      a count-based line: verification, x402_check (the month's free ones first)
     cfg.split(amount, roles=None)       the contributor split, rounded exactly as knos_pay pays several payees
     cfg.bounty(amount), cfg.task_package(price)
-    cfg.credit_tiers, cfg.placeholders(), cfg.public()
+    cfg.credit_tiers, cfg.decided(), cfg.placeholders(), cfg.public()
 
 The live lines mirror what the deployed program charges (knos.settle.v2.pay) and the proposed lines mirror the price
-book (knos.billing). Those numbers are compiled into the program and typed once in those modules; this file states
+book (knos.billing). The decided lines are the founder's starting prices of 14 Oct 2026, each with its source; none of
+them is live, because knos_pay charges only its compiled payout fee. Those numbers are compiled into the program and typed once in those modules; this file states
 them again so a reader has one place, and `validate` refuses the file when one differs. So nothing can drift: a
 change to a fee is a change to the program (an upgrade through the multisig) or to the price book, and this file and
 its tests move with it.
@@ -29,8 +33,10 @@ from pathlib import Path
 from typing import Any
 
 MICRO = 1_000_000
-STATUSES = ("live", "proposed", "placeholder")
-VALUE_KINDS = ("payout", "bounty", "funding", "graduation", "task_package")
+STATUSES = ("live", "proposed", "decided", "placeholder")
+DECIDED_KEYS = ("decided", "rationale", "source")       # a decided price says when, why and on whose word
+PLATFORM_KINDS = ("bounty_platform", "lab_order")       # a whole Knos fee of which an on-chain line is one part
+VALUE_KINDS = ("payout", "bounty", "funding", "graduation", "task_package") + PLATFORM_KINDS
 COUNT_KINDS = ("verification", "x402_check")
 KINDS = VALUE_KINDS + COUNT_KINDS
 ROLES = ("researcher", "agent", "lab", "referee")
@@ -263,12 +269,31 @@ def validate(doc: Any) -> list[str]:
         p.append(f"fees.verification.usd_each: the price book says {billing.METER_PRICE}")
     if v.get("free_per_month") != billing.METER_FREE:
         p.append(f"fees.verification.free_per_month: the price book says {billing.METER_FREE}")
-    if f["x402_check"].get("usd_each") != v.get("usd_each"):
-        p.append("fees.x402_check.usd_each: a paid check costs what a verification costs")
+    x = f["x402_check"]
+    x_each = usd(x.get("usd_each"), "fees.x402_check.usd_each", p)
+    if x.get("status") == "proposed" and x.get("usd_each") != v.get("usd_each"):
+        p.append("fees.x402_check.usd_each: a proposed paid check costs what a verification costs (the price book)")
+    if x_each is not None and x_each <= 0 and x.get("status") != "placeholder":
+        p.append("fees.x402_check.usd_each: a paid check has a price above 0")
     for kind, key in (("graduation", "rate_bps"), ("task_package", "knos_bps")):
         r = f[kind].get(key)
         if not _int(r) or not 0 <= r <= 10_000:
             p.append(f"fees.{kind}.{key}: basis points, 0 to 10000")
+    for kind in ("graduation", "task_package", "x402_check") + PLATFORM_KINDS:
+        if f[kind].get("status") == "live":
+            p.append(f"fees.{kind}.status: not live (knos_pay charges only the payout fee, {pay.FEE_BPS} bps; more on chain needs a program upgrade)")
+    for kind in PLATFORM_KINDS:
+        line, r = f[kind], f[kind].get("rate_bps")
+        if not _int(r) or not 0 <= r <= 10_000:
+            p.append(f"fees.{kind}.rate_bps: basis points, 0 to 10000")
+        if line.get("onchain_line") not in ("payout", "bounty"):
+            p.append(f"fees.{kind}.onchain_line: payout or bounty (the on-chain fee that is part of this one)")
+        elif _int(r) and r < f[line["onchain_line"]].get("rate_bps", 0):
+            p.append(f"fees.{kind}.rate_bps: at least the on-chain {line['onchain_line']} rate it includes")
+        if not str(line.get("collected", "")).strip():
+            p.append(f"fees.{kind}.collected: say how the part above the on-chain fee is collected")
+    for kind in KINDS:
+        p += _decided_problems(f[kind], f"fees.{kind}")
 
     s = doc["splits"]
     roles = s.get("roles")
@@ -285,12 +310,31 @@ def validate(doc: Any) -> list[str]:
             p.append(f"splits.roles: the shares add up to {sum(roles.values())}, not 10000")
     if s.get("status") not in STATUSES:
         p.append("splits.status: one of " + ", ".join(STATUSES))
+    p += _decided_problems(s, "splits")
 
     c = doc["cloud"]
     if c.get("status") not in STATUSES:
         p.append("cloud.status: one of " + ", ".join(STATUSES))
-    usd(c.get("credit_usd"), "cloud.credit_usd", p)
+    if c.get("status") == "live":
+        p.append("cloud.status: not live (nothing is sold)")
+    p += _decided_problems(c, "cloud")
+    if c.get("units_status", "placeholder") not in STATUSES:
+        p.append("cloud.units_status: one of " + ", ".join(STATUSES))
+    credit = usd(c.get("credit_usd"), "cloud.credit_usd", p)
+    bonus = c.get("bonus_bps", 0)
+    if not _int(bonus) or not 0 <= bonus <= 10_000:
+        p.append("cloud.bonus_bps: basis points, 0 to 10000")
+        bonus = None
     tiers = c.get("tiers")
+    for x in tiers if isinstance(tiers, list) else []:
+        if not isinstance(x, dict) or "credit_usd_month" not in x:
+            continue
+        name = x.get("name")
+        price, worth = usd(x.get("usd_month"), f"cloud.tiers.{name}.usd_month", []), usd(x.get("credit_usd_month"), f"cloud.tiers.{name}.credit_usd_month", p)
+        if price is not None and worth is not None and bonus is not None and worth != price * (10_000 + bonus) / 10_000:
+            p.append(f"cloud.tiers.{name}.credit_usd_month: {price} USD with a {bonus / 100:g}% bonus is {price * (10_000 + bonus) / 10_000} of credit, not {worth}")
+        if worth is not None and credit and _int(x.get("credits_month")) and Decimal(x["credits_month"]) * credit != worth:
+            p.append(f"cloud.tiers.{name}.credits_month: {worth} USD of credit at {credit} a credit is {worth / credit} credits")
     if not isinstance(tiers, list) or not tiers:
         p.append("cloud.tiers: a list of tiers")
     else:
@@ -311,6 +355,13 @@ def validate(doc: Any) -> list[str]:
         if not isinstance(src, dict) or not src.get("said") or not src.get("source") or src.get("audited") is not False:
             p.append(f"sources.{name}: said, source and audited: false (no outside figure without its source)")
     return p
+
+
+def _decided_problems(line: dict, where: str) -> list[str]:
+    """A decided price carries when it was decided, why, and its source (an outside figure only with its link and date)."""
+    if line.get("status") != "decided":
+        return []
+    return [f"{where}.{k}: a decided price says {k}" for k in DECIDED_KEYS if not str(line.get(k) or "").strip()]
 
 
 # -- the config ------------------------------------------------------------------------------------------------------
@@ -343,8 +394,22 @@ class FeeConfig:
             raise ValueError(f"{kind}: no per-order rate")
         if kind == "funding":
             return 0
-        bps = line["rate_bps"] if kind == "graduation" else line["knos_bps"]
+        bps = line["knos_bps"] if kind == "task_package" else line["rate_bps"]
         return amount * bps // 10_000
+
+    def platform(self, kind: str, amount: int, bps: int | None = None) -> dict:
+        """A whole Knos fee (bounty_platform, lab_order) split into what knos_pay takes on chain and what is left to
+        collect off chain. The on-chain fee is PART of the whole one, never added to it: knos_pay's rate is compiled
+        into the program, so the rest waits for a program upgrade and is invoiced until then. `bps`: the order's own
+        on-chain rate (as cfg.fee). The off-chain part is never below 0 (a floor-sized on-chain fee can cover it all)."""
+        if kind not in PLATFORM_KINDS:
+            raise ValueError(f"{kind} is not a whole Knos fee: one of {', '.join(PLATFORM_KINDS)}")
+        line = self.doc["fees"][kind]
+        whole = self.fee(kind, amount)
+        onchain = self.fee(line["onchain_line"], amount, bps=bps)
+        return {"kind": kind, "amount": amount, "rate_bps": line["rate_bps"], "fee": max(whole, onchain), "onchain": onchain,
+                "onchain_line": line["onchain_line"], "offchain": max(0, whole - onchain), "status": line["status"],
+                "collected": line["collected"]}
 
     def bounty(self, amount: int) -> dict:
         """A bounty of `amount`: the funder pays amount + fee; the payee receives the amount; the fee goes to the treasury."""
@@ -409,16 +474,36 @@ class FeeConfig:
                 out += [f"fees.{kind}.{k} = {v}" for k, v in line.items() if k.endswith(("_bps", "_usd"))]
         if self.doc["splits"].get("status") == "placeholder":
             out += [f"splits.roles.{k} = {v}" for k, v in self.roles.items()]
-        if self.doc["cloud"].get("status") == "placeholder":
-            out.append(f"cloud.credit_usd = {self.doc['cloud']['credit_usd']}")
-            out += [f"cloud.tiers.{t['name']} = {t['usd_month']} USD/month, {t['credits_month']} credits" for t in self.doc["cloud"]["tiers"]]
+        c = self.doc["cloud"]
+        if c.get("status") == "placeholder":
+            out.append(f"cloud.credit_usd = {c['credit_usd']}")
+            out += [f"cloud.tiers.{t['name']} = {t['usd_month']} USD/month, {t['credits_month']} credits" for t in c["tiers"]]
+        elif c.get("units_status", "placeholder") == "placeholder":
+            out.append(f"cloud.credit_usd = {c['credit_usd']}")
+            out += [f"cloud.consumes.{k} = {v}" for k, v in c["consumes"].items()]
+            out += [f"cloud.tiers.{t['name']}.credits_month = {t['credits_month']}" for t in c["tiers"]]
+        return out
+
+    def decided(self) -> list[str]:
+        """Every starting price the founder set, each with its date and source (status decided)."""
+        out = []
+        for kind, line in self.doc["fees"].items():
+            if line.get("status") == "decided":
+                out += [f"fees.{kind}.{k} = {v} ({line['decided']}; {line['source']})" for k, v in line.items() if k.endswith(("_bps", "_usd")) or k == "usd_each"]
+        s = self.doc["splits"]
+        if s.get("status") == "decided":
+            out += [f"splits.roles.{k} = {v} ({s['decided']}; {s['source']})" for k, v in self.roles.items()]
+        c = self.doc["cloud"]
+        if c.get("status") == "decided":
+            out += [f"cloud.tiers.{t['name']} = {t['usd_month']} USD/month, {t.get('credit_usd_month', t['usd_month'])} USD of credit ({c['decided']}; {c['source']})" for t in c["tiers"]]
         return out
 
     def public(self) -> dict:
-        """The config as JSON for a page (the revenue dashboard), with each line's status and the placeholder list."""
+        """The config as JSON for a page (the revenue dashboard), with each line's status, the decided prices and the
+        placeholder list."""
         return {"version": self.doc["version"], "network": self.doc["network"], "revenue_today": self.doc["revenue_today"],
                 "treasury": self.doc["treasury"], "onchain": self.doc["onchain"], "fees": self.doc["fees"], "splits": self.doc["splits"],
-                "cloud": self.doc["cloud"], "sources": self.doc["sources"], "placeholders": self.placeholders()}
+                "cloud": self.doc["cloud"], "sources": self.doc["sources"], "decided": self.decided(), "placeholders": self.placeholders()}
 
 
 def amounts(amount: int, bps: list[int]) -> list[int]:
