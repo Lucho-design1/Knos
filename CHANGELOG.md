@@ -4,6 +4,14 @@ Prices and figures in older entries are superseded; the current price book is [d
 
 Each entry starts with what changed for you, in one or two plain lines ("In short"); the full notes follow.
 
+## 0.3.28.post1 (October 2026)
+
+**In short:** installing Knos works again: the memory engine is held below sibyl-memory-client 0.9.
+
+sibyl-memory-client 0.9.0 (PyPI, 14 Oct 2026) refuses to store or recall without an account, so a fresh
+`pip install knos` stopped at the first command that remembers (`knos proof record`, the Stop hook, the judge's
+memory). This release is 0.3.28's code unchanged, with the dependency `sibyl-memory-client>=0.8.1,<0.9`.
+
 ## 0.3.28 (October 2026)
 
 **In short:** the 8-day time lock is in force: every program change now waits 8 days in public.

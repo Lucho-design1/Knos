@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "knos"
-version = "0.3.28"
+version = "0.3.28.post1"
 description = "The neutral meter for AI agent work: neither side keeps the count."
 readme = "README.pypi.md"   # README.md with its links pinned to the tag (scripts/bump_version.py writes it)
 license = { file = "LICENSE" }
@@ -29,7 +29,7 @@ dependencies = [
   "typer>=0.12",
   "rich>=13",
   # The memory engine: what the Stop hook and the judge learn is kept in a Sibyl store, and nowhere else.
-  "sibyl-memory-client>=0.8.1",
+  "sibyl-memory-client>=0.8.1,<0.9",
   # Solana: instructions and transactions are built and signed with solders.
   "solders>=0.29",
   # .knos/proof.toml is read with tomllib, which arrived in 3.11.
