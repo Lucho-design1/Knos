@@ -38,7 +38,8 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("path", nargs="?", default=None)
     v.add_argument("--offline", action="store_true", help="do not read the chain; recompute only")
     v.add_argument("--no-sibyl", action="store_true", help="do not consult Sibyl's store beside the file")
-    v.add_argument("--signer", action="append", default=[], help="an anchoring public key to trust (repeat it); default KNOS_RECORD_SIGNERS, else the pinned key")
+    v.add_argument("--signer", action="append", default=[], help="an anchoring public key to trust (repeat it). To verify YOUR OWN record, pass the public key of the wallet that anchored it "
+                        "(knos record anchor's signer), or set KNOS_RECORD_SIGNERS=<key>[,<key>...]. Default: KNOS_RECORD_SIGNERS, else Knos's pinned key 8aukezen..")
     v.add_argument("--json", action="store_true")
     a = sub.add_parser("anchor", help="put the Merkle root of the unanchored lines on Solana devnet (SPL Memo)")
     a.add_argument("path", nargs="?", default=None)

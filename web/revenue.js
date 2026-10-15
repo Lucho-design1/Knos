@@ -124,5 +124,14 @@ export function renderRevenue(doc, d) {
     [`Subscribers to the ${b.cloud_top_tier} tier for a year (decided price)`, b.cloud_subscribers_at_top_tier, ""],
   ];
   for (const [what, n, unit] of items) if (n !== undefined) $("rev-target").appendChild(el(doc, "li", `${what}: ${Number(n).toLocaleString("en-US")} ${unit}`.trim()));
+  const lt = d.verification_cost;
+  if (lt && $("rev-leitner")) {
+    $("rev-leitner-label").textContent = lt.label;
+    const lb = $("rev-leitner").querySelector("tbody");
+    for (const [name, p] of [["Re-check every item daily (before)", lt.before], ["Leitner boxes (after)", lt.after]]) {
+      lb.appendChild(row(doc, [name, { text: String(p.reruns), cls: "num" }, { text: String(p.reruns_per_item_day), cls: "num" },
+        { text: `${p.caught} of ${p.breakages}`, cls: "num" }, { text: p.mean_days_unseen === null ? "none" : String(p.mean_days_unseen), cls: "num" }]));
+    }
+  }
   for (const src of Object.values(s.sources)) $("rev-sources").appendChild(el(doc, "li", `${src.said}. Source: ${src.source}. Not audited.`));
 }

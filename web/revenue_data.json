@@ -365,5 +365,83 @@
    "cloud.tiers.Pro = 100 USD/month, 110 USD of credit (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure)",
    "cloud.tiers.Team = 200 USD/month, 220 USD of credit (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure)"
   ]
+ },
+ "verification_cost": {
+  "label": "SYNTHETIC: a made-up history (seeded random breakages), not measured on any real item. Cost is counted in re-runs; the USD cost of a re-run is not measured, so none is given.",
+  "synthetic": true,
+  "items": 60,
+  "days": 120,
+  "seed": 334,
+  "boxes": {
+   "claim": {
+    "unit": "days",
+    "boxes": [
+     1,
+     3,
+     7,
+     30
+    ]
+   },
+   "product": {
+    "unit": "days",
+    "boxes": [
+     1,
+     3,
+     7,
+     30
+    ]
+   },
+   "lab": {
+    "unit": "orders",
+    "boxes": [
+     1,
+     3,
+     7,
+     30
+    ]
+   },
+   "agent": {
+    "unit": "days",
+    "boxes": [
+     1,
+     3,
+     7,
+     30
+    ]
+   },
+   "sealed_test": {
+    "unit": "days",
+    "boxes": [
+     1,
+     3,
+     7,
+     30
+    ]
+   }
+  },
+  "before": {
+   "policy": "daily",
+   "reruns": 7200,
+   "item_days": 7200,
+   "reruns_per_item_day": 1.0,
+   "breakages": 5,
+   "caught": 5,
+   "mean_days_unseen": 0.0,
+   "max_days_unseen": 0,
+   "payable_days_while_broken": 0
+  },
+  "after": {
+   "policy": "leitner",
+   "reruns": 380,
+   "item_days": 7200,
+   "reruns_per_item_day": 0.0528,
+   "breakages": 5,
+   "caught": 5,
+   "mean_days_unseen": 10.6,
+   "max_days_unseen": 22,
+   "payable_days_while_broken": 53
+  },
+  "reruns_saved_share": 0.9472,
+  "unit": "re-runs per item-day kept verified (one re-run of an item's sealed checks = 1)"
  }
 }

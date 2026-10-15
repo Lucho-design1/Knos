@@ -51,6 +51,8 @@ WHY: list[tuple[str, str, str]] = [
      "A debug assertion: it is not compiled into a release build, which is what `cargo build-sbf` makes. In a test build it says the 64-bit Montgomery inverse agrees with the 32-bit one the key account holds."),
     ("programs-v2/knos_oidc/src/rsa64.rs", "u64::from_le_bytes(d[8 * i..8 * i + 8].try_into().unwrap())",
      EXACT + ". The slice is read from the same account range `rsa::load` reads for the same number (two 32-bit limbs per 64-bit limb); an index past its end would panic, which ends the transaction with nothing written."),
+    ("programs-v2/knos_pay/src/order_proof.rs", "core::str::from_utf8(&",
+     "A log line's text: the bytes were just written by `knos_oidc::claims::hex_into`, which writes only the ASCII digits 0-9 and a-f, two per byte of a 32-byte value into a 64-byte buffer: always valid UTF-8, so it cannot fail."),
     # -- knos_passkey (the guard named is the one on the lines just before)
     ("programs-v2/knos_passkey/src/lib.rs", "d[W_KEY..W_KEY + webauthn::KEY_LEN]", EXACT + ". `wallet_key` refuses an account whose length is not `WALLET_LEN` first."),
     ("programs-v2/knos_passkey/src/lib.rs", "d[W_NONCE..W_NONCE + 8]", EXACT + ". `wallet_key` refuses an account whose length is not `WALLET_LEN` first."),

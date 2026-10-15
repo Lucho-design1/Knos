@@ -28,6 +28,24 @@ session versions before it ([specification](https://modelcontextprotocol.io/spec
 **Output schema**: every tool declares `outputSchema: {"type": "object"}`; every answer is one JSON object in
 `structuredContent`, with the same JSON as text beside it.
 
+## Two official extensions: tasks and skills
+
+To a client that sends its own extension capabilities in `_meta`, `server/discover` also lists two extensions of the
+current revision (a client that names none gets the core capabilities, as before) ([extensions](https://modelcontextprotocol.io/extensions/overview),
+read 14 Oct 2026; `src/knos/mcp_ext.py`):
+
+- **Tasks** (`io.modelcontextprotocol/tasks`, schema in
+  [ext-tasks](https://github.com/modelcontextprotocol/ext-tasks) `schema/2026-07-28`). A referee re-run takes
+  minutes. A client that declares the extension in the request's
+  `_meta["io.modelcontextprotocol/clientCapabilities"].extensions` and calls `knos_verify` gets a `CreateTaskResult`
+  at once (`resultType: "task"`, `taskId`, `status: "working"`, `createdAt`, `lastUpdatedAt`, `ttlMs`,
+  `pollIntervalMs`) and polls `tasks/get` until `completed` (with `result`, what the call would have answered),
+  `failed` (with `error`) or `cancelled`; `tasks/cancel` and `tasks/update` are answered. A client that did not
+  declare it gets the answer itself, as before. Tasks live in the server's memory: a restarted server forgets them.
+- **Skills** (`io.modelcontextprotocol/skills`, SEP-2640). `skills/list` and `skills/get` list the Knos skills the
+  plugin ships (`plugin/skills/*`, packaged as `knos/_skills`), each file with its sha256 and size;
+  `resources/read` serves `skill://<name>/<file>`, only files of a listed skill.
+
 ## A person confirms each post
 
 The tools that post to GitHub as the person's account (`knos_take_work`, `knos_submit_work`) are off until the

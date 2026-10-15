@@ -130,7 +130,16 @@ def build(ledger=None, demo_file: Path | None = None, cfg: fees_config.FeeConfig
     return {"generated": (now or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "revenue": {"usd": "0", "why": "Knos runs on Solana devnet only: every fee taken is test money. Nothing has been sold."},
             "schedule": cfg.public(), "treasury": treasury(ledger, cfg), "graduation_demo": demo(demo_file),
-            "model": model({}, cfg), "one_billion": one_billion(cfg)}
+            "model": model({}, cfg), "one_billion": one_billion(cfg), "verification_cost": _verification_cost()}
+
+
+def _verification_cost() -> dict | None:
+    """Cost per verification before and after Leitner re-checks, on a SYNTHETIC history (knos.leitner.dashboard)."""
+    try:
+        from .. import leitner
+        return leitner.dashboard()
+    except Exception:  # noqa: BLE001 - the dashboard shows nothing rather than a guess
+        return None
 
 
 def main(argv: list[str] | None = None) -> int:

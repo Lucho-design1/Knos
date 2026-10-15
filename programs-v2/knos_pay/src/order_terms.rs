@@ -560,7 +560,8 @@ pub fn distinct(order_owner: u64, who: &[Option<(u64, u64)>; 3]) -> u8 {
 pub fn quorum<'a>(program_id: &Pubkey, relayer: &AccountInfo<'a>, order: &AccountInfo<'a>, sys: &AccountInfo<'a>, o: &Order, g: &Gh, judge: Judge,
                   accounts: &[AccountInfo<'a>]) -> Result<bool, ProgramError> {
     let need = o.quorum();
-    let kind = match judge { Judge::Arbiter => return Ok(true), Judge::Own | Judge::Auto => 0u8, Judge::Neutral => 1, Judge::Private => 2 };
+    let kind = match judge { Judge::Arbiter => return Ok(true), Judge::Own | Judge::Auto => 0u8, Judge::Neutral => 1, Judge::Private => 2,
+                             Judge::Attested | Judge::Panel => return Err(err(E_CLAIMS)) };   // never a forge order's judge
     if need == 0 { return Ok(true); }
     o.settled()?;
     if judge == Judge::Neutral && (g.repo_id == o.repo || (o.kind == 1 && (g.actor_id == o.funder_id || g.actor_id == o.owner_id))) { return Err(err(E_CLAIMS)); }
@@ -623,6 +624,11 @@ pub fn close_marker(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8], 
             Q_LEN | Q_LEN_21 => (key_at(&d, Q_PAYER), *order.key == key_at(&d, Q_ORDER) && {
                 let o = order.try_borrow_data()?;
                 order.owner != program_id || o.len() != ORDER_LEN || o[O_STATE] != OPEN || stamp(&o) != i64_at(&d, Q_SINCE)
+            }),
+            // 0.3.34: a verdict's tally (order_proof.rs), by the rule of a quorum's marker
+            crate::order_proof::VOTE_LEN => (key_at(&d, crate::order_proof::V_PAYER), *order.key == key_at(&d, crate::order_proof::V_ORDER) && {
+                let o = order.try_borrow_data()?;
+                order.owner != program_id || o.len() != ORDER_LEN || o[O_STATE] != OPEN || u64_at(&o, O_INC) != u64_at(&d, crate::order_proof::V_INC)
             }),
             _ => return Err(err(E_ACCOUNTS)),
         }

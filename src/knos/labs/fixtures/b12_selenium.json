@@ -1,0 +1,133 @@
+{
+ "label": "DOCUMENTED EXAMPLES (labelled): b12 Selenium Route Search responses copied from the `examples` of b12's own OpenAPI document (https://b12-labs.com/docs/selenium-route-search/openapi.json, v0.1.0, read 14 Oct 2026); the status example is set to `completed` with the progress of b12's list example; not a real job",
+ "source": "https://b12-labs.com/docs/selenium-route-search/openapi.json",
+ "responses": {
+  "POST /v1/route-searches/quote": {
+   "status": 200,
+   "body": {
+    "credits_required": 100,
+    "params": {
+     "max_route_families": 4,
+     "researcher_runs": 3,
+     "target_name": "ethanol",
+     "target_ready_routes": 2,
+     "timeout_minutes": 60
+    },
+    "target_smiles": "CCO",
+    "version": "v1.3.31"
+   }
+  },
+  "POST /v1/route-searches": {
+   "status": 202,
+   "body": {
+    "credits_charged": 100,
+    "id": "route-search-job-id",
+    "links": {
+     "cancel": "/v1/route-searches/route-search-job-id/cancel",
+     "routes": "/v1/route-searches/route-search-job-id/routes",
+     "self": "/v1/route-searches/route-search-job-id"
+    },
+    "status": "queued",
+    "version": "v1.3.31"
+   }
+  },
+  "GET /v1/route-searches/route-search-job-id": {
+   "status": 200,
+   "body": {
+    "created_at": "2026-07-08T12:00:00+00:00",
+    "credits_charged": 100,
+    "id": "route-search-job-id",
+    "links": {
+     "cancel": "/v1/route-searches/route-search-job-id/cancel",
+     "routes": "/v1/route-searches/route-search-job-id/routes",
+     "self": "/v1/route-searches/route-search-job-id"
+    },
+    "progress": {
+     "elapsed_minutes": 44.2,
+     "families_found": 4,
+     "families_solved": 3,
+     "routes_completed": 3
+    },
+    "retry_after_seconds": 60,
+    "status": "completed",
+    "updated_at": "2026-07-08T12:12:30+00:00",
+    "version": "v1.3.31",
+    "finished_at": "2026-07-08T12:44:12+00:00"
+   }
+  },
+  "GET /v1/route-searches/route-search-job-id/routes": {
+   "status": 200,
+   "body": {
+    "dropped": [],
+    "families": [
+     {
+      "best_route": {
+       "id": "route-hydration-1",
+       "molecules": [
+        {
+         "id": "mol-target",
+         "role": "target",
+         "smiles": "CCO"
+        },
+        {
+         "id": "mol-ethylene",
+         "role": "starting_material",
+         "smiles": "C=C"
+        },
+        {
+         "id": "mol-water",
+         "role": "starting_material",
+         "smiles": "O"
+        }
+       ],
+       "reactions": [
+        {
+         "assessment": {
+          "band": "likely_feasible",
+          "confidence": "high",
+          "verdict": "feasible"
+         },
+         "id": "rxn-hydration",
+         "label": "Acid-catalyzed alkene hydration",
+         "product_id": "mol-target",
+         "reactant_ids": [
+          "mol-ethylene",
+          "mol-water"
+         ]
+        }
+       ],
+       "stats": {
+        "commercially_solved": true,
+        "completed": true,
+        "reaction_count": 1
+       }
+      },
+      "family_id": "f_1a2b3c4d",
+      "id": "f_1a2b3c4d",
+      "name": "Ethylene hydration",
+      "status": "solved",
+      "strategy_summary": "Hydrate ethylene to ethanol."
+     }
+    ],
+    "id": "route-search-job-id",
+    "stats": {
+     "families_solved": 1,
+     "families_total": 1,
+     "routes_completed": 1
+    },
+    "status": "completed",
+    "target": {
+     "name": "ethanol",
+     "smiles": "CCO"
+    },
+    "target_smiles": "CCO",
+    "version": "v1.3.31"
+   }
+  }
+ },
+ "spec": {
+  "name": "ethanol",
+  "smiles": "CCO",
+  "tier": "basic"
+ }
+}

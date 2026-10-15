@@ -60,7 +60,9 @@ def _check_anchors(lines: list[dict], fetch, offline: bool, problems: list[str],
         row["pinned"] = p.get("signer") in trusted
         if not row["pinned"]:
             problems.append(f"the anchor at seq {a['seq']} is signed by {p.get('signer')}, which is not a pinned anchoring key "
-                            f"({', '.join(sorted(trusted)) or 'none'}): anyone can anchor a rewritten journal with a wallet of their own")
+                            f"({', '.join(sorted(trusted)) or 'none'}): anyone can anchor a rewritten journal with a wallet of their own. "
+                            f"If this is your own record, anchored by your own wallet, verify it with --signer {p.get('signer')} "
+                            f"(or KNOS_RECORD_SIGNERS={p.get('signer')})")
         try:
             first, last = int(p["first"]), int(p["last"])
         except (KeyError, TypeError, ValueError):

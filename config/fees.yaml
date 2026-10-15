@@ -132,6 +132,15 @@ splits:
     lab: 1000
     referee: 500
 
+game_pot:
+  status: "placeholder"
+  what: "how a Knos game's pooled pot is divided by the referee's final verdicts: the winner's share, and a partial-credit share divided among the other passing attempts in proportion to their lift (at most max_paid payees, one knos_pay order pays 1 to 4); the Knos fee on a pot is the bounty fee (fee_line), paid by the funders on top"
+  winner_bps: 7000
+  partial_bps: 3000
+  max_paid: 4
+  fee_line: "bounty_platform"
+  note: "winner_bps and partial_bps are placeholders until the founder sets them; nobody pays a pot on devnet but test money"
+
 cloud:
   status: "decided"
   what: "Knos Cloud: paid credits for hosted verification (runners, sealed-test storage, receipts, Gate for private repositories). Everything stays open source (MIT) and self-hosting stays free."

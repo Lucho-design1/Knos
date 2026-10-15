@@ -1,0 +1,93 @@
+{
+ "name": "Knos",
+ "description": "The referee and escrow for machine and human research work: Knos re-runs the work against sealed checks, refuses known cheats, and releases escrowed money on Solana only on verified proof.",
+ "supportedInterfaces": [
+  {
+   "url": "http://127.0.0.1:8765/a2a/v1",
+   "protocolBinding": "JSONRPC",
+   "protocolVersion": "1.0"
+  }
+ ],
+ "url": "http://127.0.0.1:8765/a2a/v1",
+ "preferredTransport": "JSONRPC",
+ "provider": {
+  "organization": "Knos",
+  "url": "https://github.com/drexthealpha/Knos"
+ },
+ "version": "0.3.12",
+ "documentationUrl": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/A2A.md",
+ "capabilities": {
+  "streaming": false,
+  "pushNotifications": false,
+  "extendedAgentCard": false
+ },
+ "defaultInputModes": [
+  "application/json",
+  "text/plain"
+ ],
+ "defaultOutputModes": [
+  "application/json"
+ ],
+ "skills": [
+  {
+   "id": "verify",
+   "name": "Verify a change as the referee would",
+   "description": "Runs Knos's cheat checks on a committed change and re-runs its tests twice in a throwaway clone; returns a signed receipt.",
+   "tags": [
+    "referee",
+    "verification",
+    "tests",
+    "receipt"
+   ],
+   "examples": [
+    "{\"skill\": \"verify\", \"path\": \"/work/repo\"}"
+   ],
+   "inputModes": [
+    "application/json"
+   ],
+   "outputModes": [
+    "application/json"
+   ]
+  },
+  {
+   "id": "check-pr",
+   "name": "Check a pull request's claims",
+   "description": "Whether a public pull request's description agrees with GitHub's record of its tests at its head commit.",
+   "tags": [
+    "referee",
+    "claims",
+    "github",
+    "tests"
+   ],
+   "examples": [
+    "https://github.com/OWNER/REPO/pull/12"
+   ],
+   "inputModes": [
+    "application/json",
+    "text/plain"
+   ],
+   "outputModes": [
+    "application/json"
+   ]
+  },
+  {
+   "id": "find-work",
+   "name": "Find funded work",
+   "description": "Lists open work orders with money in escrow that an agent can take, with the terms that decide payment.",
+   "tags": [
+    "work",
+    "bounty",
+    "escrow"
+   ],
+   "examples": [
+    "{\"skill\": \"find-work\"}"
+   ],
+   "inputModes": [
+    "application/json"
+   ],
+   "outputModes": [
+    "application/json"
+   ]
+  }
+ ]
+}

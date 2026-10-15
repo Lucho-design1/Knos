@@ -1,0 +1,253 @@
+{
+ "label": "MOCK (synthetic, not a real API response): Adaptyv responses built in the shapes and with the field names of Adaptyv's OpenAPI document (devs.adaptyvbio.com/api/v1/openapi.json, v0.0.2, read 14 Oct 2026); ids, sequences and values are made up; the 402 challenge is the documented production challenge with the network and asset switched to Base Sepolia (testnet), because the sandbox's network is not documented",
+ "source": "https://docs.adaptyvbio.com/llms-full.txt",
+ "files": {
+  "https://example.invalid/adaptyv-fixture/0199f3b7-1e44-7a10-8c3d-1f2e3d4c5b6a.zip": "a92fea64ada6e770274c3f04618e42e5a89a4fe381bc3ebd8311fe326fdbac34"
+ },
+ "responses": {
+  "POST /api/v1/experiments/cost-estimate": {
+   "status": 200,
+   "body": {
+    "breakdown": {
+     "pricing_version": "v1_2026-01-20",
+     "assay": {
+      "name": "affinity (BLI)",
+      "base_cents": 14900,
+      "replicate_addon_cents": 0,
+      "subtotal_cents": 44700
+     },
+     "materials": {
+      "target": {
+       "name": "fixture target",
+       "target_catalog_id": "FIXTURE-1"
+      },
+      "price_per_sequence_cents": 20433,
+      "subtotal_cents": 61300
+     },
+     "total_cents": 106000
+    },
+    "incomplete": null,
+    "warnings": []
+   }
+  },
+  "POST /api/v1/experiments": {
+   "status": 201,
+   "body": {
+    "experiment_id": "0199f3a1-6b2c-7c11-9e0a-5a1d2c3b4e5f",
+    "error": null,
+    "stripe_invoice_id": null,
+    "stripe_hosted_invoice_url": null
+   }
+  },
+  "GET /api/v1/experiments/0199f3a1-6b2c-7c11-9e0a-5a1d2c3b4e5f/quote": {
+   "status": 200,
+   "body": {
+    "experiment_id": "0199f3a1-6b2c-7c11-9e0a-5a1d2c3b4e5f",
+    "amount_total": 106000,
+    "amount_subtotal": 106000,
+    "currency": "usd",
+    "status": "open",
+    "expires_at": "2026-11-14T00:00:00Z",
+    "stripe_quote_url": "https://billing.example.com/quotes/qt_fixture",
+    "updated_at": "2026-10-14T20:00:00Z"
+   }
+  },
+  "POST /api/v1/experiments/0199f3a1-6b2c-7c11-9e0a-5a1d2c3b4e5f/quote/confirm": {
+   "status": 200,
+   "body": {
+    "id": "qt_fixture",
+    "status": "accepted",
+    "invoice_id": "in_1KnosFixtureInvoice000",
+    "hosted_invoice_url": null,
+    "payment": {
+     "kind": "machine",
+     "pay_url": "/api/v1/invoices/in_1KnosFixtureInvoice000/pay",
+     "methods": [
+      "x402-exact"
+     ]
+    }
+   }
+  },
+  "POST /api/v1/invoices/in_1KnosFixtureInvoice000/pay": {
+   "status": 402,
+   "body": {},
+   "headers": {
+    "PAYMENT-REQUIRED": "eyJ4NDAyVmVyc2lvbiI6MiwicmVzb3VyY2UiOnsidXJsIjoiaHR0cHM6Ly9kZXZzLmFkYXB0eXZiaW8uY29tL2FwaS92MS9pbnZvaWNlcy9pbl8xS25vc0ZpeHR1cmVJbnZvaWNlMDAwL3BheSIsImRlc2NyaXB0aW9uIjoiQWRhcHR5diBpbnZvaWNlIChmaXh0dXJlKSIsIm1pbWVUeXBlIjoiYXBwbGljYXRpb24vanNvbiJ9LCJhY2NlcHRzIjpbeyJzY2hlbWUiOiJleGFjdCIsIm5ldHdvcmsiOiJlaXAxNTU6ODQ1MzIiLCJhbW91bnQiOiIxMDYwMDAwMDAwIiwicGF5VG8iOiIweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMGRFYUQiLCJhc3NldCI6IjB4MDM2Q2JENTM4NDJjNTQyNjYzNGU3OTI5NTQxZUMyMzE4ZjNkQ0Y3ZSIsIm1heFRpbWVvdXRTZWNvbmRzIjozMDAsImV4dHJhIjp7Im5hbWUiOiJVU0RDIiwidmVyc2lvbiI6IjIiLCJhc3NldFRyYW5zZmVyTWV0aG9kIjoiZWlwMzAwOSJ9fV19"
+   }
+  },
+  "GET /api/v1/experiments/0199f3a1-6b2c-7c11-9e0a-5a1d2c3b4e5f": {
+   "status": 200,
+   "body": {
+    "id": "0199f3a1-6b2c-7c11-9e0a-5a1d2c3b4e5f",
+    "code": "EXP-FIXTURE-001",
+    "name": "Knos fixture order",
+    "status": "done",
+    "results_status": "all",
+    "created_at": "2026-10-14T20:00:00Z",
+    "experiment_url": "https://foundry.adaptyvbio.com/experiments/fixture",
+    "experiment_spec": {
+     "experiment_type": "affinity",
+     "method": "bli",
+     "n_replicates": 2,
+     "target": {
+      "id": "019a03da-b87f-7e15-8b02-cef171c9871d",
+      "name": "fixture target"
+     },
+     "sequences": {
+      "knos_design_1": "EVQLVESGGGLVQPGGSLRLSCAASGFTFS",
+      "knos_design_2": "QVQLQESGPGLVKPSETLSLTCTVSGGSIS",
+      "pos_ctrl": {
+       "aa_string": "DIQMTQSPSSLSASVGDRVTITCRASQSIS",
+       "control": true
+      }
+     }
+    },
+    "costs": {
+     "type": "invoiced",
+     "amount_cents": 106000,
+     "currency": "usd"
+    }
+   }
+  },
+  "GET /api/v1/experiments/0199f3a1-6b2c-7c11-9e0a-5a1d2c3b4e5f/results": {
+   "status": 200,
+   "body": {
+    "items": [
+     {
+      "id": "0199f3b7-1e44-7a10-8c3d-1f2e3d4c5b6a",
+      "title": "Affinity (BLI), fixture",
+      "experiment_id": "0199f3a1-6b2c-7c11-9e0a-5a1d2c3b4e5f",
+      "result_type": "affinity",
+      "created_at": "2026-10-14T21:00:00Z",
+      "summary": [
+       {
+        "result_type": "affinity",
+        "sequence": "pos_ctrl",
+        "kd_mean": 2.1e-09,
+        "kd_units": "M",
+        "kon_mean": 240000.0,
+        "koff_mean": 0.000504,
+        "binding": "true",
+        "binding_strength": "strong",
+        "expression": "high",
+        "fit_quality": "good",
+        "positive_control": "pos_ctrl",
+        "performance": {},
+        "method": "bli",
+        "replicates": [
+         {
+          "replicate": 1,
+          "binding": "true",
+          "binding_strength": "strong",
+          "fit_quality": "good",
+          "expression": "high",
+          "kd": 2e-09,
+          "kon": 240000.0,
+          "koff": 0.00048,
+          "confidence": "high"
+         },
+         {
+          "replicate": 2,
+          "binding": "true",
+          "binding_strength": "strong",
+          "fit_quality": "good",
+          "expression": "high",
+          "kd": 2.2e-09,
+          "kon": 240000.0,
+          "koff": 0.0005279999999999999,
+          "confidence": "high"
+         }
+        ]
+       },
+       {
+        "result_type": "affinity",
+        "sequence": "knos_design_1",
+        "kd_mean": null,
+        "kd_units": "M",
+        "kon_mean": null,
+        "koff_mean": null,
+        "binding": "false",
+        "binding_strength": "none",
+        "expression": "high",
+        "fit_quality": "good",
+        "positive_control": "pos_ctrl",
+        "performance": {
+         "pos_ctrl": "worse"
+        },
+        "method": "bli",
+        "replicates": [
+         {
+          "replicate": 1,
+          "binding": "false",
+          "binding_strength": "none",
+          "fit_quality": "good",
+          "expression": "high"
+         },
+         {
+          "replicate": 2,
+          "binding": "false",
+          "binding_strength": "none",
+          "fit_quality": "good",
+          "expression": "high"
+         }
+        ]
+       },
+       {
+        "result_type": "affinity",
+        "sequence": "knos_design_2",
+        "kd_mean": null,
+        "kd_units": "M",
+        "kon_mean": null,
+        "koff_mean": null,
+        "binding": "false",
+        "binding_strength": "none",
+        "expression": "low",
+        "fit_quality": "good",
+        "positive_control": "pos_ctrl",
+        "performance": {
+         "pos_ctrl": "worse"
+        },
+        "method": "bli",
+        "replicates": [
+         {
+          "replicate": 1,
+          "binding": "false",
+          "binding_strength": "none",
+          "fit_quality": "good",
+          "expression": "high"
+         },
+         {
+          "replicate": 2,
+          "binding": "false",
+          "binding_strength": "none",
+          "fit_quality": "good",
+          "expression": "high"
+         }
+        ]
+       }
+      ],
+      "metadata": {},
+      "data_package_url": "https://example.invalid/adaptyv-fixture/0199f3b7-1e44-7a10-8c3d-1f2e3d4c5b6a.zip"
+     }
+    ],
+    "total": 1,
+    "count": 1,
+    "offset": 0
+   }
+  }
+ },
+ "spec": {
+  "experiment_type": "affinity",
+  "method": "bli",
+  "target_id": "019a03da-b87f-7e15-8b02-cef171c9871d",
+  "sequences": {
+   "knos_design_1": "EVQLVESGGGLVQPGGSLRLSCAASGFTFS",
+   "knos_design_2": "QVQLQESGPGLVKPSETLSLTCTVSGGSIS",
+   "pos_ctrl": {
+    "aa_string": "DIQMTQSPSSLSASVGDRVTITCRASQSIS",
+    "control": true
+   }
+  },
+  "n_replicates": 2
+ }
+}

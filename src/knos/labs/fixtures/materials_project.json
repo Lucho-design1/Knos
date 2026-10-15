@@ -1,0 +1,17 @@
+{
+ "label": "FIXTURE (labelled): mp-149 (silicon) as the LEGACY Materials Project site shows it (https://legacy.materialsproject.org/materials/mp-149/, read 14 Oct 2026: band gap 0.853 eV, formation energy 0.000 eV/atom, energy above hull 0.000 eV/atom, density 2.28 g/cm3; is_stable set true here because the energy above hull is 0), placed in the response shape of the current API (api.materialsproject.org/openapi.json); not an API response, and the current database may differ",
+ "source": "https://legacy.materialsproject.org/materials/mp-149/",
+ "responses": {
+  "GET /materials/summary/?material_ids=mp-149&_fields=material_id,formula_pretty,energy_above_hull,formation_energy_per_atom,band_gap,is_stable,density,builder_meta&license=BY-C": {
+   "status": 200,
+   "body": {
+    "data": [
+     {"material_id": "mp-149", "formula_pretty": "Si", "energy_above_hull": 0.0, "formation_energy_per_atom": 0.0,
+      "band_gap": 0.853, "is_stable": true, "density": 2.28, "builder_meta": {"license": "BY-C"}}
+    ],
+    "errors": null,
+    "meta": {"api_version": "fixture", "total_doc": 1}
+   }
+  }
+ }
+}

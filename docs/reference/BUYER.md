@@ -45,6 +45,23 @@ Money moves only when you run the printed `knos fund-wallet` yourself.
 | `knos gate seal` | a maintainer's Gate on outside pull requests: the tests go into the repository secret `KNOS_GATE_HIDDEN` |
 | `knos taskpack export` | a merged fix turned into a sealed package after the fact |
 
+## Before you post, and when work arrives as a patch
+
+```bash
+knos task calibrate --tests ~/hidden/my-task --base <unchanged tree> --reference <your own solution's tree>
+knos task judge --seal ~/hidden/seal-N.json --hidden ~/hidden/my-task --commit <base commit> --patch work.patch
+```
+
+- `calibrate` judges your hidden tests twice before they are sealed in public, cheat rules off: the unchanged base must
+  fail them (or they would pay for no work) and your own solution must pass them (or they would refuse honest work).
+  Exit 1 says which. Buying v0.3.34, it caught two defects in our own bundles before any worker saw a seal.
+- The judge takes `pyproject.toml`, `setup.cfg`, `pytest.ini`, `tox.ini` and every `conftest.py` from the BASE, so a
+  hidden test that reads them sees the base's copy, never the delivered one (a version bump, a new dependency).
+  `knos task post` and `calibrate` warn when a bundle names one of them.
+- `judge` builds the base (`git archive` of the commit) and the delivered tree (the patch applied with `git apply`),
+  then runs `knos referee works` on them.
+- A `/knos take` reservation never outlasts the escrow: `knos fund-wallet --days 3` reserves for 3 days at most.
+
 ## What is not there yet
 
 - **Payment needs GitHub Actions.** An escrow pays only on a signed run of the pinned `prove.yml` on a merged pull

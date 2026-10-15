@@ -472,6 +472,54 @@ def register(app, help_lines: list | None = None) -> None:
         got = said(go)
         show_(got, as_json, buyer.lines(got))
 
+    @sub.command("calibrate")
+    def _calibrate(tests: str = typer.Option(..., "--tests", help="the folder of hidden tests, before it is sealed in public"),
+                   base: str = typer.Option(..., "--base", help="the unchanged tree the work starts from"),
+                   reference: str = typer.Option(..., "--reference", help="your own solution's tree (never delivered)"),
+                   as_json: bool = typer.Option(False, "--json")) -> None:
+        """Test hidden tests before posting: the base must fail them and your own solution must pass. Exit 1 if not."""
+        from . import buyer
+
+        def go():
+            try:
+                return buyer.calibrate(tests, base, reference)
+            except (buyer.Refused, OSError, ValueError) as why:
+                raise Stop(str(why)) from None
+        got = said(go)
+        show_(got, as_json, [f"Warning: {w}" for w in got["warnings"]]
+              + [f"base: {'PASS' if got['base']['passed'] else 'FAIL'}; your reference: "
+                 f"{'PASS' if got['reference']['passed'] else 'FAIL'}"] + got["said"])
+        if not got["ok"]:
+            raise typer.Exit(1)
+
+    @sub.command("judge")
+    def _judge(seal: str = typer.Option(..., "--seal", help="the seal file `knos task post` wrote"),
+               hidden: str = typer.Option(..., "--hidden", help="the hidden tests the seal names"),
+               commit: str = typer.Option(..., "--commit", help="the commit the work was made on"),
+               patch: str = typer.Option(..., "--patch", help="the delivered patch (git diff --binary)"),
+               repo: str = typer.Option(".", "--repo", help="a clone that has the commit"),
+               out: str = typer.Option("", "--out", help="write the verdict JSON here"),
+               as_json: bool = typer.Option(False, "--json")) -> None:
+        """Judge work delivered as a patch: builds the base and the delivered tree, then `knos referee works`."""
+        import tempfile
+        from . import buyer, referee
+
+        def go():
+            try:
+                s = json.loads(Path(seal).read_text(encoding="utf-8"))
+                s.pop("seal_hash", None)
+                with tempfile.TemporaryDirectory(prefix="knos-task-judge-") as tmp:
+                    base, pr = buyer.trees(commit, patch, repo=repo, into=tmp)
+                    return referee.works(base, pr, s, hidden_dir=hidden).to_dict()
+            except (buyer.Refused, OSError, ValueError) as why:
+                raise Stop(str(why)) from None
+        got = said(go)
+        if out:
+            Path(out).write_text(json.dumps(got, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8")
+        show_(got, as_json, ["Works: PASS" if got["passed"] else "Works: REFUSED"] + [f"  {r}" for r in got["reasons"]])
+        if not got["passed"]:
+            raise typer.Exit(1)
+
     @sub.command("why")
     def _why(where: str, pull: int = typer.Option(0, "--pull", help="the merged pull request's number"), as_json: bool = typer.Option(False, "--json")) -> None:
         """Why a merged pull request was not paid, and what fixes it."""

@@ -66,11 +66,15 @@ packages = ["src/knos"]
 "terms" = "knos/_terms"
 # the one fee config (config/fees.yaml), which knos.money.fees_config reads when the tree is not there
 "config/fees.yaml" = "knos/_config/fees.yaml"
+# the Leitner re-verification boxes (config/leitner.yaml), which knos.leitner reads when the tree is not there
+"config/leitner.yaml" = "knos/_config/leitner.yaml"
+# the agent skills `knos mcp` serves over the MCP skills extension (src/knos/mcp_ext.py)
+"plugin/skills" = "knos/_skills"
 
 [tool.hatch.build.targets.sdist]
 # anchored at the root: a bare name would also take every README.md and tests/ folder below it (the crates', the
 # JavaScript client's, which the stamp of the pinned workflows writes), and the sdist must not change with the stamp
-include = ["/src/knos", "/terms", "/config/fees.yaml", "/tests", "/README.md", "/LICENSE"]
+include = ["/src/knos", "/terms", "/config/fees.yaml", "/config/leitner.yaml", "/plugin/skills", "/tests", "/README.md", "/LICENSE"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

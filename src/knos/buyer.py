@@ -63,7 +63,75 @@ def check_bundle(bundle: Path) -> list[str]:
     if why:
         notes.append(f"not black-box: its checks {why}. A worker's code can then fake the verdict from inside the test "
                      "process; `knos accept init` makes a black-box bundle")
+    read = from_base_reads(files)
+    if read:
+        notes.append(f"the tests read {', '.join(read)}, which the judge takes from the BASE, never from the delivered "
+                     "work: a check of what the worker puts there always sees the base's copy. Check it outside the "
+                     "sealed tests, or on another file")
     return notes
+
+
+# What knos.judge's overlay always takes from the base (judge.restored, runner python/command/blackbox): a sealed test
+# that reads one of these sees the base's copy, whatever the work delivered. Found by V34DOG while buying v0.3.34.
+FROM_BASE = ("pyproject.toml", "setup.cfg", "pytest.ini", "tox.ini", "conftest.py")
+
+
+def from_base_reads(files: dict) -> list[str]:
+    """The files of FROM_BASE a bundle's text names (`files`: relative name -> bytes)."""
+    text = b"\n".join(files.values()).decode("utf-8", "replace")
+    return [n for n in FROM_BASE if re.search(r"(?<![\w.-])" + re.escape(n) + r"(?![\w.-])", text)]
+
+
+def trees(commit: str, patch, *, repo=".", into) -> tuple[Path, Path]:
+    """The two trees a delivered patch is judged on: `base` = the repository at `commit` (git archive, no .git), `pr` =
+    a copy of it with the patch applied (git apply, binary patches too). Raises Refused when the patch does not apply."""
+    into = Path(into)
+    base, pr = into / "base", into / "pr"
+    for d in (base, pr):
+        if d.exists():
+            raise Refused(f"{d} already exists: give an empty folder")
+    base.mkdir(parents=True)
+    arc = subprocess.run(["git", "-C", str(repo), "archive", "--format=tar", commit], capture_output=True, timeout=600)
+    if arc.returncode != 0:
+        raise Refused(f"git archive {commit} failed in {repo}: {arc.stderr.decode('utf-8', 'replace').strip()[:300]}")
+    import io
+    import tarfile
+    with tarfile.open(fileobj=io.BytesIO(arc.stdout)) as tar:
+        tar.extractall(base, filter="data") if hasattr(tarfile, "data_filter") else tar.extractall(base)
+    shutil.copytree(base, pr, symlinks=True)
+    got = subprocess.run(["git", "apply", "--whitespace=nowarn", str(Path(patch).resolve())], cwd=pr, capture_output=True,
+                         timeout=600)
+    if got.returncode != 0:
+        raise Refused(f"the patch does not apply to {commit}: {got.stderr.decode('utf-8', 'replace').strip()[:300]}")
+    return base, pr
+
+
+ALREADY = "already pass on the base"      # knos.judge's words when the hidden tests do not fail on the base
+
+
+def calibrate(bundle, base, reference, *, issue: str = "0", sandbox: str = "auto") -> dict:
+    """Test the hidden tests before sealing them in public: judged with the cheat rules off, the unchanged `base` must
+    FAIL and `reference` (the buyer's own solution, never delivered) must PASS. Either way round is a defect of the
+    tests, not of any worker's work: fix the bundle and calibrate again, then post."""
+    from . import referee
+    bundle = Path(bundle)
+    notes = check_bundle(bundle)
+    sealed = referee.seal(bundle, issue=str(issue))
+    got = {}
+    # The judge is fail-to-pass: judging the base against itself never passes, but its reasons say whether the hidden
+    # tests already pass on the base ("already pass on the base"), which is what a buyer needs to know.
+    c = referee.works(Path(base), Path(base), sealed, hidden_dir=bundle, sandbox=sandbox, scan=False)
+    got["base"] = {"passed": any(ALREADY in r for r in c.reasons), "reasons": c.reasons[:3]}
+    c = referee.works(Path(base), Path(reference), sealed, hidden_dir=bundle, sandbox=sandbox, scan=False)
+    got["reference"] = {"passed": c.passed, "reasons": c.reasons[:3]}
+    said = []
+    if got["base"]["passed"]:
+        said.append("the unchanged base PASSES the hidden tests: they would pay for no work (fail-to-pass is required)")
+    if not got["reference"]["passed"] and not got["base"]["passed"]:
+        said.append("your reference solution FAILS the hidden tests: they would refuse honest work. "
+                    + "; ".join(got["reference"]["reasons"])[:400])
+    return {"ok": not said, "bundle": str(bundle), "spec_hash": sealed["spec_hash"], "warnings": notes, **got,
+            "said": said or ["calibrated: the base fails and your reference passes; seal and post it"]}
 
 
 def fee_lines(amount_units: int, decimals: int = 6) -> list[str]:
@@ -117,7 +185,9 @@ def plan(spec_path, bundle, repo: str, amount: str, *, issue: int | None = None,
             "seal_file": str(out_dir / f"seal-{n if n else '<issue>'}.json"), "fund_command": fund,
             "fees": fee_lines(units, decimals),
             "judge_command": ["knos", "referee", "works", "--base", "<base tree>", "--pr", "<delivered tree>", "--seal",
-                              str(out_dir / f"seal-{n if n else '<issue>'}.json"), "--hidden", str(bundle)]}
+                              str(out_dir / f"seal-{n if n else '<issue>'}.json"), "--hidden", str(bundle)],
+            "judge_patch_command": ["knos", "task", "judge", "--seal", str(out_dir / f"seal-{n if n else '<issue>'}.json"),
+                                    "--hidden", str(bundle), "--commit", "<base commit>", "--patch", "<delivered patch>"]}
 
 
 def comment(p: dict) -> str:
@@ -157,6 +227,8 @@ def send(p: dict, gh: Callable[..., str] = _gh) -> dict:
     p["seal_file"] = p["seal_file"].replace("<issue>", str(n))
     p["fund_command"] = [x.replace("<issue>", str(n)) for x in p["fund_command"]]
     p["judge_command"] = [x.replace("<issue>", str(n)) for x in p["judge_command"]]
+    if p.get("judge_patch_command"):
+        p["judge_patch_command"] = [x.replace("<issue>", str(n)) for x in p["judge_patch_command"]]
     Path(p["seal_file"]).write_text(json.dumps({**sealed, "seal_hash": p["seal_hash"]}, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     p["comment_url"] = gh("issue", "comment", str(n), "-R", p["repo"], "--body", comment(p))
     p["sent"] = True
@@ -178,6 +250,10 @@ def lines(p: dict) -> list[str]:
     out.append("  3. fund it from your wallet (this command never moves money): " + " ".join(p["fund_command"]))
     out += [f"     {x}" for x in p["fees"]]
     out.append("  4. when work is delivered, judge it: " + " ".join(p["judge_command"]))
+    if p.get("judge_patch_command"):
+        out.append("     work delivered as a patch: " + " ".join(p["judge_patch_command"]))
     if not p.get("sent"):
+        out.append("  Before --send, test your hidden tests: knos task calibrate --tests " + p["bundle"]
+                   + " --base <base tree> --reference <your own solution>")
         out += ["", "Nothing was sent. With --send, gh opens the issue and posts the seal as your account."]
     return out

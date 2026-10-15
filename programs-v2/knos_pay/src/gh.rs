@@ -42,21 +42,27 @@ pub fn token_of(tok: &AccountInfo, key: &AccountInfo, now: i64, ours: impl Fn(&[
 
 /// `orders`: the caller is an instruction of a work order that gl.rs gives an audience to. Only then is a GitLab
 /// token read at all.
+///
+/// 0.3.34: the front door is issuers.rs `checked`, shared by every issuer family; what this function accepts, and in
+/// which order it refuses, is what it was. GitHub's family and a PRIVATE key `ours` accepts are read here (GitHub's
+/// claims), gitlab.com's (`orders` only) by gl.rs, and every other family (Confidential Space, ORCID, any other
+/// registered issuer) is refused with E_TOKEN as before: their readers are cs.rs and orcid.rs, for their own instructions.
 fn read(tok: &AccountInfo, key: &AccountInfo, now: i64, orders: bool, ours: impl Fn(&[u8; 32]) -> bool) -> Result<Gh, ProgramError> {
-    if *tok.owner != OIDC_ID { return Err(err(E_TOKEN)); }
-    let d = tok.try_borrow_data()?;
-    let v = knos_oidc::verified(&d).ok_or_else(|| err(E_TOKEN))?;
-    let gitlab = orders && v.issuer == knos_oidc::pins::ISSUER_GITLAB;    // read by gl.rs, into ids no GitHub token can carry
-    let signed = v.issuer == knos_oidc::pins::ISSUER_GITHUB || knos_oidc::registrant(&d).is_some_and(ours);
-    if !(signed || gitlab) || !knos_oidc::fresh(v.exp, now) { return Err(err(E_TOKEN)); }
-    key_good(&d, key, now)?;
-    if gitlab { return crate::gl::read(v.payload, v.exp, now); }
-    let [repo_id, owner_id, actor_id, iat, wref, wsha, runner, aud, event, repository, run_attempt] = fields(v.payload,
+    crate::issuers::checked(tok, key, now, |v, _, d| {
+        let gitlab = orders && v.issuer == knos_oidc::pins::ISSUER_GITLAB;    // read by gl.rs, into ids no GitHub token can carry
+        let signed = v.issuer == knos_oidc::pins::ISSUER_GITHUB || knos_oidc::registrant(&d).is_some_and(ours);
+        signed || gitlab
+    }, |f, payload, exp| if f == crate::issuers::Family::GitLab { crate::gl::read(payload, exp, now) } else { github_claims(payload, exp, now) })
+}
+
+/// The GitHub reader: the claims of a token GitHub (or a private key standing in for it) signed, as `Gh`.
+fn github_claims(payload: &[u8], exp: i64, now: i64) -> Result<Gh, ProgramError> {
+    let [repo_id, owner_id, actor_id, iat, wref, wsha, runner, aud, event, repository, run_attempt] = fields(payload,
         [b"repository_id", b"repository_owner_id", b"actor_id", b"iat", b"job_workflow_ref", b"job_workflow_sha", b"runner_environment", b"aud",
          b"event_name", b"repository", b"run_attempt"])?;
     if text(runner)? != b"github-hosted" { return Err(err(E_CLAIMS)); }
     let iat = number(iat)? as i64;
-    if iat > now.saturating_add(TOKEN_AHEAD) || v.exp.saturating_sub(iat) > TOKEN_LIFE { return Err(err(E_TOKEN)); }
+    if iat > now.saturating_add(TOKEN_AHEAD) || exp.saturating_sub(iat) > TOKEN_LIFE { return Err(err(E_TOKEN)); }
     let wf_ref = text(wref)?;
     const MID: &[u8] = b"/.github/workflows/";
     let at = wf_ref.windows(MID.len()).position(|w| w == MID).ok_or_else(|| err(E_CLAIMS))?;
@@ -94,7 +100,7 @@ pub fn sig_hash(tok: &AccountInfo) -> Result<[u8; 32], ProgramError> {
 /// earlier are refused from that moment on, as the verifier refuses new ones. Another account in the key's place is
 /// E_ACCOUNTS; a key that is not usable is refused with the verifier's own code (76 not active, 77 expired, 78 revoked).
 /// `tok`: the data of a VERIFIED token account, so at least T_JWT bytes.
-fn key_good(tok: &[u8], key: &AccountInfo, now: i64) -> ProgramResult {
+pub(crate) fn key_good(tok: &[u8], key: &AccountInfo, now: i64) -> ProgramResult {
     if *key.owner != OIDC_ID || key.key.as_ref() != &tok[T_KEY..T_KEY + 32] { return Err(err(E_ACCOUNTS)); }
     let k = key.try_borrow_data()?;
     if k.len() < K_HDR { return Err(err(E_ACCOUNTS)); }

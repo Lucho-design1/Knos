@@ -59,7 +59,7 @@ import urllib.request
 from datetime import datetime, timezone
 from typing import Any, cast
 
-from . import mcp_more, preflight, version
+from . import mcp_ext, mcp_more, preflight, version
 from .verify import tools as verify_tools
 
 PROTOCOL = "2026-07-28"
@@ -283,11 +283,65 @@ def _money_call(name: str, args: dict) -> dict:
                 given[key] = json.loads(given[key])
             except ValueError:
                 raise Failed(f"{name}: {key} must be JSON text.") from None
+    if name == "knos_graduate":
+        # 0.3.34: the MCP tool takes only a verdict m referees of Knos's registry signed (graduation.signed_verdict)
+        from . import graduation
+        try:
+            label = graduation.signed_verdict(given.get("verdict"), str(given.get("claim_id")), funder=given.get("funder"))
+        except graduation.GraduationError as why:
+            raise Failed(f"knos_graduate: {why}") from None
+        out = _MONEY_CALL(name, given)
+        return {**out, "panel": label, "said": f"{label}. {out.get('said', '')}"} if label else out
     return _MONEY_CALL(name, given)
 
 
 MONEY_TOOLS, _MONEY_CALL = _money_tools()
 TOOLS += MONEY_TOOLS
+
+
+def _idea_tools():
+    """src/knos/ideas/tools.py (idea in + wanted?; read-only, never signs), loaded on first use the way knos.cli
+    loads its command modules, so `knos mcp` imports none of it unless the operator opts in."""
+    import importlib
+    return importlib.import_module(f"{__package__}.ideas.tools")
+
+
+def _idea_rows() -> list[dict]:
+    return [_tool(t["name"], t["title"], t["description"], t["properties"], t["required"]) for t in _idea_tools().MCP_TOOLS]
+
+
+def _ideas_on() -> bool:
+    """KNOS_MCP_TOOLS=ideas (a comma-separated list) lists the six idea tools; by default the list is unchanged."""
+    return "ideas" in {w.strip().lower() for w in os.environ.get("KNOS_MCP_TOOLS", "").split(",")}
+
+
+def _game_tools():
+    """src/knos/game/tools.py, loaded by name like the command modules (src/knos/cli.py _mod): the game's code is
+    imported only when a game is played."""
+    import importlib
+    return importlib.import_module("knos.game.tools")
+
+
+def _game_call(name: str, args: dict) -> dict:
+    """The Knos game: humans and agents play through the same calls."""
+    game_tools = _game_tools()
+    try:
+        return game_tools.call(name, args)
+    except game_tools.Refused as no:
+        raise Failed(str(no)) from None
+
+
+try:
+    GAME_TOOLS, _GAME_ENV = list(_game_tools().TOOLS), _game_tools().ENV    # knos_game_state, _data, _join, _submit, _board, _mine
+except ImportError:
+    GAME_TOOLS, _GAME_ENV = [], "KNOS_GAME_DIR"
+_GAME_NAMES = frozenset(t["name"] for t in GAME_TOOLS)
+
+
+def _tools_now() -> list[dict]:
+    """The tools this server offers now: the game's only when a game is set up (KNOS_GAME_DIR names its folder)."""
+    tools = TOOLS + GAME_TOOLS if os.environ.get(_GAME_ENV, "").strip() else TOOLS
+    return tools + _idea_rows() if _ideas_on() else tools          # and the idea tools on KNOS_MCP_TOOLS=ideas
 
 
 class Failed(Exception):
@@ -401,6 +455,10 @@ class Server:
                          "tools/list": self._list, "tools/call": self._call,
                          "resources/list": self._resources, "resources/templates/list": self._templates,
                          "resources/read": self._read, "prompts/list": self._prompts, "prompts/get": self._prompt}
+        self._task_box = mcp_ext.Tasks()    # src/knos/mcp_ext.py: the tasks and skills extensions of 2026-07-28
+        for name, fn in (("tasks/get", self._task_box.get), ("tasks/cancel", self._task_box.cancel), ("tasks/update", self._task_box.update),
+                         ("skills/list", mcp_ext.skills_list), ("skills/get", mcp_ext.skills_get)):
+            self._methods[name] = (lambda p, f=fn: self._ext(f, p))
         self._confirm: dict | None = None   # a call a person confirms (src/knos/mcp_more.py): tool, args, approved, exp
         self._tools = {"knos_bounties": self._bounties, "knos_bounty": self._bounty,
                        "knos_check_pr": self._check_pr, "knos_due": self._due, "knos_quote": self._quote,
@@ -413,6 +471,10 @@ class Server:
         self._tools.update(verify_tools.HANDLERS)                                     # src/knos/verify/tools.py: knos_verify, knos_receipt
         for t in MONEY_TOOLS:                                                         # knos.money.agent, when installed
             self._tools[t["name"]] = lambda a, n=t["name"]: _money_call(n, a)
+        for t in GAME_TOOLS:                                                          # knos.game.tools: the game's one door
+            self._tools[t["name"]] = lambda a, n=t["name"]: _game_call(n, a)
+        if _ideas_on():                                                               # src/knos/ideas/tools.py: idea in, wanted? (opt-in)
+            self._tools.update(_idea_tools().HANDLERS)
 
     # -- the protocol -------------------------------------------------------------------------------------------
     def line(self, text: str):
@@ -458,9 +520,21 @@ class Server:
         return {"protocolVersion": asked if asked in SESSION_PROTOCOLS else SESSION_PROTOCOLS[-1],
                 "capabilities": mcp_more.capabilities(), "serverInfo": _server_info(), "instructions": INSTRUCTIONS}
 
-    def _discover(self, _params: dict) -> dict:
-        return {"resultType": "complete", "supportedVersions": [PROTOCOL], "capabilities": mcp_more.capabilities(),
+    def _discover(self, params: dict) -> dict:
+        # the extensions (tasks, skills) are listed to a client that sends its own extension capabilities; a client
+        # that names none gets the core capabilities, exactly as before 0.3.34
+        caps = mcp_more.capabilities()
+        if mcp_ext.client_speaks_extensions(params):
+            caps = {**caps, "extensions": mcp_ext.capabilities()}
+        return {"resultType": "complete", "supportedVersions": [PROTOCOL], "capabilities": caps,
                 "instructions": INSTRUCTIONS, "_meta": {SERVER_KEY: _server_info()}}
+
+    @staticmethod
+    def _ext(fn, params: dict) -> dict:
+        try:
+            return fn(params)
+        except KeyError as no:
+            raise Refused(-32602, str(no.args[0]) if no.args else "not found") from None
 
     # -- resources and prompts (src/knos/mcp_more.py) ----------------------------------------------------------------
     def _resources(self, _params: dict) -> dict:
@@ -471,6 +545,9 @@ class Server:
 
     def _read(self, params: dict) -> dict:
         uri = params.get("uri")
+        skill = self._ext(lambda p: mcp_ext.read_skill_file(p.get("uri")), params)
+        if skill is not None:
+            return {"resultType": "complete", **skill, "ttlMs": mcp_more.READ_TTL_MS, "cacheScope": "public"}
         allowed = _scope()
         m = re.fullmatch(r"knos://bounty/([^/]+/[^/]+)/\d+", uri) if isinstance(uri, str) else None
         if m and allowed is not None and m.group(1).lower() not in {x.lower() for x in allowed}:
@@ -493,14 +570,21 @@ class Server:
             raise Refused(-32602, str(no)) from None
 
     def _list(self, _params: dict) -> dict:
-        return {"resultType": "complete", "tools": TOOLS, "ttlMs": LIST_TTL_MS, "cacheScope": "public"}
+        return {"resultType": "complete", "tools": _tools_now(), "ttlMs": LIST_TTL_MS, "cacheScope": "public"}
 
     def _call(self, params: dict) -> dict:
+        """A long tool (mcp_ext.LONG_TOOLS) for a client that takes tasks runs as one: a handle now, the answer by
+        tasks/get. Every other call answers when it is done, as before."""
+        if params.get("name") in mcp_ext.LONG_TOOLS and params.get("name") in self._tools and mcp_ext.client_takes_tasks(params):
+            return self._task_box.start(self._call_now, params)
+        return self._call_now(params)
+
+    def _call_now(self, params: dict) -> dict:
         name = params.get("name")
-        if not isinstance(name, str) or name not in self._tools:
+        if not isinstance(name, str) or name not in self._tools or (name in _GAME_NAMES and not os.environ.get(_GAME_ENV, "").strip()):
             raise Refused(-32602, f"Unknown tool: {name}" if isinstance(name, str) else "tools/call needs a tool name")
         try:
-            tool = next(t for t in TOOLS if t["name"] == name)
+            tool = next(t for t in _tools_now() if t["name"] == name)
             args = _arguments(tool, params.get("arguments"))
             self._inside(name, args)
             self._confirm = None

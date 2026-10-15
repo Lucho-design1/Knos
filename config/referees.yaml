@@ -1,0 +1,25 @@
+# Knos's published referee registry: the public keys whose m-of-n signatures Knos's client tools accept as a panel
+# for an order judged by referees (knos_pay 0.3.34 PANEL orders, docs/reference/PAY_ON_PROOF.md "Trust model").
+#
+# Who holds these keys decides the money of every panel order drawn from them. A panel that is not drawn from this
+# list, or that holds the funder's or a payee's own key, is refused by verdict.check, the idea panel tools and the
+# graduation tool unless the caller passes --unlisted-panel (unlisted_panel=True), and every output then says
+# "UNLISTED PANEL".
+#
+# test: true marks a DEVNET TEST key: made by the build agent V34PAY, its secret kept in that agent's own devnet wallet
+# folder, never a founder or member key, for test money only. Knos has published NO production referee key yet:
+# adding one (and who holds it) is a founder decision.
+version: 1
+referees:
+  - key: 2DxGapgF7bScgxWTexTtmmzb9RmYc69Mnd4WjRCjPyNK
+    name: knos-devnet-referee-1
+    label: Knos devnet TEST referee 1 (test money only)
+    test: true
+  - key: 6f9EoaRJdxoijEqTREWp2THvX81yQyVwykmP1mfSH29S
+    name: knos-devnet-referee-2
+    label: Knos devnet TEST referee 2 (test money only)
+    test: true
+  - key: E1Hr6wxgJYoNEryqWTRvFD1tsNsVQ8RLjDUhwvHdUoUC
+    name: knos-devnet-referee-3
+    label: Knos devnet TEST referee 3 (test money only)
+    test: true

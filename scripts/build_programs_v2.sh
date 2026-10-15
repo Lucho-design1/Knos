@@ -81,6 +81,7 @@ fi
 if [ "$what" = pay ] || [ "$what" = all ]; then
   build knos_pay knos_pay_v2_nodevnet.so --no-default-features --features testkeys
   build knos_pay knos_pay_v2_test.so --features testkeys
+  build knos_pay knos_pay_v2_0334_test.so --features testkeys      # the 0.3.34 test build the pay-on-proof tests load
   build knos_pay -
 fi
 

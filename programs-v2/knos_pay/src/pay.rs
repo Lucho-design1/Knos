@@ -161,23 +161,39 @@ pub fn bind(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8], now: i64
     let [relayer, tok, key, bind, sys, used] = take(accounts)?;
     if !data.is_empty() { return Err(ProgramError::InvalidInstructionData); }
     if !relayer.is_signer || !relayer.is_writable { return Err(err(E_ACCOUNTS)); }
-    let g = github(tok, key, now)?;
-    let sha_ok = g.wf_sha[..] == CLAIM_SHA[..] || TEST_CLAIM_SHA.is_some_and(|t| g.wf_sha[..] == t[..]);
-    if !g.wf_ref.starts_with(CLAIM_REF) || !sha_ok { return Err(err(E_WORKFLOW)); }
-    // the actor owns the repository (so it is a personal account, and theirs), the repository is their knos-claim,
-    // and they started the run themselves, by hand. Not a re-run: that keeps the first actor's name whoever starts it.
-    let own = g.actor_id != 0 && g.actor_id == g.owner_id;
-    let named = g.repository.as_deref().is_some_and(|r| r.ends_with(b"/knos-claim"));
-    let started = g.first_attempt && g.event == b"workflow_dispatch";
-    if !own || !named || !started { return Err(err(E_CLAIMS)); }
-    let wallet = bind_aud(&g.aud)?;
-    let (first, bump) = open(program_id, relayer, bind, sys, BIND_LEN, &[b"bind", &g.actor_id.to_le_bytes()], E_ACCOUNTS)?;
+    // 0.3.34: an ORCID sign-in to Knos binds an ORCID iD (orcid.rs); any other token is read as GitHub's, as before
+    let orcid = crate::orcid::of(tok, key, now)?;
+    let (user, wallet, iat) = match &orcid {
+        Some(o) => (o.id, o.wallet, o.iat),
+        None => {
+            let g = github(tok, key, now)?;
+            let sha_ok = g.wf_sha[..] == CLAIM_SHA[..] || TEST_CLAIM_SHA.is_some_and(|t| g.wf_sha[..] == t[..]);
+            if !g.wf_ref.starts_with(CLAIM_REF) || !sha_ok { return Err(err(E_WORKFLOW)); }
+            // the actor owns the repository (so it is a personal account, and theirs), the repository is their knos-claim,
+            // and they started the run themselves, by hand. Not a re-run: that keeps the first actor's name whoever starts it.
+            let own = g.actor_id != 0 && g.actor_id == g.owner_id;
+            let named = g.repository.as_deref().is_some_and(|r| r.ends_with(b"/knos-claim"));
+            let started = g.first_attempt && g.event == b"workflow_dispatch";
+            if !own || !named || !started { return Err(err(E_CLAIMS)); }
+            (g.actor_id, bind_aud(&g.aud)?, g.iat)
+        }
+    };
+    let (first, bump) = open(program_id, relayer, bind, sys, BIND_LEN, &[b"bind", &user.to_le_bytes()], E_ACCOUNTS)?;
     // a later token rebinds; the same or an older one does nothing
-    if !first && g.iat <= i64_at(&bind.try_borrow_data()?, BD_IAT) { return Err(err(E_REPLAY)); }
+    if !first && iat <= i64_at(&bind.try_borrow_data()?, BD_IAT) { return Err(err(E_REPLAY)); }
     mark_used(program_id, relayer, used, sys, &sig_hash(tok)?, USED, false)?;
+    if let Some(o) = &orcid {
+        // ORCID's token lives a day: its marker stays until it cannot be fresh (orcid::keep_until)
+        let mut u = used.try_borrow_mut_data()?;
+        let keep = crate::orcid::keep_until(o.exp).max(i64_at(&u, U_AFTER));
+        put_i64(&mut u, U_AFTER, keep);
+    }
     let mut d = bind.try_borrow_mut_data()?;
     d[BD_VERSION] = 1; d[BD_BUMP] = bump;
-    put_u64(&mut d, BD_USER, g.actor_id); put_key(&mut d, BD_WALLET, &wallet); put_i64(&mut d, BD_IAT, g.iat);
-    msg!("knos2:bound user={} wallet={}", g.actor_id, b58(&wallet));
+    put_u64(&mut d, BD_USER, user); put_key(&mut d, BD_WALLET, &wallet); put_i64(&mut d, BD_IAT, iat);
+    match &orcid {
+        Some(o) => msg!("knos3:bound orcid={} wallet={}", o.id - crate::issuers::OR_BASE, b58(&wallet)),
+        None => msg!("knos2:bound user={} wallet={}", user, b58(&wallet)),
+    }
     Ok(())
 }

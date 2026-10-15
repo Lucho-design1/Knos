@@ -15,10 +15,11 @@ same signed bytes land at most once, however often and wherever they are sent. S
     maxRetries is given), so they are not sent to it again;
   * reads the status of every signature the process waits on at these endpoints in ONE getSignatureStatuses (BATCH a
     request), at most once a poll round whoever waits (`_Board`): forty payments at once ask one request a poll, not forty;
-  * raises TimeoutError("... not confirmed ...") after POLLS polls (60 s: a blockhash is taken for about 60 to 90
-    seconds, https://solana.com/docs/core/transactions/confirmation#how-does-transaction-expiration-work), or once that
-    time and WAIT_SLACK_S more have passed on the clock whatever the polls, so the caller may sign again over a fresh
-    blockhash.
+  * raises TimeoutError("... not confirmed ...") after POLLS polls (60 s), or once that time and WAIT_SLACK_S more have
+    passed on the clock whatever the polls, so the caller may sign again over a fresh blockhash. 60 s is a ceiling
+    with room to spare, not a blockhash's life: a blockhash is good for 150 blocks
+    (https://solana.com/docs/advanced/confirmation), about 33 s on devnet with 200 ms slots (measured 14 Oct 2026,
+    knos.platform.blockhash); the "60 to 90 seconds" this line once said was written for 400 ms slots.
 
 Why the last three are so: the first load test of 0.3.25 on devnet (10 October 2026) asked each transaction's status every
 0.5 s and sent its bytes again every 2 s whatever an endpoint had answered. Forty payments at once asked about 80 status

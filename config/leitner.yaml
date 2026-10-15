@@ -1,0 +1,56 @@
+# Knos re-verification boxes (knos.leitner). Every verified claim, product, lab, agent and sealed test sits in a box.
+# Passing a re-check moves it up one box; any failure drops it to box 1 and PAUSES its payouts and graduation until it
+# passes again. The intervals are a starting choice, not measured: change them here.
+#
+#   unit: days     the next re-check is due this many days after the last
+#   unit: orders   the next re-check is due after this many more orders (labs: a new lab is checked on every order,
+#                  a proven lab rarely)
+version: 1
+default:
+  unit: "days"
+  boxes:
+    - 1
+    - 3
+    - 7
+    - 30
+kinds:
+  claim:
+    unit: "days"
+    boxes:
+      - 1
+      - 3
+      - 7
+      - 30
+  product:
+    unit: "days"
+    boxes:
+      - 1
+      - 3
+      - 7
+      - 30
+  agent:
+    unit: "days"
+    boxes:
+      - 1
+      - 3
+      - 7
+      - 30
+  lab:
+    unit: "orders"
+    boxes:
+      - 1
+      - 3
+      - 7
+      - 30
+  sealed_test:
+    unit: "days"
+    boxes:
+      - 1
+      - 3
+      - 7
+      - 30
+rotation:
+  # a sealed test that nobody has failed in this many runs is rotated out for a fresh one from the pool; a test that
+  # caught a cheat stays hot (box 1) for this many more runs
+  retire_after_clean_runs: 20
+  hot_after_catch_runs: 10

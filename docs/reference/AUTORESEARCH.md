@@ -31,6 +31,11 @@ The command exits 0 when the result graduated, 1 when it did not, 2 when the tas
 | `train.py` | the one file agents may change; the baseline |
 | sealed file | what only the referee holds: here a seed from which the hidden sets are generated |
 
+Two data backends. `data.kind: "synthetic"`: rows generated from seeds (the example). `data.kind: "csv"`: your own
+files. task.json names the public ones (`"train": "public/train.csv", "val": "public/val.csv"`), the sealed file names
+the hidden ones beside it (`{"dev": "hidden_dev.csv", "final": "hidden_final.csv"}`); every CSV has a header, numeric
+feature columns and a last column `y` of 0 or 1. A task that lacks one of these is refused with the missing name.
+
 ## What the referee does (`knos.autoresearch.judge`)
 
 1. **Seal first.** The spec hash covers program.md, idea.md, task.json, the baseline, the sealed file's hash and the
@@ -39,13 +44,22 @@ The command exits 0 when the result graduated, 1 when it did not, 2 when the tas
 2. **Static rules, before any candidate code runs** (each a named rule; the category is Knos Record's `cheat` field):
    `AR-SCOPE` out_of_scope (any file but the editable one), `AR-NOCHANGE` no_change, `AR-IMPORT` runner_tampering (an
    import outside argparse, bisect, collections, csv, functools, heapq, itertools, json, math, random, statistics,
-   time; `__import__`, `eval`, `exec`, `compile`, `getattr`, `setattr`, `importlib`, `open` of a literal path; any private
+   time, and `knos_io`; `__import__`, `eval`, `exec`, `compile`, `getattr`, `setattr`, `importlib`; any private
    attribute such as `random._os`, any dunder name but `__name__`, or an attribute that leads to the operating system such
    as `statistics.sys.modules`), `AR-SEALED`
-   data_tampering (a string naming "sealed", "hidden", "..", or an absolute path; docstrings excepted). When the
+   data_tampering (a string naming "sealed", "hidden", "..", or an absolute path; docstrings excepted), `AR-FILE`
+   runner_tampering (v0.3.34: any file or OS access at all, `open` called, aliased or as an attribute,
+   `argparse.FileType`, `read_text`/`write_text`, and the tools that build a string the rules cannot read: `chr`,
+   `bytes`, `bytearray`, `.decode`, `.fromhex`). The candidate reads data only through `knos_io.rows("train" | "val" |
+   "predict")` and writes through `knos_io.output()`, which the referee's runner hands it. When the
    shared cheat library `knos.cheats` is installed, its `scan(base, pr, scope=[editable])` runs too.
 3. **Two runs** in a fresh directory holding only the candidate, the public data and the hidden rows' features
-   (never their labels), Python's isolated mode, an almost empty environment and a hard wall-clock limit. Score =
+   (never their labels), Python's isolated mode and an almost empty environment. The time budget is **CPU time**
+   (`time_budget_s` plus 5 s of start-up, enforced by RLIMIT_CPU), with a wall-clock backstop of
+   max(3 x budget, budget + 15) s for a candidate that only waits; a loaded host does not fail an honest run. Where
+   Linux allows unprivileged user namespaces, each run is in its own user, mount and network namespace, and the task's
+   sealed file, its folder, the hidden data files, the game's folder, `~/.config/solana` and `KNOS_AR_MASK` are covered
+   by empty mounts the candidate cannot remove (`RunResult.isolation` = "namespace"). Score =
    mean accuracy of the two seeds on the hidden dev set. `AR-RERUN` rerun_mismatch refuses when the two differ by
    more than the tolerance. A crash or a run over budget fails the candidate without calling it a cheat.
 4. **Keep if better.** Kept only when it passes and beats the current best by more than `keep_delta`. The agent is
@@ -54,11 +68,12 @@ The command exits 0 when the result graduated, 1 when it did not, 2 when the tas
    seeds. Graduation needs the lift on each seed to be at least `min_lift`, both re-runs to agree, and the judging
    code to hash as it did when the spec was sealed (else `judge_drift`).
 
-**Limit: this is a static filter and a process boundary, not an OS sandbox.** The candidate runs as the referee's own
-user. The rules above close the bypasses found in review (`sys.modules["o"+"s"]`, a module's private `_os`), but a
-determined candidate may still find a path they miss and read any file that user can read, such as this demo's sealed
-seed. The hidden labels are never on disk in the sandbox. Before real money depends on it, the referee must run
-candidates on a machine or account that holds neither the sealed file nor the hidden labels.
+**Limit.** On Linux with user namespaces the sealed file is out of the candidate's reach by any path; v0.3.34 closed
+the hole an outside judge used (the sealed path built from `chr()` codes and opened: now refused by `AR-FILE`, and
+masked at run time; tests/test_game_fix34.py repeats the exact technique). Where namespaces are not available
+(Windows, macOS, a locked-down kernel), `isolation` is "none" and only the static rules stand: set `KNOS_AR_REQUIRE_JAIL=1`
+on any machine that judges strangers' code, and it refuses to run a candidate without the namespace. The namespace
+does not limit memory or processes, and the candidate still runs as the referee's own user inside it.
 
 ## The record and the payout
 
@@ -96,8 +111,8 @@ features, pairwise products, batch 16, learning rate 0.1, 20 epochs, learning ra
 
 The same command run again while other jobs loaded the VM (load average 9.8 on 4 CPUs) took 115.6 s: experiment 11
 (40 epochs) ran past the 20-second budget and failed, so 4 were discarded and 1 failed; every other decision and every
-score above came out the same. The budget is wall-clock time, as in the original pattern, so a busy machine can fail
-a run that a quiet one passes; a hosted referee runs on a machine of its own.
+score above came out the same. That run used a wall-clock budget; since v0.3.34 the budget is CPU time with a
+wall-clock backstop, so host load no longer decides pass or fail (an outside judge's baseline failed on a loaded VM).
 
 The split plan, from a re-run in the merged v0.3.29 tree (same scores; 106.9 s at load average 10.9) with its fee
 config (the shares were placeholders then; the founder decided the same 60/25/10/5 on 14 Oct 2026, config/fees.yaml): bounty 100 test USDC

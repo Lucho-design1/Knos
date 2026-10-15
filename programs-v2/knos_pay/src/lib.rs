@@ -310,6 +310,16 @@
 //!                  (`order`): the marker is closed and its rent goes to rent_to, who paid it.
 //! order_terms.rs gives the layouts of Hb, Done and As and the rules of 18 to 21, 24 and 27 in full.
 //!
+//! 0.3.34: PAY ON PROOF FROM ANY SOURCE. Every token now enters through one interface with one reader per issuer
+//! family (issuers.rs: GitHub and private keys gh.rs, gitlab.com gl.rs, Google Confidential Space cs.rs, ORCID
+//! orcid.rs); what GitHub and GitLab tokens may do is unchanged. An order may pin a judge that is not a forge
+//! (order_proof.rs): a container image, paid by PayOrder on a Confidential Space token, or m of n referee keys, whose
+//! Ed25519 signatures (Solana's precompile, read by instruction introspection) release it through PayOrder with data
+//! (a PASS) or refund it through RefundOrder with data (a FAIL). Such an order is funded by FundOrderWallet with
+//! options byte 35. Bind takes an ORCID id_token as well and binds the ORCID iD (orcid.rs). No instruction number
+//! and no account of an earlier build changed; one account kind is new, the verdict's tally ["vd", order, digest]
+//! (80 bytes; CloseMarker frees it once its order is gone, paid, or funded anew).
+//!
 //! MINT RULES (token.rs). The mint's owner is SPL Token or Token-2022, and the token program passed is that owner.
 //! Token accounts of a Token-2022 mint are created with the size GetAccountDataSize returns. When money enters
 //! (OpenBalance, FundBalance, FundWallet, FaucetOpen, FundOrderWallet, FundOrderBalance) a Token-2022 mint's
@@ -342,10 +352,14 @@
 //!   knos3:warranty order= held= until=             knos3:released order= payee= amount= to=             knos3:reverted order= amount= head=
 //!   knos3:reserved order= taker= until=            knos3:cancelled order= at= deadline=                 knos3:kill order= taker= amount= held=
 //!   knos3:assigned order= payee= to=               knos3:bound org= wallet= by=
+pub mod cs;
 pub mod fund;
 pub mod gh;
 pub mod gl;
+pub mod issuers;
+pub mod orcid;
 pub mod order;
+pub mod order_proof;
 pub mod order_judge;
 pub mod order_pay;
 pub mod order_terms;

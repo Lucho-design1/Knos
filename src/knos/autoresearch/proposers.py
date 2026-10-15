@@ -154,9 +154,13 @@ class CommandProposer:
 
 
 def from_spec(spec: str, seed: int = 0):
-    """'local' or 'cmd:<command line>'."""
+    """'local', 'cmd:<command line>' or 'sdk:claude' (the Claude Agent SDK in-process, with Knos's guard hook:
+    knos.claude.agent_sdk; needs the claude-agent-sdk package and the agent's own key)."""
     if spec in ("", "local"):
         return LocalProposer(seed)
+    if spec == "sdk:claude":
+        from ..claude.agent_sdk import SdkProposer
+        return SdkProposer()
     if spec.startswith("cmd:"):
         return CommandProposer(spec[4:])
-    raise ValueError(f"unknown proposer {spec!r}: use local or cmd:<command>")
+    raise ValueError(f"unknown proposer {spec!r}: use local, cmd:<command> or sdk:claude")

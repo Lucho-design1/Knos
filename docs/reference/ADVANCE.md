@@ -53,8 +53,11 @@ A transaction lands whole or not at all. An advancer who cannot pay gets no assi
 supplier's bound wallet gets no money. After it, the supplier cannot take the assignment back or assign the order a
 second time: only the advancer can pass it on.
 
-Both keys in one command is a rehearsal. Two parties on two machines must pass the transaction between them inside
-one blockhash (about a minute) or use a durable nonce: that hand-over is not built.
+Both keys in one command is a rehearsal. Two parties on two machines either pass the transaction between them inside
+one blockhash's life, about 33 s on devnet with 200 ms slots (measured 14 Oct 2026, [DURABLE_NONCES.md](DURABLE_NONCES.md)),
+or sign over a durable nonce: one party signs, writes the transaction to a file, and the other adds its signature and
+sends it whenever it is ready (`python -m knos.platform.nonce cosign` / `send`; a knos_pay funding was sent this way
+on devnet 56.9 s after the first signature). `Assign` itself has not been sent this way yet.
 
 ## The three ends
 

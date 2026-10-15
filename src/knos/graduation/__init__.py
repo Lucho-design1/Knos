@@ -71,6 +71,72 @@ def terms(kind: str, claim_id: str, spec_hash: str, milestone: int, shares: list
                            "split": {r: b for r, b in shares}})
 
 
+# == a SIGNED verdict (0.3.34): what the MCP tool knos_graduate requires ==============================================
+# The verdict object may carry `signed`: {"message": hex, "signatures": [[key, sig hex], ...], "m": int, "keys": [key, ...]}
+# (keys as base58 or hex). The message is knos.platform.verdict.message(job, evidence, "PASS", 0, recipient, expiry,
+# nonce) with job = graduation_job(claim_id) and evidence = graduation_evidence(spec_hash): m distinct keys of a panel
+# drawn from Knos's referee registry (config/referees.yaml) signed that THIS claim's THIS spec passed. `unlisted_panel`:
+# true in the verdict object to use keys outside the registry (the answer then says UNLISTED PANEL).
+
+
+def graduation_job(claim_id: str) -> bytes:
+    return hashlib.sha256(b"knos3:graduate:" + claim_id.encode()).digest()
+
+
+def graduation_evidence(spec_hash: str) -> bytes:
+    return hashlib.sha256(b"knos3:spec:" + spec_hash.encode()).digest()
+
+
+def graduation_message(claim_id: str, spec_hash: str, expiry: int, nonce: int = 0, recipient: bytes = bytes(32)) -> bytes:
+    """What each referee signs to say a claim graduates (knos.platform.verdict layout)."""
+    from ..platform import verdict as V
+    return V.message(graduation_job(claim_id), graduation_evidence(spec_hash), "PASS", 0, recipient, expiry, nonce)
+
+
+def _key32(k) -> bytes:
+    if isinstance(k, str) and len(k) == 64:
+        return bytes.fromhex(k)
+    return bytes(Pubkey.from_string(str(k)))
+
+
+def signed_verdict(verdict: Any, claim_id: str, *, funder: str | None = None, now: int | None = None) -> str:
+    """'' when `verdict` carries m valid signatures of a registry panel over this claim's and spec's PASS, the UNLISTED
+    PANEL label when it does with unlisted_panel=true; GraduationError otherwise (an unsigned "passed" is refused)."""
+    import time
+    from ..platform import referees, verdict as V
+    if not isinstance(verdict, dict) or verdict.get("passed") is not True:
+        raise GraduationError("only a verdict that passed (works, wanted and makeable) graduates")
+    sv = verdict.get("signed")
+    if not isinstance(sv, dict):
+        raise GraduationError("the verdict is not signed: knos_graduate needs m of n signatures of Knos's referee panel "
+                              "(config/referees.yaml) over graduation_message(claim_id, spec_hash, ...)")
+    try:
+        msg = bytes.fromhex(str(sv["message"]))
+        sigs = [(_key32(k), bytes.fromhex(str(s))) for k, s in sv["signatures"]]
+        keys = [_key32(k) for k in sv["keys"]]
+        m = int(sv["m"])
+        f = V.parse(msg)
+    except (KeyError, TypeError, ValueError) as why:
+        raise GraduationError(f"the signed verdict is malformed: {why}") from None
+    spec_hash = verdict.get("spec_hash")
+    if not isinstance(spec_hash, str) or f["job"] != graduation_job(claim_id) or f["evidence_hash"] != graduation_evidence(spec_hash):
+        raise GraduationError("the signed verdict is for another claim or another spec")
+    if f["verdict"] != "PASS":
+        raise GraduationError("the signed verdict is FAIL")
+    if not 1 <= m <= len(keys):
+        raise GraduationError("m: from 1 to the number of panel keys")
+    unlisted = verdict.get("unlisted_panel") is True
+    try:
+        label = referees.panel_rule(keys, funder=funder, unlisted_panel=True if unlisted else False)
+    except referees.PanelError as why:
+        raise GraduationError(f"panel: {why}") from None
+    ok, why = V.check(msg, sigs, keys, m, now=int(time.time()) if now is None else now, used=set(), record=False,
+                      unlisted_panel=True)
+    if not ok:
+        raise GraduationError(f"the signed verdict does not hold: {why}")
+    return label
+
+
 def _int(v: Any, name: str, low: int, high: int) -> int:
     if isinstance(v, bool) or not isinstance(v, int) or not low <= v <= high:
         raise GraduationError(f"{name}: a whole number from {low:,} to {high:,}")

@@ -433,7 +433,51 @@ def passkey_wallet() -> Recorder:
     return r
 
 
-SCENARIOS = (oidc_verify, pay_order, double_pay, order_fees, order_plan, job_fee, meter_count, passkey_wallet)
+def pay_on_proof() -> Recorder:
+    """0.3.34, an order with no issuer, on the 0.3.34 test build (tests/fixtures/knos_pay_v2_0334_test.so): a wallet
+    funds an order judged by a 2-of-3 referee panel (FundOrderWallet, options byte 35); one referee signing twice in
+    one transaction is recorded once and pays nothing; that referee again is refused (E_REPLAY 91); a verdict signed
+    for another order is refused (E_CLAIMS 85); the second distinct referee pays (PayOrder with data)."""
+    from knos.proof import issuers as iss
+    r = scenario("pay_on_proof")
+    c = _order.OrderChain(pay_build="knos_pay_v2_0334_test.so")
+    r.name_it(fee=c.fee, funder_tok=c.funder_tok, relayer_tok=c.tip)
+    panel = [r.keypair() for _ in range(3)]
+    keys = [bytes(k.pubkey()) for k in panel]
+    terms = pay.terms_json({"accept": "", "checks": [], "mode": "tests", "v": 2})
+    orders = []
+    for name in ("a", "b"):
+        ix = iss.fund_order_judged_ix(c.funder.pubkey(), c.funder_tok, c.usdc, iss.topic_id(f"proof-{name}"), 1, 20 * USDC, terms, panel=(2, keys))
+        r.label(f"fund_{name}")
+        assert c.send([ix], c.funder), c.err
+        orders.append(ix.accounts[1].pubkey)
+    a, b = orders
+    wallet = r.keypair().pubkey()
+    payees = [("0000-0002-1825-0097", 10_000, wallet)]
+    evidence = hashlib.sha256(b"synthetic evidence").digest()
+    r.name_it(order=a, order_tok=pay.ov_pda(a), dest=pay.ata(wallet, c.usdc), other=b,
+              vote=iss.vote_pda(a, iss.verdict_digest(a, c.order(a), evidence, payees)))
+
+    def verdict(at, signers, sign_for=None):
+        d = iss.verdict_digest(sign_for or at, c.order(sign_for or at), evidence, payees)
+        return [iss.ed25519_ix([(bytes(k.pubkey()), bytes(k.sign_message(d))) for k in signers], d),
+                iss.pay_order_verdict_ix(c.payer.pubkey(), at, c.order(at), 2, keys, evidence, payees)]
+    r.check(c.svm, "funded", tokens=["funder_tok", "order_tok", "fee", "dest"], data=["order"])
+    c.warp(5)
+    r.label("one_referee_twice")
+    assert c.send(verdict(a, [panel[0], panel[0]]), mark=False), c.err
+    r.check(c.svm, "recorded", tokens=["order_tok", "dest"], data=["order", "vote"])
+    r.label("same_referee_again")
+    assert not c.send(verdict(a, [panel[0]]), mark=False)
+    r.label("signed_for_another_order")
+    assert not c.send(verdict(b, [panel[1]], sign_for=a), mark=False)
+    r.label("second_referee_pays")
+    assert c.send(verdict(a, [panel[1]]), mark=False), c.err
+    r.check(c.svm, "paid", tokens=["order_tok", "dest", "fee", "relayer_tok"], data=["order"])
+    return r
+
+
+SCENARIOS = (oidc_verify, pay_order, double_pay, order_fees, order_plan, job_fee, meter_count, passkey_wallet, pay_on_proof)
 
 
 def main(argv: list[str]) -> int:

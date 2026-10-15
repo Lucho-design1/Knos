@@ -85,6 +85,16 @@ the file.
 
 Exit code 0 when every check passes, 1 otherwise. `--json` prints the report.
 
+**Verifying your own record.** A record you anchored with your own wallet is not signed by Knos's pinned key, so a
+plain `knos record verify` fails it on purpose (anyone could otherwise re-anchor a rewritten file). Name the key you
+trust, which is the public key of the wallet that anchored it:
+
+    knos record verify DIR --signer <your anchoring public key>
+    KNOS_RECORD_SIGNERS=<key>[,<key>...] knos record verify DIR
+
+The failure message names the anchor's signer and prints this flag with it. Trust that key only if it is yours, or
+the key of someone you choose to believe.
+
 `knos record anchor`, `journal` and `prove` need something after them (a folder, a seq or an option). On its own,
 `knos record anchor` is still the record of the GitHub login `anchor`. `python -m knos.record anchor` needs no argument.
 

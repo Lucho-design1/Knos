@@ -65,7 +65,18 @@ class Task:
         return sha256_bytes(canonical({
             "program": sha256_bytes(self.program.encode()), "idea": sha256_bytes(self.idea.encode()),
             "task": self.spec, "baseline": sha256_bytes(self.baseline.encode()),
-            "sealed": self.spec["sealed"]["sha256"], "judge": judge_hash}))
+            "sealed": self.spec["sealed"]["sha256"], "judge": judge_hash,
+            **({"hidden": self.hidden_sha256()} if self.spec["data"]["kind"] == "csv" else {})}))
+
+    def hidden_sha256(self) -> str:
+        """sha256 over the CONTENTS of everything the referee judges with: the sealed file's bytes and, for a csv task,
+        every hidden file it names (dev, final). Changing a hidden label after sealing changes it (sealed_changed)."""
+        crlf, lf = bytes([13, 10]), bytes([10])
+        parts = {"sealed": sha256_bytes(self.sealed_path.read_bytes().replace(crlf, lf))}
+        if self.spec["data"]["kind"] == "csv":
+            for k in ("dev", "final"):
+                parts[k] = sha256_bytes((self.sealed_path.parent / self.sealed[k]).read_bytes().replace(crlf, lf))
+        return sha256_bytes(canonical(parts))
 
     def public(self) -> dict[str, list]:
         """What the agent may see: the public train and validation rows (with labels)."""
@@ -110,10 +121,30 @@ def load(root: Path | str, sealed: Path | str | None = None) -> Task:
     editable = spec["editable"]
     if "/" in editable or "\\" in editable or editable.startswith("."):
         raise TaskError("editable: one file name at the task's top level")
+    kind = (spec.get("data") or {}).get("kind")
+    if kind not in ("synthetic", "csv"):
+        raise TaskError("data.kind: synthetic (rows generated from seeds) or csv (files: see docs/reference/AUTORESEARCH.md)")
+    if kind == "csv":
+        missing = [k for k in ("train", "val") if not isinstance(spec["data"].get(k), str)]
+        if missing:
+            raise TaskError(f"a csv task names its public files in task.json data: {', '.join(missing)} missing "
+                            "(e.g. \"train\": \"public/train.csv\", \"val\": \"public/val.csv\"; last column y)")
+        for k in ("train", "val"):
+            if not (root / spec["data"][k]).is_file():
+                raise TaskError(f"data.{k}: {spec['data'][k]} is not a file in the task folder")
     sealed_path = Path(sealed) if sealed else root / spec["sealed"]["file"]
     raw = sealed_path.read_bytes().replace(b"\r\n", b"\n")      # the same hash on a Windows checkout
     if sha256_bytes(raw) != spec["sealed"]["sha256"]:
         raise TaskError("the sealed file does not match the hash task.json committed to (refused: spec_tampering)")
+    sealed_doc = json.loads(raw)
+    if kind == "csv":
+        missing = [k for k in ("dev", "final") if not isinstance(sealed_doc.get(k), str)]
+        if missing:
+            raise TaskError(f"the sealed file of a csv task names the hidden files: {', '.join(missing)} missing "
+                            "(e.g. {\"dev\": \"hidden_dev.csv\", \"final\": \"hidden_final.csv\"}, paths beside the sealed file)")
+        for k in ("dev", "final"):
+            if not (sealed_path.parent / sealed_doc[k]).is_file():
+                raise TaskError(f"sealed {k}: {sealed_doc[k]} is not a file beside the sealed file")
     return Task(root=root, spec=spec, program=(root / "program.md").read_text(encoding="utf-8"),
                 idea=(root / "idea.md").read_text(encoding="utf-8"),
                 baseline=(root / editable).read_text(encoding="utf-8"),

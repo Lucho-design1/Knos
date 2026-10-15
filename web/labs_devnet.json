@@ -1,0 +1,554 @@
+{
+ "what": "the Knos lab escrow on Solana devnet: real transactions, TEST money (the demo's own mint), lab replies from FIXTURES; the LAB verdict pays the lab even though the science failed, the OUTCOME verdict does not pay the researcher",
+ "synthetic": true,
+ "cluster": "devnet",
+ "mint": "5XJJTDxBF1LqbQ9MAURyYUnHCPcd4JHxjdy9or2gWjsX",
+ "multisig": "6ijcVeTAdebqBrPeqHKGm2ufZFDzaWy9p5BBUYFpQjrF",
+ "m": 2,
+ "referees": [
+  "A5eboqGmZ7cwLzp4DCh2bMo3QMxa9R6ZMyVqYfmWNqeF",
+  "FhyxiGkuA7wu1KfkLb45CBudXgJmnCanSx7A3T8u6Hzr",
+  "HeHdAMVRMRZ2UapyPQSSHQYjGY1ygigSX7UGMkK5uA7h"
+ ],
+ "treasury": "4G3cznCnwCUPBCZwzKiLupjdgB5pSoCcGWNGuFv4TYFo",
+ "funder": "65fYudhSyrv5zggXcFixr3ohXDnEJDgAeM1WqQd1ULz8",
+ "written": "2026-10-14T20:20:28Z",
+ "runs": [
+  {
+   "field": "proteins",
+   "lab_adapter": "adaptyv",
+   "fixture": "MOCK (synthetic, not a real API response): Adaptyv responses built in the shapes and with the field names of Adaptyv's OpenAPI document (devs.adaptyvbio.com/api/v1/openapi.json, v0.0.2, read 14 Oct 2026); ids, sequences and values are made up; the 402 challenge is the documented production challenge with the network and asset switched to Base Sepolia (testnet), because the sandbox's network is not documented",
+   "plan": {
+    "order": "knos-lab-proteins-1792008988",
+    "field": "proteins",
+    "price": 1060000000,
+    "fee": 31800000,
+    "reward": 50000000,
+    "lab_pot": 1091800000,
+    "outcome_pot": 50000000,
+    "fee_rate_bps": 300,
+    "fee_status": "decided",
+    "fee_bearer": "funder, on top of the price (the decision leaves who bears it open; this demo charges the funder)",
+    "fee_line": "config/fees.yaml fees.lab_order"
+   },
+   "pots": {
+    "lab": "ErLoPX44nKZ1y9Wh5HWGPvMSLjk39i6Zve62pZeA9qbU",
+    "outcome": "G9CGxVF5pGPobu8QWZHjrkYDnmcV3NgWRTocsUV8jGvM"
+   },
+   "fund_signature": "2hXSLBMh5J7wvgpZDpkSyqDwnBj41ncAiJwQfKWRiSmxYzWtgigzXj4HHeGSvVet4vFVoenWMCYYeJeFmGHnQPbN",
+   "lab_verdict": {
+    "kind": "lab",
+    "verdict": "PASS",
+    "reasons": [
+     "protocol executed as specified, every run reported, QC passed"
+    ],
+    "evidence_hash": "f3c87cd04b1941b98267dbcfc1a674bf16231760833fda150c2d0a7e2b37e92e",
+    "spec_hash": "5c7d73e3174436f0bf0d27b50af6eaf24de85397f13c3870fd787a82abba84f5",
+    "checks": [
+     {
+      "protocol_key": "experiment_type",
+      "ordered": "affinity",
+      "executed": "affinity",
+      "held": true
+     },
+     {
+      "protocol_key": "method",
+      "ordered": "bli",
+      "executed": "bli",
+      "held": true
+     },
+     {
+      "protocol_key": "target_id",
+      "ordered": "019a03da-b87f-7e15-8b02-cef171c9871d",
+      "executed": "019a03da-b87f-7e15-8b02-cef171c9871d",
+      "held": true
+     },
+     {
+      "metric": "positive_control_kd_nm",
+      "op": "<=",
+      "value": 50,
+      "agg": "value",
+      "over": "qc",
+      "got": 2.1,
+      "held": true
+     }
+    ],
+    "signed": {
+     "v": 1,
+     "kind": "lab",
+     "order": "knos-lab-proteins-1792008988",
+     "evidence_hash": "f3c87cd04b1941b98267dbcfc1a674bf16231760833fda150c2d0a7e2b37e92e",
+     "spec_hash": "5c7d73e3174436f0bf0d27b50af6eaf24de85397f13c3870fd787a82abba84f5",
+     "verdict": "PASS",
+     "amount": 1060000000,
+     "recipient": "2SY9HfJ2q6VBVJG77kS4nFriAtUn3YSpChS6a46kU11L",
+     "mint": "5XJJTDxBF1LqbQ9MAURyYUnHCPcd4JHxjdy9or2gWjsX",
+     "expiry": 1792012595,
+     "nonce": "proteins-1792008988:lab"
+    },
+    "signatures": [
+     {
+      "referee": "A5eboqGmZ7cwLzp4DCh2bMo3QMxa9R6ZMyVqYfmWNqeF",
+      "signature": "4YwD6kujTTA2M6gpFMbSrparsY4JSN8UemHJR2hEdjvPFD7bmaJjAvTV9vZYkBwAdaXv45rEPuaJeecdtiZhwVLU"
+     },
+     {
+      "referee": "FhyxiGkuA7wu1KfkLb45CBudXgJmnCanSx7A3T8u6Hzr",
+      "signature": "2Br5uKJR56rL9MTv5qXPuLvExJqgGbP6R7V4Fr6syFQttsUL8WVxeLnK6aiwL5MvCKCB34iKHFxqGiBkn4Q35RB3"
+     }
+    ],
+    "digest": "a857be2f26a24e53efdb3948155f36fe4cf7b927bf8e04b2710904b4c7d686cf"
+   },
+   "outcome_verdict": {
+    "kind": "outcome",
+    "verdict": "FAIL",
+    "reasons": [
+     "the result did not meet the claim (the science failed; the lab is still paid)"
+    ],
+    "evidence_hash": "f3c87cd04b1941b98267dbcfc1a674bf16231760833fda150c2d0a7e2b37e92e",
+    "spec_hash": "5c7d73e3174436f0bf0d27b50af6eaf24de85397f13c3870fd787a82abba84f5",
+    "checks": [
+     {
+      "metric": "kd_nm",
+      "op": "<=",
+      "value": 100,
+      "got": null,
+      "held": false,
+      "why": "not in the results"
+     }
+    ],
+    "signed": {
+     "v": 1,
+     "kind": "outcome",
+     "order": "knos-lab-proteins-1792008988",
+     "evidence_hash": "f3c87cd04b1941b98267dbcfc1a674bf16231760833fda150c2d0a7e2b37e92e",
+     "spec_hash": "5c7d73e3174436f0bf0d27b50af6eaf24de85397f13c3870fd787a82abba84f5",
+     "verdict": "FAIL",
+     "amount": 50000000,
+     "recipient": "65fYudhSyrv5zggXcFixr3ohXDnEJDgAeM1WqQd1ULz8",
+     "mint": "5XJJTDxBF1LqbQ9MAURyYUnHCPcd4JHxjdy9or2gWjsX",
+     "expiry": 1792012595,
+     "nonce": "proteins-1792008988:outcome"
+    },
+    "signatures": [
+     {
+      "referee": "A5eboqGmZ7cwLzp4DCh2bMo3QMxa9R6ZMyVqYfmWNqeF",
+      "signature": "qYNa2KF4Txm3KMHBtH12eLbVzmEP9YzTvoUL4235TMefCoX6LJdWFZXZgT4aRKkgxQ5q9jnFiWJZ1RVVcK48QLw"
+     },
+     {
+      "referee": "FhyxiGkuA7wu1KfkLb45CBudXgJmnCanSx7A3T8u6Hzr",
+      "signature": "53fb5C4Z5ZZXVgt2FhPWBqypGKC811opntKzSkHXwUrHoDjoEimq2Uny7x45bMdvFiQFJeQda9ibo9yGFckD7vnB"
+     }
+    ],
+    "digest": "3b2442ef1b1e02a9e14e0b8ab11de382b3852b6db98d6aa9f30c401f46e82407"
+   },
+   "settlement": [
+    {
+     "pot": "lab",
+     "to": "lab",
+     "amount": 1060000000,
+     "why": "LAB PASS: protocol executed and QC passed"
+    },
+    {
+     "pot": "lab",
+     "to": "treasury",
+     "amount": 31800000,
+     "why": "the Knos lab order fee (300 bps, decided)"
+    },
+    {
+     "pot": "outcome",
+     "to": "funder",
+     "amount": 50000000,
+     "why": "OUTCOME FAIL: the claim did not hold; the researcher is not paid"
+    }
+   ],
+   "releases": [
+    {
+     "to": "lab",
+     "signature": "59wopRabZ4KRX7yviUKB2C2yTcKochwPR4JBj61G7gk1sJixWUrcCWhqvLB7aCSfEpbPLWC4Y8m2Qcc5hy6qAXhv"
+    },
+    {
+     "to": "funder",
+     "signature": "myPdzaweKiqa3vMAcpEsHqicgL6jYcyNdtPtoiesSHdyRrqvqXbM94VWWm7o7cK4DJPYsn53iP5UizFjhvFaVDt"
+    }
+   ],
+   "x402_solana": null,
+   "x402_base_sepolia": {
+    "requirement": {
+     "scheme": "exact",
+     "network": "eip155:84532",
+     "amount": "1060000000",
+     "payTo": "0x000000000000000000000000000000000000dEaD",
+     "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+     "maxTimeoutSeconds": 300,
+     "extra": {
+      "name": "USDC",
+      "version": "2",
+      "assetTransferMethod": "eip3009"
+     }
+    },
+    "payer": "0x2BaebeAa648C4F00a3a9951ceDc59C892c699fFa",
+    "local_check": "ok",
+    "facilitator_verify": {
+     "isValid": false,
+     "invalidReason": "invalid_exact_evm_insufficient_balance",
+     "payer": "0x2BaebeAa648C4F00a3a9951ceDc59C892c699fFa"
+    },
+    "note": "no money moves: /verify only; the demo's Base Sepolia address holds no USDC"
+   },
+   "lab_state": "done",
+   "balances_after": {
+    "lab": 1060000000,
+    "researcher": 0,
+    "treasury": 31800000
+   },
+   "addresses": {
+    "lab": "2SY9HfJ2q6VBVJG77kS4nFriAtUn3YSpChS6a46kU11L",
+    "researcher": "GNHzWus4d8EHCZxmEWiYjSafZf3QUUSPzNdo2VygAcyK",
+    "payment_wallet": "8mtsYaqL2ZNtqLXjosm8f9nhfhy9FDoNCmvBdEV4Gyyt"
+   },
+   "leitner": {
+    "lab": {
+     "id": "lab:adaptyv",
+     "kind": "lab",
+     "box": 1,
+     "paused": false,
+     "next_due": 4,
+     "checks": 1,
+     "failures": 0,
+     "cost": 1.0,
+     "last": "pass"
+    }
+   },
+   "public_record": {
+    "lab_order": "fe83f56dea3777780df185353cf911aa1d0df6c0fc5f2e3e05cee75b81dc95f4",
+    "field": "proteins",
+    "lab_ref": "02e1caf8f9dd7338e2867e9dc3c75a9d69a5ccedf07b6004c26d22e664ed99a1",
+    "lab_named": false,
+    "spec_hash": "5c7d73e3174436f0bf0d27b50af6eaf24de85397f13c3870fd787a82abba84f5",
+    "evidence_hash": "f3c87cd04b1941b98267dbcfc1a674bf16231760833fda150c2d0a7e2b37e92e",
+    "lab_verdict": "PASS",
+    "outcome_verdict": "FAIL",
+    "ordered_at": "2026-10-14T20:16:28Z",
+    "results_at": "2026-10-14T20:16:35Z",
+    "turnaround_s": 7,
+    "releases": [
+     {
+      "to_role": "lab",
+      "tx_signature": "59wopRabZ4KRX7yviUKB2C2yTcKochwPR4JBj61G7gk1sJixWUrcCWhqvLB7aCSfEpbPLWC4Y8m2Qcc5hy6qAXhv"
+     },
+     {
+      "to_role": "funder",
+      "tx_signature": "myPdzaweKiqa3vMAcpEsHqicgL6jYcyNdtPtoiesSHdyRrqvqXbM94VWWm7o7cK4DJPYsn53iP5UizFjhvFaVDt"
+     }
+    ],
+    "private": true,
+    "synthetic": true
+   },
+   "recorded_seq": 0
+  },
+  {
+   "field": "electronics",
+   "lab_adapter": "pcbway",
+   "fixture": "MOCK (synthetic, not a real API response): PCBWay partner API responses in the documented shapes and field names (https://api-partner.pcbway.com/Help, one page per endpoint, read 14 Oct 2026) with made-up values; the process names are made up (PCBWay's sample says only 'eg MI, Board Cutting, AOI'); the bench test of the boards is SYNTHETIC",
+   "plan": {
+    "order": "knos-lab-electronics-1792009204",
+    "field": "electronics",
+    "price": 55000000,
+    "fee": 1650000,
+    "reward": 20000000,
+    "lab_pot": 56650000,
+    "outcome_pot": 20000000,
+    "fee_rate_bps": 300,
+    "fee_status": "decided",
+    "fee_bearer": "funder, on top of the price (the decision leaves who bears it open; this demo charges the funder)",
+    "fee_line": "config/fees.yaml fees.lab_order"
+   },
+   "pots": {
+    "lab": "3rHH6hwUEsLS9e7ptPEwymfowSGqKKQPTobU6LTNiee4",
+    "outcome": "8D5nF27xH3SZeCQdSzgg3V4SfEcYTTUeRjwy74o5ungH"
+   },
+   "fund_signature": "645D13zyqAUqX4PydiLFaW5yc1W9VGUmFQcYWmiDUgV4WNQEvA1JvMEm1YQty4bJUpccNVixDT8nA5DTDACeWmuN",
+   "lab_verdict": {
+    "kind": "lab",
+    "verdict": "PASS",
+    "reasons": [
+     "protocol executed as specified, every run reported, QC passed"
+    ],
+    "evidence_hash": "8ee5f3e94c076c1e7f95f5e3ba93ba4ced493f913430feb2aa15d3f30fefa411",
+    "spec_hash": "d108d34fbe95f308975633a735e6c035a2b53a7b9b6206593abeffb3dbff1ee3",
+    "checks": [
+     {
+      "protocol_key": "Layers",
+      "ordered": 2,
+      "executed": 2,
+      "held": true
+     },
+     {
+      "protocol_key": "Thickness",
+      "ordered": 1.6,
+      "executed": 1.6,
+      "held": true
+     },
+     {
+      "protocol_key": "Material",
+      "ordered": "FR-4",
+      "executed": "FR-4",
+      "held": true
+     },
+     {
+      "protocol_key": "Qty",
+      "ordered": 10,
+      "executed": 10,
+      "held": true
+     },
+     {
+      "protocol_key": "SurfaceFinish",
+      "ordered": "HASL lead free",
+      "executed": "HASL lead free",
+      "held": true
+     }
+    ],
+    "signed": {
+     "v": 1,
+     "kind": "lab",
+     "order": "knos-lab-electronics-1792009204",
+     "evidence_hash": "8ee5f3e94c076c1e7f95f5e3ba93ba4ced493f913430feb2aa15d3f30fefa411",
+     "spec_hash": "d108d34fbe95f308975633a735e6c035a2b53a7b9b6206593abeffb3dbff1ee3",
+     "verdict": "PASS",
+     "amount": 55000000,
+     "recipient": "75fgnZyeMCTBh8DVLcAvUZzg8RRK2wqGhRZ6uEhWWTm",
+     "mint": "5XJJTDxBF1LqbQ9MAURyYUnHCPcd4JHxjdy9or2gWjsX",
+     "expiry": 1792012810,
+     "nonce": "electronics-1792009204:lab"
+    },
+    "signatures": [
+     {
+      "referee": "A5eboqGmZ7cwLzp4DCh2bMo3QMxa9R6ZMyVqYfmWNqeF",
+      "signature": "3yPLexhaLYZ7vD114GVtTJ2rMXSbtEk1PabgZqjE4qTWiMocAbuvmw9i7uZ8xjGJhBCiYAavfHThqhH5uGHPGpqK"
+     },
+     {
+      "referee": "FhyxiGkuA7wu1KfkLb45CBudXgJmnCanSx7A3T8u6Hzr",
+      "signature": "334M5DKSaWYKXdDA7w4jZFHYbGgVt6pAdPPFBZYee2speusVgKE1ZQTsqQbbER9WNdoFodBX7LshTxjAentA6BMc"
+     }
+    ],
+    "digest": "a4572ea4ebfe0c896d146662a31b155fbf8e7af2802eb16a20dae48c096adce7"
+   },
+   "outcome_verdict": {
+    "kind": "outcome",
+    "verdict": "FAIL",
+    "reasons": [
+     "the result did not meet the claim (the science failed; the lab is still paid)"
+    ],
+    "evidence_hash": "8ee5f3e94c076c1e7f95f5e3ba93ba4ced493f913430feb2aa15d3f30fefa411",
+    "spec_hash": "d108d34fbe95f308975633a735e6c035a2b53a7b9b6206593abeffb3dbff1ee3",
+    "checks": [
+     {
+      "metric": "supply_current_ma",
+      "op": "<=",
+      "value": 12.0,
+      "agg": "max",
+      "over": "runs",
+      "got": 18.6,
+      "held": false
+     }
+    ],
+    "signed": {
+     "v": 1,
+     "kind": "outcome",
+     "order": "knos-lab-electronics-1792009204",
+     "evidence_hash": "8ee5f3e94c076c1e7f95f5e3ba93ba4ced493f913430feb2aa15d3f30fefa411",
+     "spec_hash": "d108d34fbe95f308975633a735e6c035a2b53a7b9b6206593abeffb3dbff1ee3",
+     "verdict": "FAIL",
+     "amount": 20000000,
+     "recipient": "65fYudhSyrv5zggXcFixr3ohXDnEJDgAeM1WqQd1ULz8",
+     "mint": "5XJJTDxBF1LqbQ9MAURyYUnHCPcd4JHxjdy9or2gWjsX",
+     "expiry": 1792012810,
+     "nonce": "electronics-1792009204:outcome"
+    },
+    "signatures": [
+     {
+      "referee": "A5eboqGmZ7cwLzp4DCh2bMo3QMxa9R6ZMyVqYfmWNqeF",
+      "signature": "228ydnmx7YheGusNvgyakNFG1s3BhWJc6jo5DVrmojynm9rjWJ9WMdZxG7LZgDNXgUqrjC46ufiMZNpRFPV6Vu1A"
+     },
+     {
+      "referee": "FhyxiGkuA7wu1KfkLb45CBudXgJmnCanSx7A3T8u6Hzr",
+      "signature": "x2oLBk2QH7Q1m1Ypbj4Pd9Pvj2CKZRy54qjnmXYgC2wcgqtZznvYExyHZSSRDX8zbVaSh8xGdR57M9JMEjkFBhp"
+     }
+    ],
+    "digest": "9923dbf44df08700bc6859eece916ece9f123a078970d142d00d7347ad0d0f7f"
+   },
+   "settlement": [
+    {
+     "pot": "lab",
+     "to": "lab",
+     "amount": 55000000,
+     "why": "LAB PASS: protocol executed and QC passed"
+    },
+    {
+     "pot": "lab",
+     "to": "treasury",
+     "amount": 1650000,
+     "why": "the Knos lab order fee (300 bps, decided)"
+    },
+    {
+     "pot": "outcome",
+     "to": "funder",
+     "amount": 20000000,
+     "why": "OUTCOME FAIL: the claim did not hold; the researcher is not paid"
+    }
+   ],
+   "releases": [
+    {
+     "to": "lab",
+     "signature": "2bL1Mje5FxijVa5WG8V6eLsFzRMYckHoMCrnN4fnGhepmYEeRfKp87K9F4Zgxvsbf5CJGFQeoD2chhdw7MFdPohC"
+    },
+    {
+     "to": "lab",
+     "signature": null
+    },
+    {
+     "to": "funder",
+     "signature": "2EfcAZmZgrFSjYk6UktVKQoyWhjQwYssA2CqiWowjfsRmmrrQwwYk3TZ6tskW4KsKY2NwyquH7jGJR9cRnfCfC4m"
+    }
+   ],
+   "x402_solana": {
+    "requirement": {
+     "scheme": "exact",
+     "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+     "amount": "55000000",
+     "asset": "5XJJTDxBF1LqbQ9MAURyYUnHCPcd4JHxjdy9or2gWjsX",
+     "payTo": "8AEooLbFL5Vz1ar7YeYURcjUCEPAgrCmAtAhq8hEZWG1",
+     "maxTimeoutSeconds": 120,
+     "extra": {
+      "feePayer": "CKPKJWNdJEqa81x7CkZ14BVPiY6y16Sxs7owznqtWYp5",
+      "memo": "knos-lab-electronics-1792009214"
+     }
+    },
+    "settlement": {
+     "success": true,
+     "transaction": "4LiWaf9A884YNYWKvW4YKvyr9tjmMdpNk29ME5n8AyD3aKTa8vEzJ92QTzkb4V8qW3QkKPfdPuBpiScALaJbNjV3",
+     "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+     "payer": "75fgnZyeMCTBh8DVLcAvUZzg8RRK2wqGhRZ6uEhWWTm",
+     "confirmedBy": null
+    }
+   },
+   "x402_base_sepolia": null,
+   "lab_state": "13/13 processes",
+   "balances_after": {
+    "lab": 55000000,
+    "researcher": 0,
+    "treasury": 33450000
+   },
+   "addresses": {
+    "lab": "8AEooLbFL5Vz1ar7YeYURcjUCEPAgrCmAtAhq8hEZWG1",
+    "researcher": "3LabDhV79NSvg44uDoZC3VMXBQw7e5j6CcoA5eyHXq9c",
+    "payment_wallet": "75fgnZyeMCTBh8DVLcAvUZzg8RRK2wqGhRZ6uEhWWTm"
+   },
+   "leitner": {
+    "lab": {
+     "id": "lab:pcbway",
+     "kind": "lab",
+     "box": 1,
+     "paused": false,
+     "next_due": 4,
+     "checks": 1,
+     "failures": 0,
+     "cost": 1.0,
+     "last": "pass"
+    }
+   },
+   "public_record": {
+    "lab_order": "ca80534959c09a8737983c80427b20b5d57bf77da70ee40ee350863108cca841",
+    "field": "electronics",
+    "lab_ref": "847aedf90e86b95dde29ac48a30fc38c7ebfb8f66342a7ab753b096bad7558e3",
+    "lab_named": false,
+    "spec_hash": "d108d34fbe95f308975633a735e6c035a2b53a7b9b6206593abeffb3dbff1ee3",
+    "evidence_hash": "8ee5f3e94c076c1e7f95f5e3ba93ba4ced493f913430feb2aa15d3f30fefa411",
+    "lab_verdict": "PASS",
+    "outcome_verdict": "FAIL",
+    "ordered_at": "2026-10-14T20:20:04Z",
+    "results_at": "2026-10-14T20:20:10Z",
+    "turnaround_s": 6,
+    "releases": [
+     {
+      "to_role": "lab",
+      "tx_signature": "2bL1Mje5FxijVa5WG8V6eLsFzRMYckHoMCrnN4fnGhepmYEeRfKp87K9F4Zgxvsbf5CJGFQeoD2chhdw7MFdPohC"
+     },
+     {
+      "to_role": "lab",
+      "tx_signature": null
+     },
+     {
+      "to_role": "funder",
+      "tx_signature": "2EfcAZmZgrFSjYk6UktVKQoyWhjQwYssA2CqiWowjfsRmmrrQwwYk3TZ6tskW4KsKY2NwyquH7jGJR9cRnfCfC4m"
+     }
+    ],
+    "private": true,
+    "synthetic": true
+   },
+   "recorded_seq": 1
+  }
+ ],
+ "signatures": [
+  {
+   "step": "setup: the demo's own test mint (6 decimals, no freeze authority)",
+   "signature": "5dBTWRKUbeY98CCBhq5vGo7stELcHt2W48SVRqgXfkg9857jtaiEUu9aqabD8hfwFMZn3eRDKMAiGNPNDpwgmGU4",
+   "explorer": "https://explorer.solana.com/tx/5dBTWRKUbeY98CCBhq5vGo7stELcHt2W48SVRqgXfkg9857jtaiEUu9aqabD8hfwFMZn3eRDKMAiGNPNDpwgmGU4?cluster=devnet"
+  },
+  {
+   "step": "setup: 10,000 test units to the funder",
+   "signature": "49GLC3TdqgF9EzBUrWT5cgzJ1J6NWqv8MqoT3nRJ23MDhYHbGjCwrjTTwr74THZL1uuUJkDWYbBSo4DEGovpKPYJ",
+   "explorer": "https://explorer.solana.com/tx/49GLC3TdqgF9EzBUrWT5cgzJ1J6NWqv8MqoT3nRJ23MDhYHbGjCwrjTTwr74THZL1uuUJkDWYbBSo4DEGovpKPYJ?cluster=devnet"
+  },
+  {
+   "step": "setup: the referees' 2-of-3 SPL Token multisig (owner of every pot)",
+   "signature": "3KyLb7apK1WjMKJm4S4vAXiRecdvEq3RHe2GzvmtpiF1XdzibvcvdkG3AB5WuvASbxhqDUgW4BYBWm2JizkN8X4P",
+   "explorer": "https://explorer.solana.com/tx/3KyLb7apK1WjMKJm4S4vAXiRecdvEq3RHe2GzvmtpiF1XdzibvcvdkG3AB5WuvASbxhqDUgW4BYBWm2JizkN8X4P?cluster=devnet"
+  },
+  {
+   "step": "setup: token accounts (Knos treasury, labs, researchers, payment wallet)",
+   "signature": "y3mwuzzx3k8MXuPPZCgPMRruskQVfY8QhQge1zPfLJDRcTkXGZnFpLRgvTrLty4H2H5CR8ifPBCPj91eAqJsks9",
+   "explorer": "https://explorer.solana.com/tx/y3mwuzzx3k8MXuPPZCgPMRruskQVfY8QhQge1zPfLJDRcTkXGZnFpLRgvTrLty4H2H5CR8ifPBCPj91eAqJsks9?cluster=devnet"
+  },
+  {
+   "step": "proteins: fund the lab pot (1,091.80 = price + 3% fee) and the outcome pot (50.00 reward), both owned by the referees' 2-of-3 multisig",
+   "signature": "2hXSLBMh5J7wvgpZDpkSyqDwnBj41ncAiJwQfKWRiSmxYzWtgigzXj4HHeGSvVet4vFVoenWMCYYeJeFmGHnQPbN",
+   "explorer": "https://explorer.solana.com/tx/2hXSLBMh5J7wvgpZDpkSyqDwnBj41ncAiJwQfKWRiSmxYzWtgigzXj4HHeGSvVet4vFVoenWMCYYeJeFmGHnQPbN?cluster=devnet"
+  },
+  {
+   "step": "proteins: LAB verdict PASS (2 of 3 referees): price to the lab, 3% fee to the Knos treasury, pot closed",
+   "signature": "59wopRabZ4KRX7yviUKB2C2yTcKochwPR4JBj61G7gk1sJixWUrcCWhqvLB7aCSfEpbPLWC4Y8m2Qcc5hy6qAXhv",
+   "explorer": "https://explorer.solana.com/tx/59wopRabZ4KRX7yviUKB2C2yTcKochwPR4JBj61G7gk1sJixWUrcCWhqvLB7aCSfEpbPLWC4Y8m2Qcc5hy6qAXhv?cluster=devnet"
+  },
+  {
+   "step": "proteins: OUTCOME verdict FAIL (2 of 3 referees): reward back to the funder; the researcher is not paid, pot closed",
+   "signature": "myPdzaweKiqa3vMAcpEsHqicgL6jYcyNdtPtoiesSHdyRrqvqXbM94VWWm7o7cK4DJPYsn53iP5UizFjhvFaVDt",
+   "explorer": "https://explorer.solana.com/tx/myPdzaweKiqa3vMAcpEsHqicgL6jYcyNdtPtoiesSHdyRrqvqXbM94VWWm7o7cK4DJPYsn53iP5UizFjhvFaVDt?cluster=devnet"
+  },
+  {
+   "step": "setup: token accounts (Knos treasury, labs, researchers, payment wallet)",
+   "signature": "4pk1UoDaSTX1kavE7EjAQWHFKC9Uwvz5D86b54WQmNa1BfYV2wPwymVj5Nn7XGV8hKRFPdytJrnA3mogFudygh2J",
+   "explorer": "https://explorer.solana.com/tx/4pk1UoDaSTX1kavE7EjAQWHFKC9Uwvz5D86b54WQmNa1BfYV2wPwymVj5Nn7XGV8hKRFPdytJrnA3mogFudygh2J?cluster=devnet"
+  },
+  {
+   "step": "electronics: fund the lab pot (56.65 = price + 3% fee) and the outcome pot (20.00 reward), both owned by the referees' 2-of-3 multisig",
+   "signature": "645D13zyqAUqX4PydiLFaW5yc1W9VGUmFQcYWmiDUgV4WNQEvA1JvMEm1YQty4bJUpccNVixDT8nA5DTDACeWmuN",
+   "explorer": "https://explorer.solana.com/tx/645D13zyqAUqX4PydiLFaW5yc1W9VGUmFQcYWmiDUgV4WNQEvA1JvMEm1YQty4bJUpccNVixDT8nA5DTDACeWmuN?cluster=devnet"
+  },
+  {
+   "step": "electronics: LAB verdict PASS (2 of 3 referees): price to the one-time payment wallet, 3% fee to the Knos treasury, pot closed",
+   "signature": "2bL1Mje5FxijVa5WG8V6eLsFzRMYckHoMCrnN4fnGhepmYEeRfKp87K9F4Zgxvsbf5CJGFQeoD2chhdw7MFdPohC",
+   "explorer": "https://explorer.solana.com/tx/2bL1Mje5FxijVa5WG8V6eLsFzRMYckHoMCrnN4fnGhepmYEeRfKp87K9F4Zgxvsbf5CJGFQeoD2chhdw7MFdPohC?cluster=devnet"
+  },
+  {
+   "step": "electronics: x402 exact on Solana devnet: the payment wallet pays the lab's 402, settled by the x402.org facilitator",
+   "signature": "4LiWaf9A884YNYWKvW4YKvyr9tjmMdpNk29ME5n8AyD3aKTa8vEzJ92QTzkb4V8qW3QkKPfdPuBpiScALaJbNjV3",
+   "explorer": "https://explorer.solana.com/tx/4LiWaf9A884YNYWKvW4YKvyr9tjmMdpNk29ME5n8AyD3aKTa8vEzJ92QTzkb4V8qW3QkKPfdPuBpiScALaJbNjV3?cluster=devnet"
+  },
+  {
+   "step": "electronics: OUTCOME verdict FAIL (2 of 3 referees): reward back to the funder; the researcher is not paid, pot closed",
+   "signature": "2EfcAZmZgrFSjYk6UktVKQoyWhjQwYssA2CqiWowjfsRmmrrQwwYk3TZ6tskW4KsKY2NwyquH7jGJR9cRnfCfC4m",
+   "explorer": "https://explorer.solana.com/tx/2EfcAZmZgrFSjYk6UktVKQoyWhjQwYssA2CqiWowjfsRmmrrQwwYk3TZ6tskW4KsKY2NwyquH7jGJR9cRnfCfC4m?cluster=devnet"
+  }
+ ]
+}

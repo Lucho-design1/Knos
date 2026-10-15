@@ -14,9 +14,11 @@ pub const OPTS_LEN: usize = 48;
 /// reserve_days u8 @7, rate u64 @8, arbiter_id u64 @16, judge_repo_id u64 @24, salted u8 @32 (1: a private order,
 /// whose 32-byte scope follows in the instruction data), grace u8 @33 (1: the order has the PRESENTATION GRACE, `GRACE`
 /// in lib.rs: the funder's choice, because it delays his refund by that long), 14 zero bytes.
+/// 0.3.34: byte 35 is the order's JUDGE when it is not a forge (order_proof.rs): 1 a container image (ATTESTED), 2 a
+/// referee panel (PANEL); 0 for every forge order. A judged order takes no other option but the grace.
 pub struct Opts {
     pub flags: u8, pub holdback_bps: u16, pub warranty_days: u16, pub kill_bps: u16, pub reserve_days: u8, pub rate: u64, pub arbiter_id: u64,
-    pub judge_repo_id: u64, pub salted: bool, pub grace: bool,
+    pub judge_repo_id: u64, pub salted: bool, pub grace: bool, pub judge: u8,
 }
 /// The options, read and checked: holdback at most MAX_HOLDBACK_BPS and only with a warranty, warranty at most
 /// MAX_WARRANTY_DAYS, kill fee at most MAX_KILL_BPS; a STANDING order has a rate between 1 and its amount, any other
@@ -29,14 +31,18 @@ pub struct Opts {
 pub fn opts_of(o: &[u8], amount: u64) -> Result<Opts, ProgramError> {
     if o.len() != OPTS_LEN { return Err(ProgramError::InvalidInstructionData); }
     let v = Opts { flags: o[0], holdback_bps: u16_at(o, 1), warranty_days: u16_at(o, 3), kill_bps: u16_at(o, 5), reserve_days: o[7], rate: u64_at(o, 8),
-                   arbiter_id: u64_at(o, 16), judge_repo_id: u64_at(o, 24), salted: o[32] == 1, grace: o[33] == 1 };
+                   arbiter_id: u64_at(o, 16), judge_repo_id: u64_at(o, 24), salted: o[32] == 1, grace: o[33] == 1, judge: o[35] };
     let standing = v.flags & F_STANDING != 0;
     let private = v.flags & F_PRIVATE != 0;
     let quorum = v.flags >> 6;
     let judges = 1 + (v.flags & F_NEUTRAL != 0) as u8 + (v.judge_repo_id != 0) as u8;
     let plain = !standing && !private;
     let ok = v.flags & !(F_PRIVATE | F_NEUTRAL | F_STANDING | F_AUTO | F_QUORUM) == 0 && o[32] <= 1
-        && (v.flags & F_AUTO == 0 || plain) && (quorum == 0 || (plain && (2..=judges).contains(&quorum))) && o[33] <= 1 && o[34..] == [0u8; 14]
+        && (v.flags & F_AUTO == 0 || plain) && (quorum == 0 || (plain && (2..=judges).contains(&quorum))) && o[33] <= 1 && o[34] == 0
+        && o[35] <= crate::order_proof::PANEL && o[36..] == [0u8; 12]
+        // a judged order (0.3.34): nothing that needs a forge's token (order_proof.rs), the grace only
+        && (v.judge == 0 || (v.flags == 0 && v.holdback_bps == 0 && v.warranty_days == 0 && v.kill_bps == 0 && v.reserve_days == 0
+                             && v.rate == 0 && v.arbiter_id == 0 && v.judge_repo_id == 0 && !v.salted))
         && v.holdback_bps <= MAX_HOLDBACK_BPS && v.warranty_days <= MAX_WARRANTY_DAYS && v.kill_bps <= MAX_KILL_BPS
         && (v.holdback_bps == 0 || v.warranty_days > 0)
         && (if standing { v.rate >= 1 && v.rate <= amount } else { v.rate == 0 })
@@ -220,9 +226,16 @@ pub fn fund_order_wallet(program_id: &Pubkey, accounts: &[AccountInfo], data: &[
         (public_scope(repo, issue), terms_hash(rest)?, Some(rest))
     };
     let faucet = DEVNET && *mint.key == faucet_mint(program_id).0;
+    // 0.3.34: a judged order (options byte 35, order_proof.rs) is judged by what its judge runs (mode 1); `wf_repo`
+    // carries its pin, and the order's own workflows repository is zero bytes, which no forge token's pin ever is
+    let judge = opts.judge;
+    if judge != 0 && mode != 1 { return Err(err(E_TERMS)); }
+    let pin: [u8; 32] = wf_repo.try_into().unwrap();
+    let wf_repo = if judge != 0 { &[0u8; 32][..] } else { wf_repo };
     escrow(program_id, &Escrow { payer: funder, order, ov, from: funder_tok, authority: funder, mint, auth, token, sys, auth_signs: false }, &m,
            &NewOrder { repo, issue, scope, seq, amount, bps: FEE_BPS, work, mode, kind: 0, faucet, funder_id: 0, owner_id: 0,
                        not_before: now.saturating_sub(CLOCK_SLACK), source: funder.key, refund_to: funder.key, terms, wf_repo, wf_sha, opts }, json, now)?;
+    if judge != 0 { crate::order_proof::judged(order, judge, &pin)?; }
     Ok(())
 }
 
@@ -241,6 +254,8 @@ pub fn fund_order_balance(program_id: &Pubkey, accounts: &[AccountInfo], json: &
     let f = order_fund_aud(&g.aud, balance.key)?;
     may_spend(&b, &g)?;
     let opts = opts_of(&f.opts, f.amount)?;
+    // 0.3.34: a judged order is a wallet's only (order_proof.rs): a forge's fund token funds a forge's order
+    if opts.judge != 0 { return Err(err(E_TERMS)); }
     // a run by hand or by schedule funds a PRIVATE order only (its attestor has no comment to react to)
     if crate::fund::by_hand_or_schedule(&g) && opts.flags & F_PRIVATE == 0 { return Err(err(E_CLAIMS)); }
     // what is funded: a public order of the token's repository, or a private one of its judge repository (order_judge.rs)

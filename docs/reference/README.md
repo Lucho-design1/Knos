@@ -110,8 +110,11 @@ The documents in this folder are listed below, with the eight front pages too.
 | [AGENTS.md](AGENTS.md) | an agent finds work, takes it, submits it and is paid |
 | [HERMES.md](HERMES.md) | Knos in Hermes Agent: the skill, the MCP server (stdio and HTTP), the plugin, the referee as GEPA's judge, an Atropos environment |
 | [AUTORESEARCH.md](AUTORESEARCH.md) | autoresearch for anyone: agents change one file, the referee keeps or refuses each run, sealed data decides payment |
+| [GAME.md](GAME.md) | the Knos game: people and AI scientists attack one sealed goal at once; a pooled pot split by the referee's verdicts |
 | [DEMAND_CHECK.md](DEMAND_CHECK.md) | the demand check on Qloo's MCP server: a maker's demand report, a buyer agent, pre-orders in a devnet escrow |
+| [IDEAS.md](IDEAS.md) | an idea in from anyone or any research source, every field; demand, then pull commitments released in stages |
 | [NEBIUS.md](NEBIUS.md) | Nemotron models on Nebius Token Factory as Knos coders and cheat explainers, Tavily provenance; the referee still decides |
+| [LABS.md](LABS.md) | cloud labs and fabs through one interface: the lab paid on protocol and QC, the researcher on the outcome |
 | [TEAMS.md](TEAMS.md) | Knos for teams: per verified merge, per agent check, bounty fee, task packages; metering, chain-checked invoices, the dashboard, the 1B USD arithmetic |
 
 ## 5. How do I build on it?
@@ -122,13 +125,14 @@ The documents in this folder are listed below, with the eight front pages too.
 | [GATE.md](GATE.md) | the upgrade gate for your own program: three commands, and what it cannot do |
 | [PR_GATE.md](PR_GATE.md) | Knos Gate: sealed hidden tests and cheat checks on outside pull requests, one check, one comment, a signed receipt |
 | [CODE_SCANNING.md](CODE_SCANNING.md) | Gate's findings as code-scanning alerts and line annotations, an attested receipt, and a required check |
-| [MCP_SERVER.md](MCP_SERVER.md) | knos mcp's resources, prompts and output schema, and the person's confirmation before each post |
+| [MCP_SERVER.md](MCP_SERVER.md) | knos mcp's resources, prompts, output schema, tasks and skills, and the person's confirmation before each post |
 | [TOKEN_SAFETY.md](TOKEN_SAFETY.md) | Token-2022 extensions that would break an escrow or a payout, and the check that refuses them |
 | [PRIORITY_FEES.md](PRIORITY_FEES.md) | priority fees on a limit sized by simulation, and a WebSocket wait for confirmation |
 | [SELF.md](SELF.md) | Knos builds Knos: agents improve product code, judged by the referee from main, paid on devnet |
 | [ES256.md](ES256.md) | a second kind of signed token (ES256), checked in one transaction; live on devnet since 9 Oct 2026 |
 | [ALPENGLOW.md](ALPENGLOW.md) | how Knos tells a cluster runs Alpenglow, waits until a payment is final there, and how long that took on devnet |
 | [PLATFORM.md](PLATFORM.md) | the programs on today's Solana: sBPF v3 builds, a GitHub token verified in one transaction, v1 transactions, finality, and the upgrade steps |
+| [PAY_ON_PROOF.md](PAY_ON_PROOF.md) | pay on proof from any source: a Confidential Space container as the judge, m of n referee signatures, ORCID iDs as payees |
 | [CONFORMANCE.md](CONFORMANCE.md) | the formats, with test vectors and a runner |
 | [INTEGRATIONS.md](INTEGRATIONS.md) | what a bounty or work platform can take; no platform uses it |
 | [ADAPTERS.md](ADAPTERS.md) | other systems' events, and what the chain can check of them |
@@ -136,6 +140,13 @@ The documents in this folder are listed below, with the eight front pages too.
 | [SOURCES.md](SOURCES.md) | signed results from systems other than CI: which can be neutral evidence |
 | [TASK_PACKAGES.md](TASK_PACKAGES.md) | a merged issue and fix as a sealed, verified task; maintainer opt-in; grading with cheat rules |
 | [ZK.md](ZK.md) | a research score proven without showing the hidden test set: Groth16 checked on Solana; toy setup |
+| [DURABLE_NONCES.md](DURABLE_NONCES.md) | the measured blockhash life, and escrow funding signed now and sent later by another party |
+| [X402_UPTO.md](X402_UPTO.md) | x402 `upto` on Solana: one ceiling escrowed, the checks used charged, the rest refunded, on devnet |
+| [SAS_INPUTS.md](SAS_INPUTS.md) | attestations by issuers an order trusts, read as conditions before money moves |
+| [SPENDING_LIMITS.md](SPENDING_LIMITS.md) | Squads spending limits for bounded treasury costs, run on a test multisig, and the founder's steps |
+| [KORA_CCTP.md](KORA_CCTP.md) | gasless sends through a Kora fee relayer, and USDC from EVM chains into an escrow by CCTP V2 |
+| [A2A.md](A2A.md) | Knos as an A2A agent: its Agent Card and the skills other agents can call |
+| [CLAUDE_AGENTS.md](CLAUDE_AGENTS.md) | Claude agents as guarded attempts, Knos judging Managed Agents, structured outputs and prompt caching |
 
 ## 6. How is it run and paid for?
 

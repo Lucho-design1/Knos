@@ -13,6 +13,12 @@ For each candidate (a dict of files the agent submits):
     AR-IMPORT also refuses getattr/setattr, any private attribute (x._os), any dunder name but __name__, and attributes
     that lead to the operating system (x.sys, x.modules, x.os, ...): sys is not importable, so sys.modules["o"+"s"] and
     statistics.sys.modules are refused.
+    AR-FILE   runner_tampering  (v0.3.34) any file or OS access at all: open (called, aliased or as an attribute),
+                                 io / os / pathlib (not importable), argparse.FileType, read_text/write_text, and the
+                                 tools that build a string the rules cannot read: chr, bytes, bytearray, .decode,
+                                 .fromhex. The candidate reads data only through `knos_io` (rows, output), which the
+                                 referee's runner hands it (sandbox.py). An outside judge read the sealed seed through a
+                                 path built with chr(); this rule refuses that, and the namespace mask hides the file.
 
 LIMIT (said in docs/reference/AUTORESEARCH.md): these rules are a static filter, not an OS sandbox. The candidate runs as
 the referee's own user; a determined candidate may still find a path the filter misses and read any file that user can
@@ -39,12 +45,16 @@ from . import sandbox
 from .task import Task
 
 ALLOWED_IMPORTS = frozenset({"argparse", "bisect", "collections", "csv", "functools", "heapq", "itertools", "json",
-                             "math", "random", "statistics", "time"})
+                             "knos_io", "math", "random", "statistics", "time"})
 FORBIDDEN_CALLS = frozenset({"__import__", "eval", "exec", "compile", "breakpoint", "globals", "locals", "vars", "getattr", "setattr",
                              "delattr", "memoryview"})
 # names that lead from an allowed module to the operating system: statistics.sys, a module's _os, sys.modules, ...
 FORBIDDEN_ATTRS = frozenset({"sys", "os", "modules", "builtins", "subprocess", "system", "popen", "spawn", "fork", "exec",
                              "import_module", "loader", "socket", "ctypes", "environ", "f_globals", "f_back", "gi_frame"})
+FILE_NAMES = frozenset({"open", "chr", "bytes", "bytearray", "input", "exec", "eval", "compile", "__import__", "getattr",
+                        "setattr", "delattr", "globals", "locals", "vars", "breakpoint", "memoryview"})
+FILE_ATTRS = frozenset({"open", "FileType", "read_text", "write_text", "read_bytes", "write_bytes", "decode", "fromhex",
+                        "b64decode", "a2b_hex", "unhexlify", "fdopen", "popen"})
 SEALED_WORDS = ("sealed", "hidden", "..")
 LOCKED_FILES = ("judge.py", "sandbox.py", "synth.py", "task.py")
 
@@ -65,6 +75,7 @@ class Finding:
 class Verdict:
     passed: bool
     score: float | None = None
+    isolation: str = ""
     scores: list[float] = field(default_factory=list)
     reasons: list[str] = field(default_factory=list)
     cheats: list[Finding] = field(default_factory=list)
@@ -128,8 +139,12 @@ def static_findings(files: dict[str, str], editable: str, current: str | None) -
                 out.append(Finding("AR-IMPORT", "runner_tampering", editable, f"line {node.lineno}: {name}()"))
             if name == "open" and node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
                 out.append(Finding("AR-IMPORT", "runner_tampering", editable, f"line {node.lineno}: open() of a literal path"))
+        elif isinstance(node, ast.Attribute) and node.attr in FILE_ATTRS:
+            out.append(Finding("AR-FILE", "runner_tampering", editable, f"line {node.lineno}: .{node.attr} (file access or a built string)"))
         elif isinstance(node, ast.Attribute) and (node.attr.startswith("_") or node.attr in FORBIDDEN_ATTRS):
             out.append(Finding("AR-IMPORT", "runner_tampering", editable, f"line {node.lineno}: .{node.attr}"))
+        elif isinstance(node, ast.Name) and node.id in FILE_NAMES:
+            out.append(Finding("AR-FILE", "runner_tampering", editable, f"line {node.lineno}: {node.id} (file access or a built string)"))
         elif isinstance(node, ast.Name) and node.id.startswith("__") and node.id != "__name__":
             out.append(Finding("AR-IMPORT", "runner_tampering", editable, f"line {node.lineno}: {node.id}"))
         elif isinstance(node, ast.Constant) and isinstance(node.value, str):
@@ -161,9 +176,16 @@ def shared_findings(files: dict[str, str], editable: str, current: str) -> list[
 class LocalJudge:
     backend = "knos.autoresearch.judge"
 
-    def __init__(self, task: Task, python: str | None = None):
+    def __init__(self, task: Task, python: str | None = None, mask=()):
+        """`mask`: more paths no candidate may read (a game's folder, say); the task's sealed file, its folder and the
+        hidden data files are always masked where the OS gives the candidate its own namespace (sandbox.py)."""
         self.task = task
         self.python = python
+        sealed = Path(task.sealed_path).resolve()
+        hidden = [sealed.parent / str(v) for k, v in (task.sealed or {}).items() if k in ("dev", "final") and isinstance(v, str)]
+        self.mask = [str(sealed), str(sealed.parent), *[str(h) for h in hidden], *[str(m) for m in mask]]
+        self.isolation = ""
+        self.sealed_contents = task.hidden_sha256()
         self.public = task.public()
         self.hidden = task.hidden()
         self.sealed_judge = judge_hash()
@@ -172,13 +194,21 @@ class LocalJudge:
         t = self.task.spec
         return {"spec_hash": self.task.spec_hash(self.sealed_judge), "judge_hash": self.sealed_judge,
                 "editable": t["editable"], "seeds": t["seeds"][:2], "tolerance": {"abs": t["rerun_tolerance"]},
-                "sealed_at": int(time.time()), "backend": self.backend}
+                "sealed_at": int(time.time()), "backend": self.backend, "hidden_sha256": self.sealed_contents}
+
+    def sealed_changed(self) -> str | None:
+        """Why the hidden data on disk is not what was sealed (its contents' hash moved), or None."""
+        now = self.task.hidden_sha256()
+        return None if now == self.sealed_contents else (f"sealed_changed: the hidden data hashes {now[:16]}, it was sealed as "
+                                                         f"{self.sealed_contents[:16]}")
 
     def _runs(self, source: str, rows: list) -> tuple[list[float], list[str], dict, float]:
         t = self.task.spec
         scores, reasons, reported, wall = [], [], {}, 0.0
         for seed in t["seeds"][:2]:
-            r = sandbox.run(source, t["editable"], self.public, [(x, 0) for x, _y in rows], seed, float(t["time_budget_s"]), self.python)
+            r = sandbox.run(source, t["editable"], self.public, [(x, 0) for x, _y in rows], seed, float(t["time_budget_s"]), self.python,
+                            mask=self.mask)
+            self.isolation = r.isolation
             wall += r.wall_s
             if not r.ok:
                 reasons.append(f"seed {seed}: {r.error}")
@@ -198,12 +228,14 @@ class LocalJudge:
             return Verdict(False, reasons=[f.detail for f in found], cheats=found)
         scores, reasons, reported, wall = self._runs(files[t["editable"]], self.hidden[stage])
         if reasons:
-            return Verdict(False, scores=scores, reasons=reasons, cheats=found, reported=reported, wall_s=wall)
+            return Verdict(False, scores=scores, reasons=reasons, cheats=found, reported=reported, wall_s=wall, isolation=self.isolation)
         if abs(scores[0] - scores[1]) > t["rerun_tolerance"]:
             found.append(Finding("AR-RERUN", "rerun_mismatch", t["editable"],
                                  f"seed scores {scores[0]:.4f} vs {scores[1]:.4f} differ by more than {t['rerun_tolerance']}"))
-            return Verdict(False, scores=scores, reasons=["re-run mismatch"], cheats=found, reported=reported, wall_s=wall)
-        return Verdict(True, score=sum(scores) / len(scores), scores=scores, cheats=found, reported=reported, wall_s=wall)
+            return Verdict(False, scores=scores, reasons=["re-run mismatch"], cheats=found, reported=reported, wall_s=wall,
+                           isolation=self.isolation)
+        return Verdict(True, score=sum(scores) / len(scores), scores=scores, cheats=found, reported=reported, wall_s=wall,
+                       isolation=self.isolation)
 
     def final(self, baseline: str, best: str) -> dict:
         """Graduation: baseline and best on hidden_final, both seeds, judging code unchanged since sealing."""
@@ -214,6 +246,9 @@ class LocalJudge:
         reasons = []
         if now != self.sealed_judge:
             reasons.append("judge_drift: the judging code changed since the spec was sealed")
+        moved = self.sealed_changed()
+        if moved:
+            reasons.append(moved)
         for name, v in (("baseline", base_v), ("best", best_v)):
             if not v.passed:
                 reasons.append(f"{name}: " + "; ".join(v.reasons))

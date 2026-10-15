@@ -622,6 +622,12 @@ def _release_pin() -> tuple[str, str]:
     return found
 
 
+def reservation_days(reserve: int, days: int) -> int:
+    """A `/knos take` reservation never outlasts the escrow: past `days` the money is back with the funder, and a
+    reservation would only keep others off an issue nobody can be paid for (V34DOG, v0.3.34 dogfooding)."""
+    return max(0, min(int(reserve), int(days)))
+
+
 @_app.command("fund-wallet")
 def fund_wallet(where: str = typer.Argument(..., metavar="OWNER/REPO#ISSUE"), amount: str = typer.Argument(..., help="how much, like 20 or 12.5"),
                 checks: str = typer.Option(None, "--checks", help="the checks that must pass, comma-separated; `none` for none (default: the repository's own)"),
@@ -661,6 +667,7 @@ def fund_wallet(where: str = typer.Argument(..., metavar="OWNER/REPO#ISSUE"), am
         reserve = 0      # a reservation is a `/knos take` comment, and nothing in that repository answers one
     else:
         wf_repo, wf_sha = _given_pin(workflow) if workflow else _pinned(name, branch, None)
+        reserve = reservation_days(reserve, days)
     named = None if checks is None else () if checks.strip().lower() == "none" else tuple(c.strip() for c in checks.split(",") if c.strip())
     fund = commands.Fund(units, named, tuple(p.strip() for p in (paths or "").split(",") if p.strip()), days, reserve)
     try:
@@ -1170,10 +1177,12 @@ _MODULES = (    # (the commands it adds, how); in the order they were always reg
     (("protect",), lambda: _mod("strip_check").register(_app, _HELP)),            # knos protect --check-strip OWNER/REPO: whether the workflow-strip hole is closed (src/knos/strip_check.py)
     (("referee", "cheats"), lambda: _mod("referee.cli").register(_app, _HELP)),   # knos referee seal | works | wanted | makeable | maintainer, knos cheats list | red-team (src/knos/referee/)
     (("self",), lambda: _mod("self.cli").register(_app, _HELP)),             # knos self run | status | archive | rollback (src/knos/self/)
+    (("game",), lambda: _mod("game.cli").register(_app, _HELP)),             # knos game new | join | submit | play | finish | pot | serve (src/knos/game/)
     (("outcome",), lambda: _mod("outcomes.cli").register(_app, _HELP)),           # knos outcome draft | validate | tiers | lock | measure | sign ... (src/knos/outcomes/)
     (("gate",), lambda: _mod("gate.cli").register(_app, _HELP)),                  # knos gate: Knos Gate, receipts, bounty quotes (src/knos/gate/cli.py)
     (("verify",), lambda: _mod("verify.cli").register(_app, _HELP)),               # knos verify: AI policy, cheat checks, tests twice, a signed receipt (src/knos/verify/)
     (("taskpack",), lambda: _mod("taskpack").register(_app, _HELP)),              # knos taskpack export | verify | grade | rows (src/knos/taskpack/)
+    (("idea",), lambda: _mod("ideas.cli").register(_app, _HELP)),                 # knos idea get | search | in | who | wanted | check | commit | state (src/knos/ideas/)
 )
 _OWN = frozenset(name for name, _p, _s in _HELP) | {"hook", "badge", "record", "proof"}     # commands this module (or one it imports anyway) defines
 _loaded: set[int] = set()
@@ -1188,7 +1197,7 @@ def load(command: str | None = None) -> None:
         if i not in _loaded:
             _loaded.add(i)
             _MODULES[i][1]()
-    tail = [row for name in ("meter", "audit", "budget", "observe", "reproduce", "shadow", "events", "bill", "preflight", "keep", "appeal", "vault", "archive", "approve", "decide", "net", "advance", "faucet", "controls", "recall", "task", "exit", "boundary", "selfhost", "assurance", "fees", "protect", "referee", "cheats", "outcome", "gate", "verify", "self") for row in _HELP if row[0] == name]   # the lines modules append: in this order always
+    tail = [row for name in ("meter", "audit", "budget", "observe", "reproduce", "shadow", "events", "bill", "preflight", "keep", "appeal", "vault", "archive", "approve", "decide", "net", "advance", "faucet", "controls", "recall", "task", "exit", "boundary", "selfhost", "assurance", "fees", "protect", "referee", "cheats", "outcome", "gate", "verify", "self", "game", "idea") for row in _HELP if row[0] == name]   # the lines modules append: in this order always
     _HELP[:] = [row for row in _HELP if row not in tail] + tail
     _arrange()
 

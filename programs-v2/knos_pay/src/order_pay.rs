@@ -19,7 +19,9 @@ use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, 
 
 /// Who signed a pay token, of the five the design allows (order_judge.rs: a, b, c, d, and e for an AUTO order).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Judge { Own = 0, Neutral = 1, Private = 2, Arbiter = 3, Auto = 4 }
+/// 0.3.34 adds two that are not forge runs (order_proof.rs): Attested, a Confidential Space container the order pinned
+/// by image digest; Panel, m of the n referee keys the order named. Neither is ever a judge of a forge order.
+pub enum Judge { Own = 0, Neutral = 1, Private = 2, Arbiter = 3, Auto = 4, Attested = 5, Panel = 6 }
 
 /// HOOK. Which judge signed this token for this order, or a refusal. Always: the workflow is in the order's pinned
 /// repository at the order's pinned commit, and the run is a first attempt (`github` has already required a
@@ -85,13 +87,13 @@ pub fn payees_of(list: &[u8]) -> Result<Vec<Payee>, ProgramError> {
 }
 
 /// The accounts of a payment that every payee shares, as PayOrder and SettleOrder list them.
-struct Payout<'a, 'b> {
-    relayer: &'b AccountInfo<'a>, order: &'b AccountInfo<'a>, ov: &'b AccountInfo<'a>, tip_tok: &'b AccountInfo<'a>, fee_tok: &'b AccountInfo<'a>,
-    auth: &'b AccountInfo<'a>, rent_to: &'b AccountInfo<'a>, mint: &'b AccountInfo<'a>, token: &'b AccountInfo<'a>, sys: &'b AccountInfo<'a>,
-    ata_program: &'b AccountInfo<'a>,
+pub(crate) struct Payout<'a, 'b> {
+    pub(crate) relayer: &'b AccountInfo<'a>, pub(crate) order: &'b AccountInfo<'a>, pub(crate) ov: &'b AccountInfo<'a>, pub(crate) tip_tok: &'b AccountInfo<'a>,
+    pub(crate) fee_tok: &'b AccountInfo<'a>, pub(crate) auth: &'b AccountInfo<'a>, pub(crate) rent_to: &'b AccountInfo<'a>, pub(crate) mint: &'b AccountInfo<'a>,
+    pub(crate) token: &'b AccountInfo<'a>, pub(crate) sys: &'b AccountInfo<'a>, pub(crate) ata_program: &'b AccountInfo<'a>,
 }
 /// The five accounts of one payee, in this order: bind, wallet, dest_token, rep, pair.
-const PER_PAYEE: usize = 5;
+pub(crate) const PER_PAYEE: usize = 5;
 
 /// Pays `due` of an order to its payees, each to a token account of the wallet resolved for it (`wallets`, in the
 /// payees' order), the tip to the relayer and the rest of the fee to FEE_OWNER; records each payment; closes the
@@ -161,43 +163,65 @@ fn pay_out<'a>(program_id: &Pubkey, a: &Payout<'a, '_>, o: &Order, per: &[Accoun
 pub fn pay_order(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8], now: i64) -> ProgramResult {
     let [relayer, tok, key, order, ov, tip_tok, fee_tok, auth, rent_to, mint, token, sys, ata_program, used] = take(accounts)?;
     let per = &accounts[14..];
-    if !data.is_empty() { return Err(ProgramError::InvalidInstructionData); }
+    // 0.3.34: with data, a referee panel's PASS verdict on a PANEL order (order_proof.rs: the token's place holds the
+    // instructions sysvar, the key's the verdict's tally). Every pay token comes with no data, as before.
+    if !data.is_empty() { return crate::order_proof::pay_order_verdict(program_id, accounts, data, now); }
     if !relayer.is_signer || !relayer.is_writable { return Err(err(E_ACCOUNTS)); }
     let o = load_order(program_id, order)?;
-    let g = crate::order_judge::token(program_id, &o, tok, key, now)?;
-    // in time: shown by the deadline; or, for an order funded with the presentation grace, issued by the forge by the
-    // deadline and shown within GRACE after it (RefundOrder waits exactly as long, so the two never overlap)
-    if o.state != OPEN || !o.in_time(g.iat, now) { return Err(err(E_STATE)); }
-    let judge = judge_ok(&o, &g)?;
-    // issued after the funding (`not_before` is the chain's time then): a proof made before this order existed cannot pay it
-    if g.iat < o.not_before { return Err(err(E_STATE)); }
-    let a = crate::order_judge::audience(&o, judge, &g.aud, now)?;
-    if a.order != *order.key || a.terms != o.terms || a.mode != o.mode { return Err(err(E_AUD)); }
-    not_yet(program_id, &o, &a.payees, per)?;
-    if per.len() < a.payees.len() * PER_PAYEE { return Err(ProgramError::NotEnoughAccountKeys); }
+    // 0.3.34: an order that pins a container image is paid on a Confidential Space token (order_proof.rs `attested`);
+    // a PANEL order only by a verdict. An order of every earlier build has 0 in that byte: the forge path, as before.
+    let (g, judge, pr, payees) = match crate::order_proof::judge_kind(order)? {
+        crate::order_proof::FORGE => {
+            let g = crate::order_judge::token(program_id, &o, tok, key, now)?;
+            // in time: shown by the deadline; or, for an order funded with the presentation grace, issued by the forge by the
+            // deadline and shown within GRACE after it (RefundOrder waits exactly as long, so the two never overlap)
+            if o.state != OPEN || !o.in_time(g.iat, now) { return Err(err(E_STATE)); }
+            let judge = judge_ok(&o, &g)?;
+            // issued after the funding (`not_before` is the chain's time then): a proof made before this order existed cannot pay it
+            if g.iat < o.not_before { return Err(err(E_STATE)); }
+            let a = crate::order_judge::audience(&o, judge, &g.aud, now)?;
+            if a.order != *order.key || a.terms != o.terms || a.mode != o.mode { return Err(err(E_AUD)); }
+            not_yet(program_id, &o, &a.payees, per)?;
+            (Some(g), judge, a.pr, a.payees)
+        }
+        crate::order_proof::ATTESTED => (None, Judge::Attested, 0, crate::order_proof::attested(&o, order, tok, key, now)?),
+        _ => return Err(err(E_CLAIMS)),
+    };
+    if per.len() < payees.len() * PER_PAYEE { return Err(ProgramError::NotEnoughAccountKeys); }
     // the token is accepted: from here it is used up, whether it pays or holds
     mark_used(program_id, relayer, used, sys, &sig_hash(tok)?, USED, false)?;
     // HOOK. An order with a QUORUM: this judge's word is recorded, and nothing is paid until enough distinct judges
     // have passed the same artifact (order_terms.rs, 5). The last three accounts are the three markers.
-    if !crate::order_terms::quorum(program_id, relayer, order, sys, &o, &g, judge, accounts)? { return Ok(()); }
-    // where each payee's money goes: the address the token carries; else the payee's bound wallet; else nowhere yet.
-    // The bind account must be ["bind", id] itself (`bound`), so a Bind cannot be hidden.
-    let mut wallets = Vec::with_capacity(a.payees.len());
-    for (k, p) in a.payees.iter().enumerate() {
+    if let Some(g) = &g {
+        if !crate::order_terms::quorum(program_id, relayer, order, sys, &o, g, judge, accounts)? { return Ok(()); }
+    }
+    pay_or_hold(program_id, &Payout { relayer, order, ov, tip_tok, fee_tok, auth, rent_to, mint, token, sys, ata_program }, &o, per, &payees, judge, pr, now)
+}
+
+/// The end of every accepted payment of an order, whoever judged it (PayOrder, and order_proof.rs): where each
+/// payee's money goes is the address the proof carries; else the payee's bound wallet; else nowhere yet. The bind
+/// account must be ["bind", id] itself (`bound`), so a Bind cannot be hidden. One payee with nowhere: the order is
+/// HELD for it; several payees and one with nowhere: refused (E_PAYEE). Otherwise `pay_out`, to the wallets each
+/// payee assigned (`routed`) or resolved here.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn pay_or_hold<'a>(program_id: &Pubkey, a: &Payout<'a, '_>, o: &Order, per: &[AccountInfo<'a>], payees: &[Payee], judge: Judge, pr: u64,
+                              now: i64) -> ProgramResult {
+    if per.len() < payees.len() * PER_PAYEE { return Err(ProgramError::NotEnoughAccountKeys); }
+    let mut wallets = Vec::with_capacity(payees.len());
+    for (k, p) in payees.iter().enumerate() {
         let at = bound(program_id, &per[k * PER_PAYEE], p.id)?;
         match p.address.or(at) { Some(w) => wallets.push(w), None => break }
     }
-    if wallets.len() < a.payees.len() {
-        if a.payees.len() != 1 { return Err(err(E_PAYEE)); }
+    if wallets.len() < payees.len() {
+        if payees.len() != 1 { return Err(err(E_PAYEE)); }
         let until = now.saturating_add(HOLD);
-        let mut d = order.try_borrow_mut_data()?;
+        let mut d = a.order.try_borrow_mut_data()?;
         d[O_STATE] = HELD;
-        put_u64(&mut d, O_PAYEE, a.payees[0].id); put_i64(&mut d, O_HOLD_UNTIL, until);
-        msg!("knos3:held order={} pr={} payee={} until={}", b58(order.key), a.pr, a.payees[0].id, until);
+        put_u64(&mut d, O_PAYEE, payees[0].id); put_i64(&mut d, O_HOLD_UNTIL, until);
+        msg!("knos3:held order={} pr={} payee={} until={}", b58(a.order.key), pr, payees[0].id, until);
         return Ok(());
     }
-    pay_out(program_id, &Payout { relayer, order, ov, tip_tok, fee_tok, auth, rent_to, mint, token, sys, ata_program }, &o, per, &a.payees,
-            &crate::order_terms::routed(program_id, order.key, &o, &a.payees, wallets, per)?, due_now(&o), Some(judge), a.pr, now)
+    pay_out(program_id, a, o, per, payees, &crate::order_terms::routed(program_id, a.order.key, o, payees, wallets, per)?, due_now(o), Some(judge), pr, now)
 }
 
 /// 26 SettleOrder: a HELD order is paid once its payee has bound a wallet. No token is needed: the proof was checked
@@ -223,7 +247,8 @@ pub fn settle_order(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8], 
 /// accounts: relayer(s) order(w) ov(w) refund_token(w) auth rent_to(w) mint token_program
 pub fn refund_order(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8], now: i64) -> ProgramResult {
     let [relayer, order, ov, refund_tok, auth, rent_to, mint, token] = take(accounts)?;
-    if !data.is_empty() { return Err(ProgramError::InvalidInstructionData); }
+    // 0.3.34: with data, a referee panel's FAIL verdict on a PANEL order refunds before the deadline (order_proof.rs)
+    if !data.is_empty() { return crate::order_proof::refund_order_verdict(program_id, accounts, data, now); }
     if !relayer.is_signer { return Err(err(E_ACCOUNTS)); }
     let o = load_order(program_id, order)?;
     let due = match o.state { OPEN => now > o.pay_until(), HELD => now > o.hold_until, _ => false };

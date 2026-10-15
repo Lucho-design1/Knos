@@ -52,7 +52,10 @@ or texts about spreadsheet formats; they are not commitments and did not change.
   0.5 s: the public devnet RPC takes 40 requests of one method per 10 s.
 - After a payment is reported, the job waits at most 10 s for `finalized` on Alpenglow (40 s, `FINAL_WAIT`, on
   TowerBFT). A payment Knos already waited for at `finalized` is final at once: nothing is asked again.
-- The 60 s limit on a transaction's wait is unchanged: it follows the blockhash's life, not finality.
+- The wait for a sent transaction keeps its own ceiling (`knos.chain.wait`), which is not the blockhash's life: with
+  200 ms slots (SIMD-0525) a blockhash lasts about 33 s on devnet, measured on 14 Oct 2026 as lastValidBlockHeight
+  minus the `confirmed` block height over the block rate ([DURABLE_NONCES.md](DURABLE_NONCES.md),
+  `python -m knos.platform.blockhash`). A transaction that must wait for another signer uses a durable nonce instead.
 
 ## "Paid and final in N ms"
 

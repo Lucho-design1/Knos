@@ -1,0 +1,217 @@
+{
+ "label": "MOCK (synthetic, not a real API response): PCBWay partner API responses in the documented shapes and field names (https://api-partner.pcbway.com/Help, one page per endpoint, read 14 Oct 2026) with made-up values; the process names are made up (PCBWay's sample says only 'eg MI, Board Cutting, AOI'); the bench test of the boards is SYNTHETIC",
+ "source": "https://api-partner.pcbway.com/Help",
+ "responses": {
+  "POST /api/Pcb/PcbQuotation": {
+   "status": 200,
+   "body": {
+    "priceList": [
+     {
+      "BuildDays": 5,
+      "BuildText": "5 days",
+      "Express": false,
+      "Price": 33.0,
+      "Standard": true
+     },
+     {
+      "BuildDays": 2,
+      "BuildText": "2 days",
+      "Express": true,
+      "Price": 61.0,
+      "Standard": false
+     }
+    ],
+    "Shipping": {
+     "ShipCost": 22.0,
+     "ShipDays": "4-7",
+     "Weight": 0.3,
+     "IsRas": false
+    },
+    "Status": "ok",
+    "ErrorText": "",
+    "Code": 0
+   }
+  },
+  "POST /api/Pcb/PlaceOrder": {
+   "status": 200,
+   "body": {
+    "OrderNo": "W0000KNOSFX1",
+    "DeliveryDate": "2026-10-21T00:00:00+08:00",
+    "Price": 33.0,
+    "Status": "ok",
+    "ErrorText": "",
+    "Code": 0
+   }
+  },
+  "POST /api/Pcb/QueryOrderProcess": {
+   "status": 200,
+   "body": {
+    "AllProcess": [
+     "MI",
+     "Board Cutting",
+     "Drilling",
+     "Plating",
+     "Outer Layer",
+     "AOI",
+     "Solder Mask",
+     "Silkscreen",
+     "Surface Finish",
+     "E-Test",
+     "Routing",
+     "FQC",
+     "Packing"
+    ],
+    "List": [
+     {
+      "Name": "MI",
+      "Time": "2026-10-15T10:00:00+08:00"
+     },
+     {
+      "Name": "Board Cutting",
+      "Time": "2026-10-15T10:00:00+08:00"
+     },
+     {
+      "Name": "Drilling",
+      "Time": "2026-10-15T10:00:00+08:00"
+     },
+     {
+      "Name": "Plating",
+      "Time": "2026-10-15T10:00:00+08:00"
+     },
+     {
+      "Name": "Outer Layer",
+      "Time": "2026-10-16T10:00:00+08:00"
+     },
+     {
+      "Name": "AOI",
+      "Time": "2026-10-16T10:00:00+08:00"
+     },
+     {
+      "Name": "Solder Mask",
+      "Time": "2026-10-16T10:00:00+08:00"
+     },
+     {
+      "Name": "Silkscreen",
+      "Time": "2026-10-16T10:00:00+08:00"
+     },
+     {
+      "Name": "Surface Finish",
+      "Time": "2026-10-17T10:00:00+08:00"
+     },
+     {
+      "Name": "E-Test",
+      "Time": "2026-10-17T10:00:00+08:00"
+     },
+     {
+      "Name": "Routing",
+      "Time": "2026-10-17T10:00:00+08:00"
+     },
+     {
+      "Name": "FQC",
+      "Time": "2026-10-17T10:00:00+08:00"
+     },
+     {
+      "Name": "Packing",
+      "Time": "2026-10-18T10:00:00+08:00"
+     }
+    ],
+    "Status": "ok",
+    "ErrorText": "",
+    "Code": 0
+   }
+  },
+  "POST /api/Pcb/CheckOrderDetails": {
+   "status": 200,
+   "body": {
+    "PcbModel": {
+     "Length": 50.0,
+     "Width": 40.0,
+     "Layers": 2,
+     "Qty": 10,
+     "Thickness": 1.6,
+     "Material": "FR-4",
+     "SolderMask": "Green",
+     "SurfaceFinish": "HASL lead free",
+     "MinTrackSpacing": "6/6mil",
+     "MinHoleSize": 0.3,
+     "GroupNo": "G0000KNOSFX",
+     "Status": 0,
+     "IsPaid": true,
+     "Price": 33.0,
+     "BuildDays": 5,
+     "AuditResult": "pass"
+    },
+    "Status": "ok",
+    "ErrorText": "",
+    "Code": 0
+   }
+  }
+ },
+ "spec": {
+  "Length": 50.0,
+  "Width": 40.0,
+  "Layers": 2,
+  "Qty": 10,
+  "Thickness": 1.6,
+  "Material": "FR-4",
+  "FR4Tg": "TG150",
+  "DesignInPanel": 1,
+  "BoardType": "Single PCB",
+  "MinTrackSpacing": "6/6mil",
+  "MinHoleSize": 0.3,
+  "SolderMask": "Green",
+  "Silkscreen": "White",
+  "SilkSides": 0,
+  "Goldfingers": "No",
+  "SurfaceFinish": "HASL lead free",
+  "ViaProcess": "Tenting vias",
+  "FinishedCopper": "1 oz Cu",
+  "PcbFileUrl": "https://example.invalid/knos-fixture/gerbers.zip",
+  "PcbFileName": "knos-sensor-board.zip"
+ },
+ "qc": {
+  "protocol_keys": [
+   "Layers",
+   "Thickness",
+   "Material",
+   "Qty",
+   "SurfaceFinish"
+  ],
+  "runs": 3,
+  "checks": []
+ },
+ "claim": {
+  "metric": "supply_current_ma",
+  "op": "<=",
+  "value": 12.0,
+  "agg": "max"
+ },
+ "bench": {
+  "label": "SYNTHETIC bench test (a referee re-run measuring each board against the sealed spec)",
+  "file": "bench-knos-sensor-board.json",
+  "sha256": "75e15e6f3826d55c4965ea5bc99a58ff71dc87f84457f4bf71ed73c41ad0df24",
+  "boards": [
+   {
+    "board": "board-1",
+    "measurements": {
+     "supply_current_ma": 18.2,
+     "osc_hz_error_ppm": 4
+    }
+   },
+   {
+    "board": "board-2",
+    "measurements": {
+     "supply_current_ma": 17.9,
+     "osc_hz_error_ppm": 6
+    }
+   },
+   {
+    "board": "board-3",
+    "measurements": {
+     "supply_current_ma": 18.6,
+     "osc_hz_error_ppm": 3
+    }
+   }
+  ]
+ }
+}
