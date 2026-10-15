@@ -248,18 +248,19 @@ def sealed_tier(bundle_file, sha256: str, spec: dict, parent_dir, candidate_dir,
         again = [pytest([tests], candidate_dir, tmp / f"t{i + 2}", rootdir=bundle, sandbox=sandbox, seed=str(i + 1))
                  for i in range(max(0, reruns))]
         out["tests"] = _slim(first_t)
-        agree, why = True, []
+        agree = True
+        differ: list[str] = []
         for a in again:
             ok, w = rerun_agrees({"passed": first_t["passed_all"]}, {"passed": a["passed_all"]})
-            agree, why = agree and ok, why + w
+            agree, differ = agree and ok, differ + w
         if "metric_candidate" in out:
             vals = out["metric_reruns"]
             for v in vals[1:]:
                 ok, w = rerun_agrees({"passed": True, "metric": vals[0]}, {"passed": True, "metric": v},
                                      {"abs": tolerance_abs, "rel": 0.0})
-                agree, why = agree and ok, why + w
+                agree, differ = agree and ok, differ + w
         out["rerun_agrees"] = agree
-        out["rerun_reasons"] = why
+        out["rerun_reasons"] = differ
         metric_ok = "metric_candidate" not in out or (out["metric_candidate"]["ok"] and out["metric_parent"]["ok"])
         out["passed"] = bool(first_t["passed_all"] and agree and metric_ok)
         return out

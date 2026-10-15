@@ -148,13 +148,6 @@ def read_token_amount(data: bytes | None) -> int | None:
     return int.from_bytes(bytes(data)[64:72], "little")
 
 
-def read_token_owner(data: bytes | None) -> str | None:
-    if data is None or len(data) < 64:
-        return None
-    from solders.pubkey import Pubkey
-    return str(Pubkey.from_bytes(bytes(data)[32:64]))
-
-
 def read_multisig(data: bytes | None) -> dict | None:
     """{m, n, initialized, signers} of an SPL Token multisig account."""
     if data is None or len(data) < MULTISIG_LEN:

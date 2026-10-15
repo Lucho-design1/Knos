@@ -19,6 +19,7 @@ import json
 import os
 import subprocess
 import urllib.request
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -75,7 +76,7 @@ def git_read(repo: Path, ref: str | None, path: str) -> tuple[bytes, str]:
     return raw.stdout, sha.stdout.strip()
 
 
-def http_read(url: str, token_env: str | None, env: dict | None = None, opener=None) -> bytes:
+def http_read(url: str, token_env: str | None, env: Mapping[str, str] | None = None, opener=None) -> bytes:
     env = os.environ if env is None else env
     headers = {"Accept": "application/json", "User-Agent": "knos-outcome"}
     if token_env:

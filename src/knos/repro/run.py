@@ -176,7 +176,7 @@ def reported(repo: Path, claim: dict) -> tuple[float | None, str]:
         return None, f"{rep['file']}:{rep['key']} could not be read"
 
 
-def _metric(row: dict, name: str):
+def _metric(row: dict | None, name: str):
     v = row["metrics"].get(name) if row else None
     return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) and v == v else None
 
@@ -198,10 +198,10 @@ def judge(spec: dict, runs: dict[str, dict], repo: Path) -> tuple[list[dict], li
             whys.append(rep_why or f"the repository reports {rep:g} for {c['id']}, and knos.yml claims {c['expected']:g}")
             cheats.append({"rule": "reported_mismatch", "claim": c["id"], "paths": [c["reported"]["file"]]})
         for which, got, tol in (("rerun", rerun, c["tolerance"]), ("heldout", held, c["heldout_tolerance"])):
-            r = runs.get(which)
-            if not r:
+            ran = runs.get(which)
+            if not ran:
                 continue
-            if r["why"] and got is None:
+            if ran["why"] and got is None:
                 continue
             if got is None:
                 whys.append(f"the {which} run wrote no number for {c['metric']}")

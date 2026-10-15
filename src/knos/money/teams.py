@@ -199,7 +199,7 @@ def dashboard(events: list[dict], team: str, *, check: ChainCheck | None = None,
     cfg = cfg or fees_config.load()
     mine = [e for e in events if e.get("team") == team]
     u = usage(mine, team).get(team, {})
-    tot = Counter()
+    tot: Counter[str] = Counter()
     for c in u.values():
         tot.update(c)
     rules = Counter(r for e in mine if e["kind"] == "verification" for r in (e.get("cheats") or []))

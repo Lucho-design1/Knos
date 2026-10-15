@@ -130,10 +130,10 @@ def signed_verdict(verdict: Any, claim_id: str, *, funder: str | None = None, no
         label = referees.panel_rule(keys, funder=funder, unlisted_panel=True if unlisted else False)
     except referees.PanelError as why:
         raise GraduationError(f"panel: {why}") from None
-    ok, why = V.check(msg, sigs, keys, m, now=int(time.time()) if now is None else now, used=set(), record=False,
-                      unlisted_panel=True)
+    ok, reason = V.check(msg, sigs, keys, m, now=int(time.time()) if now is None else now, used=set(), record=False,
+                         unlisted_panel=True)
     if not ok:
-        raise GraduationError(f"the signed verdict does not hold: {why}")
+        raise GraduationError(f"the signed verdict does not hold: {reason}")
     return label
 
 

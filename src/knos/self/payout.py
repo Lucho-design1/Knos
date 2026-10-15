@@ -23,7 +23,7 @@ SIG = re.compile(r"Signature:\s*([1-9A-HJ-NP-Za-km-z]{80,90})")
 
 
 class PayoutError(RuntimeError):
-    pass
+    partial: dict | None = None         # what was sent when only part of a payout went out (execute sets it)
 
 
 def plan(target: dict, fees=None) -> dict:

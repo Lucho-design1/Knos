@@ -205,7 +205,9 @@ def good(value: str | None = None) -> tuple[str, ...]:
 
 def reached(status: dict | None, value: str | None = None) -> bool:
     """Whether one entry of getSignatureStatuses has reached the commitment."""
-    return bool(status) and status.get("confirmationStatus") in good(value)  # type: ignore[union-attr]
+    if not status:
+        return False
+    return status.get("confirmationStatus") in good(value)
 
 
 def final_wait(url: str | None, ask=None) -> float:
@@ -227,7 +229,7 @@ _KEEP = 2048
 def timed(signature: str, sent: float, done: float, commitment_word: str, url: str | None = None) -> dict:
     """Note that `signature`, sent at `sent` (time.monotonic), reached `commitment_word` at `done`."""
     row = {"final_ms": max(0, round((done - sent) * 1000)), "commitment": commitment_word,
-           "final": is_final(commitment_word), "alpenglow": bool(url) and _cached_active(url)}
+           "final": is_final(commitment_word), "alpenglow": _cached_active(url) if url else False}
     with _LOCK:
         if len(_TIMES) >= _KEEP:
             _TIMES.pop(next(iter(_TIMES)))

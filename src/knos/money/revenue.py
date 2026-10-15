@@ -79,8 +79,8 @@ def one_billion(cfg: fees_config.FeeConfig | None = None) -> dict:
     """Arithmetic, not a forecast: the yearly volume each line alone would need for 1B USD of fees at the config's rates."""
     cfg = cfg or fees_config.load()
     f = cfg.doc["fees"]
-    out = {"label": "DERIVED: 1,000,000,000 USD divided by each rate in config/fees.yaml. Arithmetic on the rates, not a forecast, not a plan.",
-           "fees_usd": str(TARGET)}
+    out: dict[str, Any] = {"label": "DERIVED: 1,000,000,000 USD divided by each rate in config/fees.yaml. Arithmetic on the rates, not a forecast, not a plan.",
+                       "fees_usd": str(TARGET)}
     out["payout_volume_usd_year"] = str((TARGET * 10_000 / f["payout"]["rate_bps"]).quantize(Decimal(1)))
     out["verifications_year"] = str((TARGET / _d(f["verification"]["usd_each"])).quantize(Decimal(1)))
     for kind, key in (("bounty_platform", "bounty_volume_usd_year"), ("lab_order", "lab_order_volume_usd_year")):

@@ -52,9 +52,6 @@ class Proof:
         """A with y -> q - y: what the program reads"""
         return bn254.g1_to_bytes(bn254.g1_neg(bn254.g1_from_bytes(self.a)))
 
-    def to_json(self) -> dict:
-        return {"a": self.a.hex(), "b": self.b.hex(), "c": self.c.hex()}
-
 
 def inputs_from_json(doc: dict) -> list[int]:
     return [int(x, 16) for x in doc["inputs"]]

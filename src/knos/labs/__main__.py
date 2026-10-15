@@ -40,8 +40,8 @@ def _try(name: str, live: bool) -> int:
         res = {"mode": "live", "label": a.label, "lab_verdict": lv.verdict,
                "outcome_verdict": verdicts.outcome_verdict(lab.example, r, lv).verdict, "qc": r.qc}
     else:
-        r = lab.results(o)
-        res = {k: r[k] for k in ("state", "qc", "lab_verdict", "outcome_verdict", "settle", "source")}
+        got = lab.results(o)
+        res = {k: got[k] for k in ("state", "qc", "lab_verdict", "outcome_verdict", "settle", "source")}
         res["mode"] = "fixture"
     print(json.dumps({**out, "results": res}, indent=1, default=str))
     return 0

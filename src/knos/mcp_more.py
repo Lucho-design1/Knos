@@ -118,7 +118,7 @@ def token(address: str, server) -> dict:
     return {"address": address, **token22.check(str(got[0]), bytes(got[1]))}
 
 
-def prompt(name: str, args: dict) -> dict:
+def prompt(name: str | None, args: dict) -> dict:
     args = {k: str(v) for k, v in (args or {}).items() if isinstance(v, (str, int))}
     if name == "earn_a_bounty":
         where = f" in {args['repo']}" if args.get("repo") else ""
@@ -159,8 +159,10 @@ def asks(params: dict) -> bool:
     confirmation off."""
     if os.environ.get("KNOS_AGENT_CONFIRM", "").strip() == "0":
         return False
-    meta = params.get("_meta") if isinstance(params.get("_meta"), dict) else {}
-    caps = meta.get(CAPS_KEY) if isinstance(meta.get(CAPS_KEY), dict) else {}
+    meta = params.get("_meta")
+    meta = meta if isinstance(meta, dict) else {}
+    caps = meta.get(CAPS_KEY)
+    caps = caps if isinstance(caps, dict) else {}
     el = caps.get("elicitation")
     return isinstance(el, dict) and (not el or "form" in el)
 
@@ -189,8 +191,10 @@ def approved(tool: str, params: dict) -> tuple[set[str], str | None, int | None]
         return isinstance(d, str) and hmac.compare_digest(str(seals.get(d, "")), _seal(d, exp, role))
     good = {d for d in st.get("approved", []) if sealed(d, "approved")}
     pending = st.get("pending")
-    responses = params.get("inputResponses") if isinstance(params.get("inputResponses"), dict) else {}
-    answer = responses.get("confirm") if isinstance(responses.get("confirm"), dict) else {}
+    responses = params.get("inputResponses")
+    responses = responses if isinstance(responses, dict) else {}
+    answer = responses.get("confirm")
+    answer = answer if isinstance(answer, dict) else {}
     action = answer.get("action")
     if sealed(pending, "pending") and action is not None:
         if action == "accept" and isinstance(answer.get("content"), dict) and answer["content"].get("post") is True:

@@ -64,10 +64,10 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "flow":
         from .flow import run_flow
         out = Path(a.out) if a.out else Path(tempfile.mkdtemp(prefix="knos-flow-"))
-        d = run_flow(Path(a.root), out, wallets=Path(a.wallets) if a.wallets else None, team=a.team, rounds=a.rounds,
-                     cheater=not a.no_cheater, usage=Path(a.usage) if a.usage else None)
+        done = run_flow(Path(a.root), out, wallets=Path(a.wallets) if a.wallets else None, team=a.team, rounds=a.rounds,
+                        cheater=not a.no_cheater, usage=Path(a.usage) if a.usage else None)
         print(f"flow: {out / 'flow.html'}")
-        return 0 if any(s.get("step") == "referee" and s.get("passed") for s in d["steps"]) else 1
+        return 0 if any(s.get("step") == "referee" and s.get("passed") for s in done["steps"]) else 1
     if a.cmd == "demo":
         from .demo import run_demo
         out = Path(a.out) if a.out else Path(tempfile.mkdtemp(prefix="knos-nebius-"))

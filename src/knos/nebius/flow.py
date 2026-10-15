@@ -33,6 +33,7 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 
 from .. import referee
 from ..money import fees_config, teams
@@ -185,7 +186,7 @@ def run_flow(root: Path, out: Path, *, wallets: Path | None = None, team: str = 
             f"{'pass' if own.passed else 'fail'}" + ("" if cc.passed else f"; {cc.reasons[:1]}"))
 
     # 6. paid
-    paid ={"step": "paid", "paid": False, "why": "the referee refused: the escrow stays, and returns to the team at its deadline"}
+    paid: dict[str, Any] = {"step": "paid", "paid": False, "why": "the referee refused: the escrow stays, and returns to the team at its deadline"}
     if c.passed:
         from solders.keypair import Keypair
 

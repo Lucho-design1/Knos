@@ -35,6 +35,7 @@ async def _run(protocol_path: str, sealed: dict) -> dict:
     from pylabrobot.resources.hamilton import STARLetDeck
 
     spec = importlib.util.spec_from_file_location("knos_submitted_protocol", protocol_path)
+    assert spec is not None and spec.loader is not None, f"not a Python file: {protocol_path}"
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     set_tip_tracking(True)

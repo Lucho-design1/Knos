@@ -8,7 +8,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-from knos import a2a, mcp, mcp_ext
+from knos import a2a, mcp
 
 ROOT = Path(__file__).resolve().parents[1]
 TASKS = {"_meta": {"io.modelcontextprotocol/clientCapabilities": {"extensions": {"io.modelcontextprotocol/tasks": {}}}}}

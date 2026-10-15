@@ -16,7 +16,6 @@ change to the referee).
 from __future__ import annotations
 
 import fnmatch
-import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -525,7 +524,3 @@ def matches(path: str, globs: Iterable[str]) -> bool:
         if not any(c in g for c in "*?[") and (path == g or path.startswith(g.rstrip("/") + "/")):
             return True
     return False
-
-
-def to_json(findings: Iterable[Finding]) -> str:
-    return json.dumps([f.to_dict() for f in findings], sort_keys=True)

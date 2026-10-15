@@ -18,6 +18,7 @@ an environment can quote but never order by accident.
 """
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import os
@@ -62,8 +63,8 @@ class Spec:
     OUTCOME verdict holds the result to it. The lab sees `protocol`; `claim` never goes to the lab."""
     field: str
     protocol: dict
-    qc: dict = field(default_factory=dict)
-    claim: dict = field(default_factory=dict)
+    qc: dict = dataclasses.field(default_factory=dict)       # dataclasses.field: in this class `field` names the str above
+    claim: dict = dataclasses.field(default_factory=dict)
     title: str = ""
 
     def hash(self) -> str:
@@ -215,9 +216,12 @@ class Adapter:
         self.mode = mode
         self.base = (base or os.environ.get(f"KNOS_{self.NAME.upper()}_BASE") or self.BASE).rstrip("/")
         self._key = key
+        self.fixtures: Fixtures | None             # None: live, or an adapter with no recorded responses
+        self.transport: Transport | None           # None: an adapter that never calls a lab (manual, robotics)
         if mode == "fixture":
-            self.fixtures = Fixtures(self.NAME)
-            self.transport: Transport = transport or self.fixtures
+            fixtures = Fixtures(self.NAME)
+            self.fixtures = fixtures
+            self.transport = transport or fixtures
         else:
             self.fixtures = None
             self.transport = transport or http
@@ -251,6 +255,8 @@ class Adapter:
               ok: tuple[int, ...] = (200, 201, 202), headers: dict | None = None) -> tuple[int, dict, dict]:
         if spends and self.mode == "live" and os.environ.get(LIVE_ORDERS) != "1":
             raise LabError(f"{self.NAME}: a live order spends money; set {LIVE_ORDERS}=1 to allow it (Knos CI never does)")
+        if self.transport is None:
+            raise LabError(f"{self.NAME}: this adapter calls no lab")
         status, answer, got = self.transport(method, self.base + path, body, {**self.auth_headers(), **(headers or {})})
         if status not in ok:
             raise LabError(f"{self.NAME} answered {status} to {method} {path}: {_why(answer)}")

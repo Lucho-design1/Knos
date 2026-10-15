@@ -133,11 +133,11 @@ def register(app, help_lines: list | None = None) -> None:
     """`knos self` in the knos command (src/knos/cli.py _MODULES row)."""
     import importlib
     typer = importlib.import_module("typer")
-    globals()["typer"] = typer      # the command's `ctx: typer.Context` is a string annotation read from this module
     if help_lines is not None:
         help_lines.append(("self", "For a repository's workflows", "Knos builds Knos: agents improve product code, judged by the referee from main, paid on devnet."))
 
-    @app.command("self", context_settings={"allow_extra_args": True, "ignore_unknown_options": True, "help_option_names": []})
-    def self_(ctx: typer.Context) -> None:
+    def self_(ctx) -> None:
         """Knos builds Knos: targets, the loop, the archive, audits, rollback, referee changes (docs/reference/SELF.md)."""
         raise typer.Exit(main(list(ctx.args) or ["--help"]))
+    self_.__annotations__["ctx"] = typer.Context       # named here: this module's annotations are text, and typer is not a global
+    app.command("self", context_settings={"allow_extra_args": True, "ignore_unknown_options": True, "help_option_names": []})(self_)

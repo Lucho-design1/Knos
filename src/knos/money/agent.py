@@ -108,8 +108,8 @@ def _fees(a: dict, _ledger, cfg: fees_config.FeeConfig) -> dict:
 
 def _graduate(a: dict, _ledger, cfg: fees_config.FeeConfig) -> dict:
     from .. import graduation
-    p = graduation.plan(a.get("verdict"), claim_id=a.get("claim_id"), repo_id=a.get("repo_id"), amount=a.get("amount"),
-                        contributors=a.get("contributors"), milestone=a.get("milestone", 1), min_buyers=a.get("min_buyers", 1),
+    p = graduation.plan(a.get("verdict"), claim_id=a.get("claim_id"), repo_id=a.get("repo_id"), amount=a.get("amount"),  # type: ignore[arg-type]  # JSON tool arguments: plan() checks each one and refuses a wrong type
+                        contributors=a.get("contributors"), milestone=a.get("milestone", 1), min_buyers=a.get("min_buyers", 1),  # type: ignore[arg-type]  # as above
                         min_locked=a.get("min_locked", 0), cfg=cfg)
     out: dict = {"plan": p, "said": (f"Graduates: a milestone escrow of {p['escrow']['amount'] / 1e6:,.2f} (the funder pays "
                                      f"{p['escrow']['funder_pays'] / 1e6:,.2f} with the fee) and a pre-order pool. Nothing was sent.")}
@@ -128,7 +128,7 @@ def _preorder(a: dict, ledger, cfg: fees_config.FeeConfig) -> dict:
     if not isinstance(p, dict) or "pool" not in p:
         raise Refused("plan: the plan knos_graduate returned")
     buyer = _pk(a.get("buyer"), "buyer")
-    amount = a.get("amount")
+    amount: int = a.get("amount")  # type: ignore[assignment]  # a JSON tool argument: preorder_ix() refuses it unless an int in range, before any other use
     ix = graduation.preorder_ix(p, buyer, _pk(a.get("buyer_token"), "buyer_token"), _pk(a.get("mint"), "mint"), amount, seq=int(a.get("seq", 0)))
     fee = cfg.fee("payout", amount)
     out = {"order": str(graduation.address(p, "pool", buyer, int(a.get("seq", 0)))), "amount": amount, "fee": fee, "buyer_pays": amount + fee,

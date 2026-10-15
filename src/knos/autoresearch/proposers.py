@@ -19,7 +19,6 @@ import ast
 import json
 import random
 import re
-import shlex
 import subprocess
 from dataclasses import dataclass, field
 
@@ -56,6 +55,8 @@ def read_config(source: str) -> dict:
 def write_config(source: str, cfg: dict) -> str:
     body = "{\n" + "".join(f"    {k!r}: {v!r},\n" for k, v in cfg.items()) + "}"
     m = CONFIG_RE.search(source)
+    if not m:
+        raise ValueError("no `CONFIG = {...}` block in the editable file")
     return source[:m.start(1)] + body + source[m.end(1):]
 
 
@@ -138,7 +139,8 @@ class CommandProposer:
     """Any agent behind a command line: prompt on stdin, the new file on stdout."""
 
     def __init__(self, command: str, timeout_s: float = 600.0, runner=subprocess.run):
-        self.argv = shlex.split(command)
+        from ..gate.sealed import split     # POSIX words, or on Windows words whose backslashes are path separators
+        self.argv = split(command)
         if not self.argv:
             raise ValueError("an empty proposer command")
         self.name = "cmd:" + self.argv[0]

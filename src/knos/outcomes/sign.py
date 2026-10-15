@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from solders.keypair import Keypair
 from solders.pubkey import Pubkey
@@ -61,7 +62,7 @@ def verify(spec: dict, sigs: dict) -> list[str]:
 
 
 def add(path: Path, spec: dict, entry: dict) -> dict:
-    doc = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {"spec_hash": spec_hash(spec), "signatures": []}
+    doc: dict[str, Any] = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {"spec_hash": spec_hash(spec), "signatures": []}
     if doc.get("spec_hash") != spec_hash(spec):
         doc = {"spec_hash": spec_hash(spec), "signatures": []}
     doc["signatures"] = [s for s in doc["signatures"] if s.get("role") != entry["role"]] + [entry]
@@ -77,5 +78,5 @@ def comment(spec: dict, sigs: dict, orders: list[dict] | None = None) -> str:
         lines.append(f"- {s['role']} @{s['github']} ({s['address']}): `{s['signature']}`")
     for o in orders or []:
         lines.append(f"- tier {o['name']}: order `{o['address']}`, terms `{o['terms_hash']}`, {o['amount'] / 1e6:g} test units")
-    lines += ["", f"Check: `knos outcome verify-signatures outcome.yaml` (message: knos-outcome:v1:<hash>)."]
+    lines += ["", "Check: `knos outcome verify-signatures outcome.yaml` (message: knos-outcome:v1:<hash>)."]
     return "\n".join(lines)

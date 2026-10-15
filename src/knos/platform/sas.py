@@ -134,7 +134,8 @@ def read_attestation(data: bytes) -> Attestation:
 
 def decode(layout: bytes, names: tuple[str, ...], data: bytes) -> dict:
     """The attestation's data as {field name: value}, by the schema's layout. Refused when the bytes do not fit."""
-    r, out = _R(data, 0), {}
+    r = _R(data, 0)
+    out: dict[str, object] = {}
     for i, code in enumerate(layout):
         if code not in TYPES:
             raise ValueError(f"schema type code {code} is not one Knos decodes")
@@ -149,6 +150,7 @@ def decode(layout: bytes, names: tuple[str, ...], data: bytes) -> dict:
         elif kind == "char":
             out[name] = chr(int.from_bytes(r.take(4), "little"))
         else:
+            assert size is not None      # only string and vec_u8 have no fixed size, and both are read above
             out[name] = int.from_bytes(r.take(size), "little", signed=kind.startswith("i"))
     if r.i != len(r.d):
         raise ValueError("the data is longer than the schema's layout")
@@ -242,5 +244,6 @@ def encode(layout: bytes, values: list) -> bytes:
         elif kind == "char":
             out += ord(v).to_bytes(4, "little")
         else:
+            assert size is not None      # only string and vec_u8 have no fixed size, and both are written above
             out += int(v).to_bytes(size, "little", signed=kind.startswith("i"))
     return out

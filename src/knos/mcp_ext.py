@@ -91,7 +91,7 @@ class Tasks:
     def get(self, params: dict) -> dict:
         tid = params.get("taskId")
         with self._lock:
-            t = self._tasks.get(tid)
+            t = self._tasks.get(tid) if isinstance(tid, str) else None
             if t is None:
                 raise KeyError(f"no task {tid!r} (it finished more than ttlMs ago, or this server restarted)")
             return {"resultType": "complete", **t}
@@ -99,7 +99,7 @@ class Tasks:
     def cancel(self, params: dict) -> dict:
         tid = params.get("taskId")
         with self._lock:
-            t = self._tasks.get(tid)
+            t = self._tasks.get(tid) if isinstance(tid, str) else None
             if t is None:
                 raise KeyError(f"no task {tid!r}")
             if t["status"] in ("working", "input_required"):

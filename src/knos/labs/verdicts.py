@@ -26,7 +26,7 @@ import statistics
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 from .base import Results, Spec, canonical, sha256_hex
 
@@ -86,7 +86,8 @@ def _agg(values: list[Any], agg: str) -> Any:
     if agg in ("all", "any"):
         return values
     nums = [float(v) for v in values]
-    return {"median": statistics.median, "min": min, "max": max, "mean": statistics.fmean}[agg](nums)
+    pick: dict[str, Callable[[list[float]], float]] = {"median": statistics.median, "min": min, "max": max, "mean": statistics.fmean}
+    return pick[agg](nums)
 
 
 def condition(results: Results, cond: dict) -> tuple[bool, dict]:

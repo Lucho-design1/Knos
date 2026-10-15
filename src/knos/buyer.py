@@ -117,7 +117,7 @@ def calibrate(bundle, base, reference, *, issue: str = "0", sandbox: str = "auto
     bundle = Path(bundle)
     notes = check_bundle(bundle)
     sealed = referee.seal(bundle, issue=str(issue))
-    got = {}
+    got: dict[str, dict] = {}
     # The judge is fail-to-pass: judging the base against itself never passes, but its reasons say whether the hidden
     # tests already pass on the base ("already pass on the base"), which is what a buyer needs to know.
     c = referee.works(Path(base), Path(base), sealed, hidden_dir=bundle, sandbox=sandbox, scan=False)

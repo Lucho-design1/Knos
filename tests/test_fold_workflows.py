@@ -102,13 +102,13 @@ def test_the_explainer_counts_both_homes_as_the_public_workflows():
     from knos import tasks
     assert tasks.PUBLIC_WORKFLOW_HOMES == (OLD, NEW) and tasks.PUBLIC_WORKFLOWS == NEW and tasks.OLD_PUBLIC_WORKFLOWS == OLD
 
-    class O:
+    class Order:
         state, deadline, payee_id = "open", 2_000_000_000, 0
 
         def __init__(self, home):
             self.wf_repo_hash, self.wf_sha = tasks.repo_hash(home), PIN
     for home, public in ((OLD, True), (NEW, True), ("drexthealpha/knos-workflows-rc", False)):
-        got = tasks.facts("octo/widgets#5", [O(home)], 1_000)
+        got = tasks.facts("octo/widgets#5", [Order(home)], 1_000)
         assert got["orders"][0]["wf_public"] is public, home
 
 

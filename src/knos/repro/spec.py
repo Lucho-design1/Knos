@@ -265,7 +265,8 @@ def normalise(doc) -> dict:
     claims_in = doc.get("claims")
     if not isinstance(claims_in, list) or not claims_in:
         raise SpecError("claims: a list of at least one claim")
-    claims, seen = [], set()
+    claims: list[dict] = []
+    seen: set[str] = set()
     for k, c in enumerate(claims_in):
         where = f"claims[{k}]"
         if not isinstance(c, dict) or set(c) - {"id", "metric", "expected", "tolerance", "heldout_tolerance", "reported"}:

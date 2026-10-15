@@ -92,7 +92,7 @@ def run(task: Task, proposer, out: Path, iterations: int = 12, record_root: Path
     rows = [("0", "researcher", "baseline", f"{best:.4f}", f"{base_v.reported.get('val_accuracy', float('nan')):.4f}",
              f"{base_v.wall_s:.2f}", "baseline")]
     say(f"#0 baseline  dev {best:.4f}")
-    kept_by = Counter()
+    kept_by: Counter[str] = Counter()
 
     for i in range(1, iterations + 1):
         ctx = Context(task.program, task.idea, task.editable, best_src, rep.history)

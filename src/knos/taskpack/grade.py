@@ -27,7 +27,7 @@ def touched(patch: str) -> list[str] | None:
     `diff --git` line), plus any path the headers name. None when git cannot read the patch: it is then refused."""
     with tempfile.TemporaryDirectory(prefix="knos-touched-") as tmp:
         f = Path(tmp) / "c.patch"
-        f.write_text(patch, encoding="utf-8")
+        f.write_bytes(patch.encode("utf-8"))      # the patch's own bytes: write_text would end its lines with CRLF on Windows
         got = subprocess.run(["git", "apply", "--numstat", "-z", str(f)], cwd=tmp, capture_output=True, timeout=60)
     if got.returncode != 0:
         return None
@@ -106,7 +106,7 @@ def grade(pack: Path | str, repo: Path | str, patch: str, *, key: bytes | None =
     with tempfile.TemporaryDirectory(prefix="knos-grade-") as tmp:
         where = Path(tmp) / "work"
         ex.tree(Path(repo), m["source"]["base_commit"], where)
-        (Path(tmp) / "candidate.patch").write_text(patch, encoding="utf-8")
+        (Path(tmp) / "candidate.patch").write_bytes(patch.encode("utf-8"))     # as written: no CRLF on Windows
         got = subprocess.run(["git", "apply", "--whitespace=nowarn", str(Path(tmp) / "candidate.patch")], cwd=str(where), capture_output=True, text=True, timeout=60)
         if got.returncode != 0:
             out["cheats"] = []

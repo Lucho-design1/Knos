@@ -70,11 +70,11 @@ def main(argv=None) -> int:
     s.add_argument("--pubkey", default=None, help="an ed25519 key as identity, with --signature of knos-game:<game id>:join:<name>")
     s.add_argument("--signature", default=None)
     s = sub.add_parser("submit")
-    for a in ("dir", "player", "key", "file"):
-        s.add_argument(a)
+    for arg in ("dir", "player", "key", "file"):
+        s.add_argument(arg)
     s = sub.add_parser("play")
-    for a in ("dir", "player", "key"):
-        s.add_argument(a)
+    for arg in ("dir", "player", "key"):
+        s.add_argument(arg)
     s.add_argument("--agent", required=True)
     s.add_argument("--n", type=int, default=1)
     s = sub.add_parser("panel")
@@ -121,7 +121,6 @@ def main(argv=None) -> int:
         elif a.cmd == "finish":
             _print(g.finish())
         elif a.cmd == "pot":
-            from . import pot
             from .. import chain
             from . import payout
             _print(pot_report(g, chain.ledger))
@@ -237,14 +236,14 @@ def register(app, help_lines: list | None = None) -> None:
     """`knos game` in the knos command (src/knos/cli.py _MODULES row)."""
     import importlib
     typer = importlib.import_module("typer")
-    globals()["typer"] = typer
     if help_lines is not None:
         help_lines.append(("game", "For a repository's workflows", "Many attempts at once: people and AI scientists play one sealed goal; funders pool a pot."))
 
-    @app.command("game", context_settings={"allow_extra_args": True, "ignore_unknown_options": True, "help_option_names": []})
-    def game_(ctx: typer.Context) -> None:
+    def game_(ctx) -> None:
         """A Knos game: one sealed goal, people and AI scientists, one referee, a pooled pot (docs/reference/GAME.md)."""
         raise typer.Exit(main(list(ctx.args) or ["--help"]))
+    game_.__annotations__["ctx"] = typer.Context       # named here: this module's annotations are text, and typer is not a global
+    app.command("game", context_settings={"allow_extra_args": True, "ignore_unknown_options": True, "help_option_names": []})(game_)
 
 
 if __name__ == "__main__":

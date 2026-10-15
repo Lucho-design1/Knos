@@ -182,7 +182,9 @@ def read_channel(data: bytes | None) -> Channel | None:
     if data is None or len(data) != 256:
         return None
     d, u = bytes(data), (lambda a, b: int.from_bytes(bytes(data)[a:b], "little"))
-    k = (lambda a: Pubkey.from_bytes(d[a:a + 32]))
+
+    def k(a: int) -> Pubkey:
+        return Pubkey.from_bytes(d[a:a + 32])
     return Channel(STATUS.get(d[3], f"unknown {d[3]}"), u(4, 12), u(12, 20), u(20, 28), u(28, 36), u(52, 56), d[56:88],
                    k(88), k(120), k(152), k(184), k(216), u(248, 256))
 

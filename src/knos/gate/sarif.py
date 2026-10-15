@@ -11,13 +11,13 @@ Only what the verdict already says leaves here (rule, category, path, detail): n
 and `knos.gate.run` checks this text against the hidden files' lines before it is written, as it does the comment.
 GitHub's docs: https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/sarif-support-for-code-scanning
 and https://docs.github.com/en/rest/code-scanning/code-scanning#upload-an-analysis-as-sarif-data (read 14 Oct 2026)."""
-from __future__ import annotations
-
+# No `from __future__ import annotations` here: the module's own function `annotations` would shadow that name.
 import base64
 import gzip
 import hashlib
 import json
 import re
+from typing import cast
 
 from . import CHECK_NAME
 from .cheatlib import RULES, changed_files
@@ -77,8 +77,9 @@ def sarif(verdict: dict, diff: str = "", version: str = "") -> dict:
     ids = sorted({f["rule"] for f in found} | set(RULES))
     rules = []
     for rid in ids:
-        cat, said = RULES.get(rid, (next((f.get("category") for f in found if f["rule"] == rid), "cheat"), ""))
-        said = said or next((f.get("detail") for f in found if f["rule"] == rid), rid)
+        # a refused finding names its category and detail (knos.gate.cheatlib's Finding): both are str
+        cat, said = cast("tuple[str, str]", RULES.get(rid, (next((f.get("category") for f in found if f["rule"] == rid), "cheat"), "")))
+        said = said or cast(str, next((f.get("detail") for f in found if f["rule"] == rid), rid))
         rules.append({"id": rid, "name": "".join(w.capitalize() for w in re.split(r"[^A-Za-z0-9]+", cat) if w) or "Cheat",
                       "shortDescription": {"text": f"Knos Gate: {cat.replace('_', ' ')}"},
                       "fullDescription": {"text": f"The pull request {said}." if not said.endswith(".") else said},

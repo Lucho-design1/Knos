@@ -47,7 +47,10 @@ def pay_job(root: Path, *, repo_id: int, issue: int, amount: int, wf_repo: str, 
     c = Chain()
     sigs: list[str] = []
     send = c.svm.send_transaction
-    c.svm.send_transaction = lambda tx: (sigs.append(str(tx.signatures[0])), send(tx))[1]
+    def _send(tx):
+        sigs.append(str(tx.signatures[0]))
+        return send(tx)
+    c.svm.send_transaction = _send
     m = c.new_mint(keypair=mint) if mint is not None else c.new_mint()
     fee_acct = c.token_account(pay.FEE_OWNER, m)
     who, tok = c.wallet(m, amount + 10_000_000, key=funder)
@@ -56,6 +59,7 @@ def pay_job(root: Path, *, repo_id: int, issue: int, amount: int, wf_repo: str, 
     fund_sig = sigs[-1]
     job = pay.job_pda(repo_id, issue, who.pubkey())
     j = pay.read_job(c.data(job))
+    assert j is not None, "the job funded above is in LiteSVM"
     aud = pay.pay_audience(j.repo_id, j.issue, payee_id, head_sha, j.terms, j.mode, payee_wallet)
     tokacct = c.gh(aud, wf_repo=wf_repo, wf_sha=wf_sha, repository_id=j.repo_id)
     if tokacct is None:

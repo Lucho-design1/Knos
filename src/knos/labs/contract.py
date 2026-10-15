@@ -55,7 +55,7 @@ def _examples() -> dict[str, Spec]:
 
 
 def _d(x: Any) -> dict:
-    return asdict(x) if is_dataclass(x) else dict(x)
+    return asdict(x) if is_dataclass(x) and not isinstance(x, type) else dict(x)
 
 
 class Lab:

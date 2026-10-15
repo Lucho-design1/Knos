@@ -17,8 +17,6 @@ from ..record.journal import redaction_problems
 from .base import sha256_hex
 from .verdicts import Verdict
 
-PRIVATE_KEYS = ("runs", "qc", "protocol", "sequences", "buyer", "price", "amount_usd", "lab", "claim", "raw", "files")
-
 
 def new_salt() -> str:
     return secrets.token_hex(16)

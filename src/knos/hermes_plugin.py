@@ -149,8 +149,8 @@ HANDLERS = {"knos_verify": verify_tool, "knos_receipt": receipt_tool, "knos_boun
             "knos_outcome_check": outcome_check}
 
 
-def register(ctx) -> None:
-    """Hermes calls this once when the plugin loads."""
+def _register_tools(ctx) -> None:
+    """The tools `register` adds."""
     for name, fn in HANDLERS.items():
         ctx.register_tool(name=name, toolset=TOOLSET, schema=SCHEMAS[name], handler=_guard(fn),
                           description=SCHEMAS[name]["description"], emoji="")
@@ -224,10 +224,9 @@ def pre_tool_call(tool_name: str = "", args=None, **kwargs):
     return None
 
 
-_register_tools = register
-
-
-def register(ctx) -> None:  # noqa: F811 - the tools, then the hook (a Hermes without register_hook gets the tools only)
+def register(ctx) -> None:
+    """Hermes calls this once when the plugin loads: the tools, then the hook (a Hermes without register_hook gets the
+    tools only)."""
     _register_tools(ctx)
     hook = getattr(ctx, "register_hook", None)
     if callable(hook):

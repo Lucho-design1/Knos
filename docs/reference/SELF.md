@@ -159,7 +159,9 @@ record, the runs, the other bundles), the wallet and key folders (the payout wal
 `KNOS_SELF_MASK`) and the other tree of the
 judgment are covered by empty, unreadable mounts, and the repository's `.git` is read-only. Then it runs with a clean
 environment as `KNOS_SELF_SANDBOX_USER` when set, else as the operator. Without `sudo -n unshare` the referee refuses
-to judge; `--sandbox none` turns the jail off and is for a machine where that is acceptable.
+to judge; `--sandbox none` turns the jail off and is for a machine where that is acceptable. The jail is Linux's
+(network and mount namespaces): on macOS and Windows there is no `unshare`, so the referee refuses there unless
+`--sandbox none` is asked for.
 
 ## Limits
 

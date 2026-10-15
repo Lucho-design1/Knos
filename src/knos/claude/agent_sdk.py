@@ -85,7 +85,8 @@ def options(cwd: str, editable: str | None = None, model: str = MODEL, max_turns
 async def attempt(task_prompt: str, cwd: str, editable: str | None = None, query=None, opts=None) -> dict:
     """Run one attempt; {text, session_id, cost_usd, is_error}. `query`/`opts` stand in for the SDK in tests."""
     if query is None:
-        from claude_agent_sdk import query  # type: ignore[import-not-found]
+        from claude_agent_sdk import query as sdk_query  # type: ignore[import-not-found]
+        query = sdk_query
     opts = opts if opts is not None else options(cwd, editable)
     out = {"text": "", "session_id": None, "cost_usd": None, "is_error": True}
     async for m in query(prompt=task_prompt, options=opts):

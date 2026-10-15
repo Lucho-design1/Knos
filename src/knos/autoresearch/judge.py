@@ -204,7 +204,10 @@ class LocalJudge:
 
     def _runs(self, source: str, rows: list) -> tuple[list[float], list[str], dict, float]:
         t = self.task.spec
-        scores, reasons, reported, wall = [], [], {}, 0.0
+        scores: list[float] = []
+        reasons: list[str] = []
+        reported: dict = {}
+        wall = 0.0
         for seed in t["seeds"][:2]:
             r = sandbox.run(source, t["editable"], self.public, [(x, 0) for x, _y in rows], seed, float(t["time_budget_s"]), self.python,
                             mask=self.mask)

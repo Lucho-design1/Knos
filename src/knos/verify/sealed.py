@@ -128,7 +128,7 @@ def _fallback(task: Task, pr: Path, patch: str) -> dict:
             try:
                 suites = ET.parse(report).getroot()
                 suite = suites if suites.tag == "testsuite" else suites.find("testsuite")
-                tests, bad = int(suite.get("tests", 0)), int(suite.get("failures", 0)) + int(suite.get("errors", 0))
+                tests, bad = int(suite.get("tests", 0)), int(suite.get("failures", 0)) + int(suite.get("errors", 0))  # type: ignore[union-attr]  # no testsuite: the AttributeError is caught below
             except (OSError, ET.ParseError, AttributeError, ValueError):
                 tests, bad = 0, 0
                 reasons.append("the check wrote no test report (an exit code alone is not a pass)")

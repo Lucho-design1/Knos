@@ -185,8 +185,8 @@ def check(msg: bytes, sigs, keys, m: int, *, now: int, used=None, record: bool =
                 return False, "replay: this job and nonce were used"
         else:
             store.add(item)
-    why = f"{len(counted)} of {m} distinct registered re-runners signed"
-    return True, f"{label}; {why}" if label else why
+    said = f"{len(counted)} of {m} distinct registered re-runners signed"
+    return True, f"{label}; {said}" if label else said
 
 
 def sign(msg: bytes, keypair) -> tuple[bytes, bytes]:

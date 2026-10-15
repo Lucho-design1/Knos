@@ -36,11 +36,6 @@ def agent_spec(name: str = "Knos research worker") -> dict:
             "tools": [{"type": "agent_toolset_20260401", "default_config": {"enabled": True}}]}
 
 
-def environment_spec(name: str = "knos-attempts") -> dict:
-    return {"name": name, "config": {"type": "cloud", "networking": {"type": "limited", "allow_package_managers": True,
-                                                                       "allow_mcp_servers": False}}}
-
-
 def rubric(task: dict) -> str:
     """A starter rubric from a Knos task's PUBLIC terms: what the deliverable is, its format, the public checks. The
     sealed checks are not in it (they stay with the referee)."""

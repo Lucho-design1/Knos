@@ -42,7 +42,7 @@ def rule(cfg: fees_config.FeeConfig | None = None) -> dict:
     if not isinstance(line, dict):
         raise PotError("config/fees.yaml has no game_pot section")
     w, p, m = line.get("winner_bps"), line.get("partial_bps"), line.get("max_paid")
-    if not all(isinstance(x, int) and not isinstance(x, bool) for x in (w, p, m)) or w + p != 10_000 or not 0 < w <= 10_000 or not 1 <= m <= 4:
+    if not all(isinstance(x, int) and not isinstance(x, bool) for x in (w, p, m)) or w + p != 10_000 or not 0 < w <= 10_000 or not 1 <= m <= 4:  # type: ignore[operator]  # w, p, m: the all() just tested each is an int
         raise PotError("game_pot: winner_bps + partial_bps = 10000, winner_bps above 0, max_paid 1 to 4")
     return {"winner_bps": w, "partial_bps": p, "max_paid": m, "status": line.get("status"), "fee_line": line.get("fee_line", "bounty_platform")}
 
@@ -170,7 +170,10 @@ def pay_litesvm(root, p: dict, pledges: list[dict], payees: list[tuple[int, int,
     c = OrderChain()
     sigs: list[str] = []
     send = c.svm.send_transaction
-    c.svm.send_transaction = lambda tx: (sigs.append(str(tx.signatures[0])), send(tx))[1]
+    def _send(tx):
+        sigs.append(str(tx.signatures[0]))
+        return send(tx)
+    c.svm.send_transaction = _send
     lp = dict(p, wf_repo=WF_REPO, wf_sha=WF_SHA)
     wallets = [(gid, bps, Pubkey.from_string(addr)) for gid, bps, addr in payees]
     for _gid, _bps, w in wallets:

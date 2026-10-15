@@ -30,7 +30,6 @@ from pathlib import Path
 
 from solders.instruction import AccountMeta, Instruction
 from solders.keypair import Keypair
-from solders.pubkey import Pubkey
 from solders.system_program import CreateAccountParams, TransferParams, create_account, transfer
 
 from .. import chain
@@ -121,12 +120,12 @@ def main(argv: list[str] | None = None) -> int:
                          "explorer": f"https://explorer.solana.com/tx/{sig}?cluster=devnet"})
             print("preorder B", sig)
         data = led.account(ob)
-        o = pay.read_order(data) if data is not None else None
-        while o is not None and led.now() <= o.pay_until:
+        o_b = pay.read_order(data) if data is not None else None
+        while o_b is not None and led.now() <= o_b.pay_until:
             time.sleep(5)
-        if o is not None and led.account(ob) is not None:
+        if o_b is not None and led.account(ob) is not None:
             try:
-                send("claim B: refund after the deadline (amount and fee back to the buyer)", [refund_ix(payer.pubkey(), ob, o)])
+                send("claim B: refund after the deadline (amount and fee back to the buyer)", [refund_ix(payer.pubkey(), ob, o_b)])
             except chain.RpcError:
                 pass                    # another relayer refunded it first: anyone may send RefundOrder
         if led.account(ob) is None and not any(s["step"].startswith("claim B: refund") for s in sent):

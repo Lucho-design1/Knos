@@ -169,7 +169,9 @@ class Recorder:
         return self._do("append", kind, sanitize(payload), claim=self.claim_id, domain=DOMAIN)
 
     def verify(self) -> dict:
-        got = (self.api or self.local).verify(self.root)
+        target = self.api or self.local
+        assert target is not None       # __init__ sets local whenever api is unset
+        got = target.verify(self.root)
         if isinstance(got, dict) and "merkle_root" not in got:
             hashes = [e.get("hash", "") for e in self.written if isinstance(e, dict) and e.get("hash")]
             got = dict(got, merkle_root_of_this_run=merkle_root(hashes))

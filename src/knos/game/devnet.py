@@ -36,11 +36,12 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
 TASK = ROOT / "examples" / "autoresearch"
 JUDGE_REPO = 1401439243          # drexthealpha/knos-e2e (the graduation demo's judge repository id)
-QUOTE = {"kind": "compute", "supplier": "Nebius Token Factory, Nemotron 3 Super", "unit_cost": 0.0, "quantity": 1,
+QUOTE: dict[str, Any] = {"kind": "compute", "supplier": "Nebius Token Factory, Nemotron 3 Super", "unit_cost": 0.0, "quantity": 1,
          "source": "Token Factory model catalog, read 14 Oct 2026 (knos.nebius.sources.PRICE_PER_M); usage of this run's agent calls"}
 
 
@@ -118,7 +119,7 @@ def main(argv=None) -> int:
     out["game"] = {"id": g.s["id"], "spec_hash": g.s["seal"]["spec_hash"], "judge_hash": g.s["seal"]["judge_hash"], "dir": str(a.game)}
     pp = pot.plan(g.s["id"], g.s["seal"]["spec_hash"], JUDGE_REPO, work_s=pay.MIN_WORK)
     out["pot_plan"] = {k: pp[k] for k in ("scope", "terms", "terms_hash", "wf_repo", "wf_sha", "work_s", "rule")}
-    pledges = []
+    pledges: list[dict[str, Any]] = []
     for f, amt in zip(funders, (20 * UNIT, 10 * UNIT)):
         sig = send(f"pot: a funder pools {amt // UNIT} test units (knos_pay private order, 60 s deadline)",
                    [pot.fund_ix(pp, f.pubkey(), tok[str(f.pubkey())], mint, amt)], [], fee_payer=f)
@@ -147,7 +148,7 @@ def main(argv=None) -> int:
         keys = {}
         for name, kind, label, gid, prop in roster:
             keys[name] = (g.join(name, kind=kind, label=label, github_id=gid), prop)
-        out["players"] = [{"name": n, "kind": k, "label": l, "github_id": gid, "synthetic_github_id": True} for n, k, l, gid, _ in roster]
+        out["players"] = [{"name": n, "kind": k, "label": lab, "github_id": gid, "synthetic_github_id": True} for n, k, lab, gid, _ in roster]
         out["labels"] = {"nemotron": nem_label, "second_agent": second_label, "human": players.SyntheticHuman.LABEL}
         attempts = []
         for r in range(a.rounds):

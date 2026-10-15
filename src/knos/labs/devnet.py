@@ -28,6 +28,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, cast
 
 from solders.keypair import Keypair
 from solders.pubkey import Pubkey
@@ -37,6 +38,10 @@ from .. import chain, leitner
 from ..money import fees_config
 from ..settle.v2 import pay
 from . import Spec, escrow, get, privacy, verdicts, x402pay
+
+if TYPE_CHECKING:
+    from .electronics import PCBWay
+    from .robotics import PyLabRobot
 
 UNIT = 1_000_000
 DECIMALS = 6
@@ -183,9 +188,9 @@ class Demo:
         # 3. the lab (fixture), the two verdicts, signed 2 of 3
         o = adapter.order(spec, str(pots["lab"].pubkey()), q)
         st = adapter.status(o)
-        r = adapter.results(o, spec) if case["lab"] == "pylabrobot" else adapter.results(o)
-        if case.get("bench"):
-            r = adapter.with_bench(r, case["bench"])
+        r = cast("PyLabRobot", adapter).results(o, spec) if case["lab"] == "pylabrobot" else adapter.results(o)
+        if case.get("bench"):          # only the electronics case (pcbway) carries a bench
+            r = cast("PCBWay", adapter).with_bench(r, case["bench"])
         results_at = _now()
         lab_v = verdicts.lab_verdict(spec, r)
         out_v = verdicts.outcome_verdict(spec, r, lab_v)
@@ -209,7 +214,7 @@ class Demo:
             raise SystemExit("the lab is paused by its last re-check")
         sched.result(f"lab:{case['lab']}", lab_v.passed, 1)
         # 4. LAB verdict releases
-        rel = []
+        rel: list[dict[str, Any]] = []
         cos = [k.pubkey() for k in signers]
         if lab_v.passed:
             ixs = [escrow.transfer_checked_ix(pots["lab"].pubkey(), self.mint, self.ata(lab_to), self.ms, p.price, DECIMALS, cos),
@@ -314,7 +319,8 @@ def main(argv: list[str] | None = None) -> int:
         old = json.loads(a.out.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         pass
-    runs, failed = [], []
+    runs: list[dict] = []
+    failed: list[dict] = []
 
     def write() -> None:            # after every field: what ran is never lost when a later field fails
         out = {"what": "the Knos lab escrow on Solana devnet: real transactions, TEST money (the demo's own mint), lab replies from FIXTURES; "

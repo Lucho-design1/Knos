@@ -32,6 +32,7 @@ import secrets
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 from ..autoresearch import task as artask
 from ..autoresearch.judge import LocalJudge
@@ -121,7 +122,7 @@ class Game:
             raise GameError("rules: rounds, per_round and max_refusals at least 1, ladder_eta in (0, 0.5]")
         gid = game_id or ("g" + seal["spec_hash"][:12])
         _name(gid, "game id", 64)
-        state = {"v": 1, "id": gid, "title": _title(title), "field": _field(field),
+        state: dict[str, Any] = {"v": 1, "id": gid, "title": _title(title), "field": _field(field),
                  "task_dir": str(Path(task_dir).resolve()), "sealed": None if sealed is None else str(Path(sealed).resolve()),
                  "seal": seal, "synthetic": bool(t.spec.get("synthetic")), "rules": r, "round": 1, "status": "open",
                  "created": _now(), "players": {}, "attempts": [], "private": {"scores": {}, "baseline": None},
@@ -133,7 +134,7 @@ class Game:
         if not base.passed:
             raise GameError("the baseline itself fails the referee: " + "; ".join(base.reasons))
         state["private"]["baseline"] = base.score
-        state["baseline_shown"] = ladder.rounded(base.score, float(r["ladder_eta"]), t.maximize)
+        state["baseline_shown"] = ladder.rounded(base.score, float(r["ladder_eta"]), t.maximize)  # type: ignore[arg-type]  # base.passed: a passed Verdict carries its score
         g._event("claim", {"spec_hash": seal["spec_hash"], "judge_hash": seal["judge_hash"], "game": gid, "status": "open",
                            "metric": t.spec["metric"], "field": state["field"], "synthetic": state["synthetic"]})
         g._event("paper", {"title": t.spec["name"], "program_sha256": _sha(t.program), "idea_sha256": _sha(t.idea),
@@ -261,9 +262,9 @@ class Game:
                 raise GameError("the game is not taking attempts")
             if p["out"]:
                 raise GameError("this player is out of the game: the referee refused its attempts too often")
-            moved = self.sealed_moved()
-            if moved:
-                raise GameError(moved + ": the game takes no attempt on data other than what was sealed")
+            drift = self.sealed_moved()
+            if drift:
+                raise GameError(drift + ": the game takes no attempt on data other than what was sealed")
             used = sum(1 for a in self.s["attempts"] if a["pid"] == pid and a["round"] == self.s["round"])
             pending = self.s.setdefault("pending", {})
             if used + pending.get(pid, 0) >= int(self.s["rules"]["per_round"]):
@@ -290,7 +291,7 @@ class Game:
             maximize = self.task.maximize
             moved = False
             if decision == "scored":
-                p["shown"], moved = ladder.step(p["shown"], v.score, float(self.s["rules"]["ladder_eta"]), maximize)
+                p["shown"], moved = ladder.step(p["shown"], v.score, float(self.s["rules"]["ladder_eta"]), maximize)  # type: ignore[arg-type]  # "scored": v.passed, so v.score is set
                 self.s["private"]["scores"][str(n)] = v.score
                 (self.root / "attempts" / f"{n}.json").write_text(json.dumps({"pid": pid, "files": files}), encoding="utf-8")
             if decision == "refused":

@@ -128,11 +128,11 @@ def works(base_dir, pr_dir, seal: dict, *, hidden_dir=None, changed=None, sandbo
         ev["reruns"] = []
         for _ in range(max(0, n)):
             again = once()
-            ok, why = rerun_agrees(first, again, seal.get("tolerance"))
+            ok, differ = rerun_agrees(first, again, seal.get("tolerance"))
             ev["reruns"].append({"agree": ok, "verdict": _slim(again)})
             if not ok:
-                findings.append(_cheats.Finding("rerun_mismatch", "rerun_mismatch", "", "; ".join(why)))
-                return done(False, why)
+                findings.append(_cheats.Finding("rerun_mismatch", "rerun_mismatch", "", "; ".join(differ)))
+                return done(False, differ)
         return done(True, [])
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

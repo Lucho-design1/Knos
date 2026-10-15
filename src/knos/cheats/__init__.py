@@ -45,7 +45,8 @@ def build_case(case: Case, base, pr) -> None:
     shutil.copytree(root / case.sample, base, ignore=ignore)
     shutil.copytree(root / case.sample, pr, ignore=ignore)
     spec = importlib.util.spec_from_file_location(f"knos_cheat_{case.bench[0][:-3]}", root / case.bench[0])
-    mod = importlib.util.module_from_spec(spec)
+    assert spec is not None and spec.loader is not None
+    mod =importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     getattr(mod, case.bench[1])(Path(pr))
 

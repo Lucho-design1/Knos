@@ -15,7 +15,6 @@ R = 2188824287183927522224640574525727508854836440041603434369820418657580849561
 ATE_LOOP = 29793968203157093288  # 6x + 2, x = 4965661367192848881
 
 # ---- Fp2: (a0, a1) = a0 + a1 u ----
-Fp2 = tuple
 F2_ZERO = (0, 0)
 F2_ONE = (1, 0)
 
@@ -347,10 +346,3 @@ def g2_from_bytes(b: bytes):
     if not g2_in_subgroup(pt):
         raise ValueError("G2 point not in the order-r subgroup")
     return pt
-
-
-def g2_to_bytes(pt) -> bytes:
-    if pt is None:
-        return bytes(128)
-    (x0, x1), (y0, y1) = pt
-    return b"".join(v.to_bytes(32, "big") for v in (x1, x0, y1, y0))

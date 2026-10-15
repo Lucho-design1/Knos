@@ -3,6 +3,7 @@ rules that read a change without running it."""
 from __future__ import annotations
 
 import copy
+import os
 from pathlib import Path
 
 import pytest
@@ -113,6 +114,7 @@ def test_the_implausible_gain_check_fails_closed():
     assert rules.implausible(97, 0, 0.6) is False
 
 
+@pytest.mark.skipif(os.name == "nt", reason="the jail is a Linux mount namespace (docs/reference/SELF.md, The jail): its script names POSIX paths")
 def test_the_jail_masks_the_state_the_wallets_and_the_other_tree(monkeypatch, tmp_path):
     from knos.self import tiers
     monkeypatch.setattr(tiers, "jail_available", lambda: True)

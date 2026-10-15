@@ -100,8 +100,11 @@ def decode(message_hex: str) -> Message:
     m = bytes.fromhex(message_hex[2:] if message_hex.startswith("0x") else message_hex)
     if len(m) < 148 + 228:
         raise ValueError("too short for a CCTP V2 burn message")
-    u32 = (lambda a: int.from_bytes(m[a:a + 4], "big"))
-    u256 = (lambda a: int.from_bytes(m[a:a + 32], "big"))
+    def u32(a: int) -> int:
+        return int.from_bytes(m[a:a + 4], "big")
+
+    def u256(a: int) -> int:
+        return int.from_bytes(m[a:a + 32], "big")
     b = 148
     return Message(u32(0), u32(4), u32(8), m[12:44], m[44:76], m[76:108], m[108:140], u32(140), u32(144),
                    m[b + 4:b + 36], m[b + 36:b + 68], u256(b + 68), m[b + 100:b + 132], u256(b + 132), u256(b + 164), u256(b + 196),
@@ -143,4 +146,6 @@ def attestation(source_domain: int, tx_hash: str, env: str = "sandbox", fetch=No
 
 
 def ready(got: dict | None) -> bool:
-    return bool(got) and got.get("status") == "complete" and got.get("attestation") not in (None, "", "PENDING")
+    if not got:
+        return False
+    return got.get("status") == "complete" and got.get("attestation") not in (None, "", "PENDING")

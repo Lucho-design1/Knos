@@ -132,12 +132,6 @@ def row_values(row: dict) -> dict:
     return out
 
 
-def aggregate(values: list[float], how: str) -> float:
-    if not values:
-        raise ValueError("no items to aggregate")
-    return sum(values) / len(values) if how == "mean" else float(sum(values))
-
-
 def lift(treated: float, control: float, kind: str, direction: str) -> float:
     """How much better treated is than control. relative: (t - c) / c (for `lower`, (c - t) / c); absolute: t - c
     (for `lower`, c - t). A relative lift over a control of 0 is refused: it has no size."""

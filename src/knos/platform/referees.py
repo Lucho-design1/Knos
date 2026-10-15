@@ -37,7 +37,7 @@ def registry_path() -> Path:
 
 def load(path: Path | None = None) -> list[dict]:
     """The registry's entries: {key (base58), name, label, test}. An absent file is an empty registry."""
-    import yaml
+    import yaml  # type: ignore[import-untyped]
     p = path or registry_path()
     if not p.is_file():
         return []

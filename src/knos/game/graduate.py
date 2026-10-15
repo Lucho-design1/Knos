@@ -88,7 +88,10 @@ def pay_litesvm(root, p: dict, wallets: list[str], preorders: list[int]) -> dict
     c = OrderChain()
     sigs: list[str] = []
     send = c.svm.send_transaction
-    c.svm.send_transaction = lambda tx: (sigs.append(str(tx.signatures[0])), send(tx))[1]
+    def _send(tx):
+        sigs.append(str(tx.signatures[0]))
+        return send(tx)
+    c.svm.send_transaction = _send
     ws = [Pubkey.from_string(w) for w in wallets]
     payees = [(i, b, w) for (i, b, _a), w in zip(p["payees"], ws)]
     for w in ws:

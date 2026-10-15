@@ -351,7 +351,3 @@ def load(root: Path | str) -> dict:
     if not p.is_file():
         raise ConfigError(f"no {PATH} on the base commit: Knos Gate is not set up in this repository")
     return loads(p.read_text(encoding="utf-8"))
-
-
-def write_schema(path: Path | str) -> None:
-    Path(path).write_text(json.dumps(SCHEMA, indent=2) + "\n", encoding="utf-8")

@@ -16,7 +16,7 @@ The rules, each with a planted contradiction in tests/test_truth_check.py:
               tested or higher; or says deployed, exercised or live about one whose stage is lower
     calls     a statement says nothing calls a function ("nothing calls it", "does not ask it yet") that the source calls
     price     a price that is not the price book's (Meter, Record, Control, Pilot, the Acceptance rate)
-    fee       a fee rate that neither build of knos_pay charges
+    fee       a fee rate that neither build of knos_pay charges and no line of config/fees.yaml sets
     version   a version said to be live at a public id that is not the one docs/capabilities.json records
     count     two documents count the same thing (programs, capabilities, tests passed) differently, or a count of
               capabilities is not the number of rows
@@ -310,17 +310,31 @@ def _percent(rate: str) -> str:
 
 
 def fee_rates(root: Path = ROOT) -> set[str]:
-    """Every rate, in percent, either build of knos_pay charges or lets a Plan set: src/knos/fees.py and settle/v2/pay.py."""
+    """Every rate, in percent, either build of knos_pay charges or lets a Plan set (src/knos/fees.py and settle/v2/pay.py),
+    and every fee line of config/fees.yaml, the one fee config: its rate, and for a decided line collected partly on
+    chain (`onchain_line`) the part invoiced off chain, its rate less the on-chain line's."""
     src = root / "src" / "knos"
     bps: set[int] = set()
-    if (src / "settle" / "v2" / "pay.py").is_file() and (m := re.search(r"(?m)^FEE_BPS = (\d+)", (src / "settle" / "v2" / "pay.py").read_text(encoding="utf-8"))):
-        bps.add(int(m.group(1)))
+    pay = src / "settle" / "v2" / "pay.py"
+    # `FEE_BPS = 30` or, in a row of constants, `FEE_BPS, FEE_MIN, ... = 30, 50_000, ...`
+    if pay.is_file() and (m := re.search(r"(?m)^((?:\w+, )*)FEE_BPS(?:, \w+)* = ((?:[\d_]+, )*[\d_]+)$", pay.read_text(encoding="utf-8"))):
+        bps.add(int(m.group(2).split(", ")[m.group(1).count(", ")].replace("_", "")))
     if (src / "fees.py").is_file():
         for line in (src / "fees.py").read_text(encoding="utf-8").splitlines():
             if re.match(r"(NEW|OLD) = Rule\(", line):
                 nums = [int(n.replace("_", "")) for n in re.findall(r"(?<![\w.\"])(\d[\d_]*)(?![\w.\"])", line)]
                 bps |= {n for n in nums if 0 < n <= 1000}
-    return {f"{b / 100:.2f}" for b in bps}
+    config = root / "config" / "fees.yaml"
+    if config.is_file():
+        from knos.money.fees_config import parse_yaml
+        lines = (parse_yaml(config.read_text(encoding="utf-8")) or {}).get("fees") or {}
+        for line in lines.values():
+            if isinstance(line, dict) and isinstance(line.get("rate_bps"), int):
+                bps.add(line["rate_bps"])
+                onchain = lines.get(line.get("onchain_line") or "") or {}
+                if isinstance(onchain.get("rate_bps"), int):
+                    bps.add(line["rate_bps"] - onchain["rate_bps"])
+    return {f"{b / 100:.2f}" for b in bps if b > 0}
 
 
 PRICES: tuple[tuple[str, str, str], ...] = (
@@ -396,7 +410,7 @@ def version_problems(stmts: list[Statement], data: dict) -> list[Problem]:
     for s in stmts:
         if s.file == MANIFEST or (s.file == "docs/reference/CAPABILITIES.md" and s.text.startswith("|")) or not LIVE.search(s.text) or NOT_LIVE_YET.search(s.text) or PAST.search(s.text):
             continue
-        for m in re.finditer(r"\b(knos_[a-z]+|upgrade_gate) (\d+\.\d+)\b", s.text):
+        for m in re.finditer(r"\b(knos_[a-z]+|upgrade_gate) (\d+\.\d+)\b(?!\.\d)", s.text):     # a build, not a release ("knos_pay 0.3.34")
             want = programs.get(m.group(1), {}).get("on_chain")
             if want and str(want) != m.group(2):
                 out.append(Problem("version", s.file, s.line, s.text, f"{MANIFEST}: the public id of {m.group(1)} runs {want}, and this says {m.group(2)} is live"))

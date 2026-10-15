@@ -108,10 +108,6 @@ def statement(labels, spec_salt: int, preds, pred_salt: int, threshold: int) -> 
     }
 
 
-def error_name(code: int) -> str:
-    return ERRORS.get(code, f"custom error {code}")
-
-
 def send(url: str, payer, ixs, *, units: int = 400_000, skip_preflight: bool = False) -> dict:
     """One transaction to `url` (devnet): a compute-unit limit, then `ixs`. Returns its signature, the compute units
     the cluster reports, its logs and its error (None when it succeeded). `skip_preflight` lets a transaction the

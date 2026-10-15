@@ -72,11 +72,11 @@ class B12Selenium(Adapter):
         # one idempotency key per (spec, escrow): a retried order is the same order, never a second charge
         key = str(uuid.uuid5(uuid.NAMESPACE_URL, f"knos:{spec.hash()}:{escrow_ref}"))
         _s, a, _h = self._call("POST", "/v1/route-searches", self.body(spec), spends=True, headers={"Idempotency-Key": key})
-        return Order(self.NAME, a["id"], escrow_ref, spec.hash(), STATE.get(a.get("status"), "submitted"), self.is_fixture, self.label, a)
+        return Order(self.NAME, a["id"], escrow_ref, spec.hash(), STATE.get(str(a.get("status")), "submitted"), self.is_fixture, self.label, a)
 
     def status(self, order: Order) -> Status:
         _s, a, _h = self._call("GET", f"/v1/route-searches/{order.order_id}")
-        return Status(self.NAME, order.order_id, STATE.get(a.get("status"), "in_progress"), str(a.get("status")), self.is_fixture, self.label, a)
+        return Status(self.NAME, order.order_id, STATE.get(str(a.get("status")), "in_progress"), str(a.get("status")), self.is_fixture, self.label, a)
 
     def results(self, order: Order) -> Results:
         st = self.status(order)

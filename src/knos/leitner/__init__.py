@@ -28,9 +28,9 @@ from typing import Any
 
 DAY = 86_400
 KINDS = ("claim", "product", "lab", "agent", "sealed_test")
-DEFAULT = {"version": 1, "default": {"unit": "days", "boxes": [1, 3, 7, 30]},
-           "kinds": {"lab": {"unit": "orders", "boxes": [1, 3, 7, 30]}},
-           "rotation": {"retire_after_clean_runs": 20, "hot_after_catch_runs": 10}}
+DEFAULT: dict[str, Any] = {"version": 1, "default": {"unit": "days", "boxes": [1, 3, 7, 30]},
+                           "kinds": {"lab": {"unit": "orders", "boxes": [1, 3, 7, 30]}},
+                           "rotation": {"retire_after_clean_runs": 20, "hot_after_catch_runs": 10}}
 
 
 class LeitnerError(ValueError):
@@ -122,9 +122,10 @@ class Scheduler:
         if path is None:
             from .. import paths
             path = paths.home() / "leitner" / "state.json"
-        s = cls(cfg or load_config(), {}, Path(path))
-        if s.path.is_file():
-            for row in json.loads(s.path.read_text(encoding="utf-8")).get("items", []):
+        state = Path(path)
+        s = cls(cfg or load_config(), {}, state)
+        if state.is_file():
+            for row in json.loads(state.read_text(encoding="utf-8")).get("items", []):
                 s.items[row["id"]] = Item(**row)
         return s
 

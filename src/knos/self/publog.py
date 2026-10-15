@@ -33,7 +33,9 @@ class Log:
 
     def write(self, kind: str, payload: dict, *, claim: str | None = None) -> dict:
         if kind == "claim":
-            got = self.record.claim(claim, payload, domain=DOMAIN, root=self.root, store=self._store())
+            if claim is None:
+                raise ValueError("a claim line names its claim")
+            got =self.record.claim(claim, payload, domain=DOMAIN, root=self.root, store=self._store())
         else:
             got = self.record.append(kind, payload, claim=claim, domain=DOMAIN, root=self.root, store=self._store())
         self.lines.append(got)

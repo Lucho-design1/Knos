@@ -256,7 +256,6 @@ def main(argv: list[str] | None = None) -> int:      # python -m knos.gate.cli (
         if code is not None:
             return int(code)
         raise
-    return 0
 
 
 if __name__ == "__main__":

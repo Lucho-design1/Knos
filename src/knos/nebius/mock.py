@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Any
 
 from ..autoresearch import proposers
 from . import sources
@@ -33,7 +34,7 @@ def _best_from_prompt(prompt: str) -> str:
 
 
 def autoresearch_responder(cheat_at: tuple = (2,)):
-    state = {"n": 0, "tried": set()}
+    state: dict[str, Any] = {"n": 0, "tried": set()}
 
     def respond(prompt: str) -> str:
         state["n"] += 1

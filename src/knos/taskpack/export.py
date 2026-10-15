@@ -35,7 +35,7 @@ import tarfile
 import tempfile
 import time
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 FORMAT = "knos-taskpack/1"
 PROTECTED_DIRS = (".github/", ".knos/")
@@ -122,7 +122,9 @@ def untar(blob: bytes) -> dict[str, bytes]:
         for m in t.getmembers():
             if not m.isfile() or m.name.startswith("/") or ".." in m.name.split("/"):
                 raise Refused(f"the sealed archive holds an unsafe entry: {m.name[:80]}")
-            out[m.name] = t.extractfile(m).read()
+            got = t.extractfile(m)
+            assert got is not None      # a regular file (checked above) always has contents to read
+            out[m.name] = got.read()
     return out
 
 
@@ -158,8 +160,10 @@ def default_judge(test_files: list[str]) -> list[str]:
 
 
 def tree(repo: Path, commit: str, into: Path) -> None:
-    """The repository's files at `commit`, unpacked into `into` (git archive: the repository itself is not touched)."""
-    blob = _git(repo, "archive", "--format=tar", commit, binary=True)
+    """The repository's files at `commit`, unpacked into `into` (git archive: the repository itself is not touched). The
+    commit's own bytes: with core.autocrlf on (Git for Windows' default) archive would write text files with CRLF line ends, and a
+    patch made at the commit would not apply to them."""
+    blob = _git(repo, "-c", "core.autocrlf=false", "archive", "--format=tar", commit, binary=True)
     into.mkdir(parents=True, exist_ok=True)
     with tarfile.open(fileobj=io.BytesIO(blob), mode="r") as t:
         for m in t.getmembers():
@@ -246,7 +250,7 @@ def export(repo: Path | str, *, merge: str, pr: dict, issue: dict, out: Path | s
         raise Refused(f"the hidden tests do not pass at the merge commit ({at_merge['summary']}): the judge command or the environment is wrong")
     tests_tar = _tar(hidden)
     ref_bytes = reference.encode("utf-8")
-    manifest = {
+    manifest: dict[str, Any] = {
         "format": FORMAT,
         "source": {"repo": pr["repo"], "pull_request": int(pr["number"]), "issue": issue.get("number"), "merge_commit": merge, "base_commit": base},
         "licence": licence(repo, merge),

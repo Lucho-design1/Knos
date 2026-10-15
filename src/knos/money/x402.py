@@ -184,7 +184,7 @@ class Server:
             return self._required([r for r in (self._pack_requirement(None), req) if r], "the payment does not accept this server's exact requirement",
                                   resource, "one paid check", self.bazaar())
         try:
-            s = self.exact["facilitator"].verify_and_settle(got, req, self.exact.get("confirm"))
+            s = self.exact["facilitator"].verify_and_settle(got, req, self.exact.get("confirm"))  # type: ignore[index,union-attr]  # req is set: exact_requirement() is None when self.exact is not
         except X.Refused as why:
             return 402, {}, {"error": str(why)}
         key = f"exact:{s.get('transaction')}"
@@ -221,7 +221,7 @@ class Server:
         _, order = self._payment(h)
         o, why = self.verify_pool_order(p, order)
         if o is None:
-            return self._required([self.requirement(claim, p, None)], why, resource, f"a pre-order of graduated claim {claim}")
+            return self._required([self.requirement(claim, p, None)], why, resource, f"a pre-order of graduated claim {claim}")  # type: ignore[arg-type]  # verify_pool_order: (None, why) always says why
         resp = {"success": True, "network": DEVNET, "transaction": "", "payer": str(o.source), "status": "escrowed", "order": order}
         return 200, {"payment-response": ra.encode(resp)}, {"escrowed": True, "claim": claim, "order": order, "amount": o.amount, "fee": o.fee,
                                                            "deadline": o.deadline, "said": "Held by knos_pay: paid to the makers on accepted delivery, "
@@ -323,7 +323,7 @@ def main(argv: list[str] | None = None) -> int:
                  "confirm": X.confirm_on()}
     server = Server(plans, chain.ledger(), a.mint, json.loads(a.offer.read_text(encoding="utf-8")) if a.offer else None,
                     state=a.state, exact=exact)
-    http = ra.serve(server, a.host, a.port)     # type: ignore[arg-type] - the same handle(path, headers, client=, method=)
+    http = ra.serve(server, a.host, a.port)     # type: ignore[arg-type]  # the same handle(path, headers, client=, method=)
     print(f"knos money x402 on http://{a.host}:{a.port} ({', '.join(ROUTES)})", file=sys.stderr)
     http.serve_forever()
     return 0

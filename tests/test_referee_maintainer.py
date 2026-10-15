@@ -110,7 +110,8 @@ def test_the_scope_globs_reach_knos_as_written_never_expanded_by_the_shell(tmp_p
     (tmp_path / "src_one").write_text("", encoding="utf-8")
     (tmp_path / "src_two").write_text("", encoding="utf-8")
     script = "args=()\n" + "\n".join(lines) + '\nprintf "%s|" "${args[@]}"\n'
-    got = subprocess.run(["bash", "-c", script], cwd=tmp_path, env={"SCOPE": "src* docs/**", "PATH": "/usr/bin:/bin"},
+    # the bash on PATH: on Windows a bare "bash" is found in System32 first, which is WSL's
+    got = subprocess.run([shutil.which("bash"), "-c", script], cwd=tmp_path, env={"SCOPE": "src* docs/**", "PATH": "/usr/bin:/bin"},
                          capture_output=True, text=True, check=True).stdout
     assert got == "--scope|src*|--scope|docs/**|"
 

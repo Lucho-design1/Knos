@@ -58,7 +58,6 @@ DEFAULT_STAGES = {  # (oracle, share of N x P in basis points): literature claim
     "published": [("not_retracted", 2000), ("referee_pass", 5000), ("lab_qc", 3000)],
 }
 DEFAULT_JUDGE_REPO = 1401439243      # drexthealpha/knos-e2e: the judge repository of Knos's devnet demos
-DEFAULT_MAKER = 142920951            # drexthealpha: ONLY the payee of Knos's own 14 Oct devnet demo; never a default
 RETRACTED_WORD = "retracted: do not fund"
 
 

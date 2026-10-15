@@ -162,8 +162,11 @@ def fund_order_judged_ix(funder: Pubkey, funder_token: Pubkey, mint: Pubkey, top
         raise ValueError("an order pins an image or a panel")
     if topic == 0:
         raise ValueError("a judged order's topic id is not 0")
-    kind = ATTESTED if image_digest is not None else PANEL
-    pin = image_digest if image_digest is not None else panel_pin(*panel)
+    if image_digest is not None:
+        kind, pin = ATTESTED, image_digest
+    else:
+        assert panel is not None        # exactly one of the two is given (checked above)
+        kind, pin = PANEL, panel_pin(*panel)
     if len(pin) != 32:
         raise ValueError("an image digest is 32 bytes")
     order = pay.order_pda(pay.scope_of(topic, issue), funder, seq, program)

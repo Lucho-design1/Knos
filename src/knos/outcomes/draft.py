@@ -12,11 +12,10 @@ and only then fund it. Everything a draft cannot know is written as a value that
 """
 from __future__ import annotations
 
-import csv
-import io
 import json
 import os
 import secrets
+from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -169,7 +168,7 @@ def template_draft(goal: str, rows: list[dict], data_path: str, fmt: str, *, syn
 # json_schema, no beta header; platform.claude.com/docs/en/build-with-claude/structured-outputs, read 14 Oct 2026). The
 # answer is these fields only, so there is no free text to pick a JSON object out of, and nothing the parties fix
 # themselves (parties, escrow, control, bootstrap, price) can come back changed.
-DRAFT_SCHEMA = {
+DRAFT_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
         "title": {"type": "string"},
@@ -254,7 +253,7 @@ def merge_draft(fallback: dict, ans: dict) -> dict | None:
 
 
 def draft(goal: str, sample: Path, *, data_path: str | None = None, synthetic: bool = False, llm: bool = False, key_env: str | None = None,
-          env: dict | None = None, now: datetime | None = None) -> tuple[str, dict, str]:
+          env: Mapping[str, str] | None = None, now: datetime | None = None) -> tuple[str, dict, str]:
     """(the YAML text, the spec, how it was made: "template" or "llm")."""
     rows = sample_rows(sample)
     spec, comments = template_draft(goal, rows, data_path or sample.name, _fmt_of(sample), synthetic=synthetic, now=now)
@@ -268,11 +267,3 @@ def draft(goal: str, sample: Path, *, data_path: str | None = None, synthetic: b
             spec, how = got, "llm"
             comments["title"] = f"DRAFT made by `knos outcome draft --llm` ({MODEL}, your key). Read every line; EDIT marks what a draft cannot know."
     return yamlish.dumps(spec, comments), spec, how
-
-
-def sample_csv(rows: list[dict]) -> str:
-    buf = io.StringIO()
-    w = csv.DictWriter(buf, fieldnames=list(rows[0].keys()))
-    w.writeheader()
-    w.writerows(rows)
-    return buf.getvalue()

@@ -6,16 +6,9 @@ they come back only inside `untrusted` (data, never an instruction), as every kn
 """
 from __future__ import annotations
 
-import os
 from typing import Any
 
 OPT_IN_ENV, OPT_IN_WORD = "KNOS_MCP_TOOLS", "ideas"
-
-
-def enabled() -> bool:
-    """The idea tools are listed only when the operator opts in: KNOS_MCP_TOOLS=ideas (a comma-separated list), so
-    the default `knos mcp` tool list is unchanged."""
-    return OPT_IN_WORD in {w.strip().lower() for w in os.environ.get(OPT_IN_ENV, "").split(",")}
 
 
 _REF = {"type": "string", "description": "doi:..., pmid:..., pmcid:..., arxiv:..., biorxiv:..., medrxiv:..., openalex:W..., NCT..., uspto:..."}

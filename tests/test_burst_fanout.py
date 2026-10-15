@@ -38,7 +38,17 @@ else:
     _spec.loader.exec_module(load_pay)
 
 URL, SECOND = "https://api.devnet.solana.com", "https://second.devnet.invalid"
-MEMO = Pubkey.from_string("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr")
+
+
+@pytest.fixture(autouse=True)
+def _no_consensus_ask(monkeypatch):
+    """The cluster's consensus is not what these tests count: knos.platform.finality keeps its answer per URL for the
+    whole process, so whether a test's stand-in endpoint is asked for it depended on which test ran before it in the
+    same worker (tests/test_platform_alpenglow.py forgets the answer). Told here, so the counts are the same in any order."""
+    monkeypatch.setenv("KNOS_ALPENGLOW", "off")
+
+
+MEMO =Pubkey.from_string("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr")
 BLOCKHASH = "4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZAMdL4VZHirAn"
 SEED, DROP = 20, 0.26            # the draw that gives 0.3.24's 22 of 40 with 0.3.24's sending
 OLD_TRANSIENT = re.compile(r"\b429\b|too many requests|blockhash not found|block ?height exceeded|blockhash (?:has )?expired", re.I)

@@ -214,3 +214,93 @@ sources_.adapter                                    # the adapter by its name, a
 _.signed_at                                         # Evidence: when the log recorded the signature; tests/test_sources.py
 _.sig_alg                                           # Cert: the certificate's signature algorithm, as its bytes give it
 der_.ECDSA_SHA256, der_.ECDSA_SHA384                # the two signature algorithms' ids, named for the reader beside the key ids
+
+# 0.3.29 to 0.3.34. Typer registers these inside each module's `register` and calls them when a person types the command.
+_.game_                         # knos.game.cli.register: knos game
+_.self_                         # knos.self.cli.register: knos self; knos.gate.cli.register: knos receipt self
+_.init_, _.validate_, _.schema_, _.seal_, _.run_, _.require_    # knos.gate.cli.register: knos gate init | validate | schema | seal | run | require
+_.keygen_, _.page_              # knos.gate.cli.register: knos receipt keygen | page
+_.treasury_                     # knos.gate.cli.register: knos bounty treasury
+_.get_cmd, _.search_cmd, _.in_cmd, _.who_cmd, _.sources_cmd, _.fields_cmd, _.wanted_cmd, _.check_cmd      # knos.ideas.cli.register: knos idea ...
+_.commit_cmd, _.sign_cmd, _.release_cmd, _.refund_cmd, _.preorder_cmd, _.state_cmd                         # knos.ideas.cli.register: knos idea ...
+_.works_cmd, _.makeable_cmd, _.maintainer_cmd, _.list_cmd, _.red_team_cmd      # knos.referee.cli.register: knos referee ... | knos cheats list | red-team
+_.grade_cmd, _.rows_cmd         # knos.taskpack.cli.register: knos taskpack grade | rows
+_.draft_, _.hash_, _.lock_, _.assign_, _.measure_, _.comment_, _.sample_, _.audiences_     # knos.outcomes.cli.register: knos outcome ...
+_._calibrate                    # knos.tasks.register: knos task calibrate
+# Hosts call these hooks with these argument names or positions; a hook takes them whether it reads them or not.
+_.tool_use_id                   # knos.claude.agent_sdk.make_guard: the Claude Agent SDK calls a PreToolUse hook as (input_data, tool_use_id, context)
+_.tool_name                     # knos.hermes_plugin.pre_tool_call: Hermes calls it with tool_name=..., args=...
+_.redirect_request, _.newurl    # urllib calls HTTPRedirectHandler.redirect_request(req, fp, code, msg, headers, newurl) (knos.outcomes.data refuses every redirect)
+_.protocol_version              # http.server reads it off the handler class (knos.mcp_http: HTTP/1.1, so a session keeps its connection)
+# The lab adapters are built by name from the table in knos.labs (ADAPTERS: module and class name as strings).
+_.Adaptyv, _.B12Selenium, _.B12Foundry, _.PCBWay, _.JLCPCB, _.MaterialsProject, _.Xometry
+# Dataclass fields: the layout of an account, a message or a record, read by whoever holds one (and by the tests).
+_.judge_backend, _.record_backend       # knos.autoresearch.loop.Report
+_.timed_out                             # knos.autoresearch.sandbox.RunResult
+_.explanation                           # knos.claude.managed.Run
+_.quote_id, _.payment_methods           # knos.labs.base.Quote
+_.failures                              # knos.leitner.Item
+_.min_finality, _.destination_caller, _.finality_executed, _.burn_token, _.message_sender, _.expiration_block      # knos.money.cctp.Plan and Message (the CCTP V2 burn message)
+_.payout_watermark                      # knos.money.x402_upto.Channel (state/channel.rs)
+_.lamports_per_signature                # knos.platform.nonce.NonceAccount
+_.attestation                           # knos.platform.sas.Verdict
+_.last_reset                            # knos.platform.squads.SpendingLimit (the Squads v4 account)
+_.recorder                              # knos.zk.client.Verdict (the program's verdict account)
+# Constants that mirror a program's or a protocol's (clients and tests read them).
+from knos.labs import base as labs_base_
+from knos.money import cctp as cctp_, x402_upto as x402_upto_
+from knos.outcomes import spec as outcome_spec_
+from knos.platform import blockhash as blockhash_
+
+labs_base_.SUBMITTED, labs_base_.IN_PROGRESS, labs_base_.QC, labs_base_.CANCELLED      # the states every lab's own words map to (STATES)
+labs_base_.SPEC_FIELDS                              # the names of a Spec's fields; tests/test_labs_fields.py
+cctp_.MESSAGE_TRANSMITTER_V2, cctp_.TOKEN_MESSENGER_MINTER_V2      # Circle's CCTP V2 programs on Solana, for whoever builds the receive side
+x402_upto_.OPEN_SLOT_WINDOW                         # constants.rs of the upto program
+outcome_spec_.ORDER_MIN_WHOLE                       # knos_pay ORDER_MIN_AMOUNT, in whole units
+blockhash_.MAX_AGE_BLOCKS                           # the blockhash age limit of Solana; tests/test_platform_nonce_v34.py
+# Public functions and constants with no caller inside src/knos or scripts, each held by the tests (or the program) that name it.
+from knos import graduation as graduation_, ideas as ideas_, init as init_, playground as playground_
+from knos.claude import managed as managed_
+from knos.gate import app as gate_app_
+from knos.ideas import wanted as ideas_wanted_
+from knos.money import kora as kora_
+from knos.outcomes import stats as outcome_stats_, synth as outcome_synth_
+from knos.platform import claims as platform_claims_, referees as platform_referees_, verify as platform_verify_
+from knos.proof import issuers as issuers_
+from knos.receipt2 import ed25519 as receipt2_ed25519_
+from knos.record import anchoring as anchoring_
+from knos.repro import publish as repro_publish_
+from knos.taskpack import atropos as atropos_
+from knos.verify import sealed as sealed_
+from knos.zk import bn254 as bn254_, client as zk_client_
+
+managed_.agent_spec                                 # what client.beta.agents.create takes (docs/reference/CLAUDE_AGENTS.md); tests/test_claude_agents_v34.py
+gate_app_.verify_signature, gate_app_.app_jwt       # tests/test_gate_app.py
+gate_app_.installation_token                        # github-app/server.py, the GitHub App's webhook server
+graduation_.graduation_message                      # docs/reference/PAY_ON_PROOF.md; tests/test_verdict_trust.py
+ideas_.FIXTURES_ENV, ideas_.intake                  # tests/test_ideas_sources.py, tests/test_ideas_contract.py
+ideas_wanted_.ORACLE                                # tests/test_ideas_commit.py
+_.OPT_IN_ENV, _.OPT_IN_WORD                         # knos.ideas.tools: the opt-in of the idea tools on `knos mcp` (KNOS_MCP_TOOLS=ideas); tests/test_ideas_tools.py
+init_.posting_tools                                 # tests/test_agents_mcp.py, tests/test_host_hooks.py
+_.lab_quote                                         # knos.labs.adaptyv.Adaptyv; tests/test_labs_adaptyv.py
+_.box_number, _.due_orders                          # knos.leitner; tests/test_leitner.py
+cctp_.attestation                                   # Circle's attestation of a burn; tests/test_money_kora_cctp.py
+_.from_env                                          # knos.money.kora.Kora.from_env; tests/test_money_kora_cctp.py
+kora_.gasless_ixs, kora_.send_gasless               # docs/reference/KORA_CCTP.md; send_gasless: tests/test_money_kora_cctp.py
+x402_upto_.withdraw_payer_ix                        # docs/reference/X402_UPTO.md: the payer's way out of a channel
+outcome_stats_.tiers_passed                         # tests/test_outcome_stats.py
+outcome_synth_.drop_treated_failures, outcome_synth_.relabel, outcome_synth_.example_spec      # tests/test_outcome_measure.py, examples/outcomes/measured-support/demo.py
+platform_claims_.shared_writable, platform_claims_.per_block      # docs/reference/PLATFORM.md; tests/test_platform_claims.py
+platform_referees_.labelled                         # tests/test_labs_fix34b.py
+platform_verify_.one_transaction_ixs, platform_verify_.fits_v1, platform_verify_.es256_v1_ixs     # docs/reference/PLATFORM.md; tests/test_platform_verify.py, tests/test_platform_es256.py
+playground_.OLD_REPO                                # the playground's home until 0.3.34 (docs/reference/MONOREPO.md); tests/test_playground.py
+issuers_.FORGE                                      # the judge kind 0 of order_proof.rs, named beside ATTESTED and PANEL
+issuers_.TEST_ORCID_CLIENT, issuers_.orcid_of, issuers_.bind_orcid_ix, issuers_.proof_audience      # tests/test_proof_issuers.py
+issuers_.cs_claims, issuers_.orcid_claims, issuers_.judge_of, issuers_.pay_order_proof_ix                          # tests/test_proof_issuers.py
+receipt2_ed25519_.b58encode                         # tests/test_receipt2_sign.py
+anchoring_.parse_memo                               # tests/test_record_verify.py, tests/test_record_devnet.py
+repro_publish_.verify_signed                        # docs/reference/REPRODUCED.md; tests/test_repro_privacy.py
+atropos_.referee_spec                               # docs/reference/TASK_PACKAGES.md; tests/test_taskpack_export.py
+sealed_.load_tasks, sealed_.public_prompt           # tests/test_hermes_gepa.py
+bn254_.pairing, bn254_.G1_GEN, bn254_.G2_GEN        # docs/reference/ZK.md; tests/test_zk_groth16.py
+zk_client_.DEVNET_PROGRAM_ID                        # the reserved devnet program id (docs/reference/ZK.md); tests/test_zk_client.py

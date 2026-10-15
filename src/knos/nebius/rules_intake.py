@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import asdict, dataclass, field
+from typing import Any
 
 from .. import cheats
 from ..cheats.rules import RUNNER_LOADED, SOURCE_EXT, _added_in, _is_test_path
@@ -45,7 +46,8 @@ class RuleProposal:
         missing = [k for k in keys if not isinstance(d.get(k), str) or not d.get(k)]
         if missing:
             raise ValueError("a rule proposal needs " + ", ".join(missing))
-        return cls(*(d[k] for k in keys), sources=[str(s) for s in d.get("sources") or []], proposed_by=proposed_by)
+        return cls(d["id"], d["category"], d["title"], d["pattern"], d["applies_to"], d["known_bad"], d["known_good"],
+                   sources=[str(s) for s in d.get("sources") or []], proposed_by=proposed_by)
 
 
 def _picker(applies_to: str, change):
@@ -70,8 +72,8 @@ def build(p: RuleProposal) -> cheats.Rule:
 
 
 def review(p: RuleProposal) -> dict:
-    out = {"id": p.id, "accepted": False, "reasons": [], "sources": p.sources, "proposed_by": p.proposed_by,
-           "decided_by": "knos referee rule intake (deterministic)"}
+    out: dict[str, Any] = {"id": p.id, "accepted": False, "reasons": [], "sources": p.sources, "proposed_by": p.proposed_by,
+                           "decided_by": "knos referee rule intake (deterministic)"}
     try:
         rule = build(p)
     except (ValueError, re.error) as why:
@@ -84,8 +86,8 @@ def review(p: RuleProposal) -> dict:
     if bad.errors or good.errors:
         out["reasons"].append("a known case is not a readable diff")
         return out
-    fires_bad = bool(rule.check(bad))
-    fires_good = bool(rule.check(good))
+    fires_bad = bool(rule.check(bad))      # type: ignore[misc]  # build() always gives the rule its check
+    fires_good = bool(rule.check(good))    # type: ignore[misc]  # build() always gives the rule its check
     before_bad = cheats.run(bad)
     before_good = cheats.run(good)
     out.update(fires_on_known_bad=fires_bad, fires_on_known_good=fires_good,

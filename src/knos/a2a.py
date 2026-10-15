@@ -30,6 +30,10 @@ import threading
 import uuid
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .mcp import Server
 
 PROTOCOL_VERSION = "1.0"
 CARD_PATH = "/.well-known/agent-card.json"
@@ -89,7 +93,7 @@ class Agent:
         self.allow_verify = allow_verify
         self.tasks: dict[str, dict] = {}
         self._lock = threading.Lock()
-        self._mcp = None
+        self._mcp: Server | None = None
 
     def _mcp_call(self, tool: str, args: dict) -> dict:
         from .mcp import Server
@@ -106,7 +110,7 @@ class Agent:
             if version and version.split(".")[:2] != PROTOCOL_VERSION.split(".")[:2]:
                 raise A2AError(-32009, f"A2A version {version} is not supported; this agent speaks {PROTOCOL_VERSION}")
             method, params = msg.get("method"), msg.get("params") or {}
-            fn = {"SendMessage": self.send, "GetTask": self.get, "ListTasks": self.list, "CancelTask": self.cancel}.get(method)
+            fn = {"SendMessage": self.send, "GetTask": self.get, "ListTasks": self.list, "CancelTask": self.cancel}.get(method) if isinstance(method, str) else None
             if fn is None:
                 raise A2AError(-32004 if isinstance(method, str) else -32600, f"{method} is not supported by this agent")
             return {"jsonrpc": "2.0", "id": rid, "result": fn(params)}
@@ -162,7 +166,8 @@ class Agent:
 
     def get(self, params: dict) -> dict:
         with self._lock:
-            t = self.tasks.get(params.get("id"))
+            tid = params.get("id")
+            t = self.tasks.get(tid) if isinstance(tid, str) else None
         if t is None:
             raise A2AError(-32001, f"no task {params.get('id')!r}")
         return t
@@ -178,7 +183,8 @@ class Agent:
 
 
 def serve(port: int = 8765, host: str = "127.0.0.1", url: str | None = None, allow_verify: bool = False) -> ThreadingHTTPServer:
-    agent, state = Agent(allow_verify=allow_verify), {}
+    agent = Agent(allow_verify=allow_verify)
+    state: dict[str, Any] = {}
 
     class H(BaseHTTPRequestHandler):
         def _send(self, code: int, body: dict, ctype: str = "application/json") -> None:

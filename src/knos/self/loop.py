@@ -47,7 +47,7 @@ class Loop:
         self.main_dir = self.state / "referee-main"
         self.archive = Archive(self.state / "archive.json")
         self._store = record_store
-        self._log = None
+        self._log: publog.Log | None = None
         self._branch = branch
 
     # ---- setup ---------------------------------------------------------------------------------------------------
@@ -217,7 +217,7 @@ class Loop:
             node["payout"] = {"status": "pending", "amount": p["amount"], "fee": p["fee"]}
         self.archive.add(node)
         self.archive.save()                      # the version is saved BEFORE any money moves
-        if p is not None:
+        if p is not None and pay:            # p is planned only when pay was given
             from . import payout
             try:
                 paid = {**p, **payout.execute(p, **pay)}
@@ -333,11 +333,17 @@ def _patch_id(repo, diff_file: Path) -> str:
 
 @contextlib.contextmanager
 def _locked(path: Path):
-    import fcntl
+    """One `knos self run` at a time on a state folder, across processes: an exclusive lock that is not waited for
+    (flock on POSIX; on Windows, which has no fcntl, msvcrt's lock of the file's first byte, as knos.record.journal does)."""
     fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
     try:
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            if sys.platform == "win32":
+                import msvcrt
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             raise LoopError("another `knos self run` holds this state folder") from None
         yield

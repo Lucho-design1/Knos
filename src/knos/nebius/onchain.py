@@ -19,9 +19,14 @@ import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .. import chain
 from ..settle.v2 import pay
+
+if TYPE_CHECKING:
+    from solders.keypair import Keypair
+    from solders.pubkey import Pubkey
 
 RPC_ENV = "KNOS_RPC"
 
@@ -63,9 +68,9 @@ def _kp(path: Path):
 
 @dataclass
 class Devnet:
-    team: object            # Keypair (buyer)
-    agent: object           # Keypair (worker)
-    mint: object            # Pubkey of the team's test mint
+    team: Keypair           # the buyer
+    agent: Keypair          # the worker
+    mint: Pubkey            # the team's test mint
     decimals: int = 6
     url: str = ""
 

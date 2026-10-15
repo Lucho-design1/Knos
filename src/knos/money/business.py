@@ -52,7 +52,7 @@ def prices(cfg: fees_config.FeeConfig) -> list[dict]:
         {"who": "an agent paying for itself", "line": "raw agent check over x402", "price": f"{x['usd_each']} USD per check",
          "free": "", "status": x["status"], "label": "starting price", "paid_with": "x402 v2 exact on Solana (x402.org facilitator), per call", "source": x["source"]},
         {"who": "a team posting a bounty", "line": "bounty fee", "price": f"{b['rate_bps'] / 100:g}% of the bounty",
-         "free": "", "status": b["status"], "label": "starting price", "paid_with": f"0.30% (at least 0.05) taken by knos_pay at payout, the rest invoiced",
+         "free": "", "status": b["status"], "label": "starting price", "paid_with": "0.30% (at least 0.05) taken by knos_pay at payout, the rest invoiced",
          "source": b["source"]},
         {"who": "an AI lab buying verified tasks", "line": "verified task package", "price": f"maintainer {100 - tp['knos_bps'] / 100:g}% / Knos {tp['knos_bps'] / 100:g}%",
          "free": "", "status": tp["status"], "label": "starting split", "paid_with": "by contract (not a knos_pay order today)", "source": tp["source"]},
