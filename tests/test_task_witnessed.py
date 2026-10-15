@@ -296,7 +296,11 @@ def test_the_whole_sequence_runs_in_order_leaves_a_link_for_each_step_and_the_re
     assert [type(c).__name__ for c in world.parsed] == ["Faucet", "Fund", "Address", "Settle"]
     assert world.parsed[1] == commands.Fund(units=5_000_000, checks=(), auto=True)
     assert ["git", "push", "-q", "origin", "main"] == world.said[-1]                  # the record is the last thing published
-    assert not any("drexthealpha/Knos" in " ".join(a) for a in world.said)               # nothing is opened on Knos's repository
+    # nothing is opened on Knos's repository: since the 0.3.34 cutover its faucet issue is there, so the faucet's reads
+    # and its one comment are all that touch it
+    on_knos = [a for a in world.said if "drexthealpha/Knos" in " ".join(a)]
+    assert on_knos and all(a[:2] == ["gh", "api"] and re.fullmatch(r"repos/drexthealpha/Knos/issues(?:\?labels=faucet&state=open|/\d+/comments(?:\?per_page=100)?)", a[2])
+                           and (len(a) == 3 or (len(a) == 5 and a[3] == "-f" and a[4].startswith("body=/knos faucet "))) for a in on_knos), on_knos
     assert "passed" in s["verified"] or s["verified"]
 
 

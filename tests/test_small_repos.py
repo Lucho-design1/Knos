@@ -151,7 +151,7 @@ def _rules():
 def test_the_playground_holds_the_callers_a_template_that_funds_and_checks_for_every_slot():
     yaml = pytest.importorskip("yaml")
     p, files = _rules(), r.files("knos-playground")
-    assert f"{r.OWNER}/knos-playground" == p.REPO and r.SETTINGS["knos-playground"][0][2]["is_template"] is False
+    assert f"{r.OWNER}/Knos" == p.REPO and f"{r.OWNER}/knos-playground" == p.OLD_REPO and r.SETTINGS["knos-playground"][0][2]["is_template"] is False
     assert r.SETTINGS["knos-playground"][1] == ("PUT", "/actions/permissions/fork-pr-contributor-approval", {"approval_policy": "first_time_contributors_new_to_github"})
     for rel, src in ((".github/workflows/knos.yml", "examples/knos-workflow.yml"), (".github/workflows/knos-check.yml", "examples/knos-check.yml")):
         assert files[rel] == (ROOT / src).read_bytes()

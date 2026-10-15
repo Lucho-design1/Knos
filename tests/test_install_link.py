@@ -18,7 +18,7 @@ from knos import commands, init, terms, terms_templates
 
 ROOT = Path(__file__).resolve().parents[1]
 SHORT, LONG = ROOT / "examples" / "knos-install.yml", ROOT / "examples" / "knos-workflow.yml"
-CALLED = "drexthealpha/knos-workflows/.github/workflows/"
+CALLED = "drexthealpha/Knos/.github/workflows/"      # the published set's home since the 0.3.34 cutover
 MINTS = {"contents": "read", "issues": "write", "pull-requests": "write", "checks": "read", "statuses": "read", "actions": "read", "id-token": "write"}
 
 
@@ -150,7 +150,7 @@ def test_nothing_in_the_wheel_names_a_commit_of_the_workflows():
     from the release's examples instead of carrying it."""
     for name in ("init.py", "terms_templates.py"):
         text = (ROOT / "src" / "knos" / name).read_text(encoding="utf-8")
-        assert "KNOS_WORKFLOWS_SHA" not in text and not re.search(r"knos-workflows/\S*[0-9a-f]{40}", text), name
+        assert "KNOS_WORKFLOWS_SHA" not in text and not re.search(r"(?:knos-workflows|drexthealpha/Knos)/\S*[0-9a-f]{40}", text), name     # either home
 
 
 # ---- the page ---------------------------------------------------------------------------------------------------------

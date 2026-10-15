@@ -150,7 +150,7 @@ pub fn payees_any(list: &[u8]) -> Result<Vec<crate::order_pay::Payee>, ProgramEr
 
 /// knos3:proof:<order address>:<evidence sha256 hex>:<terms hash hex>:<payees>: what a Confidential Space judge puts
 /// in its token's audience (at most 512 bytes, Google's limit). Returns (order, evidence, terms, payees text).
-pub fn proof_aud(aud: &[u8]) -> Result<(Pubkey, [u8; 32], [u8; 32], &[u8]), ProgramError> {
+#[allow(clippy::type_complexity)] pub fn proof_aud(aud: &[u8]) -> Result<(Pubkey, [u8; 32], [u8; 32], &[u8]), ProgramError> {
     let bad = || err(E_AUD);
     let [k, w, order, evidence, terms, list] = parts::<6>(aud).ok_or_else(bad)?;
     if k != b"knos3" || w != b"proof" { return Err(bad()); }
@@ -192,8 +192,8 @@ mod tests {
     #[test]
     fn an_orcid_id_is_its_fifteen_digits_above_every_forge_id_and_its_check_character_is_checked() {
         // ORCID's own examples: 0000-0002-1825-0097 (Josiah Carberry) and 0000-0002-1694-233X
-        assert_eq!(orcid_id(b"0000-0002-1825-0097"), Some(OR_BASE + 2_1825_009));
-        assert_eq!(orcid_id(b"0000-0002-1694-233X"), Some(OR_BASE + 2_1694_233));
+        assert_eq!(orcid_id(b"0000-0002-1825-0097"), Some(OR_BASE + 21_825_009));
+        assert_eq!(orcid_id(b"0000-0002-1694-233X"), Some(OR_BASE + 21_694_233));
         for bad in [&b"0000-0002-1825-0098"[..], b"0000-0002-1825-009", b"0000000218250097", b"0000-0002-1825-009x", b"000a-0002-1825-0097",
                     b"0000_0002-1825-0097", b"0000-0002-1825-00970"] {
             assert!(orcid_id(bad).is_none(), "{:?}", core::str::from_utf8(bad));
@@ -203,7 +203,7 @@ mod tests {
         assert!(crate::gl::not_ours(OR_BASE).is_err() && claims::parse_u64(b"1000000000000000000").is_none());
         let w = Pubkey::new_from_array([9; 32]);
         let p = payees_any(format!("0000-0002-1825-0097.6000.{w},77.4000.-").as_bytes()).ok().unwrap();
-        assert_eq!((p[0].id, p[0].address, p[1].id, p[1].address), (OR_BASE + 2_1825_009, Some(w), 77, None));
+        assert_eq!((p[0].id, p[0].address, p[1].id, p[1].address), (OR_BASE + 21_825_009, Some(w), 77, None));
         for bad in ["0000-0002-1825-0098.10000.-", "0000-0002-1825-0097.5000.-,0000-0002-1825-0097.5000.-", "0.10000.-", "5.9999.-"] {
             assert!(payees_any(bad.as_bytes()).is_err(), "{bad}");
         }

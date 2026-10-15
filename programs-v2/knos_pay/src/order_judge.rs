@@ -232,7 +232,7 @@ pub fn bind_org(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8], now:
     if !relayer.is_signer || !relayer.is_writable { return Err(err(E_ACCOUNTS)); }
     let g = github(tok, key, now)?;
     let sha_ok = g.wf_sha[..] == CLAIM_SHA[..] || g.wf_sha[..] == CLAIM_SHA_ORG[..] || TEST_CLAIM_SHA.is_some_and(|t| g.wf_sha[..] == t[..]);
-    if !g.wf_ref.starts_with(CLAIM_REF) || !sha_ok { return Err(err(E_WORKFLOW)); }
+    if !claim_ref(&g.wf_ref) || !sha_ok { return Err(err(E_WORKFLOW)); }
     // the repository is the owner's knos-claim, the owner did not start the run (so it is not a person binding his
     // own wallet: that is Bind), and whoever did started it by hand, once
     let org = g.owner_id != 0 && g.actor_id != 0 && g.owner_id != g.actor_id;

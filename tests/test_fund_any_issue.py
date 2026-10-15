@@ -25,7 +25,7 @@ RECORDED = ROOT / "tests" / "web" / "recorded" / "fund_any_issue.json"
 IDS = json.loads((ROOT / "src" / "knos" / "settle" / "v2" / "program_ids.json").read_text(encoding="utf-8"))
 PAY = Pubkey.from_string(IDS["knos_pay"])
 USDC = Pubkey.from_string("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU")
-WF_REPO, WF_SHA = "drexthealpha/knos-workflows", "a" * 40            # the pin tests/web/site.mjs stamps into the page's workflow file
+WF_REPO, WF_SHA = "drexthealpha/Knos", "a" * 40            # the pin tests/web/site.mjs stamps into the page's workflow file
 REPO_ID, ISSUE, AMOUNT, WORK_S = 5550001, 7, 20_000_000, 14 * 86_400
 
 NOTE = ("Made by tests/test_fund_any_issue.py: the terms from src/knos/terms.py for the boxes as a funder types them, and the funding instruction "

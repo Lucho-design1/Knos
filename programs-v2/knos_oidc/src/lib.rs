@@ -364,7 +364,7 @@ fn attested(program_id: &Pubkey, attest: &AccountInfo, akey: &AccountInfo, want:
         b"runner_environment", b"repository_owner_id", b"repository_id", b"event_name", b"actor_id", b"aud"])?;
     let (wref, wsha, event) = (text(wref)?, text(wsha)?, text(event)?);
     let sha_ok = wsha == pins::ROTATE_SHA || wsha == pins::ROTATE_SHA2 || pins::TEST_ROTATE_SHA.is_some_and(|t| wsha == t);
-    if !wref.starts_with(pins::ROTATE_REF) || !sha_ok || text(runner)? != b"github-hosted" { return Err(err(E_ATTEST)); }
+    if !pins::rotate_ref(&wref) || !sha_ok || text(runner)? != b"github-hosted" { return Err(err(E_ATTEST)); }
     let owner = number(owner)?;
     let by_attester = pins::attester(owner, number(repo)?) && pins::ATTEST_EVENTS.iter().any(|e| *e == &event[..]);
     // Refresh only: the same file at the same commit, started by hand in a repository of the person who started it

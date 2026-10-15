@@ -93,6 +93,16 @@
         "file_sha256": "cc25d5aebe1489d0072cea274455ba91016672a013b06b2a7dabbf25b057500b"
       },
       {
+        "name": "bug-fix",
+        "version": 2,
+        "hash": "ee9eb25a02888d22b135428c4a0905338c3d150ab4c282dad5f7a81864edbc13",
+        "built": true,
+        "cite": "Acceptance is governed by Knos Terms 3, bug-fix version 2, sha256 ee9eb25a02888d22b135428c4a0905338c3d150ab4c282dad5f7a81864edbc13",
+        "comment": "/knos fund 50 checks: lint, unit paths: src/**, tests/** days 14",
+        "needs": "",
+        "file_sha256": "32101bd4f299e6d5d526ae30e87a4cec456e0e2f9fd543550aa0810840ffbeae"
+      },
+      {
         "name": "dataset-batch",
         "version": 1,
         "hash": "1dbc5d37b696ba3fd5a70ee27efce922331c3ee9083774d5ab90467af40d418f",
@@ -103,6 +113,16 @@
         "file_sha256": "305c1e1457bc7b413f0d03126620dbf32fdd87a8b809d8d47fa0971169eb088c"
       },
       {
+        "name": "dataset-batch",
+        "version": 2,
+        "hash": "6fc88ade4b5d68713902a5360ad96593c37ddb2600c43c059bb681ec6b61ee2b",
+        "built": true,
+        "cite": "Acceptance is governed by Knos Terms 3, dataset-batch version 2, sha256 6fc88ade4b5d68713902a5360ad96593c37ddb2600c43c059bb681ec6b61ee2b",
+        "comment": "/knos fund 40 checks: none paths: batches/** days 14",
+        "needs": "",
+        "file_sha256": "ea4357d4557e38a5aba33fddf7d21dc501f12cf214361205ba8729113bf7ef0a"
+      },
+      {
         "name": "migration",
         "version": 1,
         "hash": "fae42f89b28cfd91a1f7ce22ffe8eac4d217bff0871beac6005b6d6fe9fcdbb2",
@@ -111,6 +131,16 @@
         "comment": "/knos fund 100 checks: unit holdback 20 warranty 30 days 30",
         "needs": "",
         "file_sha256": "159ec5440fd44afbed527145ad794cdc39887321daefc9b4969fa74e88e2c707"
+      },
+      {
+        "name": "migration",
+        "version": 2,
+        "hash": "b46ef7e9c42c90501e55c80b7cdfdc5ab6f2e883d8377bd562b8d3a6191cda0c",
+        "built": true,
+        "cite": "Acceptance is governed by Knos Terms 3, migration version 2, sha256 b46ef7e9c42c90501e55c80b7cdfdc5ab6f2e883d8377bd562b8d3a6191cda0c",
+        "comment": "/knos fund 100 checks: unit holdback 20 warranty 30 days 30",
+        "needs": "",
+        "file_sha256": "4c087c62dae7837679fb1d56f42139d6fa3e4898175019a6c5a144d40da3634d"
       },
       {
         "name": "support-resolution",

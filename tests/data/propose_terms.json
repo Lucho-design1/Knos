@@ -839,14 +839,14 @@
     "sources": [
      {
       "issuer": "https://token.actions.githubusercontent.com",
-      "workflow": "drexthealpha/knos-workflows/.github/workflows/attest.yml"
+      "workflow": "drexthealpha/Knos/.github/workflows/attest.yml"
      },
      {
       "issuer": "https://token.actions.githubusercontent.com",
-      "workflow": "drexthealpha/knos-workflows/.github/workflows/prove.yml"
+      "workflow": "drexthealpha/Knos/.github/workflows/prove.yml"
      }
     ],
-    "says": "Evidence counts only when signed by GitHub Actions for a run of drexthealpha/knos-workflows/.github/workflows/attest.yml; or by GitHub Actions for a run of drexthealpha/knos-workflows/.github/workflows/prove.yml."
+    "says": "Evidence counts only when signed by GitHub Actions for a run of drexthealpha/Knos/.github/workflows/attest.yml; or by GitHub Actions for a run of drexthealpha/Knos/.github/workflows/prove.yml."
    },
    "checks": {
     "mode": "merge",
@@ -897,11 +897,11 @@
       "name": "own",
       "issuer": "https://token.actions.githubusercontent.com",
       "repository": "acme/widgets",
-      "workflow": "drexthealpha/knos-workflows/.github/workflows/prove.yml",
+      "workflow": "drexthealpha/Knos/.github/workflows/prove.yml",
       "owner": "acme"
      }
     ],
-    "says": "These may judge: `own` (GitHub Actions, workflow drexthealpha/knos-workflows/.github/workflows/prove.yml, in acme/widgets, owned by acme). One of them is enough."
+    "says": "These may judge: `own` (GitHub Actions, workflow drexthealpha/Knos/.github/workflows/prove.yml, in acme/widgets, owned by acme). One of them is enough."
    },
    "price": {
     "amount": "50.00",
@@ -922,7 +922,7 @@
     "says": "@acme/platform, @alice may publish a new version. A version never changes: a change is the next version, with its own hash, and an order keeps the version it was funded on."
    }
   },
-  "hash": "dea9f0582e9002683159b0602b26bdc2c1068b569772f407cc5f73e7caa90f51",
+  "hash": "4a25dda9c1405e751346416256b00855d57eb6a3426b71819240b582771b4cf8",
   "from": {
    "deliverable": [
     "Template default (`bug-fix`): one deliverable for each issue of acme/widgets."

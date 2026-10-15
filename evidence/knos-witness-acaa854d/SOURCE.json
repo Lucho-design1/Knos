@@ -1,0 +1,183 @@
+{
+ "repository": "drexthealpha/knos-witness",
+ "url": "https://github.com/drexthealpha/knos-witness",
+ "visibility": "public",
+ "kind": "evidence",
+ "default_branch": "main",
+ "commit": "acaa854d241c2e030f521b6f5603c8f43c93bab6",
+ "tree": "44c615d7c5affb2d30e2e935c865e94275367f0d",
+ "at": "a cited commit",
+ "commits_to_here": 11,
+ "copied": "2026-10-15",
+ "note": "The commit of knos-witness whose witness.json is the record docs/JUDGES.md, docs/TRANSACTION.md, docs/judges.json, README.md and docs/reference/FLOWS.md cite (the 0.3.23 run, issue #9 and pull request #10).",
+ "files": [
+  {
+   "path": ".github/workflows/knos-check.yml",
+   "mode": "100644",
+   "blob": "e6c33100a9c290d11ed5c515a386bdd1dfdeed2f",
+   "size": 2222
+  },
+  {
+   "path": ".github/workflows/knos-reproduce.yml",
+   "mode": "100644",
+   "blob": "689d669c1f896e5ec5aa3ca9811f4de5db853a87",
+   "size": 7342
+  },
+  {
+   "path": ".github/workflows/knos.yml",
+   "mode": "100644",
+   "blob": "1c47409d666b476efeec285c2d16e0f20cd01fb3",
+   "size": 7781
+  },
+  {
+   "path": ".knos/acceptance/1/1.in",
+   "mode": "100644",
+   "blob": "3750c6e13c62eb71fc43a9a47c2908118cb16619",
+   "size": 14
+  },
+  {
+   "path": ".knos/acceptance/1/1.out",
+   "mode": "100644",
+   "blob": "2eaceb73b0415bf50dcc7a76573fff94aebba460",
+   "size": 14
+  },
+  {
+   "path": ".knos/acceptance/1/2.in",
+   "mode": "100644",
+   "blob": "b2901ea97cfc0f297529eb23d489eab8cb71f9db",
+   "size": 4
+  },
+  {
+   "path": ".knos/acceptance/1/2.out",
+   "mode": "100644",
+   "blob": "a6b6601134fa7f08d99a883f7fe0a1c3315ed422",
+   "size": 4
+  },
+  {
+   "path": ".knos/acceptance/1/3.in",
+   "mode": "100644",
+   "blob": "ceeec8434f63b74c4c2a7f5fffa2ce4851ea3bf6",
+   "size": 5
+  },
+  {
+   "path": ".knos/acceptance/1/3.out",
+   "mode": "100644",
+   "blob": "ceeec8434f63b74c4c2a7f5fffa2ce4851ea3bf6",
+   "size": 5
+  },
+  {
+   "path": ".knos/acceptance/1/4.in",
+   "mode": "100644",
+   "blob": "9b0272871647b91dc3c4c7e7042274fa54f8b20b",
+   "size": 9
+  },
+  {
+   "path": ".knos/acceptance/1/4.out",
+   "mode": "100644",
+   "blob": "b739bcfe1c60799edbd94b5467b969e37c746d80",
+   "size": 6
+  },
+  {
+   "path": ".knos/acceptance/1/5.in",
+   "mode": "100644",
+   "blob": "06580ab43ae9cce6b452a1f885477f0d66ccd43b",
+   "size": 11
+  },
+  {
+   "path": ".knos/acceptance/1/5.out",
+   "mode": "100644",
+   "blob": "4aca269b5727a74c24aecba599068f4852d1da97",
+   "size": 11
+  },
+  {
+   "path": ".knos/acceptance/2/README.md",
+   "mode": "100644",
+   "blob": "b98ffc53efaf48cf2efaeb5cc5a0c1148ee6c8ba",
+   "size": 1213
+  },
+  {
+   "path": ".knos/acceptance/2/blackbox.py",
+   "mode": "100644",
+   "blob": "996feace6ca68d743829ec78dff60e714ba2ef2f",
+   "size": 1859
+  },
+  {
+   "path": ".knos/acceptance/2/cases.json",
+   "mode": "100644",
+   "blob": "7a432b727a26234d37fa6a023cf8344b57aee800",
+   "size": 392
+  },
+  {
+   "path": ".knos/acceptance/5/README.md",
+   "mode": "100644",
+   "blob": "28f5b522902231ab1856ffed422d48c4dd7ce8a7",
+   "size": 1213
+  },
+  {
+   "path": ".knos/acceptance/5/blackbox.py",
+   "mode": "100644",
+   "blob": "5352dfefc60cc44ade3cd5bbb14c52812c5926fe",
+   "size": 1859
+  },
+  {
+   "path": ".knos/acceptance/5/cases.json",
+   "mode": "100644",
+   "blob": "55626c2212cc102c1776c3dfa0bf1516d946f014",
+   "size": 392
+  },
+  {
+   "path": ".knos/acceptance/7/README.md",
+   "mode": "100644",
+   "blob": "538dfe6317e347c02b97d55055b77ab77750191f",
+   "size": 1213
+  },
+  {
+   "path": ".knos/acceptance/7/blackbox.py",
+   "mode": "100644",
+   "blob": "1bec55756d3fcfc5ceb992e95928f176ffcf7b6c",
+   "size": 1859
+  },
+  {
+   "path": ".knos/acceptance/7/cases.json",
+   "mode": "100644",
+   "blob": "9d5f658c47d69dc8dc71005e623f2fdf4d5a945b",
+   "size": 391
+  },
+  {
+   "path": ".knos/acceptance/9/README.md",
+   "mode": "100644",
+   "blob": "a2ba26924af979652448700fbeaf768609ef4429",
+   "size": 1213
+  },
+  {
+   "path": ".knos/acceptance/9/blackbox.py",
+   "mode": "100644",
+   "blob": "57bded1d40ec8abeb335379219141e42a2098236",
+   "size": 1859
+  },
+  {
+   "path": ".knos/acceptance/9/cases.json",
+   "mode": "100644",
+   "blob": "fa1dc27ca16c7e31d6d78636167ef91e7536db7c",
+   "size": 391
+  },
+  {
+   "path": "LICENSE",
+   "mode": "100644",
+   "blob": "627729e97ce50684baa6e7b08b2cd23c584fa897",
+   "size": 1074
+  },
+  {
+   "path": "README.md",
+   "mode": "100644",
+   "blob": "d7dbfe44e753ac1d2a61bb66ee402008f07b1b0c",
+   "size": 1497
+  },
+  {
+   "path": "witness.json",
+   "mode": "100644",
+   "blob": "76f38626e7e608a0ffc51a433e772578cdb8b9bb",
+   "size": 2269
+  }
+ ]
+}

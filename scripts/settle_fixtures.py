@@ -49,7 +49,7 @@ TERMS = {"accept": "", "checks": [{"app": 15368, "name": "test"}], "deny": [".gi
          "reserve": 7, "v": 1}
 TERMS_TESTS = {**TERMS, "accept": "ab" * 32, "mode": "tests", "paths": ["src/**", "caf\u00e9/*.md", "docs/\U0001f4c4*"]}
 ODD = {"z": ["tab\there", "del\x7f", "quote\"", "back\\slash", "line\u2028", "nul\x00", "slash/"], "a": {"b": 1, "a": [True, None, -2]}}
-WF_REPO, WF_SHA, HEAD = "drexthealpha/knos-workflows", "c" * 40, "a" * 40
+WF_REPO, WF_SHA, HEAD = "drexthealpha/Knos", "c" * 40, "a" * 40
 NOW = 1_790_000_000
 BLOCKHASH = Hash(bytes([0xBB]) * 32)
 TRANSFER_CHECKED = 12       # SPL Token and Token-2022: TransferChecked { amount u64, decimals u8 }

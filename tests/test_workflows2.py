@@ -1,5 +1,5 @@
 """The second deployment's workflows: what a repository installs (examples/), what those files call (fund.yml,
-prove.yml and check.yml, published from drexthealpha/knos-workflows) and what Knos runs on itself. Every rule the
+prove.yml and check.yml, published from drexthealpha/Knos, branch workflows) and what Knos runs on itself. Every rule the
 design rests on is checked on the parsed files. Nothing here talks to GitHub: a job's `if:` is run against sample
 events by tests/_ghexpr.py, which follows GitHub's own rules for expressions."""
 from __future__ import annotations
@@ -27,7 +27,8 @@ CLAIM_COPY = ROOT / "src" / "knos" / "settle" / "knos-claim.yml"
 REUSABLE = ("fund.yml", "prove.yml", "check.yml")             # the three that take no inputs
 ATTEST = "attest.yml"                                         # the fourth published workflow: it takes facts, never code
 PUBLISHED = (*REUSABLE, ATTEST)
-CALLED = "drexthealpha/knos-workflows/.github/workflows/"
+CALLED = "drexthealpha/Knos/.github/workflows/"              # the published set's home since the cutover (docs/reference/MONOREPO.md)
+OLD_CALLED = "drexthealpha/knos-workflows/.github/workflows/"  # its home before: the same commits, still paid (tasks.PUBLIC_WORKFLOW_HOMES)
 ROTATE = "drexthealpha/knos-oidc-rotate/.github/workflows/"
 SUPPLIER = "drexthealpha/Knos/.github/workflows/supplier.yml"      # what examples/knos-supplier.yml calls, at a release's tag
 PLACEHOLDER = "KNOS_WORKFLOWS_SHA"                 # stands for the published commit until a release names it
@@ -187,14 +188,14 @@ def test_every_action_is_a_commit_listed_in_action_pins_and_every_called_workflo
     called = set()
     for path in _files():
         for name, ref, tag in re.findall(r"^\s*(?:- )?uses:\s*(\S+?)@(\S+)(?:\s+#\s*(\S+))?", path.read_text(encoding="utf-8"), re.M):
-            if name.startswith(CALLED):
-                assert name[len(CALLED):] in PUBLISHED and (ref == PLACEHOLDER or re.fullmatch(SHA, ref)), (path.name, name, ref)
-                called.add(ref)
-            elif name == SUPPLIER:
+            if name == SUPPLIER:     # (tested first: since the cutover the supplier's file and the published set share a home)
                 # the supplier's one line calls Knos's own repository at the tag of a release (docs/reference/RECORD.md, section 3): the
                 # tag names a commit in scripts/action_pins.json, and the release moves both
                 assert path.name == "knos-supplier.yml" and re.fullmatch(r"v\d+\.\d+\.\d+", ref), (path.name, name, ref)
                 assert any(re.fullmatch(r"drexthealpha/Knos@v\d+\.\d+\.\d+", k) and re.fullmatch(SHA, v) for k, v in pins.items()), "no commit is listed for a Knos tag"
+            elif name.startswith(CALLED):
+                assert name[len(CALLED):] in PUBLISHED and (ref == PLACEHOLDER or re.fullmatch(SHA, ref)), (path.name, name, ref)
+                called.add(ref)
             elif name.startswith(ROTATE):
                 # (an organisation's claim file calls the claim workflow's later commit, the one knos_pay's BindOrg pins beside the first)
                 pinned = ids["claim_sha_org"] if path.name == "knos-claim-org.yml" else {"rotate.yml": ids["rotate_sha"], "claim.yml": ids["claim_sha"]}[name[len(ROTATE):]]
@@ -776,7 +777,8 @@ def test_the_release_uploads_no_wheel_but_the_locked_one_and_attaches_the_lock_t
     assert r.wheel_cmd(check=True) == 0 and r.sha256(tmp_path / "dist" / wheel) == mine and sorted(p.name for p in (tmp_path / "dist").iterdir()) == sorted([wheel, sdist])
     # nothing inside the package can name the commit of the published workflows: the commit holds the wheel's hash
     named = [p.relative_to(ROOT).as_posix() for p in (ROOT / "src" / "knos").rglob("*") if p.is_file()
-             and re.search(rb"knos-workflows/(?:\.github|[0-9a-f]{40}|KNOS_WORKFLOWS_SHA)", p.read_bytes())]
+             and re.search(rb"knos-workflows/(?:\.github|[0-9a-f]{40}|KNOS_WORKFLOWS_SHA)"      # either home of the published set
+                           rb"|drexthealpha/Knos/(?:\.github/workflows/(?:fund|prove|check|attest)\.yml|[0-9a-f]{40}|KNOS_WORKFLOWS_SHA)", p.read_bytes())]
     assert named == [], f"the wheel would name the commit that holds its own hash: {named}"
 
 
@@ -1457,7 +1459,7 @@ def test_the_published_set_is_the_source_byte_for_byte_with_the_lock_written_in(
     assert f"knos {_release()} from PyPI" in readme and "REHEARSAL" not in readme and all(f"`.github/workflows/{n}`" in readme for n in PUBLISHED)
     assert "names this repository and one commit of it" in readme and not re.search(r"\bimmutable\b|nobody can change", readme, re.I)
     assert "--require-hashes" in readme and "requirements/sign.txt" in readme
-    assert pub.REPO == CALLED.split("/.github")[0] and pub.main(["check", str(out), "--lock", str(lock)]) == 0
+    assert pub.HOME == CALLED.split("/.github")[0] and pub.HOMES == (OLD_CALLED.split("/.github")[0], pub.HOME) and pub.main(["check", str(out), "--lock", str(lock)]) == 0
     assert "byte for byte" in capsys.readouterr().out
     # check sees one changed byte, a missing file and a file that does not belong; a checkout's .git is not looked at
     (out / ".git").mkdir()
@@ -1570,7 +1572,7 @@ def test_stamp_names_one_commit_everywhere_and_check_says_every_place_that_disag
     named = [root / "examples" / "knos-workflow.yml", root / "examples" / "knos-check.yml", root / ".github" / "workflows" / "knos.yml",
              root / ".github" / "workflows" / "knos-check.yml", root / "docs" / "reference" / "INSTALL.md", root / "web" / "front.js"]
     for sha, old in ((first, before), (second, first)):        # a release, then the next one
-        assert pub.main(["stamp", sha]) == 0 and "Named drexthealpha/knos-workflows@" + sha in capsys.readouterr().out
+        assert pub.main(["stamp", sha]) == 0 and "Named drexthealpha/Knos@" + sha in capsys.readouterr().out
         for path in named:
             text = path.read_text(encoding="utf-8")
             assert f"{CALLED}fund.yml@{sha}" in text or f"{CALLED}check.yml@{sha}" in text, path.name
@@ -1578,7 +1580,7 @@ def test_stamp_names_one_commit_everywhere_and_check_says_every_place_that_disag
         assert f"The commit is `{sha}`." in (root / "docs" / "reference" / "INSTALL.md").read_text(encoding="utf-8")
         # the seller's caller and the canary are stamped too: the workflow, and the published list read at the commit
         assert f"{CALLED}attest.yml@{sha}" in (root / "examples" / "knos-attest.yml").read_text(encoding="utf-8")
-        assert f"knos-workflows/{sha}/requirements/sign.txt" in (root / "examples" / "knos-canary.yml").read_text(encoding="utf-8")
+        assert f"drexthealpha/Knos/{sha}/requirements/sign.txt" in (root / "examples" / "knos-canary.yml").read_text(encoding="utf-8")
         assert pub.pin() == sha and pub.main(["check"]) == 0 and sha in capsys.readouterr().out
         for example, own in OWN.items():
             assert (root / "examples" / example).read_bytes() == (root / ".github" / "workflows" / own).read_bytes()
@@ -1596,16 +1598,17 @@ def test_stamp_names_one_commit_everywhere_and_check_says_every_place_that_disag
     # check: a copy edited by hand, a document left at another commit or at the placeholder, a workflow nobody publishes
     own = root / ".github" / "workflows" / "knos.yml"
     own.write_text(own.read_text(encoding="utf-8").replace("needs: command", "needs:  command"), encoding="utf-8")
-    (root / "docs" / "OLD.md").write_text(f"{CALLED}prove.yml@{first} and {CALLED}relay.yml@{second}, once {PLACEHOLDER}; "
-                                          f"-r https://raw.githubusercontent.com/drexthealpha/knos-workflows/{first}/requirements/sign.txt\n", encoding="utf-8")
+    (root / "docs" / "OLD.md").write_text(f"{CALLED}prove.yml@{first} and {OLD_CALLED}relay.yml@{second}, once {PLACEHOLDER}; "
+                                          f"-r https://raw.githubusercontent.com/drexthealpha/Knos/{first}/requirements/sign.txt\n", encoding="utf-8")
     page = root / "web" / "front.js"
     page.write_text(page.read_text(encoding="utf-8").replace("types: [created]", "types: [created, edited]"), encoding="utf-8")
     capsys.readouterr()
     assert pub.main(["check"]) == 1
     said = capsys.readouterr().out
-    for line in (".github/workflows/knos.yml is not examples/knos-workflow.yml", f"docs/OLD.md names drexthealpha/knos-workflows at {first}",
+    for line in (".github/workflows/knos.yml is not examples/knos-workflow.yml", f"docs/OLD.md names drexthealpha/Knos at {first}",
                  "docs/OLD.md names relay.yml, which drexthealpha/knos-workflows does not publish", f"docs/OLD.md still says {PLACEHOLDER}",
-                 f"docs/OLD.md reads requirements/sign.txt of drexthealpha/knos-workflows at {first}",
+                 "docs/OLD.md names the published workflows in drexthealpha/knos-workflows; the examples name them in drexthealpha/Knos",
+                 f"docs/OLD.md reads requirements/sign.txt of drexthealpha/Knos at {first}",
                  "web/front.js does not hand out examples/"):
         assert line in said, line
     assert "docs/reference/INSTALL.md" not in said and "examples/" + "knos-check.yml" not in said
@@ -1885,7 +1888,7 @@ def test_the_worker_keeps_its_keys_apart_the_claim_sweep_holds_none_and_the_fauc
     faucet = jobs["faucet"]
     assert doc["on"]["issue_comment"] == {"types": ["created"]} and "'relay for a comment'" in doc["run-name"]     # a title the chain's first step does not count
     when = " ".join(faucet["if"].split())
-    assert when.startswith("github.event_name == 'issue_comment' && github.repository == (vars.KNOS_FAUCET_REPO || 'drexthealpha/knos-playground')")
+    assert when.startswith("github.event_name == 'issue_comment' && github.repository == (vars.KNOS_FAUCET_REPO || 'drexthealpha/Knos')")
     assert "!github.event.issue.pull_request" in when and "contains(github.event.issue.labels.*.name, 'faucet')" in when and "github.event.comment.user.type != 'Bot'" in when
     assert faucet["concurrency"] == {"group": "knos-faucet", "cancel-in-progress": False} and faucet["permissions"] == {"contents": "read", "issues": "write"}
     assert _sees_a_secret_or_signs(doc, faucet) and not _caches(faucet)

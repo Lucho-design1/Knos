@@ -8,7 +8,7 @@
 //   fundUrl(), takeUrl(tasks)   where the two buttons go
 //
 // What it reads, and nothing else:
-//   GitHub      api.github.com/repos/drexthealpha/knos-playground/issues (open issues; no token), as app.js reads GitHub
+//   GitHub      api.github.com/repos/drexthealpha/Knos/issues (open issues; no token), as app.js reads GitHub
 //   this site   bounties.json (the open funded tasks counted from Solana devnet by scripts/pages_data.py) and
 //               outsiders.json (outside funders, repositories and payees: three numbers that are never added)
 //               tasks.json (the board: `python scripts/task_board.py status --json`, written when the site is built)
@@ -17,7 +17,7 @@
 // It uses the design contract's names (.k-card, .k-btn, .k-kicker, .k-num, .k-table, .k-step) and adds only what
 // keeps it inside a 320 px screen. Every sentence on it is 12 words or fewer; the rest is in the document.
 
-export const REPO = "drexthealpha/knos-playground";
+export const REPO = "drexthealpha/Knos";
 export const TEMPLATE = "fund-a-test-task.md";
 export const TASK_FILE = "words.py";
 export const DOC = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/PLAYGROUND.md";

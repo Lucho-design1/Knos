@@ -3,8 +3,10 @@ docs/reference/RELEASE.md is the plan; this is what it runs.
 
     python scripts/release.py wheel             build the wheel and the sdist ONCE, reproducibly, into dist/
     python scripts/release.py wheel --check     build them again and exit 1 unless the wheel is the locked one
-    python scripts/release.py workflows DIR     write the pinned workflows into DIR (a checkout of knos-workflows), commit
-                                                them there when they changed, and print the commit: what `stamp` takes
+    python scripts/release.py workflows DIR     write the pinned workflows into DIR (a worktree of this repository's branch
+                                                `workflows`: git worktree add DIR workflows), commit them there when they
+                                                changed, tag the commit workflows-<sha12>, push both (--no-push: not the
+                                                push), and print the commit: what `stamp` takes
     python scripts/release.py verify [DIR]      everything the one commit must hold, checked: versions, the lock, the
                                                 wheel built again, the pin (and DIR: the checkout whose HEAD is the pin)
     python scripts/release.py publish           upload THAT wheel (and the sdist) to PyPI: `uv publish`, token from the
@@ -144,11 +146,32 @@ def git(*args: str, cwd: Path) -> str:
     return done.stdout.strip()
 
 
-def workflows_cmd(folder: Path) -> int:
+def on_branch(folder: Path, branch: str) -> str | None:
+    """Why `folder` is not a worktree of this repository's branch `branch` (None when it is): its own checkout of
+    another repository, a detached HEAD or another branch are each refused, with the command that makes the right one."""
+    make = f"git -C {ROOT} worktree add {folder} {branch}"
+    if not folder.is_dir() or not (folder / ".git").exists():
+        return f"{folder} is not a worktree of the branch {branch}: make one first ({make})"
+    done = subprocess.run(["git", "symbolic-ref", "-q", "--short", "HEAD"], cwd=folder, capture_output=True, text=True)
+    if done.returncode or done.stdout.strip() != branch:
+        return (f"{folder} is on {done.stdout.strip() or 'a detached HEAD'}, not on the branch {branch}: the published workflows are committed "
+                f"only there ({make}). A checkout of drexthealpha/knos-workflows is the old home: nothing new is published there")
+    common = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=folder)).resolve()
+    ours = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=ROOT)).resolve() if (ROOT / ".git").exists() else None
+    if ours is not None and common != ours:
+        return f"{folder} is a checkout of another repository: the branch {branch} of this one is the home ({make})"
+    return None
+
+
+def workflows_cmd(folder: Path, push: bool = True) -> int:
+    """Write the published set into a worktree of the branch `workflows` of this repository, commit it there when it
+    changed, tag the commit `workflows-<sha12>` and push the branch and the tag (docs/reference/CUTOVER-0331.md,
+    section 1, step 5). The branch only grows: a commit a caller names stays reachable from it and from its tag."""
     pub = _load("pinned_workflows")
     want = pub.published(pub._read(pub._own_lock()), None)
-    if not (folder / ".git").exists():
-        raise SystemExit(f"{folder} is not a git checkout: clone {pub.REPO} there first (git clone https://github.com/{pub.REPO} {folder})")
+    why = on_branch(folder, pub.BRANCH)
+    if why:
+        raise SystemExit(why)
     for rel in sorted(p.relative_to(folder).as_posix() for p in folder.rglob("*") if p.is_file() and ".git" not in p.relative_to(folder).parts):
         if rel not in want:
             (folder / rel).unlink()                             # the repository holds the published set and nothing else
@@ -165,7 +188,18 @@ def workflows_cmd(folder: Path) -> int:
     sha, tree = git("rev-parse", "HEAD", cwd=folder), git("rev-parse", "HEAD^{tree}", cwd=folder)
     if tree != pub.tree_id(want):
         raise SystemExit(f"the commit {sha} in {folder} has the tree {tree}, and the published set is {pub.tree_id(want)}: something else is committed there")
-    print(f"The commit everything names: {sha} (tree {tree}). It is not pushed: push it before the release's own push.")
+    tag = f"{pub.BRANCH}-{sha[:12]}"
+    have = subprocess.run(["git", "rev-parse", "-q", "--verify", f"refs/tags/{tag}^{{commit}}"], cwd=folder, capture_output=True, text=True).stdout.strip()
+    if have and have != sha:
+        raise SystemExit(f"the tag {tag} names {have}, not {sha}: a published tag never moves")
+    if not have:
+        git("tag", tag, sha, cwd=folder)
+    print(f"The commit everything names: {sha} (tree {tree}), on the branch {pub.BRANCH}, tagged {tag}.")
+    if push:
+        git("push", "origin", f"refs/heads/{pub.BRANCH}:refs/heads/{pub.BRANCH}", f"refs/tags/{tag}:refs/tags/{tag}", cwd=folder)
+        print(f"Pushed {pub.BRANCH} and {tag} to origin: callers can name {pub.HOME}/.github/workflows/<file>@{sha} now.")
+    else:
+        print(f"Not pushed (--no-push): git -C {folder} push origin {pub.BRANCH} {tag}, before anything names it.")
     print(f"Next: python scripts/pinned_workflows.py stamp {sha}")
     return 0
 
@@ -516,7 +550,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="The ordered parts of a release (docs/reference/RELEASE.md).")
     sub = ap.add_subparsers(dest="command", required=True)
     sub.add_parser("wheel", help="build the wheel and the sdist reproducibly into dist/").add_argument("--check", action="store_true", help="exit 1 unless the wheel is the locked one")
-    sub.add_parser("workflows", help="write and commit the pinned workflows in a checkout of knos-workflows").add_argument("dir")
+    wf = sub.add_parser("workflows", help="write the pinned workflows into a worktree of the branch workflows, commit, tag workflows-<sha12>, push")
+    wf.add_argument("dir")
+    wf.add_argument("--no-push", action="store_true", help="commit and tag, and leave the push to you")
     sub.add_parser("verify", help="check everything the one commit must hold").add_argument("dir", nargs="?")
     sub.add_parser("publish", help="upload the locked wheel to PyPI (UV_PUBLISH_TOKEN), before the cutoff, the workflows and the push")
     check = sub.add_parser("pypi-check", help="exit 1 unless PyPI serves the wheel with exactly the locked hash")
@@ -532,7 +568,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.command == "wheel":
         return wheel_cmd(a.check)
     if a.command == "workflows":
-        return workflows_cmd(Path(a.dir))
+        return workflows_cmd(Path(a.dir), push=not a.no_push)
     if a.command == "verify":
         return verify_cmd(Path(a.dir) if a.dir else None)
     if a.command == "publish":

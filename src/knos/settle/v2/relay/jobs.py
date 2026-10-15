@@ -14,7 +14,7 @@ from solders.pubkey import Pubkey
 from .... import chain, fees
 from .. import oidc, pay
 
-from .pins import ATTESTERS, CLAIM_REF, CLAIM_SHAS, JWKS_TTL, REFRESH_AFTER, ROTATE_REF, ROTATE_SHAS, ROTATE_SHAS2, _CU, _HEX40, _HEX64, _Stop, _no
+from .pins import ATTESTERS, CLAIM_SHAS, JWKS_TTL, REFRESH_AFTER, ROTATE_SHAS, ROTATE_SHAS2, _CU, _HEX40, _HEX64, _Stop, _no, claim_ref, rotate_ref
 from .tokens import _KEPT, _Token, _address, _ints, _jwks, _units, _when, _workflow
 from .reads import _amount, _data, _last, _read, _said_in, held_for, jobs_for
 from .plans import Group, _Ask, _Plan, _bounds, _decimals, _limits
@@ -207,7 +207,7 @@ def _plan_bind(ledger, me: Pubkey, t: _Token, now: int, v: int = fees.NEW_VERSIO
     except (KeyError, ValueError, TypeError):
         raise _no(kind, "malformed audience or claims") from None
     how = "`knos claim <address>` does it: it runs Knos's claim workflow in your own repository named knos-claim"
-    if not str(c.get("job_workflow_ref", "")).startswith(CLAIM_REF) or c.get("job_workflow_sha") not in CLAIM_SHAS:
+    if not claim_ref(c.get("job_workflow_ref", "")) or c.get("job_workflow_sha") not in CLAIM_SHAS:
         raise _no(kind, f"a wallet is bound only by Knos's claim workflow at its pinned commit; {how}")
     if user == 0 or user != owner or not str(c.get("repository", "")).endswith("/knos-claim"):
         raise _no(kind, f"the claim must run in a repository named knos-claim that the claiming account owns; {how}")
@@ -244,7 +244,7 @@ def _attests(t: _Token, v: int) -> tuple[bool, bool]:
         owner, repo = _ints(c, "repository_owner_id", "repository_id")
     except (KeyError, ValueError, TypeError):
         return False, False
-    pinned = (t.issuer == oidc.GITHUB and str(c.get("job_workflow_ref", "")).startswith(ROTATE_REF) and c.get("runner_environment") == "github-hosted"
+    pinned = (t.issuer == oidc.GITHUB and rotate_ref(c.get("job_workflow_ref", ""), v) and c.get("runner_environment") == "github-hosted"
               and c.get("job_workflow_sha") in (ROTATE_SHAS | ROTATE_SHAS2 if v >= 1 else ROTATE_SHAS))
     names = pinned and (owner, repo) in ATTESTERS and c.get("event_name") in ("schedule", "workflow_dispatch")
     anyone = pinned and v >= 1 and c.get("event_name") == "workflow_dispatch" and str(c.get("actor_id")) == str(owner)

@@ -11,7 +11,7 @@
  "seq": 0,
  "mode": 0,
  "terms": "{\"accept\":\"\",\"checks\":[{\"app\":15368,\"name\":\"test\"}],\"deny\":[\".github/**\",\".knos/**\"],\"mode\":\"merge\",\"paths\":[],\"reserve\":0,\"v\":1}",
- "wfRepo": "drexthealpha/knos-workflows",
+ "wfRepo": "drexthealpha/Knos",
  "wfSha": "",
  "seller": { "githubId": "" },
  "task": { "id": "sort-1", "title": "Sort these words and drop the duplicates", "input": ["pear", "apple", "fig", "apple", "kiwi", "fig"] }

@@ -63,8 +63,8 @@ version number once used can never be used again ([npm unpublish policy](https:/
 
 The tag stays where it is. On the GitHub release of the bad version, untick "Set as the latest release" and say in
 its notes which version replaces it. The fix is the revert and the next release (section 1). Pinned copies of the
-workflows in `drexthealpha/knos-workflows` move only when a new set is built and committed there
-(`python scripts/pinned_workflows.py build DIR`, then `stamp SHA`), as [RELEASE.md](RELEASE.md) describes.
+workflows on the branch `workflows` of `drexthealpha/Knos` move only when a new set is built and committed there
+(`python scripts/release.py workflows DIR`, then `stamp SHA`), as [RELEASE.md](RELEASE.md) describes.
 
 The site is built from `main` by `.github/workflows/network.yml` (workflow `pages`) on every push that touches `web/`,
 every 30 minutes, and when `release.yml` starts it. A reverted `web/` on `main` is therefore the only change that

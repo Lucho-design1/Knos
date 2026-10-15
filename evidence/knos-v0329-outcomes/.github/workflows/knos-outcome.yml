@@ -1,0 +1,128 @@
+name: knos outcome measure
+
+# Measures one outcome (docs/reference/MEASURED.md): reads the spec and the lock at the commit this run is on, fetches
+# the window's data, recomputes the control group from the public salt, computes treated against control, the lift
+# and its bootstrap lower bound (the seed is the spec's and is logged), runs the cheat checks, uploads the result
+# JSON, and passes only when the bound reached the spec's success.min_lift.
+#
+# A reusable workflow, called by the buyer's own prove.yml:
+#
+#   jobs:
+#     measure:
+#       (calls drexthealpha/Knos/.github/workflows/knos-outcome.yml at a commit, with knos: "knos==<version>")
+#       permissions: {contents: read}
+#     sign:
+#       needs: measure
+#       ...                      # asks GitHub for one token per passed tier (examples/outcomes/measured-support/prove.yml.in)
+#
+# This workflow mints no token and has no id-token permission. knos_pay pays an order only on a token whose workflow
+# file is prove.yml at the commit the order pinned; a job inside a reusable workflow is signed as this file, so the
+# token is asked for by a job of the caller's prove.yml, after this one, from the audiences it outputs. The caller's
+# prove.yml names this file at a commit, and the order pins the caller's commit, so the measuring code is pinned too;
+# the lock also names the measuring code's own hash, which this run recomputes (measurement_code_drift).
+#
+# What this run cannot know: whether the data are true. It reads what the buyer's repository or endpoint serves.
+
+on:
+  workflow_call:
+    inputs:
+      spec:
+        description: The outcome spec in the caller's repository.
+        type: string
+        default: outcome.yaml
+      lock:
+        description: What was fixed at funding (knos outcome lock).
+        type: string
+        default: outcome.lock.json
+      knos:
+        description: >-
+          The measuring code: a pip requirement pinned to a version ("knos==0.3.29"), or "path:<dir>" for a copy kept
+          in the caller's repository at the pinned commit (a directory holding knos/outcomes).
+        type: string
+        required: true
+    secrets:
+      data_token:
+        description: The token of an HTTP data source (the buyer's secret the spec names); not needed for a file.
+        required: false
+    outputs:
+      passed:
+        description: "'true' when nothing was refused and the lower bound reached success.min_lift"
+        value: ${{ jobs.measure.outputs.passed }}
+      audiences:
+        description: The knos3:pay audience of every tier that passed, as a JSON array on one line.
+        value: ${{ jobs.measure.outputs.audiences }}
+      result_hash:
+        description: sha256 of the result JSON (its result_hash field).
+        value: ${{ jobs.measure.outputs.result_hash }}
+
+permissions: {}
+
+jobs:
+  measure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      passed: ${{ steps.measure.outputs.passed }}
+      audiences: ${{ steps.measure.outputs.audiences }}
+      result_hash: ${{ steps.measure.outputs.result_hash }}
+    env:
+      SPEC: ${{ inputs.spec }}
+      LOCK: ${{ inputs.lock }}
+      KNOS: ${{ inputs.knos }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+      - name: install the measuring code
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$KNOS" in
+            path:*) dir="${KNOS#path:}"
+                    case "$dir" in *..*|/*) echo "::error::path: a directory inside this repository"; exit 1 ;; esac
+                    test -f "$dir/knos/outcomes/measure.py" || { echo "::error::$dir/knos/outcomes is not there"; exit 1; }
+                    echo "PYTHONPATH=$GITHUB_WORKSPACE/$dir" >> "$GITHUB_ENV" ;;
+            knos==[0-9]*) python -m pip install -q --no-deps "$KNOS" ;;
+            *) echo "::error::knos is knos==<version> or path:<dir>"; exit 1 ;;
+          esac
+      - name: fetch the data branch the spec names
+        shell: bash
+        env:
+          # the checkout keeps no credentials; this step alone uses the job's read-only token, for a private repository
+          READ_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ref="$(python -c 'import sys; from knos.outcomes.spec import load; print(load(sys.argv[1])["data"].get("ref") or "")' "$SPEC")"
+          case "$ref" in "") ;; *[!A-Za-z0-9_./-]*|*..*) echo "::error::data.ref"; exit 1 ;;
+            *) auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$READ_TOKEN" | base64 -w0)"
+               git -c "http.https://github.com/.extraheader=$auth" fetch --no-tags origin "+refs/heads/$ref:refs/remotes/origin/$ref" ;; esac
+      - name: measure
+        id: measure
+        shell: bash
+        env:
+          KNOS_OUTCOME_DATA_TOKEN: ${{ secrets.data_token }}
+        run: |
+          set -uo pipefail
+          mkdir -p out
+          python -m knos.outcomes measure "$SPEC" --lock "$LOCK" --repo . --out out/result.json | tee out/summary.txt
+          rc=${PIPESTATUS[0]}
+          test -f out/result.json || exit 2
+          echo "passed=$(python -c 'import json; print(str(json.load(open("out/result.json"))["passed"]).lower())')" >> "$GITHUB_OUTPUT"
+          echo "result_hash=$(python -c 'import json; print(json.load(open("out/result.json"))["result_hash"])')" >> "$GITHUB_OUTPUT"
+          echo "audiences=$(python -m knos.outcomes audiences out/result.json)" >> "$GITHUB_OUTPUT"
+          (cd out && sha256sum result.json summary.txt > SHA256SUMS)
+          { echo "### Outcome measured"; echo; echo '```'; cat out/summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: knos-outcome-result
+          path: out/
+          if-no-files-found: warn
+          retention-days: 90

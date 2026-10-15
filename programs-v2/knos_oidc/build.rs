@@ -5,6 +5,7 @@
 //!     has no `uhmul64` (a u128 product there is a call into compiler-rt's `__multi3`), so the same 64-bit limbs make
 //!     each 128-bit product from four 32 x 32 -> 64-bit `mul64`s, loading and storing 32-bit halves (rsa64::h).
 //!   - sBPF v0 and v1: 32-bit limbs (rsa.rs).
+//!
 //! Measured in docs/reference/PLATFORM.md.
 fn main() {
     println!("cargo:rustc-check-cfg=cfg(knos_pqr)");

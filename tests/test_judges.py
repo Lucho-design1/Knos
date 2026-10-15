@@ -66,7 +66,11 @@ def test_a_judge_enters_through_the_manifest_and_the_witnessed_transaction_and_e
     assert "source, build hash, deployed version, transactions, fee schedule" in page
     # the witnessed transaction: each step's link, in the order it happened, on devnet and in its own repository
     assert [w["label"] for w in first["witnessed"]] == j.WITNESSED
-    assert all(w["link"].startswith(("https://explorer.solana.com/tx/", "https://github.com/drexthealpha/knos-witness/")) for w in first["witnessed"])
+    # the record is the copy kept in Knos (evidence/, tests/test_evidence_copies.py); the runs and comments stay where they happened
+    assert all(w["link"].startswith(("https://explorer.solana.com/tx/", "https://github.com/drexthealpha/knos-witness/actions/runs/",
+                                     "https://github.com/drexthealpha/knos-witness/pull/",
+                                     "https://raw.githubusercontent.com/drexthealpha/Knos/knos-0.3.34/evidence/knos-witness-acaa854d/"))
+               for w in first["witnessed"])
     assert all(w["link"].endswith("?cluster=devnet") for w in first["witnessed"] if "explorer" in w["link"])
     assert first["yourself"].endswith("examples/witnessed/README.md") and (ROOT / "examples" / "witnessed" / "README.md").exists()
     # what that run was, plainly: an own repository, test money, and what it needed
@@ -170,7 +174,8 @@ def test_the_witnessed_record_is_linked_at_its_commit_and_the_impact_row_counts_
     for rel in ("README.md", "docs/JUDGES.md", "docs/TRANSACTION.md", "docs/judges.json"):
         text = (ROOT / rel).read_text(encoding="utf-8")
         assert "knos-witness/blob/main/" not in text, rel
-    assert "knos-witness/blob/acaa854d241c2e030f521b6f5603c8f43c93bab6/witness.json" in (ROOT / "docs/JUDGES.md").read_text(encoding="utf-8")
+    # that commit's files are kept in Knos (evidence/knos-witness-acaa854d/, byte for byte: tests/test_evidence_copies.py)
+    assert "drexthealpha/Knos/knos-0.3.34/evidence/knos-witness-acaa854d/witness.json" in (ROOT / "docs/JUDGES.md").read_text(encoding="utf-8")
     # the scan's 30 is the count before the second reading (docs/index_review.json): the judged sentence gives the
     # counts after it, which docs/backtest.json keeps under `reviewed`
     reviewed = json.loads((ROOT / "docs/backtest.json").read_text(encoding="utf-8"))["reviewed"]["overall"]

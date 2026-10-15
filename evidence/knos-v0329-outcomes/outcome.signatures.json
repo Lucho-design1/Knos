@@ -1,0 +1,17 @@
+{
+  "signatures": [
+    {
+      "address": "HB1276Mmah49KJPdashNDPsbYti3C3HU8K7WPTJ7vjNZ",
+      "github": "drexthealpha",
+      "role": "buyer",
+      "signature": "65uE2TFmrBnsNURxXW1J3yDi6fQaP56y977WvhzRYaLaa2DdjVWTEk6qKr6oKKKM2FtZR2uvDnZG8dxxe4ibh4y"
+    },
+    {
+      "address": "EH47nFA5jaWNPQrbBgQbCct6BwZchqZAJZMhYPv7dsK8",
+      "github": "drexthealpha",
+      "role": "seller",
+      "signature": "5X5yLt4RPHHE3QaRXJmsqWkbUiebdhTkoLENFtLv1taL8aj7RrkTfqB8XxuW8JwLnrJvF8wZYhtBNogPpc9U68dp"
+    }
+  ],
+  "spec_hash": "1812b0de5e01c6252c78500ba50fb676f180b7abd9b4b44d5720165e11fdb361"
+}

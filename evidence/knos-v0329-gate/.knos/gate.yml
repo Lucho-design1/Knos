@@ -1,0 +1,23 @@
+# Knos Gate config of this synthetic demo. outside_only is false so the owner's own demo pull requests are judged.
+version: 1
+hidden_tests:
+  source: secret
+  secret: KNOS_GATE_HIDDEN
+  sha256: "5368fc167428c6edb6de57d54c32b3917300936f95b788e6488c9e0b41b9dd82"
+  into: tests/hidden
+  command: python -m pytest -q tests/hidden
+  timeout: 300
+public_tests:
+  command: python -m pytest -q tests/test_public.py
+setup: python -m pip install --quiet pytest
+scope:
+  allow: ["src/**", "tests/**"]
+protect: ["data/**"]
+on_fail: close
+label: knos-gate-failed
+pass_label: knos-verified
+outside_only: false
+receipt: true
+bounties:
+  enabled: true
+  cluster: devnet

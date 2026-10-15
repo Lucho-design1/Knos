@@ -1,4 +1,4 @@
-"""The task board: a fixed number of funded test tasks kept open in drexthealpha/knos-playground for whoever arrives.
+"""The task board: a fixed number of funded test tasks kept open in the playground (knos.playground.REPO: Knos's own issues) for whoever arrives.
 
     python scripts/task_board.py plan                  what `open` would do, and why it stops where it stops
     python scripts/task_board.py open [--apply] [--kinds]   do it; without --apply nothing leaves this machine; --kinds: the
@@ -32,7 +32,7 @@ What bounds it, all printed by `plan`:
 
 ONLY THROUGH THE PUBLIC PINNED WORKFLOWS. An order names, when it is funded, the commit of the workflows whose signed
 run may pay it. `open` reads the playground's own workflow files first (`unpinned`) and funds nothing unless every
-reusable workflow they call is drexthealpha/knos-workflows at the commit this checkout's examples name: an order funded
+reusable workflow they call is the published workflows' home (drexthealpha/Knos, branch workflows) at the commit this checkout's examples name: an order funded
 through a staging copy is one the public worker cannot pay (that is why one merged pull request went unpaid in
 October 2026). `plan` and `status` say the same check's result; `why` reads one order back from the chain (knos.tasks.why).
 
@@ -457,7 +457,7 @@ def unpinned(gh: Forge, repo: str, pin: str | None = None, public: str | None = 
     """Why funding in `repo` now would make an order the public worker cannot pay, one line each; [] when every reusable
     workflow its two callers call is the public repository's at the published commit. Reads two files; writes nothing."""
     pub = _pinned() if pin is None or public is None else None
-    pin, public = pin or pub.pin(), public or pub.REPO
+    pin, public = pin or pub.pin(), public or pub.home()      # the home the examples name: drexthealpha/Knos since the cutover
     said = []
     if not re.fullmatch(r"[0-9a-f]{40}", pin):
         return [f"this checkout's examples name no published commit ({pin}): stamp it first (python scripts/pinned_workflows.py stamp <sha>)"]
@@ -478,7 +478,7 @@ def unpinned(gh: Forge, repo: str, pin: str | None = None, public: str | None = 
                 said.append(f"{rel} calls {workflow} of {where}, which is not the public {public}")
             elif ref != pin:
                 said.append(f"{rel} calls {workflow} at {ref[:12]}, and the published commit is {pin[:12]}: rebuild the playground first "
-                            "(python scripts/small_repos.py build knos-playground DIR)")
+                            "(python scripts/small_repos.py fold)")
     return said
 
 

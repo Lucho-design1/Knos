@@ -42,7 +42,7 @@ not see it. The order, which docs/reference/RELEASE.md gives with every command 
        hash. `lock WHEEL --write`: requirements/sign.txt gets the line `knos==X.Y.Z --hash=sha256:<this wheel>`.
        (`lock` refuses a wheel that is not the release the workflows name.)
     2. That wheel goes to PyPI (`release.py publish`). Then `cutoff`: UV_EXCLUDE_NEWER from the time PyPI took it.
-    3. `build DIR` into a checkout of drexthealpha/knos-workflows and commit it there: its sha, S, is the one commit
+    3. `build DIR` into a worktree of the branch `workflows` (scripts/release.py workflows) and commit it there: its sha, S, is the one commit
        everything names; its tree is `tree`. Nothing signs from these workflows before this commit exists.
     4. `stamp S` here, then `check DIR`. The wheel built again from the stamped tree has the same hash (tested), so
        the ONE commit of the release holds the lock, the cutoff, the pin and the sources of the wheel at once. Then
@@ -56,10 +56,12 @@ and knos-check.yml, in templates/ (the files a new repository copies), in docs/ 
 regenerates the site's templates (scripts/front_workflow.py writes web/front.js from the examples). `check` says every
 place that disagrees.
 
-Where the published set lives (docs/reference/MONOREPO.md). Until the cutover it is drexthealpha/knos-workflows (REPO).
-The same commits, with the same shas and trees, can live in the monorepo as its branch `workflows` (HOME, BRANCH): a
-caller then says `drexthealpha/Knos/.github/workflows/prove.yml@<sha>`, and an order funded through it pins
-sha256("drexthealpha/Knos") and that sha on chain. knos_pay compares the order's pin with the token's
+Where the published set lives (docs/reference/MONOREPO.md). Until the cutover it was drexthealpha/knos-workflows (REPO).
+Since the 0.3.34 branch (CUTOVER-0331.md section 1, step 5) the examples name the monorepo's branch `workflows` (HOME,
+BRANCH): the same commits, with the same shas and trees. A caller says
+`drexthealpha/Knos/.github/workflows/prove.yml@<sha>`, an order funded through it pins sha256("drexthealpha/Knos") and
+that sha on chain, and `scripts/release.py workflows` commits a new set into a worktree of BRANCH (and tags it
+`workflows-<sha12>`) instead of a checkout of REPO. Orders funded earlier stay pinned to REPO. knos_pay compares the order's pin with the token's
 job_workflow_ref, whatever the repository is called, so both homes pay the orders pinned to them and neither pays the
 other's. `home` says which home the examples name; `move HOME` names the other one everywhere `stamp` writes;
 `branch` prints the git commands that put the published commits into the monorepo's branch (it runs nothing).
@@ -464,8 +466,12 @@ def in_the_wheel() -> list[str]:
                                   if p.is_file() and "__pycache__" not in p.parts)]
     for path in held:
         text = _text(path) or ""
-        if PLACEHOLDER in text or re.search(re.escape(REPO) + r"/(?:\.github/workflows/[\w.-]+@|)[0-9a-f]{40}", text):
-            said.append(f"{path.relative_to(ROOT).as_posix()} names a commit of {REPO}, and it is part of the wheel: the wheel must be built before that commit "
+        # either home: the monorepo's name counts before one of the published files at a commit, or before its lock at one
+        named = re.search(re.escape(REPO) + r"/(?:\.github/workflows/[\w.-]+@|)[0-9a-f]{40}", text) or \
+            re.search(re.escape(HOME) + r"/(?:\.github/workflows/" + _FILES + r"@[0-9a-f]{40}|[0-9a-f]{40}/" + re.escape(SIGN) + r")", text)
+        if PLACEHOLDER in text or named:
+            whose = HOME if named and named.group(0).startswith(HOME + "/") else REPO
+            said.append(f"{path.relative_to(ROOT).as_posix()} names a commit of {whose}, and it is part of the wheel: the wheel must be built before that commit "
                         "exists, so say it without the commit (link to examples/ instead)")
     return said
 
@@ -607,14 +613,14 @@ def inconsistencies() -> list[str]:
                         f"python scripts/pinned_workflows.py move {where}")
     for path in [*naming(), front.FRONT]:
         text, rel = _text(path), path.relative_to(ROOT).as_posix()
-        for name, ref in sorted(set(NAMED.findall(text or ""))):
+        for at, name, ref in sorted({(m.group(0).split("/.github/")[0], m.group(1), m.group(2)) for m in NAMED.finditer(text or "")}):
             if name not in WORKFLOWS:
-                said.append(f"{rel} names {name}, which {REPO} does not publish")
+                said.append(f"{rel} names {name}, which {at} does not publish")
             elif ref != named:
-                said.append(f"{rel} names {REPO} at {ref}; the examples name {named}")
-        for ref in sorted(set(RAW.findall(text or ""))):        # the published lock, read at the pinned commit
+                said.append(f"{rel} names {at} at {ref}; the examples name {named}")
+        for at, ref in sorted({(m.group(0).rsplit("/", 3)[0], m.group(1)) for m in RAW.finditer(text or "")}):     # the published lock, read at the pinned commit
             if ref != named:
-                said.append(f"{rel} reads {SIGN} of {REPO} at {ref}; the examples name {named}")
+                said.append(f"{rel} reads {SIGN} of {at} at {ref}; the examples name {named}")
         if text and named != PLACEHOLDER and path != front.FRONT and PLACEHOLDER in text:
             said.append(f"{rel} still says {PLACEHOLDER}: run python scripts/pinned_workflows.py stamp {named}")
     js = front.FRONT.read_text(encoding="utf-8")
@@ -671,7 +677,7 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit(f"cannot read PyPI's page from {a.pypi}: {why}. Nothing was written.") from None
         line, changed = write_cutoff(answer)
         print(f"UV_EXCLUDE_NEWER: {line}" + (f", written into {', '.join(changed)}." if changed else ", as the workflows say already."))
-        print("Next: python scripts/release.py workflows <a checkout of knos-workflows>")
+        print("Next: python scripts/release.py workflows <a worktree of the branch workflows>")
         return 0
     if a.command == "stamp":
         changed = stamp(a.sha)

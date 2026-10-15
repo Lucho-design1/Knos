@@ -238,7 +238,7 @@ _ABOUT = {
 _ON_PULL = {"fund": False, "offer": False, "reserve": False, "raise": False, "cancel": False, "split": True, "take": False, "release": False, "address": True, "mine": True, "pay": True, "reject": True,
             "appeal": True, "tip": True, "settle": True, "faucet": False}     # where a command belongs; status and help go anywhere
 FAUCET_LABEL = "faucet"             # the label of the one issue the faucet answers on (knos.faucet.LABEL)
-FAUCET_WHERE = "https://github.com/drexthealpha/knos-playground/issues?q=is%3Aissue+is%3Aopen+label%3Afaucet"       # knos.faucet.WHERE
+FAUCET_WHERE = "https://github.com/drexthealpha/Knos/issues?q=is%3Aissue+is%3Aopen+label%3Afaucet"       # knos.faucet.WHERE
 FAUCET_ELSEWHERE = (f"Knos: the faucet answers on its own issue in the playground and nowhere else: {FAUCET_WHERE} "
                     f"Post `{FORMS['faucet']}` there. It gives test USDC, which has no monetary value.")
 

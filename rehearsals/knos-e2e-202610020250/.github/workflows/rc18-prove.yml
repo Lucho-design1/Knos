@@ -1,0 +1,20 @@
+# 0.3.18 track E: started by hand for the knos_pay STAGING rehearsal (devnet, staging program ids only).
+name: rc18 prove
+run-name: rc18 prove ${{ inputs.tag }}
+on:
+  workflow_dispatch:
+    inputs:
+      aud:
+        required: true
+        type: string
+      tag:
+        required: true
+        type: string
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  judge:
+    uses: drexthealpha/knos-e2e-202610020250/.github/workflows/prove.yml@f77bc0145b9a3f744312d7e48efc9f838dea515e
+    with:
+      aud: ${{ inputs.aud }}

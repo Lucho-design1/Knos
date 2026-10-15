@@ -579,12 +579,12 @@
   },
   {
    "say": [
-    "16,024,654"
+    "5,410,436"
    ],
-   "what": "inputs the fuzzer ran against the claim parser in the latest nightly run of program.yml: `executions` and `source` in the fuzz.json of its `fuzz-claims` artifact. Measured: libFuzzer through cargo-fuzz on the claim parser (target claims), 300 seconds, commit 519dffc, https://github.com/drexthealpha/knos-rc/actions/runs/37185319408",
+   "what": "inputs the fuzzer ran against the claim parser in the latest run of program.yml's fuzz job (nightly on main, or by hand on the release branch): `executions` and `source` in the fuzz.json of its `fuzz-claims` artifact. Measured: libFuzzer through cargo-fuzz on the target claims, 300 seconds, commit 511fb84, https://github.com/drexthealpha/Knos/actions/runs/38701807179",
    "json": "docs/bench.json",
    "path": "release.claim_parser_executions.value",
-   "equals": 16024654,
+   "equals": 5410436,
    "doc": "docs/reference/ASSURANCE.md"
   },
   {

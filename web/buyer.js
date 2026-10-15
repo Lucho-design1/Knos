@@ -715,7 +715,7 @@ export async function readProcurement(gh, repo, dir, files) {
 
 // The sample is shown in this project's own playground repository, so that no link of the page leads to an account
 // that is somebody else's: the repository it names and every address in it are rewritten here, and nothing else of it.
-export const PLAYGROUND = "drexthealpha/knos-playground";
+export const PLAYGROUND = "drexthealpha/Knos";
 export function ownSample(sample) {
   const was = `https://github.com/${sample.repository}/`, now = `https://github.com/${PLAYGROUND}/`;
   const walk = (v) => (typeof v === "string" ? (v.startsWith(was) ? now + v.slice(was.length) : v) : Array.isArray(v) ? v.map(walk) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) : v);

@@ -96,7 +96,10 @@ SCOPED_PINS: tuple[tuple[str, str, re.Pattern], ...] = ()
 # examples/reader_template is the one example that really builds against a tag (the others name theirs in a comment and
 # build by path): its Cargo.lock holds that tag's commit, and a tag exists only after its release is pushed, so a bump
 # that moved it would name a tag nobody can fetch. It stays at the tag that holds the frozen interface crate.
-NOT_PINNED = ("CHANGELOG.md", "programs/", "scripts/bump_version.py", "requirements/sign.txt", "examples/reader_template/", "scripts/action_pins.json")
+NOT_PINNED = ("CHANGELOG.md", "programs/", "scripts/bump_version.py", "requirements/sign.txt", "examples/reader_template/", "scripts/action_pins.json",
+              "evidence/", "rehearsals/", "hermes/knos-hermes/")
+# evidence/, rehearsals/ and hermes/knos-hermes/ are other repositories' files at one commit, byte for byte
+# (tests/test_evidence_copies.py): the versions they name are history, never moved by a release.
 # scripts/action_pins.json lists the commit of each Knos tag a workflow or a document names. A commit cannot name
 # itself, so the tag of the release being made has no commit yet: a bump adds its key with SELF_PIN as the value and
 # leaves every earlier key alone (an earlier tag's commit never changes, and .github/workflows/supplier.yml runs the

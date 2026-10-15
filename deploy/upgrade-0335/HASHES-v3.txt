@@ -1,0 +1,9 @@
+# sBPF v3 deploy builds of knos_oidc and knos_pay 0.3.35 (programs-v2, default features; knos_pay's default = devnet)
+# source: branch knos-0.3.34 511fb84b + the both-homes change (patches/0335-PROG.patch: ROTATE_REF_KNOS, CLAIM_REF_KNOS)
+# toolchain: cargo-build-sbf 4.4.0 (Agave 4.4.0-beta.0), platform-tools v1.57 (--skip-tools-install), --locked,
+#            RUSTFLAGS --remap-path-prefix=<checkout>=/build --remap-path-prefix=<cargo home>=/cargo as scripts/build_sbf.sh
+# reproduced: build 1 in ~/knos/wt0335-PROG, build 2 in a second checkout ~/knos/wt0335-PROG-repro with a fresh target
+#             directory: the same bytes (15 Oct 2026)
+# name  e_flags  bytes  sha256(file)  solana-verify executable hash  devnet buffer (authority = upgrade vault)
+knos_oidc  3  173184  efb19df7f6d38c4088f3abb26f15c7a7cd1a5f6ceb30d4c89b3451a3364da503  925c76f051f9c28f617dc18352fcdab6127b2d23b164eb87fcab282e02bbe968  dJA4mokfAqG7eTKUrD1MawKbWPJrzjc72qehpujiy6V
+knos_pay  3  413544  68cb33d3aae0fb8c17de2f1b795810baf063d01bda3ba6baa2c444eaaffb5996  e01605411369b40b9e6fd28595d0254f06357fbf7f5c887eef207f8d5b68ad3a  C7MrKvNU2yxMG5RJqzCkCDGowe5T1R69j3LXz3Qj1VdA

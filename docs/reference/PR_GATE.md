@@ -112,7 +112,8 @@ tests), with the Action alone. Every run used the `nonet,user` sandbox:
 | #4 passes the public test only (claims #1) | refused, `gate.hidden_tests_failed` (1 of 3 hidden passed), closed | [run 38432762375](https://github.com/drexthealpha/knos-v0329-gate/actions/runs/38432762375) |
 | #5 correct fix, then a second commit | passed (3/3 hidden, 1/1 public, re-run agreed), signed receipt; one comment, edited in place | [run 38432780017](https://github.com/drexthealpha/knos-v0329-gate/actions/runs/38432780017) |
 
-The repository is private, so those links open for its owner only. The bounty ran in the public test repository
+The repository is private, so those links open for its owner only; its files (its main, ccf45c30) are in
+Knos as [evidence/knos-v0329-gate](../../evidence/knos-v0329-gate/) (with the demo pull requests' heads in its SOURCE.json). The bounty ran in the public test repository
 `drexthealpha/knos-e2e`, issue [#273](https://github.com/drexthealpha/knos-e2e/issues/273), with a test token minted on
 devnet (no value), whose terms require the `Knos Gate` check and allow only `gate_slug.py`:
 

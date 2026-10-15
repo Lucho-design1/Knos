@@ -1,4 +1,5 @@
-"""The playground: one public repository of Knos's where an account that cannot write to it may fund a test task.
+"""The playground: Knos's own issues (drexthealpha/Knos since the 0.3.34 branch; before it, the repository OLD_REPO),
+where an account that cannot write to it may fund a test task.
 
 Everywhere else `/knos fund` is for someone who can write to the repository (knos.flow._can_write). In the playground
 the money is the devnet faucet's free test USDC, minted for the funding and withdrawn by nobody, so the only thing a
@@ -21,7 +22,11 @@ from __future__ import annotations
 
 import datetime
 
-REPO = "drexthealpha/knos-playground"
+REPO = "drexthealpha/Knos"         # one repository (docs/reference/CUTOVER-0331.md section 4): the playground is Knos's own issues
+# Its home until the 0.3.34 branch: kept, frozen, until the tasks funded there are paid or refunded and the Colosseum
+# entry (tag v0.3.28, which links to it) is judged; deleting it is the founder's (docs/reference/MONOREPO.md). The runs
+# there install knos 0.3.28 from its pinned workflows, so this module does not decide for them.
+OLD_REPO = "drexthealpha/knos-playground"
 OWNER_ID = 142920951                # the GitHub id of the account that owns it (scripts/own_github_ids.json)
 MOST = 5_000_000                    # millionths of test USDC one playground task holds at most
 PER_DAY = 3                         # issues one account may open and fund in one UTC day

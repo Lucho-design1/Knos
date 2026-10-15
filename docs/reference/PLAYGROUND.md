@@ -1,13 +1,13 @@
 # The playground
 
-One public repository, [drexthealpha/knos-playground](https://github.com/drexthealpha/knos-playground), where a GitHub
-account and nothing else is enough to try both sides of Knos. No wallet, nothing installed, nothing spent.
+Knos's own [issues](https://github.com/drexthealpha/Knos/issues), where a GitHub account and nothing else tries both sides of Knos. No wallet, nothing installed, nothing spent.
+Until the 0.3.34 branch it was [drexthealpha/knos-playground](https://github.com/drexthealpha/knos-playground): frozen now, its open orders paid or refunded there by 2026-11-13, deletable from 6 Dec 2026 ([CUTOVER-0331.md](CUTOVER-0331.md) section 4).
 
 Test USDC, no monetary value. Who outside has used it is counted at the end of this page, never claimed.
 
 ## Take a funded task (two minutes)
 
-Issues labelled [`knos-funded`](https://github.com/drexthealpha/knos-playground/issues?q=is%3Aissue+is%3Aopen+label%3Aknos-funded)
+Issues labelled [`knos-funded`](https://github.com/drexthealpha/Knos/issues?q=is%3Aissue+is%3Aopen+label%3Aknos-funded)
 are small programming tasks: one file each, a statement, three examples, 5 test USDC. The site's
 [playground page](https://drexthealpha.github.io/Knos/#playground) lists them with the time each has left.
 
@@ -32,17 +32,17 @@ that is accepted for money worth nothing. The rest of this page is the starter t
 
 ## What a stranger does with the starter task
 
-**Fund a test task.** [Open the issue](https://github.com/drexthealpha/knos-playground/issues/new?template=fund-a-test-task.md)
+**Fund a test task.** [Open the issue](https://github.com/drexthealpha/Knos/issues/new?template=fund-a-test-task.md)
 and press **Submit new issue**. The template's text ends with the line `/knos fund 5 checks: none auto`. The workflow
 reads that line as the issue is opened, GitHub signs that your account wrote it, and 5 test USDC go into an escrow on
 Solana devnet for that issue. Knos answers in a comment.
 
 The task is paid without a merge (`auto`). An escrow holds such an order from `knos_pay` 2.1 on, and devnet runs 2.2
 (`knos status`; the site's `upgrades.json`). Before 2.1 was live the workflow funded nothing and said so in its
-comment: that is what [issue 1](https://github.com/drexthealpha/knos-playground/issues/1) got on 2026-10-05.
+comment: that is what [issue 1 of the old home](https://github.com/drexthealpha/knos-playground/issues/1) got on 2026-10-05.
 
-**Take one.** Pick an [open issue](https://github.com/drexthealpha/knos-playground/issues), edit
-[`words.py`](https://github.com/drexthealpha/knos-playground/edit/main/words.py) in the browser so that it prints the
+**Take one.** Pick an [open issue](https://github.com/drexthealpha/Knos/issues), edit
+[`words.py`](https://github.com/drexthealpha/Knos/edit/main/words.py) in the browser so that it prints the
 words of a line in reverse order, and open the pull request with `Closes #<the issue's number>` in its description.
 The checks in `.knos/acceptance/<number>/` run your file as a separate process on 21 recorded lines and compare what it
 prints. When every answer matches, GitHub signs that it did and the escrow pays your account: to the wallet you bound
@@ -63,7 +63,7 @@ every time and its cases are public, so a payment here shows that the mechanism 
 | The whole repository | one faucet funding a minute | the program (`FUND_PERIOD`, error 90) |
 | One playground task | 5 test USDC, funded only as the issue is opened, once | the workflow ([`playground.py`](../../src/knos/playground.py)) |
 | One account | 3 funded issues in a day (UTC) | the workflow, from GitHub's list of that account's issues |
-| Issues with checks | numbers 1 to 200 | the repository; a release adds more |
+| Issues with checks | numbers 1 to 200 | the repository; a release adds more. Knos's issues and pull requests share one numbering, and 1 to 60 were taken before the playground moved into Knos |
 | A funded task of the board | 5 test USDC, 14 days, 8 open at once | [`task_board.py`](../../scripts/task_board.py); 5 is the least a work order holds |
 | A first pull request from an account new to GitHub | waits for a maintainer to let its check run; a run nobody approves in 30 days [expires](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/approve-runs-from-forks) | GitHub (the least its approval setting allows) |
 

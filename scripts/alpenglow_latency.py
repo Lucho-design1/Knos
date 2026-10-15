@@ -42,7 +42,7 @@ from knos.platform import finality, priority  # noqa: E402
 LABEL = "internal dogfooding: Knos finality measurement, our own devnet test traffic (synthetic test mint, no real money)"
 REPO_ID = 1401439243            # drexthealpha/knos-e2e, the owner's test repository
 ISSUE_BASE = 932_000_000        # synthetic issue numbers: no such issues exist
-WF_REPO, WF_SHA = "drexthealpha/knos-workflows", "96b243f1b1dd5c975a0318dd9709a0da22b98dcd"
+WF_REPO, WF_SHA = "drexthealpha/Knos", "96b243f1b1dd5c975a0318dd9709a0da22b98dcd"
 MINT_LEN = 82
 
 

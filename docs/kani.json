@@ -35,43 +35,29 @@
    "checks": 64,
    "failed_checks": 0,
    "unreachable_checks": 4,
-   "verification_seconds": 8295.655,
-   "seconds": 8317.4,
-   "attempts": 2,
+   "verification_seconds": 8310.2295,
+   "seconds": 8337.0,
+   "attempts": 1,
    "limit_seconds": 21000,
    "command": "cargo-kani --output-format terse --exact --harness proofs::harness::an_orders_fee_is_between_its_floor_and_the_one_rate_for_every_amount",
    "solver": "CaDiCaL, Kani's default: the harness names no solver and the job installs no other",
    "runs": [
     {
-     "id": 37575047633,
-     "url": "https://github.com/drexthealpha/knos-rc/actions/runs/37575047633",
-     "job": 112641976418,
-     "commit": "1cfc58d9022451747bfcc07f74f4f87513c73ed0",
+     "id": 38701807179,
+     "url": "https://github.com/drexthealpha/Knos/actions/runs/38701807179",
+     "job": 116311545258,
+     "commit": "511fb84b6027be0803393af5d99903a92e99a6e6",
      "event": "workflow_dispatch",
-     "date": "2026-10-07",
+     "date": "2026-10-15",
      "kani": "0.68.0",
      "cbmc": "6.11.0",
      "rust_toolchain": "nightly-2026-08-21",
      "result": "verified",
-     "verification_seconds": 8295.655,
-     "seconds": 8317.4
-    },
-    {
-     "id": 37608154723,
-     "url": "https://github.com/drexthealpha/knos-rc/actions/runs/37608154723",
-     "job": 112748614676,
-     "commit": "39750de0bf2172cc02dab558ea1c81ce95662c1b",
-     "event": "schedule",
-     "date": "2026-10-07",
-     "kani": "0.68.0",
-     "cbmc": "6.11.0",
-     "rust_toolchain": "nightly-2026-08-21",
-     "result": "verified",
-     "verification_seconds": 8360.492,
-     "seconds": 8412.1
+     "verification_seconds": 8310.2295,
+     "seconds": 8337.0
     }
    ],
-   "note": "Not answered within 180 seconds here; verified in program.yml's job `kani-fee-bounds` on GitHub's hosted runner, 2 runs, each alone within 350 minutes: run 37575047633 (workflow_dispatch, commit 1cfc58d9): verified in 8296 s; run 37608154723 (schedule, commit 39750de0): verified in 8360 s. Kani 0.68.0, CBMC 6.11.0, solver CaDiCaL, Kani's default: the harness names no solver and the job installs no other."
+   "note": "Not answered within 180 seconds here; verified in program.yml's job `kani-fee-bounds` on GitHub's hosted runner, 1 run, each alone within 350 minutes: run 38701807179 (workflow_dispatch, commit 511fb84b): verified in 8310 s. Kani 0.68.0, CBMC 6.11.0, solver CaDiCaL, Kani's default: the harness names no solver and the job installs no other."
   },
   {
    "name": "a_payment_takes_its_share_of_the_amount_and_of_the_fee_and_the_last_one_empties_the_order",

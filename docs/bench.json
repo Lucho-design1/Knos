@@ -696,8 +696,8 @@
    "source": "git log --author=drexthealpha --format=%ad --date=short | sort -u | wc -l on drexthealpha/Knos from 2026-09-01 to the release commit of 2026-10-03"
   },
   "claim_parser_executions": {
-   "value": 16024654,
-   "source": "libFuzzer through cargo-fuzz on the claim parser (target claims), 300 seconds, commit 519dffc, https://github.com/drexthealpha/knos-rc/actions/runs/37185319408"
+   "value": 5410436,
+   "source": "libFuzzer through cargo-fuzz on the target claims, 300 seconds, commit 511fb84, https://github.com/drexthealpha/Knos/actions/runs/38701807179"
   },
   "stage_runner_queue_payments": {
    "value": 5,

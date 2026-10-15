@@ -62,6 +62,12 @@ pub const GENESIS: &[(u8, [u8; 32])] = &[
 /// The rotate workflow: `job_workflow_ref` must start with ROTATE_REF and `job_workflow_sha` must equal ROTATE_SHA.
 /// A commit sha fixes the workflow file's content, so its repository's owner cannot change what runs under this pin.
 pub const ROTATE_REF: &[u8] = b"drexthealpha/knos-oidc-rotate/.github/workflows/rotate.yml@";
+/// The same workflow at its home in Knos (branch `oidc-rotate`: the same commits, so the same ROTATE_SHA/ROTATE_SHA2),
+/// accepted beside ROTATE_REF so that keys keep being attested while callers move (docs/reference/CUTOVER-0331.md,
+/// section 2). An exact prefix: `someone/Knos/...`, `drexthealpha/Knos-x/...` and `drexthealpha/knos/...` are not it.
+pub const ROTATE_REF_KNOS: &[u8] = b"drexthealpha/Knos/.github/workflows/rotate.yml@";
+/// Whether `job_workflow_ref` names the pinned rotate workflow in one of its two homes. The commit is checked apart.
+pub fn rotate_ref(wref: &[u8]) -> bool { wref.starts_with(ROTATE_REF) || wref.starts_with(ROTATE_REF_KNOS) }
 // PIN: the commit of drexthealpha/knos-oidc-rotate that holds rotate.yml (programs-v2/program_ids.json, rotate_sha).
 pub const ROTATE_SHA: &[u8; 40] = b"6ddf031b64febecfcd510763ecee37637a8047fa";
 /// The later commit of the same workflow, accepted beside ROTATE_SHA: it adds the `issuer` input (any RS256 issuer by its
@@ -128,3 +134,27 @@ pub fn attester(owner_id: u64, repo_id: u64) -> bool {
     (owner_id == ATTEST_OWNER_ID && ATTEST_REPO_IDS.contains(&repo_id)) || TEST_ATTEST == Some((owner_id, repo_id))
 }
 pub fn is_guardian(key: &Pubkey) -> bool { *key == GUARDIAN || TEST_GUARDIAN.as_ref() == Some(key) }
+
+#[cfg(test)]
+mod two_homes {
+    use super::*;
+    #[test]
+    fn the_rotate_workflow_is_accepted_in_its_two_homes_and_nowhere_else() {
+        for ok in [&b"drexthealpha/knos-oidc-rotate/.github/workflows/rotate.yml@refs/heads/main"[..],
+                   b"drexthealpha/Knos/.github/workflows/rotate.yml@refs/heads/oidc-rotate",
+                   b"drexthealpha/Knos/.github/workflows/rotate.yml@212f9eb5f584eb6f8cd2d6673878132fc0011e27"] {
+            assert!(rotate_ref(ok), "{}", String::from_utf8_lossy(ok));
+        }
+        for no in [&b"someone/Knos/.github/workflows/rotate.yml@refs/heads/main"[..],
+                   b"drexthealpha/Knos-x/.github/workflows/rotate.yml@refs/heads/main",
+                   b"drexthealpha/Knosx/.github/workflows/rotate.yml@refs/heads/main",
+                   b"drexthealpha/knos/.github/workflows/rotate.yml@refs/heads/main",
+                   b"DREXTHEALPHA/Knos/.github/workflows/rotate.yml@refs/heads/main",
+                   b"drexthealpha/Knos/.github/workflows/claim.yml@refs/heads/main",
+                   b"drexthealpha/Knos/.github/workflows/rotate.yaml@refs/heads/main",
+                   b"xdrexthealpha/Knos/.github/workflows/rotate.yml@refs/heads/main",
+                   b"drexthealpha/Knos/.github/workflows/rotate.yml"] {
+            assert!(!rotate_ref(no), "{}", String::from_utf8_lossy(no));
+        }
+    }
+}

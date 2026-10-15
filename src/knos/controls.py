@@ -713,13 +713,13 @@ def template_parts(name: str) -> dict:
     return {"mode": tm["mode"], "checks": list(cmd.checks or ()), "paths": list(cmd.paths or ())}
 
 
-SAMPLE_REPOSITORY = "drexthealpha/knos-playground"     # where the sample below is set: web/buyer.js PLAYGROUND
+SAMPLE_REPOSITORY = "drexthealpha/Knos"     # where the sample below is set: web/buyer.js PLAYGROUND
 
 
 def sample() -> dict:
     """One small organisation's four files and its approvals so far, as data: what the console shows before a
     repository is named, and what the tests and docs/reference/CONTROLS.md use. It is set in this project's own playground
-    repository, drexthealpha/knos-playground, so that no link of the console leads to somebody else's; the files and the
+    repository, drexthealpha/Knos, so that no link of the console leads to somebody else's; the files and the
     people in them (the -acme accounts) are made up."""
     hashes = published_terms()
     card = {"version": 1, "kind": "rate-card", "name": "maintenance-2026q4", "currency": "test USDC", "valid_from": "2026-10-01", "valid_to": "2026-12-31",

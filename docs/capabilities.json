@@ -2435,7 +2435,7 @@
      ]
     }
    },
-   "note": "Tested with a test key; a kind cluster's token was verified offline in staging run 37483745385 of drexthealpha/knos-rc (https://github.com/drexthealpha/knos-rc/actions/runs/37483745385); nothing of it is on devnet, and the meter does not count it on chain."
+   "note": "Tested with a test key; a kind cluster's token was verified offline in run 38701801687 of drexthealpha/Knos (https://github.com/drexthealpha/Knos/actions/runs/38701801687), branch knos-0.3.34; nothing of it is on devnet, and the meter does not count it on chain."
   },
   {
    "id": "events_ledger",

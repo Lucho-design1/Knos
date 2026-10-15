@@ -45,7 +45,7 @@ Open these links in order. They are one real run, on 9 Oct 2026, in our own repo
    Look for: the fixed work passed, and the program paid the worker.
 4. [Replay paid nothing more](https://github.com/drexthealpha/knos-witness/pull/10#issuecomment-6075196710).
    Look for: asking to be paid again was refused.
-5. [The record](https://github.com/drexthealpha/knos-witness/blob/acaa854d241c2e030f521b6f5603c8f43c93bab6/witness.json).
+5. [The record](https://raw.githubusercontent.com/drexthealpha/Knos/knos-0.3.34/evidence/knos-witness-acaa854d/witness.json).
    Look for: every step above, each with its public link.
 
 This run was not fully automatic: one step was fixed by hand, and one agreed line is not yet settled. To do the same run in a repository of your

@@ -48,10 +48,12 @@ from typing import Any, Callable
 SITE = "https://drexthealpha.github.io/Knos"
 BOARD = SITE + "/tasks.json"
 FIRST = "Test USDC, no monetary value."
-PUBLIC_WORKFLOWS = "drexthealpha/knos-workflows"       # the one workflow repository the public worker's runs are signed for
-# The same published commits as the branch `workflows` of the monorepo (docs/reference/MONOREPO.md): an order funded
-# through drexthealpha/Knos/.github/workflows/<file>@<sha> pins that name, and is as public as one pinned to the old home.
-PUBLIC_WORKFLOW_HOMES = (PUBLIC_WORKFLOWS, "drexthealpha/Knos")
+# The published workflows' home since the 0.3.34 cutover: the branch `workflows` of the monorepo (docs/reference/MONOREPO.md),
+# the same commits as drexthealpha/knos-workflows. An order funded through drexthealpha/Knos/.github/workflows/<file>@<sha>
+# pins that name; one pinned to the old home before the cutover is as public, and keeps being paid.
+PUBLIC_WORKFLOWS = "drexthealpha/Knos"                 # where new tasks are funded through
+OLD_PUBLIC_WORKFLOWS = "drexthealpha/knos-workflows"   # the home before the cutover
+PUBLIC_WORKFLOW_HOMES = (OLD_PUBLIC_WORKFLOWS, PUBLIC_WORKFLOWS)
 ADDRESS_LINE = "/knos address <your Solana address>"
 PAYS = ("A maintainer merges a pull request that passes the check, and the merge pays the author's GitHub account in test USDC on "
         f"Solana devnet. Comment `{ADDRESS_LINE}` on the pull request to say where it goes; without an address or a bound wallet "

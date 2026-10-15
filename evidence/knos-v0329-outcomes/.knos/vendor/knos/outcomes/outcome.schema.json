@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/drexthealpha/Knos/schemas/outcome.schema.json",
+  "title": "Knos outcome spec (outcome.yaml), version 1",
+  "description": "A result measured from data that a Knos order pays for: the metric, the data, the window, a randomized control group, the bar (minimum lift at a confidence), the price in tiers under a hard cap, and the devnet escrow. knos.outcomes.spec.validate applies these rules and a few that JSON Schema cannot say (tiers rising, tier amounts adding up to the cap, the window's end after its start); tests/test_outcome_spec.py holds the two to the same fields.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "title", "synthetic", "parties", "metric", "data", "window", "control", "success", "bootstrap", "price", "tiers", "dispute_window_days", "escrow"],
+  "properties": {
+    "version": {"const": 1},
+    "title": {"type": "string", "minLength": 3, "maxLength": 120},
+    "synthetic": {"type": "boolean", "description": "true when the data are made up. Every page, result and record entry made from this spec then says synthetic."},
+    "parties": {
+      "type": "object", "additionalProperties": false, "required": ["buyer", "seller"],
+      "properties": {
+        "buyer": {"$ref": "#/$defs/party"},
+        "seller": {"allOf": [{"$ref": "#/$defs/party"}, {"required": ["address"]}]}
+      }
+    },
+    "metric": {
+      "type": "object", "additionalProperties": false, "required": ["name", "formula", "aggregate", "direction", "lift"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"},
+        "formula": {"type": "string", "minLength": 1, "maxLength": 400, "description": "A Python-like expression over one row's fields giving a number: names, numbers, strings, comparisons, and/or/not, + - * /, `x if c else y`, abs/min/max/float/int/len. Nothing else is evaluated."},
+        "aggregate": {"enum": ["mean"]},
+        "direction": {"enum": ["higher", "lower"]},
+        "lift": {"enum": ["relative", "absolute"]}
+      }
+    },
+    "data": {
+      "type": "object", "additionalProperties": false, "required": ["source", "format", "id_field", "time_field", "synthetic"],
+      "properties": {
+        "source": {"enum": ["file", "http"]},
+        "path": {"type": "string", "pattern": "^[A-Za-z0-9_./-]+$", "description": "file: the path in the buyer's repository"},
+        "ref": {"type": "string", "pattern": "^[A-Za-z0-9_./-]+$", "description": "file: the git branch or tag the data are read from (default: the commit measured)"},
+        "url": {"type": "string", "pattern": "^https://", "description": "http: a JSON endpoint"},
+        "token_secret": {"type": "string", "pattern": "^[A-Z_][A-Z0-9_]*$", "description": "http: the NAME of the buyer's GitHub secret holding the endpoint's token; never the token"},
+        "items_key": {"type": "string", "description": "http/json: the key whose value is the list of items"},
+        "format": {"enum": ["csv", "json", "jsonl"]},
+        "id_field": {"type": "string", "minLength": 1},
+        "time_field": {"type": "string", "minLength": 1},
+        "arm_field": {"type": "string", "description": "optional: the field that says who handled the item"},
+        "treated_value": {"type": "string", "description": "the arm_field value of a treated item"},
+        "synthetic": {"type": "boolean"}
+      }
+    },
+    "window": {
+      "type": "object", "additionalProperties": false, "required": ["start", "end"],
+      "properties": {"start": {"$ref": "#/$defs/utc"}, "end": {"$ref": "#/$defs/utc"}}
+    },
+    "control": {
+      "type": "object", "additionalProperties": false, "required": ["share", "salt"],
+      "properties": {
+        "share": {"type": "number", "exclusiveMinimum": 0, "maximum": 0.5, "default": 0.2},
+        "salt": {"type": "string", "pattern": "^[0-9a-f]{32,128}$", "description": "public, committed in the spec before the window opens"},
+        "tolerance": {"type": "number", "minimum": 0, "maximum": 0.2, "description": "how far the observed control share may drift from `share`; default max(0.02, 4 standard errors)"}
+      }
+    },
+    "success": {
+      "type": "object", "additionalProperties": false, "required": ["min_lift", "confidence"],
+      "properties": {
+        "min_lift": {"type": "number"},
+        "confidence": {"type": "number", "minimum": 0.5, "exclusiveMaximum": 1}
+      }
+    },
+    "bootstrap": {
+      "type": "object", "additionalProperties": false, "required": ["resamples", "seed"],
+      "properties": {
+        "resamples": {"type": "integer", "minimum": 200, "maximum": 20000},
+        "seed": {"type": "integer", "minimum": 0, "maximum": 4294967295}
+      }
+    },
+    "price": {
+      "type": "object", "additionalProperties": false, "required": ["currency", "unit_price", "cap"],
+      "properties": {
+        "currency": {"enum": ["USDC", "test-USDC"]},
+        "unit_price": {"type": "number", "minimum": 0, "description": "what one point (0.01) of lift is worth; informational once tiers are fixed"},
+        "cap": {"type": "number", "minimum": 5, "description": "the hard cap: the most the buyer can pay, the total escrowed, the sum of the tiers' amounts"}
+      }
+    },
+    "tiers": {
+      "type": "array", "minItems": 1, "maxItems": 8,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["name", "min_lift", "amount"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$"},
+          "min_lift": {"type": "number"},
+          "amount": {"type": "number", "minimum": 5, "description": "one knos_pay order each: at least 5 whole units (ORDER_MIN_AMOUNT)"}
+        }
+      }
+    },
+    "dispute_window_days": {"type": "integer", "minimum": 0, "maximum": 90},
+    "escrow": {
+      "type": "object", "additionalProperties": false, "required": ["cluster", "repository", "repository_id", "issue", "funder", "mint", "seq_start", "work_seconds"],
+      "properties": {
+        "cluster": {"enum": ["devnet", "localnet"], "description": "never mainnet in this version"},
+        "repository": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", "description": "the repository whose prove.yml measures and signs"},
+        "repository_id": {"type": "integer", "minimum": 1},
+        "issue": {"type": "integer", "minimum": 1, "description": "the issue the orders are for; the signed spec's hash is posted on it"},
+        "funder": {"$ref": "#/$defs/address"},
+        "mint": {"$ref": "#/$defs/address"},
+        "seq_start": {"type": "integer", "minimum": 0, "maximum": 4294967000, "description": "tier k is the order with seq = seq_start + k"},
+        "work_seconds": {"type": "integer", "minimum": 60, "maximum": 7776000}
+      }
+    }
+  },
+  "$defs": {
+    "party": {
+      "type": "object", "additionalProperties": false, "required": ["github", "id"],
+      "properties": {
+        "github": {"type": "string", "pattern": "^[A-Za-z0-9-]{1,39}$"},
+        "id": {"type": "integer", "minimum": 1},
+        "address": {"$ref": "#/$defs/address"}
+      }
+    },
+    "address": {"type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{32,44}$"},
+    "utc": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"}
+  }
+}

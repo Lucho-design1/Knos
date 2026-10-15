@@ -37,7 +37,7 @@ MARK = "<!-- knos-no-order 1 -->"       # the first line of the answer: an item 
 LABEL = "no-order"
 LABEL_ABOUT = "No funded Knos order is attached, so no payment is due."    # GitHub keeps 100 characters of it
 BOT = "github-actions[bot]"
-PLAYGROUND = "https://github.com/drexthealpha/knos-playground"
+PLAYGROUND = "https://github.com/drexthealpha/Knos"
 FUNDED_LABEL = "knos-funded"            # the label every funded task of the playground carries
 FUNDED = f"{PLAYGROUND}/issues?q=is%3Aissue+is%3Aopen+label%3A{FUNDED_LABEL}"       # the funded tasks, open to anyone
 SWEEP_EVERY = 300                       # seconds between two sweeps of one repository by the always-on worker

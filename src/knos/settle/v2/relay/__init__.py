@@ -142,13 +142,15 @@ from . import kinds
 from . import send
 from . import upkeep
 from . import wallets
-from .pins import (ATTESTERS as ATTESTERS, CLAIM_REF as CLAIM_REF, CLAIM_SHAS as CLAIM_SHAS, GENESIS as GENESIS,
+from .pins import (ATTESTERS as ATTESTERS, CLAIM_REF as CLAIM_REF, CLAIM_REF_KNOS as CLAIM_REF_KNOS, CLAIM_REFS as CLAIM_REFS,
+    CLAIM_SHAS as CLAIM_SHAS, GENESIS as GENESIS,
     JWKS_TTL as JWKS_TTL, ORG_CLAIM_SHAS as ORG_CLAIM_SHAS, REFRESH_AFTER as REFRESH_AFTER, ROOM as ROOM,
-    ROOM_V1 as ROOM_V1, ROTATE_REF as ROTATE_REF, ROTATE_SHAS as ROTATE_SHAS, ROTATE_SHAS2 as ROTATE_SHAS2,
+    ROOM_V1 as ROOM_V1, ROTATE_REF as ROTATE_REF, ROTATE_REF_KNOS as ROTATE_REF_KNOS, ROTATE_REFS as ROTATE_REFS,
+    ROTATE_SHAS as ROTATE_SHAS, ROTATE_SHAS2 as ROTATE_SHAS2,
     _BROKE as _BROKE, _CU as _CU, _DIGEST_INFO as _DIGEST_INFO, _HEX40 as _HEX40, _HEX64 as _HEX64,
     _LAST_STEP as _LAST_STEP, _SPARE as _SPARE, _Stop as _Stop, _T_ID as _T_ID, _T_PAYER as _T_PAYER, _U64 as _U64,
     _VERIFIER as _VERIFIER, _code as _code, _failed as _failed, _no as _no, _out_of_compute as _out_of_compute,
-    answered as answered, transient as transient, why_failed as why_failed)
+    answered as answered, claim_ref as claim_ref, rotate_ref as rotate_ref, transient as transient, why_failed as why_failed)
 from .build import (_TIERED as _TIERED, _UPGRADEABLE as _UPGRADEABLE, _VERSION as _VERSION,
     _VERSION_LINE as _VERSION_LINE, _built as _built, _drop as _drop, _keep as _keep, _where as _where, forget as forget,
     version as version)

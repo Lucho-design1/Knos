@@ -18,7 +18,8 @@ flowchart TB
 ## Two records, both public
 
 The first is one order on Solana devnet, run on 9 Oct 2026 with Knos 0.3.23 in Knos's own repository
-`drexthealpha/knos-witness`. There is no outside buyer: the buyer and the supplier are both Knos accounts.
+`drexthealpha/knos-witness` (its files and its history are kept in Knos: [evidence/knos-witness](../evidence/knos-witness/)).
+There is no outside buyer: the buyer and the supplier are both Knos accounts.
 
 The second is a made-up invoice from a made-up supplier (`examples/shadow/invoice.csv`, which says so in its first
 line). It is checked with GitHub's recorded answers, so it runs with no network.
@@ -52,7 +53,7 @@ line). It is checked with GitHub's recorded answers, so it runs with no network.
 ## 3. Both sides rebuild the invoice
 
 The order: the buyer's and the supplier's statements each have one line, agreed, with the same sha256
-([the record](https://github.com/drexthealpha/knos-witness/blob/acaa854d241c2e030f521b6f5603c8f43c93bab6/witness.json)):
+([the record](https://raw.githubusercontent.com/drexthealpha/Knos/knos-0.3.34/evidence/knos-witness-acaa854d/witness.json)):
 
 `a3791c5d92a545a16b0486a01b9d70f091e3e431074a5b6cbb47549c7a110280`
 

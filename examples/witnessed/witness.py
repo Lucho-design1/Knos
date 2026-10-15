@@ -53,7 +53,7 @@ from typing import Any, Callable
 
 TEMPLATE = "templates/knos-task"     # the folder of drexthealpha/Knos a new repository gets its files from (0.3.31: no template repository)
 FOLDER = Path(__file__).resolve().parents[2] / TEMPLATE
-PLAYGROUND = "drexthealpha/knos-playground"
+PLAYGROUND = "drexthealpha/Knos"
 NAME = "knos-witness"
 FUND, BUDGET = "5", "10"
 # The funding line as knos.commands reads it: `checks: none` names no CI check (the template has none to name; the

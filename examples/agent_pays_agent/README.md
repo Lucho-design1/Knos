@@ -18,7 +18,7 @@ by `knos-oidc`; `evaluator.mjs` is the `test` check that run reads. In the test,
 On devnet, with test USDC. Nobody has done this devnet run yet. You need two key files: the payee must be an account
 other than the funder, and `buyer.mjs` refuses a board whose payee is its own address.
 
-    cp examples/agent_pays_agent/offer.devnet.json offer.json   # fill repoId, issue, seller.githubId, wfSha (the knos-workflows commit pinned in examples/knos-workflow.yml)
+    cp examples/agent_pays_agent/offer.devnet.json offer.json   # fill repoId, issue, seller.githubId, wfSha (the commit of the published workflows pinned in examples/knos-workflow.yml, on the branch workflows of drexthealpha/Knos)
     node examples/agent_pays_agent/seller.mjs --devnet --key seller.json --offer offer.json &
     node examples/agent_pays_agent/buyer.mjs --devnet --key buyer.json --board http://127.0.0.1:4021 --max 5000000
     node examples/x402_attested/live.mjs status --rpc https://api.devnet.solana.com --order ORDER

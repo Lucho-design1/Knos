@@ -74,6 +74,9 @@ LOADER = Pubkey.from_string("BPFLoaderUpgradeab1e11111111111111111111111")
 SECURITY_TXT = b"=======BEGIN SECURITY.TXT V1======="
 PROGRAMDATA_HEADER = 45  # u32 tag | u64 slot | u8 option | [32] authority
 PINS_REPO = "drexthealpha/knos-oidc-rotate"
+# The pinned rotate and claim commits have two homes: the old repository and Knos's branch `oidc-rotate` (the same
+# commits; docs/reference/CUTOVER-0331.md section 2). A pin is a commit when either home has it.
+PINS_REPOS = (PINS_REPO, "drexthealpha/Knos")
 REPO = "drexthealpha/Knos"      # whose program.yml runs `gh` reads, wherever the command is run
 NOT_HERE = "not checked from here: needs a clone"
 NEEDS_GH = NOT_HERE + " (and gh, logged in to GitHub)"
@@ -421,26 +424,37 @@ def run(fetch: Fetch, ids: dict | None = None, env: Mapping[str, str] | None = N
     res.append(("guardian: the vault both programs name is the pinned multisig's, which has no config authority", *_guardian(fetch.account, ids, elfs)))
 
     pins = {"rotate_sha": "knos_oidc", "claim_sha": "knos_pay"}     # the pin, and the program whose binary carries it
-    bad, unreached = [], []
+    bad, unreached, homes = [], [], {}
     for key, name in pins.items():
         pin = str(ids.get(key, ""))
         if len(pin) != 40 or pin.encode() not in elfs[name]:
             bad.append(f"{key} {pin or 'unset'} is not in the on-chain binary of {name}")
             continue
-        try:
-            commit = fetch.get(f"https://api.github.com/repos/{PINS_REPO}/commits/{pin}")
-        except Unreachable as why:
-            unreached.append(str(why))
+        down = None
+        for repo in PINS_REPOS:
+            try:
+                commit = fetch.get(f"https://api.github.com/repos/{repo}/commits/{pin}")
+            except Unreachable as why:
+                down = down or str(why)
+                continue
+            if isinstance(commit, dict) and commit.get("sha") == pin:
+                homes[key] = repo
+                break
+        if key in homes:
             continue
-        if not (isinstance(commit, dict) and commit.get("sha") == pin):
-            bad.append(f"{key} {pin} is not a commit of {PINS_REPO}")
+        if down is not None:
+            unreached.append(down)
+        else:
+            bad.append(f"{key} {pin} is not a commit of {' or '.join(PINS_REPOS)}")
     pin_name = "rotate and claim workflow pins are in the programs and on GitHub"
     if bad:
         res.append((pin_name, False, "; ".join(bad)))
     elif unreached:       # GitHub was not asked successfully: that says nothing about the pins
-        res.append((pin_name, None, f"could not reach GitHub ({unreached[0]}), so the commits of {PINS_REPO} were not checked; the pins are in the binaries"))
+        res.append((pin_name, None, f"could not reach GitHub ({unreached[0]}), so the commits of {' and '.join(PINS_REPOS)} were not checked; "
+                                    "the pins are in the binaries"))
     else:
-        res.append((pin_name, True, f"{PINS_REPO}@{ids['rotate_sha']} (rotate) and @{ids['claim_sha']} (claim): in the binaries, and the commits exist"))
+        res.append((pin_name, True, f"{homes['rotate_sha']}@{ids['rotate_sha']} (rotate) and {homes['claim_sha']}@{ids['claim_sha']} (claim): "
+                                    "in the binaries, and the commits exist"))
 
     keys, now = _github_keys(fetch, ids), fetch.now()
     usable = sum(oidc.key_usable(key, now)[0] for _kid, _n, key in keys)

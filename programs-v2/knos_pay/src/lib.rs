@@ -379,6 +379,12 @@ pub const GUARDIAN: Pubkey = pubkey!("AT1aKj1DpgaWerxmS4YjDkNpWPNUtCCKVDvxLhFxg5
 /// The claim workflow: a Bind token's `job_workflow_ref` must start with CLAIM_REF and its `job_workflow_sha` must be
 /// CLAIM_SHA. A commit sha fixes the workflow file's content.
 pub const CLAIM_REF: &[u8] = b"drexthealpha/knos-oidc-rotate/.github/workflows/claim.yml@";
+/// The same workflow at its home in Knos (branch `oidc-rotate`: the same commits, so the same CLAIM_SHA and
+/// order_judge::CLAIM_SHA_ORG), accepted beside CLAIM_REF by Bind and BindOrg while callers move
+/// (docs/reference/CUTOVER-0331.md, section 2). An exact prefix: `someone/Knos/...` and `drexthealpha/knos/...` are not it.
+pub const CLAIM_REF_KNOS: &[u8] = b"drexthealpha/Knos/.github/workflows/claim.yml@";
+/// Whether `job_workflow_ref` names the pinned claim workflow in one of its two homes. The commit is checked apart.
+pub fn claim_ref(wref: &[u8]) -> bool { wref.starts_with(CLAIM_REF) || wref.starts_with(CLAIM_REF_KNOS) }
 pub const CLAIM_SHA: &[u8; 40] = b"80e796d341f65060767939c4e65a38ede5fa1ac8";
 
 /// Test builds only (`--features testkeys`, which also makes knos-oidc trust the test keys): a test claim pin, and a
@@ -568,6 +574,25 @@ mod tests {
         assert_eq!((MIN_AMOUNT, MAX_AMOUNT, MAX_WORK, HOLD, PAUSE_MAX, MAX_TERMS), (1_000_000, 100_000_000_000, 7_776_000, 15_552_000, 604_800, 600));
         assert!(CLAIM_REF.ends_with(b"/.github/workflows/claim.yml@") && knos_oidc::claims::is_hex(CLAIM_SHA, 40));
         const { assert!(TOKEN_LIFE >= 300 && TOKEN_AHEAD >= CLOCK_SLACK) };
+    }
+}
+#[cfg(test)]
+mod claim_two_homes {
+    use super::*;
+    #[test]
+    fn the_claim_workflow_is_accepted_in_its_two_homes_and_nowhere_else() {
+        for ok in [&b"drexthealpha/knos-oidc-rotate/.github/workflows/claim.yml@refs/heads/main"[..],
+                   b"drexthealpha/Knos/.github/workflows/claim.yml@refs/heads/oidc-rotate"] {
+            assert!(claim_ref(ok), "{}", String::from_utf8_lossy(ok));
+        }
+        for no in [&b"someone/Knos/.github/workflows/claim.yml@refs/heads/main"[..],
+                   b"drexthealpha/Knos-x/.github/workflows/claim.yml@refs/heads/main",
+                   b"drexthealpha/Knosx/.github/workflows/claim.yml@refs/heads/main",
+                   b"drexthealpha/knos/.github/workflows/claim.yml@refs/heads/main",
+                   b"drexthealpha/Knos/.github/workflows/rotate.yml@refs/heads/main",
+                   b"drexthealpha/Knos/.github/workflows/claim.yml"] {
+            assert!(!claim_ref(no), "{}", String::from_utf8_lossy(no));
+        }
     }
 }
 #[cfg(any(kani, test))] mod proofs; // the fee and conservation arithmetic, for `cargo kani` and `cargo test`: not in the program

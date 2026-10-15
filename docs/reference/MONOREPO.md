@@ -23,12 +23,22 @@ Three kinds, decided from what reads them:
 | knos-attest | c | [`templates/knos-attest/`](../../templates/knos-attest) | folded; `python -m knos.host_judge link` then `editor` | the live site until this release deploys |
 | knos-claim | c | [`templates/knos-claim/`](../../templates/knos-claim) | folded; `knos claim` creates the empty repository and commits the file; `#payee` links to both steps | knos 0.3.28 and older try the template first and fall back to the same empty repository and file |
 | knos-claim-org | c | [`templates/knos-claim-org/`](../../templates/knos-claim-org) | folded; `knos claim --org` never used the template | nothing |
-| knos-workflows | b | the branch `workflows` of drexthealpha/Knos, the same commits (after the cutover below) | in-Knos path built and tested; old repository is the live one | every caller and every escrow below |
-| knos-workflows-rc | b (devnet rehearsal only) | regenerable: `python scripts/pinned_workflows.py build DIR --source REQ` | nothing to fold | one open devnet job and one credits account (below) |
-| knos-playground | not foldable yet | its files are written from Knos already (`scripts/small_repos.py build knos-playground`) | a live service: strangers open issues there to fund test tasks | open faucet tasks on its issues; `knos.playground.REPO`; the worker's `KNOS_FAUCET_REPO` default |
-| knos-rc | not foldable | it is a staging copy of Knos itself | kept | `.github/workflows/hermetic.yml` runs only there; evidence links to its runs in docs/bench.json, docs/kani.json, docs/capabilities.json, OUTCOMES.md, RELAY.md, REPRODUCE.md, VERIFIER.md |
-| knos-labs | a, but not by a copy | history only (CHANGELOG, DISCLOSURE.md, `knos init`'s note) | not folded: see "knos-labs" below | links in CHANGELOG.md and DISCLOSURE.md |
-| knos-oidc-rotate | b | [`workflows/knos-oidc-rotate/`](../../workflows/knos-oidc-rotate) (a copy, inactive) | copied; the programs still pin the old repository | `ROTATE_REF` in `programs-v2/knos_oidc/src/pins.rs`, `CLAIM_REF` in `programs-v2/knos_pay/src/lib.rs`, the first deployment (no upgrade authority), `src/knos/settle/v2/relay/pins.py`, every `knos-claim` repository |
+| knos-workflows | b | the branch `workflows` of drexthealpha/Knos, the same commits: 96b243f1 and its 16 ancestors, tags `workflows-<sha12>` for every commit an open escrow pins (made 15 Oct 2026, pushed with the 0.3.34 branch) | 0.3.34 branch: every caller, example, template, site page, `sdk/settle` and terms 3 document (version 2) names `drexthealpha/Knos/.github/workflows/...@96b243f1...`; `scripts/release.py workflows` commits into a worktree of the branch. `main` (tag v0.3.28, the Colosseum entry) still names the old repository until 5 Dec 2026 | the escrows funded through it (below; the last open one frees itself 2026-11-13 15:48 UTC), `main` until 5 Dec 2026, outside repositories that installed Knos. Deletable from 6 Dec 2026 at the earliest |
+| knos-workflows-rc | b (devnet rehearsal only) | [`rehearsals/knos-workflows-rc/`](../../rehearsals/knos-workflows-rc) (main at 876f3ced, byte for byte); also regenerable: `python scripts/pinned_workflows.py build DIR --source REQ` | copied (0.3.34) | one open devnet job and one credits account (below) |
+| knos-playground | a, into Knos's own issues (founder's decision, 14 Oct 2026) | Knos's own issues: `knos.playground.REPO`, the worker's `KNOS_FAUCET_REPO` default and every site page name drexthealpha/Knos; `python scripts/small_repos.py fold` writes its files into Knos (the issue template, `words.py`, `check.py`, `tasks/<task>.py`, `.knos/acceptance/1..200/`) | 0.3.34 branch: moved; live in Knos once the branch reaches `main` (after 5 Dec 2026). Waits: the founder opens and pins the issue labelled `faucet` in Knos and gives Knos the secrets `KNOS_FAUCET_KEY` and `KNOS_RELAY_KEY` ([FAUCET.md](FAUCET.md)) | the old repository is frozen: 35 open 5-test-USDC orders on its issues #3 and #6 to #29, the last refundable 2026-11-13 15:48 UTC; tag v0.3.28 links it until 5 Dec 2026. Deletable from 6 Dec 2026 |
+| knos-rc | not foldable | it is a staging copy of Knos itself | kept; since 0.3.34 `.github/workflows/hermetic.yml` runs in Knos too, and these are cited from Knos runs (15 Oct 2026, branch knos-0.3.34): the kind cluster's token (outcome-k8s.yml, run 38701801687: OUTCOMES.md, VERIFIER.md, CAPABILITIES.md, docs/capabilities.json), the fuzz count and Kani's proof (program.yml, run 38701807179: docs/bench.json, docs/facts.json, docs/kani.json, ASSURANCE.md, TRUST.md), and the relay's event run (worker.yml, run 37716553935 of 8 Oct: RELAY.md) | still cited from it: `tests_passing` in docs/bench.json (Knos's tests.yml run 38701796582 failed: sibyl-memory-client 0.9.0 asks for an account), REPRODUCE.md's own run (filed on a branch, with a pull request), BENCH.md's two `knos-rc, comment ...` rows (events in its issues), `scripts/exercise_public.py`'s staging rehearsal |
+| knos-labs | a, as history | the branch `labs` of drexthealpha/Knos: its one commit ed6136f9 (fetched 15 Oct 2026 as the local branch `labs-src`) plus one commit that removes its `.github/workflows` (see "knos-labs" below) | 0.3.34 branch: CHANGELOG.md, DISCLOSURE.md, docs/reference/README.md and `knos init`'s note link `https://github.com/drexthealpha/Knos/tree/labs`. Waits: that commit and the push of `labs`, with this release | tag v0.3.28 links it until 5 Dec 2026. Deletable from 6 Dec 2026, once `labs` is pushed |
+| knos-oidc-rotate | b | [`workflows/knos-oidc-rotate/`](../../workflows/knos-oidc-rotate) (a copy, inactive); its commits go to the branch `oidc-rotate` of drexthealpha/Knos ([CUTOVER-0331.md](CUTOVER-0331.md) section 2 step 1) | copied; the 0.3.35 builds of knos_oidc and knos_pay accept both homes (`ROTATE_REF_KNOS`, `CLAIM_REF_KNOS`; tested) and are written to devnet buffers held by the upgrade vault (knos_oidc `dJA4mokfAqG7eTKUrD1MawKbWPJrzjc72qehpujiy6V`, knos_pay `C7MrKvNU2yxMG5RJqzCkCDGowe5T1R69j3LXz3Qj1VdA`); the live programs take only the old home until the founder's upgrade executes ([deploy/upgrade-0335/STEPS.md](../../deploy/upgrade-0335/STEPS.md)) | the live programs until that upgrade; the first deployment (no upgrade authority); the rotate caller `.github/workflows/keys.yml` and the claim callers (`examples/knos-claim*.yml`, `src/knos/settle/knos-claim*.yml`, `web/payee.js`), which move only after it; every existing `knos-claim` repository |
+| knos-witness | a (evidence) | [`evidence/knos-witness/`](../../evidence/knos-witness) (main at 479b0327) and [`evidence/knos-witness-acaa854d/`](../../evidence/knos-witness-acaa854d) (the commit whose `witness.json` the documents cite); its 14 commits are the local ref `evidence/knos-witness` | copied (0.3.34), byte for byte, `SOURCE.json` beside each (`tests/test_evidence_copies.py`); README.md, docs/JUDGES.md, TRANSACTION.md, FLOWS.md and judges.json link the record here | the Actions runs, issue #9 and the comment on pull request #10 that those pages link (they cannot be copied, so the links stay); `examples/witnessed/witness.py` names a person's own repository `knos-witness` |
+| knos-load | a (evidence) | [`evidence/knos-load/`](../../evidence/knos-load) (main at b9615b0b, its one commit) | copied (0.3.34) | the Actions runs 37833126115 and 38012410577 that docs/load.json and LOAD.md cite (kept) |
+| knos-v0329-gate | a (evidence; private) | [`evidence/knos-v0329-gate/`](../../evidence/knos-v0329-gate) (main at ccf45c30; the demo pull requests' heads in its `SOURCE.json`) | copied (0.3.34) | the Actions runs PR_GATE.md cites (private: they open for the owner only) |
+| knos-v0329-outcomes | a (evidence; private) | [`evidence/knos-v0329-outcomes/`](../../evidence/knos-v0329-outcomes) (the pinned commit 509485fb) and [`evidence/knos-v0329-outcomes-b59b30f3/`](../../evidence/knos-v0329-outcomes-b59b30f3) (the data commit); local refs `evidence/knos-v0329-outcomes` and `evidence/knos-v0329-outcomes-data` | copied (0.3.34) | the Actions runs in `examples/outcomes/measured-support/demo*.json`; `demo.py --repo` and `outcome.yaml.in` name it as the repository the demo runs in |
+| knos-hermes | a | [`hermes/knos-hermes/`](../../hermes/knos-hermes) (master at 11df3a96; its `[project.urls]` now name Knos) | copied as source and not built: Knos ships one package ([HERMES.md](HERMES.md)) | PyPI's page of knos-hermes 0.1.0 (its links change only with a new upload: the founder's decision); the open pull request 0xNyk/awesome-hermes-agent#382 |
+| knos-e2e | the live test repository | [`rehearsals/knos-e2e/`](../../rehearsals/knos-e2e) (a snapshot of main at 0ddf601a) | kept: it is the one test repository | everything that tests against it |
+| knos-e2e-202610020250 | rehearsal | [`rehearsals/knos-e2e-202610020250/`](../../rehearsals/knos-e2e-202610020250) (main at e0393fc8) | copied (0.3.34) | one devnet order (CUTOVER-0331.md); BENCH.md names its #2 and #3 |
+| knos-e2e-202610020406 | rehearsal | [`rehearsals/knos-e2e-202610020406/`](../../rehearsals/knos-e2e-202610020406) (main at 4b95b012) | copied (0.3.34) | an outside contributor's open pull request (#2) |
+| knos-e2e-202610020610 | rehearsal | [`rehearsals/knos-e2e-202610020610/`](../../rehearsals/knos-e2e-202610020610) (main at 2e23795c) | copied (0.3.34) | one devnet order and one credits account (CUTOVER-0331.md); an outside contributor's open pull requests (#3, #4) |
+| k0615 | rehearsal | [`rehearsals/k0615/`](../../rehearsals/k0615) (main at f8cd4236) | copied (0.3.34) | an outside contributor's open pull request (#8) |
 
 knos-oidc-rotate is a trust anchor of another kind: `programs-v2/knos_pay/src/lib.rs` (`CLAIM_REF`) and
 `programs-v2/knos_oidc/src/pins.rs` (`ROTATE_REF`) compile its name into the programs, so moving it is a program
@@ -82,12 +92,18 @@ size of a job, an order and a credits account, counted by the stored workflow ha
 | orders (knos_pay 2.1) | 31 open | 2026-11-08 06:48 |
 | knos_meter credits | 1 | none (a credits account has no deadline) |
 
+Read again on 15 Oct 2026 the same way (internal dogfooding): jobs 11 open (def6ac689479 2, 96b243f1b1dd 9) and 4 held,
+latest open deadline 2026-10-18 01:54; orders 39 open (b7196a2ad17c 11, 5b26b1cddeae 8, 96b243f1b1dd 8, 43c8605d155e
+8, 160edd4e19fc 4), latest 2026-11-13 15:48 (35 of them on drexthealpha/knos-playground's issues); credits 1
+(64b31fae2b00).
+
 A held job waits for its payee to bind a wallet and needs no new workflow run. An open one can be paid only by a run
-of knos-workflows at its pinned commit until its deadline, then it is refunded. Also pinned to knos-workflows:
-every `uses:` line in `examples/*.yml`, `.github/workflows/knos.yml` and `knos-check.yml` of Knos, `templates/`,
-`web/front.js` and `web/install.js`, `sdk/settle/README.md` and its fixtures, the three terms documents
-`terms/3/bug-fix/1.json`, `terms/3/dataset-batch/1.json`, `terms/3/migration/1.json`, drexthealpha/knos-e2e's callers,
-and any outside repository that installed Knos (GitHub code search: `"drexthealpha/knos-workflows/.github/workflows"
+of knos-workflows at its pinned commit until its deadline, then it is refunded. On `main` (v0.3.28) also pinned to
+knos-workflows until 5 Dec 2026: every `uses:` line in `examples/*.yml`, `.github/workflows/knos.yml` and
+`knos-check.yml` of Knos, `templates/`, `web/front.js` and `web/install.js`, `sdk/settle/README.md` and its fixtures;
+the 0.3.34 branch names the new home in all of them and publishes version 2 of the terms documents (version 1, which
+orders were funded on, is kept). Still pinned to it everywhere: drexthealpha/knos-e2e's callers, and any outside
+repository that installed Knos (GitHub code search: `"drexthealpha/knos-workflows/.github/workflows"
 path:.github/workflows`, `scripts/network_stats.py` INSTALLED_QUERIES).
 
 ### The cutover
@@ -111,8 +127,25 @@ a template. Nothing else changed: the claim is still a run started by hand, with
 
 Its 306 files include a second, older `knos` package, a compiled program and workflows that run on `push`. Copied into
 `main` they would be a second package in the product tree; pushed as a branch of Knos as they are, their push
-workflows would run in Knos with Knos's secrets. So it is not folded by this release; the founder's steps, when he
-wants it folded, are in [CUTOVER-0331.md](CUTOVER-0331.md). Nothing in Knos runs or imports it.
+workflows would run in Knos with Knos's secrets. So it becomes the branch `labs` with one commit that removes
+`.github/workflows` ([CUTOVER-0331.md](CUTOVER-0331.md) section 3). Fetched on 15 Oct 2026: main = ed6136f9e3e1, one
+commit, ten workflows, of which `network.yml` (push, release, schedule), `program.yml` (push) and `tests.yml` (push,
+pull_request, schedule) would start on a push, and `fuzz.yml`, `index.yml`, `worker.yml` on a schedule. Nothing in
+Knos runs or imports it.
+
+## What the 0.3.34 branch did, and what waits (15 Oct 2026)
+
+- knos-workflows: the local branch `workflows` (= 96b243f1b1dd5c975a0318dd9709a0da22b98dcd, the old repository's
+  `main`) and the tags `workflows-96b243f1b1dd`, `-def6ac689479`, `-b7196a2ad17c`, `-5b26b1cddeae`, `-43c8605d155e`,
+  `-160edd4e19fc`, `-64b31fae2b00` (every commit an open escrow on devnet pins, read on 15 Oct). Every published file
+  of every one of those commits is `on: workflow_call`; `attest.yml` (0.3.13 on) also has `workflow_dispatch`, a run
+  by hand, and none runs on a push. Then step 5 of the cutover: the callers, `web/front.js`, `web/install.js`, the
+  templates, `sdk/settle`, the offers of `examples/`, and terms 3 version 2 of bug-fix, dataset-batch and migration
+  name the new home. Waits: the push of the branch and the tags (with this release), the rulesets (step 2, the
+  founder's), the first live payment on the new home (step 4), `main` (after 5 Dec 2026).
+- knos-labs: the local branch `labs-src` = ed6136f9; the commit that removes its workflows and the push of `labs` wait.
+- knos-playground: moved into Knos's own issues on this branch; its open orders on devnet free themselves by
+  2026-11-13 15:48 UTC; nothing is funded there by this release's code.
 
 ## knos-oidc-rotate
 
@@ -120,4 +153,8 @@ Its two files, at the commit the second deployment pins last (212f9eb5), are in 
 [`workflows/knos-oidc-rotate/`](../../workflows/knos-oidc-rotate): the same bytes, so the same git tree
 (`a7302cf6...`, held by `tests/test_fold_rotate.py`). They are not active there (they are not in Knos's own
 `.github/workflows/`). The programs name the old repository in compiled constants, so the move is a program upgrade;
-[CUTOVER-0331.md](CUTOVER-0331.md) has the steps, the Squads step included.
+[CUTOVER-0331.md](CUTOVER-0331.md) has the steps, the Squads step included. The code half is done: the 0.3.35 builds
+accept the old home and Knos's (`ROTATE_REF_KNOS`, `CLAIM_REF_KNOS`, exact prefixes, look-alikes refused in
+`tests/test_two_homes_*.py`), and both are in devnet buffers held by the upgrade vault. What waits for the founder:
+the two proposals, their approval and time lock, execution, and only then the rotate and claim callers
+([deploy/upgrade-0335/STEPS.md](../../deploy/upgrade-0335/STEPS.md)).

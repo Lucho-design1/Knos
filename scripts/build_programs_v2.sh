@@ -75,6 +75,7 @@ case "$what" in oidc|pay|meter|passkey|examples|all) ;; *) echo "usage: bash scr
 
 if [ "$what" = oidc ] || [ "$what" = all ]; then
   build knos_oidc knos_oidc_v2_test.so --features testkeys
+  build knos_oidc knos_oidc_v2_0335_test.so --features testkeys     # 0.3.35: the rotate workflow in both homes (tests/test_two_homes_*.py)
   build knos_oidc knos_oidc_v2_real.so
 fi
 
@@ -82,6 +83,7 @@ if [ "$what" = pay ] || [ "$what" = all ]; then
   build knos_pay knos_pay_v2_nodevnet.so --no-default-features --features testkeys
   build knos_pay knos_pay_v2_test.so --features testkeys
   build knos_pay knos_pay_v2_0334_test.so --features testkeys      # the 0.3.34 test build the pay-on-proof tests load
+  build knos_pay knos_pay_v2_0335_test.so --features testkeys      # 0.3.35: the claim workflow in both homes (tests/test_two_homes_*.py)
   build knos_pay -
 fi
 

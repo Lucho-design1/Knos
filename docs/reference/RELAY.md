@@ -370,7 +370,7 @@ none.
   `::error title=claim guard::`, and that repository is asked again a minute later). It does not stop the relay.
   An item that reads as a claim but is never answered (its author may write here, or is a bot) is named on the
   page: `claims: #<n> not answered (...)`, and no word of it is quoted.
-- **The answer links the funded tasks:** the open issues labelled `knos-funded` in `drexthealpha/knos-playground`.
+- **The answer links the funded tasks:** the open issues labelled `knos-funded` in `drexthealpha/Knos` (the playground is Knos's own issues since the 0.3.34 branch; `drexthealpha/knos-playground` before it).
 
 `claims.yml` keeps its immediate triggers (an issue, a comment) and its timer, as the fallback when no worker runs.
 Not exercised on GitHub yet. The release run checks two things: a claim opened from a fork is answered by the
@@ -432,15 +432,14 @@ What is not done:
   the median over 56 payments (10 Oct 2026, [BENCH.md](BENCH.md)), and no measurement separates the queue's part. What is known of the queue is a local test
   with a stand-in chain (`python scripts/queue_drill.py`, same section): it says how the queue behaves, and
   nothing about seconds on a cluster.
-- **One event run, and it carried no token.** On 6 October 2026 one `repository_dispatch` of type `knos-token`,
-  `client_payload` `{"repo": "drexthealpha/knos-rc", "number": 1}`, started the `event` job of this file in the
-  staging repository ([run 37483292967](https://github.com/drexthealpha/knos-rc/actions/runs/37483292967)): GitHub
-  created the run at 14:57:22 UTC, the job started 3 s later, and 7 s after that it had read the issue's comments
-  and answered "relay: 0 tokens carried for this event". No token had been posted there in the 70 minutes it reads,
-  so it times a run that starts, installs and reads, and no token carried by an event. On the public worker no event
-  run has happened: it runs from the first event after the file reaches `main`. Nobody dispatches `knos-token` there
-  yet: the public worker gets `workflow_run` for its own repository's `knos` workflow, and nothing for the other
-  repositories it serves (above: it cannot).
+- **One event run on the public worker, and it carried no token.** On 8 October 2026 one `repository_dispatch` of
+  type `knos-token` started the `event` job of this file in drexthealpha/Knos
+  ([run 37716553935](https://github.com/drexthealpha/Knos/actions/runs/37716553935), `main` at fb77f4fe): GitHub
+  created the run at 02:10:21 UTC, the job started 3 s later, and 9 s after that it answered "relay: 0 tokens
+  carried for this event". It times a run that starts, installs and reads, and no token carried by an event (the
+  first such run, in the staging copy on 6 October, gave the same answer). No caller dispatches `knos-token` there as
+  a matter of course: the public worker gets `workflow_run` for its own repository's `knos` workflow, and nothing for
+  the other repositories it serves (above: it cannot).
 - **In `worker.yml` an event run's folder ends with its runner; its notes do not.** The three changes
   another runner must know are comments on the relay log (above). Not yet seen on GitHub: tested here with a
   stand-in for GitHub's API. Where GitHub fails, a token both carry is taken once.

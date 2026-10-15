@@ -660,15 +660,18 @@ def diff_text(a: dict, b: dict, name_a: str = "the first", name_b: str = "the se
 
 # ---- templates: the common jobs, each with safe defaults -------------------------------------------------------------
 
-WORKFLOWS = "/".join(("drexthealpha", "knos-workflows", ".github", "workflows", ""))     # (joined here: tests/test_workflows2.py lets no file of the package, compiled or not, spell the published path whole)
-PROVE, ATTEST = WORKFLOWS + "prove.yml", WORKFLOWS + "attest.yml"
-# The monorepo's home of the same published commits (its branch `workflows`, docs/reference/MONOREPO.md). Terms name a
-# workflow by its path, and an order keeps the terms it was funded on: terms that name the old home keep paying only
-# runs of the old home. `moved` writes the next version of a terms document for the new home.
+# (joined here: tests/test_workflows2.py lets no file of the package, compiled or not, spell the published path whole)
+# The monorepo's home of the published commits (its branch `workflows`, docs/reference/MONOREPO.md): what new terms
+# name. Terms name a workflow by its path, and an order keeps the terms it was funded on: version 1 of each published
+# document names the old home and keeps paying only runs of the old home. `moved` writes the next version for the new one.
 MONOREPO_WORKFLOWS = "/".join(("drexthealpha", "Knos", ".github", "workflows", ""))
+OLD_WORKFLOWS = "/".join(("drexthealpha", "knos-workflows", ".github", "workflows", ""))    # the home before the 0.3.34 cutover
+WORKFLOWS = MONOREPO_WORKFLOWS
+PROVE, ATTEST = WORKFLOWS + "prove.yml", WORKFLOWS + "attest.yml"
+OLD_PROVE, OLD_ATTEST = OLD_WORKFLOWS + "prove.yml", OLD_WORKFLOWS + "attest.yml"     # what version 1 of the templates names
 
 
-def moved(doc: dict, to: str = MONOREPO_WORKFLOWS, frm: str = WORKFLOWS) -> dict:
+def moved(doc: dict, to: str = MONOREPO_WORKFLOWS, frm: str = OLD_WORKFLOWS) -> dict:
     """The same terms, every evidence source and evaluator that names a workflow under `frm` naming it under `to`
     instead, as the next version (a new version is a new hash: orders funded on the old one are not touched)."""
     got = json.loads(json.dumps(doc))
@@ -685,26 +688,29 @@ ACTIONS = 15368                 # the GitHub App id of GitHub Actions
 DATASET_ACCEPT = "8445799b6b70bde0dcf4a73465d9a34b0e180a9c88daa305acf4926c5d62acc5"     # examples/outcomes/data-labelling's suite
 
 
-def _own(repo: str) -> dict:
-    return {"name": "own", "issuer": GITHUB, "repository": repo, "workflow": PROVE, "owner": repo.split("/")[0]}
+def _own(repo: str, prove: str = PROVE) -> dict:
+    return {"name": "own", "issuer": GITHUB, "repository": repo, "workflow": prove, "owner": repo.split("/")[0]}
 
 
 NEUTRAL = {"name": "neutral", "issuer": GITHUB, "repository": ANYONE, "workflow": ATTEST, "owner": ANYONE}
+_OLD_NEUTRAL = {**NEUTRAL, "workflow": OLD_ATTEST}
 
 
-def base(repo: str = SAMPLE_REPO, name: str = "bug-fix") -> dict:
+def base(repo: str = SAMPLE_REPO, name: str = "bug-fix", home: str = WORKFLOWS) -> dict:
     """The safe defaults every template starts from, for `repo`: paid on a merge after named checks, nothing held, the
-    order's own repository judges, an appeal goes to an arbiter (none named), 14 days, and only the owner changes it."""
+    order's own repository judges, an appeal goes to an arbiter (none named), 14 days, and only the owner changes it.
+    `home`: where the published workflows are named (OLD_WORKFLOWS only to write version 1 of a template again)."""
+    prove, attest = home + "prove.yml", home + "attest.yml"
     return {
         "standard": STANDARD, "v": V, "name": name, "version": 1,
         "deliverable": {"kind": "pull-request", "one_per": "issue"},
-        "evidence": {"sources": [{"issuer": GITHUB, "workflow": PROVE}, {"issuer": GITHUB, "workflow": ATTEST}]},
+        "evidence": {"sources": [{"issuer": GITHUB, "workflow": prove}, {"issuer": GITHUB, "workflow": attest}]},
         "checks": {"mode": "merge", "deciding": [{"name": "lint", "app": ACTIONS}, {"name": "unit", "app": ACTIONS}], "accept": "",
                    "authority": f"the workflow files of {repo} at the commit the order was funded on"},
         "window": {"warranty_days": 0, "holdback_percent": 0},
         "changes": {"paths": ["src/**", "tests/**"], "protected": list(terms.DENY), "may_add": []},
         "dispute": {"who": "supplier", "evaluator": "arbiter", "within_days": 7, "money": "order", "no_answer": "refund-at-deadline"},
-        "evaluators": {"quorum": 1, "list": [_own(repo)]},
+        "evaluators": {"quorum": 1, "list": [_own(repo, prove)]},
         "price": {"amount": "50.00", "currency": MONEY},
         "deadline": {"days": 14, "late": "refused"},
         "policy": {"may_change": ["@" + repo.split("/")[0]], "how": "new-version"},
@@ -712,7 +718,8 @@ def base(repo: str = SAMPLE_REPO, name: str = "bug-fix") -> dict:
 
 
 def _made(name: str, **fields) -> dict:
-    doc = base(name=name)
+    """Version 1 of a template, as terms/3/<name>/1.json published it (the old home): `template` gives the current one."""
+    doc = base(name=name, home=OLD_WORKFLOWS)
     for key, value in fields.items():
         doc[key] = {**doc[key], **value} if isinstance(doc.get(key), dict) else value
     return validate(doc, strict=False)
@@ -729,7 +736,7 @@ TEMPLATES = {
                                    checks={"mode": "tests", "deciding": [], "accept": DATASET_ACCEPT,
                                            "authority": f".knos/acceptance/ of {SAMPLE_REPO} at the commit the order was funded on; its hash is in these terms"},
                                    changes={"paths": ["batches/**"]}, dispute={"evaluator": "neutral"},
-                                   evaluators={"list": [_own(SAMPLE_REPO), NEUTRAL]}, price={"amount": "40.00"}),
+                                   evaluators={"list": [_own(SAMPLE_REPO, OLD_PROVE), _OLD_NEUTRAL]}, price={"amount": "40.00"}),
     # a support resolution: no third party signs that a ticket was resolved, so this cannot fund anything
     "support-resolution": lambda: _made("support-resolution", built=False, needs="a signing system of record",
                                         deliverable={"kind": "resolution", "one_per": "ticket"}, evidence={"sources": []},
@@ -740,6 +747,15 @@ TEMPLATES = {
 
 
 def template(name: str) -> dict:
+    """The template as terms/3/ publishes it now, what new terms start from: its workflows named in the monorepo
+    (`moved` of version 1, so version 2 where version 1 named a workflow), since the 0.3.34 branch's cutover
+    (docs/reference/CUTOVER-0331.md section 1, step 5). TEMPLATES[name]() is version 1, which keeps the old home: an
+    order funded on it is judged by it."""
     if name not in TEMPLATES:
         raise KeyError(f"there is no Knos Terms 3 template named {name}: the templates are {', '.join(TEMPLATES)}")
-    return TEMPLATES[name]()
+    return moved(TEMPLATES[name]())
+
+
+def current(name: str) -> dict:
+    """The template as terms/3/ publishes it now (the same as `template`)."""
+    return template(name)

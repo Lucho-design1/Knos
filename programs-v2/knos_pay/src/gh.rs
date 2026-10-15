@@ -47,7 +47,7 @@ pub fn token_of(tok: &AccountInfo, key: &AccountInfo, now: i64, ours: impl Fn(&[
 /// which order it refuses, is what it was. GitHub's family and a PRIVATE key `ours` accepts are read here (GitHub's
 /// claims), gitlab.com's (`orders` only) by gl.rs, and every other family (Confidential Space, ORCID, any other
 /// registered issuer) is refused with E_TOKEN as before: their readers are cs.rs and orcid.rs, for their own instructions.
-fn read(tok: &AccountInfo, key: &AccountInfo, now: i64, orders: bool, ours: impl Fn(&[u8; 32]) -> bool) -> Result<Gh, ProgramError> {
+#[allow(clippy::needless_borrow)] fn read(tok: &AccountInfo, key: &AccountInfo, now: i64, orders: bool, ours: impl Fn(&[u8; 32]) -> bool) -> Result<Gh, ProgramError> {
     crate::issuers::checked(tok, key, now, |v, _, d| {
         let gitlab = orders && v.issuer == knos_oidc::pins::ISSUER_GITLAB;    // read by gl.rs, into ids no GitHub token can carry
         let signed = v.issuer == knos_oidc::pins::ISSUER_GITHUB || knos_oidc::registrant(&d).is_some_and(ours);

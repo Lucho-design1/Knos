@@ -8,7 +8,7 @@ None of the moves below has been made.
 
 | what | where | what depends on it |
 |---|---|---|
-| The pinned workflows a repository calls (`fund.yml`, `prove.yml`, `attest.yml`, `check.yml`) | `drexthealpha/knos-workflows`, at one pinned commit that every order records | Every payment. The escrow accepts a token only from that workflow file at that commit. |
+| The pinned workflows a repository calls (`fund.yml`, `prove.yml`, `attest.yml`, `check.yml`) | the branch `workflows` of `drexthealpha/Knos` (`drexthealpha/knos-workflows` for orders funded before the 0.3.34 branch), at one pinned commit that every order records | Every payment. The escrow accepts a token only from that workflow file at that commit. |
 | The key-rotation workflow | `drexthealpha/knos-oidc-rotate`; the verifier accepts its attestation only from repositories of this one account (GitHub id 142920951) | Registering a new signing key of an issuer. A registered key expires after 30 days unless it is attested again. |
 | The claim workflow and its template | `drexthealpha/knos-oidc-rotate` (`claim.yml`, pinned in `knos-pay`) and `drexthealpha/knos-claim` | A payee binding a wallet to a GitHub account. |
 | The public relay | run from the account | Carrying a signed token to the chain when the repository's own run did not. Anyone can relay, and the program tips whoever does. |

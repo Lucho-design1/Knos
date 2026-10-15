@@ -497,7 +497,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--program", action="store_true")
     ap.add_argument("--ci", action="store_true")
     ap.add_argument("--program-ci", type=int, action="append", default=[], metavar="RUN")
-    ap.add_argument("--repo", default="drexthealpha/knos-rc")
+    ap.add_argument("--repo", default="drexthealpha/Knos")
     args = ap.parse_args(argv)
     if args.program_ci:
         program_ci(args.repo, args.program_ci)

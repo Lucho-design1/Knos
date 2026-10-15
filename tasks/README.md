@@ -1,7 +1,7 @@
 # The playground's tasks. Test USDC, no monetary value.
 
 24 small programming tasks. [`scripts/task_board.py`](../scripts/task_board.py) opens each one as a funded issue in
-[drexthealpha/knos-playground](https://github.com/drexthealpha/knos-playground). Each pays 5 test USDC on Solana devnet
+the playground, Knos's own issues ([drexthealpha/Knos](https://github.com/drexthealpha/Knos/issues); drexthealpha/knos-playground until the 0.3.34 branch). Each pays 5 test USDC on Solana devnet
 (Solana's test network). Test USDC is worth nothing. [docs/reference/PLAYGROUND.md](../docs/reference/PLAYGROUND.md) is what a stranger
 reads.
 

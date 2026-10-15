@@ -1,0 +1,21 @@
+{
+ "repository": "drexthealpha/knos-v0329-outcomes",
+ "url": "https://github.com/drexthealpha/knos-v0329-outcomes",
+ "visibility": "private",
+ "kind": "evidence",
+ "default_branch": "main",
+ "commit": "b59b30f3706987ea7a3426917add1ac9a19662d2",
+ "tree": "6a4e9360eac4cc6b685b61a4b74f39ae69a7ccf0",
+ "at": "a cited commit",
+ "commits_to_here": 2,
+ "copied": "2026-10-15",
+ "note": "The data commit of the measured-outcome demo (branch outcome-data): SYNTHETIC tickets of the window, cited by docs/reference/MEASURED.md and examples/outcomes/measured-support/demo.json and result.json.",
+ "files": [
+  {
+   "path": "tickets.csv",
+   "mode": "100644",
+   "blob": "472c8ae84da138361a20b4a7aba5ffce2c6a3941",
+   "size": 651707
+  }
+ ]
+}

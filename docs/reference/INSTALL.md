@@ -301,7 +301,7 @@ the money waits for them (180 days at most).
 
 The file is [`examples/knos-install.yml`](../../examples/knos-install.yml), 21 lines, one of them a comment. It has the triggers of the long
 form, [`examples/knos-workflow.yml`](../../examples/knos-workflow.yml), and calls the same two workflows of
-drexthealpha/knos-workflows at the same full commit. The program trusts a token because of the workflow that produced it
+drexthealpha/Knos (its branch `workflows`) at the same full commit. The program trusts a token because of the workflow that produced it
 (`job_workflow_ref`, `job_workflow_sha`: the called workflow's file and commit), not the file that called it. So a
 short file in your repository is paid exactly as the long one is. Three differences, none hidden:
 
@@ -311,7 +311,7 @@ short file in your repository is paid exactly as the long one is. Three differen
 - It has one comment line. The long form's comments say what every trigger does; read them before you merge.
 
 It is short because the link must carry it: GitHub refuses an address over 8,191 bytes
-([github/docs#5136](https://github.com/github/docs/issues/5136)). The link is 2,573 bytes for a repository named
+([github/docs#5136](https://github.com/github/docs/issues/5136)). The link is 2,553 bytes for a repository named
 `acme/widgets` (measured: `len(knos.init.install_link("acme/widgets", <the file>))`). The link uses only the two
 query parameters GitHub's editor is known to read, `filename` and `value`; the commit message and the pull request's
 title are GitHub's defaults.

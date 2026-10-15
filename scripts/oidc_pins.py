@@ -5,7 +5,8 @@
                                            (with --rpc) registered on chain
 
 GENESIS is fixed in the binary. A key an issuer adds later enters only by GitHub's own signature, through the pinned
-rotate workflow (drexthealpha/knos-oidc-rotate); --check tells you when that workflow has work to do.
+rotate workflow (drexthealpha/knos-oidc-rotate, and its copy on the branch oidc-rotate of drexthealpha/Knos, which the
+second deployment accepts beside it once its 0.3.35 upgrade executes); --check tells you when that workflow has work to do.
 """
 
 from __future__ import annotations

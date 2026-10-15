@@ -103,7 +103,7 @@ One dependency also carries over: Sibyl's memory client, which the judge and the
   versions tried claims enforced at edit time across agent vendors, agent budgets, a jobs market with an escrow,
   the Stop hook, the Agent PR Index, and a first escrow that verified GitHub's signature on chain but whose keys
   and workflows were registered by an admin. They are kept as they stood at 0.3.9 in
-  [drexthealpha/knos-labs](https://github.com/drexthealpha/knos-labs), unmaintained. The Stop hook, the index and
+  [the branch `labs` of drexthealpha/Knos](https://github.com/drexthealpha/Knos/tree/labs), unmaintained. The Stop hook, the index and
   the judge are here.
 - **Knos 0.3.10** (2 Oct 2026): the first deployment. Its two programs have no admin (`knos-oidc`, `knos-pay`), were deployed
   on devnet with no upgrade authority, and nobody can change them; payment to a GitHub account; the claim; the merge and tests modes with a veto

@@ -1,0 +1,20 @@
+# 0.3.19 track C (devnet, the run's own wallets): started by hand, asks for a pay token with the given audience.
+name: c19 prove
+run-name: c19 prove ${{ inputs.tag }}
+on:
+  workflow_dispatch:
+    inputs:
+      aud:
+        required: true
+        type: string
+      tag:
+        required: true
+        type: string
+permissions: {}
+jobs:
+  judge:
+    permissions:
+      id-token: write
+    uses: drexthealpha/knos-e2e-202610020250/.github/workflows/prove.yml@3b257b6f1283fb402074703f2fb8b0a80245598a
+    with:
+      aud: ${{ inputs.aud }}

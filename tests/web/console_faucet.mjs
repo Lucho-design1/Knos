@@ -10,7 +10,7 @@ import { chromiumOrSkip, TYPES } from "./overflow.mjs";
 
 const root = process.argv[2];
 if (!root || !existsSync(join(root, "index.html"))) { console.error("usage: node tests/web/console_faucet.mjs <site dir>"); process.exit(2); }
-const FAUCET = "https://github.com/drexthealpha/knos-playground/issues?q=is%3Aissue+is%3Aopen+label%3Afaucet";
+const FAUCET = "https://github.com/drexthealpha/Knos/issues?q=is%3Aissue+is%3Aopen+label%3Afaucet";
 let fails = 0;
 const check = (name, cond, detail) => { if (cond) console.log("ok  ", name); else { fails++; console.error("FAIL", name, detail === undefined ? "" : JSON.stringify(detail)); } };
 

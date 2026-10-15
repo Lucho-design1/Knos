@@ -110,7 +110,7 @@ SHA-256) and, for small tokens, ES256 (knos_oidc 2.2, live since 9 Oct 2026; [ES
 Kubernetes cluster and has its service-account issuer sign an evaluation; `scripts/outcome_k8s.py` checks that token
 offline by this verifier's rule and carries it to devnet under a private key. Here that is tested with a token of a
 projected service-account token's shape, signed by a test key (`tests/test_outcome_k8s.py`, in the test build of the
-verifier). A kind cluster's token was verified offline in staging run 37483745385 of drexthealpha/knos-rc; the
+verifier). A kind cluster's token was verified offline in run 38701801687 of drexthealpha/Knos (branch knos-0.3.34); the
 devnet part runs when the release run executes it, and the meter does not count such a token on chain:
 [OUTCOMES.md](OUTCOMES.md#a-kubernetes-cluster-signs-an-outcome).
 

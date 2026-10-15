@@ -28,8 +28,8 @@ Thank you for the pull request. One thing to set straight, so that nobody waits 
 - Issue #17 has no funded order, so no payment is attached to it or to work done for it.
 - Knos pays only orders funded with `/knos fund`, on Solana devnet, in test USDC that has no monetary value.
 - A payment goes to the Solana address or passkey its payee binds. An address on another chain cannot be paid.
-- Funded work is listed by `knos work list`. The playground shows a funded order from start to finish: https://github.com/drexthealpha/knos-playground
-- Funded tasks anyone may take carry the label `knos-funded` there: https://github.com/drexthealpha/knos-playground/issues?q=is%3Aissue+is%3Aopen+label%3Aknos-funded
+- Funded work is listed by `knos work list`. The playground shows a funded order from start to finish: https://github.com/drexthealpha/Knos
+- Funded tasks anyone may take carry the label `knos-funded` there: https://github.com/drexthealpha/Knos/issues?q=is%3Aissue+is%3Aopen+label%3Aknos-funded
 
 This pull request is welcome as an ordinary, unpaid contribution if it is useful, and will be read as one."""
 
@@ -277,7 +277,7 @@ def test_the_worker_answers_a_fork_pull_request_on_its_next_pass_once_and_never_
 
 
 def test_the_answer_links_the_funded_tasks_of_the_playground():
-    assert claim_guard.FUNDED == "https://github.com/drexthealpha/knos-playground/issues?q=is%3Aissue+is%3Aopen+label%3Aknos-funded"
+    assert claim_guard.FUNDED == "https://github.com/drexthealpha/Knos/issues?q=is%3Aissue+is%3Aopen+label%3Aknos-funded"
     for pull in (True, False):
         text = claim_guard.answer(pull, [], [30])
         assert text.count(claim_guard.FUNDED) == 1 and "label `knos-funded`" in text and text.startswith(claim_guard.MARK)

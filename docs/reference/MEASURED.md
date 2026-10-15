@@ -137,6 +137,8 @@ transaction signature and what the chain said when it was read.
 id 1417494699), issue 1, pinned commit `509485fb3b690a946e2a260079cf51cca307f1b5`, spec hash
 `1812b0de5e01c6252c78500ba50fb676f180b7abd9b4b44d5720165e11fdb361`, window 17:05:12 to 17:15:12 UTC, data commit
 `b59b30f3706987ea7a3426917add1ac9a19662d2`. GitHub run 38437227091: `measure` passed, `sign` asked for two tier tokens.
+Both commits are in Knos, byte for byte: the pinned one as [evidence/knos-v0329-outcomes](../../evidence/knos-v0329-outcomes/),
+the data as [evidence/knos-v0329-outcomes-b59b30f3](../../evidence/knos-v0329-outcomes-b59b30f3/) (the repository is private).
 
 | | treated (agent) | control (people) |
 |---|---|---|

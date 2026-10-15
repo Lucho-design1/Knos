@@ -63,8 +63,8 @@ name: always-on worker
 # THE FAUCET (job `faucet`). `/knos faucet <address | passkey>` on the playground's faucet issue gives a
 # fixed amount of test USDC, which has no monetary value (src/knos/faucet.py, docs/reference/FAUCET.md). GitHub sends a comment's
 # event only to the repository it was written in, so this job runs where this file is installed AND that repository is
-# the one the variable KNOS_FAUCET_REPO names (default: drexthealpha/knos-playground); in Knos's own repository it is
-# skipped. It is a job of its own with a key of its own: KNOS_FAUCET_KEY holds test USDC and no SOL and signs the
+# the one the variable KNOS_FAUCET_REPO names (default: drexthealpha/Knos, whose own issues are the playground since the
+# 0.3.34 branch; drexthealpha/knos-playground was its home before). It is a job of its own with a key of its own: KNOS_FAUCET_KEY holds test USDC and no SOL and signs the
 # transfer, KNOS_RELAY_KEY pays the fee. One run at a time (concurrency group `knos-faucet`); and should two overlap
 # all the same, the signature each posts before it sends is the lock (knos.faucet.grant). Without both secrets it says
 # so and ends green. It has not run on GitHub yet.
@@ -450,7 +450,7 @@ jobs:
   # memory engine the journal is kept in); no cache of any kind.
   faucet:
     if: >-
-      github.event_name == 'issue_comment' && github.repository == (vars.KNOS_FAUCET_REPO || 'drexthealpha/knos-playground')
+      github.event_name == 'issue_comment' && github.repository == (vars.KNOS_FAUCET_REPO || 'drexthealpha/Knos')
       && !github.event.issue.pull_request && contains(github.event.issue.labels.*.name, 'faucet')
       && github.event.comment.user.type != 'Bot'
     runs-on: ubuntu-latest

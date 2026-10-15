@@ -3270,7 +3270,7 @@
       {
        "type": "knos.approval",
        "version": 1,
-       "id": "apr_d33c1092c494b13bba414374",
+       "id": "apr_0f1d8434bd4d247e573558ef",
        "subject": "offer:bug-fix-octocat",
        "amount": "1200",
        "requested_by": "ravi-acme",
@@ -3282,7 +3282,7 @@
        "source": {
         "kind": "forge comment",
         "forge": "github",
-        "url": "https://github.com/drexthealpha/knos-playground/issues/12#issuecomment-2291",
+        "url": "https://github.com/drexthealpha/Knos/issues/12#issuecomment-2291",
         "comment_id": 2291,
         "body_sha256": "4d5b226379b5d35e99cbe0599f404e317fbb6e786ed9dfd4641eab59e9a2b5d9"
        },
@@ -3305,7 +3305,7 @@
       "role": "approver",
       "at": "2026-10-02T09:14:00Z",
       "authority": "approver from 2026-01-01 to 2026-12-31, up to 25,000.00",
-      "source": "https://github.com/drexthealpha/knos-playground/issues/12#issuecomment-2291"
+      "source": "https://github.com/drexthealpha/Knos/issues/12#issuecomment-2291"
      }
     ],
     "refused": [],
@@ -3400,7 +3400,7 @@
       {
        "type": "knos.approval",
        "version": 1,
-       "id": "apr_d33c1092c494b13bba414374",
+       "id": "apr_0f1d8434bd4d247e573558ef",
        "subject": "offer:bug-fix-octocat",
        "amount": "1200",
        "requested_by": "ravi-acme",
@@ -3412,7 +3412,7 @@
        "source": {
         "kind": "forge comment",
         "forge": "github",
-        "url": "https://github.com/drexthealpha/knos-playground/issues/12#issuecomment-2291",
+        "url": "https://github.com/drexthealpha/Knos/issues/12#issuecomment-2291",
         "comment_id": 2291,
         "body_sha256": "4d5b226379b5d35e99cbe0599f404e317fbb6e786ed9dfd4641eab59e9a2b5d9"
        },
@@ -3456,7 +3456,7 @@
       "role": "approver",
       "at": "2026-10-02T09:14:00Z",
       "authority": "approver from 2026-01-01 to 2026-12-31, up to 25,000.00",
-      "source": "https://github.com/drexthealpha/knos-playground/issues/12#issuecomment-2291"
+      "source": "https://github.com/drexthealpha/Knos/issues/12#issuecomment-2291"
      },
      {
       "approver": "sam-acme",

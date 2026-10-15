@@ -1,0 +1,82 @@
+{
+ "repository": "drexthealpha/knos-v0329-gate",
+ "url": "https://github.com/drexthealpha/knos-v0329-gate",
+ "visibility": "private",
+ "kind": "evidence",
+ "default_branch": "main",
+ "commit": "ccf45c30ab275814b3eace8c072fb53aa4419dd0",
+ "tree": "e656f109f3e32fcb25f877d20cc4184c7d708bdc",
+ "at": "default branch tip",
+ "commits_to_here": 2,
+ "copied": "2026-10-15",
+ "note": "The private test repository of the Knos Gate demo of 13 Oct 2026 (docs/reference/PR_GATE.md). Synthetic. The demo pull requests (#2 to #5) and their heads are under pull_request_heads.",
+ "files": [
+  {
+   "path": ".github/actions/knos-gate/action.yml",
+   "mode": "100644",
+   "blob": "0eb12ac5d765ae55e35c2554efd1889dd123558d",
+   "size": 9481
+  },
+  {
+   "path": ".github/workflows/knos-gate.yml",
+   "mode": "100644",
+   "blob": "8dfe6e9de0a7cda627e47c906d2220ccbd2eccf4",
+   "size": 900
+  },
+  {
+   "path": ".knos-dist/knos-0.3.28-py3-none-any.whl",
+   "mode": "100644",
+   "blob": "a132ddb66445328abc749035647fed42b924f5a0",
+   "size": 1266147
+  },
+  {
+   "path": ".knos/gate.yml",
+   "mode": "100644",
+   "blob": "6a86ef25cbcab3cbf938476e2f4cbee3ab6bef4b",
+   "size": 654
+  },
+  {
+   "path": "README.md",
+   "mode": "100644",
+   "blob": "4a69c786cc5de6338079c54cd6b85bf2f66b7771",
+   "size": 236
+  },
+  {
+   "path": "data/words.txt",
+   "mode": "100644",
+   "blob": "182d2f98b62ae6649f4027efd5dc291307547338",
+   "size": 20
+  },
+  {
+   "path": "src/slugs.py",
+   "mode": "100644",
+   "blob": "9d57f36698c0348e3f3ce351c26d84e6b26be302",
+   "size": 34
+  },
+  {
+   "path": "tests/conftest.py",
+   "mode": "100644",
+   "blob": "cc66bf5498d8259a760bf1c21a3bf51b8632b7e1",
+   "size": 87
+  },
+  {
+   "path": "tests/test_public.py",
+   "mode": "100644",
+   "blob": "29c6599f35333d5e3c53724fb753ea21ab875473",
+   "size": 75
+  }
+ ],
+ "branches": {
+  "demo-edit-tests": "75757fb5bc8e59a6b3c760d2c90553d0b998f212",
+  "demo-good": "3c7573f7325e26402e5f4af90b9311e99fc5ba61",
+  "demo-lazy": "921c298553d4346e672b79788018e4ce7a29ee2c",
+  "demo-out-of-scope": "57b4c03675301539d4e2030e3802de244c398f5b",
+  "main": "ccf45c30ab275814b3eace8c072fb53aa4419dd0"
+ },
+ "pull_request_heads": {
+  "2": "75757fb5bc8e59a6b3c760d2c90553d0b998f212",
+  "3": "57b4c03675301539d4e2030e3802de244c398f5b",
+  "4": "921c298553d4346e672b79788018e4ce7a29ee2c",
+  "5": "3c7573f7325e26402e5f4af90b9311e99fc5ba61"
+ }
+}

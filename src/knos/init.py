@@ -15,7 +15,8 @@ changed for the first time it is copied to <file>.knos-backup.
 GitHub Copilot and VS Code, opencode, Hermes Agent, goose, aider, Windsurf, Cline, Roo Code. It writes the project's
 files, and the user's home only with --global.
 
-Knos before 0.3.10 also installed a memory MCP server and edit hooks (now in drexthealpha/knos-labs). `knos init`
+Knos before 0.3.10 also installed a memory MCP server and edit hooks (kept as history in the branch `labs` of
+drexthealpha/Knos: https://github.com/drexthealpha/Knos/tree/labs). `knos init`
 removes those entries, so an upgrade does not leave a host calling commands that no longer exist. A server named
 `knos` that runs `... mcp` with a command that still exists is left as it is (it starts this server); any other is
 an older one, or points at a command that is gone, and is replaced. Such a `knos` that Claude Code keeps for one

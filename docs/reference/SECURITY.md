@@ -873,7 +873,7 @@ The rule: a pull request's code and its tests never run in a job that can ask Gi
 (`id-token: write`) or that holds a credential that can write to the repository; and what the job that signs takes
 from the job that ran such code is data it checks again, never an instruction. This section is the author's own review, not an outside audit, of
 the workflows a repository installs (`fund.yml`, `prove.yml`, `check.yml` and `attest.yml`, published to
-`drexthealpha/knos-workflows` by [`scripts/pinned_workflows.py`](../../scripts/pinned_workflows.py)), of the two files that
+the branch `workflows` of `drexthealpha/Knos` (`drexthealpha/knos-workflows` before the 0.3.34 branch) by [`scripts/pinned_workflows.py`](../../scripts/pinned_workflows.py)), of the two files that
 call them (`knos.yml`, `knos-check.yml`) and of `hermetic.yml`, job by job, and what this release changed.
 [`tests/test_workflows2.py`](../../tests/test_workflows2.py) holds the shape and
 [`tests/test_verdict_gate.py`](../../tests/test_verdict_gate.py) the hostile cases.
@@ -902,7 +902,7 @@ the only way to use an action as an immutable release"
 | `attest.yml` `attest` | none; `knos` by hash | contents read; issues write; id-token | yes | from `rerun`: the output `verdict`, held to a strict shape by one step and then to the order, pull request, commits and bundle by the command (section 20) |
 | `attest.yml` `refused` | none; `knos` by hash | contents read; issues write | no | the same verdict, to post why nothing was signed |
 | `knos.yml`, `knos-check.yml` (callers) | none: each job is one call to a published workflow at a full commit | what the called jobs need between them | through the call | nothing. A called job can only have less than its caller grants, and `judge` asks for contents read |
-| `hermetic.yml` `container` (staging only, not published) | Knos's own repository, on a push to its `main` | contents read | no | nothing |
+| `hermetic.yml` `container` (Knos's own, not published) | Knos's own repository, on a push to its `main` or by hand | contents read | no | nothing |
 
 **What this review found.**
 

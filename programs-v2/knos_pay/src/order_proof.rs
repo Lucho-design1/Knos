@@ -95,7 +95,7 @@ pub fn panel_pin(m: u8, keys: &[[u8; 32]]) -> [u8; 32] {
 }
 
 /// A panel as data carries it: m u8, n u8, then n keys. Returns (m, keys, the bytes after them).
-pub fn panel_of(d: &[u8]) -> Result<(u8, Vec<[u8; 32]>, &[u8]), ProgramError> {
+#[allow(clippy::type_complexity, clippy::manual_contains)] pub fn panel_of(d: &[u8]) -> Result<(u8, Vec<[u8; 32]>, &[u8]), ProgramError> {
     let bad = || ProgramError::InvalidInstructionData;
     let (&m, rest) = d.split_first().ok_or_else(bad)?;
     let (&n, rest) = rest.split_first().ok_or_else(bad)?;

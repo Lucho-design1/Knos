@@ -156,7 +156,7 @@ of the batch, from prepaid credits (the deployed knos_meter charges 0.05 after 1
   to the supplier's wallet, on tokens a workflow of the run's own repository asked for (it signs the audience it is
   given). The fee taken was 0.40, the rule of knos_pay 2.1, which the public id ran then; `close` prints the 2.2 rule.
 - The funding of a reserve is a comment (`/knos reserve`) that `fund.yml` handles from Knos 0.3.21 on. A repository
-  using the published workflows (drexthealpha/knos-workflows) can lock a reserve only once they run 0.3.21 or later.
+  using the published workflows (drexthealpha/Knos, branch `workflows`; drexthealpha/knos-workflows before) can lock a reserve only once they run 0.3.21 or later.
   `tests/test_flow_reserve.py` runs the comment on the workflow's fakes; `tests/test_round_net_reserve.py` runs the
   round `net-reserve` from that comment on the built programs in the simulator.
 - No published workflow signs a reserve's draws: `close` prints their audiences, and the simulator tests send them.

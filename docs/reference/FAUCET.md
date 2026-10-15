@@ -5,7 +5,8 @@ Test USDC is devnet money. It has no monetary value, and it never will. The fauc
 ## The path, start to end
 
 1. **Get test USDC.** Comment on the faucet issue of the playground
-   ([find it](https://github.com/drexthealpha/knos-playground/issues?q=is%3Aissue+is%3Aopen+label%3Afaucet)):
+   ([find it](https://github.com/drexthealpha/Knos/issues?q=is%3Aissue+is%3Aopen+label%3Afaucet); the playground is
+   Knos's own issues since the 0.3.34 branch):
 
    ```
    /knos faucet <your Solana address>
@@ -30,7 +31,7 @@ Test USDC is devnet money. It has no monetary value, and it never will. The fauc
 | per address | once per receiving address in 7 days |
 | daily cap | 200 test USDC in one UTC day, for everyone together |
 | who may ask | a person's account (not a bot, not an organisation), at least 30 days old, with at least one public repository or gist |
-| where | only the issue labelled `faucet` in `drexthealpha/knos-playground` |
+| where | only the issue labelled `faucet` in `drexthealpha/Knos` (`knos.playground.REPO`) |
 
 The last-but-one row is the anti-drain rule. It reads one public answer, `GET /users/{login}` (the fields `type`,
 `created_at`, `public_repos`, `public_gists`), which costs one unauthenticated request. It does not stop a patient
@@ -67,16 +68,17 @@ fee and the rent of a new receiving account (about 0.002 SOL each, so at most ab
    (20 every 2 hours), or send devnet USDC from a wallet that holds some.
 4. Store the key as the secret `KNOS_FAUCET_KEY` of the repository that runs the worker, readable by the faucet job
    only. Delete `faucet.json`.
-5. In `drexthealpha/knos-playground`, open one issue titled "Faucet: test USDC for your first task", label it
-   `faucet`, and pin it. Its text is step 1 above and the table of rules.
-6. Rebuild the playground: `python scripts/small_repos.py build knos-playground DIR` writes
-   `.github/workflows/knos-faucet.yml` there, so a rebuild keeps it. That file is the worker's `faucet` job alone
-   ([`worker.yml`](../../.github/workflows/worker.yml), byte for byte; a test compares): it runs on `issue_comment` in
-   the playground and nowhere else (the variable `KNOS_FAUCET_REPO` names another repository; `KNOS_FAUCET_REF` the
-   commit of Knos whose code it runs, `main` when unset), with the secrets `KNOS_FAUCET_KEY` and `KNOS_RELAY_KEY`. It
-   runs `python -m knos.faucet --event "$GITHUB_EVENT_PATH"`, and without either secret it says so and ends green. The
-   repository's own Knos workflow says nothing to a faucet request on that issue, so there is one reply. No relay job
-   runs in the playground: the faucet workflow holds none.
+5. In `drexthealpha/Knos`, open one issue titled "Faucet: test USDC for your first task", label it `faucet`, and pin
+   it. Its text is step 1 above and the table of rules. (Not opened yet: the founder opens it when the playground
+   moves to Knos's `main`, after 5 Dec 2026; the link in step 1 lists it by its label, so no number is written anywhere.)
+6. The faucet runs as the `faucet` job of Knos's own [`worker.yml`](../../.github/workflows/worker.yml): it runs on
+   `issue_comment` in the playground and nowhere else (the variable `KNOS_FAUCET_REPO` names another repository, and
+   its default is `drexthealpha/Knos`; `KNOS_FAUCET_REF` the commit of Knos whose code it runs, `main` when unset), with
+   the secrets `KNOS_FAUCET_KEY` and `KNOS_RELAY_KEY`. It runs `python -m knos.faucet --event "$GITHUB_EVENT_PATH"`,
+   and without either secret it says so and ends green. The repository's own Knos workflow says nothing to a faucet
+   request on that issue, so there is one reply. (`python scripts/small_repos.py build knos-playground DIR` still
+   writes the old home's copy of that job, `.github/workflows/knos-faucet.yml`, byte for byte; nothing new is
+   published there.)
 7. Check with a comment from an account that is not Knos's own, then `knos faucet status`.
 
 Until every step is done the faucet answers nobody. No grant has been made on devnet yet.

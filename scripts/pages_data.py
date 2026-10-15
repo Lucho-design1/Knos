@@ -896,7 +896,7 @@ def rank_page(title: str, head: list[str], rows: list[list], note: str, meta: di
 
 
 # ---- everything ------------------------------------------------------------------------------------------------------
-PLAYGROUND = "drexthealpha/knos-playground"        # knos.playground.REPO: where the funded test tasks are open to anyone
+PLAYGROUND = "drexthealpha/Knos"        # knos.playground.REPO: where the funded test tasks are open to anyone
 
 
 def playground_pulls(get, jobs: list[dict] | None, own: frozenset, repo: str = PLAYGROUND) -> dict:

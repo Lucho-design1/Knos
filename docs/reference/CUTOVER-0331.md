@@ -1,8 +1,10 @@
 # Cutover 0.3.31: the repositories that still live outside Knos
 
 The founder's steps, with every command, for the repositories [MONOREPO.md](MONOREPO.md) could not simply copy: the
-two trust anchors (knos-workflows, knos-oidc-rotate), and knos-labs, knos-playground, knos-rc. Nothing here has been
-run: each step is the founder's. Old repositories stay until the step that deletes them, and deleting is his action.
+two trust anchors (knos-workflows, knos-oidc-rotate), and knos-labs, knos-playground, knos-rc. Old repositories stay
+until the step that deletes them, and deleting is his action. What the 0.3.34 branch (ONE-KNOS, 15 Oct 2026) did and
+what still waits is said under each section ("Done on the 0.3.34 branch"); `main` and tag v0.3.28, the Colosseum
+entry, are untouched until 5 Dec 2026, so no repository they link to is deleted before 6 Dec 2026.
 
 ## What still points at the old repositories
 
@@ -17,6 +19,11 @@ an order's and a credits account's size, counted by the workflow hash it stores;
 | knos-workflows-rc | knos_pay jobs; knos_meter credits | 1 open; 1 | 2026-10-17 15:37 |
 | knos-e2e-202610020610 | knos_pay orders; knos_meter credits | 1 open; 1 | 2026-10-21 03:39 |
 | knos-e2e-202610020250 | knos_pay orders | 1 open | 2026-10-14 13:18 |
+
+Read again on 15 Oct 2026 the same way: knos-workflows 11 open and 4 held jobs (latest 2026-10-18 01:54), 39 open
+orders (latest 2026-11-13 15:48; 35 of them on knos-playground's issues), 1 credits account; knos-workflows-rc 1 open
+job (2026-10-17 15:37) and 1 credits account; knos-e2e-202610020610 1 open order (2026-10-21 03:39) and 1 credits
+account; knos-e2e-202610020250 none open.
 
 Pinned in files and settings, not on chain:
 
@@ -82,12 +89,44 @@ branch of Knos holding the same commits, then new callers naming it.
    `gh repo delete drexthealpha/knos-workflows --yes`. Deleting it earlier makes every open escrow pinned to it
    unpayable and breaks every repository that still calls it.
 
+Done on the 0.3.34 branch (15 Oct 2026). Steps 1 and 3, locally in the coordinator's clone: `workflows` =
+96b243f1b1dd5c975a0318dd9709a0da22b98dcd (the old repository's `main`, 17 commits, the pinned commit is its tip), tag
+`workflows-96b243f1b1dd`, and a tag `workflows-<sha12>` for every other commit an open escrow pins: def6ac689479,
+b7196a2ad17c, 5b26b1cddeae, 43c8605d155e, 160edd4e19fc, 64b31fae2b00. No terms document and no program id names a
+commit of it. Every workflow file on every commit of the branch is `on: workflow_call`; `attest.yml` (0.3.13 on) is also
+`workflow_dispatch` (a run by hand by someone who can write to Knos), and none runs on a push. Step 5: done in this
+branch's tree (`move`, `fold`, `front_workflow.py`, terms 3 version 2 of bug-fix, dataset-batch and migration, and
+`release.py workflows` writing into a worktree of `workflows`; `pinned_workflows.py check` passes). Waits: the push of
+`workflows` and its tags (the release's one push), step 2 (the founder's rulesets), step 4 (the first live payment on
+the new home), `main` (after 5 Dec 2026), step 6 (outside repositories), step 7 (from 6 Dec 2026, after the last open
+escrow above, 2026-11-13 15:48 UTC).
+
 
 ## 2. knos-oidc-rotate (a program upgrade, signed through Squads)
 
 The programs compile `drexthealpha/knos-oidc-rotate/.github/workflows/rotate.yml@` (ROTATE_REF) and
 `.../claim.yml@` (CLAIM_REF). The same branch idea keeps the commits (6ddf031b, 80e796d3, 212f9eb5) and so the
 `rotate_sha*` and `claim_sha*` pins; only the repository part of the two constants changes, and only by an upgrade.
+
+Where this stands (0.3.35 builds, branch knos-0.3.34):
+
+- Done, step 2: the code accepts both prefixes. `programs-v2/knos_oidc/src/pins.rs` has `ROTATE_REF_KNOS` and
+  `rotate_ref`, `programs-v2/knos_pay/src/lib.rs` has `CLAIM_REF_KNOS` and `claim_ref` (used by Bind in `pay.rs` and
+  BindOrg in `order_judge.rs`), and `src/knos/settle/v2/relay/pins.py` has the same two prefixes. `knos mainnet-check`
+  takes a pinned commit from either home (`PINS_REPOS`), and the relay reads key tokens on the issues of both
+  (`ghrelay.ROTATE_REPOS`). LiteSVM tests on the testkeys builds: `tests/test_two_homes_rotate.py`,
+  `tests/test_two_homes_claim.py` (both homes; `someone/Knos`, `drexthealpha/Knos-x`, `drexthealpha/Knosx`,
+  `drexthealpha/knos` and other look-alikes refused; the builds before the change refuse the Knos home), and
+  `tests/test_two_homes_relay.py`.
+- Done, step 3 up to the founder's signatures: both programs built with the pinned toolchain (sBPF v3,
+  cargo-build-sbf 4.4.0, platform-tools v1.57; two builds in two checkouts gave the same bytes) and written to devnet
+  buffers whose authority is the upgrade vault: knos_oidc `dJA4mokfAqG7eTKUrD1MawKbWPJrzjc72qehpujiy6V` (executable hash `925c76f051f9c28f617dc18352fcdab6127b2d23b164eb87fcab282e02bbe968`), knos_pay
+  `C7MrKvNU2yxMG5RJqzCkCDGowe5T1R69j3LXz3Qj1VdA` (`e01605411369b40b9e6fd28595d0254f06357fbf7f5c887eef207f8d5b68ad3a`). They supersede the knos_oidc buffer `3xBgKGynRGRLCs2ShYsyAdNucLbE3KjvMFnKFJoiPiyr` and
+  the knos_pay buffer `Dfo5pYRLY8z9yvuXDQjJQtaoqJeL7Atso8zhWy9Ehkfj`.
+  [deploy/upgrade-0335/STEPS.md](../../deploy/upgrade-0335/STEPS.md) has every command: check the bytes, propose, the
+  time lock, execute with `--expect-hash`, and the buffers not to propose.
+- Waiting for the founder: the two proposals and their approvals, the time lock, execution; then step 4. The first
+  deployment (`programs/knos_oidc`, no upgrade authority) is left as it is.
 
 1. Put the commits into Knos, unchanged, and protect them as in step 2 above (ref `refs/heads/oidc-rotate`, tags
    `oidc-rotate-*`):
@@ -118,6 +157,8 @@ The programs compile `drexthealpha/knos-oidc-rotate/.github/workflows/rotate.yml
    `workflow_dispatch`, `uses: drexthealpha/Knos/.github/workflows/rotate.yml@212f9eb5f584eb6f8cd2d6673878132fc0011e27`
    with `id-token: write` and `issues: write`; watch one scheduled run's keys reach knos_oidc. Then the claim callers
    (`examples/knos-claim*.yml`, `templates/knos-claim*`) name `drexthealpha/Knos/.github/workflows/claim.yml@...`.
+   The exact files, and the tests that change with them, are in section 4 of
+   [deploy/upgrade-0335/STEPS.md](../../deploy/upgrade-0335/STEPS.md).
 5. knos-oidc-rotate stays while anything can still need it: the first deployment (no upgrade authority) accepts only its old
    path, every existing `knos-claim` repository calls it, and the keys of the second deployment expire unless a rotate
    run names them again. Deleting it is the last step, and only when the founder decides the first deployment and the
@@ -139,6 +180,14 @@ git push origin labs
 then change the two links (CHANGELOG.md, DISCLOSURE.md) to `https://github.com/drexthealpha/Knos/tree/labs` and delete
 the repository. Nothing in Knos runs or imports it.
 
+Done on the 0.3.34 branch (15 Oct 2026): fetched, main = ed6136f9e3e1dd45b3d0c97facd1608b98175625 (one commit, 306
+files), kept as the local branch `labs-src`; its `.github/workflows`: fund.yml, prove.yml, relay.yml (workflow_call),
+prove-demo.yml (workflow_dispatch), fuzz.yml, index.yml, worker.yml (schedule, workflow_dispatch), network.yml (push,
+release, schedule, workflow_dispatch), program.yml (push, workflow_dispatch), tests.yml (push, pull_request, schedule,
+workflow_dispatch). The links in CHANGELOG.md, DISCLOSURE.md, docs/reference/README.md and `knos init`'s note name
+`https://github.com/drexthealpha/Knos/tree/labs`. Waits: the commit that removes `.github/workflows` and the push of
+`labs` (the release's one push), then the deletion, from 6 Dec 2026 (tag v0.3.28 links it).
+
 ## 4. knos-playground and knos-rc (not folded)
 
 - knos-playground is where strangers open issues that fund test tasks from the faucet; its files are already written
@@ -147,10 +196,22 @@ the repository. Nothing in Knos runs or imports it.
   worker's `KNOS_FAUCET_REPO`, `web/playground.js`, `web/buyer.js`, `web/install.js` and `web/passkey_fund.js`
   (FAUCET_ISSUE), `src/knos/claim_guard.py`, `src/knos/commands.py` (FAUCET_WHERE), `src/knos/controls.py`, and
   waiting until its open funded tasks are paid or refunded.
-- knos-rc is the staging copy of Knos itself. `.github/workflows/hermetic.yml` runs only there, and its Actions runs
-  are the cited sources of docs/bench.json, docs/kani.json, docs/facts.json, docs/capabilities.json,
-  docs/reference/OUTCOMES.md, RELAY.md, REPRODUCE.md and VERIFIER.md. Re-source those numbers from runs in Knos, then
-  delete it.
+
+  Done on the 0.3.34 branch (15 Oct 2026; the founder decided yes on 14 Oct): every constant and page above names
+  drexthealpha/Knos, and so do `scripts/pages_data.py`, `scripts/exercise_public.py`, `scripts/task_board.py`,
+  `examples/witnessed/witness.py`, the console's sample and the docs; `python scripts/small_repos.py fold` writes the
+  playground's files into Knos (the issue template `fund-a-test-task.md`, `words.py`, `check.py`, `tasks/<task>.py`
+  and their public examples, the starter checks under `.knos/acceptance/1..200/`); the faucet is the `faucet` job of
+  Knos's own `worker.yml`. `FAUCET_ISSUE` and `FAUCET_WHERE` list the faucet issue by its label, so no number is
+  written. Waits: the founder opens one issue in drexthealpha/Knos titled "Faucet: test USDC for your first task",
+  labels it `faucet` and pins it, and adds the secrets `KNOS_FAUCET_KEY` and `KNOS_RELAY_KEY` to Knos
+  ([FAUCET.md](FAUCET.md)), when the branch reaches `main` (after 5 Dec 2026). knos-playground's 35 open orders free
+  themselves by 2026-11-13 15:48 UTC; it can be deleted from 6 Dec 2026.
+- knos-rc is the staging copy of Knos itself. Since 0.3.34 `.github/workflows/hermetic.yml` runs in Knos too, and
+  docs/kani.json, docs/capabilities.json, docs/facts.json, the fuzz count in docs/bench.json, OUTCOMES.md, RELAY.md
+  and VERIFIER.md cite runs of Knos ([MONOREPO.md](MONOREPO.md), its row). Still cited from knos-rc: `tests_passing`
+  in docs/bench.json (re-source it from a green tests.yml run of Knos), REPRODUCE.md's own run, two rows of BENCH.md
+  and the staging rehearsal of `scripts/exercise_public.py`. Re-source the first two, then delete it.
 
 ## 5. The template repositories and knos-wanted
 

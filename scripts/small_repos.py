@@ -6,10 +6,13 @@ templates/<name>/ (FOLDED): the site and `knos claim` give the user a link that 
 own and links (or `gh` calls) that add these files to it; nothing is generated from a GitHub template repository any
 more, and Knos creates no repository unless the user runs the command that does. drexthealpha/knos-task, knos-attest,
 knos-claim and knos-claim-org on GitHub are the old homes: frozen, kept until the founder deletes them.
-knos-playground is still a repository of its own (a live service: its issues are where strangers fund test tasks).
+Since the 0.3.34 branch (docs/reference/CUTOVER-0331.md section 4) the playground is Knos's own issues too: `fold`
+writes its files into this repository (playground_in_knos). drexthealpha/knos-playground is its old home: frozen at
+0.3.28's files, kept until its funded tasks are paid or refunded and the founder deletes it.
 
     python scripts/small_repos.py list                 the repositories and what each is for
-    python scripts/small_repos.py fold                 write templates/<name>/ for every folded one (after `stamp`)
+    python scripts/small_repos.py fold                 write templates/<name>/ for every folded one, and the playground
+                                                       into this repository (after `stamp`)
     python scripts/small_repos.py build NAME DIR       write the repository NAME into DIR (a checkout of it, or any folder)
     python scripts/small_repos.py check NAME DIR       exit 1 unless DIR holds exactly that
     python scripts/small_repos.py tree NAME            the git tree id a commit of it must have
@@ -489,6 +492,39 @@ def files(name: str, board: dict[int, str] | None = None) -> dict[str, bytes]:
     return out
 
 
+# The playground in Knos's own issues (the 0.3.34 branch; docs/reference/CUTOVER-0331.md section 4): what a stranger's
+# issue and pull request there need, written into this repository's own tree by `fold`. What Knos holds already is not
+# written again: its two callers (.github/workflows/knos.yml and knos-check.yml are the examples, byte for byte:
+# scripts/pinned_workflows.py check), the faucet (the worker's own `faucet` job runs in Knos), its issue chooser's
+# config.yml, its pull request template, README.md and LICENSE.
+IN_KNOS_SKIP = (".github/workflows/knos.yml", ".github/workflows/knos-check.yml", FAUCET_WORKFLOW, ".github/ISSUE_TEMPLATE/config.yml",
+                ".github/pull_request_template.md", "README.md", "LICENSE")
+
+
+def playground_in_knos(board: dict[int, str] | None = None) -> dict[str, bytes]:
+    """The playground's files as this repository holds them: the issue template that funds, the starter file and
+    check.py at the top, the tasks' starting files and public examples under tasks/, and the starter task's checks
+    under .knos/acceptance/<n>/ for every issue number from 1 to playground.SLOTS (a board's lines replace theirs)."""
+    return {rel: data for rel, data in files("knos-playground", board).items() if rel not in IN_KNOS_SKIP}
+
+
+def fold_playground(root: Path | None = None) -> list[str]:
+    """Write the playground's files into this repository (or `root`), reading the board's lines from its board.json.
+    An acceptance folder of an issue number the playground has checks for holds exactly its bundle afterwards.
+    Returns the files written."""
+    root = root or ROOT
+    want = playground_in_knos(board_of(root))
+    for n in range(1, _playground().SLOTS + 1):
+        folder = root / ".knos" / "acceptance" / str(n)
+        for p in sorted(folder.rglob("*")) if folder.is_dir() else []:
+            if p.is_file() and p.relative_to(root).as_posix() not in want:
+                p.unlink()
+    for rel, data in want.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_bytes(data)
+    return sorted(want)
+
+
 def wrong(name: str, out: dict[str, bytes]) -> list[str]:
     """Why these files must not be published, one line each: a caller that names no real commit, or one the programs do not pin."""
     pub, said = _pub(), []
@@ -552,6 +588,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.command == "fold":
         for folder in fold():
             print(f"Wrote {folder}.")
+        print(f"Wrote the playground into this repository ({len(fold_playground())} files: Knos's own issues are the playground).")
         return 0
     if a.command == "list":
         for name, (what, _files) in REPOS.items():

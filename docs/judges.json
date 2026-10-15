@@ -133,7 +133,7 @@
    },
    {
     "label": "the record",
-    "link": "https://github.com/drexthealpha/knos-witness/blob/acaa854d241c2e030f521b6f5603c8f43c93bab6/witness.json"
+    "link": "https://raw.githubusercontent.com/drexthealpha/Knos/knos-0.3.34/evidence/knos-witness-acaa854d/witness.json"
    }
   ],
   "yourself": "https://github.com/drexthealpha/Knos/blob/main/examples/witnessed/README.md"

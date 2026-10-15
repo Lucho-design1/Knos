@@ -211,12 +211,13 @@ def test_support_resolution_is_published_as_not_built_and_funds_nothing():
 
 def test_the_registry_lists_every_version_with_its_hash_and_older_files_keep_theirs():
     rows = terms_registry.check3(ROOT / "terms")
-    assert [(r["name"], r["version"]) for r in rows] == [("bug-fix", 1), ("dataset-batch", 1), ("migration", 1), ("support-resolution", 1)]
+    assert [(r["name"], r["version"]) for r in rows] == [("bug-fix", 1), ("bug-fix", 2), ("dataset-batch", 1), ("dataset-batch", 2), ("migration", 1), ("migration", 2),
+                                                     ("support-resolution", 1)]      # version 2: the workflows in the monorepo (0.3.34 cutover)
     for r in rows:
         text = (ROOT / "terms" / "3" / r["name"] / f"{r['version']}.json").read_text(encoding="utf-8")
         doc = json.loads(text)
         assert hashlib.sha256(text.encode()).hexdigest() == r["file_sha256"] and terms3.digest(doc) == r["hash"]
-        assert r["cite"] == terms3.cite(doc) == f"Acceptance is governed by Knos Terms 3, {r['name']} version 1, sha256 {r['hash']}"
+        assert r["cite"] == terms3.cite(doc) == f"Acceptance is governed by Knos Terms 3, {r['name']} version {r['version']}, sha256 {r['hash']}"
         assert r["comment"] == (terms3.comment(doc) if r["built"] else "") and terms_registry.verify3(doc, ROOT / "terms") == (r["hash"], [r])
     assert _script().build(write=False) == []                                # the registry is what the code publishes
     index = json.loads((ROOT / "terms" / "index.json").read_text(encoding="utf-8"))
@@ -241,10 +242,11 @@ def test_a_published_terms_3_file_is_never_rewritten(tmp_path, monkeypatch):
     (root / "3" / "migration" / "7.json").unlink()
     longer = terms3.TEMPLATES["migration"]
     monkeypatch.setitem(terms3.TEMPLATES, "migration", lambda: terms3.validate({**longer(), "deadline": {"days": 45, "late": "refused"}}, strict=False))
-    assert reg.build(root) == ["3/migration/2.json", "index.json"]
+    assert reg.build(root) == ["3/migration/3.json", "index.json"]
     assert path.read_text(encoding="utf-8") == was                           # version 1 stayed
-    two = terms_registry.read3("migration", root=root)
-    assert two["version"] == 2 and two["deadline"]["days"] == 45 and terms_registry.read3("migration", 1, root)["deadline"]["days"] == 30
+    three = terms_registry.read3("migration", root=root)
+    assert three["version"] == 3 and three["deadline"]["days"] == 45 and terms_registry.read3("migration", 1, root)["deadline"]["days"] == 30
+    assert terms_registry.read3("migration", 2, root)["deadline"]["days"] == 30
     assert reg.build(root) == []
 
 
@@ -287,7 +289,7 @@ def test_knos_terms_verify_refuses_a_file_missing_a_field_and_says_which(tmp_pat
     whole = tmp_path / "whole.json"
     whole.write_text(terms3.dumps(doc), encoding="utf-8")
     got = run.invoke(app, ["terms", "verify", str(whole)])
-    assert got.exit_code == 0 and f"Knos Terms 3, bug-fix version 1, sha256 {terms3.digest(doc)}" in got.output
+    assert got.exit_code == 0 and f"Knos Terms 3, bug-fix version 2, sha256 {terms3.digest(doc)}" in got.output
     assert "Who may appeal, and to whom? The supplier may appeal a rejection within 7 days" in got.output
     del doc["dispute"]
     part = tmp_path / "part.json"

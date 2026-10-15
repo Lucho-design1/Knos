@@ -1,0 +1,63 @@
+{
+ "repository": "drexthealpha/knos-e2e-202610020406",
+ "url": "https://github.com/drexthealpha/knos-e2e-202610020406",
+ "visibility": "public",
+ "kind": "rehearsal",
+ "default_branch": "main",
+ "commit": "4b95b0123e3fe70c79374c97a58ed4734adf3401",
+ "tree": "98dd6e4c581f3f362446c9c97d545b4ed6641781",
+ "at": "default branch tip",
+ "commits_to_here": 7,
+ "copied": "2026-10-15",
+ "note": "A rehearsal repository of 2 Oct 2026 (devnet).",
+ "files": [
+  {
+   "path": ".github/workflows/knos.yml",
+   "mode": "100644",
+   "blob": "6d8169e22d32030e781b533991f0b75af10d51b8",
+   "size": 5268
+  },
+  {
+   "path": ".github/workflows/rc18-attest.yml",
+   "mode": "100644",
+   "blob": "b8d1e0f54a2edc66873d27e7bb28ac1b5b064982",
+   "size": 527
+  },
+  {
+   "path": ".knos/acceptance/1/test_accept.py",
+   "mode": "100644",
+   "blob": "349ce9bc26f09ee68ce08c25670a2671c4467f3e",
+   "size": 175
+  },
+  {
+   "path": "CONTRIBUTING.md",
+   "mode": "100644",
+   "blob": "b60d3e3788cc14fe52e021c3faf7e90e6247697a",
+   "size": 65
+  },
+  {
+   "path": "README.md",
+   "mode": "100644",
+   "blob": "dfd4df15ca04dd32ddfcb2a455e92982866ff1b9",
+   "size": 58
+  },
+  {
+   "path": "calc.py",
+   "mode": "100644",
+   "blob": "12ee7431b8e0e3e366c904c33ef3dee767b1bc20",
+   "size": 32
+  },
+  {
+   "path": "tests/test_calc.py",
+   "mode": "100644",
+   "blob": "2ff95e61f3d1838bef7d247dff1faff2589748fa",
+   "size": 66
+  }
+ ],
+ "branches": {
+  "main": "4b95b0123e3fe70c79374c97a58ed4734adf3401"
+ },
+ "pull_request_heads": {
+  "2": "8488f26bc7e33ddacaa8db41848d685ac763440a"
+ }
+}

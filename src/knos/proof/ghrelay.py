@@ -147,6 +147,9 @@ TERMS = re.compile(r"^knos-terms:[ \t]*(\{.*\}|[0-9a-f]{128})[ \t\r]*$", re.M)
 ISSUER = re.compile(r"^knos-issuer:[ \t]*(https://[!-~]{1,192})[ \t\r]*$", re.M)     # the URL of the issuer whose key a key token names, in the same comment
 MARK = "knosrelay"   # one word every token comment carries, so one search finds them all
 ROTATE_REPO = "drexthealpha/knos-oidc-rotate"
+# the rotate workflow's two homes, whose issues always carry key tokens: the old repository and Knos (branch oidc-rotate,
+# docs/reference/CUTOVER-0331.md section 2); both are read every pass
+ROTATE_REPOS = (ROTATE_REPO, "drexthealpha/Knos")
 RELAY_KIND = {"proof": "pay"}   # the comment marker says proof; the relays call that audience pay
 # knos_meter's three audiences are all posted as knos-eval: (knos attest --kind eval|batch|claim): one evaluation, the
 # buyer's count of a batch, the seller's own count of it
@@ -291,7 +294,7 @@ def _api(path: str) -> list | dict:
 def discover(since: str, state: dict, getter=_api) -> set[str]:
     """Repositories that may hold a token: the search, the owners served before, and the ones always read."""
     repos = {r.strip() for r in os.environ.get("KNOS_RELAY_REPOS", "").split(",") if "/" in r}
-    repos.add(ROTATE_REPO)
+    repos.update(ROTATE_REPOS)
     try:
         res = getter(f"search/issues?q=%22{MARK}%22+in:comments+updated:%3E={since[:10]}&sort=updated&order=desc&per_page=50")
         for it in res.get("items", []):
@@ -1146,7 +1149,7 @@ def once(ledger=None, payer=None, now: float | None = None, crank: bool = True, 
         rest = sorted(newest[EVERY_PASS:])
         turn = int(state.get("turn", 0)) % max(len(rest), 1)
         state["turn"] = turn + IN_TURN
-        repos = {ROTATE_REPO, HOME_REPO} | {r.strip() for r in os.environ.get("KNOS_RELAY_REPOS", "").split(",") if "/" in r}
+        repos = {*ROTATE_REPOS, HOME_REPO} | {r.strip() for r in os.environ.get("KNOS_RELAY_REPOS", "").split(",") if "/" in r}
         repos |= set(newest[:EVERY_PASS]) | set((rest + rest)[turn:turn + IN_TURN])
         repos |= watched(ledger, state, now)                # found on chain, with no search: where a proof is awaited
         if now - state.get("searched", 0) >= SEARCH_EVERY:

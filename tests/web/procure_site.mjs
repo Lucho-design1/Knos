@@ -100,7 +100,7 @@ await page.waitForSelector("#proc-file");
 const file = await text("#proc-file"), made = p.readYaml(file);
 check("the file is a sound standing offer", p.offerProblems(made, sample.rate_card).length === 0 && made.name === "feature-hubot" && made.cap === 400 && made.suppliers.join() === "hubot" && made.envelope === "eng-2026q4" && made.starts === "2026-10-06", file);
 const link = new URL(await attr("#proc-file-open", "href"));
-check("it opens as a new file on the forge, already filled in", link.origin + link.pathname === "https://github.com/drexthealpha/knos-playground/new/main" && link.searchParams.get("filename") === `${DIR}/offers/feature-hubot.yaml` && link.searchParams.get("value") === `${file}\n`.replace(/\n+$/, "\n"),
+check("it opens as a new file on the forge, already filled in", link.origin + link.pathname === "https://github.com/drexthealpha/Knos/new/main" && link.searchParams.get("filename") === `${DIR}/offers/feature-hubot.yaml` && link.searchParams.get("value") === `${file}\n`.replace(/\n+$/, "\n"),
   link.href);
 check("the comment that funds it on devnet", (await text("[data-offer-comment]")) === "/knos offer @hubot rate 80 budget 400 checks: unit days 30", await text("[data-offer-comment]"));
 check("the approval it needs is said", (await text("[data-offer-need]")) === "Waits for 2 approvers: 1,200.00 needs 2 approvers.");

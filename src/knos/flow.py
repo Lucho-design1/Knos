@@ -3586,7 +3586,7 @@ def _attest_eval(run: Run, order: str, pull: int | None, no) -> int:
         knosm:eval:<buyer>:<seller>:<work order>:<head>:<policy>:<milestone>:<verdict>:<rate>
 
     knos_meter counts it once per (buyer, work order, artifact, policy, milestone), from the run's first attempt, and
-    only against credits the buyer opened for this workflow at this commit (OpenCredits pins drexthealpha/knos-workflows
+    only against credits the buyer opened for this workflow at this commit (OpenCredits pins the published workflows' home
     and its commit). Posted as `knos-eval:` for a relayer, like every token of this command."""
     got = _evaluation(order)
     if got is None:

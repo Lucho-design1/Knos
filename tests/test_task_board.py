@@ -534,7 +534,7 @@ def test_the_board_funds_only_through_the_public_pinned_workflows_and_says_so():
     code, said, _ = run(forge, "plan", "-n", "2")
     assert code == 0 and "funds through the public pinned workflows: checked in the playground's own workflow files." in said
     public = forge.files[".github/workflows/knos.yml"]
-    for staged, why in ((public.replace(b"drexthealpha/knos-workflows/", b"drexthealpha/knos-workflows-rc/"), "of drexthealpha/knos-workflows-rc, which is not the public drexthealpha/knos-workflows"),
+    for staged, why in ((public.replace(b"drexthealpha/Knos/", b"drexthealpha/knos-workflows-rc/"), "of drexthealpha/knos-workflows-rc, which is not the public drexthealpha/Knos"),
                         (public.replace(pin.encode(), b"5" * 40), f"at 555555555555, and the published commit is {pin[:12]}"),
                         (b"on: push\njobs: {}\n", "calls no pinned workflow"), (None, "could not be read")):
         forge = Forge()
@@ -579,7 +579,7 @@ def test_the_boards_document_is_what_an_agent_reads_and_why_is_one_sentence():
     assert tb.main(["why", "drexthealpha/knos-e2e#25", "--pull", "38"], gh=forge, say=said.append, why=why) == 0 and asked == [("drexthealpha/knos-e2e#25", 38)]
     assert said == ["The order on drexthealpha/knos-e2e#25 was funded through a copy of the workflows that is not the public one (a staging copy), "
                     "so the public worker's signed run cannot pay it.\nFix: A maintainer comments `/knos tip <amount>` on the merged pull request #38; the old order "
-                    "goes back to its funder at its deadline. Fund the next task only where the repository calls drexthealpha/knos-workflows at the published commit."]
+                    "goes back to its funder at its deadline. Fund the next task only where the repository calls drexthealpha/Knos at the published commit."]
 
 
 def test_the_sites_build_writes_the_empty_board_without_solders():

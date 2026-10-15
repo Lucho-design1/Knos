@@ -1,5 +1,8 @@
 # Upgrade 0.3.34: knos_pay pays on proof from any source, through the upgrade multisig
 
+**Superseded (OK-PROG, 0.3.35):** propose the knos_pay buffer in [deploy/upgrade-0335/STEPS.md](../upgrade-0335/STEPS.md) instead of
+`Dfo5pYRLY8z9yvuXDQjJQtaoqJeL7Atso8zhWy9Ehkfj` below: it is this build plus the claim workflow's Knos home. Propose one, not both.
+
 **For the founder.** Nothing here has been proposed, approved or executed, and no founder or member key signed
 anything. The V34PAY build agent built knos_pay 0.3.34 as sBPF v3, deployed that same build to a devnet test program
 of its own to exercise it, and prepares one upgrade buffer for the real knos_pay with its own wallet. Only a proposal

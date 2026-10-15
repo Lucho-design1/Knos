@@ -100,7 +100,7 @@ def test_a_comment_in_a_repository_whose_caller_names_the_monorepo_funds_an_orde
 
 def test_the_explainer_counts_both_homes_as_the_public_workflows():
     from knos import tasks
-    assert tasks.PUBLIC_WORKFLOW_HOMES == (OLD, NEW) and tasks.PUBLIC_WORKFLOWS == OLD
+    assert tasks.PUBLIC_WORKFLOW_HOMES == (OLD, NEW) and tasks.PUBLIC_WORKFLOWS == NEW and tasks.OLD_PUBLIC_WORKFLOWS == OLD
 
     class O:
         state, deadline, payee_id = "open", 2_000_000_000, 0
@@ -118,7 +118,7 @@ def test_terms_that_name_the_old_home_pay_only_its_runs_and_the_next_version_nam
     new = terms3.moved(old)
     assert new["version"] == old["version"] + 1 and terms3.digest(new) != terms3.digest(old)
     assert all(s["workflow"].startswith(terms3.MONOREPO_WORKFLOWS) for s in new["evidence"]["sources"])
-    for doc, good, bad in ((old, terms3.WORKFLOWS, terms3.MONOREPO_WORKFLOWS), (new, terms3.MONOREPO_WORKFLOWS, terms3.WORKFLOWS)):
+    for doc, good, bad in ((old, terms3.OLD_WORKFLOWS, terms3.MONOREPO_WORKFLOWS), (new, terms3.MONOREPO_WORKFLOWS, terms3.OLD_WORKFLOWS)):
         assert terms3.evaluator_allowed(doc, terms3.GITHUB, "acme/widgets", good + "prove.yml@" + PIN) == "own"
         assert terms3.evaluator_allowed(doc, terms3.GITHUB, "acme/widgets", bad + "prove.yml@" + PIN) is None
         assert terms3.evaluator_allowed(doc, terms3.GITHUB, "seller/knos-attest", good + "attest.yml@" + PIN, ("acme",)) == "neutral"
@@ -140,7 +140,8 @@ def test_move_names_the_monorepo_everywhere_and_back_and_check_holds_one_home(tm
     pub = _script("pinned_workflows")
     root = _tree(tmp_path)
     monkeypatch.setattr(pub, "ROOT", root)
-    assert pub.home() == OLD and pub.main(["check"]) == 0
+    assert pub.home() == NEW and pub.main(["check"]) == 0                  # the tree names the monorepo since the 0.3.34 cutover
+    assert pub.move(OLD) and pub.home() == OLD and pub.main(["check"]) == 0   # the tree as it was before the cutover
     before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
     changed = pub.move(NEW)
     assert "examples/knos-workflow.yml" in changed and "web/front.js" in changed and "web/install.js" in changed

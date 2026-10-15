@@ -1,0 +1,164 @@
+{
+ "repository": "drexthealpha/knos-v0329-outcomes",
+ "url": "https://github.com/drexthealpha/knos-v0329-outcomes",
+ "visibility": "private",
+ "kind": "evidence",
+ "default_branch": "main",
+ "commit": "509485fb3b690a946e2a260079cf51cca307f1b5",
+ "tree": "fcf539a260956d1d49851c8420c41b38a7af998b",
+ "at": "default branch tip",
+ "commits_to_here": 1,
+ "copied": "2026-10-15",
+ "note": "The private repository of the measured-outcome demo of 13 Oct 2026 (docs/reference/MEASURED.md, examples/outcomes/measured-support/demo.json): the pinned commit 509485fb. SYNTHETIC data.",
+ "files": [
+  {
+   "path": ".github/workflows/knos-outcome.yml",
+   "mode": "100644",
+   "blob": "b05d5314bb15ef17c5af6956f5e061dc616e7299",
+   "size": 6126
+  },
+  {
+   "path": ".github/workflows/prove.yml",
+   "mode": "100644",
+   "blob": "3cf7a8b3d69dbfd673f7cbf42ded9d28c4b9d7e7",
+   "size": 4130
+  },
+  {
+   "path": ".knos/vendor/knos/__init__.py",
+   "mode": "100644",
+   "blob": "e07b832e97b4dbdc0f18757a62c507038652fa44",
+   "size": 80
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/__init__.py",
+   "mode": "100644",
+   "blob": "888632b6dba2218708c4b77ce73d8e2e3cf790cd",
+   "size": 900
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/__main__.py",
+   "mode": "100644",
+   "blob": "634db357c17e73ea2e3c7a7db2d6c433b934c86b",
+   "size": 3827
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/assign.py",
+   "mode": "100644",
+   "blob": "6bf4f636ade9f0eaca2cb575879aa5e87fb797b6",
+   "size": 1828
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/cli.py",
+   "mode": "100644",
+   "blob": "676a610178c7d7a6c2c088e74dbd378dc7e7deea",
+   "size": 10365
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/data.py",
+   "mode": "100644",
+   "blob": "ffa0a8b110f7e6cf3063c545b708a4ac93cecdfb",
+   "size": 6206
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/draft.py",
+   "mode": "100644",
+   "blob": "98d5924ff8cd2b8722f217b4ba9dc0e52aadcd61",
+   "size": 12023
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/escrow.py",
+   "mode": "100644",
+   "blob": "aa8e75dd48348dfd897de4ea85786fbf44def319",
+   "size": 3344
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/measure.py",
+   "mode": "100644",
+   "blob": "3ac88d65cd628fa15b3d6830b69384928fcb462d",
+   "size": 8083
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/metric.py",
+   "mode": "100644",
+   "blob": "697703a26a33d87c1f660f5e9ce2479fc81d07c2",
+   "size": 6431
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/outcome.schema.json",
+   "mode": "100644",
+   "blob": "db4d6c83bde28acff96b99920b2a3a70453b76f8",
+   "size": 7346
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/recordio.py",
+   "mode": "100644",
+   "blob": "9b0eb12faf954ff06d37f625cbb01fa15e80d988",
+   "size": 5024
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/sign.py",
+   "mode": "100644",
+   "blob": "5cdd06a4c80d577a12e41eb8c08a9ce8049a69e6",
+   "size": 3748
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/spec.py",
+   "mode": "100644",
+   "blob": "77d8bb650bee356a653fa5a3109931781ce74a1b",
+   "size": 9524
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/stats.py",
+   "mode": "100644",
+   "blob": "807fc415c790f93779263b724c818cf1cefda79e",
+   "size": 4416
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/synth.py",
+   "mode": "100644",
+   "blob": "1e15c1cdfc382a148502e7b46d308e71ed42a3b5",
+   "size": 5684
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/tamper.py",
+   "mode": "100644",
+   "blob": "4d19355ffccbace60cb36df926f88f690aee3f33",
+   "size": 5148
+  },
+  {
+   "path": ".knos/vendor/knos/outcomes/yamlish.py",
+   "mode": "100644",
+   "blob": "5f59c0e68ea97f2e9317bcc43320d3ced8d9a2ed",
+   "size": 10748
+  },
+  {
+   "path": "README.md",
+   "mode": "100644",
+   "blob": "7bca1a03693f635fb02dd765f012f351e231ea35",
+   "size": 213
+  },
+  {
+   "path": "outcome.lock.json",
+   "mode": "100644",
+   "blob": "8e23754f2fd037a03dc0a0184d77723d9f1a5d4b",
+   "size": 1398
+  },
+  {
+   "path": "outcome.signatures.json",
+   "mode": "100644",
+   "blob": "06d820d9bcd26794d93c8c73849a6b8547892c3e",
+   "size": 594
+  },
+  {
+   "path": "outcome.yaml",
+   "mode": "100644",
+   "blob": "0c1059d705efeb70c821b2e882b8d82fa966c7e6",
+   "size": 1508
+  }
+ ],
+ "branches": {
+  "main": "509485fb3b690a946e2a260079cf51cca307f1b5",
+  "outcome-data": "b59b30f3706987ea7a3426917add1ac9a19662d2"
+ },
+ "pull_request_heads": {}
+}

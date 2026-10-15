@@ -159,7 +159,7 @@ def test_the_one_click_and_the_file_it_installs_need_no_secret(capsys):
     job = doc["jobs"]["attest"]
     assert "secrets" not in text.replace("holds no secret", "").replace("needs no secret", "").replace("no secret of yours", "") and "secrets" not in job
     assert doc["permissions"] == {} and job["permissions"] == {"contents": "read", "issues": "write", "id-token": "write"}
-    assert list(doc[True]) == ["workflow_dispatch"] and re.fullmatch(r"drexthealpha/knos-workflows/\.github/workflows/attest\.yml@([0-9a-f]{40}|KNOS_WORKFLOWS_SHA)", job["uses"])
+    assert list(doc[True]) == ["workflow_dispatch"] and re.fullmatch(r"drexthealpha/Knos/\.github/workflows/attest\.yml@([0-9a-f]{40}|KNOS_WORKFLOWS_SHA)", job["uses"])
     assert host_judge.editor_link("ada/knos-judge", text + "x" * 9000) is None and host_judge.editor_link("ada", text) is None
     assert host_judge.run_link("ada/knos-judge") == "https://github.com/ada/knos-judge/actions/workflows/knos-attest.yml"
     assert host_judge.fund_line("20", "ada/knos-judge") == "/knos fund 20 checks: unit quorum 2 judge: ada/knos-judge"

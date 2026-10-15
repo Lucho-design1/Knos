@@ -120,7 +120,7 @@ SLOTS = {
     "outside_prs_merged_and_paid": ("of the pull requests #32, #33 and #34 by jaystay-bot, the ones that were merged and "
                                     "paid on devnet when the release ran", None),
     "tests_passing": ("tests that passed in the release's own run of the suite (`pytest -q` on the release commit)", None),
-    "claim_parser_executions": ("inputs the fuzzer ran against the claim parser in the latest nightly run of program.yml: "
+    "claim_parser_executions": ("inputs the fuzzer ran against the claim parser in the latest run of program.yml's fuzz job (nightly on main, or by hand on the release branch): "
                                 "`executions` and `source` in the fuzz.json of its `fuzz-claims` artifact", None),
     "days_of_shipping": ("days, from 1 Sep 2026 to the release, on which drexthealpha made a commit in the public "
                          "repository (the automatic commits of a workflow are left out): "

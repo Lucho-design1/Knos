@@ -9,7 +9,7 @@ const $ = (id) => document.getElementById(id);
 const API = "https://api.github.com";
 // The commit the templates below name is the example's own (scripts/front_workflow.py writes them from examples/).
 // The Pages build stamps its own commit into these two constants for templates that still use them; a template that
-// names its workflows in drexthealpha/knos-workflows at a commit uses neither, and the page never hands out a file
+// names its published workflows at a commit (drexthealpha/Knos, branch workflows) uses neither, and the page never hands out a file
 // whose commit is not a full one (see pinned).
 export const KNOS_SHA = "KNOS_COMMIT_SHA";
 export const KNOS_RELAY_SHA = "KNOS_COMMIT_SHA";
@@ -202,7 +202,7 @@ jobs:
       statuses: read
       actions: read
       id-token: write
-    uses: drexthealpha/knos-workflows/.github/workflows/fund.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
+    uses: drexthealpha/Knos/.github/workflows/fund.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
     secrets:
       KNOS_RELAY_KEY: \${{ secrets.KNOS_RELAY_KEY }}       # optional: when the repository has none, this passes nothing
 
@@ -223,7 +223,7 @@ jobs:
       statuses: read
       actions: read
       id-token: write
-    uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
+    uses: drexthealpha/Knos/.github/workflows/prove.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
     secrets:
       KNOS_RELAY_KEY: \${{ secrets.KNOS_RELAY_KEY }}       # optional, as above
 
@@ -243,7 +243,7 @@ jobs:
       statuses: read
       actions: read
       id-token: write
-    uses: drexthealpha/knos-workflows/.github/workflows/prove.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
+    uses: drexthealpha/Knos/.github/workflows/prove.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
     secrets:
       KNOS_RELAY_KEY: \${{ secrets.KNOS_RELAY_KEY }}       # optional, as above
 `;
@@ -292,7 +292,7 @@ jobs:
       checks: read
       statuses: read
       actions: read
-    uses: drexthealpha/knos-workflows/.github/workflows/check.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
+    uses: drexthealpha/Knos/.github/workflows/check.yml@96b243f1b1dd5c975a0318dd9709a0da22b98dcd
 `;
 
 export function checkUrl(owner, repo, branch) {

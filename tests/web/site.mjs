@@ -187,6 +187,7 @@ async function mock(ctx) {
     const user = (login) => Object.entries(users).find(([name]) => name.toLowerCase() === login.toLowerCase());
     if (p.startsWith("/users/")) { const got = user(decodeURIComponent(p.slice(7))); return got ? json({ id: got[1].id, login: got[1].login ?? got[0], type: got[1].type }) : json({ message: "Not Found" }, 404); }
     if (p.startsWith("/user/")) { const got = Object.entries(users).find(([, v]) => v.id === Number(p.slice(6))); return got ? json({ id: got[1].id, login: got[1].login ?? got[0] }) : json({ message: "Not Found" }, 404); }
+    if (p === "/repos/drexthealpha/Knos/issues" && !u.searchParams.has("labels") && u.searchParams.get("state") === "open") { hub.playgroundAsked++; return json(hub.playground); }
     if (p.startsWith("/repos/drexthealpha/Knos/issues") || p.startsWith("/repos/drexthealpha/knos-e2e/") || p.endsWith("/contents/.knos/profile.json")) {
       hub.asked.push(p + u.search);
       if (hub.down) return json({ message: "Server Error" }, 500);
@@ -198,7 +199,6 @@ async function mock(ctx) {
       if (profile && hub.profiles[profile[1]]) return json({ encoding: "base64", content: Buffer.from(JSON.stringify(hub.profiles[profile[1]])).toString("base64") });
       return json({ message: "Not Found" }, 404);
     }
-    if (p === "/repos/drexthealpha/knos-playground/issues") { hub.playgroundAsked++; return json(hub.playground); }
     if (p === "/rate_limit") { githubReads--; return json({ resources: { core: { limit: 60, remaining: 57, reset: 1790003600 } } }); }
     if (p === "/repos/octo/widgets/pulls/12/commits") return json([{ sha: "e".repeat(40) }]);
     const issue = /^\/repos\/([^/]+\/[^/]+)\/issues\/(\d+)$/.exec(p);
@@ -1319,7 +1319,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   const hrefs = await page.$$eval("a[href]", (a) => a.map((x) => x.getAttribute("href")));
   const issuerDocs = (await import(pathToFileURL(join(root, "verifier.js")).href)).ISSUERS.map((i) => i.source);
   // the Console's sample approvals name where each was made: a comment in this project's own playground repository, never an account that is somebody else's
-  check("links: the Console's sample is in the project's own playground repository", hrefs.some((h) => /^https:\/\/github\.com\/drexthealpha\/knos-playground\/issues\/\d+#issuecomment-\d+$/.test(h)) && !(await page.content()).includes("github.com/acme/"));
+  check("links: the Console's sample is in the project's own playground repository", hrefs.some((h) => /^https:\/\/github\.com\/drexthealpha\/Knos\/issues\/\d+#issuecomment-\d+$/.test(h)) && !(await page.content()).includes("github.com/acme/"));
   const bad = hrefs.filter((h) => !(h.startsWith("#") ? ["check", "fd-in", "check-a-pull-request", "protect", "fund", "claim", "pricing", "records", "network", "build", "rank", "buy", "install", "capabilities", "status", "index", "pilot", "reproduce", "demo", "shadow", "verifier", "playground", "terms", "supplier", "invoice-statement", "story", "keyholder", "sample", "record", ...MENU.added.map((a) => a.name)].includes(h.slice(1).split("=")[0])
     : h === TEMPLATE_LINK || h === JUDGE_TEMPLATE_LINK || h === "https://drexthealpha.github.io/Knos/" || /^https:\/\/explorer\.solana\.com\/(tx\/[1-9A-HJ-NP-Za-km-z]{64,90}|address\/[1-9A-HJ-NP-Za-km-z]{32,44})\?cluster=devnet$/.test(h) || /^https:\/\/github\.com\/drexthealpha\/|^https:\/\/faucet\.circle\.com\/$|^(index|stats|operations|agent_weekly|records|statement_sample)\.json$|^(privacy|faq)\.html$|^check\/$|^terms\/(?:3\/)?[\w-]+\/\d+\.json$/.test(h) || issuerDocs.includes(h)));
   check("links: every link goes to a view, to the site's own address, to the project's own GitHub, to a transaction or an address on devnet's explorer, to Circle's devnet faucet, to a file of the site or to an issuer's own documentation (the verifier's table)", bad.length === 0, bad);
@@ -2891,7 +2891,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("  a sample token is decoded, and said to be decoded, not verified", (await text(page, "#vf-verdict")).trim() === "Decoded, not verified." && (await page.$$eval("#vf-claims tbody tr", (l) => l.length)) > 3 && (await overflow(page)) <= 1);
 
   // Playground: GitHub is asked when the page is opened, and not before; a funded task and one still waiting
-  served.extra["/bounties.json"] = { type: "application/json", body: JSON.stringify({ bounties: [{ repository: "drexthealpha/knos-playground", issue: 4, amount: 5_000_000, decimals: 6, currency: "test USDC" }] }) };
+  served.extra["/bounties.json"] = { type: "application/json", body: JSON.stringify({ bounties: [{ repository: "drexthealpha/Knos", issue: 4, amount: 5_000_000, decimals: 6, currency: "test USDC" }] }) };
   served.extra["/outsiders.json"] = { type: "application/json", body: JSON.stringify({ measured: true, funders: 0, repositories: 0, payees: 0, funders_in_knos_repositories_faucet: 0, definitions: {} }) };
   hub.playground = [{ number: 4, title: "Count the words", state: "open", user: { login: "someone" } }, { number: 5, title: "Count the lines", state: "open", user: { login: "someone" } }, { number: 6, title: "a pull request", state: "open", pull_request: {} }];
   await visit(page, "#playground");
@@ -2899,7 +2899,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   const pg = await import(pathToFileURL(join(root, "playground.js")).href);
   check("playground: opened, it asks GitHub once and lists the open tasks: one funded on devnet, one waiting; a pull request is not a task", hub.playgroundAsked === 1 && await page.isVisible("#playground") && await page.isHidden("#view-check")
     && JSON.stringify(await page.$$eval("#pg-tasks tbody tr", (l) => l.map((r) => [r.dataset.issue, r.dataset.state]))) === JSON.stringify([["5", "opened"], ["4", "funded"]]) && (await text(page, '#pg-tasks tr[data-issue="4"]')).includes("Funded: 5 test USDC")
-    && (await page.getAttribute("#pg-fund", "href")) === pg.fundUrl() && (await page.getAttribute("#pg-take", "href")) === "https://github.com/drexthealpha/knos-playground/issues/4");
+    && (await page.getAttribute("#pg-fund", "href")) === pg.fundUrl() && (await page.getAttribute("#pg-take", "href")) === "https://github.com/drexthealpha/Knos/issues/4");
   check("  the three outside counts are zeros that were counted, never added together", (await page.getAttribute("#pg-counts", "data-measured")) === "true" && (await text(page, "#pg-funders")).trim() === "0 outside funders" && (await text(page, "#pg-counts")).includes("Add none of them together.") && (await overflow(page)) <= 1);
   delete served.extra["/bounties.json"]; delete served.extra["/outsiders.json"]; hub.playground = [];
 

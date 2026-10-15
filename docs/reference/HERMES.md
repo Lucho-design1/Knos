@@ -182,3 +182,16 @@ bundle at `base/.knos/acceptance/<issue>/` (knos.verify.sealed). Demo only: no r
 `KNOS_HERMES_GUARD=block` a tool call that would write a workflow (`.github/`), `.knos/`, the test runner's
 configuration, or an existing test file is blocked with the reason, before the agent spends work Knos would refuse to
 pay for; `warn` prints the reason and blocks nothing; unset, the hook does nothing. Tests: `tests/test_hermes_hook.py`.
+
+## knos-hermes, the first Hermes integration (now a folder of Knos)
+
+Before the plugin above, Knos reached Hermes as a package of its own: `knos-hermes` 0.1.0 on PyPI, from the repository
+drexthealpha/knos-hermes (2 Sep 2026), a Hermes memory provider (`knos_recall`, `knos_remember`, `knos_claim`,
+`knos_done`) over the local memory of knos 0.1.x. Its code and docs are in Knos as
+[`hermes/knos-hermes/`](../../hermes/knos-hermes/): the files of its last commit (11df3a96) byte for byte, except
+the `[project.urls]` of its `pyproject.toml`, which now name this repository (SOURCE.json says so;
+tests/test_evidence_copies.py holds it). Knos does not build or install it, so there is still one package: it imports
+`knos.memory` and `knos.answer`, which Knos removed in 0.3.10 (2 Oct 2026), and it asks for `knos>=0.1.1`, so next to
+the knos of today it reports itself unavailable to Hermes. What Knos gives Hermes now is the skill, the MCP server and
+the plugin above. PyPI shows the links of the last upload: a final `knos-hermes` upload built from that folder (or
+yanking 0.1.0, as `python scripts/public_face.py --remote` says) is the founder's decision.

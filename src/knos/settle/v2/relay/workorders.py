@@ -12,7 +12,7 @@ from solders.pubkey import Pubkey
 from .... import chain, fees
 from .. import oidc, order_auto, pay
 
-from .pins import CLAIM_REF, CLAIM_SHAS, ORG_CLAIM_SHAS, _CU, _HEX40, _HEX64, _Stop, _U64, _no
+from .pins import CLAIM_SHAS, ORG_CLAIM_SHAS, _CU, _HEX40, _HEX64, _Stop, _U64, _no, claim_ref
 from .tokens import _Token, _address, _ints, _units, _when, _workflow
 from .reads import _amount, _data, _funded_by, _last, _read, _said_in, _said_since, held_for
 from .plans import Group, _Ask, _Plan, _bounds, _decimals, _limits
@@ -593,7 +593,7 @@ def _plan_org_bind(a: _Ask) -> _Plan:
     except (KeyError, ValueError, TypeError):
         raise _no(kind, "malformed audience or claims") from None
     how = "`knos claim --org <organisation> <address>` does it: it runs Knos's claim workflow in the organisation's repository named knos-claim"
-    if not str(c.get("job_workflow_ref", "")).startswith(CLAIM_REF) or c.get("job_workflow_sha") not in CLAIM_SHAS | ORG_CLAIM_SHAS:
+    if not claim_ref(c.get("job_workflow_ref", "")) or c.get("job_workflow_sha") not in CLAIM_SHAS | ORG_CLAIM_SHAS:
         raise _no(kind, f"an organisation's wallet is bound only by Knos's claim workflow at its pinned commit; {how}")
     if org == 0 or actor == 0 or org == actor or not str(c.get("repository", "")).endswith("/knos-claim"):
         raise _no(kind, "an organisation's claim runs in the organisation's repository named knos-claim, started by a member (a person binds "

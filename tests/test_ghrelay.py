@@ -81,13 +81,14 @@ def test_caller_workflow_needs_no_secret_and_names_one_published_commit():
     wf = (ROOT / "examples" / "knos-workflow.yml").read_text(encoding="utf-8")
     # no secret is needed; the one a repository may set is handed on by name, never all of them
     assert set(re.findall(r"secrets\.(\w+)", wf)) == {"KNOS_RELAY_KEY"} and "inherit" not in wf and "No secret is needed" in wf
-    # the workflows are pinned by one commit of drexthealpha/knos-workflows; until a release names it the template
+    # the workflows are pinned by one commit of the published set (drexthealpha/Knos, branch workflows, since the 0.3.34
+    # cutover; drexthealpha/knos-workflows before); until a release names it the template
     # carries a placeholder, and the release puts the commit into the examples and the site together
-    pins = set(re.findall(r"drexthealpha/knos-workflows/\.github/workflows/(?:fund|prove)\.yml@(\S+)", wf))
+    pins = set(re.findall(r"drexthealpha/Knos/\.github/workflows/(?:fund|prove)\.yml@(\S+)", wf))
     assert len(pins) == 1 and re.fullmatch(r"KNOS_WORKFLOWS_SHA|[0-9a-f]{40}", next(iter(pins)))
     code = "\n".join(ln for ln in wf.splitlines() if not ln.lstrip().startswith("#"))
     assert "pull_request_target" not in code and "issue_comment" in code and "push" in code
-    assert "relay.yml" not in wf and "drexthealpha/Knos/.github/workflows" not in wf     # nothing of the first deployment's
+    assert "relay.yml" not in wf and not re.search(r"drexthealpha/Knos/\.github/workflows/(?!(?:fund|prove|check|attest)\.yml@)", wf)     # nothing of the first deployment's
     fund = (ROOT / ".github" / "workflows" / "fund.yml").read_text(encoding="utf-8")
     assert "id-token: write" in fund and 'knos command --event "$GITHUB_EVENT_PATH" --repo "$GITHUB_REPOSITORY"' in fund
 
@@ -103,7 +104,7 @@ def test_the_site_hands_out_the_examples_byte_for_byte():
     js = (ROOT / "web" / "front.js").read_text(encoding="utf-8")
     check = re.search(r"export const CHECK_WORKFLOW = `(.*?)`;\n", js, re.DOTALL).group(1)
     code = "\n".join(ln for ln in check.splitlines() if not ln.lstrip().startswith("#"))      # its comments say it asks for none
-    assert "knos-workflows/.github/workflows/check.yml@" in code and "id-token" not in code and "write" not in code
+    assert "drexthealpha/Knos/.github/workflows/check.yml@" in code and "id-token" not in code and "write" not in code
     net = (ROOT / ".github" / "workflows" / "network.yml").read_text(encoding="utf-8")
     assert 'bash scripts/build_site.sh _site "$GITHUB_SHA"' in net
     assert "settings/rules/new?target=branch&enforcement=active" in js

@@ -168,7 +168,7 @@ pub fn bind(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8], now: i64
         None => {
             let g = github(tok, key, now)?;
             let sha_ok = g.wf_sha[..] == CLAIM_SHA[..] || TEST_CLAIM_SHA.is_some_and(|t| g.wf_sha[..] == t[..]);
-            if !g.wf_ref.starts_with(CLAIM_REF) || !sha_ok { return Err(err(E_WORKFLOW)); }
+            if !claim_ref(&g.wf_ref) || !sha_ok { return Err(err(E_WORKFLOW)); }
             // the actor owns the repository (so it is a personal account, and theirs), the repository is their knos-claim,
             // and they started the run themselves, by hand. Not a re-run: that keeps the first actor's name whoever starts it.
             let own = g.actor_id != 0 && g.actor_id == g.owner_id;

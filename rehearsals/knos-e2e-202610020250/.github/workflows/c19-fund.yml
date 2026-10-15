@@ -1,0 +1,14 @@
+# 0.3.19 track C (devnet, the run's own wallets): a comment that is a knos3:fund audience, by the owner, asks for a fund token.
+name: c19 fund
+on:
+  issue_comment:
+    types: [created]
+permissions: {}
+jobs:
+  fund:
+    if: github.event.comment.user.id == 142920951 && startsWith(github.event.comment.body, 'knos3:fund:')
+    permissions:
+      id-token: write
+    uses: drexthealpha/knos-e2e-202610020250/.github/workflows/fund.yml@3b257b6f1283fb402074703f2fb8b0a80245598a
+    with:
+      aud: ${{ github.event.comment.body }}

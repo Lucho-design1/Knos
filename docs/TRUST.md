@@ -58,7 +58,7 @@ The same person wrote the code and the tests. A test is evidence, not proof.
 
 - **Tests.** `python -m pytest -q tests` runs the whole suite offline. The chain tests run the built programs in
   a simulator.
-- **Fuzzing.** A fuzzer feeds the program's claim reader random input. The latest nightly run tried 16,024,654
+- **Fuzzing.** A fuzzer feeds the program's claim reader random input. The latest run tried 5,410,436
   inputs against the claim parser.
 - **A second opinion on signatures.** A test compares the verifier with OpenSSL on thousands of made-up tokens.
 - **Model checking.** Five Kani proofs check the payment program's fee sums: what goes in equals what comes out,

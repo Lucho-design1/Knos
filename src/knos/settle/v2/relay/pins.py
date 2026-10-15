@@ -23,6 +23,34 @@ ROTATE_REF = "drexthealpha/knos-oidc-rotate/.github/workflows/rotate.yml@"
 CLAIM_REF = "drexthealpha/knos-oidc-rotate/.github/workflows/claim.yml@"
 
 
+# The same two workflows at their home in Knos (branch `oidc-rotate`, the same commits), which the 0.3.35 builds of the
+# second deployment accept beside the prefixes above (programs-v2/knos_oidc/src/pins.rs ROTATE_REF_KNOS, knos_pay
+# CLAIM_REF_KNOS; docs/reference/CUTOVER-0331.md section 2). Exact prefixes, case and all: `someone/Knos/...`,
+# `drexthealpha/Knos-x/...` and `drexthealpha/knos/...` are neither. The first deployment (programs/knos_oidc, v0) has no
+# upgrade authority and only ever takes ROTATE_REF.
+ROTATE_REF_KNOS = "drexthealpha/Knos/.github/workflows/rotate.yml@"
+
+
+CLAIM_REF_KNOS = "drexthealpha/Knos/.github/workflows/claim.yml@"
+
+
+ROTATE_REFS = (ROTATE_REF, ROTATE_REF_KNOS)
+
+
+CLAIM_REFS = (CLAIM_REF, CLAIM_REF_KNOS)
+
+
+def rotate_ref(ref: object, v: int = 1) -> bool:
+    """Whether a `job_workflow_ref` names the pinned rotate workflow: in either home on the second deployment (v >= 1),
+    in the old one only on the first (v = 0)."""
+    return str(ref).startswith(ROTATE_REFS if v >= 1 else ROTATE_REF)
+
+
+def claim_ref(ref: object) -> bool:
+    """Whether a `job_workflow_ref` names the pinned claim workflow, in either home (Bind and BindOrg)."""
+    return str(ref).startswith(CLAIM_REFS)
+
+
 # The pins the programs hold (program_ids.json). A test build accepts test pins beside them; the tests add those here.
 ROTATE_SHAS = frozenset({oidc.IDS["rotate_sha"]})
 

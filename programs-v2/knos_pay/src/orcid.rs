@@ -18,7 +18,7 @@
 //!   - `sub` is a well-formed iD with a good check character; `nonce` names a wallet;
 //!   - `iat` is at most TOKEN_AHEAD ahead and `exp` at most ORCID_LIFE after it;
 //!   - and its `iat` is later than the one the iD's Bind holds (a Bind is replaced only by a later sign-in).
-//! The token's marker ["used", sig] is made as for every token, and is kept until the token cannot be fresh any more.
+//!     The token's marker ["used", sig] is made as for every token, and is kept until the token cannot be fresh any more.
 use crate::{err, issuers::{self, Family}, E_AUD, E_CLAIMS, E_TOKEN, TOKEN_AHEAD};
 use knos_oidc::claims::{self, fields, number, parts, text};
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};

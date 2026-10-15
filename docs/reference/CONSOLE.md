@@ -181,7 +181,7 @@ evidence for the supplier. [SECURITY.md](SECURITY.md) has the full account.
 
 (Added in Knos 0.3.17, 6 Oct 2026.) The four parts of the page read files in the buyer's repository (`.knos/procurement/`;
 [CONTROLS.md](CONTROLS.md), section 9, is their schema). Until a repository is named they show a made-up
-organisation, set in this project's own playground repository (drexthealpha/knos-playground) with made-up
+organisation, set in this project's own repository (drexthealpha/Knos, whose issues are the playground) with made-up
 accounts, and say so. Naming a public repository reads its files through GitHub's API. The page writes
 nothing anywhere.
 

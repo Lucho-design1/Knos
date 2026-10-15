@@ -83,7 +83,7 @@ def plan3(root: Path = DIR) -> tuple[list[dict], dict[str, str]]:
     new: dict[str, str] = {}
     newest = latest(rows)
     for name in terms3.TEMPLATES:
-        doc, have = terms3.template(name), newest.get(name)
+        doc, have = terms3.current(name), newest.get(name)     # the workflows in their home now (knos.terms3.moved)
         if have and terms3.digest({**doc, "version": have["version"]}) == have["hash"]:
             continue
         doc = terms3.validate({**doc, "version": have["version"] + 1 if have else 1})

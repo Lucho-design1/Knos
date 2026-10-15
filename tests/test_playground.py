@@ -23,12 +23,14 @@ def listing(*stamps, pulls=()):
 def test_the_playground_is_one_repository_of_one_owner_on_devnet():
     own = json.loads((ROOT / "scripts" / "own_github_ids.json").read_text(encoding="utf-8"))
     assert playground.OWNER_ID in own["ids"]
-    assert playground.is_playground("drexthealpha/knos-playground", playground.OWNER_ID, True)
-    assert playground.is_playground("DrexTheAlpha/Knos-Playground", playground.OWNER_ID, True)          # GitHub's names ignore case
-    assert not playground.is_playground("drexthealpha/knos-playground", playground.OWNER_ID, False)     # never off devnet
-    assert not playground.is_playground("drexthealpha/knos-playground", 99, True)                       # the name under another owner
-    assert not playground.is_playground("octo/knos-playground", playground.OWNER_ID, True)
-    assert not playground.is_playground("drexthealpha/Knos", playground.OWNER_ID, True)
+    # Knos's own issues since the 0.3.34 cutover; its old home, drexthealpha/knos-playground, is not the playground now
+    assert playground.REPO == "drexthealpha/Knos" and playground.OLD_REPO == "drexthealpha/knos-playground"
+    assert playground.is_playground("drexthealpha/Knos", playground.OWNER_ID, True)
+    assert playground.is_playground("DrexTheAlpha/KNOS", playground.OWNER_ID, True)                     # GitHub's names ignore case
+    assert not playground.is_playground("drexthealpha/Knos", playground.OWNER_ID, False)                # never off devnet
+    assert not playground.is_playground("drexthealpha/Knos", 99, True)                                  # the name under another owner
+    assert not playground.is_playground("octo/Knos", playground.OWNER_ID, True)
+    assert not playground.is_playground("drexthealpha/knos-playground", playground.OWNER_ID, True)
 
 
 def test_the_line_the_template_carries_is_a_fund_command_within_the_playground_and_the_faucet():

@@ -1,0 +1,31 @@
+{
+ "repository": "drexthealpha/knos-load",
+ "url": "https://github.com/drexthealpha/knos-load",
+ "visibility": "public",
+ "kind": "evidence",
+ "default_branch": "main",
+ "commit": "b9615b0beeb5ed1a319671ff9d1bcfe9a6cc2310",
+ "tree": "80b428f007d29ca4c3ff1859f77653931a6218ea",
+ "at": "default branch tip",
+ "commits_to_here": 1,
+ "copied": "2026-10-15",
+ "note": "The project's own load-test repository: its prove.yml signed the pay tokens of the load runs docs/load.json and docs/reference/LOAD.md cite (GitHub Actions runs 37833126115 and 38012410577 of drexthealpha/knos-load).",
+ "files": [
+  {
+   "path": ".github/workflows/prove.yml",
+   "mode": "100755",
+   "blob": "af3c50da631c84b4b04ea5463e51f3b4c854f2bc",
+   "size": 2676
+  },
+  {
+   "path": "README.md",
+   "mode": "100755",
+   "blob": "c065f19dfa9d7402fbf29a6135dbb8e135a1fea8",
+   "size": 765
+  }
+ ],
+ "branches": {
+  "main": "b9615b0beeb5ed1a319671ff9d1bcfe9a6cc2310"
+ },
+ "pull_request_heads": {}
+}
