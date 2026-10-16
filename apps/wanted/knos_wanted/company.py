@@ -145,3 +145,74 @@ def quote(units: int) -> dict:
             "on_graduation": {"line": "graduation", "units": cfg.fee("graduation", amount) / 1e6, "status": f["graduation"]["status"],
                               "collected": f["graduation"].get("collected")},
             "demand_report": {"line": None, "units": 0, "status": "free: config/fees.yaml has no demand-report line (founder decision)"}}
+
+
+# ---- the decision check (POST /api/check) and its money, in the Record; Sibyl is READ before money moves -----------
+class NotInRecord(ValueError):
+    """The Knos Record (Sibyl) does not hold what a money step needs: nothing is locked or released."""
+
+
+def record_check(rep: dict, store=None) -> dict:
+    """WARM claim `demand:<hash>`: the decision (verdict, target, reserve), counts, no idea text; COLD `experiment`."""
+    rec = _record()
+    if rec is None:
+        return {"recorded": False, "why": "the knos package is not installed"}
+
+    def go():
+        cid, r = claim_id(rep["hash"]), root()
+        d = rep.get("decision") or {}
+        state = {"what": "Knos demand check decision", "report_hash": rep["hash"], "idea_sha256": sha(rep.get("idea")),
+                 "verdict": d.get("verdict"), "target_units": d.get("target_units"), "reserve_units": d.get("reserve_units"),
+                 "live": str(rep.get("label", "")).startswith("LIVE"), "research": (rep.get("research") or {}).get("hash"),
+                 "preorders": {"orders": 0, "units": 0, "list": []}, "released": []}
+        warm = rec.claim(cid, state, domain=DOMAIN, root=r, store=store)
+        cold = rec.append("experiment", {"report_hash": rep["hash"], "calls": len(rep.get("calls") or []),
+                                         "endpoints": sorted({c["call"] for c in rep.get("calls") or []}), "verdict": d.get("verdict")},
+                          claim=cid, domain=DOMAIN, root=r, store=store)
+        return {"recorded": True, "claim": cid, "warm_seq": warm["seq"], "cold_seq": cold["seq"]}
+    return _safe(go)
+
+
+def record_state(report_hash: str, store=None) -> dict:
+    """The decision as Sibyl holds it (WARM). Raises NotInRecord when Sibyl is absent or holds no such decision."""
+    rec = _record()
+    if rec is None:
+        raise NotInRecord("the Knos Record is not available on this server (knos/Sibyl not installed): no money moves without it")
+    try:
+        got = rec.claim_state(claim_id(report_hash), root=root(), store=store) or {}
+    except ImportError:
+        raise NotInRecord("Sibyl is not installed on this server: the Knos Record cannot be read, so no money moves") from None
+    if got.get("report_hash") != report_hash:
+        raise NotInRecord("this report is not in the Knos Record (Sibyl): run the check again on this server")
+    return got
+
+
+def record_lock(report_hash: str, order: str, units: int, signature: str | None, store=None) -> dict:
+    rec = _record()
+
+    def go():
+        cid, r = claim_id(report_hash), root()
+        prev = record_state(report_hash, store)
+        cold = rec.append("funding", {"report_hash": report_hash, "order": order, "signature": signature, "amount_units": units,
+                                      "cluster": "devnet", "money": "devnet test units"}, claim=cid, domain=DOMAIN, root=r, store=store)
+        state = {k: v for k, v in prev.items() if not k.startswith("_")}
+        pre = state.get("preorders") or {"orders": 0, "units": 0, "list": []}
+        state["preorders"] = {"orders": pre.get("orders", 0) + 1, "units": pre.get("units", 0) + units, "list": [*pre.get("list", []), order]}
+        warm = rec.claim(cid, state, domain=DOMAIN, root=r, store=store)
+        return {"recorded": True, "claim": cid, "cold_seq": cold["seq"], "warm_seq": warm["seq"]}
+    return _safe(go) if rec is not None else {"recorded": False, "why": "the knos package is not installed"}
+
+
+def record_release(report_hash: str, order: str, signatures: list, evidence_sha256: str, store=None) -> dict:
+    rec = _record()
+
+    def go():
+        cid, r = claim_id(report_hash), root()
+        prev = record_state(report_hash, store)
+        cold = rec.append("payout", {"report_hash": report_hash, "what": "pre-order released to the maker on proof", "order": order, "signatures": signatures, "evidence_sha256": evidence_sha256,
+                                      "cluster": "devnet"}, claim=cid, domain=DOMAIN, root=r, store=store)
+        state = {k: v for k, v in prev.items() if not k.startswith("_")}
+        state["released"] = [*state.get("released", []), order]
+        warm = rec.claim(cid, state, domain=DOMAIN, root=r, store=store)
+        return {"recorded": True, "claim": cid, "cold_seq": cold["seq"], "warm_seq": warm["seq"]}
+    return _safe(go) if rec is not None else {"recorded": False, "why": "the knos package is not installed"}

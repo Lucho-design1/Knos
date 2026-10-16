@@ -42,6 +42,9 @@ TREND_NOTE = f"Qloo's trend data ends {DATA_END} and shows no movement for these
 TREND_TYPES = {"urn:entity:brand", "urn:entity:artist", "urn:entity:movie", "urn:entity:person", "urn:entity:podcast",
                "urn:entity:tv_show", "urn:entity:actor"}
 DEFAULT_PLACE = "United States"
+AUDIENCE_TYPES = ("communities", "global_issues", "hobbies_and_interests", "investing_interests", "leisure", "life_stage",
+                  "lifestyle_preferences_beliefs", "political_preferences", "professional_area", "spending_habits")
+AUDIENCE_TYPES = tuple("urn:audience:" + t for t in AUDIENCE_TYPES)
 NEUTRAL = 0.5          # Qloo's audience affinity when it has no signal: the list comes back flat at exactly 0.5
 
 # The kind of product, from the idea's nouns, in this priority order (a "podcast about video games" is a podcast).
@@ -95,10 +98,19 @@ RULES = {
                                       # between this and 0 it halves the target
     "falling_delta": -0.02,           # trend percentile change at or below: REFUSE (falling); a flat or missing series
     "rising_delta": 0.02,             # counts neither for nor against
+    "group_confirmed": 1.2,           # the idea names a buyer group (a /v2/audiences segment) that Qloo ranks in this
+    "group_refuted": 0.6,             # taste's top 20 above 0.55 -> target x 1.2; named but absent or neutral -> x 0.6
+    "adjacent_affinity": 0.94,        # a recommended product (/v2/insights of the idea's kind) at or above this affinity
+                                      # (top-10 recommendations measured 0.93-0.955 on 16 Oct 2026: 0.94 keeps the strongest),
+    "adjacent_many": 5,               # not already matched, is adjacent demand: >= 5 -> target x 1.2,
+    "adjacent_many_factor": 1.2,
+    "adjacent_few": 1,                # <= 1 -> target x 0.8, else x 1
+    "adjacent_few_factor": 0.8,
     "base_units": 100,
     "units_formula": "target = round10(base x (1 + 2 x strength) x (1 - overlap/2) x audience_factor x trend_factor), "
                      "strength = mean (affinity - 0.5) x 2 of the informative segments, trend_factor 1.25 rising else 1, "
-                     "audience_factor 0.5 when the named audience leans mildly away else 1, clamped to [20, 1000]; "
+                     "audience_factor = 0.5 when the named audience leans mildly away (else 1) x the buyer-group factor x the "
+                     "recommendations factor (see group_* and adjacent_*), clamped to [20, 1000]; "
                      "reserve = ceil(target x (0.3 + 0.2 x overlap)) units pre-ordered before the maker is paid",
 }
 
@@ -242,6 +254,50 @@ def _trend(run: _Run, ent: dict | None, today: dt.date) -> dict:
     return {"direction": "no movement", "why": TREND_NOTE, "counted": False}
 
 
+def _stem(w: str) -> str:
+    w = w.lower()
+    for suf in ("ers", "er", "ing", "ism", "ists", "ist", "s"):
+        if w.endswith(suf) and len(w) - len(suf) >= 3:
+            return w[:-len(suf)]
+    return w
+
+
+GROUP_GENERIC = {"with", "young", "and", "professional", "enthusiast", "enthusiasts", "issues", "interests", "politically",
+                 "health", "beauty", "home", "art", "arts"}
+
+
+def _buyer_group(run: _Run, idea: str, every: list[dict]) -> dict | None:
+    """The buyer group the idea names ("for runners", "gamers"), found in Qloo's audience list (/v2/audiences), and
+    whether Qloo's ranked segments for this taste (top 20) confirm it. None when the idea names no Qloo segment."""
+    stems = {_stem(w) for w in tokens(idea) if len(w) > 3 and w not in STOP}
+    if not stems:
+        return None
+    body, src = run.get("/v2/audiences", {"filter.audience.types": ",".join(AUDIENCE_TYPES), "take": 300},
+                        "the named buyer group: Qloo's audience segments")
+    for a in (((body or {}).get("results") or {}).get("audiences") or []):
+        name = str(a.get("name") or "")
+        seg = {_stem(w) for w in tokens(name) if w not in GROUP_GENERIC}
+        if seg and seg & stems:
+            hit = next((x for x in every if str(x.get("name") or "").lower().startswith(name.lower())), None)
+            aff = hit.get("affinity") if hit else None
+            ok = isinstance(aff, (int, float)) and aff > RULES["informative_affinity"]
+            return {"segment": name, "id": a.get("id"), "affinity": aff, "rank": every.index(hit) + 1 if hit else None,
+                    "status": "confirmed" if ok else "refuted", "src": src, "src_rank": hit.get("src") if hit else None}
+    return None
+
+
+def _recommend(run: _Run, kind: str, signal: dict, known: set) -> dict | None:
+    """Qloo's recommendations for this taste (/v2/insights filter.type = the idea's kind): products next to the idea.
+    Strong neighbours (affinity >= rules) that are not already matched are adjacent demand."""
+    body, src = run.get("/v2/insights", {"filter.type": kind, "take": 10, **signal}, "recommendations: what this audience also likes")
+    if src is None:
+        return None
+    rows = [{"name": e.get("name"), "id": e.get("entity_id"), "affinity": (e.get("query") or {}).get("affinity")}
+            for e in (((body or {}).get("results") or {}).get("entities") or [])[:10]]
+    adj = [r for r in rows if r["id"] not in known and isinstance(r["affinity"], (int, float)) and r["affinity"] >= RULES["adjacent_affinity"]]
+    return {"items": rows, "adjacent": [r["name"] for r in adj], "strong": len(adj), "src": src}
+
+
 def _audience(run: _Run, signal: dict, what: str, take: int = 6) -> tuple[list[dict], int | None]:
     body, src = run.get("/v2/insights", {"filter.type": "urn:audience", "take": take, **signal}, what)
     rows = [{"name": a.get("disambiguation") or a.get("name"), "affinity": (a.get("query") or {}).get("affinity"), "src": src}
@@ -255,7 +311,7 @@ def _informative(rows: list[dict]) -> list[dict]:
 
 def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: dt.date, exclude: set[str]) -> dict:
     ev: dict = {"product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
-                "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": []}
+                "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None}
     words = content_words(idea, place)
     ev["words"], ev["named_audience"] = words, [{"word": w, "dimension": d, "key": k} for w, d, k in audience_named(idea)]
     if not words:
@@ -315,7 +371,10 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         lc, hq = h.get("location") or {}, h.get("query") or {}
         ev["where"].append({"lat": lc.get("latitude"), "lon": lc.get("longitude"), "affinity": hq.get("affinity"), "src": s7})
     ev["place"] = loc
-    ev["audiences"], _ = _audience(run, signal, "audience segments ranked by affinity")
+    every, _ = _audience(run, signal, "audience segments ranked by affinity", take=20)
+    ev["audiences"] = every[:6]
+    ev["buyer_group"] = _buyer_group(run, idea, every)
+    ev["recommended"] = _recommend(run, kind, signal, {m["id"] for m in ev["matches"]} | ({lead["id"]} if lead else set()))
     ev["trend"] = _trend(run, lead, today)
     if lead:
         ev["versus"] = _versus(run, near, lead, signal, ev["audiences"])
@@ -413,6 +472,12 @@ def decide(ev: dict, live: bool, idea: str = "") -> dict:
     overlap = vs["overlap"]
     strength = sum((a["affinity"] - NEUTRAL) * 2 for a in info) / len(info)
     factor_t = 1.25 if t.get("direction") == "rising" else 1.0
+    bg, rec = ev.get("buyer_group"), ev.get("recommended")
+    factor_g = (RULES["group_confirmed"] if bg["status"] == "confirmed" else RULES["group_refuted"]) if bg else 1.0
+    factor_r = 1.0
+    if rec is not None:
+        factor_r = RULES["adjacent_many_factor"] if rec["strong"] >= RULES["adjacent_many"] else RULES["adjacent_few_factor"] if rec["strong"] <= RULES["adjacent_few"] else 1.0
+    factor_a = round(factor_a * factor_g * factor_r, 4)
     raw = RULES["base_units"] * (1 + 2 * strength) * (1 - overlap / 2) * factor_a * factor_t
     target = int(min(1000, max(20, round(raw / 10) * 10)))
     reserve = int(math.ceil(round(target * (0.3 + 0.2 * overlap), 6)))
@@ -420,8 +485,15 @@ def decide(ev: dict, live: bool, idea: str = "") -> dict:
            f"audience: {len(info)} informative segments, strength {strength:.2f}",
            f"vs {vs['leader']}: overlap {overlap:.0%} ({vs['method']}); room: {', '.join(vs['whitespace'][:3]) or 'none named'}",
            (f"trend: {t.get('direction')} (data through {t.get('data_through')})" if t.get("counted") else f"trend: {t.get('why') or TREND_NOTE}")]
-    if factor_a < 1:
+    if any(isinstance(((ev["who"] or {}).get(na["dimension"]) or {}).get(na["key"]), (int, float)) and
+           ((ev["who"] or {}).get(na["dimension"]) or {}).get(na["key"]) < 0 for na in ev["named_audience"]):
         why.append("the stated audience leans mildly away in Qloo's demographics: target halved")
+    if bg:
+        why.append(f"buyer group '{bg['segment']}' (/v2/audiences) {bg['status']} by Qloo's ranked segments"
+                   + (f" (rank {bg['rank']}, affinity {bg['affinity']:.2f})" if bg.get("rank") else " (not in the top 20)")
+                   + f": target x {factor_g}")
+    if rec is not None and factor_r != 1.0:
+        why.append(f"recommendations: {rec['strong']} strong adjacent products ({', '.join(rec['adjacent'][:3]) or 'none'}): target x {factor_r}")
     return {"verdict": "OPEN", "reasons": why, "target_units": target, "reserve_units": reserve,
             "formula": f"round10({RULES['base_units']} x (1 + 2 x {strength:.3f}) x (1 - {overlap:.3f}/2) x {factor_a} x {factor_t}) = {target}; "
                        f"reserve ceil({target} x (0.3 + 0.2 x {overlap:.3f})) = {reserve}"}
@@ -447,7 +519,7 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
     run = _Run(client)
     ok, why = client.ready()
     empty = {"product_type": None, "words": content_words(idea, place), "matches": [], "unrelated": [], "excluded": [], "leader": None,
-             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": []}
+             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None}
     ev = gather(run, idea, place, leader, today, set(exclude or [])) if ok else empty
     failed = [c for c in run.calls if c.get("error") and c["what"].startswith(ESSENTIAL)]
     missing = [c for c in run.calls if c.get("error") and c not in failed]

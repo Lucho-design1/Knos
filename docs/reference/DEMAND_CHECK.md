@@ -81,6 +81,32 @@ evidence without the claim id refused (HTTP 422); referee PASS + release
 `5H7WmpNZDWpeBh1PWWqso65WZjognA7JkXXJCSLmLSceAtgbaGfU1sZTBDmY6ZGhFnpUCBL8aT9k6oSTw7Uoski`; the maker's wallet then held
 45 test units. The evidence page in that run was an echo service showing the claim id (a demo, not a product page).
 
+**Two more Qloo calls, used only where they change the target** (never the verdict):
+- **Named buyer group** (`/v2/audiences`, all ten audience types, cached 7 days): when a word of the idea names one of
+  Qloo's audience segments ("runners" -> Running, "gamers" -> Video Gamer, "vegans" -> Veganism), the segment is looked
+  up in the idea's top 20 ranked segments (`/v2/insights` `urn:audience`). Ranked above 0.55: confirmed, target x 1.2;
+  absent or neutral: refuted, target x 0.6, and the report says so. No named segment: no change, no call counted.
+- **Recommendations** (`/v2/insights` with `filter.type` = the idea's kind, 10 results): products this taste also
+  likes. Those with affinity >= 0.8 that are not already matched are adjacent demand: >= 5 -> target x 1.2; <= 1 ->
+  target x 0.8; else no change. A failed call changes nothing.
+
+## Research intake (16 Oct 2026)
+
+`POST /api/research {ref}` -> a research card (`apps/wanted/knos_wanted/research.py`): the proven result quoted from the
+abstract with its DOI, OpenAlex `cited_by_count`, year, retraction status, Nobel recognition from
+`apps/wanted/knos_wanted/data/nobel.toml` (rows quote and link nobelprize.org press releases), and the product it enables.
+After the demand check, "why it never crossed" flags the three walls only with evidence: money before proof (>= 5
+years, Nobel or >= 1,000 citations, and no Qloo product for it), slow judges (an OpenAlex field or topic that is
+clinical or regulated), failed attempts (Qloo products like it with popularity < 0.3); otherwise "no evidence".
+
+## The Knos Record (Sibyl) in the live flow
+
+`/api/check` writes the decision to the Record (`company.record_check`: WARM claim `demand:<hash>`, COLD `experiment`).
+Money reads it back first: `preorder.lock` refuses a report Sibyl does not hold as OPEN with the same target and
+reserve; `preorder.record_gate` refuses a release Sibyl holds no pre-order for, or already holds as released; the reserve
+is counted from Sibyl. Each lock and release is written back (COLD `funding` / `payout`, WARM state). Without Sibyl
+(`sibyl-memory-client` 0.8.x, pinned `<0.9`) no money moves.
+
 ## How Knos reaches Qloo (MCP flow, optional)
 
 ```

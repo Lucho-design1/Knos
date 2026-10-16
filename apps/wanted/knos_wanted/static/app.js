@@ -14,7 +14,14 @@ async function api(path, body) {
   return data;
 }
 function err(e) { const b = $("err"); b.hidden = !e; b.textContent = e ? String(e.message || e) : ""; if (e) b.scrollIntoView({ block: "nearest" }); }
-function busy(btn, on, text) { btn.disabled = on; if (on) { btn.dataset.t = btn.textContent; btn.textContent = text; } else if (btn.dataset.t) btn.textContent = btn.dataset.t; }
+let slowTimer = null, card = null;
+function slow(on, what) {
+  clearTimeout(slowTimer); const el = $("slow");
+  if (!on) { el.hidden = true; return; }
+  el.hidden = false; el.textContent = what + "...";
+  slowTimer = setTimeout(() => { el.textContent = what + "... still working: a free server can take up to a minute to wake, and Qloo answers take a few seconds each."; }, 6000);
+}
+function busy(btn, on, text) { slow(on, (text || "").replace(/\.+$/, "")); btn.disabled = on; if (on) { btn.dataset.t = btn.textContent; btn.textContent = text; } else if (btn.dataset.t) btn.textContent = btn.dataset.t; }
 function src(n) { const c = calls[n - 1]; return n && c ? `<span class="src" title="${esc(JSON.stringify(c.params))}">source #${n} ${esc(c.call)}${c.params && c.params["filter.type"] ? " " + esc(c.params["filter.type"]) : ""}</span>` : ""; }
 function pct(v) { return v == null ? "?" : (Math.round(v * 1000) / 10) + "%"; }
 function tx(sig) { return `<a href="https://explorer.solana.com/tx/${esc(sig)}?cluster=devnet" target="_blank" rel="noopener">${esc(sig.slice(0, 10))}...</a>`; }
@@ -90,6 +97,8 @@ function render(r) {
   if (r.fees && r.fees.text) $("feeLine").textContent = r.fees.text + ".";
   $("pre").hidden = d.verdict !== "OPEN";
   if (d.verdict === "OPEN") { $("units").max = d.target_units; $("preModel").textContent = (r.fees && r.fees.text) || ""; }
+  const rs = r.research;
+  if (rs) $("decision").insertAdjacentHTML("beforeend", `<h3>Why it never crossed the valley</h3><ul>${(rs.why_never_crossed || []).map((w) => `<li class="${w.flag ? "warn" : ""}"><b>${esc(w.wall)}</b>: ${esc(w.evidence)}</li>`).join("")}</ul>`);
   try { history.replaceState(null, "", "#report=" + r.hash); } catch (e) { /* file */ }
   if (d.verdict === "OPEN") loadPre(r.hash);
 }
@@ -135,7 +144,7 @@ async function fromHash() {
 window.addEventListener("hashchange", fromHash);
 async function runCheck(exclude) {
   err(null); const b = $("checkBtn"); busy(b, true, "Asking Qloo...");
-  try { render(await api("/api/check", { idea: $("idea").value, place: $("place").value, leader: $("leader").value, exclude: exclude || [] })); $("decision").scrollIntoView({ behavior: "smooth" }); }
+  try { render(await api("/api/check", { idea: $("idea").value, place: $("place").value, leader: $("leader").value, research: card && $("idea").value === card.product ? card.hash : undefined, exclude: exclude || [] })); $("decision").scrollIntoView({ behavior: "smooth" }); }
   catch (e) { err(e); } finally { busy(b, false); }
 }
 $("whoBtn").onclick = () => { $("signin").hidden = !$("signin").hidden; if (!$("signin").hidden) $("signin").scrollIntoView({ block: "nearest" }); };
@@ -161,5 +170,21 @@ $("msBtn").onclick = async () => {
 $("refundBtn").onclick = async () => {
   if (!session) { $("signin").hidden = false; return err("Sign in first."); }
   try { err(null); $("msOut").innerHTML = out(await api("/api/refund", { commitment: $("commit").value })); await loadPre(report.hash); } catch (e) { err(e); }
+};
+function renderCard(c) {
+  card = c; const el = $("rcard"); el.hidden = false;
+  const n = c.nobel, r = c.retraction || {};
+  el.innerHTML = `<p class="label">${esc(c.label || "")}</p><h3>${esc(c.title)}</h3>` +
+    `<p class="muted">${esc(c.field || "")}${c.year ? ", " + c.year : ""}${c.venue ? ", " + esc(c.venue) : ""}</p>` +
+    `<blockquote>${esc(c.proven_result.quote)}</blockquote><p class="small muted">Proven result: ${esc(c.proven_result.where)}, <a href="${esc(c.proven_result.source || "#")}" target="_blank" rel="noopener">source</a></p>` +
+    `<p>Cited <b>${c.cited_by_count == null ? "?" : c.cited_by_count.toLocaleString()}</b> times${c.cited_source ? ` (<a href="${esc(c.cited_source)}" target="_blank" rel="noopener">OpenAlex</a>)` : ""}. ` +
+    `Retraction: <b>${r.retracted ? "RETRACTED" : r.checked || r.via ? "none found" : "not checked"}</b>${r.via ? " (" + esc(r.via) + ")" : ""}.</p>` +
+    (n ? `<p>Nobel Prize in ${esc(n.prize)} ${n.year} (${esc(n.laureates)}): "${esc(n.said)}" <a href="${esc(n.url)}" target="_blank" rel="noopener">nobelprize.org</a></p>` : "") +
+    `<p class="small muted">Product it enables: ${esc(c.product_source)}. Edit it below if you see it differently.</p>`;
+  $("idea").value = c.product; $("idea").focus();
+}
+$("researchForm").onsubmit = async (ev) => {
+  ev.preventDefault(); err(null); const b = $("refBtn"); busy(b, true, "Reading the paper...");
+  try { renderCard(await api("/api/research", { ref: $("ref").value })); } catch (e) { err(e); } finally { busy(b, false); }
 };
 boot();

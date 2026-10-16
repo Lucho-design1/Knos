@@ -27,7 +27,7 @@ knos-demand-check = "knos_wanted.__main__:main"
 packages = ["knos_wanted"]
 
 [tool.setuptools.package-data]
-knos_wanted = ["static/*"]
+knos_wanted = ["static/*", "data/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

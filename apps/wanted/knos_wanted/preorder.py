@@ -27,7 +27,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from . import escrow
+from . import company, escrow
 
 PROGRAM_034_TEST = "FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4"   # knos_pay 0.3.34 TEST build on devnet
 FIELD = "Business, Management and Accounting"
@@ -152,16 +152,21 @@ def fee_line(units: int | None = None) -> dict:
 
 # ---- lock ------------------------------------------------------------------------------------------------------------
 def lock(report: dict, units: int, buyer_label: str, maker_wallet: str | None = None, days: int | None = None, led=None) -> dict:
-    """Lock `units` test units for the maker of an OPEN report, judged by the 2-of-3 panel. Returns the commitment record."""
+    """Lock `units` test units for the maker of an OPEN report, judged by the 2-of-3 panel. Returns the commitment record.
+    The decision is READ from the Knos Record (Sibyl) first: a report Sibyl does not hold as OPEN, with the same target
+    and reserve, locks nothing."""
+    d = report.get("decision") or {}
+    if d.get("verdict") != "OPEN" or report.get("label", "").startswith("NO QLOO"):
+        raise ValueError("pre-orders open only on a report whose decision is OPEN on live Qloo evidence")
+    held = company.record_state(report.get("hash", ""))
+    if held.get("verdict") != "OPEN" or not held.get("live") or (held.get("target_units"), held.get("reserve_units")) != (d.get("target_units"), d.get("reserve_units")):
+        raise company.NotInRecord("the Knos Record (Sibyl) does not hold this report as OPEN with this target and reserve")
     _need()
     from solders.pubkey import Pubkey
 
     from knos import ideas
     from knos.ideas import commit as C
     from knos.settle.v2 import pay
-    d = report.get("decision") or {}
-    if d.get("verdict") != "OPEN" or report.get("label", "").startswith("NO QLOO"):
-        raise ValueError("pre-orders open only on a report whose decision is OPEN on live Qloo evidence")
     if isinstance(units, bool) or not isinstance(units, int) or not 5 <= units <= min(1000, d["target_units"]):
         raise ValueError(f"units: 5 to {min(1000, d['target_units'])} (the report's target)")
     maker = (maker_wallet or os.environ.get("KNOS_WANTED_MAKER_WALLET") or "").strip()
@@ -195,6 +200,7 @@ def lock(report: dict, units: int, buyer_label: str, maker_wallet: str | None = 
                "buyer": f"demo buyer, test money (for {buyer_label[:80]})", "maker_wallet": maker, "status": "locked",
                "deadline_days": days, "doc": doc, "made": doc["made"],
                "signatures": {"mint_to_buyer": minted, "lock": st["signature"]}}
+        rec["record"] = company.record_lock(report["hash"], st["order"], units, st["signature"])
         _save(rec)
     return public(rec)
 
@@ -209,7 +215,8 @@ def public(rec: dict) -> dict:
             "signatures": sigs, "explorer": {k: escrow.explorer(v) for k, v in sigs.items() if isinstance(v, str)},
             "order_explorer": escrow.explorer(rec["order"], "address"), "evidence": rec.get("evidence"),
             "how_to_prove": f"publish a public https page that contains {rec['claim_id']} and post its URL as the milestone evidence",
-            "money": "test units of this app's own devnet test mint: test money, 0 revenue", "fees": fee_line(rec["units"])}
+            "money": "test units of this app's own devnet test mint: test money, 0 revenue", "fees": fee_line(rec["units"]),
+            "record": rec.get("record"), "release_record": rec.get("release_record")}
 
 
 # ---- milestone evidence ----------------------------------------------------------------------------------------------
@@ -259,20 +266,41 @@ def verify(rec: dict, url: str, opener=None, resolve=_public_host) -> tuple[dict
     return {"url": url, "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body), "contains_claim_id": True}, body
 
 
-def reserve_status(report: dict) -> dict:
+def reserve_status(report: dict, held: dict | None = None) -> dict:
+    """Units pre-ordered vs the reserve, as the Knos Record (Sibyl) holds them; this server's files when Sibyl has none."""
+    if held is None:
+        try:
+            held = company.record_state(report["hash"])
+        except company.NotInRecord:
+            held = None
+    if held is not None:
+        pre = held.get("preorders") or {}
+        return {"pre_ordered_units": pre.get("units", 0), "reserve_units": held.get("reserve_units") or 0,
+                "met": pre.get("units", 0) >= (held.get("reserve_units") or 0), "source": "Knos Record (Sibyl)"}
     locked = sum(r["units"] for r in of_report(report["hash"]) if r.get("status") in ("locked", "released"))
     need = (report.get("decision") or {}).get("reserve_units") or 0
-    return {"pre_ordered_units": locked, "reserve_units": need, "met": locked >= need}
+    return {"pre_ordered_units": locked, "reserve_units": need, "met": locked >= need, "source": "this server's files (not in the Record)"}
+
+
+def record_gate(rec: dict) -> dict:
+    """Before a release: the Record (Sibyl) must hold this pre-order and must not hold it as released already."""
+    held = company.record_state(rec["report"])
+    if rec["order"] in (held.get("released") or []):
+        raise company.NotInRecord("the Knos Record (Sibyl) already holds this commitment as released")
+    if rec["order"] not in ((held.get("preorders") or {}).get("list") or []):
+        raise company.NotInRecord("the Knos Record (Sibyl) holds no pre-order for this commitment")
+    return held
 
 
 def milestone(report: dict, order: str, url: str, led=None, opener=None, resolve=_public_host) -> dict:
     """Verify the maker's evidence; when verified and the reserve is met, 2 referees sign PASS and the server releases."""
-    _need()
-    from knos.ideas import commit as C
     rec = load(order)
     if rec["status"] != "locked":
         raise ValueError(f"this commitment is already {rec['status']}")
-    res = reserve_status(report)
+    held = record_gate(rec)
+    _need()
+    from knos.ideas import commit as C
+    res = reserve_status(report, held)
     if not res["met"]:
         raise ValueError(f"reserve not met: {res['pre_ordered_units']} of {res['reserve_units']} units pre-ordered; the maker is paid once it is")
     ev, body = verify(rec, url, opener, resolve)
@@ -288,6 +316,8 @@ def milestone(report: dict, order: str, url: str, led=None, opener=None, resolve
         rec["evidence"] = ev
         for i, s in enumerate(got["sent"], 1):
             rec["signatures"][f"referee_{i}_pass"] = s["signature"]
+        if rec["status"] == "released":
+            rec["release_record"] = company.record_release(rec["report"], order, [s["signature"] for s in got["sent"]], ev["sha256"])
         _save(rec)
     return {**public(rec), "verified": ev, "release": got["status"], "reserve": res}
 

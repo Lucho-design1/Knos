@@ -23,7 +23,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import auth, buyer, catalog, check, company, demand, escrow, planner, preorder, privacy
+from . import auth, buyer, catalog, check, company, demand, escrow, planner, preorder, privacy, research
 from .qloo_mcp import AGGREGATE, Qloo, QlooUnavailable
 from .qloo_rest import Client
 
@@ -37,7 +37,7 @@ GLOBAL_DEMO = (60, 3600)                                           # demo pre-or
 ROUTES = {"/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
-          "/api/check": "check", "/api/preorder": "lock", "/api/milestone": "milestone", "/api/refund": "lock",
+          "/api/check": "check", "/api/research": "check", "/api/preorder": "lock", "/api/milestone": "milestone", "/api/refund": "lock",
           "/api/auth/challenge": "auth", "/api/auth/passkey/register": "auth", "/api/auth/passkey/login": "auth",
           "/api/auth/google": "auth", "/api/auth/guest": "auth"}
 SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund")
@@ -47,6 +47,7 @@ class State:
     def __init__(self, q: Qloo | None = None, rest: Client | None = None):
         self.q = q or Qloo()
         self.rest = rest or Client()
+        self.cards: dict[str, dict] = {}
         self.reports: OrderedDict[str, dict] = OrderedDict()
         self.sessions: OrderedDict[str, tuple[float, dict]] = OrderedDict()
         self.hits: dict[tuple[str, str], deque] = defaultdict(deque)
@@ -226,7 +227,7 @@ def make_handler(state: State):
                     return self._send(401, {"error": "sign in first (passkey, Google or a guest label)"})
                 if u.path == "/api/milestone" and not state.allow("commitment:" + str(body.get("commitment", ""))[:64], "milestone_one"):
                     return self._send(429, {"error": "this commitment had 10 evidence posts in the last hour; try again later"})
-                if u.path.startswith("/api/auth/") or u.path in ("/api/check",) + SIGNED_IN:
+                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research") + SIGNED_IN:
                     return self._send(200, self.route_v2(u.path, body))
                 return self._send(200, self.route(u.path, body))
             except auth.AuthError as why:
@@ -265,8 +266,19 @@ def make_handler(state: State):
                     raise ValueError("exclude: a list of up to 20 Qloo entity ids the maker unticked")
                 rep = check.demand_check(idea, _text(body.get("place")), _text(body.get("leader"), 80), client=state.rest, exclude=ex)
                 rep["fees"] = preorder.fee_line()
+                card = state.cards.get(str(body.get("research") or ""))
+                if card:
+                    rep["research"] = {**card, "why_never_crossed": research.why_never_crossed(card, rep)}
+                rep["record"] = company.record_check(rep)          # the decision in the Knos Record (Sibyl), read before money
                 state.keep_check(rep)
                 return rep
+            if path == "/api/research":
+                card = research.research_card(str(body.get("ref") or ""), product=_text(body.get("product"), 200))
+                with state.lock:
+                    state.cards[card["hash"]] = card
+                    while len(state.cards) > 300:
+                        state.cards.pop(next(iter(state.cards)))
+                return card
             if path == "/api/auth/challenge":
                 return {"challenge": auth.challenge(), "rp_id": os.environ.get("KNOS_WANTED_RP_ID") or (self.headers.get("Host") or "").split(":")[0]}
             if path == "/api/auth/passkey/register":

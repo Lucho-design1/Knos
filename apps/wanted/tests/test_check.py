@@ -18,13 +18,14 @@ class FakeQloo:
     """Answers like Qloo's REST API, from synthetic numbers chosen per test."""
 
     def __init__(self, *, results=None, affinity=0.75, flat=False, trend=(0.70, 0.75), shared=1, leader_pop=0.8,
-                 demo=None, refuse=None, fail=None):
+                 demo=None, refuse=None, fail=None, recs=(0.95, 0.95, 0.95, 0.5), group_aff=None):
         self.results = results if results is not None else [ent(0, "Synthetic Water Bottle Co", leader_pop, "a water bottle brand"),
                                                              ent(1, "Glow Bottle (synthetic)"), ent(2, "Drink Reminder Bottle (synthetic)"),
                                                              ent(3, "Water Bottle Co"), ent(4, "Swimsuits For All (synthetic)", 0.9, "swimwear")]
         self.affinity, self.flat, self.trend, self.shared = affinity, flat, trend, shared
         self.demo = demo or {"age": {"24_and_younger": 0.2, "55_and_older": -0.3}, "gender": {"female": 0.2, "male": -0.2}}
         self.refuse, self.fail, self.seen = refuse, fail, []
+        self.recs, self.group_aff = recs, group_aff
 
     def ready(self):
         return True, "ok"
@@ -51,7 +52,16 @@ class FakeQloo:
             return {"results": {"entities": [{"name": "Synthetic Gym", "properties": {"geocode": {"name": "Lekki"}}, "query": {"affinity": 0.9}}]}}
         if t == "urn:audience":
             v = 0.5 if self.flat else self.affinity
-            return {"results": {"entities": [{"name": f"Segment {i} (synthetic)", "types": "urn:audience", "query": {"affinity": v}} for i in range(6)]}}
+            rows = [{"name": f"Segment {i} (synthetic)", "types": "urn:audience", "query": {"affinity": v}} for i in range(p.get("take", 6))]
+            if self.group_aff is not None:
+                rows.insert(1, {"name": "Running (Hobbies And Interests)", "types": "urn:audience", "query": {"affinity": self.group_aff}})
+            return {"results": {"entities": rows[:p.get("take", 6)]}}
+        if path == "/v2/audiences":
+            return {"results": {"audiences": [{"name": "Running", "id": "urn:audience:hobbies_and_interests:running"},
+                                              {"name": "Video Gamer", "id": "urn:audience:hobbies_and_interests:video_gamer"}]}}
+        if path == "/v2/insights" and str(t).startswith("urn:entity:"):
+            return {"results": {"entities": [{"name": f"Neighbour {i} (synthetic)", "entity_id": f"N{i}", "query": {"affinity": a}}
+                                             for i, a in enumerate(self.recs)]}}
         if path == "/v2/trending":
             if self.trend is None:
                 return {"results": {"trending": []}}
@@ -193,3 +203,23 @@ def test_no_key_never_opens(monkeypatch, tmp_path):
 def test_hyphenated_names_count_their_parts():
     m = check._ent({"name": "Chameleon Cold-brew", "entity_id": "X", "properties": {}}, 1, ["cold", "brew", "coffee"])
     assert m["relevant"] and m["name_words"] == ["brew", "cold"]
+
+
+def test_named_buyer_group_from_audiences_changes_the_target():
+    base = run(IDEA + " for runners")[0]["decision"]                     # Running named, absent from the top 20: refuted
+    assert base["verdict"] == "OPEN" and any("'Running' (/v2/audiences) refuted" in x for x in base["reasons"])
+    yes = run(IDEA + " for runners", group_aff=0.8)[0]
+    d = yes["decision"]
+    assert yes["buyer_group"]["status"] == "confirmed" and yes["buyer_group"]["rank"] == 2
+    assert d["target_units"] > base["target_units"] and d["target_units"] == 270     # Running 0.8 also lifts strength: 266.9 -> 270
+    assert base["target_units"] == 130                                                # 220 x 0.6 = 132 -> 130
+    assert run()[0]["buyer_group"] is None and run()[0]["decision"]["target_units"] == 220     # nothing named: no change
+
+
+def test_recommendations_raise_or_lower_the_target():
+    many = run(recs=(0.95,) * 6)[0]["decision"]
+    few = run(recs=(0.95, 0.5))[0]["decision"]
+    assert (many["target_units"], few["target_units"]) == (260, 180)    # 220 x 1.2 = 264 -> 260; 220 x 0.8 = 176 -> 180
+    assert any(x.startswith("recommendations: 6 strong") for x in many["reasons"])
+    no_rec = run(recs=(0.95,) * 6, fail="urn:entity:brand")[0]["decision"]["target_units"]    # recommendations (and trend) fail
+    assert no_rec == run(fail="/v2/trending")[0]["decision"]["target_units"] == 180          # same as without them: not counted

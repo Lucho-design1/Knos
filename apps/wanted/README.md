@@ -12,6 +12,25 @@ and reserve of a pre-order campaign come from a published formula over Qloo's nu
 
 Full reference: [docs/reference/DEMAND_CHECK.md](../../docs/reference/DEMAND_CHECK.md). License: MIT ([LICENSE](LICENSE)).
 
+## Research stuck in the valley of death (the intake)
+
+`POST /api/research {ref}` (the page's first box): a DOI, arXiv id, PubMed id, OpenAlex id (W...) or `uspto:<number>`
+(labelled FIXTURE without a USPTO key) is read through `knos.ideas.sources` and OpenAlex into a research card
+(`knos_wanted/research.py`): the proven result (an abstract sentence chosen by a fixed rule, quoted with its DOI),
+OpenAlex `cited_by_count`, year, retraction status (Crossref `updated-by`, OpenAlex `is_retracted`), Nobel recognition
+from `knos_wanted/data/nobel.toml` (each row quotes and links its nobelprize.org press release), and the product it
+enables (the Nobel release's named use, else a topic table, else a generic phrase; the maker edits it). The demand check
+then runs on that product, and the report adds "why it never crossed": money before proof, slow judges, failed
+attempts, each flagged only with its evidence, else "no evidence".
+
+Wake page: `docs/wanted.html` (GitHub Pages) pings `https://knos.onrender.com/healthz` until the free instance wakes,
+then opens the app; the app shows a status line during slow calls.
+
+The Knos Record (Sibyl) is read before money moves: `/api/check` writes the decision (WARM claim `demand:<hash>`, COLD
+`experiment`); a pre-order is refused unless Sibyl holds that report as OPEN with the same target and reserve; a
+release needs Sibyl's pre-order entry and is refused when Sibyl already holds it as released; the reserve is counted
+from Sibyl. Needs `sibyl-memory-client>=0.8.1,<0.9` (pinned by Knos's pyproject, installed in the image).
+
 ## The check, the decision, the money (Qloo REST, the primary path)
 
 1. **Check** (`POST /api/check {idea, place?, leader?}`, no sign-in): the idea's key words go to Qloo's API from this

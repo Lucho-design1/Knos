@@ -45,8 +45,18 @@
 
   <div id="err" class="err" role="alert" hidden></div>
 
+  <form id="researchForm" class="card form" autocomplete="off" aria-labelledby="resH">
+    <h2 id="resH">Research stuck in the valley of death</h2>
+    <label for="ref">A landmark result: DOI, arXiv id, PubMed id, OpenAlex id (W...) or uspto:&lt;patent number&gt;</label>
+    <input id="ref" maxlength="200" placeholder="10.1126/science.aam8743" inputmode="url">
+    <button id="refBtn" type="submit">Read the research</button>
+  </form>
+  <section id="rcard" class="card" hidden aria-live="polite"></section>
+
+  <p id="slow" class="slow" role="status" hidden></p>
+
   <form id="checkForm" class="card form" autocomplete="off" aria-labelledby="checkH">
-    <h2 id="checkH">1. Your idea</h2>
+    <h2 id="checkH">1. The product (or your own idea)</h2>
     <label for="idea">The product, in plain words (only its key words go to Qloo)</label>
     <textarea id="idea" rows="3" maxlength="500" required placeholder="A smart water bottle that glows to remind you to drink"></textarea>
     <div class="two">

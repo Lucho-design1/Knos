@@ -13,7 +13,8 @@ WORKDIR /src
 COPY pyproject.toml README.md README.pypi.md LICENSE ./
 COPY src ./src
 COPY terms ./terms
-COPY config/fees.yaml ./config/fees.yaml
+COPY config/fees.yaml config/leitner.yaml ./config/
+COPY plugin/skills ./plugin/skills
 COPY apps/wanted ./apps/wanted
 RUN pip install --no-cache-dir . "./apps/wanted[escrow,auth]" && sh apps/wanted/bridge/install.sh
 WORKDIR /app
