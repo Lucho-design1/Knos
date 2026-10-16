@@ -35,6 +35,27 @@ PRODUCT_MAP = (
     (("crispr", "cas9"), "a gene editing therapy"), (("lithium", "battery"), "a longer lasting battery"),
     (("microbiome", "probiotic"), "a probiotic supplement"), (("sleep",), "a sleep improving device"),
 )
+REGULATORS = {"fda.gov": "FDA (US)", "ema.europa.eu": "EMA (EU)", "nafdac.gov.ng": "NAFDAC (Nigeria)",
+              "mhra.gov.uk": "MHRA (UK)", "gov.uk/government/organisations/medicines-and-healthcare": "MHRA (UK)",
+              "pmda.go.jp": "PMDA (Japan)"}
+REGULATOR_WORDS = {"FDA": "FDA (US)", "EMA": "EMA (EU)", "NAFDAC": "NAFDAC (Nigeria)", "MHRA": "MHRA (UK)", "PMDA": "PMDA (Japan)"}
+
+
+def regulator_of(evidence: dict | None) -> str | None:
+    """The regulator a "no product yet" source cites, from its URL's domain or its quoted words."""
+    if not evidence:
+        return None
+    url = str(evidence.get("url") or "").lower()
+    for dom, name in REGULATORS.items():
+        if dom in url:
+            return name
+    said = str(evidence.get("said") or "")
+    for word, name in REGULATOR_WORDS.items():
+        if re.search(rf"\b{word}\b", said):
+            return name
+    return None
+
+
 YEARS_STUCK = 5            # years since publication before a cited result with no product counts as stuck
 TOP_CITED = 1000           # OpenAlex cited_by_count at or above this: top-cited
 SMALL_PRODUCT = 0.3        # a Qloo match below this popularity is a small attempt
@@ -123,7 +144,8 @@ def research_card(ref: str, fetcher=None, product: str | None = None, today: dt.
             "cited_by_count": work.get("cited_by_count"), "cited_source": oa_link,
             "retraction": {"retracted": bool(retr.get("retracted") or work.get("is_retracted")), "checked": bool(retr.get("checked")),
                            "via": retr.get("via") or ("OpenAlex is_retracted" if work else None), "notices": retr.get("notices") or []},
-            "nobel": nobel, "no_product_evidence": ({"said": row["said"], "url": row["url"], "products_on_market": row.get("products_on_market")} if row else None),
+            "nobel": nobel, "regulator": regulator_of({"said": row["said"], "url": row["url"]} if row else None),
+            "no_product_evidence": ({"said": row["said"], "url": row["url"], "products_on_market": row.get("products_on_market")} if row else None),
             "product": (product or "").strip()[:200] or phrase, "product_source": "edited by the maker" if product else phrase_why,
             "suggested_product": phrase, "day": today.isoformat()}
     card["hash"] = hashlib.sha256(json.dumps({k: v for k, v in card.items() if k not in ("day",)}, sort_keys=True, default=str).encode()).hexdigest()
@@ -148,8 +170,10 @@ def why_never_crossed(card: dict, report: dict, today: dt.date | None = None) ->
         out.append({"wall": "money before proof", "flag": False, "evidence": "no evidence (needs >= 5 years and Nobel or >= 1,000 citations, and no Qloo product)"})
     text = " ".join([card.get("field") or "", card.get("topic") or "", *card.get("topics", []), card.get("product") or ""]).lower()
     word = next((w for w in REGULATED_WORDS if w in text), None)
-    reg = card.get("field") in REGULATED_FIELDS or word is not None
-    why = (f"OpenAlex field '{card.get('field')}' is clinical or regulated" if card.get("field") in REGULATED_FIELDS
+    named = card.get("regulator")
+    reg = named is not None or card.get("field") in REGULATED_FIELDS or word is not None
+    why = (f"the 'no product yet' source cites the regulator {named} ({(card.get('no_product_evidence') or {}).get('url')})" if named
+           else f"OpenAlex field '{card.get('field')}' is clinical or regulated" if card.get("field") in REGULATED_FIELDS
            else f"the topic or product names '{word}' (OpenAlex topic '{card.get('topic')}', product '{card.get('product')}')")
     out.append({"wall": "slow judges", "flag": reg,
                 "evidence": (f"{why}: such products need clinical or regulatory approval before sale"

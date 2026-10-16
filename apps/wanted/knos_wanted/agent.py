@@ -27,6 +27,15 @@ _lock = threading.Lock()
 MAX_JOBS = 200
 
 
+def _trim(text, n: int) -> str:
+    """At most `n` characters, cut at a word boundary with an ellipsis (never mid-word)."""
+    t = str(text or "")
+    if len(t) <= n:
+        return t
+    cut = t[:n].rsplit(" ", 1)[0].rstrip(",;:")
+    return cut + "\u2026"
+
+
 def _now() -> str:
     return dt.datetime.now(dt.timezone.utc).strftime("%H:%M:%S")
 
@@ -88,9 +97,11 @@ def run(job: dict, state) -> None:
                 state.cards[card["hash"]] = card
             job["card"] = card["hash"]
             _step(job, "paper", "read the paper", tool="OpenAlex, Crossref (knos.ideas.sources)", inp=job["ref"],
-                  out=f"{card['title'][:120]} ({card.get('year')}), cited {card.get('cited_by_count')}, "
-                      f"retracted: {card['retraction']['retracted']}" + (f", Nobel {card['nobel']['prize']} {card['nobel']['year']}" if card.get("nobel") else ""),
-                  effect=f"proven result: \"{card['proven_result']['quote'][:160]}\"")
+                  out=f"{_trim(card['title'], 120)} ({card.get('year')}), cited {card.get('cited_by_count')}, "
+                      f"retracted: {card['retraction']['retracted']}"
+                      + (f", Nobel {card['nobel']['prize']} {card['nobel']['year']}" if card.get("nobel") else "")
+                      + (f"; regulated: the source cites {card['regulator']}" if card.get("regulator") else ""),
+                  effect=f"proven result: \"{_trim(card['proven_result']['quote'], 160)}\"")
             _step(job, "decision", "the product this result enables", tool="research.product_phrase", inp=card.get("topics"),
                   out=card["product"], effect=card["product_source"])
         idea = (product or (card or {}).get("product") or job.get("idea") or "").strip()
@@ -152,6 +163,20 @@ def start(state, *, ref: str | None = None, idea: str | None = None, place: str 
     else:
         threading.Thread(target=run, args=(job, state), daemon=True).start()
     return job
+
+
+def crossings(state, n: int = 30) -> list[dict]:
+    """Every crossing this server ran, newest first: what the Buyer view lists so a result is never lost."""
+    out = []
+    with _lock:
+        jobs = sorted(JOBS.values(), key=lambda j: j["started"], reverse=True)[:n]
+    for j in jobs:
+        rep = state.report(j["report"]) if j.get("report") else None
+        d = (rep or {}).get("decision") or {}
+        out.append({"id": j["id"], "status": j["status"], "ref": j.get("ref"), "idea": (rep or {}).get("idea") or j.get("idea"),
+                    "report": j.get("report"), "verdict": d.get("verdict"), "target_units": d.get("target_units"),
+                    "reserve_units": d.get("reserve_units"), "started": j["started"]})
+    return out
 
 
 def poll(job_id: str, since: int = 0) -> dict | None:

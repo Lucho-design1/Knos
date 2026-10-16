@@ -59,6 +59,11 @@ class FakeQloo:
         if path == "/v2/audiences":
             return {"results": {"audiences": [{"name": "Running", "id": "urn:audience:hobbies_and_interests:running"},
                                               {"name": "Video Gamer", "id": "urn:audience:hobbies_and_interests:video_gamer"}]}}
+        if t == "urn:entity:destination":
+            rows = [{"name": "Airlie Beach", "properties": {"geocode": {"country_code": "AU", "name": "Airlie Beach"}}, "query": {"affinity": 0.95}},
+                    {"name": "Twin Falls (synthetic)", "properties": {"geocode": {"country_code": "US", "name": "Twin Falls"}}, "query": {"affinity": 0.9}},
+                    {"name": "Cocoa Beach (synthetic)", "properties": {"geocode": {"country_code": "US", "name": "Cocoa Beach"}}, "query": {"affinity": 0.88}}]
+            return {"results": {"entities": rows}}
         if path == "/v2/insights" and str(t).startswith("urn:entity:"):
             return {"results": {"entities": [{"name": f"Neighbour {i} (synthetic)", "entity_id": f"N{i}", "query": {"affinity": a}}
                                              for i, a in enumerate(self.recs)]}}

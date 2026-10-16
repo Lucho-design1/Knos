@@ -30,12 +30,13 @@ async function busy(btn, text, fn) {
 
 // ---- views ---------------------------------------------------------------------------------------------------------
 function show() {
+  err(null); slow(false, "");                      // an alert never follows to another view
   const h = location.hash;
   const m = h.match(/^#buy=([0-9a-f]{64})/);
   const view = m ? "buy" : h.startsWith("#make") ? "make" : h.startsWith("#buy") ? "buy" : "research";
   for (const v of ["research", "buy", "make"]) $("v-" + v).hidden = v !== view;
   document.querySelectorAll(".views a").forEach((a) => a.classList.toggle("on", a.dataset.view === view));
-  if (m) loadProduct(m[1]);
+  if (m) loadProduct(m[1]); else if (view === "buy") loadCrossings();
   if (view === "make") loadMaker();
 }
 window.addEventListener("hashchange", show);
@@ -133,6 +134,7 @@ function receipt(p) {
   const sigs = p.signatures || {};
   $("receipt").innerHTML = `<div class="decision open"><h3>Locked in escrow</h3><p>${esc(p.units)} units · <a href="${X(p.commitment, "address")}" target="_blank" rel="noopener">escrow order ${short(p.commitment)}</a></p>` +
     Object.entries(sigs).map(([k, s]) => `<p class="small">${esc(k.replace(/_/g, " "))}: <a href="${X(s)}" target="_blank" rel="noopener">${short(s)}</a></p>`).join("") +
+    (p.verified && p.verified.chain_pin ? `<p class="small">Evidence pin on chain: <span class="mono">${esc(p.verified.chain_pin.slice(0, 16))}…</span> <span class="muted">(${esc(p.verified.chain_pin_of || "")})</span><br>Evidence page sha256: <span class="mono">${esc((p.verified.sha256 || "").slice(0, 16))}…</span></p>` : "") +
     `<p class="small muted">Claim id for the maker's proof: ${esc(p.claim_id)}</p></div>`;
 }
 async function loadWeb3() {
@@ -151,6 +153,17 @@ async function walletPreorder() {
   const sig = await new web3.Connection("https://api.devnet.solana.com", "confirmed").sendRawTransaction(signed.serialize());
   receipt({ units: $("units").value, commitment: a.commitment, signatures: { lock: sig }, claim_id: "shown once the order is on chain" });
   setTimeout(() => loadProduct(report.hash), 8000);
+}
+
+async function loadCrossings() {
+  try {
+    const { crossings } = await api("/api/crossings");
+    $("productCard").innerHTML = "<h2>Crossings on this server</h2>" + (crossings.length ?
+      "<ul class='list'>" + crossings.map((c) => `<li>${c.report ? `<a href="#buy=${esc(c.report)}">` : ""}${esc((c.idea || c.ref || "").slice(0, 90))}${c.report ? "</a>" : ""}
+        · <b>${esc(c.verdict || c.status)}</b>${c.target_units ? ` · target ${c.target_units}, reserve ${c.reserve_units}` : ""}</li>`).join("") + "</ul>" :
+      "<p class='muted'>No crossing yet: run one in the Researcher view.</p>");
+    $("buyBox").hidden = true; $("tracker").hidden = true;
+  } catch (e) { err(e); }
 }
 
 // ---- maker / funder ------------------------------------------------------------------------------------------------

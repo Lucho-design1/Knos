@@ -184,6 +184,8 @@ def make_handler(state: State):
             if u.path == "/api/cross":
                 got = agent.poll((qs.get("id") or [""])[0], int((qs.get("since") or ["0"])[0] or 0))
                 return self._send(200 if got else 404, got or {"error": "unknown crossing"})
+            if u.path == "/api/crossings":
+                return self._send(200, {"crossings": agent.crossings(state)})
             if u.path == "/api/commitments":
                 return self._send(200, {"commitments": preorder.all_public(50)})
             if u.path == "/mcp":

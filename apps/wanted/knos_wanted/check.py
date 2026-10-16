@@ -42,6 +42,14 @@ TREND_NOTE = f"Qloo's trend data ends {DATA_END} and shows no movement for these
 TREND_TYPES = {"urn:entity:brand", "urn:entity:artist", "urn:entity:movie", "urn:entity:person", "urn:entity:podcast",
                "urn:entity:tv_show", "urn:entity:actor"}
 DEFAULT_PLACE = "United States"
+# The market's country code, for scoping Qloo's geography (launch cities never leave the chosen market).
+COUNTRIES = {"united states": "US", "usa": "US", "us": "US", "united kingdom": "GB", "uk": "GB", "nigeria": "NG",
+             "germany": "DE", "france": "FR", "japan": "JP", "canada": "CA", "australia": "AU", "india": "IN",
+             "brazil": "BR", "south korea": "KR", "korea": "KR", "spain": "ES", "italy": "IT", "mexico": "MX"}
+
+
+def market_country(place: str | None) -> str | None:
+    return COUNTRIES.get((place or DEFAULT_PLACE).strip().lower())
 AUDIENCE_TYPES = ("communities", "global_issues", "hobbies_and_interests", "investing_interests", "leisure", "life_stage",
                   "lifestyle_preferences_beliefs", "political_preferences", "professional_area", "spending_habits")
 AUDIENCE_TYPES = tuple("urn:audience:" + t for t in AUDIENCE_TYPES)
@@ -409,13 +417,18 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     ev["audiences"] = every[:6]
     ev["buyer_group"] = _buyer_group(run, idea, every)
     ev["price"] = price_tier(every)
-    body, s10 = run.get("/v2/insights", {"filter.type": "urn:entity:destination", "take": 5, "feature.explainability": "true", **ents_only},
-                        "launch cities: destinations where this taste is strongest")
-    for r in (((body or {}).get("results") or {}).get("entities") or [])[:5]:
+    cc = market_country(loc)
+    scope = {"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}
+    body, s10 = run.get("/v2/insights", {"filter.type": "urn:entity:destination", "take": 8, "feature.explainability": "true",
+                                         **scope, **ents_only}, f"launch cities: destinations in {loc} where this taste is strongest")
+    for r in (((body or {}).get("results") or {}).get("entities") or []):
         geo = (r.get("properties") or {}).get("geocode") or {}
+        if cc and geo.get("country_code") and geo["country_code"] != cc:
+            continue                       # the launch cities stay inside the chosen market
         why = ((r.get("query") or {}).get("explainability") or {}).get("signal.interests.entities") or []
-        ev["cities"].append({"name": r.get("name"), "country": geo.get("country_code"), "affinity": (r.get("query") or {}).get("affinity"),
-                             "because": [x.get("entity_id") for x in why][:3], "src": s10})
+        if len(ev["cities"]) < 5:
+            ev["cities"].append({"name": r.get("name"), "country": geo.get("country_code"), "affinity": (r.get("query") or {}).get("affinity"),
+                                 "because": [x.get("entity_id") for x in why][:3], "src": s10})
     ev["recommended"] = _recommend(run, kind, signal, {m["id"] for m in ev["matches"]} | ({lead["id"]} if lead else set()))
     ev["trend"] = _trend(run, lead, today)
     if lead:

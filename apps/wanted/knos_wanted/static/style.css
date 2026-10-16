@@ -55,3 +55,5 @@ a.button.ghost { background: transparent; color: var(--accent); border: 1px soli
 @media (prefers-reduced-motion: reduce) { .step { animation: none; } }
 @media (max-width: 560px) { .views a { padding: 6px 6px; font-size: 14px; } .facts .big { font-size: 28px; } }
 .label { font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+.badge { white-space: nowrap; }
+.step b { overflow-wrap: anywhere; }

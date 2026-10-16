@@ -302,6 +302,14 @@ def chain_gate(rec: dict, led) -> None:
                       "knos_pay pays a stage once")
 
 
+def evidence_pin(doc: dict, review) -> dict:
+    """THE canonical evidence pin, the one the referees sign and the program checks on chain: knos.ideas.commit.review_evidence
+    over the saved evidence page. Its `evidence_hash` is sha256 of the signed structure (oracle, claim id and hash, the
+    result, and the page's sha256 as report_sha256). The page shows this same value beside the page's own sha256."""
+    from knos.ideas import commit as C
+    return C.review_evidence(doc, "referee_pass", True, review)
+
+
 def milestone(report: dict, order: str, url: str, led=None, opener=None, resolve=_public_host) -> dict:
     """Verify the maker's evidence; when verified and the reserve is met, 2 referees sign PASS and the server releases."""
     rec = load(order)
@@ -316,18 +324,24 @@ def milestone(report: dict, order: str, url: str, led=None, opener=None, resolve
         raise ValueError(f"reserve not met: {res['pre_ordered_units']} of {res['reserve_units']} units pre-ordered; the maker is paid once it is")
     ev, body = verify(rec, url, opener, resolve)
     doc = rec["doc"]
-    review = _dir() / f"{order}.evidence"           # the page the referees sign over: its sha256 is the verdict's evidence
+    review = _dir() / f"{order}.evidence"           # the page the referees sign over
     review.write_bytes(body)
+    pin = evidence_pin(doc, review)                  # the ONE pin: what the verdicts carry and the chain records
+    ev["chain_pin"] = pin["evidence_hash"]
+    ev["chain_pin_of"] = ("sha256 of the signed evidence structure (oracle, claim id and hash, result, and the page's "
+                          "sha256): knos.ideas.commit.review_evidence; this is the hash in the release transaction")
     refs = referees()
     with _lock:
         recs = [C.sign(doc, "stage1", r, led, passed=True, review=review) for r in refs[:2]]
+        if any(r["evidence_hash"] != ev["chain_pin"] for r in recs):
+            raise RuntimeError("the displayed evidence pin diverged from the signed verdicts")
         got = C.release(doc, "stage1", recs, relayer(), led)
         rec["status"] = got["status"] if got["status"] in ("released", "refunded") else "locked"
         rec["evidence"] = ev
         for i, s in enumerate(got["sent"], 1):
             rec["signatures"][f"referee_{i}_pass"] = s["signature"]
         if rec["status"] == "released":
-            rec["release_record"] = company.record_release(rec["report"], order, [s["signature"] for s in got["sent"]], ev["sha256"])
+            rec["release_record"] = company.record_release(rec["report"], order, [s["signature"] for s in got["sent"]], ev["chain_pin"])
         _save(rec)
     return {**public(rec), "verified": ev, "release": got["status"], "reserve": res}
 
