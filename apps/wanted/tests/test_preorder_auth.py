@@ -180,3 +180,40 @@ def test_raw_errors_never_reach_the_user(app, monkeypatch):
     monkeypatch.setattr(po, "load", lambda order: (_ for _ in ()).throw(ModuleNotFoundError("No module named 'yaml'")))
     st, e = call(app, "/api/milestone", {"commitment": "1" * 44, "evidence_url": "https://x.example/"}, tok)
     assert st == 502 and "yaml" not in e["error"] and "ModuleNotFoundError" not in e["error"] and e["ref"]
+
+
+def test_the_real_preorder_transactions_fit_with_a_50_byte_margin_for_the_largest_inputs():
+    pytest.importorskip("solders")
+    sizes = preorder.largest_preorder_txs()
+    assert sizes["preorder"] <= preorder.TX_BUDGET == 1182 and sizes["preflight"] <= 1182, sizes
+
+
+def test_preflight_never_puts_the_mint_creation_in_the_simulated_transaction(monkeypatch):
+    pytest.importorskip("solders")
+    from solders.keypair import Keypair
+    from solders.pubkey import Pubkey
+
+    monkeypatch.setenv("KNOS_WANTED_REFEREE_KEYS", json.dumps([list(bytes(Keypair())) for _ in range(3)]))
+    monkeypatch.setenv("KNOS_WANTED_DEVNET_KEYPAIR", json.dumps(list(bytes(Keypair()))))
+    monkeypatch.delenv("KNOS_WANTED_MINT", raising=False)
+    made = []
+
+    def mint(led=None, create=True):
+        if not create:
+            raise preorder.escrow.EscrowUnavailable("no test mint yet")
+        made.append(1)
+        return Pubkey.from_string("So11111111111111111111111111111111111111112")
+    monkeypatch.setattr(preorder.escrow, "mint", mint)
+
+    class Led:
+        url = "https://api.devnet.solana.com"
+
+        def account(self, addr):
+            return None
+    sims = []
+    monkeypatch.setattr(preorder, "_simulate", lambda led, ixs, payer, signers: sims.append((len(ixs), len(signers))) or {"err": None})
+    ok, why = preorder.preflight(Led())
+    assert ok and made == [1] and sims == [(4, 1)]          # the mint was made apart; the simulated tx: 2 ATAs, top-up, order
+    monkeypatch.setattr(preorder, "tx_size", lambda *a: 1200)
+    ok, why = preorder.preflight(Led())
+    assert not ok and "1200 bytes" in why

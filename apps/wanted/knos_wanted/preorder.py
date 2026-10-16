@@ -33,6 +33,7 @@ from . import company, escrow
 PROGRAM_034_TEST = "FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4"   # knos_pay 0.3.34 TEST build on devnet
 FIELD = "Business, Management and Accounting"
 PRICE = 1                       # test units per pre-ordered unit
+MAX_DAYS = 90                   # knos_pay's longest stage deadline
 MAX_EVIDENCE = 512_000
 EVIDENCE_TIMEOUT_S = 10
 _lock = threading.Lock()
@@ -175,7 +176,7 @@ def lock(report: dict, units: int, buyer_label: str, maker_wallet: str | None = 
         Pubkey.from_string(maker)
     except ValueError:
         raise ValueError("maker_wallet: the maker's devnet wallet address (or set KNOS_WANTED_MAKER_WALLET)") from None
-    days = days or int(os.environ.get("KNOS_WANTED_MILESTONE_DAYS", "30"))
+    days = max(1, min(MAX_DAYS, days or int(os.environ.get("KNOS_WANTED_MILESTONE_DAYS", "30"))))
     led = led or escrow.ledger()
     buyer, refs, prog = escrow.demo_key(), referees(), program()
     mint = escrow.mint(led)
@@ -344,6 +345,36 @@ _pre: dict = {"at": 0.0, "ok": False, "why": "not checked yet"}
 _pre_lock = threading.Lock()
 
 
+TX_LIMIT, TX_BUDGET = 1232, 1182          # Solana's packet limit, and Knos's ceiling (a 50-byte margin)
+
+
+def tx_size(ixs, payer, signers) -> int:
+    from solders.hash import Hash
+    from solders.message import Message
+    from solders.transaction import Transaction
+    return len(bytes(Transaction(signers, Message.new_with_blockhash(ixs, payer, Hash.default()), Hash.default())))
+
+
+def largest_preorder_txs() -> dict:
+    """The sizes, in bytes, of the transactions a pre-order sends for the LARGEST allowed inputs: a 500-character idea,
+    an 80-character buyer label, 1,000 units, the longest deadline, a 3-key panel, a fresh mint and fresh token accounts.
+    lock sends the PANEL order alone (C.commit); the preflight simulates top-up + ATAs + order together."""
+    from solders.keypair import Keypair
+
+    from knos import ideas
+    from knos.ideas import wanted as W
+    from knos.settle.v2 import pay
+    buyer, mint, refs = Keypair(), Keypair().pubkey(), [Keypair() for _ in range(3)]
+    claim = ideas.claim(f"Pre-order 9999 for: {'x' * 500} (Knos demand report {'f' * 16})", field_name=FIELD, kind="person",
+                        by={"app": "knos demand check", "report": "f" * 64, "buyer": "b" * 80})
+    p = W.plan(claim, units=1000, price=PRICE, stages=[("referee_pass", 10_000)], stage_work_s=[MAX_DAYS * 86_400])
+    tok = pay.ata(buyer.pubkey(), mint)
+    fund = W.fund_panel_ix(p, "stage1", buyer.pubkey(), tok, mint, 2, [bytes(r.pubkey()) for r in refs], program=program(), unlisted_panel=True)
+    setup = [pay.create_ata_ix(buyer.pubkey(), w, mint) for w in (buyer.pubkey(), pay.FEE_OWNER)]
+    return {"preorder": tx_size([fund], buyer.pubkey(), [buyer]),
+            "preflight": tx_size([*setup, escrow._mint_to_ix(mint, tok, buyer.pubkey(), 1001), fund], buyer.pubkey(), [buyer])}
+
+
 def _simulate(led, ixs, payer, signers) -> dict:
     """simulateTransaction (nothing is sent): the cluster runs the transaction against current state."""
     import base64
@@ -368,10 +399,7 @@ def preflight(led=None) -> tuple[bool, str]:
     if not ok:
         return False, why
     try:
-        from solders.keypair import Keypair
-        from solders.system_program import CreateAccountParams, create_account
-
-        from knos import chain, ideas
+        from knos import ideas
         from knos.ideas import wanted as W
         from knos.settle.v2 import pay
         led = led or escrow.ledger()
@@ -379,14 +407,11 @@ def preflight(led=None) -> tuple[bool, str]:
         ixs, signers = [], [buyer]
         try:
             mint = escrow.mint(led, create=False)
-        except escrow.EscrowUnavailable:            # no test mint yet: the first pre-order makes one; simulate that too
-            m = Keypair()
-            rent = chain.call(led.url, "getMinimumBalanceForRentExemption", [escrow.MINT_LEN])
-            from solders.instruction import AccountMeta, Instruction
-            ixs += [create_account(CreateAccountParams(from_pubkey=buyer.pubkey(), to_pubkey=m.pubkey(), lamports=rent,
-                                                       space=escrow.MINT_LEN, owner=pay.TOKEN)),
-                    Instruction(pay.TOKEN, bytes([20, 6]) + bytes(buyer.pubkey()) + b"\x00", [AccountMeta(m.pubkey(), False, True)])]
-            mint, signers = m.pubkey(), [buyer, m]
+        except escrow.EscrowUnavailable:
+            # no test mint yet: make it now, once (the first pre-order would), so the pre-order itself can be simulated.
+            # Creating it inside the simulated transaction made it 1,233 bytes on a fresh host (limit 1,232).
+            mint = escrow.mint(led, create=True)
+            print(f"knos-demand-check: created the devnet test mint {mint} for pre-orders", flush=True)
         tok = pay.ata(buyer.pubkey(), mint)
         ixs += [pay.create_ata_ix(buyer.pubkey(), w, mint) for w in (buyer.pubkey(), pay.FEE_OWNER) if led.account(pay.ata(w, mint)) is None]
         ixs.append(escrow._mint_to_ix(mint, tok, buyer.pubkey(), 6))
@@ -394,6 +419,9 @@ def preflight(led=None) -> tuple[bool, str]:
         p = W.plan(claim, units=5, price=PRICE, stages=[("referee_pass", 10_000)], stage_work_s=[30 * 86_400])
         ixs.append(W.fund_panel_ix(p, "stage1", buyer.pubkey(), tok, mint, 2, [bytes(r.pubkey()) for r in refs], program=prog,
                                    unlisted_panel=True))
+        n = tx_size(ixs, buyer.pubkey(), signers)
+        if n > TX_BUDGET:
+            return False, f"pre-order preflight: the transaction is {n} bytes, above Knos's budget of {TX_BUDGET} (Solana's limit is 1,232)"
         v = _simulate(led, ixs, buyer.pubkey(), signers)
     except Exception as e:  # noqa: BLE001 - the reason is shown on /api/status (no secrets: names and types only)
         return False, f"pre-order preflight failed: {type(e).__name__}: {str(e)[:160]}"
