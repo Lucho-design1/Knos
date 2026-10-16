@@ -315,6 +315,20 @@ def _ideas_on() -> bool:
     return "ideas" in {w.strip().lower() for w in os.environ.get("KNOS_MCP_TOOLS", "").split(",")}
 
 
+def _demand_on() -> bool:
+    """KNOS_MCP_TOOLS=demand lists knos_demand_check (src/knos/demand_tool.py: the hosted Qloo demand check, read-only)."""
+    return "demand" in {w.strip().lower() for w in os.environ.get("KNOS_MCP_TOOLS", "").split(",")}
+
+
+def _demand_tool():
+    import importlib
+    return importlib.import_module(f"{__package__}.demand_tool")
+
+
+def _demand_rows() -> list[dict]:
+    return [_tool(t["name"], t["title"], t["description"], t["properties"], t["required"]) for t in _demand_tool().MCP_TOOLS]
+
+
 def _game_tools():
     """src/knos/game/tools.py, loaded by name like the command modules (src/knos/cli.py _mod): the game's code is
     imported only when a game is played."""
@@ -341,7 +355,8 @@ _GAME_NAMES = frozenset(t["name"] for t in GAME_TOOLS)
 def _tools_now() -> list[dict]:
     """The tools this server offers now: the game's only when a game is set up (KNOS_GAME_DIR names its folder)."""
     tools = TOOLS + GAME_TOOLS if os.environ.get(_GAME_ENV, "").strip() else TOOLS
-    return tools + _idea_rows() if _ideas_on() else tools          # and the idea tools on KNOS_MCP_TOOLS=ideas
+    tools = tools + _idea_rows() if _ideas_on() else tools         # and the idea tools on KNOS_MCP_TOOLS=ideas
+    return tools + _demand_rows() if _demand_on() else tools       # and knos_demand_check on KNOS_MCP_TOOLS=demand
 
 
 class Failed(Exception):
@@ -475,6 +490,8 @@ class Server:
             self._tools[t["name"]] = lambda a, n=t["name"]: _game_call(n, a)
         if _ideas_on():                                                               # src/knos/ideas/tools.py: idea in, wanted? (opt-in)
             self._tools.update(_idea_tools().HANDLERS)
+        if _demand_on():                                                              # src/knos/demand_tool.py (opt-in)
+            self._tools.update(_demand_tool().HANDLERS)
 
     # -- the protocol -------------------------------------------------------------------------------------------
     def line(self, text: str):

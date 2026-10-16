@@ -48,7 +48,7 @@ from typing import Any, Callable
 SITE = "https://drexthealpha.github.io/Knos"
 BOARD = SITE + "/tasks.json"
 FIRST = "Test USDC, no monetary value."
-# The published workflows' home since the 0.3.34 cutover: the branch `workflows` of the monorepo (docs/reference/MONOREPO.md),
+# The published workflows' home since the 0.3.34 cutover: the `workflows-<sha12>` tags of the monorepo (docs/reference/MONOREPO.md),
 # the same commits as drexthealpha/knos-workflows. An order funded through drexthealpha/Knos/.github/workflows/<file>@<sha>
 # pins that name; one pinned to the old home before the cutover is as public, and keeps being paid.
 PUBLIC_WORKFLOWS = "drexthealpha/Knos"                 # where new tasks are funded through

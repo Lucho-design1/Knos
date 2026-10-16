@@ -36,6 +36,7 @@ SRC = ROOT / "src"
 # knos.game.__main__, knos.game.devnet, knos.game.local_agent: `python -m knos.game ...` (= `knos game`), the game's devnet
 # round, and the no-model agent behind the command protocol (docs/reference/GAME.md)
 # knos.ideas.devnet / devnet_panel: the devnet demos of docs/reference/IDEAS.md; knos.ideas.tools: the opt-in MCP tools (KNOS_MCP_TOOLS=ideas)
+# knos.demand_tool: the opt-in MCP tool knos_demand_check (KNOS_MCP_TOOLS=demand), loaded by name from knos.mcp
 # knos.labs.*: one adapter per lab, loaded by name (python -m knos.labs; docs/reference/LABS.md); knos.a2a: `python -m knos.a2a serve`;
 # knos.claude.managed, knos.money.cctp, knos.money.kora: designs callers import (CAPABILITIES-GAP); knos.platform.verdict: the off-chain
 # mirror of the m-of-n verdict release (docs/reference/PAY_ON_PROOF.md)
@@ -43,7 +44,7 @@ ENTRY = ["knos.cli", "knos.__main__", "knos.proof.ghrelay", "knos.settle.v2.pass
          "knos.outcomes.__main__", "knos.autoresearch.__main__", "knos.record.__main__", "knos.self.__main__", "knos.gate.app",
          "knos.hermes_plugin", "knos.verify.sealed", "knos.money.x402", "knos.money.revenue", "knos.graduation.devnet", "knos.repro.example", "knos.zk.__main__", "knos.platform.claims",
          "knos.nebius.__main__", "knos.money.business",
-         "knos.game.__main__", "knos.game.devnet", "knos.game.local_agent", "knos.ideas.devnet", "knos.ideas.devnet_panel", "knos.ideas.tools", "knos.a2a", "knos.claude.managed", "knos.labs.__main__", "knos.labs.adaptyv", "knos.labs.chemistry", "knos.labs.devnet", "knos.labs.electronics", "knos.labs.escrow", "knos.labs.evm", "knos.labs.materials", "knos.labs.mechanical", "knos.labs.plr_runner", "knos.labs.privacy", "knos.labs.x402pay", "knos.money.cctp", "knos.money.kora", "knos.platform.verdict"]
+         "knos.game.__main__", "knos.game.devnet", "knos.game.local_agent", "knos.ideas.devnet", "knos.ideas.devnet_panel", "knos.ideas.tools", "knos.a2a", "knos.claude.managed", "knos.labs.__main__", "knos.labs.adaptyv", "knos.labs.chemistry", "knos.labs.devnet", "knos.labs.electronics", "knos.labs.escrow", "knos.labs.evm", "knos.labs.materials", "knos.labs.mechanical", "knos.labs.plr_runner", "knos.labs.privacy", "knos.labs.x402pay", "knos.money.cctp", "knos.money.kora", "knos.platform.verdict", "knos.demand_tool"]
 SCRIPTS = [p for p in list((ROOT / "scripts").glob("*.py")) + list((ROOT / "scripts" / "exercise_rounds").glob("*.py")) + list((ROOT / "examples").glob("*.py"))
            if p.name not in ("deadcode.py", "vulture_whitelist.py")]
 

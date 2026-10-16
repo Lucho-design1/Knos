@@ -1,0 +1,34 @@
+# Render blueprint: Knos's demand check (apps/wanted) as one free web service, built from this repository's main.
+# Secrets are set on Render, never here: QLOO_API_KEY (env) and the devnet TEST keys as secret files under /etc/secrets.
+services:
+  - type: web
+    name: knos
+    runtime: docker
+    plan: free
+    dockerfilePath: apps/wanted/Dockerfile
+    dockerContext: .
+    branch: main
+    healthCheckPath: /healthz
+    envVars:
+      - key: QLOO_API_KEY
+        sync: false
+      - key: QLOO_BASE_URL
+        value: https://hackathon.api.qloo.com
+      - key: QLOO_MONTHLY_BUDGET
+        value: "8000"
+      - key: KNOS_CLUSTER
+        value: devnet
+      - key: KNOS_WANTED_TRUST_PROXY
+        value: "1"
+      - key: KNOS_WANTED_RP_ID
+        value: knos.onrender.com
+      - key: KNOS_WANTED_DEVNET_KEYPAIR
+        value: /etc/secrets/buyer.json
+      - key: KNOS_WANTED_RELAYER_KEYPAIR
+        value: /etc/secrets/relayer.json
+      - key: KNOS_WANTED_REFEREE_KEYS
+        value: /etc/secrets/panel.json
+      - key: KNOS_WANTED_MAKER_WALLET
+        value: 4dFAUoXNDbmPCJ1CPCFyaJqLW5WWY3i2TE3VKEdSbC31
+      - key: KNOS_WANTED_SESSION_SECRET
+        generateValue: true

@@ -1,6 +1,6 @@
 """The cutover of the published workflows on the 0.3.34 branch (docs/reference/CUTOVER-0331.md section 1, step 5): every
 caller, template, site page, SDK example and terms 3 document names drexthealpha/Knos/.github/workflows/...@<the same
-commit>, and `scripts/release.py workflows` publishes into a worktree of the branch `workflows` of this repository."""
+commit>, and `scripts/release.py workflows` publishes into a worktree of the `workflows-<sha12>` tags of this repository."""
 from __future__ import annotations
 
 import importlib.util
@@ -89,7 +89,7 @@ def test_the_registry_publishes_nothing_more_and_support_resolution_keeps_its_ve
     assert ("support-resolution", 2) not in rows                          # it names no workflow: nothing to move
 
 
-# ---- release.py workflows: a worktree of the branch `workflows` ------------------------------------------------------
+# ---- release.py workflows: a worktree of the `workflows-<sha12>` tags ------------------------------------------------------
 
 def _git(*args: str, cwd: Path) -> str:
     return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@example.com", *args], cwd=cwd, capture_output=True, text=True, check=True).stdout.strip()
@@ -97,7 +97,8 @@ def _git(*args: str, cwd: Path) -> str:
 
 @pytest.fixture()
 def repo(tmp_path, monkeypatch):
-    """A repository with an origin, a branch `workflows` holding one published set, and a worktree of it."""
+    """A repository with an origin, one published set kept by its tag `workflows-<sha12>` (no branch), and a detached
+    worktree at that tag."""
     if not shutil.which("git"):
         pytest.skip("needs git")
     origin, knos = tmp_path / "origin.git", tmp_path / "knos"
@@ -114,10 +115,13 @@ def repo(tmp_path, monkeypatch):
     (knos / "README.md").write_text("an earlier published set\n", encoding="utf-8")
     _git("add", "-A", cwd=knos)
     _git("commit", "-q", "-m", "knos 0.3.28: the workflows", cwd=knos)
+    first = _git("rev-parse", "HEAD", cwd=knos)
+    _git("tag", f"workflows-{first[:12]}", first, cwd=knos)
     _git("checkout", "-q", "main", cwd=knos)
+    _git("branch", "-q", "-D", "workflows", cwd=knos)                           # the tag keeps the set: no branch
     _git("remote", "add", "origin", str(origin), cwd=knos)
-    _git("push", "-q", "origin", "main", "workflows", cwd=knos)
-    _git("worktree", "add", "-q", str(tmp_path / "wf"), "workflows", cwd=knos)
+    _git("push", "-q", "origin", "main", f"refs/tags/workflows-{first[:12]}", cwd=knos)
+    _git("worktree", "add", "-q", "--detach", str(tmp_path / "wf"), f"workflows-{first[:12]}", cwd=knos)
     rel = _script("release")
     pub = _script("pinned_workflows")
     files = {".github/workflows/prove.yml": b"on: workflow_call\njobs: {}\n", "requirements/sign.txt": b"solders==1 --hash=sha256:" + b"0" * 64 + b"\n",
@@ -130,18 +134,18 @@ def repo(tmp_path, monkeypatch):
     return rel, pub, files, knos, origin, tmp_path / "wf"
 
 
-def test_release_workflows_commits_tags_and_pushes_on_the_branch(repo, capsys):
+def test_release_workflows_commits_tags_and_pushes_the_tag_only(repo, capsys):
     rel, pub, files, knos, origin, wf = repo
     assert rel.workflows_cmd(wf) == 0
     sha = _git("rev-parse", "HEAD", cwd=wf)
     tag = f"workflows-{sha[:12]}"
     assert _git("rev-parse", "HEAD^{tree}", cwd=wf) == pub.tree_id(files)
-    assert _git("rev-parse", "workflows", cwd=knos) == sha and _git("rev-parse", f"{tag}^{{commit}}", cwd=knos) == sha
-    remote = _git("ls-remote", str(origin), "refs/heads/workflows", f"refs/tags/{tag}", cwd=knos)
-    assert remote.count(sha) == 2, remote
-    assert _git("rev-list", "--count", "workflows", cwd=knos) == "2"          # the branch only grows: the earlier set is still its parent
+    assert _git("rev-parse", f"{tag}^{{commit}}", cwd=knos) == sha
+    remote = _git("ls-remote", str(origin), cwd=knos)
+    assert f"{sha}\trefs/tags/{tag}" in remote and "refs/heads/workflows" not in remote, remote   # a tag, never a branch
+    assert _git("rev-list", "--count", tag, cwd=knos) == "2"                   # the new set's parent is the earlier published set
     out = capsys.readouterr().out
-    assert f"tagged {tag}" in out and f"Pushed workflows and {tag}" in out and f"python scripts/pinned_workflows.py stamp {sha}" in out
+    assert f"tagged {tag}" in out and f"Pushed {tag} to origin" in out and f"python scripts/pinned_workflows.py stamp {sha}" in out
     # again: nothing to commit, the same tag, nothing moves
     assert rel.workflows_cmd(wf) == 0 and _git("rev-parse", "HEAD", cwd=wf) == sha
     assert "nothing to commit" in capsys.readouterr().out
@@ -154,25 +158,22 @@ def test_release_workflows_without_the_push_leaves_origin_as_it_was(repo, capsys
     assert _git("ls-remote", str(origin), cwd=knos) == before and "Not pushed (--no-push)" in capsys.readouterr().out
 
 
-def test_release_workflows_refuses_anything_but_a_worktree_of_the_branch(repo, tmp_path):
+def test_release_workflows_refuses_anything_but_a_detached_worktree_at_a_published_tag(repo, tmp_path):
     rel, _pub, _files, knos, _origin, wf = repo
-    with pytest.raises(SystemExit, match="not a worktree of the branch workflows"):
+    with pytest.raises(SystemExit, match="not a worktree at a published workflows-\\* tag"):
         rel.workflows_cmd(tmp_path / "nowhere")
-    with pytest.raises(SystemExit, match="is on main, not on the branch workflows"):
+    with pytest.raises(SystemExit, match="is on the branch main, not a detached HEAD"):
         rel.workflows_cmd(knos)                                                   # the main checkout
-    old = tmp_path / "knos-workflows"                                             # a checkout of the old home: its own repository, on main
+    old = tmp_path / "knos-workflows"                                             # a checkout of the old home: its own repository
     old.mkdir()
     _git("init", "-q", "-b", "main", cwd=old)
-    with pytest.raises(SystemExit, match="A checkout of drexthealpha/knos-workflows is the old home"):
-        rel.workflows_cmd(old)
-    _git("checkout", "-q", "-b", "workflows", cwd=old)                            # named workflows, but another repository
     (old / "x").write_text("x", encoding="utf-8")
     _git("add", "-A", cwd=old)
     _git("commit", "-q", "-m", "x", cwd=old)
-    with pytest.raises(SystemExit, match="is a checkout of another repository"):
+    with pytest.raises(SystemExit, match="A checkout of drexthealpha/knos-workflows is the old home"):
         rel.workflows_cmd(old)
-    _git("checkout", "-q", "--detach", cwd=wf)
-    with pytest.raises(SystemExit, match="a detached HEAD"):
+    _git("checkout", "-q", "--detach", "main", cwd=wf)                            # detached, but at a commit no tag publishes
+    with pytest.raises(SystemExit, match="which no workflows-\\* tag names"):
         rel.workflows_cmd(wf)
 
 

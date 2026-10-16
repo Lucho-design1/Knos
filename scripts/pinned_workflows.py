@@ -42,7 +42,7 @@ not see it. The order, which docs/reference/RELEASE.md gives with every command 
        hash. `lock WHEEL --write`: requirements/sign.txt gets the line `knos==X.Y.Z --hash=sha256:<this wheel>`.
        (`lock` refuses a wheel that is not the release the workflows name.)
     2. That wheel goes to PyPI (`release.py publish`). Then `cutoff`: UV_EXCLUDE_NEWER from the time PyPI took it.
-    3. `build DIR` into a worktree of the branch `workflows` (scripts/release.py workflows) and commit it there: its sha, S, is the one commit
+    3. `build DIR` into a worktree of the `workflows-<sha12>` tags (scripts/release.py workflows) and commit it there: its sha, S, is the one commit
        everything names; its tree is `tree`. Nothing signs from these workflows before this commit exists.
     4. `stamp S` here, then `check DIR`. The wheel built again from the stamped tree has the same hash (tested), so
        the ONE commit of the release holds the lock, the cutoff, the pin and the sources of the wheel at once. Then

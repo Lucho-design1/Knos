@@ -99,7 +99,7 @@ Before the upgrade executes, a caller in Knos attests nothing and binds nothing:
 (tests/test_two_homes_rotate.py and tests/test_two_homes_claim.py run the builds before this change and show it).
 
 The branch `oidc-rotate` and its tags must be in drexthealpha/Knos first (CUTOVER-0331.md section 2 step 1):
-`git ls-remote origin refs/heads/oidc-rotate refs/tags/oidc-rotate-212f9eb5f584` names
+`git ls-remote origin refs/tags/oidc-rotate-212f9eb5f584` names
 212f9eb5f584eb6f8cd2d6673878132fc0011e27.
 
 ### 4a. The rotate caller, in Knos `main`, only after 5 Dec 2026 (Colosseum guard: `main` and tag v0.3.28 stay as they are until then)

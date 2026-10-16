@@ -65,7 +65,7 @@ All are in [`.github/workflows`](../../.github/workflows) of the repository.
 |---|---|---|
 | `worker.yml` | the public relay, every 5 minutes | secret `KNOS_RELAY_KEY` |
 | `keys.yml` | once a day: the key refresh, as a second schedule beside the rotate repository's own | none of ours: GitHub signs the run |
-| `fund.yml`, `prove.yml`, `attest.yml`, `check.yml` | the workflows a paying repository calls at a pinned commit | published on the branch `workflows` of `drexthealpha/Knos` (`drexthealpha/knos-workflows` before the 0.3.34 branch); optional secret `KNOS_RELAY_KEY` in the calling repository |
+| `fund.yml`, `prove.yml`, `attest.yml`, `check.yml` | the workflows a paying repository calls at a pinned commit | published on the `workflows-<sha12>` tags of `drexthealpha/Knos` (`drexthealpha/knos-workflows` before the 0.3.34 branch); optional secret `KNOS_RELAY_KEY` in the calling repository |
 | `program.yml` | builds the programs; its gate job has GitHub sign the build's hash | none |
 | `release.yml` | the release | the founder's package and site credentials: not transferable by this page |
 | `tests.yml`, `hermetic.yml`, `network.yml`, `reproductions.yml`, `knos.yml`, `knos-check.yml`, `knos-reproduce.yml` | tests, the judge's image, the Numbers page, outside reproductions, and Knos used on its own repository | none beyond GitHub's own token |

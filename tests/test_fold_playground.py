@@ -1,5 +1,5 @@
 """The playground in Knos's own issues (docs/reference/CUTOVER-0331.md section 4, the founder's decision of 14 Oct 2026),
-and knos-labs as the branch `labs` (section 3): every constant and page names drexthealpha/Knos, and the files a
+and knos-labs as the tag `archive/labs` (section 3): every constant and page names drexthealpha/Knos, and the files a
 stranger's issue and pull request need are in this tree, written by `python scripts/small_repos.py fold`."""
 from __future__ import annotations
 
@@ -89,7 +89,7 @@ def test_fold_writes_the_playground_and_leaves_no_stale_check_behind(tmp_path):
 
 
 def test_the_labs_links_name_the_branch_of_knos():
-    link = "https://github.com/drexthealpha/Knos/tree/labs"
+    link = "https://github.com/drexthealpha/Knos/tree/archive/labs"
     for rel in ("CHANGELOG.md", "docs/reference/DISCLOSURE.md", "docs/reference/README.md", "src/knos/init.py"):
         text = (ROOT / rel).read_text(encoding="utf-8")
         assert link in text and "https://github.com/drexthealpha/knos-labs" not in text, rel

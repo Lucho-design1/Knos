@@ -1,5 +1,5 @@
 """The published workflows in the monorepo (docs/reference/MONOREPO.md): the same commits as drexthealpha/knos-workflows,
-as the branch `workflows` of drexthealpha/Knos. An order pins sha256(<owner>/<name>) and the commit of the workflows
+as the `workflows-<sha12>` tags of drexthealpha/Knos. An order pins sha256(<owner>/<name>) and the commit of the workflows
 that may pay it, so the move is a new name in new orders, never a change to the program or to an order already funded.
 
 In LiteSVM with the test issuer (tests/_order.py): a GitHub Actions token from a pushed run of the monorepo's branch

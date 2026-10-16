@@ -43,10 +43,17 @@ def test_no_recorded_qloo_bodies_in_repo():
         raise AssertionError(f"unexpected JSON file in the repository: {p.relative_to(ROOT)}")
 
 
-def test_qloo_only_through_mcp_and_no_key_in_code():
-    code = "\n".join(p.read_text() for p in (ROOT / "knos_wanted").rglob("*.py")) + (ROOT / "bridge" / "qloo_bridge.mjs").read_text()
-    assert "hackathon.api.qloo.com" not in code          # no direct REST calls: the harness owns the endpoint
-    assert "X-Api-Key" not in code
-    assert not re.search(r"QLOO_API_KEY\s*=", code)
-    js = (ROOT / "knos_wanted" / "static" / "app.js").read_text()
-    assert "qloo.com" not in js and "QLOO" not in js          # the browser never talks to Qloo
+def test_qloo_is_reached_only_from_the_server_client_and_no_key_in_code():
+    # Qloo is reached server side only: the REST client qloo_rest.py (the hackathon API, key from the environment)
+    # and the official harness bridge. No other module names the endpoint or the key header, no code assigns a key,
+    # and the browser never talks to Qloo.
+    rest = ROOT / "knos_wanted" / "qloo_rest.py"
+    others = [p for p in (ROOT / "knos_wanted").rglob("*.py") if p != rest]
+    code = "\n".join(p.read_text() for p in others) + (ROOT / "bridge" / "qloo_bridge.mjs").read_text()
+    assert "api.qloo.com" not in code.lower() and "x-api-key" not in code.lower()
+    every = code + rest.read_text()
+    assert not re.search(r"QLOO_API_KEY\s*=\s*['\"]", every)          # read from the environment, never written
+    assert not re.search(r"hack_[0-9a-f]{20,}", every)                  # no hackathon key literal anywhere
+    assert "os.environ" in rest.read_text() and "QLOO_API_KEY" in rest.read_text()
+    js = "\n".join(p.read_text() for p in (ROOT / "knos_wanted" / "static").glob("*.js"))
+    assert "qloo.com" not in js.lower() and "QLOO" not in js          # the browser never talks to Qloo

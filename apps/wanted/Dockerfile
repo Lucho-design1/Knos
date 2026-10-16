@@ -1,8 +1,9 @@
 # Knos's demand check as one service: the web page + JSON API on $PORT (default 8080). Built from the ROOT of the Knos
 # monorepo, so the app and the Knos it records and locks pre-orders with are the same commit:
 #   docker build -f apps/wanted/Dockerfile -t knos-demand . && docker run -p 8080:8080 --env-file apps/wanted/.env knos-demand
-# Qloo is reached only through `qloo mcp` (@qloo/qloo-harness, Node 22.19+) via the official MCP SDK. Without
-# QLOO_API_KEY it runs on Knos's MOCK (synthetic) MCP server and every answer says so.
+# Qloo is reached from the server: its REST API first (knos_wanted.qloo_rest: QLOO_API_KEY + QLOO_BASE_URL; the decision
+# needs it), and optionally `qloo mcp` (@qloo/qloo-harness, Node 22.19+) via the official MCP SDK for the older flow. Without
+# QLOO_API_KEY the decision is "cannot decide: no Qloo evidence" and the MCP flow runs on Knos's MOCK (synthetic) server.
 FROM node:22.19-bookworm-slim AS node
 
 FROM python:3.12-slim
@@ -14,7 +15,7 @@ COPY src ./src
 COPY terms ./terms
 COPY config/fees.yaml ./config/fees.yaml
 COPY apps/wanted ./apps/wanted
-RUN pip install --no-cache-dir . "./apps/wanted[escrow]" && sh apps/wanted/bridge/install.sh
+RUN pip install --no-cache-dir . "./apps/wanted[escrow,auth]" && sh apps/wanted/bridge/install.sh
 WORKDIR /app
 RUN useradd --create-home app && mkdir -p /data && chown app /data
 USER app

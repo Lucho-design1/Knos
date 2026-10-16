@@ -7,9 +7,70 @@ that exact report in a Knos escrow on Solana devnet, and a buyer agent ranks the
 against tastes the buyer chooses.
 
 **Directional demand evidence, not a sales forecast.** Every Qloo result describes
-aggregate taste, not a prediction about one person. The report does not predict units, revenue or price.
+aggregate taste, not a prediction about one person. The report does not predict sales, revenue or price: the target
+and reserve of a pre-order campaign come from a published formula over Qloo's numbers, not from a forecast.
 
-Full reference: [docs/reference/DEMAND_CHECK.md](../../docs/reference/DEMAND_CHECK.md).
+Full reference: [docs/reference/DEMAND_CHECK.md](../../docs/reference/DEMAND_CHECK.md). License: MIT ([LICENSE](LICENSE)).
+
+## The check, the decision, the money (Qloo REST, the primary path)
+
+1. **Check** (`POST /api/check {idea, place?, leader?}`, no sign-in): the idea's key words go to Qloo's API from this
+   server (`knos_wanted/qloo_rest.py`): `/search` + `/entities` (closest products, the market leader), `/v2/tags`
+   (the idea's taste tags), `/v2/insights` with `urn:demographics` (who), `urn:heatmap` (where), `urn:audience`
+   (segments), `/v2/trending` (rising or falling) and `/v2/analysis/compare` (overlap and whitespace vs the leader).
+   Every number in the report names the call that produced it. The maker confirms the matches: the page lists them
+   with a tick each; unticking wrong ones and pressing "Decide again" re-runs the check without them (`exclude`).
+2. **Decision, by code** (`knos_wanted/check.py`, `RULES`): OPEN pre-orders with a target and a reserve, or REFUSE
+   with reasons (no matching taste data, audience too thin, falling trend, the leader already owns the space). With
+   no Qloo key or a failed essential call the answer is "cannot decide: no Qloo evidence": nothing opens without Qloo.
+3. **Pre-order** (`POST /api/preorder`, signed in): test units locked on Solana devnet through `knos.ideas.commit`, one
+   stage "milestone" judged by a 2-of-3 referee panel on the knos_pay 0.3.34 test program. Demo buyer, test money.
+4. **Milestone** (`POST /api/milestone {commitment, evidence_url}`): code fetches the maker's https page (public
+   addresses only, no redirects, 512 KB, 10 s) and requires the commitment's claim id on it; then two referees sign
+   PASS over the page's sha256 and the server releases to the maker, once the report's reserve is met. Otherwise the
+   money stays locked and `POST /api/refund` returns it after the deadline.
+5. **Business model**: Knos takes the payout fee of `config/fees.yaml` (0.3%, at least 0.05) only on money released on
+   proof; the program holds it with the money and a refund costs the buyer nothing. The page shows the line it reads.
+
+Sign-in: a passkey (WebAuthn; the identity is derived from the passkey's public key), Google (only when
+`GOOGLE_CLIENT_ID` is set; the ID token is checked with Google's tokeninfo endpoint), or an email typed as a display
+label only (no email provider is configured: nothing is sent or verified, and the page says so).
+
+Agents: `knos mcp` lists `knos_demand_check` when `KNOS_MCP_TOOLS=demand`; it POSTs to the hosted app
+(`KNOS_WANTED_URL`), so an agent gets the same code-made decision without a Qloo key.
+
+### Run it locally
+
+```sh
+# from the root of the Knos checkout
+pip install . "./apps/wanted[escrow]"
+export QLOO_API_KEY=...                                   # server side only; never in the page
+export QLOO_BASE_URL=https://hackathon.api.qloo.com
+PYTHONPATH=apps/wanted python -m knos_wanted serve        # http://127.0.0.1:8080
+```
+
+### Environment (names only)
+
+| Variable | What |
+|---|---|
+| `QLOO_API_KEY`, `QLOO_BASE_URL` | Qloo's key (header only, never logged) and API base |
+| `QLOO_MONTHLY_BUDGET` | hard cap on uncached Qloo calls per month (default 9000); cached answers still served |
+| `KNOS_WANTED_CACHE`, `KNOS_WANTED_STATE` | private cache (7 days) and state folders on the server |
+| `KNOS_WANTED_DEVNET_KEYPAIR` | the demo buyer's devnet test wallet (also the test mint's authority) |
+| `KNOS_WANTED_REFEREE_KEYS` | JSON list of 3 devnet test referee secret keys (one server: not an independent panel) |
+| `KNOS_WANTED_MAKER_WALLET` | default payee (the maker's devnet wallet) |
+| `KNOS_WANTED_RELAYER_KEYPAIR`, `KNOS_WANTED_MINT`, `KNOS_WANTED_PROGRAM`, `KNOS_WANTED_MILESTONE_DAYS` | optional |
+| `GOOGLE_CLIENT_ID`, `KNOS_WANTED_SESSION_SECRET`, `KNOS_WANTED_RP_ID` | sign-in |
+| `KNOS_WANTED_URL` | for `knos mcp`: where the hosted check lives |
+
+Without the escrow variables the pre-order endpoints answer "escrow unavailable on this server"; the report still works.
+
+### What changed since 30 Sep
+
+- Qloo's REST API is the primary path (cache, 4 calls/s, monthly budget); the qloo-harness MCP sidecar stays optional.
+- A decision made by code (OPEN with target and reserve, or REFUSE with reasons); "cannot decide" without Qloo.
+- Pre-orders are paid on proof: one milestone, a 2-of-3 referee panel, release only after code verifies the evidence.
+- Sign-in (passkey, Google when configured, a label), a mobile-first page, and the `knos_demand_check` MCP tool.
 
 ## Try it
 
@@ -25,9 +86,13 @@ PYTHONPATH=src:apps/wanted python -m knos_wanted maker "A late-night oat-milk co
     --rival Starbucks --rival Pret --pick first                             # the maker flow in a terminal
 ```
 
-Without a Qloo credential on the server the demand check runs on Knos's **MOCK (synthetic, not real Qloo data)** MCP
-server, which lists the same ten tools and answers in the same envelope. The mode and the reason are on the page
-header, on every report, on every row of the trail and in every API answer.
+**Without a Qloo key the build refuses to decide.** `POST /api/check` answers CANNOT_DECIDE ("cannot decide: no Qloo
+evidence") with zero Qloo calls, `/api/status` says `qloo_rest.rest: false` and `no_key_behaviour`, the page badge
+says "Qloo: off", and pre-orders never open. With the key set, `/api/status` reports `mode: live` (the REST path).
+Only the older terminal/MCP flow below (`maker`, `buyer`) still falls back to Knos's MCP server,
+**MOCK (synthetic, not real Qloo data)**,
+when the harness has no credential; every answer of that flow is labelled so, and none of it can
+open pre-orders.
 
 ## What is Qloo-powered
 
@@ -93,7 +158,7 @@ docker run -p 8080:8080 --env-file apps/wanted/.env knos-demand
 
 | Variable | Needed for | Without it |
 |---|---|---|
-| `QLOO_API_KEY` (+ `QLOO_BASE_URL`, `QLOO_TRUSTED_BASE_URL` = `https://hackathon.api.qloo.com`) | live Qloo data | MOCK (synthetic) data, labelled |
+| `QLOO_API_KEY` (+ `QLOO_BASE_URL`, `QLOO_TRUSTED_BASE_URL` = `https://hackathon.api.qloo.com`) | live Qloo data | the check answers CANNOT_DECIDE (no Qloo evidence); the MCP flow runs MOCK (synthetic), labelled |
 | `KNOS_WANTED_DEVNET_KEYPAIR` | pre-orders and anchoring (a devnet test wallet with a little devnet SOL; path or JSON byte array) | escrow buttons explain what is missing |
 | `KNOS_WANTED_MINT` | the same test mint across restarts | a test mint is created on first use |
 | `KNOS_WANTED_RECORD` | where the Knos Record lives | `~/.knos/record` |

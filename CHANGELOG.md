@@ -1904,7 +1904,7 @@ it passed. Two new programs replace the old escrow.
 
 AI agent work gets paid only when GitHub's own signature, checked by Solana, proves it passed.
 
-One product. Everything else moved to [the branch `labs` of drexthealpha/Knos](https://github.com/drexthealpha/Knos/tree/labs).
+One product. Everything else moved to [the tag `archive/labs` of drexthealpha/Knos](https://github.com/drexthealpha/Knos/tree/archive/labs).
 
 - **Nobody controls the proof.** Two new programs replace the escrow: `knos-oidc` verifies GitHub Actions and GitLab
   CI tokens on chain, and `knos-pay` holds and pays bounties. Neither has an admin instruction, and both have no

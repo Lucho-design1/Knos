@@ -185,7 +185,7 @@ The documents in this folder are listed below, with the eight front pages too.
 |---|---|
 | [`programs-v2`](../../programs-v2) | The four programs. Each file's first lines say what it does. |
 | [`programs`](../../programs) | The first deployment, exactly as deployed. |
-| [`.github/workflows`](../../.github/workflows) | The workflows a repository calls, published at one pinned commit of the branch `workflows` of `drexthealpha/Knos` (`drexthealpha/knos-workflows` before the 0.3.34 branch). |
+| [`.github/workflows`](../../.github/workflows) | The workflows a repository calls, published at one pinned commit of the `workflows-<sha12>` tags of `drexthealpha/Knos` (`drexthealpha/knos-workflows` before the 0.3.34 branch). |
 | [`src/knos`](../../src/knos) | What the workflows run: the judge, the relay, receipts, statements, the Stop hook, the MCP server. |
 | [`crates`](../../crates), [`idl`](../../idl), [`sdk/settle`](../../sdk/settle), [`examples`](../../examples), [`conformance`](../../conformance) | What another team builds on. |
 | [`web`](../../web) | The site. It reads GitHub and Solana in the browser; there is no Knos server. |
@@ -207,6 +207,6 @@ bounty on an issue is the smallest one.
 
 Knos 0.1 (1–7 Sep 2026) was shared memory for coding agents, built on Sibyl Labs' memory engine. 0.2 and 0.3.0–0.3.9 (30 Sep – 2 Oct)
 tried coordination, budgets and a jobs market before the measurement showed where the problem was
-([the branch `labs` of drexthealpha/Knos](https://github.com/drexthealpha/Knos/tree/labs)). 0.3.10 to 0.3.15 are the two deployments, work
+([the tag `archive/labs` of drexthealpha/Knos](https://github.com/drexthealpha/Knos/tree/archive/labs)). 0.3.10 to 0.3.15 are the two deployments, work
 orders, the count and the console. 0.3.16 put an invoice check on the site. [DISCLOSURE.md](DISCLOSURE.md) says what
 was built when and what came from elsewhere; [the changelog](../../CHANGELOG.md) has every release.

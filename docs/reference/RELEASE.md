@@ -16,7 +16,7 @@ Four things depend on each other, and only one order satisfies all of them.
 
 - The jobs that sign install by hash. Their list is the last line of `requirements/sign.txt`: the knos wheel by
   its sha256.
-- The workflows a repository calls are published at ONE commit of the branch `workflows` of `drexthealpha/Knos` (the
+- The workflows a repository calls are published at ONE commit of the `workflows-<sha12>` tags of `drexthealpha/Knos` (the
   same commits as the old home `drexthealpha/knos-workflows`; docs/reference/CUTOVER-0331.md), and that commit
   holds the list. So the commit exists only after the wheel does.
 - This repository names that commit in `examples/`, in its own `knos.yml`, in `docs/` and on the site.
@@ -50,7 +50,7 @@ python scripts/pinned_workflows.py lock dist/knos-<version>-py3-none-any.whl --w
 export UV_PUBLISH_TOKEN=<a PyPI token for the knos project>         # read by uv, never printed
 python scripts/release.py publish                 # uploads THAT wheel and the sdist; waits until PyPI's index lists the wheel
 python scripts/pinned_workflows.py cutoff         # UV_EXCLUDE_NEWER: ten minutes after PyPI took the wheel, into the workflows
-git worktree add ../knos-workflows-branch workflows                  # once: a worktree of the branch `workflows` of this repository
+git worktree add ../knos-workflows-branch workflows                  # once: a worktree of the `workflows-<sha12>` tags of this repository
 python scripts/release.py workflows ../knos-workflows-branch         # the published set with that lock and cutoff: committed, tagged workflows-<sha12>, pushed
                                                   # (the push: the commit must exist on GitHub before anything names it)
 python scripts/pinned_workflows.py stamp <that commit>               # the examples, knos.yml, docs/ and the site name it
@@ -306,7 +306,7 @@ differs (the push did not land, or a cache: wait a minute and run it again) or t
 ## After the tag: the first real runs
 
 1. **The pinned workflows are republished** (the `release.py workflows` step and its push, above): check that the
-   pinned commit of the branch `workflows` of `drexthealpha/Knos` holds this release's set. A new workflow command exists for users
+   pinned commit of the `workflows-<sha12>` tags of `drexthealpha/Knos` holds this release's set. A new workflow command exists for users
    only once it is republished.
 2. **The knos-verify action and the reproduce workflow** ([`integrations/workflows/knos-verify.yml`](../../integrations/workflows/knos-verify.yml),
    [`examples/knos-reproduce.yml`](../../examples/knos-reproduce.yml), [REPRODUCE.md](REPRODUCE.md)): a run that this

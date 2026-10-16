@@ -6,6 +6,8 @@ until the step that deletes them, and deleting is his action. What the 0.3.34 br
 what still waits is said under each section ("Done on the 0.3.34 branch"); `main` and tag v0.3.28, the Colosseum
 entry, are untouched until 5 Dec 2026, so no repository they link to is deleted before 6 Dec 2026.
 
+
+**One branch (16 Oct 2026).** drexthealpha/Knos has one branch, `main`. The branches `workflows`, `oidc-rotate` and `labs` of 15 Oct were replaced by tags that keep the same commits: `workflows-<sha12>` (every published set), `oidc-rotate-<sha12>` and `archive/labs`; every other old branch whose commits were not in `main` is kept as `archive/<name>`. The steps below that name `refs/heads/...` are the record of 15 Oct.
 ## What still points at the old repositories
 
 Read from devnet on 14 Oct 2026 (`getProgramAccounts` on the public knos_pay and knos_meter, every account of a job's,
@@ -79,7 +81,7 @@ branch of Knos holding the same commits, then new callers naming it.
    the canary does; read the order's workflow hash. This is the step this build could run only in LiteSVM.
 5. In the next release: `python scripts/pinned_workflows.py move drexthealpha/Knos`, `python scripts/small_repos.py
    fold`, `python scripts/front_workflow.py`, and publish version 2 of each `terms/3` document with
-   `knos.terms3.moved`. From then on `scripts/release.py workflows` writes into a worktree of the branch `workflows`
+   `knos.terms3.moved`. From then on `scripts/release.py workflows` writes into a worktree of the `workflows-<sha12>` tags
    (commit, tag `workflows-<sha12>`, push) instead of a checkout of knos-workflows.
 6. Every repository that installed Knos updates its two callers to the new home. Where Knos Gate guards the
    repository, a pull request that edits `.github/workflows/` is refused (`gate.workflow_edited`): the owner commits
@@ -177,7 +179,7 @@ git commit -m "knos-labs: the earlier experiments, kept as history; their workfl
 git push origin labs
 ```
 
-then change the two links (CHANGELOG.md, DISCLOSURE.md) to `https://github.com/drexthealpha/Knos/tree/labs` and delete
+then change the two links (CHANGELOG.md, DISCLOSURE.md) to `https://github.com/drexthealpha/Knos/tree/archive/labs` and delete
 the repository. Nothing in Knos runs or imports it.
 
 Done on the 0.3.34 branch (15 Oct 2026): fetched, main = ed6136f9e3e1dd45b3d0c97facd1608b98175625 (one commit, 306
@@ -185,7 +187,7 @@ files), kept as the local branch `labs-src`; its `.github/workflows`: fund.yml, 
 prove-demo.yml (workflow_dispatch), fuzz.yml, index.yml, worker.yml (schedule, workflow_dispatch), network.yml (push,
 release, schedule, workflow_dispatch), program.yml (push, workflow_dispatch), tests.yml (push, pull_request, schedule,
 workflow_dispatch). The links in CHANGELOG.md, DISCLOSURE.md, docs/reference/README.md and `knos init`'s note name
-`https://github.com/drexthealpha/Knos/tree/labs`. Waits: the commit that removes `.github/workflows` and the push of
+`https://github.com/drexthealpha/Knos/tree/archive/labs`. Waits: the commit that removes `.github/workflows` and the push of
 `labs` (the release's one push), then the deletion, from 6 Dec 2026 (tag v0.3.28 links it).
 
 ## 4. knos-playground and knos-rc (not folded)

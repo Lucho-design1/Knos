@@ -9,7 +9,79 @@ are not built yet against tastes the buyer chooses. The code is [`apps/wanted/`]
 Every Qloo result is aggregate taste, not a prediction about one person. A report is directional demand evidence,
 not a sales forecast.
 
-## How Knos reaches Qloo
+## The decision check (Qloo REST, primary since 16 Oct 2026)
+
+`POST /api/check {idea, place?, leader?}` (web page, or `knos mcp` tool `knos_demand_check` with
+`KNOS_MCP_TOOLS=demand`, which POSTs to the hosted app at `KNOS_WANTED_URL`). Code: `apps/wanted/knos_wanted/check.py`
+over `qloo_rest.py` (key in the request header only, from the server's environment; answers cached privately for 7
+days; at most 4 calls per second; a monthly budget, `QLOO_MONTHLY_BUDGET`, default 9,000 uncached calls).
+
+| Step | Qloo call | Gives |
+|---|---|---|
+| closest products, leader | `/search` (key words only, typed by the idea's kind: brand, videogame, place, ...) + `/entities` | names, popularity; the leader = top match unless named |
+| taste tags | `/v2/tags` (`filter.parents.types` = that kind) | the idea's tags |
+| who | `/v2/insights` `filter.type=urn:demographics` | age and gender affinity |
+| where | `/v2/insights` `filter.type=urn:entity:place` and `urn:heatmap`, `filter.location.query` = place (default United States) | named places and map hot spots |
+| segments | `/v2/insights` `filter.type=urn:audience` | audience segments by affinity (`/v2/audiences` lists the same segments unranked) |
+| rising or falling | `/v2/trending` (`filter.type`, `signal.interests.entities`, 12-week windows going back until Qloo has data) | weekly population percentile |
+| vs the leader | `/v2/analysis/compare` (a = the idea's neighbours, b = the leader) | shared tags (overlap), whitespace |
+
+Every number in the report carries `src`, the index of the call in `report.calls` that produced it.
+
+**Decision rules** (`check.RULES`, deterministic; no language model decides). Thresholds were set on Qloo's real
+answers (16 Oct 2026: 15 cached audience answers and 10 calibration ideas) and why:
+- **Relevance gate.** Content words = the idea minus filler ("all", "about", "the"), pitch words ("smart", "new") and
+  instruction words ("ignore", "rules", "decision", "release", "funds"); kind words ("podcast", "bar", "game") pick the
+  Qloo type but do not count as a match. A Qloo product counts only when its name shares 2 content words with the
+  idea, or 1 in the name and 1 more in its description or tags. None: REFUSE "no product in Qloo matches this idea".
+  Why: single-word name hits were namesakes ("Swimsuits For All" for "all", "Road & Track" for "tracks").
+- **Clone gate.** The leader's name is in the idea with a clone phrase ("exactly like", "clone of", ...) or is the
+  idea's whole subject: REFUSE "an existing product already owns this".
+- **Leader check, never skipped.** Overlap = shared taste tags / the smaller side (compare, when both sides have >= 3
+  distinct tags), else shared informative audience segments of the idea's other matches vs the leader's own. No
+  comparison possible: REFUSE ("an existing product already owns this" when the leader's popularity is >= 0.9, else
+  "no leader comparison possible"). Overlap >= 85%: REFUSE "the incumbent already serves this taste", whatever the
+  leader's popularity (a round-2 judge saw a Korean BBQ idea open at 96% overlap with a 0.85-popularity incumbent).
+  Overlap 60-85% with a leader of popularity >= 0.95: REFUSE (owned). Why: matched
+  leaders' popularity ran 0.43-1.0 (median about 0.95); compare returned <= 1 tag on one side for most brands.
+- **Audience.** A segment is informative when its affinity is above 0.55. Why: when Qloo has no signal it returns a
+  list flat at exactly 0.5 (spread 0.0); entity signals gave 0.64-0.88; adding tag signals pushed whole lists down to
+  0.17-0.29 (so tags are not used as audience signals). Fewer than 3 informative segments of 6, or no demographics:
+  REFUSE "audience too thin".
+- **Stated audience.** "students", "seniors", "women", "men", "parents", ... are compared with Qloo's demographics:
+  <= -0.3 REFUSE (contradiction, shown); between -0.3 and 0 the target is halved.
+- **Trend.** The leader's weekly population percentile over the newest 12-week window that has data (Qloo's series
+  ends 24 Jul 2026: shown as "data through"). Every series measured was flat (start = end, velocity 0), and places,
+  podcasts and video games have none: the report and page then say "Qloo's trend data ends 2026-07-24 and shows no
+  movement for these; not counted" (neither for nor against). Falling (<= -0.02): REFUSE;
+  rising (>= +0.02): target x 1.25.
+- **Size.** target = round10(100 x (1 + 2 x strength) x (1 - overlap/2) x audience factor x trend factor), strength =
+  mean of (affinity - 0.5) x 2 over the informative segments; clamped to 20..1000; reserve = ceil(target x (0.3 + 0.2 x
+  overlap)) units pre-ordered before the maker is paid. Campaign sizes from a published formula, not a sales forecast.
+- **No Qloo.** No key, the budget spent, or an essential call failing (search, demographics, segments) after one retry
+  without the optional location/tags: CANNOT_DECIDE "cannot decide: no Qloo evidence". A failed optional call is
+  listed as missing evidence and not counted. Qloo's error text is never shown; a refused (4xx) question is cached a
+  day so repeats do not spend the budget.
+**Paid on proof.** On an OPEN report a signed-in user pre-orders (`POST /api/preorder`): the app's demo devnet wallet
+(demo buyer, test money) locks the units through `knos.ideas.commit` as one stage "milestone" (oracle `referee_pass`)
+judged by a 2-of-3 panel on the knos_pay 0.3.34 test program `FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4`; the
+payee is the maker's devnet wallet. The panel's keys are held by the server (`KNOS_WANTED_REFEREE_KEYS`): one server is
+not an independent panel, and the commitment says UNLISTED PANEL. `POST /api/milestone {commitment, evidence_url}`:
+code fetches the https page (public addresses only, no redirects, 512 KB, 10 s), requires the commitment's claim id on
+it and the report's reserve to be met; then two referees sign PASS over the page's sha256 and the server releases.
+Not verified: nothing is signed; `POST /api/refund` returns the money after the deadline. Knos's fee is the payout line
+of `config/fees.yaml` (30 bps, floor 0.05), held with the money and taken only at release.
+
+Devnet run, 16 Oct 2026, round 1 under the first rules (test units of the app's own test mint; live Qloo answers): a smart water bottle (Lagos) OPEN,
+target 150, reserve 45; canned oat-milk cold brew (London) REFUSE, audience too thin; a cozy farming video game REFUSE,
+audience too thin and no demographic signal; the same water-bottle idea with no key: CANNOT_DECIDE. The water bottle's
+45-unit pre-order: lock `5mCZbS5MLXD9sjQiXXMpQXGWGELwWeadKzmsVzr1So6n5Df4MjH8F7smwJaNPG9H2xDC8MTHTozDzsf73PdE8Qys`;
+evidence without the claim id refused (HTTP 422); referee PASS + release
+`4HhTwWcC6tMwtYYzaHNmYByPUDadZUuMQpthfwenw5fjr58jBJyrxw7SUUc89NUddzABSebZJT28Y8p3UwwhkzJm`,
+`5H7WmpNZDWpeBh1PWWqso65WZjognA7JkXXJCSLmLSceAtgbaGfU1sZTBDmY6ZGhFnpUCBL8aT9k6oSTw7Uoski`; the maker's wallet then held
+45 test units. The evidence page in that run was an echo service showing the claim id (a demo, not a product page).
+
+## How Knos reaches Qloo (MCP flow, optional)
 
 ```
 browser --> Knos server (Python) --JSON lines--> apps/wanted/bridge/qloo_bridge.mjs --MCP stdio--> qloo mcp --> Qloo

@@ -873,7 +873,7 @@ The rule: a pull request's code and its tests never run in a job that can ask Gi
 (`id-token: write`) or that holds a credential that can write to the repository; and what the job that signs takes
 from the job that ran such code is data it checks again, never an instruction. This section is the author's own review, not an outside audit, of
 the workflows a repository installs (`fund.yml`, `prove.yml`, `check.yml` and `attest.yml`, published to
-the branch `workflows` of `drexthealpha/Knos` (`drexthealpha/knos-workflows` before the 0.3.34 branch) by [`scripts/pinned_workflows.py`](../../scripts/pinned_workflows.py)), of the two files that
+the `workflows-<sha12>` tags of `drexthealpha/Knos` (`drexthealpha/knos-workflows` before the 0.3.34 branch) by [`scripts/pinned_workflows.py`](../../scripts/pinned_workflows.py)), of the two files that
 call them (`knos.yml`, `knos-check.yml`) and of `hermetic.yml`, job by job, and what this release changed.
 [`tests/test_workflows2.py`](../../tests/test_workflows2.py) holds the shape and
 [`tests/test_verdict_gate.py`](../../tests/test_verdict_gate.py) the hostile cases.

@@ -4,140 +4,114 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knos demand check</title>
-<meta name="description" content="Knos's demand check: an idea, Qloo taste evidence you confirm, a demand report in the Knos Record, then pre-orders locked in a Knos devnet escrow. Aggregate taste, not a prediction about one person.">
+<meta name="description" content="Knos: is your product wanted, by whom, where, rising or falling, and against which leader? Qloo's taste data answers; code decides whether pre-orders open; buyers' money is paid to the maker only on proof.">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+<a class="skip" href="#main">Skip to the check</a>
 <header class="top">
-  <div class="wrap">
+  <div class="wrap row">
     <div class="brand"><span class="mark" aria-hidden="true"></span>Knos <span class="sub">demand check</span></div>
-    <div id="modeBadge" class="badge" title="Where the numbers come from">loading</div>
+    <div class="row gap">
+      <span id="modeBadge" class="badge" title="Where the numbers come from">loading</span>
+      <button id="whoBtn" class="ghost" type="button" aria-controls="signin">Sign in</button>
+    </div>
   </div>
 </header>
 
-<main class="wrap">
+<main id="main" class="wrap">
   <section class="hero">
-    <h1>Is it wanted, by whom, where, and will they put money down?</h1>
-    <p class="lede">Knos checks demand before anyone builds: Qloo's taste data, through Qloo's own MCP server, answers who,
-      where, rising or not and against which rivals. You confirm every match Qloo proposes. The report goes into the
-      Knos Record, and buyers lock pre-orders in a Knos escrow on Solana devnet.</p>
-    <p class="framing"><span id="framing">Directional demand evidence, not a sales forecast.</span>
-      <span class="agg">Aggregate taste, not a prediction about one person.</span></p>
-    <p class="reason" id="reason"></p>
+    <h1>Is it wanted? Ask before you build.</h1>
+    <p class="lede short">Qloo's taste data answers; code decides; buyers pay the maker only on proof.</p>
   </section>
 
-  <nav class="tabs" role="tablist">
-    <button role="tab" id="tabMaker" class="on" aria-selected="true">I make something</button>
-    <button role="tab" id="tabBuyer" aria-selected="false">I want something</button>
-  </nav>
+  <section id="signin" class="card" hidden aria-labelledby="signinH">
+    <h2 id="signinH">Sign in</h2>
+    <p class="muted">Signing in is needed to pre-order or post a milestone. The check itself is open to everyone.</p>
+    <div class="stack">
+      <button id="pkNew" type="button">Create a passkey</button>
+      <button id="pkUse" type="button" class="ghost">Sign in with my passkey</button>
+      <p class="muted small" id="pkNote">A passkey gives you a passkey wallet identity on this site. Knos holds no key
+        for you: devnet pre-orders are made by the app's demo wallet acting for you (test money).</p>
+      <div id="googleBox" hidden><div id="gsi"></div></div>
+      <label for="email">Email (a display label only)</label>
+      <input id="email" type="email" autocomplete="email" maxlength="80" placeholder="you@example.com">
+      <p class="muted small" id="emailNote">No email provider is configured: nothing is sent to this address and it is not
+        verified. It is only the name shown beside your pre-orders.</p>
+      <button id="guestBtn" type="button" class="ghost">Continue with this label</button>
+      <button id="outBtn" type="button" class="ghost" hidden>Sign out</button>
+    </div>
+  </section>
 
   <div id="err" class="err" role="alert" hidden></div>
 
-  <!-- MAKER -->
-  <section id="maker">
-    <form id="makerForm" class="card form" autocomplete="off">
-      <label for="idea">Your idea (stays on this server: only search words go to Qloo, never this text)</label>
-      <textarea id="idea" rows="3" maxlength="500" required placeholder="A late-night oat-milk coffee bar for students in London"></textarea>
-      <div class="row">
-        <div><label for="variants">Existing products closest to your idea (one per variant, optional)</label><input id="variants" maxlength="200" placeholder="Blank Street, Black Sheep Coffee"></div>
-        <div><label for="rivals">Rivals (optional)</label><input id="rivals" maxlength="200" placeholder="Starbucks, Pret"></div>
-      </div>
-      <div class="row">
-        <div><label for="place">Place (for where and fit)</label><input id="place" maxlength="60" placeholder="London"></div>
-        <div class="examples" id="examples" aria-label="Examples"></div>
-      </div>
-      <button type="submit" id="makerGo" class="primary">1. Find the Qloo matches</button>
-    </form>
-
-    <section id="makerConfirm" class="card step" hidden>
-      <h2>2. Confirm what you mean</h2>
-      <p class="status">Qloo proposed these matches. Nothing else is asked until you confirm: a wrong match changes every number after it.</p>
-      <div id="makerQs"></div>
-      <button id="makerConfirmGo" class="primary" type="button">3. Build the demand report</button>
-    </section>
-
-    <section id="report" hidden>
-      <div class="card lean">
-        <div class="lean-head">
-          <div><div class="k">Lean (Knos's rule, see README)</div><div id="leanWord" class="lean-word"></div></div>
-          <div class="srcnote" id="reportLabel"></div>
-        </div>
-        <ul id="leanWhy" class="why"></ul>
-        <div class="plan" id="chosen"></div>
-      </div>
-      <div class="grid">
-        <article class="card" id="secWho"><h2>Who</h2><div class="body"></div><div class="src"></div></article>
-        <article class="card" id="secWhere"><h2>Where</h2><div class="body"></div><div class="src"></div></article>
-        <article class="card" id="secRising"><h2>Rising or not</h2><div class="body"></div><div class="src"></div></article>
-        <article class="card" id="secFit"><h2>Fit: variants and rivals, ranked</h2><div class="body"></div><div class="src"></div></article>
-        <article class="card wide" id="secRivals"><h2>Your audience vs the rivals' (compare)</h2><div class="body"></div><div class="src"></div></article>
-      </div>
-      <section class="card lock" id="publish">
-        <h2>4. Open pre-orders</h2>
-        <p>List the product so buyers can find it and lock pre-orders against this exact report (its sha256 is in the
-          escrow's terms) on <b>Solana devnet</b>, with test units. Recorded in the Knos Record: <span id="recordLine">-</span></p>
-        <div class="row tight"><div><label for="title">Product name</label><input id="title" maxlength="80" placeholder="Night Oat Bar"></div>
-          <div class="btns"><button id="publishGo" type="button" class="primary">List it for pre-orders</button></div></div>
-        <div id="publishOut" class="lockout"></div>
-        <div class="hash">Report sha256: <code id="hash"></code></div>
-      </section>
-    </section>
-  </section>
-
-  <!-- BUYER -->
-  <section id="buyer" hidden>
-    <form id="buyerForm" class="card form" autocomplete="off">
-      <p class="status">Name things you like, never who you are. Knos refuses names, e-mails, phone numbers, handles and
-        addresses before anything is sent, and keeps no copy of your tastes.</p>
-      <div class="row">
-        <div><label for="likes">Things you like (brands, places, films, artists; up to 5)</label><input id="likes" maxlength="300" placeholder="Aesop, Monocle, Kinfolk"></div>
-        <div><label for="vibes">A vibe or two (optional)</label><input id="vibes" maxlength="120" placeholder="minimalist, specialty coffee"></div>
-      </div>
-      <label>Show me</label>
-      <div class="targets" id="targets"></div>
-      <button type="submit" id="buyerGo" class="primary">1. Find the Qloo matches</button>
-    </form>
-    <section id="buyerConfirm" class="card step" hidden>
-      <h2>2. Confirm what you mean</h2>
-      <div id="buyerQs"></div>
-      <button id="buyerConfirmGo" class="primary" type="button">3. What fits this taste</button>
-    </section>
-    <section id="buyerOut" hidden>
-      <div class="srcnote" id="buyerLabel"></div>
-      <div class="grid">
-        <article class="card wide"><h2>Not built yet: products that fit this taste</h2><div id="products"></div></article>
-        <article class="card wide"><h2>People who share this taste also like</h2><div id="recs"></div></article>
-      </div>
-    </section>
-  </section>
-
-  <section class="card lock" id="lock" hidden>
-    <h2>Lock a pre-order: <span id="lockTitle"></span></h2>
-    <p>Test money only. The units wait in the knos_pay program: paid to the maker only on delivery through Knos's judge,
-      refunded after the deadline otherwise. Fees from config/fees.yaml: <span id="quote">-</span></p>
-    <div class="row tight">
-      <div><label for="units">Test units</label><input id="units" type="number" min="5" max="1000" value="5"></div>
-      <div class="btns">
-        <button id="demoBuy" class="primary" type="button">Lock with the demo buyer (no wallet)</button>
-        <button id="walletBuy" type="button">Lock with my wallet (Phantom, devnet)</button>
-      </div>
+  <form id="checkForm" class="card form" autocomplete="off" aria-labelledby="checkH">
+    <h2 id="checkH">1. Your idea</h2>
+    <label for="idea">The product, in plain words (only its key words go to Qloo)</label>
+    <textarea id="idea" rows="3" maxlength="500" required placeholder="A smart water bottle that glows to remind you to drink"></textarea>
+    <div class="two">
+      <div><label for="place">Where (optional)</label><input id="place" maxlength="60" placeholder="Lagos"></div>
+      <div><label for="leader">Market leader to beat (optional)</label><input id="leader" maxlength="80" placeholder="Qloo's top match"></div>
     </div>
-    <div id="lockOut" class="lockout"></div>
-    <div id="poolOut" class="pool"></div>
+    <button id="checkBtn" type="submit">Check demand</button>
+    <p class="muted small">No personal data, please: Knos refuses emails and phone numbers before calling Qloo.</p>
+  </form>
+
+  <section class="about">
+    <p>Knos asks Qloo's taste data who wants things like your idea, where, whether that taste is rising or falling, and
+      how much of the space the market leader already owns. Then code, not a chatbot, decides: <b>open pre-orders</b>
+      with a target and a reserve, or <b>refuse</b> with the reasons. Buyers' money waits in escrow and reaches the
+      maker <b>only on proof</b>.</p>
+    <p class="framing"><span id="framing">Directional demand evidence, not a sales forecast.</span>
+      <span class="agg">Aggregate taste, not a prediction about one person.</span></p>
+    <p class="model" id="feeLine">Knos takes a fee only on money released on proof.</p>
   </section>
 
-  <section class="card trail" id="trailBox" hidden>
-    <h2>Request to result: every Qloo call, in order</h2>
-    <p class="status">Each row is one workflow call to <code>qloo mcp</code>: the tool, the request as sent (no key, no
-      personal data), why it was asked, and what came back. <b>Aggregate taste, not a prediction about one person.</b></p>
-    <div id="trail"></div>
+  <section id="report" hidden aria-live="polite">
+    <div id="decision" class="card decision"></div>
+    <div class="grid">
+      <div class="card" id="who"></div>
+      <div class="card" id="where"></div>
+      <div class="card" id="aud"></div>
+      <div class="card" id="trend"></div>
+      <div class="card" id="versus"></div>
+      <div class="card" id="matches"></div>
+    </div>
+    <details class="card"><summary>Every Qloo call behind this report</summary><ol id="calls" class="calls"></ol>
+      <p class="muted small" id="rules"></p></details>
+  </section>
+
+  <section id="pre" class="card" hidden aria-labelledby="preH">
+    <h2 id="preH">2. Pre-orders, paid to the maker only on proof</h2>
+    <p id="preModel" class="model"></p>
+    <p class="muted small">Demo buyer, test money: the app's devnet wallet locks test units for you on Solana devnet.
+      2 of 3 referees release them to the maker when the milestone is proven; otherwise they go back after the deadline.</p>
+    <div class="two">
+      <div><label for="units">Units</label><input id="units" type="number" min="5" value="10" inputmode="numeric"></div>
+      <div><label for="maker">Maker's devnet wallet (optional)</label><input id="maker" maxlength="44" placeholder="server default"></div>
+    </div>
+    <button id="preBtn" type="button">Pre-order (demo buyer, test money)</button>
+    <div id="reserve" class="reserve"></div>
+    <ul id="preList" class="list"></ul>
+  </section>
+
+  <section id="ms" class="card" hidden aria-labelledby="msH">
+    <h2 id="msH">3. Maker: prove the milestone</h2>
+    <p class="muted small">Publish a public https page that contains the commitment's claim id, then post its URL. Code
+      fetches it (public addresses only, no redirects, 512 KB, 10 s) and checks the claim id; only then do the referees sign.</p>
+    <label for="commit">Commitment</label><select id="commit"></select>
+    <p class="mono small" id="claimId"></p>
+    <label for="evidence">Evidence URL</label><input id="evidence" type="url" maxlength="2000" placeholder="https://...">
+    <button id="msBtn" type="button">Post milestone evidence</button>
+    <button id="refundBtn" type="button" class="ghost">Refund (after the deadline)</button>
+    <div id="msOut"></div>
   </section>
 </main>
 
-<footer class="wrap foot">
-  <p>Knos (MIT). Qloo-powered: nine workflows of Qloo's canonical MCP server (<code>qloo mcp</code>, @qloo/qloo-harness),
-    called only from this server. Qloo data is never stored in the repository. Pre-orders: Solana devnet, test units.</p>
+<footer class="wrap muted small">
+  <p>Qloo's taste data is read on this server only (the key never reaches your browser). Pre-orders run on Solana devnet
+    with test units: no real money. Knos is MIT licensed.</p>
 </footer>
-<script src="/static/app.js"></script>
+<script src="/static/app.js" defer></script>
 </body>
 </html>
