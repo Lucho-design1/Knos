@@ -90,6 +90,24 @@ evidence without the claim id refused (HTTP 422); referee PASS + release
   likes. Those with affinity >= 0.8 that are not already matched are adjacent demand: >= 5 -> target x 1.2; <= 1 ->
   target x 0.8; else no change. A failed call changes nothing.
 
+## The crossing agent and what Qloo sets (17 Oct 2026)
+
+`POST /api/cross {ref | idea, place?, product?}` starts the server-side agent (`apps/wanted/knos_wanted/agent.py`), and
+`GET /api/cross?id=&since=` streams its steps. Each Qloo step carries the call, its input, an output summary and its
+effect. On OPEN the report's `decision.plan` holds what Qloo's evidence SET:
+- **who**: the top age and gender (`urn:demographics`) and the informative segments (`urn:audience`);
+- **where**: the launch cities (`urn:entity:destination`, explainability on);
+- **price tier**: the best premium spending-habit segment (Gourmand Fine Dining, Boutique Hotels, High Fashion, Watch
+  Collecting, Art Collectibles, Angel Start Up Investing, Wine Enthusiast, Real Estate) minus Discount Shoppers, each
+  absent one counted at Qloo's neutral 0.5. Above +0.05 is premium, below -0.05 is budget, otherwise mid. The unit price
+  is 4 / 2 / 1 test units: a scale, not a price recommendation;
+- **escrow target and reserve**: in units and in test units (units x unit price);
+- **unserved audience**: what the idea's side has and the leader's does not.
+
+The tag step is one `/v2/tags` call with `feature.semantic_search=true` on the product phrase.
+`feature.explainability=true` is sent on the destination and recommendation calls, and the explanations are kept in
+the report.
+
 ## Research intake (16 Oct 2026)
 
 `POST /api/research {ref}` -> a research card (`apps/wanted/knos_wanted/research.py`): the proven result quoted from the
@@ -99,15 +117,18 @@ After the demand check, "why it never crossed" flags the three walls only with e
 years, Nobel or >= 1,000 citations, and no Qloo product for it), slow judges (an OpenAlex field or topic that is
 clinical or regulated), failed attempts (Qloo products like it with popularity < 0.3); otherwise "no evidence".
 
-## The Knos Record (Sibyl) in the live flow
+## Sibyl is the agent's memory; the chain holds the money rules
 
-`/api/check` writes the decision to the Record (`company.record_check`: WARM claim `demand:<hash>`, COLD `experiment`).
-Money reads it back first: `preorder.lock` refuses a report Sibyl does not hold as OPEN with the same target and
-reserve; `preorder.record_gate` refuses a release Sibyl holds no pre-order for, or already holds as released; the reserve
-is counted from Sibyl. Each lock and release is written back (COLD `funding` / `payout`, WARM state). Without Sibyl
-(`sibyl-memory-client` 0.8.x, pinned `<0.9`) no money moves. A second release of a released commitment is refused by
-Sibyl's record alone, before this server's files or the chain are read: HTTP 409 "refused: the Knos Record (Sibyl) marks
-this commitment released", `refused_by: Knos Record (Sibyl)`.
+Sibyl is the agent's working memory. Each crossing is remembered (claim `crossing:<hash of the paper id>`: when, the
+product phrase, the decision, the report). The next crossing of the same paper starts from that memory, for example by
+reusing the product phrase the maker settled on. Each decision, lock and release is also written to the Knos Record
+(`company.record_check`, `record_lock`, `record_release`).
+
+Memory never moves or blocks money. A double release is refused by the on-chain escrow: before any release the server
+reads the order account on devnet (`preorder.chain_gate`). Once knos_pay has paid or refunded an order, the account is
+closed, and the server answers HTTP 409 "refused: the escrow order ... is closed on devnet (already released or
+refunded); knos_pay pays a stage once", with `refused_by: the escrow order on devnet (read from the chain)`. The program
+would refuse it too, because the order account no longer exists.
 
 **Pre-orders are reported available only when they work.** At start and every 10 minutes the server builds the
 transaction a 5-unit pre-order sends (test-mint top-up and the stage's PANEL order with its three referee keys, through

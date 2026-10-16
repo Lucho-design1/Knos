@@ -185,7 +185,7 @@ def test_raw_errors_never_reach_the_user(app, monkeypatch):
 def test_the_real_preorder_transactions_fit_with_a_50_byte_margin_for_the_largest_inputs():
     pytest.importorskip("solders")
     sizes = preorder.largest_preorder_txs()
-    assert sizes["preorder"] <= preorder.TX_BUDGET == 1182 and sizes["preflight"] <= 1182, sizes
+    assert sizes["preorder"] <= preorder.TX_BUDGET == 1182 and sizes["preflight"] <= 1182 and sizes["blink"] <= 1182, sizes
 
 
 def test_preflight_never_puts_the_mint_creation_in_the_simulated_transaction(monkeypatch):

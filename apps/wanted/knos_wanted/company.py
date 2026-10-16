@@ -147,9 +147,9 @@ def quote(units: int) -> dict:
             "demand_report": {"line": None, "units": 0, "status": "free: config/fees.yaml has no demand-report line (founder decision)"}}
 
 
-# ---- the decision check (POST /api/check) and its money, in the Record; Sibyl is READ before money moves -----------
-class NotInRecord(ValueError):
-    """The Knos Record (Sibyl) does not hold what a money step needs: nothing is locked or released."""
+# ---- the decision check in the Record: Sibyl is the agent's working memory; money rules live on chain ------------
+class NotInRecord(ValueError):  # Sibyl is the agent's working memory; it never gates money
+    """Sibyl (the agent's memory) holds no such record."""
 
 
 def record_check(rep: dict, store=None) -> dict:
@@ -174,16 +174,16 @@ def record_check(rep: dict, store=None) -> dict:
 
 
 def record_state(report_hash: str, store=None) -> dict:
-    """The decision as Sibyl holds it (WARM). Raises NotInRecord when Sibyl is absent or holds no such decision."""
+    """The decision as the agent remembers it (Sibyl, WARM). Raises NotInRecord when Sibyl is absent or holds none."""
     rec = _record()
     if rec is None:
-        raise NotInRecord("the Knos Record is not available on this server (knos/Sibyl not installed): no money moves without it")
+        raise NotInRecord("the agent's memory (the Knos Record in Sibyl) is not available on this server")
     try:
         got = rec.claim_state(claim_id(report_hash), root=root(), store=store) or {}
     except ImportError:
-        raise NotInRecord("Sibyl is not installed on this server: the Knos Record cannot be read, so no money moves") from None
+        raise NotInRecord("Sibyl is not installed on this server: the agent has no memory here") from None
     if got.get("report_hash") != report_hash:
-        raise NotInRecord("this report is not in the Knos Record (Sibyl): run the check again on this server")
+        raise NotInRecord("the agent's memory (Sibyl) holds no record of this report")
     return got
 
 

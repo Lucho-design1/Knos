@@ -41,6 +41,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[3]
 TASK = ROOT / "examples" / "autoresearch"
 JUDGE_REPO = 1401439243          # drexthealpha/knos-e2e (the graduation demo's judge repository id)
+QUOTE = {"kind": "compute", "supplier": "Nebius Token Factory, Nemotron 3 Super", "unit_cost": 0.0, "quantity": 1,
+         "source": "Token Factory model catalog, read 14 Oct 2026 (knos.nebius.sources.PRICE_PER_M); usage of this run's agent calls"}
 QUOTE: dict[str, Any] = {"kind": "compute", "supplier": "Nebius Token Factory, Nemotron 3 Super", "unit_cost": 0.0, "quantity": 1,
          "source": "Token Factory model catalog, read 14 Oct 2026 (knos.nebius.sources.PRICE_PER_M); usage of this run's agent calls"}
 
@@ -190,9 +192,7 @@ def main(argv=None) -> int:
     pool = graduation.pool(led, gp, str(mint))
     out["preorder_pool"] = pool
     orders = graduation.demand_orders(gp, pool)
-    usage = sum(c.prompt_tokens for c in nem.client.calls), sum(c.completion_tokens for c in nem.client.calls)
-    q = dict(QUOTE, unit_cost=round(sources.token_cost(sources.SUPER, *usage), 6),
-             supplier=QUOTE["supplier"] + (" (MOCK usage: estimated tokens, no live call)" if not nem.client.live else ""))
+    q = quote(None if own else nem.client, sources)
     v = graduate.verdict(g, orders, [q], locked_price=pool["locked"] / UNIT, min_buyers=2, min_locked=15 * UNIT,
                          record_root=g.root / "record")
     out["referee_verdict"] = {k: v[k] for k in ("passed", "failed", "spec_hash", "recorded")}
@@ -239,6 +239,16 @@ def main(argv=None) -> int:
     out["record_dir"] = str(g.root / "record")
     save()
     return 0
+
+
+def quote(client, sources) -> dict:
+    """The compute quote the referee's makeable check reads: this run's agent token usage priced from the catalog
+    (`client` None when the game was the caller's own and no Nemotron player ran: 0 tokens)."""
+    calls = list(getattr(client, "calls", []) or [])
+    usage = sum(c.prompt_tokens for c in calls), sum(c.completion_tokens for c in calls)
+    live = bool(getattr(client, "live", False))
+    return dict(QUOTE, unit_cost=round(sources.token_cost(sources.SUPER, *usage), 6),
+                supplier=QUOTE["supplier"] + ("" if live else " (MOCK usage: estimated tokens, no live call)"))
 
 
 def _now() -> str:

@@ -23,9 +23,10 @@ import time
 from collections import OrderedDict, defaultdict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+import urllib.parse
 from urllib.parse import parse_qs, urlparse
 
-from . import auth, buyer, catalog, check, company, demand, escrow, planner, preorder, privacy, research
+from . import agent, auth, blink, buyer, catalog, check, company, demand, escrow, planner, preorder, privacy, research
 from .qloo_mcp import AGGREGATE, Qloo, QlooUnavailable
 from .qloo_rest import Client
 
@@ -39,10 +40,12 @@ GLOBAL_DEMO = (60, 3600)                                           # demo pre-or
 ROUTES = {"/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
-          "/api/check": "check", "/api/research": "check", "/api/preorder": "lock", "/api/milestone": "milestone", "/api/refund": "lock",
+          "/api/check": "check", "/api/research": "check", "/api/cross": "check", "/api/factor": "lock",
+          "/api/auth/email": "auth", "/api/auth/email/verify": "auth", "/api/preorder": "lock", "/api/milestone": "milestone", "/api/refund": "lock",
           "/api/auth/challenge": "auth", "/api/auth/passkey/register": "auth", "/api/auth/passkey/login": "auth",
           "/api/auth/google": "auth", "/api/auth/guest": "auth"}
-SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund")
+SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor",
+             "/api/preorder/demo", "/api/preorder/faucet", "/api/preorder/tx", "/api/preorder/submit")   # no anonymous money or faucet calls
 
 
 class State:
@@ -132,9 +135,11 @@ def make_handler(state: State):
             fwd = self.headers.get("X-Forwarded-For", "") if os.environ.get("KNOS_WANTED_TRUST_PROXY") == "1" else ""
             return (fwd.split(",")[0].strip() or self.client_address[0])[:64]
 
-        def _send(self, code: int, body, ctype: str = "application/json") -> None:
+        def _send(self, code: int, body, ctype: str = "application/json", headers: dict | None = None) -> None:
             data = body if isinstance(body, bytes) else json.dumps(body, default=str).encode()
             self.send_response(code)
+            for k, v in (headers or {}).items():
+                self.send_header(k, v)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(data)))
             self.send_header("X-Content-Type-Options", "nosniff")
@@ -152,9 +157,48 @@ def make_handler(state: State):
                 raise ValueError("send a JSON object")
             return got
 
+        def _base(self) -> str:
+            host = self.headers.get("Host") or "localhost"
+            proto = "https" if os.environ.get("KNOS_WANTED_TRUST_PROXY") == "1" or not host.startswith(("127.", "localhost")) else "http"
+            return f"{proto}://{host}"
+
+        def _redirect(self, to: str) -> None:
+            self.send_response(302)
+            self.send_header("Location", to)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def do_OPTIONS(self):
+            return self._send(204, b"", "text/plain", blink.CORS)
+
         def do_GET(self):
             u = urlparse(self.path)
             qs = parse_qs(u.query)
+            if u.path == "/actions.json":
+                return self._send(200, blink.RULES, headers=blink.CORS)
+            if u.path == "/api/actions/preorder":
+                rep = state.report((qs.get("report") or [""])[0])
+                if rep is None:
+                    return self._send(404, {"message": "unknown report"}, headers=blink.CORS)
+                return self._send(200, blink.action(rep, self._base()), headers=blink.CORS)
+            if u.path == "/api/cross":
+                got = agent.poll((qs.get("id") or [""])[0], int((qs.get("since") or ["0"])[0] or 0))
+                return self._send(200 if got else 404, got or {"error": "unknown crossing"})
+            if u.path == "/api/commitments":
+                return self._send(200, {"commitments": preorder.all_public(50)})
+            if u.path == "/mcp":
+                return self._send(405, {"error": "POST JSON-RPC messages to /mcp (MCP Streamable HTTP)"}, headers={"Allow": "POST"})
+            if u.path == "/auth/orcid":
+                try:
+                    return self._redirect(auth.orcid_authorize(self._base() + "/auth/orcid/callback"))
+                except auth.AuthError as why:
+                    return self._send(404, {"error": str(why)})
+            if u.path == "/auth/orcid/callback":
+                try:
+                    s_ = auth.orcid_callback((qs.get("code") or [""])[0], (qs.get("state") or [""])[0], self._base() + "/auth/orcid/callback")
+                    return self._redirect("/#session=" + s_["token"])
+                except auth.AuthError as why:
+                    return self._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120]))
             if u.path in ("/", "/index.html"):
                 return self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
             if u.path.startswith("/static/"):
@@ -191,7 +235,12 @@ def make_handler(state: State):
                                         "reserve": preorder.reserve_status(rep) if rep.get("kind") == check.KIND else None})
             if u.path == "/api/commitment":
                 try:
-                    return self._send(200, preorder.public(preorder.load((qs.get("id") or [""])[0])))
+                    rec = preorder.load((qs.get("id") or [""])[0])
+                    try:
+                        rec = blink.refresh(rec)
+                    except Exception:  # noqa: BLE001 - the chain is unreachable: show what the server holds
+                        pass
+                    return self._send(200, preorder.public(rec))
                 except ValueError as why:
                     return self._send(404, {"error": str(why)})
             if u.path == "/api/auth/config":
@@ -217,6 +266,10 @@ def make_handler(state: State):
 
         def do_POST(self):
             u = urlparse(self.path)
+            if u.path == "/mcp":
+                return self._mcp()
+            if u.path == "/api/actions/preorder":
+                return self._action(u)
             kind = ROUTES.get(u.path)
             if kind is None:
                 return self._send(404, {"error": "not found"})
@@ -229,13 +282,13 @@ def make_handler(state: State):
                     return self._send(401, {"error": "sign in first (passkey, Google or a guest label)"})
                 if u.path == "/api/milestone" and not state.allow("commitment:" + str(body.get("commitment", ""))[:64], "milestone_one"):
                     return self._send(429, {"error": "this commitment had 10 evidence posts in the last hour; try again later"})
-                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research") + SIGNED_IN:
+                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research", "/api/cross") + SIGNED_IN:
                     return self._send(200, self.route_v2(u.path, body))
                 return self._send(200, self.route(u.path, body))
             except auth.AuthError as why:
                 return self._send(401, {"error": str(why)[:300]})
-            except company.NotInRecord as why:
-                return self._send(409, {"error": str(why)[:300], "refused_by": "Knos Record (Sibyl)"})
+            except preorder.Settled as why:
+                return self._send(409, {"error": str(why)[:300], "refused_by": "the escrow order on devnet (read from the chain)"})
             except preorder.NotVerified as why:
                 return self._send(422, {"error": f"milestone not verified: {why}"[:400], "verified": False})
             except escrow.EscrowUnavailable as why:
@@ -260,8 +313,48 @@ def make_handler(state: State):
                 raise auth.AuthError("passkeys work only on this site's own https origin (or localhost)")
             return origin, rp_id
 
+        def _mcp(self):
+            try:
+                msg = self._json()
+            except ValueError as why:
+                return self._send(400, {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": str(why)[:200]}})
+            if not state.allow(self._client(), "check"):
+                return self._send(429, {"jsonrpc": "2.0", "id": msg.get("id"), "error": {"code": -32000, "message": "rate limited"}})
+            out = agent.mcp(state, msg)
+            if out is None:
+                return self._send(202, b"", "text/plain")
+            return self._send(200, out, headers={"Mcp-Session-Id": "knos"} if msg.get("method") == "initialize" else None)
+
+        def _action(self, u):
+            qs = parse_qs(u.query)
+            if not state.allow(self._client(), "lock"):
+                return self._send(429, {"message": "too many pre-orders from this address; try again later"}, headers=blink.CORS)
+            try:
+                body = self._json()
+                rep = state.report((qs.get("report") or [""])[0])
+                if rep is None:
+                    raise ValueError("unknown report")
+                units = int((qs.get("units") or ["5"])[0])
+                return self._send(200, blink.preorder_tx(rep, str(body.get("account", "")), units), headers=blink.CORS)
+            except (ValueError, TypeError, escrow.EscrowUnavailable) as why:
+                return self._send(400, {"message": str(why)[:300]}, headers=blink.CORS)
+            except Exception as why:  # noqa: BLE001
+                print(f"knos-demand-check action error: {type(why).__name__}: {str(why)[:300]}", file=sys.stderr, flush=True)
+                return self._send(500, {"message": "the server could not build this transaction"}, headers=blink.CORS)
+
         def route_v2(self, path: str, body: dict) -> dict:
             """Knos's demand check on Qloo's REST API, pre-orders paid on proof, and sign-in."""
+            if path == "/api/cross":
+                ref, idea = _text(body.get("ref"), 200), _text(body.get("idea"), 500)
+                privacy.check({"idea": idea, "place": body.get("place")})
+                job = agent.start(state, ref=ref, idea=idea, place=_text(body.get("place")), product=_text(body.get("product"), 200))
+                return {"id": job["id"], "status": job["status"]}
+            if path == "/api/auth/email":
+                return auth.email_link(str(body.get("email") or ""), self._base())
+            if path == "/api/auth/email/verify":
+                return auth.email_verify(str(body.get("token") or ""))
+            if path == "/api/factor":
+                return blink.factor(preorder.load(str(body.get("commitment", ""))), int(body.get("discount_bps", 500)))
             if path == "/api/check":
                 idea = body.get("idea")
                 if not isinstance(idea, str) or not idea.strip():
@@ -275,7 +368,7 @@ def make_handler(state: State):
                 card = state.cards.get(str(body.get("research") or ""))
                 if card:
                     rep["research"] = {**card, "why_never_crossed": research.why_never_crossed(card, rep)}
-                rep["record"] = company.record_check(rep)          # the decision in the Knos Record (Sibyl), read before money
+                rep["record"] = company.record_check(rep)          # the decision in the agent's memory (Sibyl)
                 state.keep_check(rep)
                 return rep
             if path == "/api/research":
@@ -304,6 +397,7 @@ def make_handler(state: State):
                     raise ValueError("unknown report: run the demand check first")
                 return preorder.lock(rep, body.get("units", 5), f"{user.get('kind')}: {user.get('label')}", _text(body.get("maker_wallet"), 44))
             rec = preorder.load(str(body.get("commitment", "")))
+            rec = blink.refresh(rec)
             if path == "/api/milestone":
                 return preorder.milestone(state.report(rec["report"]) or {}, rec["order"], str(body.get("evidence_url", "")))
             return preorder.refund(rec["order"])

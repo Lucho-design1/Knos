@@ -1,97 +1,108 @@
-# Knos demand check (apps/wanted/)
+# Knos: proven research, funded products (apps/wanted/)
 
-Part of Knos, in the Knos monorepo at `apps/wanted/`. Before anyone builds, Knos checks demand: a maker describes an
-idea, Qloo's taste data answers who wants it, where, against which rivals and whether interest is rising, the maker
-confirms every match Qloo proposes, and the demand report goes into the Knos Record. Buyers then lock pre-orders for
-that exact report in a Knos escrow on Solana devnet, and a buyer agent ranks the products that are not built yet
-against tastes the buyer chooses.
+**Live:** https://knos.onrender.com. It runs on a free instance that sleeps, so open it through the wake page
+https://drexthealpha.github.io/Knos/wanted.html. Phone or desktop, nothing to install. **License:** MIT ([LICENSE](LICENSE)).
+
+Landmark research often never becomes a product: "the overall failure rate of drugs that passed into phase 1 trials to
+final approval is 90%" ([Errington, J Clin Invest 2024](https://www.jci.org/articles/view/177383)). Regulatory T cells were
+described in 1995 and won the 2025 Nobel Prize, and "Several of these treatments are now undergoing clinical trials"
+([nobelprize.org](https://www.nobelprize.org/prizes/medicine/2025/press-release/)). Knos takes such a result to a product
+people pre-order, with the money held in escrow and paid to the maker only on proof.
 
 **Directional demand evidence, not a sales forecast.** Every Qloo result describes
-aggregate taste, not a prediction about one person. The report does not predict sales, revenue or price: the target
-and reserve of a pre-order campaign come from a published formula over Qloo's numbers, not from a forecast.
+aggregate taste, not a prediction about one person.
+Target, reserve and price come from published rules over Qloo's numbers, not from a forecast.
 
-Full reference: [docs/reference/DEMAND_CHECK.md](../../docs/reference/DEMAND_CHECK.md). License: MIT ([LICENSE](LICENSE)).
+## The three views
 
-## Research stuck in the valley of death (the intake)
+1. **Researcher.** Paste a DOI, arXiv, PubMed or OpenAlex id. Knos's agent runs the whole crossing on the server and the
+   page shows each step live, with the Qloo call, its input, a summary of its output, and how it changed the decision.
+   The steps run in this order:
+   - read the paper and quote its proven result;
+   - name the product the result enables;
+   - ask Qloo who, where, at what price, and against which leader;
+   - decide OPEN or REFUSE by code, and set the escrow target and reserve;
+   - say why the result never crossed (money before proof, slow judges, failed attempts), each only with evidence.
+2. **Buyer.** A product page targeted by Qloo: who it is for, the launch cities, the price tier and the funding goal.
+   There are two ways to pre-order:
+   - **A Solana Action (Blink):** `GET/POST /api/actions/preorder`, with rules at `/actions.json`. Any wallet signs, and
+     the server never holds the buyer's key.
+   - **The demo buyer:** sign in with a passkey wallet (no seed phrase), email, Google or ORCID, and the app's demo buyer
+     pre-orders for you. It is labelled as such.
 
-`POST /api/research {ref}` (the page's first box): a DOI, arXiv id, PubMed id, OpenAlex id (W...) or `uspto:<number>`
-(labelled FIXTURE without a USPTO key) is read through `knos.ideas.sources` and OpenAlex into a research card
-(`knos_wanted/research.py`): the proven result (an abstract sentence chosen by a fixed rule, quoted with its DOI),
-OpenAlex `cited_by_count`, year, retraction status (Crossref `updated-by`, OpenAlex `is_retracted`), Nobel recognition
-from `knos_wanted/data/nobel.toml` (each row quotes and links its nobelprize.org press release), and the product it
-enables (the Nobel release's named use, else a topic table, else a generic phrase; the maker edits it). The demand check
-then runs on that product, and the report adds "why it never crossed": money before proof, slow judges, failed
-attempts, each flagged only with its evidence, else "no evidence".
+   Then come an escrow receipt with explorer links and a milestone tracker.
+3. **Maker / funder.** Open milestones are listed here. The maker proves one with a public evidence page, code checks
+   it, and two of three referee keys release the escrow on devnet. A second release of the same order is refused by the
+   chain: the order account is closed.
+   - **Factoring:** knos_pay has an Assign instruction (0x18). The program accepts it only from a payee with a bound
+     wallet. For a payee named only by a wallet address, a devnet simulation of Assign is refused with E_PAYEE (88). So
+     factoring here is shown as a **labelled simulation** recorded off-program. It never claims an assignment that does
+     not exist.
 
-Wake page: `web/wanted.html`, served by GitHub Pages at https://drexthealpha.github.io/Knos/wanted.html (scripts/build_site.sh copies web/), pings `https://knos.onrender.com/healthz` until the free instance wakes,
-then opens the app; the app shows a status line during slow calls.
+Everything runs on Solana devnet with test units: no real money.
 
-The Knos Record (Sibyl) is read before money moves: `/api/check` writes the decision (WARM claim `demand:<hash>`, COLD
-`experiment`); a pre-order is refused unless Sibyl holds that report as OPEN with the same target and reserve; a
-release needs Sibyl's pre-order entry and is refused when Sibyl already holds it as released; the reserve is counted
-from Sibyl. Needs `sibyl-memory-client>=0.8.1,<0.9` (pinned by Knos's pyproject, installed in the image).
+## How Qloo is used (each call sets something)
 
-## The check, the decision, the money (Qloo REST, the primary path)
+| Step | Qloo endpoint | What it sets |
+|---|---|---|
+| closest products, leader | `/search` (+ `/entities`) | the relevance gate and the market leader |
+| the idea's tastes | `/v2/tags` with `feature.semantic_search` on the product phrase | taste tags (shown) |
+| who | `/v2/insights` `urn:demographics` | WHO: the age and gender to target; checks a named audience |
+| audience and price | `/v2/insights` `urn:audience` (top 20) | the audience gate and strength; the PRICE TIER from spending-habit segments (Gourmand Fine Dining, Boutique Hotels, ... vs Discount Shoppers) |
+| named buyer group | `/v2/audiences` | confirms (x1.2) or refutes (x0.6) the group named after "for" |
+| where | `/v2/insights` `urn:entity:destination` (explainability on), `urn:entity:place`, `urn:heatmap` | WHERE: the launch cities, named places, map hot spots |
+| adjacent demand, brand ladder | `/v2/insights` with `filter.type` = the idea's kind (explainability on) | target x1.2 / x0.8 |
+| rising or falling | `/v2/trending` | not counted when Qloo's series does not move (it ends 2026-07-24) |
+| vs the leader | `/v2/analysis/compare`, or the leader's own segments | the owned and served gates, the reserve, the audience the leader does not serve |
 
-1. **Check** (`POST /api/check {idea, place?, leader?}`, no sign-in): the idea's key words go to Qloo's API from this
-   server (`knos_wanted/qloo_rest.py`): `/search` + `/entities` (closest products, the market leader), `/v2/tags`
-   (the idea's taste tags), `/v2/insights` with `urn:demographics` (who), `urn:heatmap` (where), `urn:audience`
-   (segments), `/v2/trending` (rising or falling) and `/v2/analysis/compare` (overlap and whitespace vs the leader).
-   Every number in the report names the call that produced it. The maker confirms the matches: the page lists them
-   with a tick each; unticking wrong ones and pressing "Decide again" re-runs the check without them (`exclude`).
-2. **Decision, by code** (`knos_wanted/check.py`, `RULES`): OPEN pre-orders with a target and a reserve, or REFUSE
-   with reasons (no matching taste data, audience too thin, falling trend, the leader already owns the space). With
-   no Qloo key or a failed essential call the answer is "cannot decide: no Qloo evidence": nothing opens without Qloo.
-3. **Pre-order** (`POST /api/preorder`, signed in): test units locked on Solana devnet through `knos.ideas.commit`, one
-   stage "milestone" judged by a 2-of-3 referee panel on the knos_pay 0.3.34 test program. Demo buyer, test money.
-4. **Milestone** (`POST /api/milestone {commitment, evidence_url}`): code fetches the maker's https page (public
-   addresses only, no redirects, 512 KB, 10 s) and requires the commitment's claim id on it; then two referees sign
-   PASS over the page's sha256 and the server releases to the maker, once the report's reserve is met. Otherwise the
-   money stays locked and `POST /api/refund` returns it after the deadline.
-5. **Business model**: Knos takes the payout fee of `config/fees.yaml` (0.3%, at least 0.05) only on money released on
-   proof; the program holds it with the money and a refund costs the buyer nothing. The page shows the line it reads.
+Rules and thresholds: [docs/reference/DEMAND_CHECK.md](../../docs/reference/DEMAND_CHECK.md). Without a Qloo key the
+answer is "cannot decide: no Qloo evidence", and pre-orders never open.
 
-Sign-in: a passkey (WebAuthn; the identity is derived from the passkey's public key), Google (only when
-`GOOGLE_CLIENT_ID` is set; the ID token is checked with Google's tokeninfo endpoint), or an email typed as a display
-label only (no email provider is configured: nothing is sent or verified, and the page says so).
+Sibyl is the agent's **working memory**. Before a crossing the agent recalls what it learned about the same paper,
+such as the product phrase it settled on and the last decision. After the crossing it remembers this one. Memory never
+moves or blocks money; the escrow rules live in knos_pay on chain.
 
-Agents: `knos mcp` lists `knos_demand_check` when `KNOS_MCP_TOOLS=demand`; it POSTs to the hosted app
-(`KNOS_WANTED_URL`), so an agent gets the same code-made decision without a Qloo key.
+## For other agents: MCP over HTTP
 
-### Run it locally
+`POST /mcp` speaks JSON-RPC (Streamable HTTP; `initialize`, `tools/list`, `tools/call`), and callers need no key. Its
+tools are `knos_cross` (paper id -> every step and the decision), `knos_research_card` and `knos_demand_check`. This is
+an optional door; the product is the web page.
+
+## Run it
 
 ```sh
-# from the root of the Knos checkout
-pip install . "./apps/wanted[escrow]"
-export QLOO_API_KEY=...                                   # server side only; never in the page
-export QLOO_BASE_URL=https://hackathon.api.qloo.com
+# from the root of the Knos checkout (Python 3.12)
+pip install . "./apps/wanted[escrow,auth,config]"
+export QLOO_API_KEY=... QLOO_BASE_URL=https://hackathon.api.qloo.com
 PYTHONPATH=apps/wanted python -m knos_wanted serve        # http://127.0.0.1:8080
 ```
 
-### Environment (names only)
+Docker: `docker build -f apps/wanted/Dockerfile -t knos .` (python:3.12-slim). `render.yaml` deploys it on Render.
 
 | Variable | What |
 |---|---|
-| `QLOO_API_KEY`, `QLOO_BASE_URL` | Qloo's key (header only, never logged) and API base |
-| `QLOO_MONTHLY_BUDGET` | hard cap on uncached Qloo calls per month (default 9000); cached answers still served |
-| `KNOS_WANTED_CACHE`, `KNOS_WANTED_STATE` | private cache (7 days) and state folders on the server |
-| `KNOS_WANTED_DEVNET_KEYPAIR` | the demo buyer's devnet test wallet (also the test mint's authority) |
-| `KNOS_WANTED_REFEREE_KEYS` | JSON list of 3 devnet test referee secret keys (one server: not an independent panel) |
-| `KNOS_WANTED_MAKER_WALLET` | default payee (the maker's devnet wallet) |
-| `KNOS_WANTED_RELAYER_KEYPAIR`, `KNOS_WANTED_MINT`, `KNOS_WANTED_PROGRAM`, `KNOS_WANTED_MILESTONE_DAYS` | optional |
-| `GOOGLE_CLIENT_ID`, `KNOS_WANTED_SESSION_SECRET`, `KNOS_WANTED_RP_ID` | sign-in |
-| `KNOS_WANTED_URL` | for `knos mcp`: where the hosted check lives |
+| `QLOO_API_KEY`, `QLOO_BASE_URL`, `QLOO_MONTHLY_BUDGET` | Qloo, server side only (cached 7 days, 4 calls/s, monthly cap) |
+| `KNOS_WANTED_DEVNET_KEYPAIR`, `KNOS_WANTED_REFEREE_KEYS`, `KNOS_WANTED_MAKER_WALLET`, `KNOS_WANTED_MINT` | devnet escrow: demo buyer and test-mint authority, 3 referee keys (one server: not an independent panel), payee, test mint |
+| `GOOGLE_CLIENT_ID` | Google sign-in (shown only when set) |
+| `ORCID_CLIENT_ID`, `ORCID_CLIENT_SECRET`, `ORCID_BASE` | ORCID sign-in (OAuth code flow; `ORCID_BASE=https://sandbox.orcid.org` for the sandbox) |
+| `RESEND_API_KEY`, `KNOS_WANTED_EMAIL_FROM` | email magic links; without them, an email is only a display label |
+| `KNOS_WANTED_SESSION_SECRET`, `KNOS_WANTED_RP_ID` | sessions and passkeys (RP id = the site's host) |
 
-Without the escrow variables the pre-order endpoints answer "escrow unavailable on this server"; the report still works.
+## Updates since 30 Sep 2026
 
-### What changed since 30 Sep
+- The researcher view and the server-side agent: a paper id becomes a live crossing, and every step names its Qloo call.
+- Qloo's evidence now sets who, where (launch cities), the price tier, and the escrow target and reserve. The calibrated
+  gates are relevance, clone, owned/served and contradiction. Explainability is on wherever Qloo returns it.
+- Landmark research intake (OpenAlex, Crossref, PubMed, arXiv), with sourced Nobel and "no product yet" rows.
+- Pre-orders: a Solana Action (Blink) for any wallet; the passkey or email/Google/ORCID-backed demo buyer; a devnet
+  preflight in `/api/status`; the 1,232-byte transaction limit checked; milestones released by a 2-of-3 panel; a double
+  release refused by the chain.
+- Factoring, shown as a labelled simulation because knos_pay's Assign needs a bound payee. The wake page. MCP over HTTP.
+- Fixes: the legacy `/api/preorder/{demo,faucet,tx,submit}` routes need a signed-in session; PyYAML is pinned in the
+  image; Python 3.12; no raw errors are shown to users.
 
-- Qloo's REST API is the primary path (cache, 4 calls/s, monthly budget); the qloo-harness MCP sidecar stays optional.
-- A decision made by code (OPEN with target and reserve, or REFUSE with reasons); "cannot decide" without Qloo.
-- Pre-orders are paid on proof: one milestone, a 2-of-3 referee panel, release only after code verifies the evidence.
-- Sign-in (passkey, Google when configured, a label), a mobile-first page, and the `knos_demand_check` MCP tool.
+## The older confirm-each-match flow (MCP sidecar, optional)
 
-## Try it
 
 ```bash
 # once: Qloo's harness (Node 22.19+) and the official MCP SDK beside the bridge

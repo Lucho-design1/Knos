@@ -33,6 +33,7 @@ from . import company, escrow
 PROGRAM_034_TEST = "FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4"   # knos_pay 0.3.34 TEST build on devnet
 FIELD = "Business, Management and Accounting"
 PRICE = 1                       # test units per pre-ordered unit
+MAX_PRICE = 4                   # the premium tier (check.TIERS)
 MAX_DAYS = 90                   # knos_pay's longest stage deadline
 MAX_EVIDENCE = 512_000
 EVIDENCE_TIMEOUT_S = 10
@@ -155,14 +156,11 @@ def fee_line(units: int | None = None) -> dict:
 # ---- lock ------------------------------------------------------------------------------------------------------------
 def lock(report: dict, units: int, buyer_label: str, maker_wallet: str | None = None, days: int | None = None, led=None) -> dict:
     """Lock `units` test units for the maker of an OPEN report, judged by the 2-of-3 panel. Returns the commitment record.
-    The decision is READ from the Knos Record (Sibyl) first: a report Sibyl does not hold as OPEN, with the same target
-    and reserve, locks nothing."""
+    The unit price is the one Qloo's evidence set (report.decision.plan.unit_price: the price tier)."""
     d = report.get("decision") or {}
     if d.get("verdict") != "OPEN" or report.get("label", "").startswith("NO QLOO"):
         raise ValueError("pre-orders open only on a report whose decision is OPEN on live Qloo evidence")
-    held = company.record_state(report.get("hash", ""))
-    if held.get("verdict") != "OPEN" or not held.get("live") or (held.get("target_units"), held.get("reserve_units")) != (d.get("target_units"), d.get("reserve_units")):
-        raise company.NotInRecord("the Knos Record (Sibyl) does not hold this report as OPEN with this target and reserve")
+    price = int((d.get("plan") or {}).get("unit_price") or PRICE)
     _need()
     from solders.pubkey import Pubkey
 
@@ -189,16 +187,16 @@ def lock(report: dict, units: int, buyer_label: str, maker_wallet: str | None = 
                if led.account(pay.ata(w, mint)) is None]
         if pre:
             led.send(pre, buyer)
-        need = units * PRICE * escrow.UNIT + pay.order_fee(units * PRICE * escrow.UNIT)
+        need = units * price * escrow.UNIT + pay.order_fee(units * price * escrow.UNIT)
         have = escrow._token_units(led, tok)
         minted = None
         if have < need:
             minted = led.send([escrow._mint_to_ix(mint, tok, buyer.pubkey(), -(-(need - have) // escrow.UNIT))], buyer)
-        doc = C.commit(claim, units=units, price=PRICE, payee=C.parse_payee(maker), funder=buyer, funder_token=tok, mint=mint, led=led,
+        doc = C.commit(claim, units=units, price=price, payee=C.parse_payee(maker), funder=buyer, funder_token=tok, mint=mint, led=led,
                        stages=[("referee_pass", 10_000)], stage_work_s=[days * 86_400],
                        panel=(2, [str(r.pubkey()) for r in refs]), program=prog, demand_hash=report["hash"], unlisted_panel=True)
         st = doc["orders"]["stage1"]
-        rec = {"order": st["order"], "report": report["hash"], "idea": report["idea"], "claim_id": claim["id"], "units": units,
+        rec = {"order": st["order"], "report": report["hash"], "idea": report["idea"], "claim_id": claim["id"], "units": units, "unit_price": price,
                "buyer": f"demo buyer, test money (for {buyer_label[:80]})", "maker_wallet": maker, "status": "locked",
                "deadline_days": days, "doc": doc, "made": doc["made"],
                "signatures": {"mint_to_buyer": minted, "lock": st["signature"]}}
@@ -207,9 +205,21 @@ def lock(report: dict, units: int, buyer_label: str, maker_wallet: str | None = 
     return public(rec)
 
 
+def all_public(n: int = 50) -> list[dict]:
+    out = []
+    for f in sorted(_dir().glob("*.commit"), key=lambda f: f.stat().st_mtime, reverse=True)[:n]:
+        try:
+            out.append(public(json.loads(f.read_text(encoding="utf-8"))))
+        except (OSError, ValueError, KeyError):
+            continue
+    return out
+
+
 def public(rec: dict) -> dict:
     sigs = {k: v for k, v in rec.get("signatures", {}).items() if v}
     return {"commitment": rec["order"], "claim_id": rec["claim_id"], "report": rec["report"], "units": rec["units"],
+            "unit_price": rec.get("unit_price", PRICE), "via": rec.get("via", "signed-in pre-order (demo buyer)"), "factoring": rec.get("factoring"),
+            "idea": rec.get("idea"),
             "buyer": rec["buyer"], "maker_wallet": rec["maker_wallet"], "status": rec["status"], "milestone": "stage1 (referee_pass)",
             "panel": {"m": 2, "of": 3, "keys": rec["doc"]["panel"]["keys"], "label": rec["doc"]["panel"]["label"] or "UNLISTED PANEL",
                       "note": "the three referee keys are held by this one server: not an independent panel"},
@@ -269,44 +279,42 @@ def verify(rec: dict, url: str, opener=None, resolve=_public_host) -> tuple[dict
 
 
 def reserve_status(report: dict, held: dict | None = None) -> dict:
-    """Units pre-ordered vs the reserve, as the Knos Record (Sibyl) holds them; this server's files when Sibyl has none."""
-    if held is None:
-        try:
-            held = company.record_state(report["hash"])
-        except company.NotInRecord:
-            held = None
+    """Units pre-ordered vs the reserve, from this server's commitment files (locked or released orders)."""
     if held is not None:
         pre = held.get("preorders") or {}
         return {"pre_ordered_units": pre.get("units", 0), "reserve_units": held.get("reserve_units") or 0,
                 "met": pre.get("units", 0) >= (held.get("reserve_units") or 0), "source": "Knos Record (Sibyl)"}
     locked = sum(r["units"] for r in of_report(report["hash"]) if r.get("status") in ("locked", "released"))
     need = (report.get("decision") or {}).get("reserve_units") or 0
-    return {"pre_ordered_units": locked, "reserve_units": need, "met": locked >= need, "source": "this server's files (not in the Record)"}
+    return {"pre_ordered_units": locked, "reserve_units": need, "met": locked >= need, "source": "this server's commitment files"}
 
 
-def record_gate(rec: dict) -> dict:
-    """Before a release: the Record (Sibyl) must hold this pre-order and must not hold it as released already."""
-    held = company.record_state(rec["report"])
-    if rec["order"] in (held.get("released") or []):
-        raise company.NotInRecord("refused: the Knos Record (Sibyl) marks this commitment released")
-    if rec["order"] not in ((held.get("preorders") or {}).get("list") or []):
-        raise company.NotInRecord("the Knos Record (Sibyl) holds no pre-order for this commitment")
-    return held
+class Settled(ValueError):
+    """The escrow order is closed on chain: knos_pay paid (or refunded) it, and a stage is paid once."""
+
+
+def chain_gate(rec: dict, led) -> None:
+    """Before any release: read the order account on devnet. A closed order (released or refunded) is refused here,
+    and the program would refuse it too (no order account, nothing to pay)."""
+    from solders.pubkey import Pubkey
+    if led.account(Pubkey.from_string(rec["order"])) is None:
+        raise Settled(f"refused: the escrow order {rec['order']} is closed on devnet (already released or refunded); "
+                      "knos_pay pays a stage once")
 
 
 def milestone(report: dict, order: str, url: str, led=None, opener=None, resolve=_public_host) -> dict:
     """Verify the maker's evidence; when verified and the reserve is met, 2 referees sign PASS and the server releases."""
     rec = load(order)
-    held = record_gate(rec)              # Sibyl first: its record alone refuses a second release, before files or chain
-    if rec["status"] != "locked":
-        raise ValueError(f"this commitment is already {rec['status']}")
     _need()
     from knos.ideas import commit as C
-    res = reserve_status(report, held)
+    led = led or escrow.ledger()
+    chain_gate(rec, led)                 # the chain decides: a closed order is never released again
+    if rec["status"] != "locked":
+        raise ValueError(f"this commitment is already {rec['status']}")
+    res = reserve_status(report, None)
     if not res["met"]:
         raise ValueError(f"reserve not met: {res['pre_ordered_units']} of {res['reserve_units']} units pre-ordered; the maker is paid once it is")
     ev, body = verify(rec, url, opener, resolve)
-    led = led or escrow.ledger()
     doc = rec["doc"]
     review = _dir() / f"{order}.evidence"           # the page the referees sign over: its sha256 is the verdict's evidence
     review.write_bytes(body)
@@ -367,11 +375,16 @@ def largest_preorder_txs() -> dict:
     buyer, mint, refs = Keypair(), Keypair().pubkey(), [Keypair() for _ in range(3)]
     claim = ideas.claim(f"Pre-order 9999 for: {'x' * 500} (Knos demand report {'f' * 16})", field_name=FIELD, kind="person",
                         by={"app": "knos demand check", "report": "f" * 64, "buyer": "b" * 80})
-    p = W.plan(claim, units=1000, price=PRICE, stages=[("referee_pass", 10_000)], stage_work_s=[MAX_DAYS * 86_400])
+    p = W.plan(claim, units=1000, price=MAX_PRICE, stages=[("referee_pass", 10_000)], stage_work_s=[MAX_DAYS * 86_400])
     tok = pay.ata(buyer.pubkey(), mint)
     fund = W.fund_panel_ix(p, "stage1", buyer.pubkey(), tok, mint, 2, [bytes(r.pubkey()) for r in refs], program=program(), unlisted_panel=True)
     setup = [pay.create_ata_ix(buyer.pubkey(), w, mint) for w in (buyer.pubkey(), pay.FEE_OWNER)]
-    return {"preorder": tx_size([fund], buyer.pubkey(), [buyer]),
+    wallet = Keypair()                                      # a Blink: the wallet's token account, the top-up, the order
+    wtok = pay.ata(wallet.pubkey(), mint)
+    wfund = W.fund_panel_ix(p, "stage1", wallet.pubkey(), wtok, mint, 2, [bytes(r.pubkey()) for r in refs], program=program(), unlisted_panel=True)
+    blink_ixs = [pay.create_ata_ix(wallet.pubkey(), wallet.pubkey(), mint), escrow._mint_to_ix(mint, wtok, buyer.pubkey(), 4001), wfund]
+    return {"blink": tx_size(blink_ixs, wallet.pubkey(), [wallet, buyer]),
+            "preorder": tx_size([fund], buyer.pubkey(), [buyer]),
             "preflight": tx_size([*setup, escrow._mint_to_ix(mint, tok, buyer.pubkey(), 1001), fund], buyer.pubkey(), [buyer])}
 
 

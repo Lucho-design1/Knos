@@ -32,3 +32,16 @@ services:
         value: 4dFAUoXNDbmPCJ1CPCFyaJqLW5WWY3i2TE3VKEdSbC31
       - key: KNOS_WANTED_SESSION_SECRET
         generateValue: true
+      # sign-in providers: each switches on only when set (the page shows only configured ones)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: ORCID_CLIENT_ID
+        sync: false
+      - key: ORCID_CLIENT_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: KNOS_WANTED_EMAIL_FROM
+        sync: false
+      - key: KNOS_WANTED_MINT
+        sync: false

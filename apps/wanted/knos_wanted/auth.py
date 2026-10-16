@@ -17,6 +17,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import threading
 import time
@@ -47,9 +48,89 @@ def unb64u(s: str) -> bytes:
 
 
 def config() -> dict:
+    email = bool(os.environ.get("RESEND_API_KEY") and os.environ.get("KNOS_WANTED_EMAIL_FROM"))
     return {"passkey": passkey_available(), "google_client_id": os.environ.get("GOOGLE_CLIENT_ID") or None,
-            "email_provider": False,
-            "email_note": "no email provider is configured: an email typed here is only a display label; nothing is sent or verified"}
+            "orcid": bool(os.environ.get("ORCID_CLIENT_ID") and os.environ.get("ORCID_CLIENT_SECRET")),
+            "email_provider": email,
+            "email_note": ("a sign-in link is emailed to you" if email else
+                           "no email provider is configured: an email typed here is only a display label; nothing is sent or verified")}
+
+
+# ---- ORCID (OAuth 2 authorization code; production orcid.org or sandbox.orcid.org via ORCID_BASE) -------------------
+def orcid_base() -> str:
+    return (os.environ.get("ORCID_BASE") or "https://orcid.org").rstrip("/")
+
+
+def orcid_authorize(redirect_uri: str) -> str:
+    cid = os.environ.get("ORCID_CLIENT_ID")
+    if not cid:
+        raise AuthError("ORCID sign-in is not configured on this server (ORCID_CLIENT_ID, ORCID_CLIENT_SECRET)")
+    state = challenge()
+    return orcid_base() + "/oauth/authorize?" + urllib.parse.urlencode(
+        {"client_id": cid, "response_type": "code", "scope": "/authenticate", "redirect_uri": redirect_uri, "state": state})
+
+
+def orcid_callback(code: str, state: str, redirect_uri: str, opener=None) -> dict:
+    cid, secret = os.environ.get("ORCID_CLIENT_ID"), os.environ.get("ORCID_CLIENT_SECRET")
+    if not (cid and secret):
+        raise AuthError("ORCID sign-in is not configured on this server")
+    _take(state)
+    data = urllib.parse.urlencode({"client_id": cid, "client_secret": secret, "grant_type": "authorization_code", "code": code,
+                                   "redirect_uri": redirect_uri}).encode()
+    req = urllib.request.Request(orcid_base() + "/oauth/token", data=data, headers={"Accept": "application/json"})
+    try:
+        with (opener or urllib.request.urlopen)(req, timeout=15) as r:
+            got = json.loads(r.read(20_000))
+    except urllib.error.HTTPError:
+        raise AuthError("ORCID did not accept this sign-in") from None
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        raise AuthError(f"ORCID could not be reached ({type(e).__name__})") from None
+    oid = str(got.get("orcid") or "")
+    if not re.fullmatch(r"\d{4}-\d{4}-\d{4}-\d{3}[\dX]", oid):
+        raise AuthError("ORCID returned no iD")
+    return issue("orcid:" + oid, "orcid", f"{got.get('name') or 'ORCID'} ({oid})")
+
+
+# ---- email magic link (Resend) -------------------------------------------------------------------------------------
+LINK_S = 15 * 60
+_used_links: set[str] = set()
+
+
+def email_link(email: str, base_url: str, opener=None) -> dict:
+    key, sender = os.environ.get("RESEND_API_KEY"), os.environ.get("KNOS_WANTED_EMAIL_FROM")
+    if not (key and sender):
+        raise AuthError("email sign-in is not configured on this server (RESEND_API_KEY, KNOS_WANTED_EMAIL_FROM)")
+    email = (email or "").strip().lower()
+    if not re.fullmatch(r"[^@\s]{1,64}@[^@\s]{1,190}\.[a-z]{2,24}", email):
+        raise AuthError("type a valid email address")
+    body = {"sub": "email:" + hashlib.sha256(email.encode()).hexdigest()[:16], "label": email, "exp": int(time.time() + LINK_S), "magic": True}
+    raw = b64u(json.dumps(body, sort_keys=True).encode())
+    tok = raw + "." + b64u(hmac.new(_SECRET, b"magic:" + raw.encode(), hashlib.sha256).digest())
+    link = f"{base_url.rstrip('/')}/#magic={tok}"
+    req = urllib.request.Request("https://api.resend.com/emails", method="POST",
+                                 data=json.dumps({"from": sender, "to": [email], "subject": "Your Knos sign-in link",
+                                                  "text": f"Sign in to Knos (valid 15 minutes):\n{link}\n\nIf you did not ask for this, ignore it."}).encode(),
+                                 headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
+    try:
+        with (opener or urllib.request.urlopen)(req, timeout=15) as r:
+            r.read(2000)
+    except (urllib.error.URLError, OSError) as e:
+        raise AuthError(f"the sign-in email could not be sent ({type(e).__name__})") from None
+    return {"sent": True, "to": email}
+
+
+def email_verify(tok: str, now: float | None = None) -> dict:
+    raw, _, sig = str(tok or "").partition(".")
+    if not hmac.compare_digest(sig, b64u(hmac.new(_SECRET, b"magic:" + raw.encode(), hashlib.sha256).digest())):
+        raise AuthError("this sign-in link is not valid")
+    body = json.loads(unb64u(raw))
+    if body.get("exp", 0) <= (now or time.time()):
+        raise AuthError("this sign-in link has expired: ask for a new one")
+    with _lock:
+        if sig in _used_links:
+            raise AuthError("this sign-in link was already used: ask for a new one")
+        _used_links.add(sig)
+    return issue(body["sub"], "email", body["label"])
 
 
 # ---- sessions --------------------------------------------------------------------------------------------------------

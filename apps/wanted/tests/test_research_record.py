@@ -88,33 +88,6 @@ def test_check_is_written_and_read_back_from_sibyl():
         company.record_state("c" * 64)
 
 
-def test_a_preorder_needs_the_report_in_sibyl(monkeypatch):
-    with pytest.raises(company.NotInRecord, match="not in the Knos Record"):
-        preorder.lock({**REP, "hash": "d" * 64}, 10, "guest: t")           # never recorded: nothing locks
-    company.record_check({**REP, "hash": "e" * 64, "decision": {**REP["decision"], "target_units": 50}})
-    with pytest.raises(company.NotInRecord, match="this target"):
-        preorder.lock({**REP, "hash": "e" * 64}, 10, "guest: t")           # Sibyl holds another target: refused
-    monkeypatch.setattr(company, "_record", lambda: None)                  # Sibyl absent
-    with pytest.raises(company.NotInRecord, match="not available"):
-        preorder.lock(REP, 10, "guest: t")
-
-
-def test_release_gate_reads_the_preorder_and_refuses_a_second_release(monkeypatch):
-    company.record_check(REP)
-    rec = {"report": REP["hash"], "order": "O" * 43}
-    with pytest.raises(company.NotInRecord, match="no pre-order"):
-        preorder.record_gate(rec)
-    assert company.record_lock(REP["hash"], rec["order"], 40, "sig")["recorded"] is True
-    held = preorder.record_gate(rec)
-    assert held["preorders"] == {"orders": 1, "units": 40, "list": [rec["order"]]}
-    assert preorder.reserve_status(REP)["met"] is True and preorder.reserve_status(REP)["source"] == "Knos Record (Sibyl)"
-    assert company.record_release(REP["hash"], rec["order"], ["s1", "s2"], "f" * 64)["recorded"] is True
-    with pytest.raises(company.NotInRecord, match="marks this commitment released"):
-        preorder.record_gate(rec)
-    monkeypatch.setattr(company, "_record", lambda: None)
-    with pytest.raises(company.NotInRecord):
-        preorder.record_gate(rec)
-
 
 def test_the_wake_page_pings_the_app_until_it_answers():
     from pathlib import Path
@@ -123,23 +96,30 @@ def test_the_wake_page_pings_the_app_until_it_answers():
     assert "prefers-reduced-motion" in page and "Knos Wanted" not in page
 
 
-def test_a_second_release_is_refused_by_sibyl_alone_over_http(monkeypatch):
+
+
+def test_a_second_release_is_refused_by_the_chain_over_http(monkeypatch):
     import json
     import threading
     import urllib.error
     import urllib.request
     from http.server import ThreadingHTTPServer
 
-    from knos_wanted import auth, server
+    from knos_wanted import auth, escrow, server
     from knos_wanted.qloo_mcp import InProcess, Qloo
     from knos_wanted.qloo_rest import Client
-    order = "R" * 43
-    company.record_check(REP)
-    company.record_lock(REP["hash"], order, 40, "sig")
-    company.record_release(REP["hash"], order, ["s1", "s2"], "f" * 64)
-    # this server's file still says "locked" and no chain or escrow key is configured: only Sibyl can refuse
+    order = "So11111111111111111111111111111111111111112"
+    # this server's file still says "locked" and Sibyl remembers nothing: only the closed order account on chain refuses
     preorder._save({"order": order, "report": REP["hash"], "status": "locked", "claim_id": "knos-idea:" + "0" * 32, "units": 40})
-    monkeypatch.setattr(preorder, "_need", lambda: (_ for _ in ()).throw(AssertionError("the chain path was reached")))
+
+    class Led:
+        url = "https://api.devnet.solana.com"
+
+        def account(self, addr):
+            return None                               # the order account is closed: released or refunded
+    monkeypatch.setattr(preorder, "_need", lambda: None)
+    monkeypatch.setattr(escrow, "ledger", lambda: Led())
+    monkeypatch.setattr(preorder, "verify", lambda *a, **k: (_ for _ in ()).throw(AssertionError("evidence was fetched")))
     st = server.State(Qloo(InProcess(), mode="mock", sleep=lambda s: None), Client(key=""))
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.make_handler(st))
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
@@ -151,5 +131,10 @@ def test_a_second_release_is_refused_by_sibyl_alone_over_http(monkeypatch):
         urllib.request.urlopen(req, timeout=30)
     body = json.loads(e.value.read())
     httpd.shutdown()
-    assert e.value.code == 409 and body["error"] == "refused: the Knos Record (Sibyl) marks this commitment released"
-    assert body["refused_by"] == "Knos Record (Sibyl)"
+    assert e.value.code == 409 and "is closed on devnet" in body["error"] and "chain" in body["refused_by"]
+
+
+def test_sibyl_is_memory_and_never_gates_a_preorder(monkeypatch):
+    monkeypatch.setattr(company, "_record", lambda: None)             # no Sibyl at all
+    with pytest.raises(preorder.Unavailable):                            # what stops this lock is the missing escrow keys
+        preorder.lock(REP, 10, "guest: t")

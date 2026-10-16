@@ -8,7 +8,7 @@ version = "0.3.33"
 description = "Knos's demand check: an idea -> Qloo taste evidence (via qloo mcp) the maker confirms -> a demand report in the Knos Record -> pre-orders in a Knos devnet escrow. Directional demand evidence, not a sales forecast."
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.10"
+requires-python = ">=3.12"   # the image runs python:3.12-slim; f-strings with nested quotes need 3.12
 authors = [{ name = "drexthealpha" }]
 dependencies = []   # the report and the web app use the Python standard library only
 
@@ -16,7 +16,8 @@ dependencies = []   # the report and the web app use the Python standard library
 # the "lock pre-orders" button: Knos's graduation pre-order pool. This app is apps/wanted/ of the Knos monorepo:
 # install Knos from the same checkout beside it (`pip install . "./apps/wanted[escrow]"` at the root), so the app and
 # the escrow code are always one commit.
-escrow = ["knos", "solders>=0.29", "pyyaml==6.0.3"]   # pyyaml: config/fees.yaml + config/referees.yaml on the money path (uv.lock pin)
+escrow = ["knos", "solders>=0.29"]
+config = ["pyyaml==6.0.3"]   # config/fees.yaml + config/referees.yaml on the money path (the uv.lock pin)
 auth = ["cryptography>=42"]   # passkey sign-in (ES256 signature check)
 dev = ["pytest>=8"]
 

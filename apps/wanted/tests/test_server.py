@@ -71,7 +71,17 @@ def test_buyer_flow_and_privacy_over_http(app):
 
 def test_preorder_needs_a_known_report(app):
     base, _ = app
-    assert call(base, "/api/preorder/demo", {"hash": "0" * 64})[0] in (400, 503)
+    for path in ("/api/preorder/demo", "/api/preorder/faucet", "/api/preorder/tx", "/api/preorder/submit"):
+        assert call(base, path, {"hash": "0" * 64})[0] == 401          # anonymous: no money and no faucet
+    from knos_wanted import auth
+    tok = auth.guest("t")["token"]
+    req = urllib.request.Request(base + "/api/preorder/demo", data=json.dumps({"hash": "0" * 64}).encode(),
+                                 headers={"Content-Type": "application/json", "Authorization": "Bearer " + tok})
+    try:
+        urllib.request.urlopen(req, timeout=30)
+        raise AssertionError("an unknown report was accepted")
+    except urllib.error.HTTPError as e:
+        assert e.code in (400, 503)
 
 
 def test_rate_limit(app, monkeypatch):

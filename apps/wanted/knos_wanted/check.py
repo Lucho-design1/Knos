@@ -161,9 +161,10 @@ class _Run:
 
     OPTIONAL = ("signal.location.query", "signal.interests.tags", "filter.location.query")
 
-    def __init__(self, client: Client):
+    def __init__(self, client: Client, on_call=None):
         self.c = client
         self.calls: list[dict] = []
+        self.on_call = on_call or (lambda c: None)       # the agent streams each call to the page as it happens
 
     def get(self, path: str, params: dict, what: str) -> tuple[dict | None, int | None]:
         tries = [params]
@@ -181,12 +182,31 @@ class _Run:
             self.calls.append({"n": n, "call": got["source"]["call"], "what": what, "params": got["source"]["params"],
                                "cached": got["source"]["cached"], "at": got["source"]["at"],
                                **({"note": "retried without location/tags after Qloo refused them"} if p is not params else {})})
+            self.calls[-1]["body_digest"] = _digest(got["body"])
+            self.on_call(self.calls[-1])
             return got["body"], n
         m = re.search(r"HTTP (\d{3})", str(err))
         short = f"Qloo could not answer this part (HTTP {m.group(1)})" if m else ("Qloo's monthly call budget is spent" if "budget" in str(err)
                                                                                    else "Qloo could not be reached")
         self.calls.append({"n": len(self.calls) + 1, "call": f"GET {path}", "what": what, "params": params, "error": short})
+        self.on_call(self.calls[-1])
         return None, None
+
+
+def _digest(body) -> str:
+    """A short, human summary of a Qloo answer (names and scores, never the whole body)."""
+    r = (body or {}).get("results") if isinstance(body, dict) else None
+    if isinstance(r, list):
+        return f"{len(r)} results: " + ", ".join(str(x.get("name")) for x in r[:4])
+    if isinstance(r, dict):
+        for k in ("entities", "tags", "audiences", "heatmap", "trending", "demographics"):
+            v = r.get(k)
+            if isinstance(v, list):
+                names = [str(x.get("name") or x.get("date") or (x.get("location") or {}).get("geohash") or "") for x in v[:4]]
+                return f"{len(v)} {k}" + (": " + ", ".join(n for n in names if n) if any(names) else "")
+        if "a" in r or "b" in r:
+            return f"compare: {len(r.get('a') or [])} tags on the idea's side, {len(r.get('b') or [])} on the leader's"
+    return "answer received"
 
 
 def _results(body) -> list:
@@ -293,10 +313,11 @@ def _buyer_group(run: _Run, idea: str, every: list[dict]) -> dict | None:
 def _recommend(run: _Run, kind: str, signal: dict, known: set) -> dict | None:
     """Qloo's recommendations for this taste (/v2/insights filter.type = the idea's kind): products next to the idea.
     Strong neighbours (affinity >= rules) that are not already matched are adjacent demand."""
-    body, src = run.get("/v2/insights", {"filter.type": kind, "take": 10, **signal}, "recommendations: what this audience also likes")
+    body, src = run.get("/v2/insights", {"filter.type": kind, "take": 10, "feature.explainability": "true", **signal},
+                        "recommendations and brand ladder: what this audience also likes")
     if src is None:
         return None
-    rows = [{"name": e.get("name"), "id": e.get("entity_id"), "affinity": (e.get("query") or {}).get("affinity")}
+    rows = [{"name": e.get("name"), "id": e.get("entity_id"), "affinity": (e.get("query") or {}).get("affinity"), "popularity": e.get("popularity")}
             for e in (((body or {}).get("results") or {}).get("entities") or [])[:10]]
     adj = [r for r in rows if r["id"] not in known and isinstance(r["affinity"], (int, float)) and r["affinity"] >= RULES["adjacent_affinity"]]
     return {"items": rows, "adjacent": [r["name"] for r in adj], "strong": len(adj), "src": src}
@@ -315,7 +336,7 @@ def _informative(rows: list[dict]) -> list[dict]:
 
 def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: dt.date, exclude: set[str]) -> dict:
     ev: dict = {"product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
-                "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None}
+                "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None}
     words = content_words(idea, place)
     ev["words"], ev["named_audience"] = words, [{"word": w, "dimension": d, "key": k} for w, d, k in audience_named(idea)]
     if not words:
@@ -351,8 +372,9 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         lead = max(ev["matches"], key=lambda m: len(m["matched_words"]) + 2 * len(m["name_words"]) + (m.get("popularity") or 0))
     near = [m for m in ev["matches"] if lead is None or m["id"] != lead["id"]][:3]
     ev["leader"] = lead
-    for w in q_words[:2]:
-        body, s4 = run.get("/v2/tags", {"filter.query": w, "filter.parents.types": kind, "take": 3}, f"taste tags for '{w}'")
+    body, s4 = run.get("/v2/tags", {"filter.query": " ".join(q_words[:6]), "feature.semantic_search": "true", "filter.parents.types": kind,
+                                    "take": 8}, "taste tags: semantic search of the product phrase")
+    if body is not None:
         for t in ((body or {}).get("results") or {}).get("tags") or []:
             if t.get("id") and t["id"] not in {x["id"] for x in ev["tags"]} and {_norm(x) for x in tokens(t.get("name"))} & set(words):
                 ev["tags"].append({"name": t.get("name"), "id": t["id"], "popularity": t.get("popularity"), "src": s4})
@@ -386,6 +408,14 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     every, _ = _audience(run, signal, "audience segments ranked by affinity", take=20)
     ev["audiences"] = every[:6]
     ev["buyer_group"] = _buyer_group(run, idea, every)
+    ev["price"] = price_tier(every)
+    body, s10 = run.get("/v2/insights", {"filter.type": "urn:entity:destination", "take": 5, "feature.explainability": "true", **ents_only},
+                        "launch cities: destinations where this taste is strongest")
+    for r in (((body or {}).get("results") or {}).get("entities") or [])[:5]:
+        geo = (r.get("properties") or {}).get("geocode") or {}
+        why = ((r.get("query") or {}).get("explainability") or {}).get("signal.interests.entities") or []
+        ev["cities"].append({"name": r.get("name"), "country": geo.get("country_code"), "affinity": (r.get("query") or {}).get("affinity"),
+                             "because": [x.get("entity_id") for x in why][:3], "src": s10})
     ev["recommended"] = _recommend(run, kind, signal, {m["id"] for m in ev["matches"]} | ({lead["id"]} if lead else set()))
     ev["trend"] = _trend(run, lead, today)
     if lead:
@@ -519,8 +549,45 @@ def report_hash(rep: dict) -> str:
 ESSENTIAL = ("closest existing products", "who:", "audience segments")
 
 
+PREMIUM = ("Gourmand Fine Dining", "Boutique Hotels", "High Fashion", "Watch Collecting", "Art Collectibles", "Angel Start Up Investing",
+           "Wine Enthusiast", "Real Estate")
+BUDGET = ("Discount Shoppers",)
+TIERS = {"budget": 1, "mid": 2, "premium": 4}       # test units per pre-ordered unit (devnet test money; a scale, not a price)
+
+
+def price_tier(every: list[dict]) -> dict | None:
+    """The price tier from Qloo's spending-habit segments in this taste's top 20 (/v2/insights urn:audience): the best
+    premium segment vs Discount Shoppers, each absent one at Qloo's neutral 0.5. Difference > +0.05 -> premium,
+    < -0.05 -> budget, else mid. The tier sets the pre-order's unit price in test units (TIERS)."""
+    if not every:
+        return None
+    aff = {str(a.get("name") or "").split(" (")[0]: a.get("affinity") for a in every if isinstance(a.get("affinity"), (int, float))}
+    score = round(max(aff.get(n, NEUTRAL) for n in PREMIUM) - max(aff.get(n, NEUTRAL) for n in BUDGET), 3)
+    tier = "premium" if score > 0.05 else "budget" if score < -0.05 else "mid"
+    seen = [n for n in (*PREMIUM, *BUDGET) if n in aff]
+    return {"tier": tier, "unit_price": TIERS[tier], "score": score, "segments_seen": seen, "src": every[0].get("src")}
+
+
+EFFECTS = (("closest existing products", "relevance gate and the market leader"), ("the named market leader", "the leader to compare against"),
+           ("details of", "popularity of the leader (owned-space rule)"), ("taste tags", "the idea's taste tags (shown, not counted)"),
+           ("who:", "sets WHO: the age and gender to target; checks a named audience"),
+           ("where: named places", "sets WHERE: named places in the launch area"), ("where: map points", "sets WHERE: map hot spots"),
+           ("audience segments", "audience gate, target strength and the PRICE TIER (spending-habit segments)"),
+           ("the named buyer group", "confirms or refutes the buyer group named after 'for': target x1.2 / x0.6"),
+           ("launch cities", "sets WHERE: the launch cities"), ("recommendations", "adjacent demand: target x1.2 / x0.8; the brand ladder"),
+           ("weekly trend", "rising or falling (not counted when Qloo's series does not move)"),
+           ("the idea's other matches vs the leader", "overlap with the leader: owned/served gates, the reserve, the unserved audience"),
+           ("the leader's", "overlap with the leader (audience method): owned/served gates, the reserve, the unserved audience"))
+
+
+def annotate(rep: dict) -> None:
+    for c in rep.get("calls") or []:
+        c["effect"] = next((e for k, e in EFFECTS if c["what"].startswith(k)), "evidence")
+        c["out"] = c.get("error") or c.get("body_digest") or ""
+
+
 def demand_check(idea: str, place: str | None = None, leader: str | None = None, client: Client | None = None,
-                 today: dt.date | None = None, exclude: list[str] | None = None) -> dict:
+                 today: dt.date | None = None, exclude: list[str] | None = None, on_call=None) -> dict:
     idea = " ".join(str(idea or "").split())
     if not 8 <= len(idea) <= 500:
         raise ValueError("describe the idea in 8 to 500 characters")
@@ -528,10 +595,10 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
     leader = (" ".join(str(leader).split())[:80] or None) if leader else None
     client = client or Client()
     today = today or dt.datetime.now(dt.timezone.utc).date()
-    run = _Run(client)
+    run = _Run(client, on_call)
     ok, why = client.ready()
     empty = {"product_type": None, "words": content_words(idea, place), "matches": [], "unrelated": [], "excluded": [], "leader": None,
-             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None}
+             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None}
     ev = gather(run, idea, place, leader, today, set(exclude or [])) if ok else empty
     failed = [c for c in run.calls if c.get("error") and c["what"].startswith(ESSENTIAL)]
     missing = [c for c in run.calls if c.get("error") and c not in failed]
@@ -550,5 +617,16 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
     rep = {"v": V, "kind": KIND, "idea": idea, "place": place, "leader_named": leader, "label": label,
            "framing": FRAMING, "aggregate": AGGREGATE, **ev, "decision": decision, "rules": RULES, "calls": run.calls,
            "made": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "day": today.isoformat()}
+    d = rep["decision"]
+    if d.get("verdict") == "OPEN":            # Qloo's evidence SETS the campaign: who, where, the price, the target and the reserve
+        pr = ev.get("price") or {"tier": "mid", "unit_price": TIERS["mid"]}
+        vs = ev.get("versus") or {}
+        d["plan"] = {"who": {"age": (ev.get("who") or {}).get("top_age"), "gender": (ev.get("who") or {}).get("top_gender"),
+                             "segments": [a["name"] for a in _informative(ev.get("audiences") or [])][:4]},
+                     "where": [c["name"] + (f" ({c['country']})" if c.get("country") else "") for c in ev.get("cities") or []][:4],
+                     "tier": pr["tier"], "unit_price": pr["unit_price"], "target_units": d["target_units"], "reserve_units": d["reserve_units"],
+                     "escrow_target": d["target_units"] * pr["unit_price"], "escrow_reserve": d["reserve_units"] * pr["unit_price"],
+                     "unserved_audience": vs.get("whitespace", [])[:5]}
+    annotate(rep)
     rep["hash"] = report_hash(rep)
     return rep
