@@ -32,6 +32,8 @@ done
 # The page GitHub Pages answers a missing address with (404.html), the privacy and terms page, and the line every page
 # shows when a data file does not load (retry.js): files of web/, carried by the copy above; a build without one stops.
 for f in 404.html privacy.html retry.js; do [ -s "$out/$f" ] || { echo "web/$f is missing"; exit 1; }; done
+# The demand check's wake page (apps/wanted on a free Render instance): it pings /healthz until the app answers.
+[ -s "$out/wanted.html" ] || { echo "web/wanted.html is missing"; exit 1; }
 # The pages a search engine can index besides the first screen (the app's other pages are # routes): faq.html and
 # check/index.html, listed with it in sitemap.xml, and llms.txt (https://llmstxt.org/), all files of web/ carried by the
 # copy above. Each "Last updated" and every lastmod is the date of the commit this site is built from (for a release,

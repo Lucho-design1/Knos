@@ -12,10 +12,12 @@ Rate limits per client address keep a public demo from draining the Qloo quota a
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import mimetypes
 import os
 import re
+import sys
 import threading
 import time
 from collections import OrderedDict, defaultdict, deque
@@ -199,7 +201,7 @@ def make_handler(state: State):
             return self._send(404, {"error": "not found"})
 
         def status(self) -> dict:
-            ok, why = preorder.ready()
+            pf = preorder.preflight_status()
             rest = state.rest.status()
             mcp = state.q.status()
             if rest["rest"]:        # the decision path is Qloo's REST API: when it is live, the server is live
@@ -207,7 +209,7 @@ def make_handler(state: State):
                        "mcp_flow": {k: mcp.get(k) for k in ("mode", "label", "reason")}}
             else:
                 top = {"no_key_behaviour": "every check answers CANNOT_DECIDE (" + check.NO_EVIDENCE + "); pre-orders never open"}
-            return {**mcp, **top, "qloo_rest": rest, "preorders": {"available": ok, "why": why},
+            return {**mcp, **top, "qloo_rest": rest, "preorders": pf,
                     "fees": preorder.fee_line(), "auth": auth.config(),
                     "framing": demand.FRAMING, "escrow": escrow.available(),
                     "demo_wallet": bool(os.environ.get("KNOS_WANTED_DEVNET_KEYPAIR")), "cluster": "devnet",
@@ -232,6 +234,8 @@ def make_handler(state: State):
                 return self._send(200, self.route(u.path, body))
             except auth.AuthError as why:
                 return self._send(401, {"error": str(why)[:300]})
+            except company.NotInRecord as why:
+                return self._send(409, {"error": str(why)[:300], "refused_by": "Knos Record (Sibyl)"})
             except preorder.NotVerified as why:
                 return self._send(422, {"error": f"milestone not verified: {why}"[:400], "verified": False})
             except escrow.EscrowUnavailable as why:
@@ -242,8 +246,10 @@ def make_handler(state: State):
                 return self._send(400, {"error": str(why)[:400]})
             except (ValueError, TypeError, KeyError) as why:
                 return self._send(400, {"error": str(why)[:300]})
-            except Exception as why:  # noqa: BLE001 - chain/RPC errors: say what, never a key
-                return self._send(502, {"error": f"{type(why).__name__}: {str(why)[:300]}"})
+            except Exception as why:  # noqa: BLE001 - never a raw Python error to the user: a generic line + a log line
+                ref = hashlib.sha256(f"{time.time()}{id(why)}".encode()).hexdigest()[:10]
+                print(f"knos-demand-check error {ref} {u.path}: {type(why).__name__}: {str(why)[:300]}", file=sys.stderr, flush=True)
+                return self._send(502, {"error": f"the server could not finish this step (reference {ref}); nothing was charged", "ref": ref})
 
         def _origin(self) -> tuple[str, str]:
             host = (self.headers.get("Host") or "").split(":")[0]
@@ -368,10 +374,11 @@ def serve(host: str | None = None, port: int | None = None) -> None:
     host = host or os.environ.get("HOST", "127.0.0.1")
     port = port or int(os.environ.get("PORT", "8080"))
     state = State()
+    threading.Thread(target=lambda: preorder.preflight_status(force=True), daemon=True).start()   # the money path, simulated
     httpd = ThreadingHTTPServer((host, port), make_handler(state))
     rest_ok, rest_why = state.rest.ready()
     print(f"Knos demand check on http://{host}:{port}  Qloo REST: {'on' if rest_ok else 'off (' + rest_why + ')'}  "
-          f"Qloo MCP: {state.q.mode} ({state.q.reason})  pre-orders on proof: {preorder.ready()[1]}", flush=True)
+          f"Qloo MCP: {state.q.mode} ({state.q.reason})  pre-orders on proof: preflight running (see /api/status)", flush=True)
     try:
         httpd.serve_forever()
     finally:

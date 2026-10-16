@@ -23,7 +23,7 @@ enables (the Nobel release's named use, else a topic table, else a generic phras
 then runs on that product, and the report adds "why it never crossed": money before proof, slow judges, failed
 attempts, each flagged only with its evidence, else "no evidence".
 
-Wake page: `docs/wanted.html` (GitHub Pages) pings `https://knos.onrender.com/healthz` until the free instance wakes,
+Wake page: `web/wanted.html`, served by GitHub Pages at https://drexthealpha.github.io/Knos/wanted.html (scripts/build_site.sh copies web/), pings `https://knos.onrender.com/healthz` until the free instance wakes,
 then opens the app; the app shows a status line during slow calls.
 
 The Knos Record (Sibyl) is read before money moves: `/api/check` writes the decision (WARM claim `demand:<hash>`, COLD

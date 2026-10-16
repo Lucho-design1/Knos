@@ -22,6 +22,7 @@ import json
 import os
 import socket
 import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -286,7 +287,7 @@ def record_gate(rec: dict) -> dict:
     """Before a release: the Record (Sibyl) must hold this pre-order and must not hold it as released already."""
     held = company.record_state(rec["report"])
     if rec["order"] in (held.get("released") or []):
-        raise company.NotInRecord("the Knos Record (Sibyl) already holds this commitment as released")
+        raise company.NotInRecord("refused: the Knos Record (Sibyl) marks this commitment released")
     if rec["order"] not in ((held.get("preorders") or {}).get("list") or []):
         raise company.NotInRecord("the Knos Record (Sibyl) holds no pre-order for this commitment")
     return held
@@ -295,9 +296,9 @@ def record_gate(rec: dict) -> dict:
 def milestone(report: dict, order: str, url: str, led=None, opener=None, resolve=_public_host) -> dict:
     """Verify the maker's evidence; when verified and the reserve is met, 2 referees sign PASS and the server releases."""
     rec = load(order)
+    held = record_gate(rec)              # Sibyl first: its record alone refuses a second release, before files or chain
     if rec["status"] != "locked":
         raise ValueError(f"this commitment is already {rec['status']}")
-    held = record_gate(rec)
     _need()
     from knos.ideas import commit as C
     res = reserve_status(report, held)
@@ -335,3 +336,77 @@ def refund(order: str, led=None) -> dict:
             rec["signatures"]["refund"] = got["sent"][0]["signature"]
         _save(rec)
     return public(rec)
+
+
+# ---- preflight: is the money path really working on this server? ----------------------------------------------------
+PREFLIGHT_TTL_S = 600
+_pre: dict = {"at": 0.0, "ok": False, "why": "not checked yet"}
+_pre_lock = threading.Lock()
+
+
+def _simulate(led, ixs, payer, signers) -> dict:
+    """simulateTransaction (nothing is sent): the cluster runs the transaction against current state."""
+    import base64
+
+    from solders.hash import Hash
+    from solders.message import Message
+    from solders.transaction import Transaction
+
+    from knos import chain
+    tx = Transaction(signers, Message.new_with_blockhash(ixs, payer, Hash.default()), Hash.default())
+    got = chain.call(led.url, "simulateTransaction", [base64.b64encode(bytes(tx)).decode(),
+                                                      {"encoding": "base64", "sigVerify": False, "replaceRecentBlockhash": True,
+                                                       "commitment": "confirmed"}], timeout=20)
+    return got.get("value") or {}
+
+
+def preflight(led=None) -> tuple[bool, str]:
+    """Build the transaction a 5-unit pre-order sends (test mint top-up, the stage's PANEL order with the server's 3
+    referee keys) and SIMULATE it on devnet with the demo buyer. Every import, key, config file and the buyer's SOL are
+    exercised; nothing is sent. (False, why) on any failure."""
+    ok, why = ready()
+    if not ok:
+        return False, why
+    try:
+        from solders.keypair import Keypair
+        from solders.system_program import CreateAccountParams, create_account
+
+        from knos import chain, ideas
+        from knos.ideas import wanted as W
+        from knos.settle.v2 import pay
+        led = led or escrow.ledger()
+        buyer, refs, prog = escrow.demo_key(), referees(), program()
+        ixs, signers = [], [buyer]
+        try:
+            mint = escrow.mint(led, create=False)
+        except escrow.EscrowUnavailable:            # no test mint yet: the first pre-order makes one; simulate that too
+            m = Keypair()
+            rent = chain.call(led.url, "getMinimumBalanceForRentExemption", [escrow.MINT_LEN])
+            from solders.instruction import AccountMeta, Instruction
+            ixs += [create_account(CreateAccountParams(from_pubkey=buyer.pubkey(), to_pubkey=m.pubkey(), lamports=rent,
+                                                       space=escrow.MINT_LEN, owner=pay.TOKEN)),
+                    Instruction(pay.TOKEN, bytes([20, 6]) + bytes(buyer.pubkey()) + b"\x00", [AccountMeta(m.pubkey(), False, True)])]
+            mint, signers = m.pubkey(), [buyer, m]
+        tok = pay.ata(buyer.pubkey(), mint)
+        ixs += [pay.create_ata_ix(buyer.pubkey(), w, mint) for w in (buyer.pubkey(), pay.FEE_OWNER) if led.account(pay.ata(w, mint)) is None]
+        ixs.append(escrow._mint_to_ix(mint, tok, buyer.pubkey(), 6))
+        claim = ideas.claim("Knos demand check preflight: a 5-unit pre-order, simulated only", field_name=FIELD, kind="agent")
+        p = W.plan(claim, units=5, price=PRICE, stages=[("referee_pass", 10_000)], stage_work_s=[30 * 86_400])
+        ixs.append(W.fund_panel_ix(p, "stage1", buyer.pubkey(), tok, mint, 2, [bytes(r.pubkey()) for r in refs], program=prog,
+                                   unlisted_panel=True))
+        v = _simulate(led, ixs, buyer.pubkey(), signers)
+    except Exception as e:  # noqa: BLE001 - the reason is shown on /api/status (no secrets: names and types only)
+        return False, f"pre-order preflight failed: {type(e).__name__}: {str(e)[:160]}"
+    if v.get("err") is not None:
+        logs = [x for x in (v.get("logs") or []) if "rror" in x][-1:]
+        return False, f"pre-order preflight: devnet simulation failed ({v.get('err')}{'; ' + logs[0][:160] if logs else ''})"
+    return True, f"ok: a pre-order transaction simulated on devnet ({v.get('unitsConsumed', '?')} compute units)"
+
+
+def preflight_status(force: bool = False, led=None) -> dict:
+    with _pre_lock:
+        if force or time.time() - _pre["at"] > PREFLIGHT_TTL_S:
+            ok, why = preflight(led)
+            _pre.update(at=time.time(), ok=ok, why=why)
+        return {"available": _pre["ok"], "why": _pre["why"], "checked": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(_pre["at"])),
+                "preflight": "simulateTransaction of a 5-unit pre-order on devnet, every 10 minutes"}

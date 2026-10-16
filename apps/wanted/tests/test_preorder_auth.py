@@ -137,3 +137,46 @@ def test_a_maker_can_repost_evidence_ten_times_an_hour_per_commitment(app):
     codes = [call(app, "/api/milestone", {"commitment": one, "evidence_url": "https://x.example/"}, tok)[0] for _ in range(11)]
     assert codes[:10] == [400] * 10 and codes[10] == 429           # unknown commitment (400) until the per-commitment cap
     assert call(app, "/api/milestone", {"commitment": two, "evidence_url": "https://x.example/"}, tok)[0] == 400
+
+
+def test_preflight_builds_the_real_preorder_transaction_and_reports_the_simulation(monkeypatch):
+    pytest.importorskip("solders")
+    from solders.keypair import Keypair
+    from solders.pubkey import Pubkey
+
+    keys = [list(bytes(Keypair())) for _ in range(3)]
+    monkeypatch.setenv("KNOS_WANTED_REFEREE_KEYS", json.dumps(keys))
+    monkeypatch.setenv("KNOS_WANTED_DEVNET_KEYPAIR", json.dumps(list(bytes(Keypair()))))
+    monkeypatch.setenv("KNOS_WANTED_MINT", str(Pubkey.from_string("So11111111111111111111111111111111111111112")))
+
+    class Led:
+        url = "https://api.devnet.solana.com"
+
+        def account(self, addr):
+            return None
+    seen = {}
+
+    def sim(led, ixs, payer, signers):
+        seen["n"] = len(ixs)
+        return {"err": {"InstructionError": [3, {"Custom": 1}]}, "logs": ["Program log: Error: insufficient funds"]}
+    monkeypatch.setattr(preorder, "_simulate", sim)
+    ok, why = preorder.preflight(Led())
+    assert not ok and "devnet simulation failed" in why and "insufficient funds" in why and seen["n"] == 4   # 2 ATAs, mint, fund
+    monkeypatch.setattr(preorder, "_simulate", lambda *a: {"err": None, "unitsConsumed": 4242})
+    ok, why = preorder.preflight(Led())
+    assert ok and "4242" in why
+    st = preorder.preflight_status(force=True, led=Led())
+    assert st["available"] is True and "simulateTransaction" in st["preflight"]
+    monkeypatch.setattr(preorder, "_simulate", lambda *a: (_ for _ in ()).throw(ModuleNotFoundError("No module named 'yaml'")))
+    st = preorder.preflight_status(force=True, led=Led())
+    assert st["available"] is False and "ModuleNotFoundError" in st["why"]
+    monkeypatch.delenv("KNOS_WANTED_REFEREE_KEYS")
+    assert preorder.preflight_status(force=True)["available"] is False
+
+
+def test_raw_errors_never_reach_the_user(app, monkeypatch):
+    from knos_wanted import preorder as po
+    tok = call(app, "/api/auth/guest", {"label": "x"})[1]["token"]
+    monkeypatch.setattr(po, "load", lambda order: (_ for _ in ()).throw(ModuleNotFoundError("No module named 'yaml'")))
+    st, e = call(app, "/api/milestone", {"commitment": "1" * 44, "evidence_url": "https://x.example/"}, tok)
+    assert st == 502 and "yaml" not in e["error"] and "ModuleNotFoundError" not in e["error"] and e["ref"]

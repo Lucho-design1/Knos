@@ -16,7 +16,7 @@ dependencies = []   # the report and the web app use the Python standard library
 # the "lock pre-orders" button: Knos's graduation pre-order pool. This app is apps/wanted/ of the Knos monorepo:
 # install Knos from the same checkout beside it (`pip install . "./apps/wanted[escrow]"` at the root), so the app and
 # the escrow code are always one commit.
-escrow = ["knos", "solders>=0.29"]
+escrow = ["knos", "solders>=0.29", "pyyaml==6.0.3"]   # pyyaml: config/fees.yaml + config/referees.yaml on the money path (uv.lock pin)
 auth = ["cryptography>=42"]   # passkey sign-in (ES256 signature check)
 dev = ["pytest>=8"]
 

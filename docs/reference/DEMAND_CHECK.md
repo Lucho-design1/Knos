@@ -82,7 +82,7 @@ evidence without the claim id refused (HTTP 422); referee PASS + release
 45 test units. The evidence page in that run was an echo service showing the claim id (a demo, not a product page).
 
 **Two more Qloo calls, used only where they change the target** (never the verdict):
-- **Named buyer group** (`/v2/audiences`, all ten audience types, cached 7 days): when a word of the idea names one of
+- **Named buyer group** (`/v2/audiences`, all ten audience types, cached 7 days): when a word after "for" in the idea names one of
   Qloo's audience segments ("runners" -> Running, "gamers" -> Video Gamer, "vegans" -> Veganism), the segment is looked
   up in the idea's top 20 ranked segments (`/v2/insights` `urn:audience`). Ranked above 0.55: confirmed, target x 1.2;
   absent or neutral: refuted, target x 0.6, and the report says so. No named segment: no change, no call counted.
@@ -105,7 +105,15 @@ clinical or regulated), failed attempts (Qloo products like it with popularity <
 Money reads it back first: `preorder.lock` refuses a report Sibyl does not hold as OPEN with the same target and
 reserve; `preorder.record_gate` refuses a release Sibyl holds no pre-order for, or already holds as released; the reserve
 is counted from Sibyl. Each lock and release is written back (COLD `funding` / `payout`, WARM state). Without Sibyl
-(`sibyl-memory-client` 0.8.x, pinned `<0.9`) no money moves.
+(`sibyl-memory-client` 0.8.x, pinned `<0.9`) no money moves. A second release of a released commitment is refused by
+Sibyl's record alone, before this server's files or the chain are read: HTTP 409 "refused: the Knos Record (Sibyl) marks
+this commitment released", `refused_by: Knos Record (Sibyl)`.
+
+**Pre-orders are reported available only when they work.** At start and every 10 minutes the server builds the
+transaction a 5-unit pre-order sends (test-mint top-up and the stage's PANEL order with its three referee keys, through
+config/fees.yaml and config/referees.yaml) and runs devnet `simulateTransaction` with the demo buyer (nothing is sent);
+`/api/status` `preorders` is `available: false` with the reason otherwise. An unexpected error reaches the user as
+"the server could not finish this step (reference ...)", and the server logs the reference with the error.
 
 ## How Knos reaches Qloo (MCP flow, optional)
 

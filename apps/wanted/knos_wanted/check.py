@@ -67,6 +67,7 @@ demand target reserve release funds fund money price prices order orders preorde
 ignore previous instruction instructions system prompt set open close verified overwhelming guaranteed exactly clone
 copy version invented invent call called named name similar better best cheaper cheap first ever kind sort type lot
 lots great good amazing awesome cool nice perfect ultimate premium simple easy smart now today tomorrow please brand-new
+let lets without within measure measures read reads
 all-new""".split())
 # Audience words in the idea, and the Qloo demographic key they name.
 AUDIENCE = {"student": ("age", "24_and_younger"), "students": ("age", "24_and_younger"), "teen": ("age", "24_and_younger"),
@@ -83,7 +84,8 @@ CLONE_PHRASES = ("exactly like", "just like", "clone of", "copy of", "same as", 
 # The decision rules. Every threshold is here, read by decide() and printed in the report.
 RULES = {
     "relevance": "a Qloo product counts only when its name shares 2 content words with the idea, or 1 in its name and 1 more "
-                 "in its description or tags (content words: the idea minus filler, pitch, instruction and kind words such as podcast); "
+                 "in its description or tags, or 3 anywhere in its name, description and tags (content words: the idea minus filler, "
+                 "pitch, instruction and kind words such as podcast); "
                  "none -> REFUSE " + NO_MATCH,
     "clone": "the leader's name is in the idea together with a clone phrase ('exactly like', 'clone of', ...) or is "
              "the idea's whole subject -> REFUSE " + OWNED,
@@ -204,7 +206,7 @@ def _ent(r: dict, src: int, words: list[str]) -> dict:
     return {"name": r.get("name"), "id": r.get("entity_id"), "type": (r.get("types") or [None])[0], "popularity": r.get("popularity"),
             "about": (p.get("short_description") or p.get("description") or "")[:240], "located": str(where)[:120],
             "address": str(p.get("address") or "")[:160], "matched_words": hits, "name_words": name_hits,
-            "relevant": len(name_hits) >= 2 or (len(name_hits) >= 1 and len(hits) >= 2), "src": src}
+            "relevant": len(name_hits) >= 2 or (len(name_hits) >= 1 and len(hits) >= 2) or len(hits) >= 3, "src": src}
 
 
 def _dedupe(ms: list[dict]) -> list[dict]:
@@ -269,7 +271,9 @@ GROUP_GENERIC = {"with", "young", "and", "professional", "enthusiast", "enthusia
 def _buyer_group(run: _Run, idea: str, every: list[dict]) -> dict | None:
     """The buyer group the idea names ("for runners", "gamers"), found in Qloo's audience list (/v2/audiences), and
     whether Qloo's ranked segments for this taste (top 20) confirm it. None when the idea names no Qloo segment."""
-    stems = {_stem(w) for w in tokens(idea) if len(w) > 3 and w not in STOP}
+    low = f" {idea.lower()} "
+    named = low.split(" for ", 1)[1] if " for " in low else ""         # the buyers are named after "for": "... for runners"
+    stems = {_stem(w) for w in tokens(named) if len(w) > 3 and w not in STOP}
     if not stems:
         return None
     body, src = run.get("/v2/audiences", {"filter.audience.types": ",".join(AUDIENCE_TYPES), "take": 300},
@@ -324,6 +328,14 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         return ev
     rel = [w for w in words if w not in kind_words()] or words
     found = _dedupe([_ent(r, src, rel) for r in _results(body) if r.get("entity_id")])
+    # Qloo's text search reads a long query as one phrase: when nothing relevant comes back, ask again with the idea's
+    # word pairs (at most 2 more calls), keeping only what passes the same relevance gate.
+    if not any(m["relevant"] for m in found) and len(q_words) > 2:
+        for pair in (q_words[:2], q_words[-2:]):
+            b2, s2 = run.get("/search", {"query": " ".join(pair), "types": kind, "take": 12}, "closest existing products (word pair)")
+            found = _dedupe(found + [_ent(r, s2, rel) for r in _results(b2) if r.get("entity_id")]) if s2 else found
+            if any(m["relevant"] for m in found):
+                break
     if kind == "urn:entity:place" and place:
         found = [m for m in found if _in_place(m, place)]
     ev["excluded"] = [m for m in found if m["id"] in exclude]

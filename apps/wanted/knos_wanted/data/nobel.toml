@@ -1,4 +1,5 @@
-# Nobel-recognised key papers, by DOI. Every row names its source: the nobelprize.org press release (read 16 Oct 2026).
+# Landmark papers, by DOI: Nobel-recognised (nobel = true) or top-cited results whose product is not on the market (nobel = false). Every row names its source:
+# the nobelprize.org press release, or an official/foundation page saying no product exists (read 16-17 Oct 2026).
 # `said` quotes that release (one short sentence); `enables` is the product phrase Knos proposes from it (the maker
 # can edit it). `products_on_market` says what the release itself says about products; it is not Knos's claim.
 
@@ -10,6 +11,7 @@ laureates = "Mary E. Brunkow, Fred Ramsdell, Shimon Sakaguchi"
 url = "https://www.nobelprize.org/prizes/medicine/2025/press-release/"
 said = "Several of these treatments are now undergoing clinical trials."
 enables = "a regulatory T cell therapy for autoimmune disease"
+nobel = true
 products_on_market = "none named: treatments are in clinical trials (press release)"
 
 [[paper]]
@@ -20,44 +22,26 @@ laureates = "Mary E. Brunkow, Fred Ramsdell, Shimon Sakaguchi"
 url = "https://www.nobelprize.org/prizes/medicine/2025/press-release/"
 said = "Several of these treatments are now undergoing clinical trials."
 enables = "a regulatory T cell therapy for autoimmune disease"
+nobel = true
 products_on_market = "none named: treatments are in clinical trials (press release)"
 
 [[paper]]
-doi = "10.1126/science.aam8743"
-prize = "Chemistry"
-year = 2025
-laureates = "Susumu Kitagawa, Richard Robson, Omar M. Yaghi"
-url = "https://www.nobelprize.org/prizes/chemistry/2025/press-release/"
-said = "These constructions, metal-organic frameworks, can be used to harvest water from desert air, capture carbon dioxide, store toxic gases or catalyse chemical reactions."
-enables = "a solar powered device that harvests drinking water from desert air"
-products_on_market = "named as a potential use (the release: 'may contribute'), no product named"
-
+doi = "10.1038/nature16521"
+prize = ""
+year = 2016
+nobel = false
+laureates = "Gao, Emaminejad, Nyein, Challa, Chen, Javey et al. (UC Berkeley)"
+url = "https://www.fda.gov/medical-devices/safety-communications/do-not-use-smartwatches-or-smart-rings-measure-blood-glucose-levels-fda-safety-communication"
+said = "The FDA has not authorized, cleared, or approved any smartwatch or smart ring that is intended to measure or estimate blood glucose values on its own."
+enables = "a fitness watch with a sweat glucose sensor"
+products_on_market = "none authorized: FDA safety communication, 21 Feb 2024"
 [[paper]]
-doi = "10.1038/46248"
-prize = "Chemistry"
-year = 2025
-laureates = "Susumu Kitagawa, Richard Robson, Omar M. Yaghi"
-url = "https://www.nobelprize.org/prizes/chemistry/2025/press-release/"
-said = "These constructions, metal-organic frameworks, can be used to harvest water from desert air, capture carbon dioxide, store toxic gases or catalyse chemical reactions."
-enables = "a solar powered device that harvests drinking water from desert air"
-products_on_market = "named as a potential use, no product named"
-
-[[paper]]
-doi = "10.1126/science.1059413"
-prize = "Physics"
-year = 2023
-laureates = "Pierre Agostini, Ferenc Krausz, Anne L'Huillier"
-url = "https://www.nobelprize.org/prizes/physics/2023/press-release/"
-said = "Attosecond pulses can also be used to identify different molecules, such as in medical diagnostics."
-enables = "a laser blood test that identifies disease molecules for medical diagnostics"
-products_on_market = "named as a potential use, no product named"
-
-[[paper]]
-doi = "10.1038/35107000"
-prize = "Physics"
-year = 2023
-laureates = "Pierre Agostini, Ferenc Krausz, Anne L'Huillier"
-url = "https://www.nobelprize.org/prizes/physics/2023/press-release/"
-said = "Attosecond pulses can also be used to identify different molecules, such as in medical diagnostics."
-enables = "a laser blood test that identifies disease molecules for medical diagnostics"
-products_on_market = "named as a potential use, no product named"
+doi = "10.1038/nm0797-797"
+prize = ""
+year = 1997
+nobel = false
+laureates = "Dieterich, Ehnis, Bauer, Donner, Volta, Riecken, Schuppan"
+url = "https://celiac.org/about-celiac-disease/treatment/"
+said = "At this time, the only treatment for celiac disease is the gluten-free diet."
+enables = "a celiac pill that digests the gluten in bread"
+products_on_market = "none: the only treatment is the gluten-free diet (Celiac Disease Foundation)"

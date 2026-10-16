@@ -26,33 +26,35 @@ class FakeFetch:
 @pytest.fixture
 def paper(monkeypatch):
     from knos.ideas import claim, sources
-    c = claim("Water harvesting from air with metal-organic frameworks powered by natural sunlight", field_name="Chemistry",
-              kind="literature", ids={"doi": "10.1126/science.aam8743"}, year=2017,
+    c = claim("Scurfin, a forkhead/winged-helix protein, is mutated in the scurfy mouse", field_name="Immunology and Microbiology",
+              kind="literature", ids={"doi": "10.1038/83784"}, year=2001,
               retraction={"checked": True, "retracted": False, "notices": [], "via": "crossref updated-by"},
-              extra={"topic": "Metal-Organic Frameworks: Synthesis and Applications"})
+              extra={"topic": "T-cell and B-cell Immunology"})
     monkeypatch.setattr(sources, "get", lambda ref, f=None, enrich=True: c)
     return c
 
 
 def test_card_quotes_the_result_cites_nobel_and_proposes_a_product(paper):
-    card = research.research_card("10.1126/science.aam8743", fetcher=FakeFetch(), today=TODAY)
+    card = research.research_card("10.1038/83784", fetcher=FakeFetch(), today=TODAY)
     assert card["proven_result"]["quote"].startswith("Here we report a device that harvests water")
-    assert card["cited_by_count"] == 12000 and card["year"] == 2017 and card["retraction"]["retracted"] is False
+    assert card["cited_by_count"] == 12000 and card["year"] == 2001 and card["retraction"]["retracted"] is False
     assert card["nobel"]["year"] == 2025 and card["nobel"]["url"].startswith("https://www.nobelprize.org/")
+    assert card["no_product_evidence"]["said"] == "Several of these treatments are now undergoing clinical trials."
     assert card["product"] == card["nobel"]["enables"] and "nobelprize.org" in card["product_source"]
-    edited = research.research_card("10.1126/science.aam8743", fetcher=FakeFetch(), product="a desert water maker", today=TODAY)
+    edited = research.research_card("10.1038/83784", fetcher=FakeFetch(), product="a desert water maker", today=TODAY)
     assert edited["product"] == "a desert water maker" and edited["product_source"] == "edited by the maker"
 
 
 def test_walls_are_flagged_only_with_evidence(paper):
-    card = research.research_card("10.1126/science.aam8743", fetcher=FakeFetch(), today=TODAY)
+    card = research.research_card("10.1038/83784", fetcher=FakeFetch(), today=TODAY)
     none = research.why_never_crossed(card, {"hash": "a" * 64, "matches": []}, TODAY)
-    assert none[0]["flag"] is True and "9 years" in none[0]["evidence"] and "Nobel Chemistry 2025" in none[0]["evidence"]
-    assert none[1]["flag"] is False and none[2] == {"wall": "failed attempts", "flag": False, "evidence": "no evidence"}
+    assert none[0]["flag"] is True and "25 years" in none[0]["evidence"] and "Nobel Physiology or Medicine 2025" in none[0]["evidence"]
+    assert none[1]["flag"] is True and "Immunology" in none[1]["evidence"]
+    assert none[2] == {"wall": "failed attempts", "flag": False, "evidence": "no evidence"}
     small = research.why_never_crossed(card, {"hash": "a" * 64, "matches": [{"name": "Tiny Water Co", "popularity": 0.1}]}, TODAY)
     assert small[0]["flag"] is False and small[2]["flag"] is True and "Tiny Water Co" in small[2]["evidence"]
-    med = {**card, "field": "Medicine", "topic": "T cell therapy"}
-    assert research.why_never_crossed(med, {"matches": []}, TODAY)[1]["flag"] is True
+    phys = {**card, "field": "Physics and Astronomy", "topic": "Optics", "topics": [], "product": "a faster camera"}
+    assert research.why_never_crossed(phys, {"matches": []}, TODAY)[1]["flag"] is False
 
 
 def test_product_table_and_generic_phrase():
@@ -65,7 +67,10 @@ def test_product_table_and_generic_phrase():
 
 def test_every_nobel_row_cites_its_press_release():
     rows = research.nobel_rows()
-    assert len(rows) >= 6 and all(r["url"].startswith("https://www.nobelprize.org/prizes/") and r["said"] and r["doi"] for r in rows)
+    assert len(rows) >= 4 and all(r["url"].startswith("https://") and r["said"] and r["doi"] for r in rows)
+    assert all(r["url"].startswith("https://www.nobelprize.org/prizes/") for r in rows if r.get("nobel", True))
+    top = next(r for r in rows if r["doi"] == "10.1038/nature16521")
+    assert top["nobel"] is False and "fda.gov" in top["url"] and research.nobel_for(top["doi"])["enables"].startswith("a fitness watch")
 
 
 # ---- the Record (Sibyl) is read before money moves ------------------------------------------------------------------
@@ -104,7 +109,7 @@ def test_release_gate_reads_the_preorder_and_refuses_a_second_release(monkeypatc
     assert held["preorders"] == {"orders": 1, "units": 40, "list": [rec["order"]]}
     assert preorder.reserve_status(REP)["met"] is True and preorder.reserve_status(REP)["source"] == "Knos Record (Sibyl)"
     assert company.record_release(REP["hash"], rec["order"], ["s1", "s2"], "f" * 64)["recorded"] is True
-    with pytest.raises(company.NotInRecord, match="already holds this commitment as released"):
+    with pytest.raises(company.NotInRecord, match="marks this commitment released"):
         preorder.record_gate(rec)
     monkeypatch.setattr(company, "_record", lambda: None)
     with pytest.raises(company.NotInRecord):
@@ -113,6 +118,38 @@ def test_release_gate_reads_the_preorder_and_refuses_a_second_release(monkeypatc
 
 def test_the_wake_page_pings_the_app_until_it_answers():
     from pathlib import Path
-    page = (Path(__file__).resolve().parents[3] / "docs" / "wanted.html").read_text()
+    page = (Path(__file__).resolve().parents[3] / "web" / "wanted.html").read_text()
     assert "https://knos.onrender.com" in page and "/healthz" in page and "location.replace" in page
     assert "prefers-reduced-motion" in page and "Knos Wanted" not in page
+
+
+def test_a_second_release_is_refused_by_sibyl_alone_over_http(monkeypatch):
+    import json
+    import threading
+    import urllib.error
+    import urllib.request
+    from http.server import ThreadingHTTPServer
+
+    from knos_wanted import auth, server
+    from knos_wanted.qloo_mcp import InProcess, Qloo
+    from knos_wanted.qloo_rest import Client
+    order = "R" * 43
+    company.record_check(REP)
+    company.record_lock(REP["hash"], order, 40, "sig")
+    company.record_release(REP["hash"], order, ["s1", "s2"], "f" * 64)
+    # this server's file still says "locked" and no chain or escrow key is configured: only Sibyl can refuse
+    preorder._save({"order": order, "report": REP["hash"], "status": "locked", "claim_id": "knos-idea:" + "0" * 32, "units": 40})
+    monkeypatch.setattr(preorder, "_need", lambda: (_ for _ in ()).throw(AssertionError("the chain path was reached")))
+    st = server.State(Qloo(InProcess(), mode="mock", sleep=lambda s: None), Client(key=""))
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.make_handler(st))
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    tok = auth.guest("t")["token"]
+    req = urllib.request.Request(f"http://127.0.0.1:{httpd.server_address[1]}/api/milestone",
+                                 json.dumps({"commitment": order, "evidence_url": "https://x.example/"}).encode(),
+                                 {"Content-Type": "application/json", "Authorization": "Bearer " + tok})
+    with pytest.raises(urllib.error.HTTPError) as e:
+        urllib.request.urlopen(req, timeout=30)
+    body = json.loads(e.value.read())
+    httpd.shutdown()
+    assert e.value.code == 409 and body["error"] == "refused: the Knos Record (Sibyl) marks this commitment released"
+    assert body["refused_by"] == "Knos Record (Sibyl)"

@@ -74,7 +74,7 @@ def proven_result(title: str, abstract_text: str) -> tuple[str, str]:
 
 def product_phrase(text: str, nobel: dict | None) -> tuple[str, str]:
     if nobel and nobel.get("enables"):
-        return nobel["enables"], f"the use named in the Nobel press release ({nobel['url']})"
+        return nobel["enables"], f"the use named by the landmark table's source ({nobel['url']})"
     low = text.lower()
     for keys, phrase in PRODUCT_MAP:
         if any(k in low for k in keys):
@@ -110,8 +110,9 @@ def research_card(ref: str, fetcher=None, product: str | None = None, today: dt.
     topics = [t.get("display_name") for t in (work.get("topics") or [])[:3] if t.get("display_name")]
     keywords = [k.get("display_name") for k in (work.get("keywords") or [])[:5] if k.get("display_name")]
     concepts = [k.get("display_name") for k in (work.get("concepts") or [])[:5] if k.get("display_name")]
-    nobel = nobel_for(ids.get("doi"))
-    phrase, phrase_why = product_phrase(" ".join([c["statement"], *topics, *keywords, *concepts]), nobel)
+    row = nobel_for(ids.get("doi"))
+    nobel = row if row and row.get("nobel", True) else None
+    phrase, phrase_why = product_phrase(" ".join([c["statement"], *topics, *keywords, *concepts]), row)
     retr = c.get("retraction") or {}
     today = today or dt.datetime.now(dt.timezone.utc).date()
     oa_link = (work.get("id") or "").replace("https://openalex.org/", "https://api.openalex.org/works/") or None
@@ -122,7 +123,8 @@ def research_card(ref: str, fetcher=None, product: str | None = None, today: dt.
             "cited_by_count": work.get("cited_by_count"), "cited_source": oa_link,
             "retraction": {"retracted": bool(retr.get("retracted") or work.get("is_retracted")), "checked": bool(retr.get("checked")),
                            "via": retr.get("via") or ("OpenAlex is_retracted" if work else None), "notices": retr.get("notices") or []},
-            "nobel": nobel, "product": (product or "").strip()[:200] or phrase, "product_source": "edited by the maker" if product else phrase_why,
+            "nobel": nobel, "no_product_evidence": ({"said": row["said"], "url": row["url"], "products_on_market": row.get("products_on_market")} if row else None),
+            "product": (product or "").strip()[:200] or phrase, "product_source": "edited by the maker" if product else phrase_why,
             "suggested_product": phrase, "day": today.isoformat()}
     card["hash"] = hashlib.sha256(json.dumps({k: v for k, v in card.items() if k not in ("day",)}, sort_keys=True, default=str).encode()).hexdigest()
     return card
