@@ -119,7 +119,7 @@ def preorder_tx(report: dict, account: str, units: int, label: str = "wallet") -
     st = doc["orders"]["stage1"]
     rec = {"order": st["order"], "report": report["hash"], "idea": report["idea"], "claim_id": claim["id"], "units": units, "unit_price": price,
            "buyer": f"wallet {account} ({label[:60]}), test money", "maker_wallet": maker, "status": "pending", "deadline_days": 30,
-           "doc": doc, "made": doc["made"], "signatures": {}, "via": "Solana Action (Blink)"}
+           "doc": doc, "made": doc["made"], "signatures": {}, "via": "Solana Action (Blink)", "via_kind": "blink"}
     preorder._save(rec)
     return {"type": "transaction", "transaction": base64.b64encode(raw).decode(), "bytes": len(raw), "commitment": st["order"],
             "message": f"Locks {units * price} test units in escrow on devnet for {units} units; paid to the maker only on proof."}

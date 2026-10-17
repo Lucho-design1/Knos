@@ -82,7 +82,7 @@ def test_the_entry_point_and_the_directory_plugin_reach_the_same_register():
     block = text.split('[project.entry-points."hermes_agent.plugins"]', 1)[1]
     assert re.search(r'^knos = "knos\.hermes_plugin:register"$', block, re.M)
     manifest = yaml.safe_load((ROOT / "hermes" / "plugin" / "knos" / "plugin.yaml").read_text(encoding="utf-8"))
-    assert manifest["name"] == "knos" and manifest["provides_tools"] == FOUR and manifest["python_dependencies"] == ["knos==0.3.28"]
+    assert manifest["name"] == "knos" and manifest["provides_tools"] == FOUR and manifest["python_dependencies"] == ["knos==0.4.0"]
     import importlib.util
     spec = importlib.util.spec_from_file_location("knos_hermes_dir_plugin", ROOT / "hermes" / "plugin" / "knos" / "__init__.py")
     plugin = importlib.util.module_from_spec(spec)

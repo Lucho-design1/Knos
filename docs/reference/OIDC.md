@@ -69,7 +69,7 @@ The interface crate, [`crates/knos-oidc-interface`](../../crates/knos-oidc-inter
 allocate, so it builds with solana-program, pinocchio or anchor of any version:
 
 ```toml
-knos-oidc-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.3.28" }
+knos-oidc-interface = { git = "https://github.com/drexthealpha/Knos", tag = "v0.4.0" }
 ```
 
 ```rust

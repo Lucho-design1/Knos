@@ -214,7 +214,7 @@ async function loadFund() {
     const open = commitments.filter((c) => c.status === "locked");
     $("fundList").innerHTML = open.map((c) => `<li class="card"><b>${esc((c.idea || "").slice(0, 80))}</b> · ${esc(c.units)} × ${esc(c.unit_price)} · <a href="${X(c.commitment, "address")}" target="_blank" rel="noopener">${short(c.commitment)}</a>
       <div class="row"><input class="fu" data-r="${esc(c.report)}" type="number" min="5" value="10" aria-label="${t("units")}" style="max-width:110px"><button class="fundBtn" data-r="${esc(c.report)}" type="button">${t("fund_btn")}</button></div>
-      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(c.factoring.status)} — ${esc(c.factoring.note)}</p>` : `<button class="fBtn quiet" data-c="${esc(c.commitment)}" type="button">${t("factoring_t")}</button>`}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
+      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(factorNote(c.factoring))}</p>` : `<button class="fBtn quiet" data-c="${esc(c.commitment)}" type="button">${t("factoring_t")}</button>`}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
     document.querySelectorAll(".fundBtn").forEach((b) => b.onclick = async () => {
       const card = b.closest("li"); card.querySelectorAll(".note").forEach((n) => n.remove());
       const put = (cls, html) => card.insertAdjacentHTML("beforeend", `<div class="note ${cls}" role="status">${html}</div>`);
@@ -232,6 +232,13 @@ async function loadFund() {
       if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
       await api("/api/factor", { commitment: b.dataset.c, discount_bps: 500 }); loadFund(); }));
   } catch (e) { err(e); }
+}
+// server notes the page knows are shown in the reader's language (the server's English stays in the API)
+function viaLabel(c) { return { preorder: t("via_preorder"), funder: t("via_funder"), blink: t("via_blink") }[c.via_kind] || c.via || ""; }
+function factorNote(f) {
+  if (String(f.status || "").startsWith("SIMULATED")) return t("factoring_sim");
+  if (f.status === "ready") return t("factoring_ready");
+  return `${f.status || ""}. ${f.note || ""}`;
 }
 function receiptInto(el, p) {
   el.insertAdjacentHTML("beforeend", `<p class="small">✓ ${esc(p.units)} → <a href="${X(p.commitment, "address")}" target="_blank" rel="noopener">${short(p.commitment)}</a>${(p.signatures || {}).lock ? ` · <a href="${X(p.signatures.lock)}" target="_blank" rel="noopener">${short(p.signatures.lock)}</a>` : ""}</p>`);
@@ -274,10 +281,10 @@ async function loadMaker() {
   try {
     const { commitments } = await api("/api/commitments");
     $("makeList").innerHTML = commitments.map((c) => `<li class="card"><b>${esc((c.idea || "").slice(0, 80))}</b> · ${esc(c.units)} × ${esc(c.unit_price)} · <b>${esc(c.status)}</b>
-      <p class="small"><a href="${X(c.commitment, "address")}" target="_blank" rel="noopener">${short(c.commitment)}</a> · <span class="mono">${esc(c.claim_id)}</span> · ${esc(c.via)}</p>
+      <p class="small"><a href="${X(c.commitment, "address")}" target="_blank" rel="noopener">${short(c.commitment)}</a> · <span class="mono">${esc(c.claim_id)}</span> · ${esc(viaLabel(c))}</p>
       ${Object.entries(c.signatures || {}).map(([k, s]) => `<span class="small">${esc(k.replace(/_/g, " "))}: <a href="${X(s)}" target="_blank" rel="noopener">${short(s)}</a></span>`).join(" · ")}
       ${c.status === "locked" ? `<label>${t("evidence_url")}</label><div class="row"><input class="ev" data-c="${esc(c.commitment)}" type="url" placeholder="https://…"><button class="msBtn" data-c="${esc(c.commitment)}" type="button">${t("milestone_prove")}</button></div>` : ""}
-      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(c.factoring.status)}. ${esc(c.factoring.note)}</p>` : ""}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
+      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(factorNote(c.factoring))}</p>` : ""}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
     document.querySelectorAll(".msBtn").forEach((b) => b.onclick = () => busy(b, t("loading"), async () => {
       if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
       const url = document.querySelector(`.ev[data-c="${b.dataset.c}"]`).value;

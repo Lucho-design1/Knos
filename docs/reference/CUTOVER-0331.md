@@ -51,10 +51,10 @@ branch of Knos holding the same commits, then new callers naming it.
 
    ```
    git fetch https://github.com/drexthealpha/knos-workflows.git main
-   git merge-base --is-ancestor 96b243f1b1dd5c975a0318dd9709a0da22b98dcd FETCH_HEAD
+   git merge-base --is-ancestor e25ca40dd8b56344b4ace320d2c66c3436a2f98d FETCH_HEAD
    git branch workflows FETCH_HEAD
-   git tag workflows-96b243f1b1dd 96b243f1b1dd5c975a0318dd9709a0da22b98dcd
-   git push origin workflows workflows-96b243f1b1dd
+   git tag workflows-e25ca40dd8b5 e25ca40dd8b56344b4ace320d2c66c3436a2f98d
+   git push origin workflows workflows-e25ca40dd8b5
    ```
 
 2. Protect the branch and its tags so no commit a caller names can become unreachable: a ruleset on
@@ -74,8 +74,8 @@ branch of Knos holding the same commits, then new callers naming it.
    JSON
    ```
 
-3. Check: `git ls-remote origin refs/heads/workflows refs/tags/workflows-96b243f1b1dd` names
-   96b243f1b1dd5c975a0318dd9709a0da22b98dcd. The same commit sha is the same tree, byte for byte.
+3. Check: `git ls-remote origin refs/heads/workflows refs/tags/workflows-e25ca40dd8b5` names
+   e25ca40dd8b56344b4ace320d2c66c3436a2f98d. The same commit sha is the same tree, byte for byte.
 4. The first live payment on the new home, in drexthealpha/knos-e2e only: on a test branch whose callers say
    `drexthealpha/Knos/.github/workflows/...@96b243f1...`, fund an issue by comment and pay its pull request the way
    the canary does; read the order's workflow hash. This is the step this build could run only in LiteSVM.

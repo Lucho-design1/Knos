@@ -405,7 +405,7 @@ def make_handler(state: State):
                 if rep is None or rep.get("kind") != check.KIND:
                     raise ValueError("unknown report: run the crossing first")
                 return preorder.lock(rep, body.get("units", 5), f"funder {user.get('kind')}: {user.get('label')}",
-                                     _text(body.get("maker_wallet"), 44))
+                                     _text(body.get("maker_wallet"), 44), funder=True)
             if path == "/api/anchor":
                 got = company.anchor()
                 if got.get("anchored"):

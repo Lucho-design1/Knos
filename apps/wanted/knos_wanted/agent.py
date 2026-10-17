@@ -27,6 +27,24 @@ _lock = threading.Lock()
 MAX_JOBS = 200
 
 
+
+def _knos_version() -> str:
+    """The knos package's version: from the checkout's pyproject.toml when knos is imported from a source tree (where
+    installed metadata may be another release's), else knos.version(), the same answer as `knos --version`."""
+    try:
+        import re
+        from pathlib import Path
+
+        import knos
+        root = Path(knos.__file__).resolve().parents[2]
+        if (root / "src" / "knos").is_dir() and (root / "pyproject.toml").is_file():
+            m = re.search(r'(?m)^version = "([^"]+)"', (root / "pyproject.toml").read_text(encoding="utf-8"))
+            if m:
+                return m.group(1)
+        return knos.version()
+    except Exception:  # noqa: BLE001 - the handshake still answers without knos
+        return "unknown"
+
 def _trim(text, n: int) -> str:
     """At most `n` characters, cut at a word boundary with an ellipsis (never mid-word)."""
     t = str(text or "")
@@ -354,7 +372,7 @@ def mcp(state, msg: dict) -> dict | None:
         return {"jsonrpc": "2.0", "id": mid, "result": result}
     if method == "initialize":
         return ok({"protocolVersion": PROTOCOL, "capabilities": {"tools": {"listChanged": False}},
-                   "serverInfo": {"name": "knos-demand-check", "version": "0.3.34"},
+                   "serverInfo": {"name": "knos-demand-check", "version": _knos_version()},
                    "instructions": "Call knos_cross with a paper id; every step names the Qloo call behind it."})
     if method == "ping":
         return ok({})

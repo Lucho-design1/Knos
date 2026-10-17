@@ -134,7 +134,12 @@ def of_report(report_hash: str) -> list[dict]:
     return out
 
 
-def fee_line(units: int | None = None) -> dict:
+PREORDER_VIA = "signed-in pre-order (demo buyer, test money)"
+FUNDER_VIA = ("funder money: a funder's escrow for this milestone (its own devnet order and claim id, beside the pre-orders; "
+              "paid to the maker on proof, refunded after the deadline)")
+
+
+def fee_line(units: int | None = None, unit_price: int | None = None) -> dict:
     """What Knos takes, from config/fees.yaml: the payout fee, held with the money and taken only at release."""
     try:
         from knos.money import fees_config
@@ -147,14 +152,17 @@ def fee_line(units: int | None = None) -> dict:
                "text": f"Knos takes {bps / 100:g}% (at least {f['payout'].get('floor_usd')} test units) only on money released on proof; "
                        "a refund costs the buyer nothing", "source": "config/fees.yaml (fees.payout, fees.funding)"}
         if units:
-            out["on_this_preorder"] = cfg.fee("payout", int(units) * escrow.UNIT * PRICE) / escrow.UNIT
+            amount = int(units) * int(unit_price or PRICE)                   # the order's amount: what the release settles
+            out["on_this_preorder"] = cfg.fee("payout", amount * escrow.UNIT) / escrow.UNIT
+            out["on_amount"] = amount
         return out
     except Exception as why:  # noqa: BLE001
         return {"text": "fees: knos is not installed on this server", "why": type(why).__name__}
 
 
 # ---- lock ------------------------------------------------------------------------------------------------------------
-def lock(report: dict, units: int, buyer_label: str, maker_wallet: str | None = None, days: int | None = None, led=None) -> dict:
+def lock(report: dict, units: int, buyer_label: str, maker_wallet: str | None = None, days: int | None = None, led=None,
+         funder: bool = False) -> dict:
     """Lock `units` test units for the maker of an OPEN report, judged by the 2-of-3 panel. Returns the commitment record.
     The unit price is the one Qloo's evidence set (report.decision.plan.unit_price: the price tier)."""
     d = report.get("decision") or {}
@@ -197,6 +205,7 @@ def lock(report: dict, units: int, buyer_label: str, maker_wallet: str | None = 
                        panel=(2, [str(r.pubkey()) for r in refs]), program=prog, demand_hash=report["hash"], unlisted_panel=True)
         st = doc["orders"]["stage1"]
         rec = {"order": st["order"], "report": report["hash"], "idea": report["idea"], "claim_id": claim["id"], "units": units, "unit_price": price,
+               "via": FUNDER_VIA if funder else PREORDER_VIA, "via_kind": "funder" if funder else "preorder",
                "buyer": f"demo buyer, test money (for {buyer_label[:80]})", "maker_wallet": maker, "status": "locked",
                "deadline_days": days, "doc": doc, "made": doc["made"],
                "signatures": {"mint_to_buyer": minted, "lock": st["signature"]}}
@@ -233,7 +242,7 @@ VERIFIER = ("verdicts checked on chain by knos_pay: an ed25519 pre-instruction c
 def public(rec: dict) -> dict:
     sigs = {k: v for k, v in rec.get("signatures", {}).items() if v}
     return {"commitment": rec["order"], "claim_id": rec["claim_id"], "report": rec["report"], "units": rec["units"],
-            "unit_price": rec.get("unit_price", PRICE), "via": rec.get("via", "signed-in pre-order (demo buyer)"), "factoring": rec.get("factoring"),
+            "unit_price": rec.get("unit_price", PRICE), "via": rec.get("via", PREORDER_VIA), "via_kind": rec.get("via_kind", "preorder"), "factoring": rec.get("factoring"),
             "idea": rec.get("idea"),
             "buyer": rec["buyer"], "maker_wallet": rec["maker_wallet"], "status": rec["status"], "milestone": "stage1 (referee_pass)",
             "panel": {"m": 2, "of": 3, "keys": rec["doc"]["panel"]["keys"], "label": rec["doc"]["panel"]["label"] or "UNLISTED PANEL",
@@ -242,7 +251,7 @@ def public(rec: dict) -> dict:
             "signatures": sigs, "explorer": {k: escrow.explorer(v) for k, v in sigs.items() if isinstance(v, str)},
             "order_explorer": escrow.explorer(rec["order"], "address"), "evidence": rec.get("evidence"),
             "how_to_prove": f"publish a public https page that contains {rec['claim_id']} and post its URL as the milestone evidence",
-            "money": "test units of this app's own devnet test mint: test money, 0 revenue", "fees": fee_line(rec["units"]),
+            "money": "test units of this app's own devnet test mint: test money, 0 revenue", "fees": fee_line(rec["units"], rec.get("unit_price", PRICE)),
             "record": rec.get("record"), "release_record": rec.get("release_record"),
             "finality": _finality(sigs), "verifier": VERIFIER}
 

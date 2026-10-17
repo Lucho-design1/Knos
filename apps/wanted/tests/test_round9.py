@@ -178,3 +178,26 @@ def test_persona_keeps_the_products_kind_and_shelves_the_noise():
     from knos_wanted import check
     rep = check.demand_check(IDEA, client=FakeQloo())
     assert all(p["on_kind"] for p in rep["persona"]) and len(rep["persona_all"]) >= len(rep["persona"])
+
+
+def test_release_findings_version_fee_funder_label_and_translations():
+    import knos
+    from knos_wanted import preorder
+    init = agent.mcp(None, {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
+    root = Path(knos.__file__).resolve().parents[2]
+    want = (re.search(r'(?m)^version = "([^"]+)"', (root / "pyproject.toml").read_text(encoding="utf-8")).group(1)
+            if (root / "src" / "knos").is_dir() and (root / "pyproject.toml").is_file() else knos.version())
+    assert init["result"]["serverInfo"]["version"] == want                    # the package's own version, never a hand-written number
+    assert init["result"]["serverInfo"]["version"] != "0.3.34"
+    # the fee on what the order holds: 48 units at 2 test units each settle 96
+    f48 = preorder.fee_line(48, 2)
+    assert f48["on_amount"] == 96 and f48["on_this_preorder"] == preorder.fee_line(96, 1)["on_this_preorder"]
+    # a funder's money is its own escrow, labelled as funder money; a pre-order stays a pre-order
+    assert "funder" in preorder.FUNDER_VIA and "escrow for this milestone" in preorder.FUNDER_VIA
+    js = (STATIC / "app.js").read_text(encoding="utf-8")
+    assert "viaLabel(c)" in js and "factorNote(" in js
+    i18n = (STATIC / "i18n.js").read_text(encoding="utf-8")
+    assert "same devnet escrow" not in i18n
+    for key in ("skip:", "factoring_sim:", "factoring_ready:", "via_preorder:", "via_funder:", "via_blink:"):
+        assert i18n.count(key) == 7, key                                      # every language
+    assert 'data-i18n="skip"' in (STATIC / "index.html").read_text(encoding="utf-8")

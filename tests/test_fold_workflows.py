@@ -8,6 +8,7 @@ LiteSVM test of knos_pay does. What it shows is the program's own rule on the tw
 from __future__ import annotations
 
 import importlib.util
+import re
 import shutil
 from pathlib import Path
 
@@ -15,7 +16,18 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 OLD, NEW = "drexthealpha/knos-workflows", "drexthealpha/Knos"
-PIN = "96b243f1b1dd5c975a0318dd9709a0da22b98dcd"      # the published commit the examples name (knos 0.3.28's workflows)
+def _published_pin() -> str:
+    """The published commit the examples name, read by pinned_workflows' own reader (a release moves it by design:
+    `release.py workflows`, then `pinned_workflows.py stamp`). Never the placeholder; always a full commit sha."""
+    spec = importlib.util.spec_from_file_location("pinned_workflows_pin", ROOT / "scripts" / "pinned_workflows.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    pin = mod.pin()
+    assert pin != mod.PLACEHOLDER and re.fullmatch(r"[0-9a-f]{40}", pin), pin
+    return pin
+
+
+PIN = _published_pin()
 
 
 def _script(name: str):

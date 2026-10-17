@@ -78,7 +78,7 @@ What was built and checked (0.3.31):
   another commit of Knos and for `someone/Knos`; an order pinned to knos-workflows keeps being paid by it and refuses
   the new home; a comment whose caller names the new home funds an order pinned to it.
 - On devnet (14 Oct 2026, internal dogfooding, test units of a mint of the agent's own): `knos fund-wallet
-  drexthealpha/knos-e2e#279 1 --checks none --days 1 --workflow drexthealpha/Knos@96b243f1b1dd5c975a0318dd9709a0da22b98dcd`
+  drexthealpha/knos-e2e#279 1 --checks none --days 1 --workflow drexthealpha/Knos@e25ca40dd8b56344b4ace320d2c66c3436a2f98d`
   funded job `7AsTBnqZLXQ1GaV9m1pF5QjWb1iWCoRqmsKdmm1GFZNr` on the public knos_pay, transaction
   [`2viGqe5R...`](https://explorer.solana.com/tx/2viGqe5RJxTiq9Q8A3JGZaJmvv24X7X1sUDEmTjtizZzKTTKWf5kYV1K2Me9Ydg7MgWVMGoM3mYsD6xtKUUEsvne?cluster=devnet).
   Read back: its workflow hash is sha256("drexthealpha/Knos") and its commit 96b243f1. It cannot be paid before the
@@ -137,7 +137,7 @@ Knos runs or imports it.
 
 ## What the 0.3.34 branch did, and what waits (15 Oct 2026)
 
-- knos-workflows: the local branch `workflows` (= 96b243f1b1dd5c975a0318dd9709a0da22b98dcd, the old repository's
+- knos-workflows: the local branch `workflows` (= e25ca40dd8b56344b4ace320d2c66c3436a2f98d, the old repository's
   `main`) and the tags `workflows-96b243f1b1dd`, `-def6ac689479`, `-b7196a2ad17c`, `-5b26b1cddeae`, `-43c8605d155e`,
   `-160edd4e19fc`, `-64b31fae2b00` (every commit an open escrow on devnet pins, read on 15 Oct). Every published file
   of every one of those commits is `on: workflow_call`; `attest.yml` (0.3.13 on) also has `workflow_dispatch`, a run

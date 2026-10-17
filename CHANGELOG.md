@@ -4,6 +4,77 @@ Prices and figures in older entries are superseded; the current price book is [d
 
 Each entry starts with what changed for you, in one or two plain lines ("In short"); the full notes follow.
 
+## 0.4.0 (October 2026)
+
+**In short:** Knos now has an app for research products: paste a landmark paper, see who would buy its product (Qloo,
+end to end), and back it with devnet test money that is paid to the maker only on proof. Six roles, one phone page,
+seven languages.
+
+Everything is on Solana devnet, which is test mode: every amount is test units of a test mint, and every money view
+says so. **No program changes in this release:** nothing under `programs-v2/knos_*`, `programs/`, `idl/` or
+`tests/fixtures/*.so` moved by a byte. The interface crates stay at 0.3.14. The app's escrow runs on the knos_pay
+0.3.34 devnet test program `FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4`, not on the public knos_pay program.
+
+### The six roles (apps/wanted, hosted at knos.onrender.com)
+
+- **Researcher (Research):** a DOI, PubMed, arXiv or OpenAlex id becomes a research card (citations, retraction
+  check), its product, and a decision (OPEN or REFUSE) from Knos's own rules over Qloo's evidence. Every step names
+  the Qloo call behind it, what it returned, and why it matters.
+- **Buyer (Back):** who (age, gender, segments), where (launch cities), the price tier, and the escrow target and
+  reserve, all set by Qloo's evidence. A pre-order locks test units in a PANEL order released by a 2-of-3 referee panel.
+- **Funder (Fund):** a funder's money goes into its own escrow for the milestone (its own order and claim id, beside
+  the pre-orders), paid to the maker on proof and refunded after the deadline.
+- **Contributor (Contribute):** a demo game round is always open. Submit the whole `train.py` of
+  `examples/autoresearch`; the sealed referee judges it at once; several attempts per round; a scored attempt can be
+  paid a demo prize in test units.
+- **Maker (Make):** post a public page that contains the claim id as evidence; two referee signatures release the
+  money; a second release is refused because the order is closed on chain.
+- **Agent (MCP over HTTP at /mcp):** the knos_* tools for every role, and the official qloo-harness MCP server's
+  tools as `qloo_*`. Tools that move test money say "CONFIRM FIRST".
+
+### Qloo end to end
+
+- Search, entities, tags, audiences, insights (demographics, heatmap, locations), trends and compare each set one
+  thing in the decision: relevance, the market leader, who, where, price tier, trend and the reserve.
+- The official qloo-harness MCP server runs live on the server; the decision comes from REST and is labelled so.
+- Explainability is shown wherever Qloo returns it; the taste persona keeps the product's kind and puts the rest
+  behind a "Show all Qloo matches" toggle.
+
+### Solana pieces
+
+- PANEL orders on knos_pay with an Ed25519 pre-instruction carrying the referees' signatures; the three referee
+  keys are held by this one server and labelled "UNLISTED PANEL".
+- A Solana Action (Blink) for a pre-order from any wallet; passkey wallets; x402 pays for a report per use.
+- Receipts show measured finality and the verifier; the record's root is anchored on devnet.
+- The 1,232-byte transaction limit is checked before sending.
+
+### Sibyl working memory
+
+- Sibyl is the agents' shared working memory: the plan, the reference shelf, a refusal on conflict, and full-text
+  search (`knos_memory_search`, `knos_memory_recall`).
+
+### Languages
+
+- English, French, Spanish, Portuguese, Arabic (right to left), Hindi and Chinese. Labels, skip link and the server's
+  known notes (factoring, how an escrow was funded) are shown in the reader's language.
+
+### What's simulated
+
+- **Factoring** (maker cash now) is a labelled simulation: knos_pay refuses the Assign because a payee named only by a
+  wallet has no Bind (E_PAYEE 88). No assignment exists on chain.
+- **The referee panel** is not independent: its three keys are held by the app's server.
+- **The money** is test units of the app's own devnet mint: 0 revenue.
+
+### CI
+
+- Python 3.10 runs the suite again (no 3.12-only f-strings; `tomli` stands in for `tomllib`); ruff and mypy are
+  clean; Windows reads every file as UTF-8; the site's app link is a page the site declares by name.
+
+### Fixes from the last outside check
+
+- The MCP handshake reports the installed knos version. The receipt's fee is computed on the order's amount
+  (units times the order's own unit price). The Arabic header no longer clips the sign-in label.
+
 ## 0.3.28 (October 2026)
 
 **In short:** the 8-day time lock is in force: every program change now waits 8 days in public.

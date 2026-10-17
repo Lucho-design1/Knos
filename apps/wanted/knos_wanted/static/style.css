@@ -106,3 +106,5 @@ code.url { background: var(--soft); padding: 3px 8px; border-radius: 6px; font-f
 #whoBtn { max-width: 9.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
 .bar { min-width: 0; } .bar > * { min-width: 0; } select.lang { max-width: 96px; }
 @media (max-width: 400px) { #whoBtn { max-width: 6.5rem; } .badge { display: none; } }
+.bar { flex-wrap: wrap; row-gap: 6px; } .brand { min-width: 0; }
+[dir="rtl"] #whoBtn { direction: rtl; }

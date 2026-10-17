@@ -11,4 +11,4 @@ provides_tools:
   - knos_bounty_claim
   - knos_outcome_check
 python_dependencies:
-  - knos==0.3.28
+  - knos==0.4.0
