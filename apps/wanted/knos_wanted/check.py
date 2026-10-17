@@ -321,8 +321,10 @@ def _buyer_group(run: _Run, idea: str, every: list[dict]) -> dict | None:
 def _recommend(run: _Run, kind: str, signal: dict, known: set) -> dict | None:
     """Qloo's recommendations for this taste (/v2/insights filter.type = the idea's kind): products next to the idea.
     Strong neighbours (affinity >= rules) that are not already matched are adjacent demand."""
-    body, src = run.get("/v2/insights", {"filter.type": kind, "take": 10, "feature.explainability": "true", **signal},
-                        "recommendations and brand ladder: what this audience also likes")
+    thin = {"backfill.cross_domain.take": "5"} if len(known) < 3 else {}    # thin matches: cross-domain backfill, not a refusal
+    body, src = run.get("/v2/insights", {"filter.type": kind, "take": 10, "feature.explainability": "true", "bias.trends": "high",
+                                         **thin, **signal}, "recommendations: what this audience also likes (bias.trends high"
+                                         + (", cross-domain backfill)" if thin else ")"))
     if src is None:
         return None
     rows = [{"name": e.get("name"), "id": e.get("entity_id"), "affinity": (e.get("query") or {}).get("affinity"), "popularity": e.get("popularity")}
@@ -343,8 +345,8 @@ def _informative(rows: list[dict]) -> list[dict]:
 
 
 def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: dt.date, exclude: set[str]) -> dict:
-    ev: dict = {"product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
-                "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None}
+    ev: dict = {"persona": [], "ladder": [], "tag_families": [], "product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
+                "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "ladder": [], "tag_families": []}
     words = content_words(idea, place)
     ev["words"], ev["named_audience"] = words, [{"word": w, "dimension": d, "key": k} for w, d, k in audience_named(idea)]
     if not words:
@@ -380,8 +382,11 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         lead = max(ev["matches"], key=lambda m: len(m["matched_words"]) + 2 * len(m["name_words"]) + (m.get("popularity") or 0))
     near = [m for m in ev["matches"] if lead is None or m["id"] != lead["id"]][:3]
     ev["leader"] = lead
-    body, s4 = run.get("/v2/tags", {"filter.query": " ".join(q_words[:6]), "feature.semantic_search": "true", "filter.parents.types": kind,
-                                    "take": 8}, "taste tags: semantic search of the product phrase")
+    fams, _sf = run.get("/v2/tags/types", {"filter.parents.types": kind, "take": 10}, f"tag families Qloo keeps for {kind.split(':')[-1]}s")
+    ev["tag_families"] = [t.get("type") for t in ((fams or {}).get("results") or {}).get("tag_types") or []][:8]
+    body, s4 = run.get("/v2/tags", {"filter.query": " ".join(q_words[:6]), "feature.semantic_search": "true",
+                                    "feature.typo_tolerance": "true", "filter.parents.types": kind,
+                                    "take": 8}, "taste tags: semantic search (typo-tolerant) of the product phrase")
     if body is not None:
         for t in ((body or {}).get("results") or {}).get("tags") or []:
             if t.get("id") and t["id"] not in {x["id"] for x in ev["tags"]} and {_norm(x) for x in tokens(t.get("name"))} & set(words):
@@ -405,7 +410,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         p = r.get("properties") or {}
         geo = p.get("geocode") or {}
         area = ", ".join(str(x) for x in (geo.get("name"), geo.get("admin2_region") or geo.get("admin1_region")) if x)
-        ev["places"].append({"name": r.get("name"), "area": area or str(p.get("address") or "")[:80],
+        ev["places"].append({"name": r.get("name"), "area": area or str(p.get("address") or "")[:80], "price_level": p.get("price_level"),
                              "affinity": (r.get("query") or {}).get("affinity"), "src": s6})
     body, s7 = run.get("/v2/insights", {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **ents_only},
                        f"where: map points in {loc}")
@@ -413,10 +418,23 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         lc, hq = h.get("location") or {}, h.get("query") or {}
         ev["where"].append({"lat": lc.get("latitude"), "lon": lc.get("longitude"), "affinity": hq.get("affinity"), "src": s7})
     ev["place"] = loc
+    body, s11 = run.get("/v2/insights", {"filter.type": "urn:tag", "diversify.by": "subtype", "diversify.take": "2", "take": 8, **signal},
+                        "taste persona: this taste's tags, one or two per family (diversify.by=subtype)")
+    ev["persona"] = [{"name": t.get("name"), "family": t.get("subtype"), "src": s11}
+                     for t in (((body or {}).get("results") or {}).get("tags") or [])[:8]]
+    if len(ev["matches"]) >= 2:
+        ladder_ids = ",".join(m["id"] for m in ev["matches"][:6])
+        body, s12 = run.get("/v2/insights", {"filter.type": kind, "filter.results.entities": ladder_ids, "take": 6, **signal},
+                            "brand ladder: the matched products ranked against this taste (filter.results.entities)")
+        ev["ladder"] = sorted([{"name": e.get("name"), "affinity": (e.get("query") or {}).get("affinity"), "popularity": e.get("popularity"),
+                                "src": s12} for e in (((body or {}).get("results") or {}).get("entities") or [])],
+                              key=lambda r: -(r["affinity"] or 0))
     every, _ = _audience(run, signal, "audience segments ranked by affinity", take=20)
     ev["audiences"] = every[:6]
     ev["buyer_group"] = _buyer_group(run, idea, every)
-    ev["price"] = price_tier(every)
+    if ev["buyer_group"] and ev["buyer_group"].get("id"):
+        signal = {**signal, "signal.demographics.audiences": ev["buyer_group"]["id"]}       # the named group steers the later calls
+    ev["price"] = price_tier(every, [p_.get("price_level") for p_ in ev["places"]])
     cc = market_country(loc)
     scope = {"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}
     body, s10 = run.get("/v2/insights", {"filter.type": "urn:entity:destination", "take": 8, "feature.explainability": "true",
@@ -568,7 +586,7 @@ BUDGET = ("Discount Shoppers",)
 TIERS = {"budget": 1, "mid": 2, "premium": 4}       # test units per pre-ordered unit (devnet test money; a scale, not a price)
 
 
-def price_tier(every: list[dict]) -> dict | None:
+def price_tier(every: list[dict], venue_levels: list | None = None) -> dict | None:
     """The price tier from Qloo's spending-habit segments in this taste's top 20 (/v2/insights urn:audience): the best
     premium segment vs Discount Shoppers, each absent one at Qloo's neutral 0.5. Difference > +0.05 -> premium,
     < -0.05 -> budget, else mid. The tier sets the pre-order's unit price in test units (TIERS)."""
@@ -578,7 +596,11 @@ def price_tier(every: list[dict]) -> dict | None:
     score = round(max(aff.get(n, NEUTRAL) for n in PREMIUM) - max(aff.get(n, NEUTRAL) for n in BUDGET), 3)
     tier = "premium" if score > 0.05 else "budget" if score < -0.05 else "mid"
     seen = [n for n in (*PREMIUM, *BUDGET) if n in aff]
-    return {"tier": tier, "unit_price": TIERS[tier], "score": score, "segments_seen": seen, "src": every[0].get("src")}
+    lv = sorted(v for v in (venue_levels or []) if isinstance(v, (int, float)))
+    venue = lv[len(lv) // 2] if lv else None            # the venues' median price_level (1-4), the price cross-check
+    return {"tier": tier, "unit_price": TIERS[tier], "score": score, "segments_seen": seen,
+            "venue_price_level": venue, "venue_check": (None if venue is None else
+            "agrees" if (venue >= 3) == (tier == "premium") or venue == 2 else "differs"), "src": every[0].get("src")}
 
 
 EFFECTS = (("closest existing products", "relevance gate and the market leader"), ("the named market leader", "the leader to compare against"),
@@ -611,7 +633,7 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
     run = _Run(client, on_call)
     ok, why = client.ready()
     empty = {"product_type": None, "words": content_words(idea, place), "matches": [], "unrelated": [], "excluded": [], "leader": None,
-             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None}
+             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "ladder": [], "tag_families": []}
     ev = gather(run, idea, place, leader, today, set(exclude or [])) if ok else empty
     failed = [c for c in run.calls if c.get("error") and c["what"].startswith(ESSENTIAL)]
     missing = [c for c in run.calls if c.get("error") and c not in failed]
@@ -627,7 +649,9 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
         decision["reasons"].append(f"missing evidence (not counted): {c['what']}: {c['error']}")
     good = [c for c in run.calls if not c.get("error")]
     label = (LIVE_LABEL + ("; partial: some calls failed" if failed or missing else "")) if good else "NO QLOO EVIDENCE"
-    rep = {"v": V, "kind": KIND, "idea": idea, "place": place, "leader_named": leader, "label": label,
+    limits = ("Qloo states no prices, no market sizes, no B2B and no medical demand; the only price signals are venue "
+              "price levels (1-4) and spending-habit segments. Pre-orders and per-use payments are how willingness to pay is proven here.")
+    rep = {"v": V, "kind": KIND, "limits": limits, "idea": idea, "place": place, "leader_named": leader, "label": label,
            "framing": FRAMING, "aggregate": AGGREGATE, **ev, "decision": decision, "rules": RULES, "calls": run.calls,
            "made": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "day": today.isoformat()}
     d = rep["decision"]
@@ -639,7 +663,10 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
                      "where": [c["name"] + (f" ({c['country']})" if c.get("country") else "") for c in ev.get("cities") or []][:4],
                      "tier": pr["tier"], "unit_price": pr["unit_price"], "target_units": d["target_units"], "reserve_units": d["reserve_units"],
                      "escrow_target": d["target_units"] * pr["unit_price"], "escrow_reserve": d["reserve_units"] * pr["unit_price"],
-                     "unserved_audience": vs.get("whitespace", [])[:5]}
+                     "unserved_audience": vs.get("whitespace", [])[:5],
+                     "persona": [x["name"] for x in ev.get("persona") or []][:6],
+                     "ladder": [{k: r[k] for k in ("name", "affinity", "popularity")} for r in ev.get("ladder") or []][:6],
+                     "venue_price_level": pr.get("venue_price_level"), "venue_check": pr.get("venue_check")}
     annotate(rep)
     rep["hash"] = report_hash(rep)
     return rep

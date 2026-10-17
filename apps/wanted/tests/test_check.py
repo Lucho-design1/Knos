@@ -30,6 +30,9 @@ class FakeQloo:
     def ready(self):
         return True, "ok"
 
+    def status(self):
+        return {"rest": True, "reason": "SYNTHETIC fixture client", "calls_this_month": 0, "budget": 0, "rate_per_s": 4.0, "cache_ttl_days": 7}
+
     def get(self, path, params):
         self.seen.append((path, dict(params)))
         if self.refuse and self.refuse in params:
@@ -42,6 +45,11 @@ class FakeQloo:
         t = p.get("filter.type")
         if path == "/search":
             return {"results": self.results}
+        if path == "/v2/tags/types":
+            return {"results": {"tag_types": [{"type": "urn:tag:genre:brand"}, {"type": "urn:tag:keyword:brand"}]}}
+        if path == "/v2/insights" and t == "urn:tag":
+            return {"results": {"tags": [{"name": "Wellness (synthetic)", "subtype": "urn:tag:genre:brand"},
+                                         {"name": "Outdoors (synthetic)", "subtype": "urn:tag:keyword:brand"}]}}
         if path == "/v2/tags":
             return {"results": {"tags": [{"id": "urn:tag:water", "name": "Water (synthetic tag)", "popularity": 0.9}]}}
         if t == "urn:demographics":
@@ -49,7 +57,7 @@ class FakeQloo:
         if t == "urn:heatmap":
             return {"results": {"heatmap": [{"location": {"latitude": 6.5, "longitude": 3.4}, "query": {"affinity": 1}}]}}
         if t == "urn:entity:place":
-            return {"results": {"entities": [{"name": "Synthetic Gym", "properties": {"geocode": {"name": "Lekki"}}, "query": {"affinity": 0.9}}]}}
+            return {"results": {"entities": [{"name": "Synthetic Gym", "properties": {"geocode": {"name": "Lekki"}, "price_level": 3}, "query": {"affinity": 0.9}}]}}
         if t == "urn:audience":
             v = 0.5 if self.flat else self.affinity
             rows = [{"name": f"Segment {i} (synthetic)", "types": "urn:audience", "query": {"affinity": v}} for i in range(p.get("take", 6))]

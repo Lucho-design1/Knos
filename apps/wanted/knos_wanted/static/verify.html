@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Knos verifies</title>
+<meta name="description" content="What checks every number, every decision and every payment on Knos, and where to see it yourself.">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top"><div class="wrap"><div class="bar">
+  <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>Knos</a>
+  <a href="/" class="small">← app</a>
+</div></div></header>
+<main class="wrap">
+  <h1>How we verify</h1>
+  <p>Everything on the app is checkable without trusting this server. This page says what checks each claim, and where.</p>
+
+  <div class="card"><h2>The demand decision</h2>
+    <p>Qloo's taste API is the only demand oracle. Every number in a report names the call that produced it (endpoint,
+    input, output summary) and each step says how it changed the decision. The verdict and the campaign (who, where,
+    price tier, target, reserve) are computed by published rules — <span class="mono">check.RULES</span>, documented in
+    <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/DEMAND_CHECK.md" rel="noopener">DEMAND_CHECK.md</a> —
+    never by a language model. Without a Qloo key the server answers "cannot decide: no Qloo evidence" and nothing opens.
+    A report is directional demand evidence, not a sales forecast; every Qloo figure is aggregate taste, not a prediction
+    about one person.</p></div>
+
+  <div class="card"><h2>The money</h2>
+    <p>Pre-orders are knos_pay escrow orders on Solana devnet (test units of this app's own test mint; no real money).
+    A stage is released only by 2-of-3 referee signatures that the program checks on chain; the referee keys are held by
+    this one server and every commitment says so (<span class="mono">UNLISTED PANEL</span>). A released or refunded
+    order's account is closed, so a second release is refused by the chain itself. Deadlines refund to the buyer;
+    anyone may send the refund. Fees come from
+    <a href="https://github.com/drexthealpha/Knos/blob/main/config/fees.yaml" rel="noopener">config/fees.yaml</a>:
+    Knos takes the payout fee only on money released on proof.</p>
+    <p class="small muted">Programs: knos_pay test build <span class="mono">FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4</span> (devnet).
+    Every receipt links its transactions on explorer.solana.com.</p></div>
+
+  <div class="card"><h2>The evidence</h2>
+    <p>A milestone's evidence is a public https page that must contain the commitment's claim id. The server fetches it
+    (public addresses only, no redirects, size and time limits) and the referees sign over one canonical pin:
+    <span class="mono">knos.ideas.commit.review_evidence</span>, the sha256 of the signed evidence structure, which
+    includes the page's own sha256. The receipt shows both values, and the pin is what the release transaction carries.</p></div>
+
+  <div class="card"><h2>The record</h2>
+    <p>Every decision, lock and release is appended to the Knos Record (a hash-chained journal with Sibyl as the agents'
+    working memory beside it), and the record's Merkle root can be anchored on devnet in a Memo transaction signed by the
+    app's test wallet. <span id="anchor" class="small muted"></span></p></div>
+
+  <div class="card"><h2>The identity</h2>
+    <p>Passkeys: the server keeps only the passkey's public key; your identity is derived from it, and sign-in is an
+    ES256 signature over a fresh challenge checked server-side. There is no seed phrase to lose. Devnet pre-orders made
+    with a passkey are executed by the app's demo buyer wallet, held by the server and labelled on every receipt — the
+    on-chain secp256r1 passkey path is not wired into this app yet, and we say so rather than imply it. Wallet
+    pre-orders (Blinks) are signed by your own wallet; the server never sees the key.</p></div>
+
+  <div class="card"><h2>The code</h2>
+    <p>MIT licensed, one repository, tests in the tree: <a href="https://github.com/drexthealpha/Knos" rel="noopener">github.com/drexthealpha/Knos</a>.
+    The app is <span class="mono">apps/wanted/</span>; the suite runs against the Knos of the same commit.</p></div>
+</main>
+<footer class="wrap muted small"><p>Devnet test money everywhere on this site — no real funds.</p></footer>
+<script>
+fetch("/api/status").then((r) => r.json()).then((s) => {
+  const a = (s.record_anchor || {});
+  if (a.tx) document.getElementById("anchor").innerHTML = 'Latest anchor: <a href="' + a.explorer + '" rel="noopener">' + a.tx.slice(0, 12) + '…</a>';
+}).catch(() => {});
+</script>
+</body>
+</html>

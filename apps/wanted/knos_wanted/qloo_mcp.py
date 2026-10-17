@@ -90,6 +90,10 @@ class Bridge:
             env["QLOO_MCP_ARGS_JSON"] = json.dumps(["-m", "knos_wanted.mock_mcp"])
             env["PYTHONPATH"] = os.pathsep.join([str(APP)] + [p for p in env.get("PYTHONPATH", "").split(os.pathsep) if p])
             env.pop("QLOO_API_KEY", None)          # the MOCK server never needs it
+        elif env.get("QLOO_BASE_URL") and not env.get("QLOO_TRUSTED_BASE_URL"):
+            # qloo-harness 0.1.26 exits at startup when QLOO_BASE_URL is set without QLOO_TRUSTED_BASE_URL matching it
+            # (measured 17 Oct 2026): the harness trusts only endpoints it is told to trust, so tell it.
+            env["QLOO_TRUSTED_BASE_URL"] = env["QLOO_BASE_URL"]
         env.update(extra_env or {})
         self._env = env
         self._p: subprocess.Popen | None = None

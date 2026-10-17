@@ -215,6 +215,21 @@ def all_public(n: int = 50) -> list[dict]:
     return out
 
 
+def _finality(sigs: dict) -> dict:
+    """Measured time to finality per signature this process sent (knos.platform.finality: Alpenglow-aware)."""
+    try:
+        from knos.platform import finality
+        rows = {k: finality.timing_of(v) for k, v in sigs.items()}
+        return {k: v for k, v in rows.items() if v}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+VERIFIER = ("verdicts checked on chain by knos_pay: an ed25519 pre-instruction carries the 2-of-3 referee signatures "
+            "over the evidence pin, and the program pays only when they verify; knos_oidc verifies GitHub-OIDC-judged "
+            "stages (not used for this panel stage). Test units stand in for USDC on devnet (6 decimals).")
+
+
 def public(rec: dict) -> dict:
     sigs = {k: v for k, v in rec.get("signatures", {}).items() if v}
     return {"commitment": rec["order"], "claim_id": rec["claim_id"], "report": rec["report"], "units": rec["units"],
@@ -228,7 +243,8 @@ def public(rec: dict) -> dict:
             "order_explorer": escrow.explorer(rec["order"], "address"), "evidence": rec.get("evidence"),
             "how_to_prove": f"publish a public https page that contains {rec['claim_id']} and post its URL as the milestone evidence",
             "money": "test units of this app's own devnet test mint: test money, 0 revenue", "fees": fee_line(rec["units"]),
-            "record": rec.get("record"), "release_record": rec.get("release_record")}
+            "record": rec.get("record"), "release_record": rec.get("release_record"),
+            "finality": _finality(sigs), "verifier": VERIFIER}
 
 
 # ---- milestone evidence ----------------------------------------------------------------------------------------------

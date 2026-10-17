@@ -1,4 +1,4 @@
-// Knos: researcher, buyer and maker views. No framework, no key: every Qloo call happens on the server.
+// Knos: six roles on one phone page. No framework; every taste call happens on the server.
 "use strict";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -7,6 +7,25 @@ const short = (s) => String(s || "").slice(0, 8) + "…";
 let session = null, report = null, status = {};
 try { session = JSON.parse(localStorage.getItem("knos.session") || "null"); } catch (e) { session = null; }
 
+// ---- i18n ----------------------------------------------------------------------------------------------------------
+const I = window.KNOS_I18N || { langs: { en: "English" }, rtl: [], en: {} };
+let LANG = "en";
+try { LANG = localStorage.getItem("knos.lang") || (navigator.language || "en").slice(0, 2); } catch (e) { /* private */ }
+if (!I.langs[LANG]) LANG = "en";
+const t = (k) => (I[LANG] && I[LANG][k]) || I.en[k] || k;
+function applyLang() {
+  document.documentElement.lang = LANG;
+  document.documentElement.dir = I.rtl.includes(LANG) ? "rtl" : "ltr";
+  document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
+  if (session) $("whoBtn").textContent = session.label;
+}
+function langMenu() {
+  $("lang").innerHTML = Object.entries(I.langs).map(([k, v]) => `<option value="${k}" ${k === LANG ? "selected" : ""}>${esc(v)}</option>`).join("");
+  $("lang").onchange = () => { LANG = $("lang").value; try { localStorage.setItem("knos.lang", LANG); } catch (e) { } applyLang(); show(); };
+}
+
+// ---- plumbing ------------------------------------------------------------------------------------------------------
 async function api(path, body) {
   const headers = { "Content-Type": "application/json" };
   if (session && session.token) headers.Authorization = "Bearer " + session.token;
@@ -19,25 +38,34 @@ let slowTimer = null;
 function slow(on, what) {
   clearTimeout(slowTimer); const el = $("slow");
   if (!on) { el.hidden = true; return; }
-  el.hidden = false; el.textContent = what + "…";
-  slowTimer = setTimeout(() => { el.textContent = what + "… still working: a free server can take up to a minute to wake."; }, 6000);
+  el.hidden = false; $("slowText").textContent = what + "…";
+  slowTimer = setTimeout(() => { $("slowText").textContent = what + "… (" + t("loading") + ")"; }, 6000);
 }
 function err(e) { const b = $("err"); b.hidden = !e; b.textContent = e ? String(e.message || e) : ""; if (e) b.scrollIntoView({ block: "nearest" }); }
 async function busy(btn, text, fn) {
-  const t = btn.textContent; btn.disabled = true; btn.textContent = text; slow(true, text); err(null);
-  try { return await fn(); } catch (e) { err(e); } finally { btn.disabled = false; btn.textContent = t; slow(false); }
+  const was = btn.textContent; btn.disabled = true; btn.textContent = text; slow(true, text); err(null);
+  try { return await fn(); } catch (e) { err(e); } finally { btn.disabled = false; btn.textContent = was; slow(false); }
 }
 
 // ---- views ---------------------------------------------------------------------------------------------------------
+const VIEWS = ["research", "buy", "fund", "contribute", "make", "agents"];
 function show() {
-  err(null); slow(false, "");                      // an alert never follows to another view
+  err(null); slow(false, "");
   const h = location.hash;
   const m = h.match(/^#buy=([0-9a-f]{64})/);
-  const view = m ? "buy" : h.startsWith("#make") ? "make" : h.startsWith("#buy") ? "buy" : "research";
-  for (const v of ["research", "buy", "make"]) $("v-" + v).hidden = v !== view;
-  document.querySelectorAll(".views a").forEach((a) => a.classList.toggle("on", a.dataset.view === view));
-  if (m) loadProduct(m[1]); else if (view === "buy") loadCrossings();
+  let view = m ? "buy" : (h.slice(1).split("=")[0] || "research");
+  if (!VIEWS.includes(view)) view = "research";
+  for (const v of VIEWS) $("v-" + v).hidden = v !== view;
+  document.querySelectorAll("nav.roles a").forEach((a) => {
+    a.classList.toggle("on", a.dataset.view === view);
+    a.setAttribute("aria-current", a.dataset.view === view ? "page" : "false");
+  });
+  if (m) loadProduct(m[1]); else if (view === "buy") loadCrossings($("productCard"), true);
+  if (view === "research") loadOpen();
   if (view === "make") loadMaker();
+  if (view === "fund") loadFund();
+  if (view === "contribute") loadTasks();
+  if (view === "agents") loadAgents();
 }
 window.addEventListener("hashchange", show);
 
@@ -46,7 +74,7 @@ function b64u(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))).re
 function unb64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); const b = atob(s + "===".slice((s.length + 3) % 4)); return Uint8Array.from(b, (c) => c.charCodeAt(0)); }
 function setSession(s) {
   session = s; try { s ? localStorage.setItem("knos.session", JSON.stringify(s)) : localStorage.removeItem("knos.session"); } catch (e) { /* private */ }
-  $("whoBtn").textContent = s ? s.label : "Sign in"; $("outBtn").hidden = !s; if (s) $("signin").hidden = true;
+  $("whoBtn").textContent = s ? s.label : t("sign_in"); $("outBtn").hidden = !s; if (s) $("signin").hidden = true;
 }
 async function passkeyNew() {
   const ch = await api("/api/auth/challenge", {}); const label = $("email").value.trim() || "Knos user";
@@ -70,17 +98,25 @@ function google(clientId) {
   document.head.appendChild(s);
 }
 async function emailGo() {
-  if (status.auth && status.auth.email_provider) { const r = await api("/api/auth/email", { email: $("email").value }); $("emailNote").textContent = "A sign-in link was sent to " + r.to + "."; }
+  if (status.auth && status.auth.email_provider) { const r = await api("/api/auth/email", { email: $("email").value }); $("emailNote").textContent = "→ " + r.to; }
   else setSession(await api("/api/auth/guest", { label: $("email").value }));
 }
 
-// ---- researcher: the live crossing ---------------------------------------------------------------------------------
+// ---- researcher ----------------------------------------------------------------------------------------------------
 const KIND = { memory: "Memory", paper: "Paper", qloo: "Qloo", decision: "Decision" };
 function stepHtml(s) {
   return `<li class="step ${esc(s.kind)}"><div class="row"><span class="tag">${KIND[s.kind] || s.kind}</span><b>${esc(s.title)}</b><span class="muted small">${esc(s.at)}</span></div>` +
-    (s.tool ? `<p class="small mono">${esc(s.tool)}</p>` : "") + (s.output ? `<p>${esc(s.output)}</p>` : "") +
-    (s.effect ? `<p class="small effect">→ ${esc(s.effect)}</p>` : "") +
+    (s.tool ? `<p class="small mono muted">${esc(s.tool)}</p>` : "") + (s.output ? `<p>${esc(s.output)}</p>` : "") +
+    (s.effect ? `<p class="effect">→ ${esc(s.effect)}</p>` : "") +
     (s.input && typeof s.input === "object" ? `<details class="small"><summary>input</summary><pre>${esc(JSON.stringify(s.input, null, 1))}</pre></details>` : "") + "</li>";
+}
+async function loadOpen() {
+  try {
+    const { crossings } = await api("/api/crossings");
+    const open = crossings.filter((c) => c.verdict === "OPEN").slice(0, 6);
+    $("openNow").hidden = !open.length;
+    $("openList").innerHTML = open.map((c) => `<li><a class="p" href="#buy=${esc(c.report)}"><span class="v">${esc(t("open_v"))}</span><br><b>${esc((c.idea || "").slice(0, 90))}</b><br><span class="small muted">${t("target")} ${c.target_units} · ${t("reserve")} ${c.reserve_units}</span></a></li>`).join("");
+  } catch (e) { $("openNow").hidden = true; }
 }
 async function cross() {
   const body = { ref: $("ref").value.trim() || undefined, idea: $("idea").value.trim() || undefined, product: $("product").value.trim() || undefined, place: $("place").value.trim() || undefined };
@@ -92,7 +128,7 @@ async function cross() {
     for (const s of p.steps) $("steps").insertAdjacentHTML("beforeend", stepHtml(s));
     since = p.total;
     if (p.status !== "running") {
-      if (p.status === "error") throw new Error(p.error || "the crossing stopped");
+      if (p.status === "error") throw new Error(p.error || "stopped");
       if (p.report) { const r = await api("/api/report?hash=" + p.report); report = r; outcome(r); }
       return;
     }
@@ -101,41 +137,53 @@ async function cross() {
 }
 function outcome(r) {
   const d = r.decision || {}, p = d.plan;
-  $("outcome").innerHTML = `<div class="decision ${esc((d.verdict || "").toLowerCase())}"><h3>${esc(d.verdict)}</h3>` +
-    (p ? `<p><b>Who:</b> ${esc((p.who.age || "").replace(/_/g, " "))}, ${esc(p.who.gender)}; ${esc((p.who.segments || []).join(", "))}</p>
-      <p><b>Where:</b> ${esc((p.where || []).join(", ") || "n/a")}</p><p><b>Price:</b> ${esc(p.tier)} tier, ${p.unit_price} test units per unit</p>
-      <p><b>Escrow:</b> target ${p.target_units} units (${p.escrow_target} test units), reserve ${p.reserve_units} (${p.escrow_reserve})</p>
-      <p><a class="button" href="#buy=${r.hash}">Open the product page</a></p>` : `<ul>${(d.reasons || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`) + "</div>";
+  const word = d.verdict === "OPEN" ? t("open_v") : d.verdict === "REFUSE" ? t("refuse") : t("cannot");
+  $("outcome").innerHTML = `<div class="decision ${esc((d.verdict || "").toLowerCase())}"><h3>${esc(word)}</h3>` +
+    (p ? `<p><b>${t("for_l")}:</b> ${esc((p.who.age || "").replace(/_/g, " "))}, ${esc(p.who.gender)} · ${esc((p.who.segments || []).slice(0, 3).join(", "))}</p>
+      <p><b>${t("where_l")}:</b> ${esc((p.where || []).join(", ") || "—")}</p><p><b>${t("price_l")}:</b> ${p.unit_price} ${esc(status.money_word || "test units")} (${esc(p.tier)})</p>
+      <p><b>${t("goal_l")}:</b> ${p.target_units} · ${t("reserve")} ${p.reserve_units}</p>
+      <p><a class="button" href="#buy=${r.hash}">${t("open_product")}</a></p>` : `<ul>${(d.reasons || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`) + "</div>";
 }
 
 // ---- buyer ---------------------------------------------------------------------------------------------------------
+async function loadCrossings(el, withTitle) {
+  try {
+    const { crossings } = await api("/api/crossings");
+    el.innerHTML = (withTitle ? `<h2>${t("buy_t")}</h2><p class="muted">${t("buy_none")}</p>` : "") + (crossings.length ?
+      "<ul class='plist'>" + crossings.map((c) => `<li><a class="p" ${c.report ? `href="#buy=${esc(c.report)}"` : ""}>${c.verdict === "OPEN" ? `<span class="v">${t("open_v")}</span><br>` : ""}<b>${esc((c.idea || c.ref || "").slice(0, 90))}</b> <span class="small muted">· ${esc(c.verdict || c.status)}</span></a></li>`).join("") + "</ul>" :
+      `<p class="empty">${t("empty")}</p>`);
+    $("buyBox").hidden = true; $("tracker").hidden = true;
+  } catch (e) { err(e); }
+}
 async function loadProduct(h) {
   try {
     const r = await api("/api/report?hash=" + h); report = r;
     const d = r.decision || {}, p = d.plan || {}, rs = r.research;
-    $("productCard").innerHTML = `<p class="label">${esc(r.label)}</p><h1>${esc(r.idea)}</h1>` +
-      (rs ? `<p class="small">From the research: <a href="${esc(rs.proven_result.source || "#")}" target="_blank" rel="noopener">${esc(rs.title)}</a> (${esc(rs.year)}; cited ${esc(rs.cited_by_count)})</p>` : "") +
-      (p.who ? `<div class="grid"><div><h3>For</h3><p>${esc((p.who.age || "").replace(/_/g, " "))}, ${esc(p.who.gender)}</p><p class="small muted">${esc((p.who.segments || []).join(", "))}</p></div>
-        <div><h3>Launching in</h3><p>${esc((p.where || []).join(", "))}</p></div><div><h3>Price</h3><p>${p.unit_price} test units per unit (${esc(p.tier)})</p></div>
-        <div><h3>Funding goal</h3><p>${p.target_units} units; the maker is paid on proof once ${p.reserve_units} are pre-ordered</p></div></div>` +
-        (p.unserved_audience && p.unserved_audience.length ? `<p class="small">Who the leader does not serve: ${esc(p.unserved_audience.join(", "))}</p>` : "")
-        : `<p>${esc(d.verdict)}: ${esc((d.reasons || []).join("; "))}</p>`);
+    $("productCard").innerHTML = `<p class="small muted">${esc(r.label)}</p><h1>${esc(r.idea)}</h1>` +
+      (rs ? `<p class="small">${esc(rs.title)} (${esc(rs.year)}; cited ${esc(rs.cited_by_count)})${rs.regulator ? ` · <b>${esc(rs.regulator)}</b>` : ""} <a href="${esc(rs.proven_result.source || "#")}" target="_blank" rel="noopener">→</a></p>` : "") +
+      (p.who ? `<div class="grid"><div><h3>${t("for_l")}</h3><p>${esc((p.who.age || "").replace(/_/g, " "))}, ${esc(p.who.gender)}</p><p class="small muted">${esc((p.who.segments || []).join(", "))}</p></div>
+        <div><h3>${t("where_l")}</h3><p>${esc((p.where || []).join(", "))}</p></div><div><h3>${t("price_l")}</h3><p>${p.unit_price} / ${esc(p.tier)}</p></div>
+        <div><h3>${t("goal_l")}</h3><p>${t("target")} ${p.target_units} · ${t("reserve")} ${p.reserve_units}</p></div></div>` +
+        (p.unserved_audience && p.unserved_audience.length ? `<p class="small">${t("unserved_l")}: ${esc(p.unserved_audience.join(", "))}</p>` : "")
+        : `<div class="decision ${esc((d.verdict || "").toLowerCase())}">${esc((d.reasons || []).join("; "))}</div>`);
     $("buyBox").hidden = d.verdict !== "OPEN";
+    if (r.limits) $("productCard").insertAdjacentHTML("beforeend", `<p class="small muted">${esc(r.limits)}</p>`);
     if (r.fees && r.fees.text) $("feeLine").textContent = r.fees.text + ".";
     const action = `${location.origin}/api/actions/preorder?report=${r.hash}`;
     $("blinkLink").href = "https://dial.to/?action=" + encodeURIComponent("solana-action:" + action) + "&cluster=devnet";
     $("tracker").hidden = false;
-    $("trackList").innerHTML = (r.preorders || []).map((o) => `<li>${esc(o.units)} units, <b>${esc(o.status)}</b> · <a href="${X(o.order, "address")}" target="_blank" rel="noopener">escrow ${short(o.order)}</a></li>`).join("") || "<li class='muted'>No pre-orders yet.</li>";
     const res = r.reserve || {};
-    if (res.reserve_units) $("trackList").insertAdjacentHTML("afterbegin", `<li>Reserve: ${res.pre_ordered_units} of ${res.reserve_units} units <progress max="${res.reserve_units}" value="${Math.min(res.pre_ordered_units, res.reserve_units)}"></progress></li>`);
+    $("trackList").innerHTML = (res.reserve_units ? `<li>${t("reserve")}: ${res.pre_ordered_units} / ${res.reserve_units} <progress max="${res.reserve_units}" value="${Math.min(res.pre_ordered_units, res.reserve_units)}"></progress></li>` : "") +
+      ((r.preorders || []).map((o) => `<li>${esc(o.units)} · <b>${esc(o.status)}</b> · <a href="${X(o.order, "address")}" target="_blank" rel="noopener">${short(o.order)}</a></li>`).join("") || `<li class="muted">${t("empty")}</li>`);
   } catch (e) { err(e); }
 }
 function receipt(p) {
   const sigs = p.signatures || {};
-  $("receipt").innerHTML = `<div class="decision open"><h3>Locked in escrow</h3><p>${esc(p.units)} units · <a href="${X(p.commitment, "address")}" target="_blank" rel="noopener">escrow order ${short(p.commitment)}</a></p>` +
-    Object.entries(sigs).map(([k, s]) => `<p class="small">${esc(k.replace(/_/g, " "))}: <a href="${X(s)}" target="_blank" rel="noopener">${short(s)}</a></p>`).join("") +
-    (p.verified && p.verified.chain_pin ? `<p class="small">Evidence pin on chain: <span class="mono">${esc(p.verified.chain_pin.slice(0, 16))}…</span> <span class="muted">(${esc(p.verified.chain_pin_of || "")})</span><br>Evidence page sha256: <span class="mono">${esc((p.verified.sha256 || "").slice(0, 16))}…</span></p>` : "") +
-    `<p class="small muted">Claim id for the maker's proof: ${esc(p.claim_id)}</p></div>`;
+  $("receipt").innerHTML = `<div class="decision open"><h3>${t("receipt_t")}</h3><p class="testmoney">${t("test_money")}</p><p>${esc(p.units)} · <a href="${X(p.commitment, "address")}" target="_blank" rel="noopener">${short(p.commitment)}</a></p>` +
+    Object.entries(sigs).map(([k, s]) => `<p class="small">${esc(k.replace(/_/g, " "))}: <a href="${X(s)}" target="_blank" rel="noopener">${short(s)}</a>${p.finality && p.finality[k] ? ` <span class="muted">· final in ${p.finality[k].final_ms} ms (${esc(p.finality[k].commitment)})</span>` : ""}</p>`).join("") +
+    (p.verified && p.verified.chain_pin ? `<p class="small">${t("evidence_pin")}: <span class="mono">${esc(p.verified.chain_pin.slice(0, 16))}…</span><br>${t("page_sha")}: <span class="mono">${esc((p.verified.sha256 || "").slice(0, 16))}…</span></p>` : "") +
+    (p.verifier ? `<p class="small muted">${esc(p.verifier)}</p>` : "") +
+    `<p class="small muted">${t("claim_id")}: <span class="mono">${esc(p.claim_id)}</span></p></div>`;
 }
 async function loadWeb3() {
   if (window.solanaWeb3) return window.solanaWeb3;
@@ -144,77 +192,131 @@ async function loadWeb3() {
 }
 async function walletPreorder() {
   const w = window.phantom && window.phantom.solana || window.solflare || window.solana;
-  if (!w) { window.open($("blinkLink").href, "_blank"); throw new Error("No wallet in this browser: the Blink opened in a new tab."); }
+  if (!w) { window.open($("blinkLink").href, "_blank"); throw new Error("No wallet here: the Blink opened in a new tab."); }
   const web3 = await loadWeb3(); await w.connect(); const account = w.publicKey.toString();
   const r = await fetch(`/api/actions/preorder?report=${report.hash}&units=${parseInt($("units").value, 10)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ account }) });
-  const a = await r.json(); if (!r.ok) throw new Error(a.message || "the transaction could not be built");
+  const a = await r.json(); if (!r.ok) throw new Error(a.message || "failed");
   const tx = web3.Transaction.from(Uint8Array.from(atob(a.transaction), (c) => c.charCodeAt(0)));
   const signed = await w.signTransaction(tx);
   const sig = await new web3.Connection("https://api.devnet.solana.com", "confirmed").sendRawTransaction(signed.serialize());
-  receipt({ units: $("units").value, commitment: a.commitment, signatures: { lock: sig }, claim_id: "shown once the order is on chain" });
+  receipt({ units: $("units").value, commitment: a.commitment, signatures: { lock: sig }, claim_id: a.claim_id || "…" });
   setTimeout(() => loadProduct(report.hash), 8000);
 }
 
-async function loadCrossings() {
+// ---- funder --------------------------------------------------------------------------------------------------------
+async function loadFund() {
   try {
-    const { crossings } = await api("/api/crossings");
-    $("productCard").innerHTML = "<h2>Crossings on this server</h2>" + (crossings.length ?
-      "<ul class='list'>" + crossings.map((c) => `<li>${c.report ? `<a href="#buy=${esc(c.report)}">` : ""}${esc((c.idea || c.ref || "").slice(0, 90))}${c.report ? "</a>" : ""}
-        · <b>${esc(c.verdict || c.status)}</b>${c.target_units ? ` · target ${c.target_units}, reserve ${c.reserve_units}` : ""}</li>`).join("") + "</ul>" :
-      "<p class='muted'>No crossing yet: run one in the Researcher view.</p>");
-    $("buyBox").hidden = true; $("tracker").hidden = true;
+    const { commitments } = await api("/api/commitments");
+    const open = commitments.filter((c) => c.status === "locked");
+    $("fundList").innerHTML = open.map((c) => `<li class="card"><b>${esc((c.idea || "").slice(0, 80))}</b> · ${esc(c.units)} × ${esc(c.unit_price)} · <a href="${X(c.commitment, "address")}" target="_blank" rel="noopener">${short(c.commitment)}</a>
+      <div class="row"><input class="fu" data-r="${esc(c.report)}" type="number" min="5" value="10" aria-label="${t("units")}" style="max-width:110px"><button class="fundBtn" data-r="${esc(c.report)}" type="button">${t("fund_btn")}</button></div>
+      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(c.factoring.status)} — ${esc(c.factoring.note)}</p>` : `<button class="fBtn quiet" data-c="${esc(c.commitment)}" type="button">${t("factoring_t")}</button>`}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
+    document.querySelectorAll(".fundBtn").forEach((b) => b.onclick = () => busy(b, t("loading"), async () => {
+      if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
+      const units = parseInt(document.querySelector(`.fu[data-r="${b.dataset.r}"]`).value, 10);
+      const got = await api("/api/fund", { report: b.dataset.r, units });
+      receiptInto(b.parentElement.parentElement, got); }));
+    document.querySelectorAll(".fBtn").forEach((b) => b.onclick = () => busy(b, t("loading"), async () => {
+      if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
+      await api("/api/factor", { commitment: b.dataset.c, discount_bps: 500 }); loadFund(); }));
+  } catch (e) { err(e); }
+}
+function receiptInto(el, p) {
+  el.insertAdjacentHTML("beforeend", `<p class="small">✓ ${esc(p.units)} → <a href="${X(p.commitment, "address")}" target="_blank" rel="noopener">${short(p.commitment)}</a>${(p.signatures || {}).lock ? ` · <a href="${X(p.signatures.lock)}" target="_blank" rel="noopener">${short(p.signatures.lock)}</a>` : ""}</p>`);
+}
+
+// ---- contributor ---------------------------------------------------------------------------------------------------
+async function loadTasks() {
+  try {
+    const got = await api("/api/tasks");
+    const box = $("taskBox");
+    box.innerHTML = (got.rounds && got.rounds.length ? got.rounds.map((r) => `<div class="card"><h3>${esc(r.title || r.id)}</h3><p class="small muted">${esc(r.label || "")}</p>
+      <p class="small">${esc(r.state || "")} · ${esc(String(r.players ?? ""))}</p>
+      <label>${t("claim_id")}</label><input class="tname" data-g="${esc(r.id)}" maxlength="40" placeholder="ada">
+      <label>Submission (python)</label><textarea class="tsub" data-g="${esc(r.id)}" rows="3" maxlength="4000"></textarea>
+      <button class="tBtn" data-g="${esc(r.id)}" type="button">${t("cross_go")}</button></div>`).join("") :
+      `<p class="note">${t("contribute_none")} ${esc(got.why || "")}</p>`) +
+      (got.milestones && got.milestones.length ? `<ul class="list">` + got.milestones.map((m) => `<li>${esc((m.idea || "").slice(0, 70))} · <span class="mono small">${esc(m.claim_id)}</span> · <a href="#make">${t("milestone_prove")}</a></li>`).join("") + "</ul>" : "");
+    document.querySelectorAll(".tBtn").forEach((b) => b.onclick = () => busy(b, t("loading"), async () => {
+      if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
+      const g = b.dataset.g;
+      const out = await api("/api/task/submit", { round: g, name: document.querySelector(`.tname[data-g="${g}"]`).value, code: document.querySelector(`.tsub[data-g="${g}"]`).value });
+      b.parentElement.insertAdjacentHTML("beforeend", `<p class="small">✓ ${esc(JSON.stringify(out.result || out).slice(0, 200))}</p>`); }));
   } catch (e) { err(e); }
 }
 
-// ---- maker / funder ------------------------------------------------------------------------------------------------
+// ---- maker ---------------------------------------------------------------------------------------------------------
 async function loadMaker() {
   try {
     const { commitments } = await api("/api/commitments");
-    $("makeList").innerHTML = commitments.map((c) => `<li class="card"><b>${esc((c.idea || "").slice(0, 80))}</b> · ${esc(c.units)} units × ${esc(c.unit_price)} · <b>${esc(c.status)}</b>
-      <p class="small"><a href="${X(c.commitment, "address")}" target="_blank" rel="noopener">escrow ${short(c.commitment)}</a> · claim id <span class="mono">${esc(c.claim_id)}</span> · ${esc(c.via)}</p>
+    $("makeList").innerHTML = commitments.map((c) => `<li class="card"><b>${esc((c.idea || "").slice(0, 80))}</b> · ${esc(c.units)} × ${esc(c.unit_price)} · <b>${esc(c.status)}</b>
+      <p class="small"><a href="${X(c.commitment, "address")}" target="_blank" rel="noopener">${short(c.commitment)}</a> · <span class="mono">${esc(c.claim_id)}</span> · ${esc(c.via)}</p>
       ${Object.entries(c.signatures || {}).map(([k, s]) => `<span class="small">${esc(k.replace(/_/g, " "))}: <a href="${X(s)}" target="_blank" rel="noopener">${short(s)}</a></span>`).join(" · ")}
-      ${c.status === "locked" ? `<div class="row gap"><input class="ev" data-c="${esc(c.commitment)}" type="url" placeholder="https://… evidence page"><button class="msBtn" data-c="${esc(c.commitment)}" type="button">Prove and release</button></div>
-        <button class="fBtn ghost" data-c="${esc(c.commitment)}" type="button">Get cash now (factoring)</button>` : ""}
-      ${c.factoring ? `<p class="small warn">Factoring: ${esc(c.factoring.status)}. ${esc(c.factoring.note)} Advance ${esc(c.factoring.advance)} on ${esc(c.factoring.face_value)} test units.</p>` : ""}</li>`).join("") || "<li class='muted'>No commitments yet.</li>";
-    document.querySelectorAll(".msBtn").forEach((b) => b.onclick = () => busy(b, "Verifying", async () => {
-      if (!session) { $("signin").hidden = false; throw new Error("Sign in first."); }
-      const url = document.querySelector(`.ev[data-c="${b.dataset.c}"]`).value; await api("/api/milestone", { commitment: b.dataset.c, evidence_url: url }); loadMaker(); }));
-    document.querySelectorAll(".fBtn").forEach((b) => b.onclick = () => busy(b, "Simulating the Assign on devnet", async () => {
-      if (!session) { $("signin").hidden = false; throw new Error("Sign in first."); }
-      await api("/api/factor", { commitment: b.dataset.c, discount_bps: 500 }); loadMaker(); }));
+      ${c.status === "locked" ? `<label>${t("evidence_url")}</label><div class="row"><input class="ev" data-c="${esc(c.commitment)}" type="url" placeholder="https://…"><button class="msBtn" data-c="${esc(c.commitment)}" type="button">${t("milestone_prove")}</button></div>` : ""}
+      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(c.factoring.status)}. ${esc(c.factoring.note)}</p>` : ""}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
+    document.querySelectorAll(".msBtn").forEach((b) => b.onclick = () => busy(b, t("loading"), async () => {
+      if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
+      const url = document.querySelector(`.ev[data-c="${b.dataset.c}"]`).value;
+      const got = await api("/api/milestone", { commitment: b.dataset.c, evidence_url: url });
+      receipt(got); loadMaker(); }));
   } catch (e) { err(e); }
 }
 
-// ---- wiring --------------------------------------------------------------------------------------------------------
+// ---- agents --------------------------------------------------------------------------------------------------------
+async function loadAgents() {
+  $("mcpUrl").textContent = location.origin + "/mcp";
+  const box = $("memBox");
+  if (box && !box.dataset.wired) {
+    box.dataset.wired = "1";
+    box.querySelector("input").placeholder = t("mem_search");
+    box.querySelector("form").onsubmit = async (ev) => {
+      ev.preventDefault(); const out = box.querySelector(".memOut");
+      out.innerHTML = `<span class="spin"></span>`;
+      try {
+        const g = await api("/api/memory/search?q=" + encodeURIComponent(box.querySelector("input").value));
+        out.innerHTML = `<p class="small muted">${esc(g.said || "")}</p>` +
+          (g.rows || []).map((r) => `<p class="small"><span class="tag">${esc(r.tier || "")}</span>${esc(r.name || r.key || r.doc_key || "")} <span class="muted">${esc((r.snippet || "").slice(0, 140))}</span></p>`).join("");
+      } catch (e) { out.innerHTML = `<p class="small muted">${esc(e.message)}</p>`; }
+    };
+  }
+  try {
+    const r = await fetch("/mcp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }) });
+    const j = await r.json();
+    $("mcpTools").innerHTML = ((j.result || {}).tools || []).map((x) => `<p><b class="mono">${esc(x.name)}</b><br><span class="small muted">${esc(x.description)}</span></p>`).join("");
+  } catch (e) { $("mcpTools").innerHTML = ""; }
+}
+
+// ---- boot ----------------------------------------------------------------------------------------------------------
 async function boot() {
+  langMenu(); applyLang();
   const h = location.hash;
   const m = h.match(/session=([^&]+)/);
-  if (m) { try { const tok = decodeURIComponent(m[1]); const body = JSON.parse(atob((tok.split(".")[0] + "===").slice(0, Math.ceil(tok.split(".")[0].length / 4) * 4).replace(/-/g, "+").replace(/_/g, "/"))); setSession({ token: tok, ...body }); } catch (e) { /* bad link */ } history.replaceState(null, "", "#research"); }
+  if (m) { try { const tok = decodeURIComponent(m[1]); const b = tok.split(".")[0]; const pad = b + "===".slice((b.length + 3) % 4); setSession({ token: tok, ...JSON.parse(atob(pad.replace(/-/g, "+").replace(/_/g, "/"))) }); } catch (e) { } history.replaceState(null, "", "#research"); }
   const mg = h.match(/magic=([^&]+)/);
   if (mg) { try { setSession(await api("/api/auth/email/verify", { token: decodeURIComponent(mg[1]) })); } catch (e) { err(e); } history.replaceState(null, "", "#research"); }
   setSession(session);
   try {
     status = await api("/api/status");
     const rest = status.qloo_rest || {};
-    $("modeBadge").textContent = rest.rest ? "Qloo: live" : "Qloo: off"; $("modeBadge").className = "badge " + (rest.rest ? "live" : "off");
+    $("modeBadge").textContent = rest.rest ? t("status_live") : t("status_off");
+    $("modeBadge").className = "badge " + (rest.rest ? "live" : "off");
     const a = status.auth || {};
     if (a.google_client_id) google(a.google_client_id);
     $("orcidBtn").hidden = !a.orcid;
-    if (!a.passkey || !window.PublicKeyCredential) { $("pkNew").disabled = $("pkUse").disabled = true; $("pkNote").textContent = "Passkeys are not available here."; }
-    $("emailNote").textContent = (a.email_note || "") + ".";
-    $("emailBtn").textContent = a.email_provider ? "Email me a sign-in link" : "Continue with this label";
+    if (!a.passkey || !window.PublicKeyCredential) { $("pkNew").disabled = $("pkUse").disabled = true; }
+    $("emailNote").textContent = a.email_note || "";
   } catch (e) { err(e); }
   show();
 }
 $("whoBtn").onclick = () => { $("signin").hidden = !$("signin").hidden; };
 $("outBtn").onclick = () => setSession(null);
-$("pkNew").onclick = () => busy($("pkNew"), "Creating your passkey", passkeyNew);
-$("pkUse").onclick = () => busy($("pkUse"), "Checking your passkey", passkeyUse);
-$("emailBtn").onclick = () => busy($("emailBtn"), "Signing in", emailGo);
+$("pkNew").onclick = () => busy($("pkNew"), t("loading"), passkeyNew);
+$("pkUse").onclick = () => busy($("pkUse"), t("loading"), passkeyUse);
+$("emailBtn").onclick = () => busy($("emailBtn"), t("loading"), emailGo);
 document.querySelectorAll(".chip").forEach((c) => c.onclick = () => { $("ref").value = c.dataset.ref; });
-$("crossForm").onsubmit = (ev) => { ev.preventDefault(); busy($("crossBtn"), "The agent is crossing", cross); };
-$("walletBtn").onclick = () => busy($("walletBtn"), "Waiting for your wallet", walletPreorder);
-$("preBtn").onclick = () => busy($("preBtn"), "Locking on devnet", async () => {
-  if (!session) { $("signin").hidden = false; throw new Error("Sign in first: passkey, email, Google or ORCID."); }
+$("crossForm").onsubmit = (ev) => { ev.preventDefault(); busy($("crossBtn"), t("cross_busy"), cross); };
+$("walletBtn").onclick = () => busy($("walletBtn"), t("loading"), walletPreorder);
+$("preBtn").onclick = () => busy($("preBtn"), t("loading"), async () => {
+  if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
   const p = await api("/api/preorder", { report: report.hash, units: parseInt($("units").value, 10) }); receipt(p); loadProduct(report.hash); });
 boot();

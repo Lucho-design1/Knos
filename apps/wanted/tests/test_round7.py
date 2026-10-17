@@ -40,14 +40,17 @@ def test_the_crossing_streams_steps_sets_the_plan_and_remembers(st):
     titles = [s["title"] for s in job["steps"]]
     assert "WHO: the target audience" in titles and "PRICE: the tier" in titles and "ESCROW: target and reserve" in titles
     again = agent.start(st, ref="10.0/x", place="Lagos", wait=True)                 # Sibyl: the agent's memory of this paper
-    assert again["steps"][0]["title"] == "the agent remembers this paper" and "decision OPEN" in again["steps"][0]["output"]
+    remembered = next(s for s in again["steps"] if s["title"] == "the agent remembers this paper")   # after the HOT plan step (round 9B)
+    assert "decision OPEN" in remembered["output"]
 
 
 def test_price_tier_from_spending_segments():
     seg = lambda n, a: {"name": n + " (Spending Habits)", "affinity": a, "src": 3}   # noqa: E731
     assert check.price_tier([seg("Gourmand Fine Dining", 0.8), seg("Discount Shoppers", 0.5)])["tier"] == "premium"
     assert check.price_tier([seg("Discount Shoppers", 0.8)])["tier"] == "budget"
-    assert check.price_tier([seg("Yoga", 0.9)]) == {"tier": "mid", "unit_price": 2, "score": 0.0, "segments_seen": [], "src": 3}
+    assert check.price_tier([seg("Yoga", 0.9)]) == {"tier": "mid", "unit_price": 2, "score": 0.0, "segments_seen": [],
+                                                    "venue_price_level": None, "venue_check": None, "src": 3}
+    assert check.price_tier([seg("Gourmand Fine Dining", 0.8)], [3, 4, 2])["venue_check"] == "agrees"
 
 
 @pytest.fixture
@@ -82,7 +85,8 @@ def test_mcp_over_http_lists_and_calls(http):
     assert c == 200 and init["result"]["protocolVersion"] and init["result"]["capabilities"]["tools"]
     assert post(base, "/mcp", {"jsonrpc": "2.0", "method": "notifications/initialized"})[0] == 202
     c, lst, _ = post(base, "/mcp", {"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
-    assert [t["name"] for t in lst["result"]["tools"]] == ["knos_cross", "knos_research_card", "knos_demand_check"]
+    names = [t["name"] for t in lst["result"]["tools"]]
+    assert names[:3] == ["knos_cross", "knos_research_card", "knos_demand_check"] and len(names) >= 10   # roles 1-5 covered (round 9)
     c, x, _ = post(base, "/mcp", {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "knos_cross", "arguments": {"ref": "10.0/x"}}})
     sc = x["result"]["structuredContent"]
     assert sc["status"] == "done" and sc["decision"]["verdict"] == "OPEN" and len(sc["steps"]) > 10

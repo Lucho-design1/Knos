@@ -100,6 +100,11 @@ Docker: `docker build -f apps/wanted/Dockerfile -t knos .` (python:3.12-slim). `
 - Factoring, shown as a labelled simulation because knos_pay's Assign needs a bound payee. The wake page. MCP over HTTP.
 - Fixes: the legacy `/api/preorder/{demo,faucet,tx,submit}` routes need a signed-in session; PyYAML is pinned in the
   image; Python 3.12; no raw errors are shown to users.
+- v0.4.0: six roles on one phone page in seven languages (ar is RTL); the official qloo-harness MCP server runs LIVE on
+  the server (its ten tools answer at /mcp as `qloo_*`; REST carries the decision, labelled); launch cities scoped to
+  the market; taste persona, brand ladder, venue price levels, audience signals, explainability shown at their steps;
+  x402 pays for a report per use on devnet; receipts show measured finality and the verifier; the record root anchors
+  on devnet; Sibyl is the agents shared working memory (plan, reference shelf, conflict refusal, FTS search).
 
 ## The older confirm-each-match flow (MCP sidecar, optional)
 

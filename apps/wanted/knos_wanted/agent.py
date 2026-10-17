@@ -55,6 +55,47 @@ def recall(key: str) -> dict:
         return {}
 
 
+def _store():
+    rec = company._record()
+    if rec is None:
+        return None
+    try:
+        from knos.record import journal
+        return journal.sibyl(company.root())
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def hot_get(key: str) -> dict:
+    st = _store()
+    try:
+        return (st.state(key) if st else None) or {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def hot_set(key: str, body: dict) -> bool:
+    st = _store()
+    try:
+        if st is None:
+            return False
+        st.set_state(key, body)
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def shelve_paper(card: dict) -> dict:
+    """The paper joins the agent's REFERENCE shelf (title, ids, counts: public literature facts, never idea text)."""
+    rec = company._record()
+    if rec is None:
+        return {"shelved": False, "why": "no record here"}
+    return company._safe(lambda: {"shelved": True, "seq": rec.paper("paper:" + (card["ids"].get("doi") or card["ref"]),
+                                  {"title": card["title"], "year": card.get("year"), "cited_by_count": card.get("cited_by_count"),
+                                   "doi": card["ids"].get("doi"), "card_hash": card["hash"], "product": card["product"]},
+                                  domain=company.DOMAIN, root=company.root())["seq"]})
+
+
 def remember(key: str, state: dict) -> dict:
     rec = company._record()
     if rec is None:
@@ -77,8 +118,36 @@ def _qloo_step(job: dict):
 
 
 def run(job: dict, state) -> None:
+    refused = False
+    key = memory_key(job.get("ref"), job.get("idea"))
     try:
-        key = memory_key(job.get("ref"), job.get("idea"))
+        held = hot_get("lock:" + key)
+        other = held.get("running")
+        if other and other != job["id"] and JOBS.get(other, {}).get("status") == "running":
+            refused = True
+            _step(job, "memory", "another agent holds this crossing", tool="Sibyl HOT state (the shared working plan)",
+                  inp="lock:" + key, out=f"crossing {other} is running the same paper now: this agent's conflicting "
+                  "writes are REFUSED; it reads along and writes nothing",
+                  effect="one plan per crossing; memory stays consistent")
+        else:
+            hot_set("lock:" + key, {"running": job["id"], "started": job["started"],
+                                    "plan": ["recall memory", "read the paper", "name the product", "ask Qloo (who, where, "
+                                             "price, trend, leader)", "decide by code", "remember the crossing"]})
+            _step(job, "memory", "the agent's plan, in shared memory", tool="Sibyl HOT state (crossing plan + cursor)",
+                  inp="lock:" + key, out="plan written: recall -> paper -> product -> Qloo evidence -> decision -> remember",
+                  effect="a second agent on the same paper is refused while this one runs")
+        try:
+            if getattr(state.q, "mode", "") == "live":
+                words = " ".join((job.get("product") or job.get("idea") or job.get("ref") or "").split()[:6]) or "research product"
+                cap = state.q.call("qloo_find_tags", {"query": words},
+                                   why="the official qloo-harness MCP server reads Qloo beside the REST steps", step="harness")
+                names = ", ".join(str(r.get("name")) for r in (cap.get("results") or [])[:4])
+                _step(job, "qloo", "the Qloo harness answers (live)", tool="qloo mcp (official @qloo/qloo-harness, via the Node bridge)",
+                      inp={"tool": "qloo_find_tags", "query": words}, out=f"status {cap.get('status')}: {names}"[:200],
+                      effect="the ten harness tools answer at /mcp as qloo_*; the decision reads below run on the REST API, labelled")
+        except Exception:  # noqa: BLE001 - a harness that is down never stops a crossing; REST carries it, labelled
+            _step(job, "qloo", "the Qloo harness is down: REST carries this crossing", tool="qloo mcp (not reachable)",
+                  out="falling back to the REST API, labelled on every step", effect="same evidence, same rules")
         mem = recall(key)
         product = job.get("product")
         if mem:
@@ -104,6 +173,14 @@ def run(job: dict, state) -> None:
                   effect=f"proven result: \"{_trim(card['proven_result']['quote'], 160)}\"")
             _step(job, "decision", "the product this result enables", tool="research.product_phrase", inp=card.get("topics"),
                   out=card["product"], effect=card["product_source"])
+            if not refused:
+                shelf = shelve_paper(card)
+                _step(job, "memory", "the paper on the reference shelf", tool="Sibyl REFERENCE tier (knos.record paper line)",
+                      inp=card["ids"].get("doi") or job.get("ref"),
+                      out=f"seq {shelf.get('seq')}" if shelf.get("shelved") else shelf.get("why", "not shelved"),
+                      effect="later crossings and searches find this paper without re-reading it")
+            if not refused:
+                hot_set("lock:" + key, {**hot_get("lock:" + key), "cursor": "qloo evidence"})
         idea = (product or (card or {}).get("product") or job.get("idea") or "").strip()
         rep = check.demand_check(idea, job.get("place"), job.get("leader"), client=state.rest, on_call=_qloo_step(job))
         rep["fees"] = preorder.fee_line()
@@ -135,10 +212,15 @@ def run(job: dict, state) -> None:
             for w in rep["research"]["why_never_crossed"]:
                 _step(job, "decision", f"why it never crossed: {w['wall']}", tool="research.why_never_crossed", out=w["evidence"],
                       effect="flagged" if w["flag"] else "not flagged")
-        r = remember(key, {"when": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M"), "product": idea, "verdict": d["verdict"],
-                           "report": rep["hash"], "target_units": d.get("target_units")})
-        _step(job, "memory", "the agent remembers this crossing", tool="Sibyl (agent memory)", inp=key,
-              out="remembered" if r.get("remembered") else r.get("why", "not remembered"), effect="the next crossing of this paper starts from here")
+        if refused:
+            _step(job, "memory", "nothing written: the other agent holds this crossing", tool="Sibyl (agent memory)", inp=key,
+                  out="conflicting write refused", effect="the running agent's record stays the one record")
+        else:
+            r = remember(key, {"when": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M"), "product": idea, "verdict": d["verdict"],
+                               "report": rep["hash"], "target_units": d.get("target_units")})
+            hot_set("lock:" + key, {"running": None, "last_report": rep["hash"]})
+            _step(job, "memory", "the agent remembers this crossing", tool="Sibyl (agent memory: WARM state + COLD journal)", inp=key,
+                  out="remembered" if r.get("remembered") else r.get("why", "not remembered"), effect="the next crossing of this paper starts from here")
         job["status"] = "done"
     except Exception as e:  # noqa: BLE001 - the page shows one plain line; the log has the rest
         job["status"] = "error"
@@ -189,6 +271,18 @@ def poll(job_id: str, since: int = 0) -> dict | None:
 
 # ---- MCP over HTTP (an optional door for other agents) ----------------------------------------------------------------
 PROTOCOL = "2025-06-18"
+CONFIRM = ("CONFIRM FIRST: this moves devnet TEST money or posts work. Ask the human you work for before calling, and "
+           "pass the session token knos_sign_in returned. Test money only; no real funds.")
+DISCOVERY = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knos MCP</title><link rel="stylesheet" href="/static/style.css"></head><body><main class="wrap">
+<h1>Knos over MCP</h1>
+<p>This endpoint speaks the Model Context Protocol (Streamable HTTP, JSON-RPC): <code class="url">POST /mcp</code>.
+Add it by URL in Claude, Cursor or any MCP client. Reading needs no key; money tools take a session token from
+<span class="mono">knos_sign_in</span> and say in their descriptions to confirm with your human first. Everything is
+Solana devnet test money.</p>
+<p>Tools: knos_cross, knos_research_card, knos_demand_check, knos_crossings, knos_milestones, knos_tasks,
+knos_memory_recall, knos_sign_in, knos_preorder, knos_evidence, knos_task_submit.</p>
+<p><a href="/">The app</a> · <a href="/verify">How we verify</a></p></main></body></html>"""
 TOOLS = [
     {"name": "knos_cross", "title": "Cross a paper to a funded product",
      "description": "Paper id (DOI, arXiv, PubMed, OpenAlex) -> research card -> Qloo evidence at every decision -> who, where, price "
@@ -202,7 +296,49 @@ TOOLS = [
      "description": "A product idea -> Qloo evidence -> a decision made by code.",
      "inputSchema": {"type": "object", "properties": {"idea": {"type": "string"}, "place": {"type": "string"}}, "required": ["idea"],
                      "additionalProperties": False}},
+    {"name": "knos_crossings", "title": "Crossings on this server",
+     "description": "Every crossing this server ran, newest first: id, paper or idea, verdict, report hash.",
+     "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"name": "knos_milestones", "title": "Open milestones",
+     "description": "Every commitment on this server: escrow order, units, status, claim id. A locked one needs an evidence page.",
+     "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"name": "knos_tasks", "title": "Open work for contributors",
+     "description": "Open game rounds and milestones a person or agent can work on; judged and paid on devnet (test money).",
+     "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"name": "knos_memory_search", "title": "Search everything this Knos remembers",
+     "description": "FTS5 search (multilingual) over the agents' memory and the Knos Record: papers, crossings, decisions, events.",
+     "inputSchema": {"type": "object", "properties": {"q": {"type": "string"}}, "required": ["q"], "additionalProperties": False}},
+    {"name": "knos_memory_recall", "title": "What the agent remembers about a paper",
+     "description": "Sibyl, the crossing agent's working memory: the last crossing of a paper or idea (product phrase, verdict, report).",
+     "inputSchema": {"type": "object", "properties": {"ref": {"type": "string"}, "idea": {"type": "string"}}, "additionalProperties": False}},
+    {"name": "knos_sign_in", "title": "A session for the money tools",
+     "description": "Returns a session token the money tools need. " + CONFIRM,
+     "inputSchema": {"type": "object", "properties": {"label": {"type": "string", "description": "who your human is (a display label)"}},
+                     "required": ["label"], "additionalProperties": False}},
+    {"name": "knos_preorder", "title": "Pre-order with the demo buyer",
+     "description": "Locks units of an OPEN report in devnet escrow through the app's demo buyer. " + CONFIRM,
+     "inputSchema": {"type": "object", "properties": {"report": {"type": "string"}, "units": {"type": "integer"},
+                                                       "session": {"type": "string"}}, "required": ["report", "units", "session"],
+                     "additionalProperties": False}},
+    {"name": "knos_evidence", "title": "Post milestone evidence",
+     "description": "Posts a milestone's public evidence page; verified evidence releases the escrow to the maker. " + CONFIRM,
+     "inputSchema": {"type": "object", "properties": {"commitment": {"type": "string"}, "evidence_url": {"type": "string"},
+                                                       "session": {"type": "string"}}, "required": ["commitment", "evidence_url", "session"],
+                     "additionalProperties": False}},
+    {"name": "knos_task_submit", "title": "Submit work to an open round",
+     "description": "Joins the open game round and submits one attempt; the sealed referee judges it. " + CONFIRM,
+     "inputSchema": {"type": "object", "properties": {"round": {"type": "string"}, "name": {"type": "string"}, "code": {"type": "string"},
+                                                       "session": {"type": "string"}}, "required": ["round", "code", "session"],
+                     "additionalProperties": False}},
 ]
+
+
+def _signed(args: dict) -> dict:
+    from . import auth
+    who = auth.who("Bearer " + str(args.get("session") or ""))
+    if who is None:
+        raise ValueError("session: sign in first with knos_sign_in (and confirm with your human)")
+    return who
 
 
 def mcp(state, msg: dict) -> dict | None:
@@ -220,9 +356,30 @@ def mcp(state, msg: dict) -> dict | None:
     if method == "ping":
         return ok({})
     if method == "tools/list":
-        return ok({"tools": TOOLS})
+        extra = []
+        try:
+            from .qloo_mcp import WORKFLOWS
+            mode = getattr(state.q, "mode", "mock")
+            extra = [{"name": n, "title": n.replace("_", " "),
+                      "description": f"The official qloo-harness tool {n}, proxied from this server's `qloo mcp` "
+                                     f"({'LIVE' if mode == 'live' else 'MOCK synthetic data, labelled in every answer'}).",
+                      "inputSchema": {"type": "object", "properties": {}, "additionalProperties": True}}
+                     for n in ("qloo_capabilities",) + WORKFLOWS]
+        except Exception:  # noqa: BLE001
+            extra = []
+        return ok({"tools": TOOLS + extra})
     if method == "tools/call":
         name, args = params.get("name"), params.get("arguments") or {}
+        if isinstance(name, str) and name.startswith("qloo_"):
+            from .qloo_mcp import WORKFLOWS, QlooUnavailable
+            if name not in ("qloo_capabilities",) + WORKFLOWS:
+                return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": f"unknown tool {name}"}}
+            import json as _json
+            try:
+                got = state.q.call(name, dict(args), why="proxied for an outside agent over Knos's MCP", step=name)
+            except QlooUnavailable as e:
+                return ok({"isError": True, "content": [{"type": "text", "text": str(e)[:300]}]})
+            return ok({"content": [{"type": "text", "text": _json.dumps(got, default=str)[:60_000]}], "structuredContent": got})
         try:
             if name == "knos_cross":
                 job = start(state, ref=args.get("ref"), idea=args.get("idea"), place=args.get("place"), product=args.get("product"), wait=True)
@@ -235,6 +392,37 @@ def mcp(state, msg: dict) -> dict | None:
                 rep = check.demand_check(str(args.get("idea") or ""), args.get("place"), client=state.rest)
                 state.keep_check(rep)
                 out = {"report": rep["hash"], "decision": rep["decision"], "calls": rep["calls"]}
+            elif name == "knos_crossings":
+                out = {"crossings": crossings(state)}
+            elif name == "knos_milestones":
+                out = {"commitments": preorder.all_public(50)}
+            elif name == "knos_tasks":
+                from . import tasks as _tasks
+                out = _tasks.listing()
+            elif name == "knos_memory_search":
+                from knos.record import search as rsearch
+                got = rsearch.search(str(args.get("q") or "")[:200], root=company.root())
+                out = {"said": got.get("said"), "rows": got.get("rows", [])[:20]}
+            elif name == "knos_memory_recall":
+                out = recall(memory_key(args.get("ref"), args.get("idea"))) or {"remembered": False}
+            elif name == "knos_sign_in":
+                from . import auth
+                out = auth.guest(str(args.get("label") or "agent") + " (via MCP)")
+            elif name == "knos_preorder":
+                who = _signed(args)
+                rep = state.report(str(args.get("report") or ""))
+                if rep is None:
+                    raise ValueError("unknown report: run knos_cross first")
+                out = preorder.lock(rep, int(args.get("units") or 0), f"{who.get('kind')}: {who.get('label')}")
+            elif name == "knos_evidence":
+                who = _signed(args)
+                rec = preorder.load(str(args.get("commitment") or ""))
+                out = preorder.milestone(state.report(rec["report"]) or {}, rec["order"], str(args.get("evidence_url") or ""))
+            elif name == "knos_task_submit":
+                who = _signed(args)
+                from . import tasks as _tasks
+                out = _tasks.submit(str(args.get("round") or ""), str(args.get("name") or ""), str(args.get("code") or ""),
+                                    f"{who.get('kind')}: {who.get('label')}")
             else:
                 return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": f"unknown tool {name}"}}
         except ValueError as e:

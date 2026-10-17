@@ -2,7 +2,31 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.drexthealpha/knos",
   "description": "The neutral meter for AI agent work: neither side keeps the count.",
-  "repository": {"url": "https://github.com/drexthealpha/Knos", "source": "github"},
+  "repository": {
+    "url": "https://github.com/drexthealpha/Knos",
+    "source": "github"
+  },
   "version": "0.3.28",
-  "packages": [{"registryType": "pypi", "identifier": "knos", "version": "0.3.28", "transport": {"type": "stdio"}, "packageArguments": [{"type": "positional", "value": "mcp"}]}]
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "knos",
+      "version": "0.3.28",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://knos.onrender.com/mcp"
+    }
+  ]
 }

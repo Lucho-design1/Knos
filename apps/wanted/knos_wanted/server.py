@@ -26,7 +26,7 @@ from pathlib import Path
 import urllib.parse
 from urllib.parse import parse_qs, urlparse
 
-from . import agent, auth, blink, buyer, catalog, check, company, demand, escrow, planner, preorder, privacy, research
+from . import agent, auth, blink, buyer, catalog, check, company, demand, escrow, planner, preorder, privacy, research, tasks, x402
 from .qloo_mcp import AGGREGATE, Qloo, QlooUnavailable
 from .qloo_rest import Client
 
@@ -41,10 +41,11 @@ ROUTES = {"/api/maker/start": "maker", "/api/maker/search": "search", "/api/make
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
           "/api/check": "check", "/api/research": "check", "/api/cross": "check", "/api/factor": "lock",
+          "/api/fund": "lock", "/api/task/submit": "check", "/api/anchor": "lock",
           "/api/auth/email": "auth", "/api/auth/email/verify": "auth", "/api/preorder": "lock", "/api/milestone": "milestone", "/api/refund": "lock",
           "/api/auth/challenge": "auth", "/api/auth/passkey/register": "auth", "/api/auth/passkey/login": "auth",
           "/api/auth/google": "auth", "/api/auth/guest": "auth"}
-SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor",
+SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/api/fund", "/api/task/submit", "/api/anchor",
              "/api/preorder/demo", "/api/preorder/faucet", "/api/preorder/tx", "/api/preorder/submit")   # no anonymous money or faucet calls
 
 
@@ -53,6 +54,7 @@ class State:
         self.q = q or Qloo()
         self.rest = rest or Client()
         self.cards: dict[str, dict] = {}
+        self.last_anchor: dict | None = None
         self.reports: OrderedDict[str, dict] = OrderedDict()
         self.sessions: OrderedDict[str, tuple[float, dict]] = OrderedDict()
         self.hits: dict[tuple[str, str], deque] = defaultdict(deque)
@@ -184,11 +186,50 @@ def make_handler(state: State):
             if u.path == "/api/cross":
                 got = agent.poll((qs.get("id") or [""])[0], int((qs.get("since") or ["0"])[0] or 0))
                 return self._send(200 if got else 404, got or {"error": "unknown crossing"})
+            if u.path in ("/verify", "/verify.html"):
+                return self._send(200, (STATIC / "verify.html").read_bytes(), "text/html; charset=utf-8")
             if u.path == "/api/crossings":
-                return self._send(200, {"crossings": agent.crossings(state)})
+                take = min(100, max(1, int((qs.get("take") or ["30"])[0] or 30)))
+                offset = max(0, int((qs.get("offset") or ["0"])[0] or 0))
+                rows = agent.crossings(state, offset + take)[offset:]
+                return self._send(200, {"crossings": rows, "take": take, "offset": offset})
+            if u.path == "/api/tasks":
+                return self._send(200, tasks.listing())
+            if u.path == "/api/memory/search":
+                q = (qs.get("q") or [""])[0][:200]
+                if not q.strip():
+                    return self._send(400, {"error": "q: what to search the record for"})
+                try:
+                    from knos.record import search as rsearch
+                    got = rsearch.search(q, root=company.root())
+                    return self._send(200, {"query": q, "said": got.get("said"), "verdict": got.get("verdict"),
+                                            "rows": [{k: r.get(k) for k in ("tier", "key", "category", "name", "doc_key", "snippet", "score")}
+                                                     for r in got.get("rows", [])[:20]]})
+                except Exception as why:  # noqa: BLE001
+                    return self._send(503, {"error": f"the record cannot be searched here ({type(why).__name__})"})
+            if u.path == "/api/x402/report":
+                h = (qs.get("hash") or [""])[0]
+                rep_ = state.report(h)
+                if rep_ is None:
+                    return self._send(404, {"error": "unknown report"})
+                if not x402.ready():
+                    return self._send(503, {"error": "the paid route needs the devnet escrow configured"})
+                pay_h = self.headers.get("X-Payment") or self.headers.get("X-PAYMENT")
+                try:
+                    if not pay_h:
+                        return self._send(402, x402.challenge(h, self._base()))
+                    settled = x402.settle(pay_h)
+                except ValueError as why:
+                    return self._send(402, {**x402.challenge(h, self._base()), "error": str(why)[:200]})
+                return self._send(200, {**rep_, "paid": settled},
+                                  headers={"X-Payment-Response": __import__("base64").b64encode(json.dumps(settled).encode()).decode()})
             if u.path == "/api/commitments":
-                return self._send(200, {"commitments": preorder.all_public(50)})
+                take = min(100, max(1, int((qs.get("take") or ["50"])[0] or 50)))
+                offset = max(0, int((qs.get("offset") or ["0"])[0] or 0))
+                return self._send(200, {"commitments": preorder.all_public(offset + take)[offset:], "take": take, "offset": offset})
             if u.path == "/mcp":
+                if "text/html" in (self.headers.get("Accept") or ""):
+                    return self._send(200, agent.DISCOVERY.encode(), "text/html; charset=utf-8")
                 return self._send(405, {"error": "POST JSON-RPC messages to /mcp (MCP Streamable HTTP)"}, headers={"Allow": "POST"})
             if u.path == "/auth/orcid":
                 try:
@@ -260,7 +301,8 @@ def make_handler(state: State):
                        "mcp_flow": {k: mcp.get(k) for k in ("mode", "label", "reason")}}
             else:
                 top = {"no_key_behaviour": "every check answers CANNOT_DECIDE (" + check.NO_EVIDENCE + "); pre-orders never open"}
-            return {**mcp, **top, "qloo_rest": rest, "preorders": pf,
+            return {**mcp, **top, "qloo_rest": rest, "preorders": pf, "record_anchor": state.last_anchor,
+                    "x402": {"ready": x402.ready(), "route": "/api/x402/report?hash=<report>", "price": f"{x402.PRICE_UNITS} test unit per read"},
                     "fees": preorder.fee_line(), "auth": auth.config(),
                     "framing": demand.FRAMING, "escrow": escrow.available(),
                     "demo_wallet": bool(os.environ.get("KNOS_WANTED_DEVNET_KEYPAIR")), "cluster": "devnet",
@@ -357,6 +399,21 @@ def make_handler(state: State):
                 return auth.email_verify(str(body.get("token") or ""))
             if path == "/api/factor":
                 return blink.factor(preorder.load(str(body.get("commitment", ""))), int(body.get("discount_bps", 500)))
+            user = self.user or {}
+            if path == "/api/fund":
+                rep = state.report(body.get("report") or body.get("hash"))
+                if rep is None or rep.get("kind") != check.KIND:
+                    raise ValueError("unknown report: run the crossing first")
+                return preorder.lock(rep, body.get("units", 5), f"funder {user.get('kind')}: {user.get('label')}",
+                                     _text(body.get("maker_wallet"), 44))
+            if path == "/api/anchor":
+                got = company.anchor()
+                if got.get("anchored"):
+                    state.last_anchor = {"tx": got["tx"], "explorer": got["explorer"], "root": got["root"]}
+                return got
+            if path == "/api/task/submit":
+                return tasks.submit(str(body.get("round", "")), str(body.get("name", "")), str(body.get("code", "")),
+                                    f"{user.get('kind')}: {user.get('label')}")
             if path == "/api/check":
                 idea = body.get("idea")
                 if not isinstance(idea, str) or not idea.strip():
@@ -392,7 +449,6 @@ def make_handler(state: State):
                 return auth.google(body.get("credential"))
             if path == "/api/auth/guest":
                 return auth.guest(str(body.get("label") or ""))
-            user = self.user or {}
             if path == "/api/preorder":
                 rep = state.report(body.get("report") or body.get("hash"))
                 if rep is None or rep.get("kind") != check.KIND:

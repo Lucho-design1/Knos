@@ -3,119 +3,146 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Knos: proven research, funded products</title>
-<meta name="description" content="Paste a landmark paper. Knos's agent asks Qloo who wants the product it enables, where, at what price, and opens pre-orders held in escrow on Solana devnet, paid to the maker only on proof.">
+<title>Knos — proven research, funded products</title>
+<meta name="description" content="Paste a landmark paper or an idea. Knos asks Qloo's taste data who would buy the product it enables, where, at what price, and opens pre-orders held in escrow on Solana devnet, paid to the maker only on proof.">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to the app</a>
 <header class="top">
-  <div class="wrap row">
-    <a class="brand" href="#research"><span class="mark" aria-hidden="true"></span>Knos</a>
-    <nav class="views" aria-label="Views">
-      <a href="#research" data-view="research">Researcher</a>
-      <a href="#buy" data-view="buy">Buyer</a>
-      <a href="#make" data-view="make">Maker</a>
-    </nav>
-    <div class="row gap">
-      <span id="modeBadge" class="badge" title="Where the numbers come from">…</span>
-      <button id="whoBtn" class="ghost" type="button" aria-controls="signin">Sign in</button>
+  <div class="wrap">
+    <div class="bar">
+      <a class="brand" href="#research"><span class="mark" aria-hidden="true"></span>Knos</a>
+      <span id="modeBadge" class="badge">…</span>
+      <label class="small muted" for="lang" hidden data-i18n="lang_l">Language</label>
+      <select id="lang" class="lang" aria-label="Language"></select>
+      <button id="whoBtn" class="quiet" type="button" aria-controls="signin" data-i18n="sign_in">Sign in</button>
     </div>
+    <nav class="roles" aria-label="Roles">
+      <a href="#research" data-view="research" data-i18n="nav_research">Research</a>
+      <a href="#buy" data-view="buy" data-i18n="nav_back">Back</a>
+      <a href="#fund" data-view="fund" data-i18n="nav_fund">Fund</a>
+      <a href="#contribute" data-view="contribute" data-i18n="nav_contribute">Contribute</a>
+      <a href="#make" data-view="make" data-i18n="nav_make">Make</a>
+      <a href="#agents" data-view="agents" data-i18n="nav_agents">Agents</a>
+    </nav>
   </div>
 </header>
 
 <main id="main" class="wrap">
   <section id="signin" class="card" hidden aria-labelledby="signinH">
-    <h2 id="signinH">Sign in</h2>
-    <p class="muted small">Needed to pre-order with the demo buyer, post milestones or factor. Reading papers and the agent's crossing are open to everyone.</p>
+    <h2 id="signinH" data-i18n="sign_in">Sign in</h2>
     <div class="stack">
-      <button id="pkNew" type="button">Create a passkey wallet</button>
-      <button id="pkUse" type="button" class="ghost">Sign in with my passkey</button>
-      <p class="muted small" id="pkNote">A passkey wallet: no seed phrase. Your identity comes from the passkey's public key. Devnet pre-orders made this way use the app's demo buyer acting for you (test money).</p>
+      <button id="pkNew" type="button" data-i18n="pk_new">Create a passkey wallet</button>
+      <button id="pkUse" type="button" class="ghost" data-i18n="pk_use">Sign in with my passkey</button>
+      <p class="muted small" id="pkNote" data-i18n="pk_note"></p>
       <div id="googleBox" hidden><div id="gsi"></div></div>
-      <a id="orcidBtn" class="button ghost" href="/auth/orcid" hidden>Sign in with ORCID</a>
-      <label for="email">Email</label>
+      <a id="orcidBtn" class="button ghost" href="/auth/orcid" hidden data-i18n="orcid_btn">Sign in with ORCID</a>
+      <label for="email" data-i18n="email_l">Email</label>
       <input id="email" type="email" autocomplete="email" maxlength="80" placeholder="you@example.com">
       <p class="muted small" id="emailNote"></p>
-      <button id="emailBtn" type="button" class="ghost">Continue with email</button>
-      <button id="outBtn" type="button" class="ghost" hidden>Sign out</button>
+      <button id="emailBtn" type="button" class="ghost" data-i18n="email_go">Continue with email</button>
+      <button id="outBtn" type="button" class="ghost" hidden data-i18n="sign_out">Sign out</button>
     </div>
   </section>
 
-  <div id="err" class="err" role="alert" hidden></div>
-  <p id="slow" class="slow" role="status" hidden></p>
+  <div id="err" class="note err" role="alert" hidden></div>
+  <p id="slow" class="note row" role="status" hidden><span class="spin" aria-hidden="true"></span><span id="slowText"></span></p>
 
   <!-- RESEARCHER -->
   <section id="v-research" class="view">
-    <div class="hero">
-      <h1>Proven research that never became a product.</h1>
-      <p class="lede">Paste a landmark paper. Knos's agent reads it, asks Qloo who would buy what it enables, where, and at what
-        price, then opens pre-orders held in escrow and paid to the maker only on proof.</p>
-    </div>
-    <form id="crossForm" class="card form" autocomplete="off" aria-labelledby="crossH">
-      <h2 id="crossH">Cross a paper</h2>
-      <label for="ref">DOI, arXiv id, PubMed id or OpenAlex id</label>
+    <h1 data-i18n="hero_t">Research that works, waiting for a market.</h1>
+    <p data-i18n="hero_p">Paste a landmark paper or describe an idea. Knos asks Qloo's taste data who would buy the product it
+      enables, where, and at what price — then opens pre-orders held in escrow and paid to the maker only on proof.</p>
+    <p class="small muted">Directional demand evidence, not a sales forecast. Every Qloo figure is aggregate taste, not a prediction about one person. <a href="/verify" data-i18n="verify_link">How we verify</a></p>
+
+    <section id="openNow" hidden>
+      <h2 data-i18n="live_products">Open for backing now</h2>
+      <ul id="openList" class="plist"></ul>
+    </section>
+
+    <form id="crossForm" class="card" autocomplete="off" aria-labelledby="crossH">
+      <h2 id="crossH" data-i18n="cross_t">Start a crossing</h2>
+      <label for="ref" data-i18n="cross_ref">Paper id (DOI, arXiv, PubMed, OpenAlex, patent)</label>
       <input id="ref" maxlength="200" placeholder="10.1038/nature16521" inputmode="url">
-      <p class="small">Try: <button type="button" class="chip" data-ref="10.1038/nature16521">sweat glucose sensors</button>
+      <p class="small muted"><span data-i18n="try">Try:</span>
+        <button type="button" class="chip" data-ref="10.1038/nature16521">sweat glucose sensors</button>
         <button type="button" class="chip" data-ref="10.4049/jimmunol.155.3.1151">regulatory T cells</button>
         <button type="button" class="chip" data-ref="10.1038/nm0797-797">celiac autoantigen</button></p>
-      <details><summary class="small">Optional: your own product phrase or a launch place</summary>
-        <label for="product">Product phrase (the agent proposes one)</label><input id="product" maxlength="200">
-        <label for="place">Place</label><input id="place" maxlength="60" placeholder="Lagos">
-        <label for="idea">Or an idea without a paper</label><textarea id="idea" rows="2" maxlength="500"></textarea>
-      </details>
-      <button id="crossBtn" type="submit">Run the crossing</button>
+      <label for="idea" data-i18n="cross_or">or your own idea</label>
+      <textarea id="idea" rows="2" maxlength="500" data-i18n-ph="cross_idea"></textarea>
+      <div class="two">
+        <div><label for="place" data-i18n="cross_place">Launch market (optional)</label><input id="place" maxlength="60" placeholder="Lagos"></div>
+        <div><label for="product" data-i18n="cross_product">Product phrase (optional)</label><input id="product" maxlength="200"></div>
+      </div>
+      <button id="crossBtn" type="submit" data-i18n="cross_go">Run the crossing</button>
     </form>
     <section id="timeline" class="card" hidden aria-live="polite">
-      <h2>The crossing, live</h2>
+      <h2 data-i18n="timeline_t">The crossing, live</h2>
       <ol id="steps" class="steps"></ol>
       <div id="outcome"></div>
-    </section>
-    <section class="facts" aria-labelledby="factsH">
-      <h2 id="factsH">Why this valley exists</h2>
-      <div class="grid">
-        <div class="card"><p class="big">90%</p><p>of drugs that pass into phase 1 trials fail before final approval.</p>
-          <p class="small muted">Errington, J Clin Invest 2024: "the overall failure rate of drugs that passed into phase 1 trials to final approval is 90%". <a href="https://www.jci.org/articles/view/177383" target="_blank" rel="noopener">jci.org</a></p></div>
-        <div class="card"><p class="big">30 years</p><p>Regulatory T cells were described in 1995 and won the 2025 Nobel Prize; treatments are still in trials.</p>
-          <p class="small muted">"Several of these treatments are now undergoing clinical trials." <a href="https://www.nobelprize.org/prizes/medicine/2025/press-release/" target="_blank" rel="noopener">nobelprize.org</a></p></div>
-        <div class="card"><p class="big">0</p><p>smartwatches authorised to measure blood glucose, ten years after wearable sweat sensors (Nature 2016).</p>
-          <p class="small muted">"The FDA has not authorized, cleared, or approved any smartwatch or smart ring that is intended to measure or estimate blood glucose values on its own." <a href="https://www.fda.gov/medical-devices/safety-communications/do-not-use-smartwatches-or-smart-rings-measure-blood-glucose-levels-fda-safety-communication" target="_blank" rel="noopener">fda.gov</a></p></div>
-      </div>
-      <p class="framing"><span id="framing">Directional demand evidence, not a sales forecast.</span>
-        <span class="agg">Aggregate taste, not a prediction about one person.</span></p>
     </section>
   </section>
 
   <!-- BUYER -->
   <section id="v-buy" class="view" hidden>
-    <div id="productCard" class="card"><p class="muted">Run a crossing first, or open a product link (#buy=...).</p></div>
+    <div id="productCard" class="card"></div>
     <section id="buyBox" class="card" hidden aria-labelledby="buyH">
-      <h2 id="buyH">Pre-order (devnet, test money)</h2>
-      <p id="feeLine" class="model">Knos takes a fee only on money released on proof.</p>
-      <label for="units">Units</label><input id="units" type="number" min="5" value="5" inputmode="numeric">
+      <div class="row spread"><h2 id="buyH" data-i18n="buy_t">Pre-order</h2><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
+      <p id="feeLine" class="small muted"></p>
+      <label for="units" data-i18n="units">Units</label><input id="units" type="number" min="5" value="5" inputmode="numeric">
       <div class="two">
-        <div><h3>With your wallet</h3><p class="small muted">A Solana Action: any wallet signs; the server never holds your key.</p>
-          <button id="walletBtn" type="button">Pre-order with a wallet</button>
-          <p class="small"><a id="blinkLink" target="_blank" rel="noopener">Open as a Blink</a></p></div>
-        <div><h3>With your passkey</h3><p class="small muted">Signed in with a passkey, email, Google or ORCID: the app's demo buyer locks test units for you.</p>
-          <button id="preBtn" type="button" class="ghost">Pre-order with the demo buyer</button></div>
+        <div><h3 data-i18n="buy_wallet">With your wallet</h3><p class="small muted" data-i18n="buy_wallet_p"></p>
+          <button id="walletBtn" type="button" data-i18n="buy_btn">Pre-order with a wallet</button>
+          <p class="small"><a id="blinkLink" target="_blank" rel="noopener">Blink</a></p></div>
+        <div><h3 data-i18n="buy_demo">With your passkey</h3><p class="small muted" data-i18n="buy_demo_p"></p>
+          <button id="preBtn" type="button" class="ghost" data-i18n="buy_demo_btn">Pre-order with the demo buyer</button></div>
       </div>
       <div id="receipt"></div>
     </section>
-    <section id="tracker" class="card" hidden><h2>Milestone tracker</h2><ul id="trackList" class="list"></ul></section>
+    <section id="tracker" class="card" hidden><h2 data-i18n="goal_l">Funding goal</h2><ul id="trackList" class="list"></ul></section>
   </section>
 
-  <!-- MAKER / FUNDER -->
+  <!-- FUNDER -->
+  <section id="v-fund" class="view" hidden>
+    <div class="row spread"><h1 data-i18n="fund_t">Back a milestone</h1><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
+    <p data-i18n="fund_p"></p>
+    <ul id="fundList" class="list"></ul>
+  </section>
+
+  <!-- CONTRIBUTOR -->
+  <section id="v-contribute" class="view" hidden>
+    <h1 data-i18n="contribute_t">Open work</h1>
+    <p data-i18n="contribute_p"></p>
+    <div id="taskBox"></div>
+  </section>
+
+  <!-- MAKER -->
   <section id="v-make" class="view" hidden>
-    <section class="card"><h2>Open milestones and payouts</h2>
-      <p class="small muted">Prove a milestone: publish a public https page containing the commitment's claim id and post its URL. Code checks it; two of three referee keys then release the escrow on devnet. A closed escrow order cannot be released twice: the chain refuses it.</p>
-      <ul id="makeList" class="list"></ul></section>
+    <div class="row spread"><h1 data-i18n="make_t">Milestones and payouts</h1><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
+    <p class="small muted" data-i18n="make_p"></p>
+    <ul id="makeList" class="list"></ul>
+  </section>
+
+  <!-- AGENTS -->
+  <section id="v-agents" class="view" hidden>
+    <h1 data-i18n="agents_t">For agents</h1>
+    <p data-i18n="agents_p"></p>
+    <p data-i18n="agents_add">Add this server by URL in Claude, Cursor or any MCP client:</p>
+    <p><code class="url" id="mcpUrl"></code></p>
+    <div id="memBox" class="card"><h2 data-i18n="mem_search">Search everything Knos remembers</h2>
+      <form class="row"><input maxlength="200" aria-labelledby="memBox"><button type="submit" class="quiet">→</button></form>
+      <div class="memOut"></div></div>
+    <div id="mcpTools" class="card"></div>
   </section>
 </main>
 
 <footer class="wrap muted small">
-  <p>Qloo's taste data is read on the server only. Escrow on Solana devnet with test units: no real money. Agents can use the same crossing over MCP at <code>/mcp</code>. MIT licensed.</p>
+  <p data-i18n="footer">Qloo taste data is read on the server only. Escrow on Solana devnet with test units: no real money. MIT licensed.</p>
+  <p><a href="/verify" data-i18n="verify_link">How we verify</a> · <a href="https://github.com/drexthealpha/Knos" rel="noopener">GitHub</a></p>
 </footer>
+<script src="/static/i18n.js" defer></script>
 <script src="/static/app.js" defer></script>
 </body>
 </html>
