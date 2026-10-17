@@ -69,5 +69,5 @@ def test_stdio_wire_format():
 
 def test_runs_as_a_process():
     p = subprocess.run([sys.executable, "-m", "knos_wanted.mock_mcp"], input=json.dumps({"jsonrpc": "2.0", "id": 7, "method": "ping"}) + "\n",
-                       capture_output=True, text=True, cwd=APP, timeout=30)
+                       capture_output=True, text=True, encoding="utf-8", cwd=APP, timeout=30)
     assert json.loads(p.stdout) == {"jsonrpc": "2.0", "id": 7, "result": {}}

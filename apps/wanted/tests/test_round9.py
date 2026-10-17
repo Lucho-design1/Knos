@@ -1,5 +1,6 @@
 """Round 9A: six roles on one page — the funder and contributor endpoints, the agent door for roles 1-5, the
 language file, and the first-load budget. SYNTHETIC fixtures; no network, no chain."""
+import hashlib
 import json
 import re
 import threading
@@ -121,9 +122,13 @@ def test_first_load_is_under_200_kb():
 
 
 def test_the_pages_home_links_the_app_prominently():
-    home = (Path(server.__file__).resolve().parents[3] / "web" / "index.html").read_text(encoding="utf-8")
-    assert 'id="hero-app"' in home and 'href="wanted.html"' in home and "Back research products" in home
-    assert home.index('id="more-list"') < home.index('id="hero-app"') < home.index('id="hero-fact"')   # in the More menu: one tap, zero words on the pinned first screen
+    web = Path(server.__file__).resolve().parents[3] / "web"
+    views = (web / "views.js").read_text(encoding="utf-8")
+    # the site declares the app as a page added by name (its link under More, its section, its lazy module)
+    assert 'apps: { file: "./apps.js", draw: "renderApps", nav: "Research products" }' in views
+    mod = (web / "apps.js").read_text(encoding="utf-8")
+    assert "export function renderApps" in mod and 'href="wanted.html"' in mod and "https://knos.onrender.com/" in mod
+    assert "healthz" in mod and "test money" in mod and "click" in mod   # on press: straight to the app when awake; the wake page otherwise
 
 
 def test_an_empty_server_seeds_one_demo_round_and_judges_a_submission(monkeypatch, tmp_path):
@@ -137,8 +142,27 @@ def test_an_empty_server_seeds_one_demo_round_and_judges_a_submission(monkeypatc
     assert out["result"].get("decision") in ("accepted", "failed", "refused") and "referee" in out["note"]
     assert tasks.listing()["rounds"][0]["id"] == r["id"]                       # one open demo round at a time, not two
     assert (Path(server.__file__).resolve().parents[3] / "examples" / "autoresearch" / "task.json").exists()
-    docker = (Path(server.__file__).resolve().parents[2] / "wanted" / "Dockerfile").read_text()
+    docker = (Path(server.__file__).resolve().parents[2] / "wanted" / "Dockerfile").read_text(encoding="utf-8")
     assert "COPY examples/autoresearch" in docker                              # the image carries the demo task
+
+
+def test_a_contributors_train_py_reaches_the_referee_and_may_be_resubmitted(monkeypatch, tmp_path):
+    monkeypatch.delenv("KNOS_GAME_DIR", raising=False)
+    monkeypatch.setenv("KNOS_WANTED_STATE", str(tmp_path / "state"))
+    r = tasks.listing()["rounds"][0]
+    s = r["submit"]
+    assert s["file"] == "train.py" and s["readme"].endswith("examples/autoresearch/README.md") and s["attempts_per_round"] >= 2
+    base = (Path(server.__file__).resolve().parents[3] / "examples" / "autoresearch" / "train.py").read_text(encoding="utf-8")
+    better = base.replace("'linear'", "'square'", 1).replace("'standardize': False", "'standardize': True", 1)
+    assert better != base
+    out = tasks.submit(r["id"], "  Ada  Lovelace ", better, "guest: ada", sub="guest-ada")
+    assert out["name"] == "Ada Lovelace"
+    assert out["result"]["sha256"] == out["submitted_sha256"] == hashlib.sha256(better.encode()).hexdigest()
+    assert out["result"]["decision"] == "scored" and out["result"]["n"] == 1, out
+    again = tasks.submit(r["id"], "Ada Lovelace", base, "guest: ada", sub="guest-ada")   # a second attempt, same player
+    assert again["result"]["n"] == 2 and again["result"]["sha256"] == hashlib.sha256(base.encode()).hexdigest()
+    seen = json.dumps([out, again, tasks.listing()])
+    assert '"key"' not in seen and "suffix" not in seen                         # the player key and the sealed part stay on the server
 
 
 def test_the_signin_sheet_and_the_noise_toggle_are_on_the_page():

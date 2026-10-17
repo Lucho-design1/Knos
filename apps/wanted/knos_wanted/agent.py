@@ -326,8 +326,11 @@ TOOLS = [
                                                        "session": {"type": "string"}}, "required": ["commitment", "evidence_url", "session"],
                      "additionalProperties": False}},
     {"name": "knos_task_submit", "title": "Submit work to an open round",
-     "description": "Joins the open game round and submits one attempt; the sealed referee judges it. " + CONFIRM,
+     "description": "Submits the whole train.py to the open round (knos_tasks says what to change and links the task's README); "
+                    "the sealed referee judges it at once; several attempts per round. A scored attempt with a devnet `wallet` "
+                    "is paid a demo prize in test units. " + CONFIRM,
      "inputSchema": {"type": "object", "properties": {"round": {"type": "string"}, "name": {"type": "string"}, "code": {"type": "string"},
+                                                       "wallet": {"type": "string"},
                                                        "session": {"type": "string"}}, "required": ["round", "code", "session"],
                      "additionalProperties": False}},
 ]
@@ -422,7 +425,8 @@ def mcp(state, msg: dict) -> dict | None:
                 who = _signed(args)
                 from . import tasks as _tasks
                 out = _tasks.submit(str(args.get("round") or ""), str(args.get("name") or ""), str(args.get("code") or ""),
-                                    f"{who.get('kind')}: {who.get('label')}")
+                                    f"{who.get('kind')}: {who.get('label')}", sub=str(who.get("sub") or ""),
+                                    wallet=str(args.get("wallet") or "") or None)
             else:
                 return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": f"unknown tool {name}"}}
         except ValueError as e:

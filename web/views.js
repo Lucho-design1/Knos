@@ -15,4 +15,5 @@ export const ADDED = {
   finance: { file: "./supplier_finance.js", draw: "renderSupplierFinance", nav: "Supplier finance" },
   payee: { file: "./payee.js", draw: "renderPayee", nav: "Collect payout" },
   vendor: { file: "./vendor.js", draw: "renderVendor", nav: "Vendor pages" },
+  apps: { file: "./apps.js", draw: "renderApps", nav: "Research products" },
 };

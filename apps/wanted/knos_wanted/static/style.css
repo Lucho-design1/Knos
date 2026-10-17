@@ -101,3 +101,8 @@ code.url { background: var(--soft); padding: 3px 8px; border-radius: 6px; font-f
   border-radius: var(--r) var(--r) 0 0; box-shadow: 0 -8px 40px rgba(0, 0, 0, .35); }
 @media (min-width: 700px) { #signin:not([hidden]) { inset-inline: auto; inset-inline-end: 16px; inset-block-end: 16px; width: 380px; border-radius: var(--r); } }
 .note.ok { border-inline-start-color: var(--ok); }
+
+/* the account button never pushes the header wider than the phone */
+#whoBtn { max-width: 9.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+.bar { min-width: 0; } .bar > * { min-width: 0; } select.lang { max-width: 96px; }
+@media (max-width: 400px) { #whoBtn { max-width: 6.5rem; } .badge { display: none; } }

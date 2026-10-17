@@ -11,7 +11,7 @@ import json
 import os
 import urllib.error
 import urllib.request
-from typing import Any
+from typing import Any, NoReturn
 
 OPT_IN_ENV, OPT_IN_WORD = "KNOS_MCP_TOOLS", "demand"
 DEFAULT_URL = "https://knos.onrender.com"
@@ -36,7 +36,7 @@ def base_url() -> str:
     return (os.environ.get("KNOS_WANTED_URL") or DEFAULT_URL).rstrip("/")
 
 
-def _fail(text: str):
+def _fail(text: str) -> NoReturn:
     from .mcp import Failed
     raise Failed(text)
 

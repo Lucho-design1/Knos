@@ -1,49 +1,84 @@
 """Open work a contributor (person or agent) can join: the Knos game's rounds on this server, judged and paid on devnet.
 
 The game is `knos.game` (src/knos/game): a sealed task, players who submit code, a deterministic referee, a pot paid by
-verdicts. This module only fronts it for the web app: when KNOS_GAME_DIR names a game folder, /api/tasks lists its
-state and /api/task/submit joins and submits in one step (the smallest honest flow: a new player per submission; the
-referee answers at once; the pot is paid by the game's own verdict path at round close, not by this endpoint). Without
-a game folder the page says so instead of inventing work. Open milestones are listed beside it as evidence tasks.
+verdicts. This module fronts it for the web app:
+  - when KNOS_GAME_DIR names an operator's open round, that round is listed;
+  - otherwise (Render wipes /data) the server keeps ONE open DEMO round, seeded from the example task packaged in the
+    image (examples/autoresearch) with a time budget sized for a free 0.1-CPU host, and reseeds it when it closes;
+  - /api/task/submit: the contributor's first submission joins them as a player, later ones reuse that player (several
+    attempts per round, the game's own per_round limit); the sealed referee answers at once, on this server;
+  - a submission the referee SCORES earns a demo prize when the contributor gives a devnet wallet: a knos_pay PANEL
+    order of test units, released at once by 2 of the server's 3 referee keys over the referee's verdict (the same
+    escrow path as a milestone; devnet test money, labelled).
+Open milestones are listed beside the round as evidence tasks.
 """
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
+import json
 import os
+import shutil
+import threading
 from pathlib import Path
 
 from . import escrow, preorder
 
 TASK_DIR = Path(__file__).resolve().parents[3] / "examples" / "autoresearch"
+TASK_README = "https://github.com/drexthealpha/Knos/blob/main/examples/autoresearch/README.md"
 DEMO_TITLE = "Demo round: beat the sealed classifier (test money)"
 DEMO_LABEL = ("DEMO ROUND, devnet test money: the repository's example task, seeded by this server so contributors "
               "always have one open round; the sealed referee judges every submission")
+DEMO_BUDGET_S = 120          # per seeded run; the task's own 20 s is sized for a laptop, not a free 0.1-CPU host
+PER_ROUND = 4
+PRIZE_UNITS = 5              # test units for a scored attempt (knos_pay's order minimum)
+_lock = threading.Lock()
 
 
 def _status(root: Path) -> str | None:
-    import json
     try:
         return json.loads((root / "game.json").read_text(encoding="utf-8")).get("status")
     except (OSError, ValueError):
         return None
 
 
+def _open_demo() -> Path | None:
+    """The newest open demo round this server already seeded (it survives a restart on the same state dir)."""
+    rows = sorted(escrow._state_dir().glob("demo-game-*"), reverse=True)
+    return next((r for r in rows if (r / "game.json").exists() and _status(r) != "closed"), None)
+
+
+def _demo_task(stamp: str) -> Path:
+    """The packaged task, copied with a time budget sized for this host; the sealed file is copied as it is (its sha256
+    is what task.json commits to)."""
+    dst = escrow._state_dir() / f"demo-task-{stamp}"
+    shutil.copytree(TASK_DIR, dst, ignore=shutil.ignore_patterns("__pycache__"))
+    spec = json.loads((dst / "task.json").read_text(encoding="utf-8"))
+    spec["time_budget_s"] = max(int(spec.get("time_budget_s") or 0), DEMO_BUDGET_S)
+    (dst / "task.json").write_text(json.dumps(spec, indent=1), encoding="utf-8")
+    return dst
+
+
 def ensure_round() -> str | None:
-    """One open demo round at a time: when no game folder is configured (or the configured one is empty or closed —
-    Render wipes /data), seed a fresh labelled demo round from the task packaged in the image. Returns its id."""
-    base = Path(os.environ.get("KNOS_GAME_DIR") or "").expanduser()
-    if base and (base / "game.json").exists() and _status(base) != "closed":
-        return None                                    # an operator's own open round: leave it alone
-    if not TASK_DIR.exists():
-        return None                                    # no packaged task: the page says so instead
-    from knos.game.engine import Game
-    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d%H%M%S")
-    root = escrow._state_dir() / f"demo-game-{stamp}"
-    g = Game.create(root, TASK_DIR, title=DEMO_TITLE, field="ml-research", game_id=f"knos-demo-{stamp}",
-                    rules={"rounds": 3, "per_round": 4, "ladder_eta": 0.01, "max_refusals": 2, "identity_required": False})
-    os.environ["KNOS_GAME_DIR"] = str(root)
-    print(f"knos-demand-check: seeded the demo game round {g.s['id']} at {root} ({DEMO_LABEL})", flush=True)
-    return g.s["id"]
+    """One open demo round at a time. Returns the id of a round it seeded, None when one is already open."""
+    with _lock:
+        base = Path(os.environ.get("KNOS_GAME_DIR") or "").expanduser()
+        if str(base) not in ("", ".") and (base / "game.json").exists() and _status(base) != "closed":
+            return None                                # an open round (the operator's, or the demo one): leave it
+        kept = _open_demo()
+        if kept is not None:
+            os.environ["KNOS_GAME_DIR"] = str(kept)
+            return None
+        if not TASK_DIR.exists():
+            return None                                # no packaged task: the page says so instead
+        from knos.game.engine import Game
+        stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d%H%M%S")
+        root = escrow._state_dir() / f"demo-game-{stamp}"
+        g = Game.create(root, _demo_task(stamp), title=DEMO_TITLE, field="ml-research", game_id=f"knos-demo-{stamp}",
+                        rules={"rounds": 3, "per_round": PER_ROUND, "ladder_eta": 0.01, "max_refusals": 2, "identity_required": False})
+        os.environ["KNOS_GAME_DIR"] = str(root)
+        print(f"knos-demand-check: seeded the demo game round {g.s['id']} at {root} ({DEMO_LABEL})", flush=True)
+        return g.s["id"]
 
 
 def _tools():
@@ -52,7 +87,8 @@ def _tools():
 
 
 def available() -> tuple[bool, str]:
-    if not os.environ.get("KNOS_GAME_DIR", "").strip():
+    base = Path(os.environ.get("KNOS_GAME_DIR") or "").expanduser()
+    if str(base) in ("", ".") or not (base / "game.json").exists() or _status(base) == "closed":
         try:
             ensure_round()
         except Exception as e:  # noqa: BLE001
@@ -64,6 +100,18 @@ def available() -> tuple[bool, str]:
         return True, "ok"
     except Exception as e:  # noqa: BLE001
         return False, f"the game modules are not installed here ({type(e).__name__})"
+
+
+def _budget() -> int | None:
+    try:
+        root = Path(os.environ["KNOS_GAME_DIR"])
+        s = json.loads((root / "game.json").read_text(encoding="utf-8"))
+        task = Path(s.get("task_dir") or s.get("task", {}).get("dir") or "")
+        if task and (task / "task.json").exists():
+            return int(json.loads((task / "task.json").read_text(encoding="utf-8")).get("time_budget_s") or 0) or None
+    except (KeyError, OSError, ValueError):
+        pass
+    return None
 
 
 def rounds() -> list[dict]:
@@ -78,18 +126,15 @@ def rounds() -> list[dict]:
         return []
     g = st.get("game") or st
     demo = str(g.get("id") or "").startswith("knos-demo-")
-    if str(g.get("status") or "") == "closed":
-        try:
-            ensure_round()                              # reseed: one open demo round at a time
-            st = gt.call("knos_game_state", {})
-            board = gt.call("knos_game_board", {})
-            g, demo = st.get("game") or st, True
-        except Exception:  # noqa: BLE001
-            pass
     return [{"id": g.get("id"), "title": g.get("title"),
              "label": DEMO_LABEL if demo else "Knos game round: code judged by the sealed referee; the pot pays by its "
              "verdicts on devnet (test money)", "demo": demo, "state": g.get("status") or st.get("status"),
-             "round": g.get("round") or st.get("round"), "players": len(board.get("board") or board.get("rows") or [])}]
+             "round": g.get("round") or st.get("round"), "players": len(board.get("board") or board.get("rows") or []),
+             "submit": {"file": "train.py", "what": "the whole train.py, changed so the sealed referee measures a higher "
+                        "accuracy (for example: features 'square' and standardize True)",
+                        "attempts_per_round": PER_ROUND, "time_budget_s": _budget() or DEMO_BUDGET_S,
+                        "readme": TASK_README, "baseline": "https://github.com/drexthealpha/Knos/blob/main/examples/autoresearch/train.py",
+                        "prize": f"{PRIZE_UNITS} test units on devnet for a scored attempt, when you give a devnet wallet"}}]
 
 
 def listing() -> dict:
@@ -97,21 +142,91 @@ def listing() -> dict:
     ms = [{"claim_id": r.get("claim_id"), "idea": r.get("idea"), "commitment": r.get("commitment"), "units": r.get("units")}
           for r in preorder.all_public(20) if r.get("status") == "locked"]
     return {"rounds": rounds(), "why": None if ok else why, "milestones": ms,
-            "note": "devnet test money; a round's pot is paid by the game's referee verdicts, a milestone by 2-of-3 referee signatures"}
+            "note": "devnet test money; a round's attempts are judged by the game's sealed referee, a milestone by 2-of-3 referee signatures"}
 
 
-def submit(round_id: str, name: str, code: str, who: str) -> dict:
-    """Join the configured game as a fresh player and submit one attempt; the referee answers at once."""
+def _players() -> Path:
+    return escrow._state_dir() / "demo-players.json"
+
+
+def _player_for(game_id: str, sub: str, name: str, kind: str, gt) -> tuple[str, str]:
+    """The same contributor keeps one player per round: later attempts are that player's next attempts."""
+    with _lock:
+        try:
+            book = json.loads(_players().read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            book = {}
+        k = hashlib.sha256(f"{game_id}|{sub}".encode()).hexdigest()
+        if k in book:
+            return book[k]["player"], book[k]["key"]
+        joined = gt.call("knos_game_join", {"name": name, "kind": kind, "label": "web contributor"})
+        book[k] = {"player": joined["player"], "key": joined["key"]}
+        tmp = _players().with_suffix(".tmp")
+        tmp.write_text(json.dumps(book), encoding="utf-8")
+        os.replace(tmp, _players())
+        return joined["player"], joined["key"]
+
+
+def _prize(game_id: str, verdict: dict, name: str, wallet: str) -> dict:
+    """A scored attempt's demo prize: one knos_pay PANEL order of test units to the contributor's wallet, released at
+    once by 2 of the server's 3 referee keys signing over the referee's verdict (its sha256 is the evidence)."""
+    from solders.pubkey import Pubkey
+
+    from knos import ideas
+    from knos.ideas import commit as C
+    from knos.settle.v2 import pay
+    try:
+        Pubkey.from_string(wallet)
+    except ValueError:
+        return {"paid": False, "why": "payout wallet: a Solana address"}
+    ok, why = preorder.ready()
+    if not ok:
+        return {"paid": False, "why": why}
+    led = escrow.ledger()
+    buyer, refs, prog = escrow.demo_key(), preorder.referees(), preorder.program()
+    mint = escrow.mint(led)
+    claim = ideas.claim(f"Demo round {game_id}: prize for attempt {verdict.get('n')} by {name} (sha256 {str(verdict.get('sha256'))[:16]})",
+                        field_name="Computer Science", kind="person", by={"app": "knos demand check", "round": game_id})
+    tok = pay.ata(buyer.pubkey(), mint)
+    pre = [pay.create_ata_ix(buyer.pubkey(), w, mint) for w in (buyer.pubkey(), Pubkey.from_string(wallet)) if led.account(pay.ata(w, mint)) is None]
+    if pre:
+        led.send(pre, buyer)
+    need = PRIZE_UNITS * escrow.UNIT + pay.order_fee(PRIZE_UNITS * escrow.UNIT)
+    if escrow._token_units(led, tok) < need:
+        led.send([escrow._mint_to_ix(mint, tok, buyer.pubkey(), -(-need // escrow.UNIT))], buyer)
+    doc = C.commit(claim, units=PRIZE_UNITS, price=1, payee=C.parse_payee(wallet), funder=buyer, funder_token=tok, mint=mint, led=led,
+                   stages=[("referee_pass", 10_000)], stage_work_s=[7 * 86_400], panel=(2, [str(r.pubkey()) for r in refs]),
+                   program=prog, unlisted_panel=True)
+    review = escrow._state_dir() / f"prize-{doc['commitment_hash'][:16]}.verdict.json"
+    review.write_text(json.dumps(verdict, sort_keys=True, default=str), encoding="utf-8")
+    recs = [C.sign(doc, "stage1", r, led, passed=True, review=review) for r in refs[:2]]
+    got = C.release(doc, "stage1", recs, preorder.relayer(), led)
+    st = doc["orders"]["stage1"]
+    return {"paid": got["status"] == "released", "units": PRIZE_UNITS, "to": wallet, "order": st["order"],
+            "lock": st["signature"], "release": [s["signature"] for s in got["sent"]],
+            "explorer": [escrow.explorer(s) for s in [st["signature"], *[x["signature"] for x in got["sent"]]] if s],
+            "label": "demo prize, devnet test money"}
+
+
+def submit(round_id: str, name: str, code: str, who: str, sub: str | None = None, wallet: str | None = None) -> dict:
+    """Submit one attempt to the open round (the contributor's player is reused across attempts); the referee answers
+    at once. A scored attempt with a payout wallet is paid its demo prize on devnet."""
     ok, why = available()
     if not ok:
         raise ValueError(why)
     if not (isinstance(code, str) and 10 <= len(code) <= 100_000):
-        raise ValueError("code: your submission, 10 to 100,000 characters")
+        raise ValueError("train.py: the whole file, 10 to 100,000 characters")
     gt = _tools()
-    name = (str(name or "").strip() or "contributor")[:40]
-    joined = gt.call("knos_game_join", {"name": f"{name}-{abs(hash(who)) % 10_000}", "kind": "agent" if "agent" in who else "human",
-                                        "label": f"web contributor ({who[:40]})"})
-    player, key = joined.get("player"), joined.get("key")
-    got = gt.call("knos_game_submit", {"player": player, "key": key, "code": code})
-    return {"joined": {k: joined.get(k) for k in ("player", "name")}, "result": got,
-            "note": "judged by the game's sealed referee; the pot pays by verdicts at round close (devnet test money)"}
+    game_id = (gt.call("knos_game_state", {}).get("game") or {}).get("id") or round_id
+    name = (" ".join(str(name or "").split()) or "contributor")[:40]
+    player, key = _player_for(str(game_id), sub or who, name, "agent" if "agent" in who else "human", gt)
+    got = gt.call("knos_game_submit", {"player": player, "key": key, "file": code})   # the tool reads "file"
+    result = {k: got.get(k) for k in ("n", "round", "decision", "shown", "reasons", "rules", "sha256", "said", "moved")}
+    out = {"name": name, "round": game_id, "result": result, "submitted_sha256": hashlib.sha256(code.encode("utf-8")).hexdigest(),
+           "note": "judged by the round's sealed referee on this server (devnet test money)"}
+    if wallet and got.get("decision") == "scored":
+        try:
+            out["prize"] = _prize(str(game_id), {**result, "name": name}, name, wallet.strip())
+        except Exception as e:  # noqa: BLE001 - the verdict stands; the prize says why it did not pay
+            out["prize"] = {"paid": False, "why": f"the prize could not be paid ({type(e).__name__})"}
+    return out

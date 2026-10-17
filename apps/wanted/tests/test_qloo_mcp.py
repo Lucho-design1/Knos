@@ -92,7 +92,7 @@ def test_cache_live_only_short_and_keyless(tmp_path, monkeypatch):
     b = live.call("qloo_find_tags", {"query": "jazz"}, why="t", trail=trail)
     assert a == b and len(n) == 1 and trail[1]["cached"] is True
     files = list((tmp_path / "c").glob("*.json"))
-    assert len(files) == 1 and "qk-test" not in files[0].read_text() and "qk-test" not in json.dumps(trail)
+    assert len(files) == 1 and "qk-test" not in files[0].read_text(encoding="utf-8") and "qk-test" not in json.dumps(trail)
     import os
     os.utime(files[0], (clock[0] - qloo_mcp.CACHE_TTL_S - 5, clock[0] - qloo_mcp.CACHE_TTL_S - 5))
     live.call("qloo_find_tags", {"query": "jazz"}, why="t", trail=trail)

@@ -91,7 +91,7 @@ def test_check_is_written_and_read_back_from_sibyl():
 
 def test_the_wake_page_pings_the_app_until_it_answers():
     from pathlib import Path
-    page = (Path(__file__).resolve().parents[3] / "web" / "wanted.html").read_text()
+    page = (Path(__file__).resolve().parents[3] / "web" / "wanted.html").read_text(encoding="utf-8")
     assert "https://knos.onrender.com" in page and "/healthz" in page and "location.replace" in page
     assert "prefers-reduced-motion" in page and "Knos Wanted" not in page
 

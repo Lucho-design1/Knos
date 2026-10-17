@@ -56,7 +56,7 @@ def test_key_only_in_the_header(tmp_path):
     assert req.get_header("X-api-key") == KEY and KEY not in req.full_url
     for f in tmp_path.rglob("*"):
         if f.is_file():
-            assert KEY not in f.read_text()
+            assert KEY not in f.read_text(encoding="utf-8")
     with pytest.raises(QlooError) as e:
         client(tmp_path, Opener(error=401)).get("/v2/tags", {"filter.query": "z"})
     assert KEY not in str(e.value) and "example.test" not in str(e.value) and "HTTP 401" in str(e.value)

@@ -16,7 +16,10 @@ import datetime as dt
 import hashlib
 import json
 import re
-import tomllib
+try:
+    import tomllib
+except ImportError:  # Python 3.10: the same parser, as Knos itself reads TOML (src/knos/judge.py)
+    import tomli as tomllib  # type: ignore[no-redef]
 from pathlib import Path
 
 NOBEL_FILE = Path(__file__).parent / "data" / "nobel.toml"
@@ -180,6 +183,6 @@ def why_never_crossed(card: dict, report: dict, today: dt.date | None = None) ->
                              if reg else "no evidence (OpenAlex field and topics are not clinical or regulated)")})
     small = [m for m in matches if isinstance(m.get("popularity"), (int, float)) and m["popularity"] < SMALL_PRODUCT]
     out.append({"wall": "failed attempts", "flag": bool(small),
-                "evidence": (f"small products exist in Qloo: {', '.join(f'{m['name']} (popularity {m['popularity']:.2f})' for m in small[:3])}"
+                "evidence": ("small products exist in Qloo: " + ", ".join(f"{m['name']} (popularity {m['popularity']:.2f})" for m in small[:3])
                              if small else "no evidence")})
     return out

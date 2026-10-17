@@ -413,7 +413,8 @@ def make_handler(state: State):
                 return got
             if path == "/api/task/submit":
                 return tasks.submit(str(body.get("round", "")), str(body.get("name", "")), str(body.get("code", "")),
-                                    f"{user.get('kind')}: {user.get('label')}")
+                                    f"{user.get('kind')}: {user.get('label')}", sub=str(user.get("sub") or ""),
+                                    wallet=_text(body.get("wallet"), 44))
             if path == "/api/check":
                 idea = body.get("idea")
                 if not isinstance(idea, str) or not idea.strip():

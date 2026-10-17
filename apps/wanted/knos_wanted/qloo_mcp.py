@@ -111,7 +111,7 @@ class Bridge:
 
     def _start(self) -> None:
         self._p = subprocess.Popen([self.node, str(BRIDGE)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                   env=self._env, text=True, bufsize=1, cwd=str(APP))
+                                   env=self._env, text=True, encoding="utf-8", bufsize=1, cwd=str(APP))
 
     def _ask(self, msg: dict) -> dict:
         with self._lock:

@@ -345,7 +345,7 @@ def _informative(rows: list[dict]) -> list[dict]:
 
 
 def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: dt.date, exclude: set[str]) -> dict:
-    ev: dict = {"persona": [], "persona_all": [], "ladder": [], "tag_families": [], "product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
+    ev: dict = {"product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
                 "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
     words = content_words(idea, place)
     ev["words"], ev["named_audience"] = words, [{"word": w, "dimension": d, "key": k} for w, d, k in audience_named(idea)]

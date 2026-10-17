@@ -242,18 +242,30 @@ async function loadTasks() {
   try {
     const got = await api("/api/tasks");
     const box = $("taskBox");
-    box.innerHTML = (got.rounds && got.rounds.length ? got.rounds.map((r) => `<div class="card"><h3>${esc(r.title || r.id)}</h3><p class="small muted">${esc(r.label || "")}</p>
-      <p class="small">${esc(r.state || "")} · ${esc(String(r.players ?? ""))}</p>
-      <label>${t("claim_id")}</label><input class="tname" data-g="${esc(r.id)}" maxlength="40" placeholder="ada">
-      <label>Submission (python)</label><textarea class="tsub" data-g="${esc(r.id)}" rows="3" maxlength="4000"></textarea>
-      <button class="tBtn" data-g="${esc(r.id)}" type="button">${t("cross_go")}</button></div>`).join("") :
+    box.innerHTML = (got.rounds && got.rounds.length ? got.rounds.map((r) => { const s = r.submit || {}; return `<div class="card"><div class="row spread"><h3>${esc(r.title || r.id)}</h3><span class="testmoney">${t("test_money")}</span></div>
+      <p class="small muted">${esc(r.label || "")}</p>
+      <p><b>What to submit:</b> ${esc(s.what || "")}. Start from <a href="${esc(s.baseline || "#")}" target="_blank" rel="noopener">${esc(s.file || "train.py")}</a> and read the <a href="${esc(s.readme || "#")}" target="_blank" rel="noopener">task's README</a>.</p>
+      <p class="small muted">Round ${esc(r.round)} · ${esc(String(r.players ?? 0))} players · up to ${esc(s.attempts_per_round)} attempts per round · ${esc(s.time_budget_s)} s per run · ${esc(s.prize || "")}</p>
+      <label for="tn-${esc(r.id)}">Your name</label><input id="tn-${esc(r.id)}" class="tname" data-g="${esc(r.id)}" maxlength="40" placeholder="ada">
+      <label for="tw-${esc(r.id)}">Payout wallet (devnet, optional)</label><input id="tw-${esc(r.id)}" class="twal" data-g="${esc(r.id)}" maxlength="44" placeholder="Solana address">
+      <label for="ts-${esc(r.id)}">The whole ${esc(s.file || "train.py")}</label><textarea id="ts-${esc(r.id)}" class="tsub mono" data-g="${esc(r.id)}" rows="8" maxlength="100000"></textarea>
+      <button class="tBtn" data-g="${esc(r.id)}" type="button">Submit work</button></div>`; }).join("") :
       `<p class="note">${t("contribute_none")} ${esc(got.why || "")}</p>`) +
       (got.milestones && got.milestones.length ? `<ul class="list">` + got.milestones.map((m) => `<li>${esc((m.idea || "").slice(0, 70))} · <span class="mono small">${esc(m.claim_id)}</span> · <a href="#make">${t("milestone_prove")}</a></li>`).join("") + "</ul>" : "");
-    document.querySelectorAll(".tBtn").forEach((b) => b.onclick = () => busy(b, t("loading"), async () => {
-      if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
-      const g = b.dataset.g;
-      const out = await api("/api/task/submit", { round: g, name: document.querySelector(`.tname[data-g="${g}"]`).value, code: document.querySelector(`.tsub[data-g="${g}"]`).value });
-      b.parentElement.insertAdjacentHTML("beforeend", `<p class="small">✓ ${esc(JSON.stringify(out.result || out).slice(0, 200))}</p>`); }));
+    document.querySelectorAll(".tBtn").forEach((b) => b.onclick = async () => {
+      const card = b.closest(".card"); card.querySelectorAll(".note").forEach((n) => n.remove());
+      const put = (cls, html) => card.insertAdjacentHTML("beforeend", `<div class="note ${cls}" role="status">${html}</div>`);
+      if (!session) { $("signin").hidden = false; $("pkNew").focus(); put("err", esc(t("err_signin"))); return; }
+      const g = b.dataset.g, was = b.textContent; b.disabled = true; b.textContent = "Judging…";
+      try {
+        const out = await api("/api/task/submit", { round: g, name: card.querySelector(".tname").value, wallet: card.querySelector(".twal").value || undefined, code: card.querySelector(".tsub").value });
+        const r = out.result || {}, pz = out.prize;
+        put(r.decision === "scored" ? "ok" : "", `<b>${esc(out.name)}</b>, attempt ${esc(r.n)}: <b>${esc(r.decision)}</b>${r.shown != null ? ` · shown score ${esc(r.shown)}` : ""}` +
+          (r.reasons && r.reasons.length ? `<br><span class="small">${esc(r.reasons.join("; "))}</span>` : "") +
+          `<br><span class="small mono">sha256 ${esc(String(r.sha256 || "").slice(0, 16))}… (your file: ${esc(out.submitted_sha256.slice(0, 16))}…)</span>` +
+          (pz ? `<br>${pz.paid ? `Prize: ${esc(pz.units)} test units → <a href="${esc((pz.explorer || []).slice(-1)[0] || "#")}" target="_blank" rel="noopener">release ↗</a>` : `Prize not paid: ${esc(pz.why || "")}`}` : ""));
+      } catch (e) { put("err", esc(e.message)); } finally { b.disabled = false; b.textContent = was; }
+    });
   } catch (e) { err(e); }
 }
 

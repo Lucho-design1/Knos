@@ -41,8 +41,6 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[3]
 TASK = ROOT / "examples" / "autoresearch"
 JUDGE_REPO = 1401439243          # drexthealpha/knos-e2e (the graduation demo's judge repository id)
-QUOTE = {"kind": "compute", "supplier": "Nebius Token Factory, Nemotron 3 Super", "unit_cost": 0.0, "quantity": 1,
-         "source": "Token Factory model catalog, read 14 Oct 2026 (knos.nebius.sources.PRICE_PER_M); usage of this run's agent calls"}
 QUOTE: dict[str, Any] = {"kind": "compute", "supplier": "Nebius Token Factory, Nemotron 3 Super", "unit_cost": 0.0, "quantity": 1,
          "source": "Token Factory model catalog, read 14 Oct 2026 (knos.nebius.sources.PRICE_PER_M); usage of this run's agent calls"}
 
