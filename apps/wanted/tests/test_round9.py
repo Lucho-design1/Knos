@@ -56,11 +56,10 @@ def test_funder_and_task_endpoints_are_gated_and_honest(app):
     st, e, _ = call(base, "/api/fund", {"report": "0" * 64, "units": 5}, tok)
     assert st == 400 and "unknown report" in e["error"]
     st, got, _ = call(base, "/api/tasks")
-    assert st == 200 and got["rounds"] == [] and "KNOS_GAME_DIR" in (got["why"] or "") and "test money" in got["note"]
-    st, e, _ = call(base, "/api/task/submit", {"round": "x", "code": "print(1)" * 3}, tok)
-    assert st == 400 and "KNOS_GAME_DIR" in e["error"]
-    with pytest.raises(ValueError, match="KNOS_GAME_DIR"):
-        tasks.submit("r", "ada", "x" * 20, "guest: t")
+    assert st == 200 and "test money" in got["note"]
+    assert got["rounds"] and got["rounds"][0]["demo"] is True              # an empty server seeds the demo round (round 10)
+    st, e, _ = call(base, "/api/task/submit", {"round": "x", "code": "short", "name": "a"}, tok)
+    assert st == 400 and "10 to 100,000" in e["error"]
 
 
 def test_paging_on_the_buyer_and_funder_lists(app):
@@ -98,7 +97,7 @@ def test_mcp_covers_the_roles_with_a_confirm_convention(app):
     tok = si["result"]["structuredContent"]["token"]
     assert tok and "via MCP" in si["result"]["structuredContent"]["label"]
     s, tk, _ = call(base, "/mcp", {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "knos_tasks", "arguments": {}}})
-    assert tk["result"]["structuredContent"]["rounds"] == []
+    assert tk["result"]["structuredContent"]["rounds"][0]["demo"] is True
     s, page, h = call(base, "/mcp", None, headers={"Accept": "text/html"})
     assert s == 200 and b"Model Context Protocol" in page and b"knos_sign_in" in page
 
@@ -125,3 +124,33 @@ def test_the_pages_home_links_the_app_prominently():
     home = (Path(server.__file__).resolve().parents[3] / "web" / "index.html").read_text(encoding="utf-8")
     assert 'id="hero-app"' in home and 'href="wanted.html"' in home and "Back research products" in home
     assert home.index('id="more-list"') < home.index('id="hero-app"') < home.index('id="hero-fact"')   # in the More menu: one tap, zero words on the pinned first screen
+
+
+def test_an_empty_server_seeds_one_demo_round_and_judges_a_submission(monkeypatch, tmp_path):
+    monkeypatch.delenv("KNOS_GAME_DIR", raising=False)
+    monkeypatch.setenv("KNOS_WANTED_STATE", str(tmp_path / "state"))           # Render's wiped /data
+    got = tasks.listing()
+    r = got["rounds"][0]
+    assert r["demo"] is True and r["id"].startswith("knos-demo-") and "DEMO ROUND" in r["label"] and "test money" in r["label"]
+    code = "def propose(task, history):\n    return {\"params\": {\"n_estimators\": 40}}\n"
+    out = tasks.submit(r["id"], "stranger", code, "guest: stranger")
+    assert out["result"].get("decision") in ("accepted", "failed", "refused") and "referee" in out["note"]
+    assert tasks.listing()["rounds"][0]["id"] == r["id"]                       # one open demo round at a time, not two
+    assert (Path(server.__file__).resolve().parents[3] / "examples" / "autoresearch" / "task.json").exists()
+    docker = (Path(server.__file__).resolve().parents[2] / "wanted" / "Dockerfile").read_text()
+    assert "COPY examples/autoresearch" in docker                              # the image carries the demo task
+
+
+def test_the_signin_sheet_and_the_noise_toggle_are_on_the_page():
+    page = (STATIC / "index.html").read_text(encoding="utf-8")
+    assert 'id="signinClose"' in page
+    css = (STATIC / "style.css").read_text(encoding="utf-8")
+    assert "#signin:not([hidden])" in css and "position: fixed" in css
+    js = (STATIC / "app.js").read_text(encoding="utf-8")
+    assert "Show all Qloo matches" in js and "left out: " in js and 'put("ok"' in js and 'put("err"' in js
+
+
+def test_persona_keeps_the_products_kind_and_shelves_the_noise():
+    from knos_wanted import check
+    rep = check.demand_check(IDEA, client=FakeQloo())
+    assert all(p["on_kind"] for p in rep["persona"]) and len(rep["persona_all"]) >= len(rep["persona"])

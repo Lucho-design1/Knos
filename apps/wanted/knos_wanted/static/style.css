@@ -96,3 +96,8 @@ footer { padding: 26px 16px 42px; }
 code.url { background: var(--soft); padding: 3px 8px; border-radius: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; overflow-wrap: anywhere; display: inline-block; }
 @media (max-width: 560px) { .two { grid-template-columns: 1fr; } .card { padding: 15px; } }
 #fundList, #makeList { list-style: none; padding: 0; }
+/* the sign-in sheet: reachable anywhere on the page, phone first */
+#signin:not([hidden]) { position: fixed; inset-inline: 0; inset-block-end: 0; z-index: 60; margin: 0; max-height: 86vh; overflow: auto;
+  border-radius: var(--r) var(--r) 0 0; box-shadow: 0 -8px 40px rgba(0, 0, 0, .35); }
+@media (min-width: 700px) { #signin:not([hidden]) { inset-inline: auto; inset-inline-end: 16px; inset-block-end: 16px; width: 380px; border-radius: var(--r); } }
+.note.ok { border-inline-start-color: var(--ok); }

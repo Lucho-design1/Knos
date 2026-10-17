@@ -527,6 +527,7 @@ def serve(host: str | None = None, port: int | None = None) -> None:
     port = port or int(os.environ.get("PORT", "8080"))
     state = State()
     threading.Thread(target=lambda: preorder.preflight_status(force=True), daemon=True).start()   # the money path, simulated
+    threading.Thread(target=tasks.available, daemon=True).start()        # seeds the demo round when no round is open
     httpd = ThreadingHTTPServer((host, port), make_handler(state))
     rest_ok, rest_why = state.rest.ready()
     print(f"Knos demand check on http://{host}:{port}  Qloo REST: {'on' if rest_ok else 'off (' + rest_why + ')'}  "

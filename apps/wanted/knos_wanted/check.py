@@ -345,8 +345,8 @@ def _informative(rows: list[dict]) -> list[dict]:
 
 
 def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: dt.date, exclude: set[str]) -> dict:
-    ev: dict = {"persona": [], "ladder": [], "tag_families": [], "product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
-                "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "ladder": [], "tag_families": []}
+    ev: dict = {"persona": [], "persona_all": [], "ladder": [], "tag_families": [], "product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
+                "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
     words = content_words(idea, place)
     ev["words"], ev["named_audience"] = words, [{"word": w, "dimension": d, "key": k} for w, d, k in audience_named(idea)]
     if not words:
@@ -420,8 +420,12 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     ev["place"] = loc
     body, s11 = run.get("/v2/insights", {"filter.type": "urn:tag", "diversify.by": "subtype", "diversify.take": "2", "take": 8, **signal},
                         "taste persona: this taste's tags, one or two per family (diversify.by=subtype)")
-    ev["persona"] = [{"name": t.get("name"), "family": t.get("subtype"), "src": s11}
-                     for t in (((body or {}).get("results") or {}).get("tags") or [])[:8]]
+    tail = kind.split(":")[-1]
+    rows11 = [{"name": t.get("name"), "family": t.get("subtype"), "src": s11,
+               "on_kind": tail in str(t.get("subtype") or "") or bool({_norm(x) for x in tokens(t.get("name"))} & set(words))}
+              for t in (((body or {}).get("results") or {}).get("tags") or [])[:8]]
+    ev["persona"] = [r for r in rows11 if r["on_kind"]] or rows11[:2]     # cross-domain noise stays out of the headline
+    ev["persona_all"] = rows11
     if len(ev["matches"]) >= 2:
         ladder_ids = ",".join(m["id"] for m in ev["matches"][:6])
         body, s12 = run.get("/v2/insights", {"filter.type": kind, "filter.results.entities": ladder_ids, "take": 6, **signal},
@@ -633,7 +637,7 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
     run = _Run(client, on_call)
     ok, why = client.ready()
     empty = {"product_type": None, "words": content_words(idea, place), "matches": [], "unrelated": [], "excluded": [], "leader": None,
-             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "ladder": [], "tag_families": []}
+             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
     ev = gather(run, idea, place, leader, today, set(exclude or [])) if ok else empty
     failed = [c for c in run.calls if c.get("error") and c["what"].startswith(ESSENTIAL)]
     missing = [c for c in run.calls if c.get("error") and c not in failed]

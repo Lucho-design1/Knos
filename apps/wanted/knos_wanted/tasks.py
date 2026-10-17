@@ -8,9 +8,42 @@ a game folder the page says so instead of inventing work. Open milestones are li
 """
 from __future__ import annotations
 
+import datetime as dt
 import os
+from pathlib import Path
 
-from . import preorder
+from . import escrow, preorder
+
+TASK_DIR = Path(__file__).resolve().parents[3] / "examples" / "autoresearch"
+DEMO_TITLE = "Demo round: beat the sealed classifier (test money)"
+DEMO_LABEL = ("DEMO ROUND, devnet test money: the repository's example task, seeded by this server so contributors "
+              "always have one open round; the sealed referee judges every submission")
+
+
+def _status(root: Path) -> str | None:
+    import json
+    try:
+        return json.loads((root / "game.json").read_text(encoding="utf-8")).get("status")
+    except (OSError, ValueError):
+        return None
+
+
+def ensure_round() -> str | None:
+    """One open demo round at a time: when no game folder is configured (or the configured one is empty or closed —
+    Render wipes /data), seed a fresh labelled demo round from the task packaged in the image. Returns its id."""
+    base = Path(os.environ.get("KNOS_GAME_DIR") or "").expanduser()
+    if base and (base / "game.json").exists() and _status(base) != "closed":
+        return None                                    # an operator's own open round: leave it alone
+    if not TASK_DIR.exists():
+        return None                                    # no packaged task: the page says so instead
+    from knos.game.engine import Game
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d%H%M%S")
+    root = escrow._state_dir() / f"demo-game-{stamp}"
+    g = Game.create(root, TASK_DIR, title=DEMO_TITLE, field="ml-research", game_id=f"knos-demo-{stamp}",
+                    rules={"rounds": 3, "per_round": 4, "ladder_eta": 0.01, "max_refusals": 2, "identity_required": False})
+    os.environ["KNOS_GAME_DIR"] = str(root)
+    print(f"knos-demand-check: seeded the demo game round {g.s['id']} at {root} ({DEMO_LABEL})", flush=True)
+    return g.s["id"]
 
 
 def _tools():
@@ -20,7 +53,12 @@ def _tools():
 
 def available() -> tuple[bool, str]:
     if not os.environ.get("KNOS_GAME_DIR", "").strip():
-        return False, "no game folder is configured on this server (KNOS_GAME_DIR)"
+        try:
+            ensure_round()
+        except Exception as e:  # noqa: BLE001
+            return False, f"no open round: the demo round could not be seeded ({type(e).__name__})"
+    if not os.environ.get("KNOS_GAME_DIR", "").strip():
+        return False, "no open round on this server (no game folder and no packaged demo task)"
     try:
         _tools()
         return True, "ok"
@@ -39,8 +77,18 @@ def rounds() -> list[dict]:
     except Exception:  # noqa: BLE001
         return []
     g = st.get("game") or st
-    return [{"id": g.get("id"), "title": g.get("title"), "label": "Knos game round: code judged by the sealed referee; "
-             "the pot pays by its verdicts on devnet (test money)", "state": g.get("state") or st.get("state"),
+    demo = str(g.get("id") or "").startswith("knos-demo-")
+    if str(g.get("status") or "") == "closed":
+        try:
+            ensure_round()                              # reseed: one open demo round at a time
+            st = gt.call("knos_game_state", {})
+            board = gt.call("knos_game_board", {})
+            g, demo = st.get("game") or st, True
+        except Exception:  # noqa: BLE001
+            pass
+    return [{"id": g.get("id"), "title": g.get("title"),
+             "label": DEMO_LABEL if demo else "Knos game round: code judged by the sealed referee; the pot pays by its "
+             "verdicts on devnet (test money)", "demo": demo, "state": g.get("status") or st.get("status"),
              "round": g.get("round") or st.get("round"), "players": len(board.get("board") or board.get("rows") or [])}]
 
 

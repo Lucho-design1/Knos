@@ -168,6 +168,10 @@ async function loadProduct(h) {
         : `<div class="decision ${esc((d.verdict || "").toLowerCase())}">${esc((d.reasons || []).join("; "))}</div>`);
     $("buyBox").hidden = d.verdict !== "OPEN";
     if (r.limits) $("productCard").insertAdjacentHTML("beforeend", `<p class="small muted">${esc(r.limits)}</p>`);
+    const all = [...(r.matches || []).map((m) => ({ ...m, kept: true })), ...(r.unrelated || []).map((u) => ({ name: u.name, kept: false }))];
+    if (all.length) $("productCard").insertAdjacentHTML("beforeend",
+      `<details class="small"><summary>Show all Qloo matches (${all.length})</summary>` +
+      all.map((m) => `<p class="small">${esc(m.name)} <span class="muted">${m.kept ? "counted" : "left out: " + esc(m.why || "shares too few of the idea's words")}</span></p>`).join("") + "</details>");
     if (r.fees && r.fees.text) $("feeLine").textContent = r.fees.text + ".";
     const action = `${location.origin}/api/actions/preorder?report=${r.hash}`;
     $("blinkLink").href = "https://dial.to/?action=" + encodeURIComponent("solana-action:" + action) + "&cluster=devnet";
@@ -211,11 +215,19 @@ async function loadFund() {
     $("fundList").innerHTML = open.map((c) => `<li class="card"><b>${esc((c.idea || "").slice(0, 80))}</b> · ${esc(c.units)} × ${esc(c.unit_price)} · <a href="${X(c.commitment, "address")}" target="_blank" rel="noopener">${short(c.commitment)}</a>
       <div class="row"><input class="fu" data-r="${esc(c.report)}" type="number" min="5" value="10" aria-label="${t("units")}" style="max-width:110px"><button class="fundBtn" data-r="${esc(c.report)}" type="button">${t("fund_btn")}</button></div>
       ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(c.factoring.status)} — ${esc(c.factoring.note)}</p>` : `<button class="fBtn quiet" data-c="${esc(c.commitment)}" type="button">${t("factoring_t")}</button>`}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
-    document.querySelectorAll(".fundBtn").forEach((b) => b.onclick = () => busy(b, t("loading"), async () => {
-      if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
-      const units = parseInt(document.querySelector(`.fu[data-r="${b.dataset.r}"]`).value, 10);
-      const got = await api("/api/fund", { report: b.dataset.r, units });
-      receiptInto(b.parentElement.parentElement, got); }));
+    document.querySelectorAll(".fundBtn").forEach((b) => b.onclick = async () => {
+      const card = b.closest("li"); card.querySelectorAll(".note").forEach((n) => n.remove());
+      const put = (cls, html) => card.insertAdjacentHTML("beforeend", `<div class="note ${cls}" role="status">${html}</div>`);
+      if (!session) { $("signin").hidden = false; $("pkNew").focus(); put("err", esc(t("err_signin"))); return; }
+      const was = b.textContent; b.disabled = true; b.textContent = t("loading") + "…";
+      try {
+        const units = parseInt(card.querySelector(".fu").value, 10);
+        const got = await api("/api/fund", { report: b.dataset.r, units });
+        const sig = (got.signatures || {}).lock;
+        put("ok", `✓ ${esc(got.units)} · <a href="${X(got.commitment, "address")}" target="_blank" rel="noopener">escrow ${short(got.commitment)} ↗</a>` +
+          (sig ? ` · <a href="${X(sig)}" target="_blank" rel="noopener">tx ${short(sig)} ↗</a>` : "") + ` · <span class="testmoney">${t("test_money")}</span>`);
+      } catch (e) { put("err", esc(e.message)); } finally { b.disabled = false; b.textContent = was; }
+    });
     document.querySelectorAll(".fBtn").forEach((b) => b.onclick = () => busy(b, t("loading"), async () => {
       if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
       await api("/api/factor", { commitment: b.dataset.c, discount_bps: 500 }); loadFund(); }));
@@ -308,7 +320,9 @@ async function boot() {
   } catch (e) { err(e); }
   show();
 }
-$("whoBtn").onclick = () => { $("signin").hidden = !$("signin").hidden; };
+$("whoBtn").onclick = () => { const sh = $("signin"); sh.hidden = !sh.hidden; if (!sh.hidden) ($("pkNew").disabled ? $("email") : $("pkNew")).focus(); };
+$("signinClose").onclick = () => { $("signin").hidden = true; $("whoBtn").focus(); };
+document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && !$("signin").hidden) { $("signin").hidden = true; $("whoBtn").focus(); } });
 $("outBtn").onclick = () => setSession(null);
 $("pkNew").onclick = () => busy($("pkNew"), t("loading"), passkeyNew);
 $("pkUse").onclick = () => busy($("pkUse"), t("loading"), passkeyUse);
