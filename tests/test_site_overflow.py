@@ -98,7 +98,8 @@ def test_the_first_screen_says_forty_words_at_most() -> None:
         return _words(re.sub(r'<(\w+)\b[^>]*class="[^"]*\bk-num\b[^"]*"[^>]*>.*?</\1>', " ", html, flags=re.S))
     words = prose(bar) + prose(hero)
     assert 20 <= len(words) <= 56, (len(words), words)          # the outcome, who it is for, the sentence, the number, the bar
-    assert len(_words(bar) + _words(hero)) <= 64                              # and with every control's label and figure: no more than these
+    assert len(_words(bar) + _words(hero)) <= 66                              # and with every control's label and figure (and the two words of the link to the app): no more than these
+    assert re.search(r'<a class="k-btn" id="hero-app" href="#apps"[^>]*>Open app →</a>', hero)       # the app, one press from the first screen
 
 
 def test_the_figure_on_the_first_screen_is_the_measured_one() -> None:

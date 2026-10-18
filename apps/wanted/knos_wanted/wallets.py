@@ -190,7 +190,8 @@ def faucet(led, h: dict, rp_id: str) -> dict:
     """Test units of this app's own devnet test mint to the passkey's wallet: devnet test money, worth nothing."""
     w = ensure(led, h, rp_id)
     with _lock:
-        sig = led.send([escrow._mint_to_ix(w["mint"], w["token_account"], relayer().pubkey(), FAUCET_UNITS)], relayer())
+        auth = escrow.demo_key()                 # the test mint's authority (escrow.mint); the relayer may be another key
+        sig = led.send([escrow._mint_to_ix(w["mint"], w["token_account"], auth.pubkey(), FAUCET_UNITS)], auth)
     return {"signature": sig, "explorer": escrow.explorer(sig), "units": FAUCET_UNITS, "to": str(w["vault"]), "mint": str(w["mint"]), "money": MONEY}
 
 

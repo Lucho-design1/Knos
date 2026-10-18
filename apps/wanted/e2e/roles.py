@@ -130,6 +130,38 @@ class Run:
                                        "label": "operator top-up of devnet test units (the test mint's authority), beyond the faucet's hourly limit"})
         self.see(role, f"operator top-up of {units} devnet test units to {vault[:8]}…: {line[:120]}")
 
+    def fund(self, role, need):
+        """Bring the role's passkey wallet to `need` test units: the operator's top-up when one is configured, else the
+        app's own faucet (25 units a press, twice an hour per address), waiting out its limit up to --faucet-wait min."""
+        w = self.api(role, "/api/wallet", {})
+        if w["balance_units"] >= need:
+            return w
+        if self.args.topup_cmd:
+            self.topup(role, w["vault"], int(need - w["balance_units"]) + 1)
+            return self.api(role, "/api/wallet", {})
+        end = time.time() + 60 * self.args.faucet_wait
+        while w["balance_units"] < need:
+            try:
+                got = self.api(role, "/api/wallet/faucet", {})
+                self.sigs(f"{role} faucet {time.strftime('%H:%M:%S')}", {"faucet": got.get("signature")})
+                self.see(role, f"faucet: +{got.get('units')} devnet test units ({str(got.get('signature'))[:16]}…)")
+            except Exception as why:  # noqa: BLE001 - the faucet's hourly limit: wait for the window to move
+                if time.time() > end or "too many" not in str(why).lower():
+                    raise RuntimeError(f"the faucet: {why}") from None
+                self.see(role, f"faucet limit reached ({str(why)[:80]}): waiting 5 minutes")
+                self.page[role].wait_for_timeout(300_000)
+                continue
+            self.page[role].wait_for_timeout(3000)
+            w = self.api(role, "/api/wallet", {})
+        return w
+
+    def hook(self, name):
+        cmd = getattr(self.args, name)
+        if cmd:
+            got = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=300)
+            self.summary.setdefault("hooks", []).append({"hook": name, "cmd": cmd, "exit": got.returncode, "out": got.stdout[-300:]})
+            print(f"hook {name}: exit {got.returncode} {got.stdout[-200:]}", flush=True)
+
     def commitment(self, role, order):
         return self.api(role, "/api/commitment?id=" + order)
 
@@ -178,14 +210,51 @@ def _err_line(text: str) -> str:
 # -- the story ----------------------------------------------------------------------------------------------------------
 def researcher(r: Run, st: dict):
     p = r.page["researcher"]
-    p.goto(r.base + "/#research", wait_until="domcontentloaded")
+    if r.args.front_door:
+        taps = 0
+        p.goto(r.args.front_door, wait_until="domcontentloaded")
+        p.wait_for_timeout(2500)
+        r.shot("researcher", "front-door")
+        nav = p.get_by_role("link", name=re.compile("Research products", re.I)).first
+        typed = None
+        if not nav.is_visible():                          # on a phone the views sit behind the Menu / More buttons
+            for name in (r"^\s*Menu\s*$", r"^\s*More\s*$"):
+                b = p.get_by_role("button", name=re.compile(name, re.I)).first
+                if not nav.is_visible() and b.count() and b.is_visible():
+                    b.click()
+                    taps += 1
+                    p.wait_for_timeout(800)
+        if nav.count() and nav.is_visible():
+            nav.click()
+            taps += 1
+        else:                                             # no link to the app on this front door: say so, type it
+            typed = r.args.front_door.rstrip("/") + "/#apps"
+            r.see("researcher", f"the front door shows no link to the app after {taps} taps; typed {typed}")
+            p.goto(typed, wait_until="domcontentloaded")
+        st["front_door_typed"] = typed
+        p.wait_for_selector("#apps-go", timeout=30_000)
+        p.click("#apps-go")
+        taps += 1
+        p.wait_for_url(re.compile(re.escape(r.base) + "|wanted\\.html"), timeout=120_000)
+        if "wanted.html" in p.url:                         # the wake page forwards once the app answers
+            p.wait_for_url(re.compile(re.escape(r.base)), timeout=180_000)
+        st["front_door_taps"] = taps
+        r.see("researcher", f"front door {r.args.front_door} -> {p.url} in {taps} taps")
+        p.wait_for_function("() => typeof api === 'function'", timeout=60_000)
+        p.evaluate("location.hash = '#research'")
+        p.wait_for_timeout(1500)
+    else:
+        p.goto(r.base + "/#research", wait_until="domcontentloaded")
     p.fill("#ref", r.args.doi)
     p.fill("#product", r.args.product)
+    if r.args.place:
+        p.fill("#place", r.args.place)
     p.click("#crossBtn")
     p.wait_for_selector("#outcome .decision", timeout=600_000)
     rep = p.evaluate("report")
     d = rep.get("decision") or {}
     st["report"], st["reserve"] = rep["hash"], int(d.get("reserve_units") or 5)
+    st["price"] = int((d.get("plan") or {}).get("unit_price") or 2)
     r.see("researcher", f"crossing decided {d.get('verdict')} ({rep.get('label', '')[:40]}): target {d.get('target_units')}, "
                         f"reserve {d.get('reserve_units')}, report {rep['hash'][:16]}")
     r.shot("researcher", "decision")
@@ -218,11 +287,12 @@ def buyer(r: Run, st: dict):
     r.click_until("buyer", "#faucetBtn", f"() => document.querySelector('#pkUnits').textContent !== {json.dumps(before)}", "faucet")
     w = r.api("buyer", "/api/wallet", {})
     r.see("buyer", f"passkey wallet {w['vault']} holds {w['balance_units']} test units after the faucet")
-    need = st["reserve"] * 2 + 2                                   # the order (reserve x unit price 2) and its fee
+    need = st["reserve"] * st.get("price", 2) + 2                  # the order (reserve x unit price) and its fee
     if w["balance_units"] < need:
-        r.topup("buyer", w["vault"], int(need - w["balance_units"]) + 1)
+        w = r.fund("buyer", need)
         p.evaluate("loadWallet()")
         p.wait_for_timeout(3000)
+    r.see("buyer", f"passkey wallet holds {w['balance_units']} test units (needs {need})")
     p.fill("#units", str(st["reserve"]))
     r.click_until("buyer", "#preBtn", "() => /escrow|✓|[1-9A-HJ-NP-Za-km-z]{8}…/.test(document.querySelector('#receipt').innerText)", "pre-order", timeout=400)
     r.see("buyer", "pre-order signed by the buyer's passkey: " + p.inner_text("#receipt")[:200].replace("\n", " "))
@@ -239,18 +309,16 @@ def lender_quotes(r: Run, st: dict):
     p = r.page["funder"]
     p.goto(r.base + "/#fund", wait_until="domcontentloaded")
     p.wait_for_function("() => typeof api === 'function'", timeout=30_000)
-    r.api("funder", "/api/wallet/faucet", {})
-    w = r.api("funder", "/api/wallet", {})
-    face = st["reserve"] * 2
-    if w["balance_units"] < face:
-        r.topup("funder", w["vault"], int(face - w["balance_units"]) + 1)
+    face = st["reserve"] * st.get("price", 2)
+    w = r.fund("funder", face * r.args.advance_rate / 100 + 0.5)
     r.see("funder", f"lender's passkey wallet {w['vault']}")
     p.reload(wait_until="domcontentloaded")
     sel = f".lendGo[data-go='quote'][data-c='{st['order']}']"
     p.wait_for_selector(sel, timeout=60_000)
-    p.locator(sel).locator("xpath=..").locator(".ar").fill("90")
-    r.click_until("funder", sel, f"() => !document.querySelector(\"{sel}\") || document.querySelector('#lendTable').innerText.includes('90%')", "quote")
-    r.see("funder", "quoted a 90% advance on the receivable")
+    rate = str(r.args.advance_rate)
+    p.locator(sel).locator("xpath=..").locator(".ar").fill(rate)
+    r.click_until("funder", sel, f"() => !document.querySelector(\"{sel}\") || document.querySelector('#lendTable').innerText.includes('{rate}%')", "quote")
+    r.see("funder", f"quoted a {rate}% advance on the receivable")
     r.shot("funder", "quoted")
 
 
@@ -285,10 +353,14 @@ def maker_proves(r: Run, st: dict):
         page = (f"<!doctype html><meta charset=utf-8><title>Milestone result</title><h1>Milestone result</h1>"
                 f"<p>Claim {st['claim']}: the prototype ({r.args.product}) was built and measured; result attached.</p>")
         Path(r.args.evidence_dir, "index.html").write_text(page, encoding="utf-8")
-    url = r.args.evidence_url
-    if url.startswith("@"):                              # a file holding the URL, read when the page is posted
+    url = r.args.evidence_url or ""
+    if r.args.evidence_url_template:
+        url = r.args.evidence_url_template.format(claim=st["claim"])
+    elif url.startswith("@"):                              # a file holding the URL, read when the page is posted
         url = Path(url[1:]).read_text(encoding="utf-8").strip()
-    url = url.rstrip("/") + "/"
+    if not r.args.evidence_url_template:
+        url = url.rstrip("/") + "/"
+    r.hook("hook_before_post")
     p.goto(r.base + "/#make", wait_until="domcontentloaded")
     sel = f".ev[data-c='{st['order']}']"
     p.wait_for_selector(sel, timeout=60_000)
@@ -299,7 +371,8 @@ def maker_proves(r: Run, st: dict):
         raise RuntimeError("milestone not verified: " + _err_line(p.inner_text("body")))
     r.see("maker", f"posted the result page {url}: the FROST referee group checks it")
     r.shot("maker", "posted")
-    c = r.wait_status("maker", st["order"], "released", 900)
+    c = r.wait_status("maker", st["order"], "released", 60 * r.args.release_wait)
+    r.hook("hook_after_release")
     r.sigs("release by the FROST referee group", c.get("signatures"))
     sess = (c.get("referee_session") or {})
     r.see("maker", f"released by the FROST group key: signers {sess.get('signers')}, signature {str(sess.get('signature'))[:16]}…, "
@@ -328,7 +401,7 @@ def contributor(r: Run, st: dict):
     w = r.api("contributor", "/api/wallet", {})
     p.goto(r.base + "/#contribute", wait_until="domcontentloaded")
     p.wait_for_selector(".tBtn", timeout=60_000)
-    p.locator(".tname").first.fill("playwright")
+    p.locator(".tname").first.fill(f"pw{time.strftime('%H%M%S')}")
     p.locator(".twal").first.fill(w["vault"])
     # a real attempt: standardized inputs and squared features (the baseline itself is refused as "no change")
     code = TRAIN.read_text(encoding="utf-8").replace("'standardize': False", "'standardize': True").replace("'features': 'linear'", "'features': 'square'")
@@ -391,15 +464,23 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default="evidence-run")
     ap.add_argument("--doi", default=DOI)
     ap.add_argument("--product", default=PRODUCT)
+    ap.add_argument("--place", default=None)
     ap.add_argument("--evidence-dir", default=None, help="the folder the maker's result page is written to")
     ap.add_argument("--evidence-url", default=None, help="the public https URL that folder is served at")
     ap.add_argument("--topup-cmd", default=None)
+    ap.add_argument("--faucet-wait", type=int, default=0, help="minutes to wait out the faucet's hourly limit (live runs)")
+    ap.add_argument("--advance-rate", type=int, default=90, help="the lender's advance rate, 50 to 98 percent")
+    ap.add_argument("--front-door", default=None, help="start the researcher here and count the taps to the app")
+    ap.add_argument("--evidence-url-template", default=None, help="the maker's public page, {claim} = the claim id")
+    ap.add_argument("--hook-before-post", default=None, help="a shell command run before the maker posts its evidence")
+    ap.add_argument("--hook-after-release", default=None, help="a shell command run after the release")
+    ap.add_argument("--release-wait", type=int, default=15, help="minutes to wait for the referee group's release")
     ap.add_argument("--note", default="")
     ap.add_argument("--header", action="append", default=[], help="NAME:VALUE sent with every request (e.g. a tunnel's documented no-interstitial header)")
     ap.add_argument("--chromium", default=None, help="a Chrome/Chromium executable (default: Playwright's)")
     args = ap.parse_args(argv)
-    if not args.evidence_url:
-        ap.error("--evidence-url: the maker's result page must be a public https page")
+    if not (args.evidence_url or args.evidence_url_template):
+        ap.error("--evidence-url or --evidence-url-template: the maker's result page must be a public https page")
     from playwright.sync_api import sync_playwright
     base, out = args.base.rstrip("/"), Path(args.out)
     out.mkdir(parents=True, exist_ok=True)

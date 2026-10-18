@@ -304,3 +304,15 @@ atropos_.referee_spec                               # docs/reference/TASK_PACKAG
 sealed_.load_tasks, sealed_.public_prompt           # tests/test_hermes_gepa.py
 bn254_.pairing, bn254_.G1_GEN, bn254_.G2_GEN        # docs/reference/ZK.md; tests/test_zk_groth16.py
 zk_client_.DEVNET_PROGRAM_ID                        # the reserved devnet program id (docs/reference/ZK.md); tests/test_zk_client.py
+
+# knos.settle.v2.passkey_smart: the LazorKit passkey wallet client. Its callers are the web app (apps/wanted/knos_wanted/
+# wallets.py, preorder.py), outside vulture's scan (src/knos scripts); the constants mirror LazorKit's program (commit,
+# authenticator flags, slot window, account discriminators) as the program's own source names them.
+from knos.settle.v2 import passkey_smart as passkey_smart_
+passkey_smart_.LAZOR_COMMIT, passkey_smart_.BE, passkey_smart_.BS, passkey_smart_.MAX_SLOT_AGE, passkey_smart_.D_WALLET
+passkey_smart_.cred_hash, passkey_smart_.user_seed, passkey_smart_.create_wallet_ix, passkey_smart_.transfer_ownership   # wallets.py
+passkey_smart_.table_addresses, passkey_smart_.create_table_ixs, passkey_smart_.read_table, passkey_smart_.wallet_table_addresses  # wallets.py (lookup tables)
+passkey_smart_.message_v0, passkey_smart_.control_filters, passkey_smart_.sole_owner   # wallets.py; tests/test_passkey_smart_chain.py
+# knos.threshold: the FROST referee coordinator and host-1 signer the web app runs (apps/wanted/knos_wanted/referee.py).
+from knos.threshold import check as threshold_check_, ghoidc as ghoidc_, participant as participant_, session as session_
+threshold_check_.verdict_record, ghoidc_.GH_HOST, participant_.LocalClient, session_.Coordinator   # referee.py; tests/test_threshold_*.py

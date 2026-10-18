@@ -61,10 +61,6 @@
       enables, where, and at what price — then opens pre-orders held in escrow and paid to the maker only on proof.</p>
     <p class="small muted">Directional demand evidence, not a sales forecast. Every Qloo figure is aggregate taste, not a prediction about one person. <a href="/verify" data-i18n="verify_link">How we verify</a></p>
 
-    <section id="openNow" hidden>
-      <h2 data-i18n="live_products">Open for backing now</h2>
-      <ul id="openList" class="plist"></ul>
-    </section>
 
     <form id="crossForm" class="card" autocomplete="off" aria-labelledby="crossH">
       <h2 id="crossH" data-i18n="cross_t">Start a crossing</h2>
@@ -82,6 +78,11 @@
       </div>
       <button id="crossBtn" type="submit" data-i18n="cross_go">Run the crossing</button>
     </form>
+    <!-- below the form: it fills in after load, and above the fold it would push the form down (layout shift) -->
+    <section id="openNow" hidden>
+      <h2 data-i18n="live_products">Open for backing now</h2>
+      <ul id="openList" class="plist"></ul>
+    </section>
     <section id="timeline" class="card" hidden aria-live="polite">
       <h2 data-i18n="timeline_t">The crossing, live</h2>
       <ol id="steps" class="steps"></ol>

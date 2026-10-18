@@ -34,7 +34,7 @@ p { margin: 8px 0; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; color: var(--ink); text-decoration: none; margin-inline-end: auto; }
 .mark { width: 20px; height: 20px; border-radius: 6px; background: var(--accent); flex: none; position: relative; }
 .mark::after { content: ""; position: absolute; inset: 6px; border-radius: 2px; background: var(--accent-ink); }
-.badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.badge { min-width: 5.6em; text-align: center; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
 .badge.live { color: var(--ok); border-color: currentColor; } .badge.off { color: var(--danger); border-color: currentColor; }
 select.lang { font: inherit; font-size: var(--fs-0); padding: 6px 8px; border-radius: var(--r-s); border: 1px solid var(--line); background: var(--surface); color: var(--ink); max-width: 110px; }
 nav.roles { display: flex; gap: 2px; overflow-x: auto; padding: 0 0 8px; scrollbar-width: none; }

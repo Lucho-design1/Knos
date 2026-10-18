@@ -555,7 +555,7 @@ jobs:
             case "$name" in ''|'#'*) continue ;; esac
             so="programs-v2/target/arch-v3/deploy/$name.so"
             got_sha="$(sha256sum "$so" | cut -d' ' -f1)" got_exe="$(solana-verify get-executable-hash "$so")"
-            got_flags="$(od -An -tu4 -j48 -N4 "$so" | tr -d ' ')" got_bytes="$(stat -c %s "$so")"
+            got_flags="$(od -An -tu4 -j48 -N4 "$so" | tr -d ' ')" got_bytes="$(wc -c < "$so" | tr -d " ")"
             if [ "$got_exe" != "$exe" ] || [ "$got_sha" != "$sha" ] || [ "$got_flags" != "$flags" ] || [ "$got_bytes" != "$bytes" ]; then
               echo "::error::$name: this build is e_flags $got_flags, $got_bytes bytes, sha256 $got_sha, executable hash $got_exe; $V3_EXPECT names e_flags $flags, $bytes bytes, sha256 $sha, executable hash $exe. Nothing will be signed for the v3 builds."
               bad=1; continue

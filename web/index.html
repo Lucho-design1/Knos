@@ -127,6 +127,11 @@
       <!-- An upgrade of the programs that is waiting, said on the first screen in one line from upgrades.json (a file of
            this site, written from the multisig's accounts when the site is built): web/front.js. It sits in the hero's own
            top margin, so it moves nothing when it appears; opened, it says each proposal in the file's own words. -->
+      <!-- THE APP, one tap from the first screen: the Knos app for research products (knos.onrender.com). web/front.js
+           sends the press straight to the app when it answers within a moment, else to its wake page (wanted.html), as
+           the #apps page does; without scripts the link opens that page. A link, not a second control of the box: it
+           sits outside .hero-words, after the strip in the keyboard order. -->
+      <p class="hero-app" style="grid-column: 1; order: 2; margin: 4px 0 0"><a class="k-btn" id="hero-app" href="#apps" aria-label="Open the Knos app">Open app →</a></p>
       <details class="hero-upgrades" id="hero-upgrades" hidden><summary id="hero-upgrades-line"></summary><div class="hero-upgrades-body" id="hero-upgrades-body"></div></details>
       <div class="hero-mark" id="mark3d" aria-hidden="true"></div>
       <div id="front-result" hidden></div>
