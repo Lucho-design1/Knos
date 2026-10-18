@@ -1,0 +1,45 @@
+{{- if .Values.sso.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "knos.name" . }}-sso
+  labels: {{- include "knos.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sso
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: knos-sso, app.kubernetes.io/instance: {{ .Release.Name }}}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: knos-sso, app.kubernetes.io/instance: {{ .Release.Name }}}
+    spec:
+      containers:
+        - name: jackson
+          image: {{ .Values.sso.image | quote }}
+          ports: [{name: http, containerPort: 5225}]
+          env:
+            - {name: DB_ENGINE, value: {{ .Values.sso.dbEngine | quote }}}
+            {{- if .Values.sso.dbUrl }}
+            - {name: DB_URL, value: {{ .Values.sso.dbUrl | quote }}}
+            {{- end }}
+            - {name: EXTERNAL_URL, value: {{ .Values.sso.externalUrl | quote }}}
+            - {name: NEXTAUTH_URL, value: {{ .Values.sso.externalUrl | quote }}}
+            - {name: DO_NOT_TRACK, value: "1"}
+            - name: API_KEYS
+              valueFrom: {secretKeyRef: {name: {{ .Values.secrets.env }}, key: KNOS_SSO_API_KEY}}
+            - name: CLIENT_SECRET_VERIFIER
+              valueFrom: {secretKeyRef: {name: {{ .Values.secrets.env }}, key: KNOS_SSO_CLIENT_SECRET}}
+            - name: NEXTAUTH_SECRET
+              valueFrom: {secretKeyRef: {name: {{ .Values.secrets.env }}, key: KNOS_SSO_CLIENT_SECRET}}
+          readinessProbe: {httpGet: {path: /api/health, port: http}, periodSeconds: 15}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 768Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "knos.name" . }}-sso
+  labels: {{- include "knos.labels" . | nindent 4 }}
+spec:
+  selector: {app.kubernetes.io/name: knos-sso, app.kubernetes.io/instance: {{ .Release.Name }}}
+  ports: [{name: http, port: 80, targetPort: http}]
+{{- end }}

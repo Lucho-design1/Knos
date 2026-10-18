@@ -27,17 +27,19 @@ Target, reserve and price come from published rules over Qloo's numbers, not fro
    There are two ways to pre-order:
    - **A Solana Action (Blink):** `GET/POST /api/actions/preorder`, with rules at `/actions.json`. Any wallet signs, and
      the server never holds the buyer's key.
-   - **The demo buyer:** sign in with a passkey wallet (no seed phrase), email, Google or ORCID, and the app's demo buyer
-     pre-orders for you. It is labelled as such.
+   - **Your passkey:** sign in with a passkey (no seed phrase). It is a LazorKit smart wallet on devnet; the faucet puts
+     devnet test units in it, and your passkey signs the pre-order (secp256r1 precompile). The server relays and pays fees;
+     no server key buys for anyone.
 
    Then come an escrow receipt with explorer links and a milestone tracker.
 3. **Maker / funder.** Open milestones are listed here. The maker proves one with a public evidence page, code checks
    it, and two of three referee keys release the escrow on devnet. A second release of the same order is refused by the
    chain: the order account is closed.
-   - **Factoring:** knos_pay has an Assign instruction (0x18). The program accepts it only from a payee with a bound
-     wallet. For a payee named only by a wallet address, a devnet simulation of Assign is refused with E_PAYEE (88). So
-     factoring here is shown as a **labelled simulation** recorded off-program. It never claims an assignment that does
-     not exist.
+   - **Factoring (real, on devnet):** the maker claims the milestone with a passkey; each pre-order pays a wallet made
+     for that one receivable and owned by the maker's passkey. A lender quotes an advance rate (the fee is face less
+     advance, due at the milestone deadline); the maker's passkey hands the receivable's wallet to the lender's passkey
+     (LazorKit TransferOwnership), the lender's passkey pays the advance, and the release repays the lender. knos_pay's own
+     Assign (0x18) needs a payee bound by a GitHub or ORCID token, which a wallet-only payee has not (E_PAYEE 88).
 
 Everything runs on Solana devnet with test units: no real money.
 
@@ -82,7 +84,7 @@ Docker: `docker build -f apps/wanted/Dockerfile -t knos .` (python:3.12-slim). `
 | Variable | What |
 |---|---|
 | `QLOO_API_KEY`, `QLOO_BASE_URL`, `QLOO_MONTHLY_BUDGET` | Qloo, server side only (cached 7 days, 4 calls/s, monthly cap) |
-| `KNOS_WANTED_DEVNET_KEYPAIR`, `KNOS_WANTED_REFEREE_KEYS`, `KNOS_WANTED_MAKER_WALLET`, `KNOS_WANTED_MINT` | devnet escrow: demo buyer and test-mint authority, 3 referee keys (one server: not an independent panel), payee, test mint |
+| `KNOS_WANTED_DEVNET_KEYPAIR`, `KNOS_WANTED_REFEREE_KEYS`, `KNOS_WANTED_MAKER_WALLET`, `KNOS_WANTED_MINT` | devnet escrow: relayer (fees, rents) and test-mint authority (the faucet), 3 referee keys (one server: not an independent panel), payee, test mint |
 | `GOOGLE_CLIENT_ID` | Google sign-in (shown only when set) |
 | `ORCID_CLIENT_ID`, `ORCID_CLIENT_SECRET`, `ORCID_BASE` | ORCID sign-in (OAuth code flow; `ORCID_BASE=https://sandbox.orcid.org` for the sandbox) |
 | `RESEND_API_KEY`, `KNOS_WANTED_EMAIL_FROM` | email magic links; without them, an email is only a display label |
@@ -94,10 +96,10 @@ Docker: `docker build -f apps/wanted/Dockerfile -t knos .` (python:3.12-slim). `
 - Qloo's evidence now sets who, where (launch cities), the price tier, and the escrow target and reserve. The calibrated
   gates are relevance, clone, owned/served and contradiction. Explainability is on wherever Qloo returns it.
 - Landmark research intake (OpenAlex, Crossref, PubMed, arXiv), with sourced Nobel and "no product yet" rows.
-- Pre-orders: a Solana Action (Blink) for any wallet; the passkey or email/Google/ORCID-backed demo buyer; a devnet
+- Pre-orders: a Solana Action (Blink) for any wallet; a passkey-signed pre-order (LazorKit smart wallet); a devnet
   preflight in `/api/status`; the 1,232-byte transaction limit checked; milestones released by a 2-of-3 panel; a double
   release refused by the chain.
-- Factoring, shown as a labelled simulation because knos_pay's Assign needs a bound payee. The wake page. MCP over HTTP.
+- Factoring signed by passkeys (maker sells, lender advances and collects). The wake page. MCP over HTTP.
 - Fixes: the legacy `/api/preorder/{demo,faucet,tx,submit}` routes need a signed-in session; PyYAML is pinned in the
   image; Python 3.12; no raw errors are shown to users.
 - v0.4.0: six roles on one phone page in seven languages (ar is RTL); the official qloo-harness MCP server runs LIVE on

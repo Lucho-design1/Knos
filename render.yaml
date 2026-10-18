@@ -28,6 +28,11 @@ services:
         value: /etc/secrets/relayer.json
       - key: KNOS_WANTED_REFEREE_KEYS
         value: /etc/secrets/panel.json
+      # referee host 1 of the FROST 2-of-3 group (knos_wanted.referee): this server's ONE key share, a secret file
+      - key: KNOS_REFEREE_FROST_SHARE
+        value: /etc/secrets/referee-frost-share.json
+      # host 2 (.github/workflows/referee.yml) needs no token here: it polls on a cron and proves itself with its
+      # GitHub Actions OIDC token, which this server verifies against GitHub's keys (knos.threshold.ghoidc)
       - key: KNOS_WANTED_MAKER_WALLET
         value: 4dFAUoXNDbmPCJ1CPCFyaJqLW5WWY3i2TE3VKEdSbC31
       - key: KNOS_WANTED_SESSION_SECRET
@@ -44,4 +49,13 @@ services:
       - key: KNOS_WANTED_EMAIL_FROM
         sync: false
       - key: KNOS_WANTED_MINT
+        sync: false
+      # SAML single sign-on through SAML Jackson (the knos-sso service: image boxyhq/jackson, DB_ENGINE=mem)
+      - key: KNOS_SSO_URL
+        value: https://knos-sso.onrender.com
+      - key: KNOS_SSO_TEST_TENANT
+        value: knos-test
+      - key: KNOS_SSO_API_KEY
+        sync: false
+      - key: KNOS_SSO_CLIENT_SECRET
         sync: false

@@ -50,10 +50,11 @@
 
   <div class="card"><h2>The identity</h2>
     <p>Passkeys: the server keeps only the passkey's public key; your identity is derived from it, and sign-in is an
-    ES256 signature over a fresh challenge checked server-side. There is no seed phrase to lose. Devnet pre-orders made
-    with a passkey are executed by the app's demo buyer wallet, held by the server and labelled on every receipt — the
-    on-chain secp256r1 passkey path is not wired into this app yet, and we say so rather than imply it. Wallet
-    pre-orders (Blinks) are signed by your own wallet; the server never sees the key.</p></div>
+    ES256 signature over a fresh challenge checked server-side. There is no seed phrase to lose. The same passkey is your
+    wallet: a LazorKit smart wallet on devnet (program FLb7fyAtkfA4TSa2uYcAT8QKHd2pkoMHgmqfnXFXo7ao) whose one owner is the
+    passkey's P-256 key. A pre-order, a sale of a receivable, a lender's advance and its collection are each signed by the
+    person's passkey and checked on chain by Solana's secp256r1 precompile; the server only pays the fee and relays. No
+    server key buys for anyone. Wallet pre-orders (Blinks) are signed by your own wallet; the server never sees the key.</p></div>
 
   <div class="card"><h2>The code</h2>
     <p>MIT licensed, one repository, tests in the tree: <a href="https://github.com/drexthealpha/Knos" rel="noopener">github.com/drexthealpha/Knos</a>.

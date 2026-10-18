@@ -30,6 +30,7 @@ def local_app(monkeypatch, tmp_path):
     monkeypatch.setenv("KNOS_WANTED_STATE", str(tmp_path / "state"))
     monkeypatch.setenv("KNOS_WANTED_CACHE", str(tmp_path / "cache"))
     monkeypatch.syspath_prepend(str(APP))
+    before = {m: v for m, v in sys.modules.items() if m.startswith("knos_wanted")}
     from knos_wanted import server
     from knos_wanted.qloo_mcp import InProcess, Qloo
     from knos_wanted.qloo_rest import Client
@@ -40,6 +41,7 @@ def local_app(monkeypatch, tmp_path):
     httpd.shutdown()
     for m in [m for m in sys.modules if m.startswith("knos_wanted")]:
         sys.modules.pop(m)
+    sys.modules.update(before)          # the modules other test files imported at collection stay the ones they hold
 
 
 def test_calls_the_hosted_check(monkeypatch, local_app):

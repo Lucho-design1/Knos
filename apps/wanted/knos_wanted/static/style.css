@@ -108,3 +108,27 @@ code.url { background: var(--soft); padding: 3px 8px; border-radius: 6px; font-f
 @media (max-width: 400px) { #whoBtn { max-width: 6.5rem; } .badge { display: none; } }
 .bar { flex-wrap: wrap; row-gap: 6px; } .brand { min-width: 0; }
 [dir="rtl"] #whoBtn { direction: rtl; }
+
+/* projects + teams (valley.js) */
+fieldset.opts { border: 0; padding: 0; margin: 10px 0; } fieldset.opts legend { font-weight: 600; margin-bottom: 6px; }
+label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; margin: 6px 0; border: 1px solid var(--line); border-radius: var(--r-s); cursor: pointer; min-height: 44px; }
+label.opt input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--accent); }
+label.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--soft); border: 1px solid var(--line); }
+.chip.st-released { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chip.st-reopened { color: var(--warnc); border-color: currentColor; background: transparent; }
+.chip.st-funded, .chip.st-claimed { color: var(--ok); border-color: currentColor; background: transparent; }
+.ms h3 { margin: 0; } .ms details { margin: 10px 0; } .ms summary { cursor: pointer; font-weight: 600; min-height: 32px; }
+.pcard a { text-decoration: none; }
+
+/* the view named in the URL is laid out before app.js runs (no layout shift on a deep link) */
+html[data-view]:not([data-view=research]) #v-research { display: none; }
+html[data-view=buy] #v-buy[hidden],
+html[data-view=fund] #v-fund[hidden],
+html[data-view=contribute] #v-contribute[hidden],
+html[data-view=make] #v-make[hidden],
+html[data-view=projects] #v-projects[hidden],
+html[data-view=teams] #v-teams[hidden],
+html[data-view=agents] #v-agents[hidden] { display: block !important; }
+#tplPick { min-height: 330px; } #regPick { min-height: 150px; }
+label.opt { font-weight: 400; font-size: var(--fs-1); margin: 6px 0; }

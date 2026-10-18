@@ -1,7 +1,7 @@
 """One paid route, priced per use over x402: GET /api/x402/report?hash=… costs 1 test unit on devnet.
 
 First call answers HTTP 402 with an x402 challenge (scheme "exact", network solana-devnet, asset = this app's test
-mint, payTo = the demo buyer's token account). The client signs a transfer of `maxAmountRequired` base units and sends
+mint, payTo = the app's devnet test wallet's token account). The client signs a transfer of `maxAmountRequired` base units and sends
 it base64 in the X-PAYMENT header ({"x402Version": 1, "scheme": "exact", "network": …, "payload": {"transaction": …}});
 this server settles it on devnet (it is its own facilitator: sendTransaction, then confirmation) and serves the full
 report with an X-PAYMENT-RESPONSE header. Devnet test money: the point is the mechanism, not revenue. An agent can pay

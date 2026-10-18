@@ -21,7 +21,12 @@ function applyLang() {
   if (session) $("whoBtn").textContent = session.label;
 }
 function langMenu() {
-  $("lang").innerHTML = Object.entries(I.langs).map(([k, v]) => `<option value="${k}" ${k === LANG ? "selected" : ""}>${esc(v)}</option>`).join("");
+  // Only the current language is listed until the menu is used: the other names (Arabic, Hindi, Chinese scripts) make
+  // the browser load fallback fonts, which cost seconds of style and layout on a phone's first paint (Lighthouse).
+  const fill = (all) => { $("lang").innerHTML = Object.entries(I.langs).filter(([k]) => all || k === LANG).map(([k, v]) => `<option value="${k}" ${k === LANG ? "selected" : ""}>${esc(v)}</option>`).join(""); };
+  fill(false);
+  const more = () => { if (!$("lang").dataset.full) { $("lang").dataset.full = "1"; fill(true); } };
+  for (const ev of ["focus", "pointerdown", "touchstart", "keydown"]) $("lang").addEventListener(ev, more, { passive: true });
   $("lang").onchange = () => { LANG = $("lang").value; try { localStorage.setItem("knos.lang", LANG); } catch (e) { } applyLang(); show(); };
 }
 
@@ -48,7 +53,7 @@ async function busy(btn, text, fn) {
 }
 
 // ---- views ---------------------------------------------------------------------------------------------------------
-const VIEWS = ["research", "buy", "fund", "contribute", "make", "agents"];
+const VIEWS = ["research", "buy", "fund", "contribute", "make", "projects", "teams", "agents"];
 function show() {
   err(null); slow(false, "");
   const h = location.hash;
@@ -56,6 +61,7 @@ function show() {
   let view = m ? "buy" : (h.slice(1).split("=")[0] || "research");
   if (!VIEWS.includes(view)) view = "research";
   for (const v of VIEWS) $("v-" + v).hidden = v !== view;
+  document.documentElement.dataset.view = view;
   document.querySelectorAll("nav.roles a").forEach((a) => {
     a.classList.toggle("on", a.dataset.view === view);
     a.setAttribute("aria-current", a.dataset.view === view ? "page" : "false");
@@ -66,6 +72,7 @@ function show() {
   if (view === "fund") loadFund();
   if (view === "contribute") loadTasks();
   if (view === "agents") loadAgents();
+  if (window.KNOS_VIEW) window.KNOS_VIEW(view);       // projects + teams (valley.js)
 }
 window.addEventListener("hashchange", show);
 
@@ -82,7 +89,8 @@ async function passkeyNew() {
     user: { id: crypto.getRandomValues(new Uint8Array(16)), name: label, displayName: label }, pubKeyCredParams: [{ type: "public-key", alg: -7 }],
     attestation: "none", timeout: 60000, authenticatorSelection: { residentKey: "preferred", userVerification: "preferred" } } });
   setSession(await api("/api/auth/passkey/register", { id: cred.id, clientDataJSON: b64u(cred.response.clientDataJSON),
-    publicKey: b64u(cred.response.getPublicKey()), alg: cred.response.getPublicKeyAlgorithm(), label }));
+    publicKey: b64u(cred.response.getPublicKey()), alg: cred.response.getPublicKeyAlgorithm(), label,
+    authenticatorData: b64u(cred.response.getAuthenticatorData()) }));
 }
 async function passkeyUse() {
   const ch = await api("/api/auth/challenge", {});
@@ -167,6 +175,7 @@ async function loadProduct(h) {
         (p.unserved_audience && p.unserved_audience.length ? `<p class="small">${t("unserved_l")}: ${esc(p.unserved_audience.join(", "))}</p>` : "")
         : `<div class="decision ${esc((d.verdict || "").toLowerCase())}">${esc((d.reasons || []).join("; "))}</div>`);
     $("buyBox").hidden = d.verdict !== "OPEN";
+    loadWallet();
     if (r.limits) $("productCard").insertAdjacentHTML("beforeend", `<p class="small muted">${esc(r.limits)}</p>`);
     const all = [...(r.matches || []).map((m) => ({ ...m, kept: true })), ...(r.unrelated || []).map((u) => ({ name: u.name, kept: false }))];
     if (all.length) $("productCard").insertAdjacentHTML("beforeend",
@@ -214,7 +223,7 @@ async function loadFund() {
     const open = commitments.filter((c) => c.status === "locked");
     $("fundList").innerHTML = open.map((c) => `<li class="card"><b>${esc((c.idea || "").slice(0, 80))}</b> · ${esc(c.units)} × ${esc(c.unit_price)} · <a href="${X(c.commitment, "address")}" target="_blank" rel="noopener">${short(c.commitment)}</a>
       <div class="row"><input class="fu" data-r="${esc(c.report)}" type="number" min="5" value="10" aria-label="${t("units")}" style="max-width:110px"><button class="fundBtn" data-r="${esc(c.report)}" type="button">${t("fund_btn")}</button></div>
-      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(factorNote(c.factoring))}</p>` : `<button class="fBtn quiet" data-c="${esc(c.commitment)}" type="button">${t("factoring_t")}</button>`}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
+      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(factorNote(c.factoring))}</p>` : ""}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
     document.querySelectorAll(".fundBtn").forEach((b) => b.onclick = async () => {
       const card = b.closest("li"); card.querySelectorAll(".note").forEach((n) => n.remove());
       const put = (cls, html) => card.insertAdjacentHTML("beforeend", `<div class="note ${cls}" role="status">${html}</div>`);
@@ -222,22 +231,44 @@ async function loadFund() {
       const was = b.textContent; b.disabled = true; b.textContent = t("loading") + "…";
       try {
         const units = parseInt(card.querySelector(".fu").value, 10);
-        const got = await api("/api/fund", { report: b.dataset.r, units });
+        const got = await KnosPasskey.approve(await api("/api/fund", { report: b.dataset.r, units }), api);
         const sig = (got.signatures || {}).lock;
         put("ok", `✓ ${esc(got.units)} · <a href="${X(got.commitment, "address")}" target="_blank" rel="noopener">escrow ${short(got.commitment)} ↗</a>` +
           (sig ? ` · <a href="${X(sig)}" target="_blank" rel="noopener">tx ${short(sig)} ↗</a>` : "") + ` · <span class="testmoney">${t("test_money")}</span>`);
       } catch (e) { put("err", esc(e.message)); } finally { b.disabled = false; b.textContent = was; }
     });
-    document.querySelectorAll(".fBtn").forEach((b) => b.onclick = () => busy(b, t("loading"), async () => {
-      if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
-      await api("/api/factor", { commitment: b.dataset.c, discount_bps: 500 }); loadFund(); }));
+    loadLend();
   } catch (e) { err(e); }
+}
+// ---- lender: receivables, as PayFi receivable financing (advance rate, fee, due date, repaid by the release) ----------
+async function loadLend() {
+  const { receivables } = await api("/api/receivables");
+  $("lendTable").querySelector("tbody").innerHTML = receivables.map((r) => { const f = r.factoring || {}; const st = f.status || "open";
+    const act = r.status !== "locked" && st !== "advanced" && st !== "assigned" ? "" :
+      st === "assigned" ? `<button class="lendGo" data-go="advance" data-c="${esc(r.commitment)}" type="button">${t("pay_adv")}</button>` :
+      st === "advanced" ? `<button class="lendGo quiet" data-go="collect" data-c="${esc(r.commitment)}" type="button">${t("collect_btn")}</button>` :
+      `<input class="ar" type="number" min="50" max="98" value="90" aria-label="${t("adv_rate")}" style="max-width:64px">% <button class="lendGo" data-go="quote" data-c="${esc(r.commitment)}" type="button">${t("quote_btn")}</button>`;
+    const q = (r.quotes || []).slice(-1)[0];
+    return `<tr><td>${esc((r.idea || "").slice(0, 40))}<br><span class="muted">${esc(st)}</span></td><td>${esc(r.face_units)}</td><td>${esc(r.due)}</td>
+      <td>${q ? esc(q.advance_bps / 100) + "%" : "—"}</td><td>${q ? esc(q.advance_units) : "—"}</td><td>${q ? esc(q.fee_units) + " (" + esc(q.fee_pct) + "%)" : "—"}</td><td>${act}</td></tr>`; }).join("") ||
+    `<tr><td colspan="7" class="empty">${t("empty")}</td></tr>`;
+  document.querySelectorAll(".lendGo").forEach((b) => b.onclick = () => busy(b, t("pk_sign"), async () => {
+    if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
+    const c = b.dataset.c;
+    if (b.dataset.go === "quote") await api("/api/lend/quote", { commitment: c, advance_bps: Math.round(parseFloat(b.closest("tr").querySelector(".ar").value) * 100) });
+    else receipt(await KnosPasskey.approve(await api("/api/lend/" + b.dataset.go, { commitment: c }), api));
+    loadLend(); }));
+}
+async function loadWallet() {
+  if (!session || session.kind !== "passkey") { $("pkWallet").hidden = true; return; }
+  try { const w = await api("/api/wallet", {}); $("pkWallet").hidden = false; $("pkVault").textContent = short(w.vault); $("pkVault").href = w.explorer; $("pkUnits").textContent = w.balance_units; }
+  catch (e) { $("pkWallet").hidden = true; }
 }
 // server notes the page knows are shown in the reader's language (the server's English stays in the API)
 function viaLabel(c) { return { preorder: t("via_preorder"), funder: t("via_funder"), blink: t("via_blink") }[c.via_kind] || c.via || ""; }
 function factorNote(f) {
-  if (String(f.status || "").startsWith("SIMULATED")) return t("factoring_sim");
-  if (f.status === "ready") return t("factoring_ready");
+  if (f.status === "quoted") return t("factoring_sim");
+  if (["assigned", "advanced", "repaid"].includes(f.status)) return `${t("factoring_ready")} (${f.status})`;
   return `${f.status || ""}. ${f.note || ""}`;
 }
 function receiptInto(el, p) {
@@ -270,7 +301,9 @@ async function loadTasks() {
         put(r.decision === "scored" ? "ok" : "", `<b>${esc(out.name)}</b>, attempt ${esc(r.n)}: <b>${esc(r.decision)}</b>${r.shown != null ? ` · shown score ${esc(r.shown)}` : ""}` +
           (r.reasons && r.reasons.length ? `<br><span class="small">${esc(r.reasons.join("; "))}</span>` : "") +
           `<br><span class="small mono">sha256 ${esc(String(r.sha256 || "").slice(0, 16))}… (your file: ${esc(out.submitted_sha256.slice(0, 16))}…)</span>` +
-          (pz ? `<br>${pz.paid ? `Prize: ${esc(pz.units)} test units → <a href="${esc((pz.explorer || []).slice(-1)[0] || "#")}" target="_blank" rel="noopener">release ↗</a>` : `Prize not paid: ${esc(pz.why || "")}`}` : ""));
+          (pz ? `<br>${pz.paid ? `Prize: ${esc(pz.units)} test units → <a href="${esc((pz.explorer || []).slice(-1)[0] || "#")}" target="_blank" rel="noopener">release ↗</a>` :
+            pz.status === "signing" ? `<span class="prizeSigning">Prize: ${esc(pz.units)} test units locked (<a href="${esc((pz.explorer || [])[0] || "#")}" target="_blank" rel="noopener">tx ↗</a>), funded by the round's sponsor; released when 2 of 3 referee hosts sign (session <span class="mono">${esc(String(pz.session).slice(0, 8))}</span>)</span>` :
+            `Prize not paid: ${esc(pz.why || "")}`}` : ""));
       } catch (e) { put("err", esc(e.message)); } finally { b.disabled = false; b.textContent = was; }
     });
   } catch (e) { err(e); }
@@ -284,7 +317,11 @@ async function loadMaker() {
       <p class="small"><a href="${X(c.commitment, "address")}" target="_blank" rel="noopener">${short(c.commitment)}</a> · <span class="mono">${esc(c.claim_id)}</span> · ${esc(viaLabel(c))}</p>
       ${Object.entries(c.signatures || {}).map(([k, s]) => `<span class="small">${esc(k.replace(/_/g, " "))}: <a href="${X(s)}" target="_blank" rel="noopener">${short(s)}</a></span>`).join(" · ")}
       ${c.status === "locked" ? `<label>${t("evidence_url")}</label><div class="row"><input class="ev" data-c="${esc(c.commitment)}" type="url" placeholder="https://…"><button class="msBtn" data-c="${esc(c.commitment)}" type="button">${t("milestone_prove")}</button></div>` : ""}
-      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(factorNote(c.factoring))}</p>` : ""}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
+      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(factorNote(c.factoring))}</p>` : ""}
+      ${c.status === "locked" && c.factoring && c.factoring.status === "quoted" ? (c.factoring.quotes || []).map((q) => `<button class="acBtn quiet" data-c="${esc(c.commitment)}" data-q="${esc(q.id)}" type="button">${t("accept_btn")}: ${esc(q.advance_units)} (${esc(q.advance_bps / 100)}%)</button>`).join(" ") : ""}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
+    document.querySelectorAll(".acBtn").forEach((b) => b.onclick = () => busy(b, t("pk_sign"), async () => {
+      if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
+      receipt(await KnosPasskey.approve(await api("/api/factor", { commitment: b.dataset.c, quote: b.dataset.q }), api)); loadMaker(); }));
     document.querySelectorAll(".msBtn").forEach((b) => b.onclick = () => busy(b, t("loading"), async () => {
       if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
       const url = document.querySelector(`.ev[data-c="${b.dataset.c}"]`).value;
@@ -351,5 +388,10 @@ $("crossForm").onsubmit = (ev) => { ev.preventDefault(); busy($("crossBtn"), t("
 $("walletBtn").onclick = () => busy($("walletBtn"), t("loading"), walletPreorder);
 $("preBtn").onclick = () => busy($("preBtn"), t("loading"), async () => {
   if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
-  const p = await api("/api/preorder", { report: report.hash, units: parseInt($("units").value, 10) }); receipt(p); loadProduct(report.hash); });
+  const step = await api("/api/preorder", { report: report.hash, units: parseInt($("units").value, 10) });
+  const p = await KnosPasskey.approve(step, api); receipt(p); loadProduct(report.hash); });
+$("faucetBtn").onclick = () => busy($("faucetBtn"), t("loading"), async () => { await api("/api/wallet/faucet", {}); loadWallet(); });
+$("claimBtn").onclick = () => busy($("claimBtn"), t("loading"), async () => {
+  if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
+  const c = await api("/api/maker/claim", { report: report.hash }); $("claimNote").textContent = `${t("claimed")}: ${c.maker} · ${short(c.main_wallet)}`; });
 boot();

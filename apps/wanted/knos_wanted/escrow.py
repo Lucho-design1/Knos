@@ -13,8 +13,8 @@ buyer after the deadline otherwise (anyone may send RefundOrder). This app never
 Devnet only (knos.chain refuses mainnet). Test money: a test mint this app creates (6 decimals, no freeze authority).
 Who signs:
   wallet mode  the buyer's own browser wallet signs; the server only builds the unsigned transaction and relays it.
-  demo mode    a devnet TEST wallet of this app (KNOS_WANTED_DEVNET_KEYPAIR) signs as a demo buyer, so judges without
-               a wallet can see a real devnet escrow. It is never a founder key and holds no real money.
+  passkey      the buyer's own passkey signs (knos_wanted.wallets). The app's devnet TEST wallet (KNOS_WANTED_DEVNET_KEYPAIR)
+               only pays fees and mints test units (the faucet); it never buys for anyone (the demo buyer is removed).
 `knos` is an optional dependency (pip install "./apps/wanted[escrow]"); without it the report still works and the button
 says the escrow is unavailable.
 """
@@ -166,32 +166,6 @@ def _amount(units) -> int:
 
 def explorer(sig_or_addr: str, kind: str = "tx") -> str:
     return f"https://explorer.solana.com/{kind}/{sig_or_addr}?cluster=devnet"
-
-
-# -- demo mode: the app's test wallet is the buyer ------------------------------------------------------------------
-def demo_preorder(report_hash: str, units: int = 5) -> dict:
-    _, graduation, pay = knos()
-    amount = _amount(units)
-    with _lock:
-        led = ledger()
-        buyer = demo_key()
-        m = mint(led)
-        ata = pay.ata(buyer.pubkey(), m)
-        p = plan(report_hash)
-        need = amount + pay.order_fee(amount)
-        pre = []
-        if led.account(ata) is None:
-            pre.append(pay.create_ata_ix(buyer.pubkey(), buyer.pubkey(), m))
-        if _token_units(led, ata) < need:
-            pre.append(_mint_to_ix(m, ata, buyer.pubkey(), 100))
-        if pre:
-            led.send(pre, buyer)
-        seq = _next_seq(led, p, buyer.pubkey())
-        sig = led.send([graduation.preorder_ix(p, buyer.pubkey(), ata, m, amount, seq=seq)], buyer)
-        order = graduation.address(p, "pool", buyer.pubkey(), seq)
-    return {"signature": sig, "explorer": explorer(sig), "order": str(order), "order_explorer": explorer(str(order), "address"),
-            "buyer": str(buyer.pubkey()), "buyer_kind": "demo buyer (this app's devnet test wallet)", "amount_units": units,
-            "fee_units": pay.order_fee(amount) / UNIT, "mint": str(m), "claim_id": p["claim_id"], "seq": seq}
 
 
 # -- wallet mode: the buyer's own wallet signs ----------------------------------------------------------------------

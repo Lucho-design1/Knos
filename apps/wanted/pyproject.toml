@@ -19,6 +19,7 @@ dependencies = []   # the report and the web app use the Python standard library
 escrow = ["knos", "solders>=0.29"]
 config = ["pyyaml==6.0.3"]   # config/fees.yaml + config/referees.yaml on the money path (the uv.lock pin)
 auth = ["cryptography>=42"]   # passkey sign-in (ES256 signature check)
+evidence = ["c2pa-python==0.38.0"]   # C2PA-signed photo/video evidence (knos_wanted.provenance)
 dev = ["pytest>=8"]
 
 [project.scripts]

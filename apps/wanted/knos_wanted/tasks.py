@@ -8,8 +8,11 @@ verdicts. This module fronts it for the web app:
   - /api/task/submit: the contributor's first submission joins them as a player, later ones reuse that player (several
     attempts per round, the game's own per_round limit); the sealed referee answers at once, on this server;
   - a submission the referee SCORES earns a demo prize when the contributor gives a devnet wallet: a knos_pay PANEL
-    order of test units, released at once by 2 of the server's 3 referee keys over the referee's verdict (the same
-    escrow path as a milestone; devnet test money, labelled).
+    order of test units FUNDED BY THE ROUND'S SPONSOR (Knos itself, from this server's own devnet test wallet: a
+    sponsor funding a prize pot, not a buyer), pinned to the panel every new order pins (preorder.panel). With the FROST
+    referee group configured, the referee's verdict is published at /api/prize/evidence and the prize is released only
+    when 2 of the 3 referee hosts sign it after re-checking that page themselves (knos_wanted.referee); otherwise 2 of
+    the server's 3 referee keys release it at once (devnet test money, labelled).
 Open milestones are listed beside the round as evidence tasks.
 """
 from __future__ import annotations
@@ -32,6 +35,9 @@ DEMO_LABEL = ("DEMO ROUND, devnet test money: the repository's example task, see
 DEMO_BUDGET_S = 120          # per seeded run; the task's own 20 s is sized for a laptop, not a free 0.1-CPU host
 PER_ROUND = 4
 PRIZE_UNITS = 5              # test units for a scored attempt (knos_pay's order minimum)
+SPONSOR = ("sponsor: Knos, the round's sponsor; its own devnet test wallet funds the prize pot (test money). A sponsor "
+           "funding a prize is a real role, not a buyer")
+PUBLIC_URL_ENV = "KNOS_WANTED_PUBLIC_URL"
 _lock = threading.Lock()
 
 
@@ -167,9 +173,43 @@ def _player_for(game_id: str, sub: str, name: str, kind: str, gt) -> tuple[str, 
         return joined["player"], joined["key"]
 
 
-def _prize(game_id: str, verdict: dict, name: str, wallet: str) -> dict:
-    """A scored attempt's demo prize: one knos_pay PANEL order of test units to the contributor's wallet, released at
-    once by 2 of the server's 3 referee keys signing over the referee's verdict (its sha256 is the evidence)."""
+def public_base(base: str | None = None) -> str:
+    """The origin the referee hosts fetch a prize's evidence from: $KNOS_WANTED_PUBLIC_URL, else the request's origin,
+    else https://<KNOS_WANTED_RP_ID>, else https://knos.onrender.com."""
+    got = os.environ.get(PUBLIC_URL_ENV) or base or ("https://" + os.environ["KNOS_WANTED_RP_ID"] if os.environ.get("KNOS_WANTED_RP_ID") else "")
+    return (got or "https://knos.onrender.com").rstrip("/")
+
+
+def _prizes() -> Path:
+    d = escrow._state_dir() / "prizes"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def prize_evidence(pid: str) -> bytes | None:
+    """The public evidence page of one prize (the round's verdict and the commitment's claim id): what each referee
+    host fetches and re-checks before it signs."""
+    if not (isinstance(pid, str) and len(pid) == 16 and all(c in "0123456789abcdef" for c in pid)):
+        return None
+    f = _prizes() / f"{pid}.evidence.json"
+    return f.read_bytes() if f.exists() else None
+
+
+def load_prize(order: str) -> dict:
+    return json.loads((_prizes() / f"{order}.json").read_text(encoding="utf-8"))
+
+
+def save_prize(rec: dict) -> None:
+    f = _prizes() / f"{rec['order']}.json"
+    tmp = f.with_suffix(".tmp")
+    tmp.write_text(json.dumps(rec, default=str), encoding="utf-8")
+    os.replace(tmp, f)
+
+
+def _prize(game_id: str, verdict: dict, name: str, wallet: str, base: str | None = None) -> dict:
+    """A scored attempt's demo prize: one knos_pay PANEL order of test units to the contributor's wallet, funded by the
+    round's sponsor. The FROST referee group (when configured) releases it after 2 of 3 hosts re-check the published
+    verdict; else 2 of the server's 3 referee keys sign over the referee's verdict (its sha256 is the evidence)."""
     from solders.pubkey import Pubkey
 
     from knos import ideas
@@ -183,32 +223,50 @@ def _prize(game_id: str, verdict: dict, name: str, wallet: str) -> dict:
     if not ok:
         return {"paid": False, "why": why}
     led = escrow.ledger()
-    buyer, refs, prog = escrow.demo_key(), preorder.referees(), preorder.program()
+    sponsor, pan, prog = escrow.demo_key(), preorder.panel(), preorder.program()
     mint = escrow.mint(led)
     claim = ideas.claim(f"Demo round {game_id}: prize for attempt {verdict.get('n')} by {name} (sha256 {str(verdict.get('sha256'))[:16]})",
                         field_name="Computer Science", kind="person", by={"app": "knos demand check", "round": game_id})
-    tok = pay.ata(buyer.pubkey(), mint)
-    pre = [pay.create_ata_ix(buyer.pubkey(), w, mint) for w in (buyer.pubkey(), Pubkey.from_string(wallet)) if led.account(pay.ata(w, mint)) is None]
+    tok = pay.ata(sponsor.pubkey(), mint)
+    pre = [pay.create_ata_ix(sponsor.pubkey(), w, mint) for w in (sponsor.pubkey(), Pubkey.from_string(wallet)) if led.account(pay.ata(w, mint)) is None]
     if pre:
-        led.send(pre, buyer)
+        led.send(pre, sponsor)
     need = PRIZE_UNITS * escrow.UNIT + pay.order_fee(PRIZE_UNITS * escrow.UNIT)
     if escrow._token_units(led, tok) < need:
-        led.send([escrow._mint_to_ix(mint, tok, buyer.pubkey(), -(-need // escrow.UNIT))], buyer)
-    doc = C.commit(claim, units=PRIZE_UNITS, price=1, payee=C.parse_payee(wallet), funder=buyer, funder_token=tok, mint=mint, led=led,
-                   stages=[("referee_pass", 10_000)], stage_work_s=[7 * 86_400], panel=(2, [str(r.pubkey()) for r in refs]),
+        led.send([escrow._mint_to_ix(mint, tok, sponsor.pubkey(), -(-need // escrow.UNIT))], sponsor)
+    doc = C.commit(claim, units=PRIZE_UNITS, price=1, payee=C.parse_payee(wallet), funder=sponsor, funder_token=tok, mint=mint, led=led,
+                   stages=[("referee_pass", 10_000)], stage_work_s=[7 * 86_400], panel=pan,
                    program=prog, unlisted_panel=True)
-    review = escrow._state_dir() / f"prize-{doc['commitment_hash'][:16]}.verdict.json"
+    st = doc["orders"]["stage1"]
+    pid = doc["commitment_hash"][:16]
+    out = {"units": PRIZE_UNITS, "to": wallet, "order": st["order"], "lock": st["signature"], "funded_by": SPONSOR,
+           "label": "demo prize, devnet test money, funded by the round's sponsor"}
+    if pan[0] == 1:
+        # the FROST referee group: publish the verdict as the evidence page, then 2 of the 3 hosts check it and sign
+        from . import referee
+        page = json.dumps({"kind": "knos-demo-round-verdict", "claim": claim["id"], "round": game_id, "verdict": verdict},
+                          sort_keys=True, default=str).encode()
+        (_prizes() / f"{pid}.evidence.json").write_bytes(page)
+        url = f"{public_base(base)}/api/prize/evidence?id={pid}"
+        rec = {"kind": "prize", "order": st["order"], "doc": doc, "round": game_id, "to": wallet, "status": "locked",
+               "evidence_url": url, "signatures": {"lock": st["signature"]}}
+        save_prize(rec)
+        sig = referee.start(rec, url, led, kind="prize")
+        rec["referee_session"] = {"id": sig["session"], "github": sig["github"]}
+        save_prize(rec)
+        return {**out, "paid": False, "status": "signing", "session": sig["session"], "evidence": url, "needs": sig["needs"],
+                "explorer": [escrow.explorer(st["signature"])] if st["signature"] else []}
+    review = escrow._state_dir() / f"prize-{pid}.verdict.json"
     review.write_text(json.dumps(verdict, sort_keys=True, default=str), encoding="utf-8")
+    refs = preorder.referees()
     recs = [C.sign(doc, "stage1", r, led, passed=True, review=review) for r in refs[:2]]
     got = C.release(doc, "stage1", recs, preorder.relayer(), led)
-    st = doc["orders"]["stage1"]
-    return {"paid": got["status"] == "released", "units": PRIZE_UNITS, "to": wallet, "order": st["order"],
-            "lock": st["signature"], "release": [s["signature"] for s in got["sent"]],
-            "explorer": [escrow.explorer(s) for s in [st["signature"], *[x["signature"] for x in got["sent"]]] if s],
-            "label": "demo prize, devnet test money"}
+    return {**out, "paid": got["status"] == "released", "release": [s["signature"] for s in got["sent"]],
+            "explorer": [escrow.explorer(s) for s in [st["signature"], *[x["signature"] for x in got["sent"]]] if s]}
 
 
-def submit(round_id: str, name: str, code: str, who: str, sub: str | None = None, wallet: str | None = None) -> dict:
+def submit(round_id: str, name: str, code: str, who: str, sub: str | None = None, wallet: str | None = None,
+           base: str | None = None) -> dict:
     """Submit one attempt to the open round (the contributor's player is reused across attempts); the referee answers
     at once. A scored attempt with a payout wallet is paid its demo prize on devnet."""
     ok, why = available()
@@ -226,7 +284,7 @@ def submit(round_id: str, name: str, code: str, who: str, sub: str | None = None
            "note": "judged by the round's sealed referee on this server (devnet test money)"}
     if wallet and got.get("decision") == "scored":
         try:
-            out["prize"] = _prize(str(game_id), {**result, "name": name}, name, wallet.strip())
+            out["prize"] = _prize(str(game_id), {**result, "name": name}, name, wallet.strip(), base)
         except Exception as e:  # noqa: BLE001 - the verdict stands; the prize says why it did not pay
             out["prize"] = {"paid": False, "why": f"the prize could not be paid ({type(e).__name__})"}
     return out

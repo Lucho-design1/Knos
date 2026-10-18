@@ -1,0 +1,32 @@
+# Knos on one machine with Docker: the app (built from apps/wanted/Dockerfile) and SAML Jackson for single sign-on.
+#   cp deploy/selfhost/env.example deploy/selfhost/.env   (fill it; never commit it)
+#   docker compose -f deploy/selfhost/compose.yaml up --build
+# Devnet TEST keys go in deploy/selfhost/keys/ (buyer.json, relayer.json, panel.json), mounted read-only.
+services:
+  knos:
+    build: {context: ../.., dockerfile: apps/wanted/Dockerfile}
+    image: knos:0.4.0
+    ports: ["127.0.0.1:8080:8080"]
+    env_file: [.env]
+    environment:
+      KNOS_CLUSTER: devnet
+      KNOS_WANTED_DEVNET_KEYPAIR: /etc/knos-keys/buyer.json
+      KNOS_WANTED_RELAYER_KEYPAIR: /etc/knos-keys/relayer.json
+      KNOS_WANTED_REFEREE_KEYS: /etc/knos-keys/panel.json
+      KNOS_SSO_URL: http://localhost:5225
+    volumes: ["knos-data:/data", "./keys:/etc/knos-keys:ro"]
+    restart: unless-stopped
+  sso:
+    image: docker.io/boxyhq/jackson:26.2.0
+    ports: ["127.0.0.1:5225:5225"]
+    environment:
+      DB_ENGINE: mem
+      EXTERNAL_URL: http://localhost:5225
+      NEXTAUTH_URL: http://localhost:5225
+      DO_NOT_TRACK: "1"
+      API_KEYS: ${KNOS_SSO_API_KEY}
+      CLIENT_SECRET_VERIFIER: ${KNOS_SSO_CLIENT_SECRET}
+      NEXTAUTH_SECRET: ${KNOS_SSO_CLIENT_SECRET}
+    restart: unless-stopped
+volumes:
+  knos-data: {}

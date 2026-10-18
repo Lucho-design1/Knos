@@ -679,9 +679,10 @@ def test_every_job_that_signs_or_sees_a_secret_installs_by_hash_and_nothing_unha
         for name, job in doc["jobs"].items():
             if "steps" in job and _sees_a_secret_or_signs(doc, job) and _installs(job):
                 found[path.name, name] = _installs(job)
-    # the test sees what it is meant to: the four jobs that sign, the relay and the canary (it holds a token), each with its one
-    # hash-locked install
-    assert sorted(found) == sorted([*SIGNS, ("worker.yml", "relay"), ("worker.yml", "event"), ("worker.yml", "faucet"), ("knos-canary.yml", "canary")]), sorted(found)
+    # the test sees what it is meant to: the four jobs that sign, the relay and the canary (it holds a token), the FROST
+    # referee host (it holds a key share and mints an OIDC token), each with its one hash-locked install
+    assert sorted(found) == sorted([*SIGNS, ("worker.yml", "relay"), ("worker.yml", "event"), ("worker.yml", "faucet"), ("knos-canary.yml", "canary"),
+                                    ("referee.yml", "sign")]), sorted(found)
     assert all(len(lines) == 1 and "--require-hashes" in lines[0] for lines in found.values()), found
     # and it would catch the mistakes: no hashes, hashes without --no-deps or --no-build, an editable install, a tool install
     signing = {"permissions": {"id-token": "write"}, "jobs": {}}

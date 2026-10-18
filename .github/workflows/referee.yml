@@ -1,0 +1,95 @@
+name: knos referee (FROST host 2 of 3)
+
+# Knos's referee panel is ONE FROST threshold key (the Zcash Foundation's frost-ed25519, RFC 9591) split across three
+# hosts; any two release a milestone, one alone signs nothing (docs/reference/REFEREE_FROST.md). This workflow is
+# host 2: its key share lives only in the repository secret KNOS_REFEREE_FROST_SHARE.
+#
+# Nobody starts it with a token: it runs on a cron every 5 minutes (GitHub may start a scheduled run late) and on
+# workflow_dispatch, and pulls the open signing sessions from the app server (knos.onrender.com/api/referee/pending).
+# With none open it stops after one HTTPS read. For each open session it:
+#   1. RE-CHECKS THE MILESTONE ITSELF: reads the order on devnet, fetches the maker's evidence page, requires the claim
+#      id in it, recomputes the verdict digest; anything else (another digest, another panel, a closed order) is
+#      refused and nothing is signed;
+#   2. FROST round 1: posts its commitments (nonces stay in this job's memory, used once);
+#   3. FROST round 2: when it is one of the two signers, posts its signature share.
+# Every post carries (a) this job's GitHub Actions OIDC token, audience knos-referee, which the app server verifies
+# against GitHub's published keys (repository drexthealpha/Knos by id, workflow .github/workflows/referee.yml on
+# refs/heads/main; knos.threshold.ghoidc), and (b) the host's transport signature over the session and body.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      session:
+        description: "referee session id (32 hex characters); empty: every open session"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write   # the job's OIDC token (audience knos-referee) authenticates its posts to the app server
+
+concurrency:
+  group: knos-referee
+  cancel-in-progress: false
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      KNOS_CLUSTER: devnet
+      KNOS_REFEREE_COORDINATOR: https://knos.onrender.com
+    steps:
+      - name: open sessions on the app server (read-only)
+        id: pending
+        env:
+          SESSION: ${{ inputs.session }}
+        run: |
+          if [ -n "$SESSION" ]; then
+            case "$SESSION" in *[!0-9a-f]*) echo "session: 32 hex characters"; exit 1;; esac
+            [ "${#SESSION}" -eq 32 ] || { echo "session: 32 hex characters"; exit 1; }
+            echo "open=1" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          n="$(curl -fsS --max-time 60 --retry 2 "$KNOS_REFEREE_COORDINATOR/api/referee/pending" | python3 -c 'import json,sys; print(len(json.load(sys.stdin).get("sessions", [])))' || echo 0)"
+          echo "open sessions: $n"
+          echo "open=$([ "$n" -gt 0 ] && echo 1 || echo 0)" >> "$GITHUB_OUTPUT"
+      - if: steps.pending.outputs.open == '1'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+          persist-credentials: false
+      # A job that holds a key share uses no Actions cache and installs nothing unhashed (tests/test_workflows2.py):
+      # knos-frost is built from its committed Cargo.lock (--locked) each run, the Python side is requirements/sign.txt
+      # (`--require-hashes`) with this checkout's src on PYTHONPATH.
+      - name: build knos-frost (frost-ed25519 =3.0.0, Cargo.lock)
+        if: steps.pending.outputs.open == '1'
+        run: cargo build --release --locked --manifest-path tools/knos-frost/Cargo.toml
+      - if: steps.pending.outputs.open == '1'
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+      - name: install what the signer needs, each by its hash, and nothing else
+        if: steps.pending.outputs.open == '1'
+        timeout-minutes: 6
+        env:
+          UV_HTTP_TIMEOUT: "30"
+          UV_HTTP_RETRIES: "5"
+        run: |
+          uv venv --no-config --python 3.12 "$RUNNER_TEMP/knos"
+          uv pip install --no-config --python "$RUNNER_TEMP/knos/bin/python" --require-hashes --no-deps --no-build -r requirements/sign.txt
+          echo "$RUNNER_TEMP/knos/bin" >> "$GITHUB_PATH"
+      - name: sign the open sessions (the share never leaves this step's environment, never printed)
+        if: steps.pending.outputs.open == '1'
+        env:
+          KNOS_REFEREE_FROST_SHARE: ${{ secrets.KNOS_REFEREE_FROST_SHARE }}
+          KNOS_FROST_BIN: ${{ github.workspace }}/tools/knos-frost/target/release/knos-frost
+          PYTHONPATH: ${{ github.workspace }}/src
+          SESSION: ${{ inputs.session }}
+        run: |
+          if [ -z "$KNOS_REFEREE_FROST_SHARE" ]; then echo "the repository secret KNOS_REFEREE_FROST_SHARE is not set"; exit 1; fi
+          if [ -n "$SESSION" ]; then
+            python -m knos.threshold sign-session --session "$SESSION" --github-oidc
+          else
+            python -m knos.threshold serve --once --github-oidc
+          fi

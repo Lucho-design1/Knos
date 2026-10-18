@@ -148,22 +148,29 @@ def test_sign_in_providers_switch_on_with_their_keys(monkeypatch):
     assert auth.config()["orcid"] and auth.config()["email_provider"]
 
 
-def test_factoring_reports_what_the_program_says(monkeypatch, tmp_path):
-    from knos_wanted import preorder
-    from knos import chain
-    rec = {"order": "So11111111111111111111111111111111111111112", "units": 10, "unit_price": 2,
+def test_factoring_is_signed_by_passkeys_and_nothing_is_simulated(monkeypatch, tmp_path):
+    """The 0.4.0 offer recorded a SIMULATED Assign; factoring is now real and every step needs a passkey
+    (knos_wanted.wallets; the chain flow is tests/test_passkey_money_app.py). What is refused here, before any chain."""
+    import pytest
+
+    from knos_wanted import preorder, wallets
+    assert not hasattr(blink, "factor")
+    rec = {"order": "So11111111111111111111111111111111111111112", "units": 10, "unit_price": 2, "status": "locked",
            "maker_wallet": "4dFAUoXNDbmPCJ1CPCFyaJqLW5WWY3i2TE3VKEdSbC31", "doc": {"payee": {"payee_id": 10 ** 15 + 7}},
            "report": "b" * 64, "claim_id": "knos-idea:" + "0" * 32}
-    from solders.keypair import Keypair
-    monkeypatch.setenv("KNOS_WANTED_DEVNET_KEYPAIR", json.dumps(list(bytes(Keypair()))))
-
-    class Led:
-        url = "https://api.devnet.solana.com"
-    monkeypatch.setattr(chain, "call", lambda url, m, p, timeout=10: {"value": {"err": {"InstructionError": [0, {"Custom": 88}]}}})
-    out = blink.factor(rec, 500, led=Led())
-    assert out["status"] == "SIMULATED (off-program)" and out["assign_simulation"]["custom_code"] == 88
-    assert out["advance"] == 19.0 and out["face_value"] == 20 and "no assignment exists on chain" in out["note"]
-    assert preorder.load(rec["order"])["factoring"]["status"].startswith("SIMULATED")
-    monkeypatch.setattr(chain, "call", lambda url, m, p, timeout=10: {"value": {"err": None}})
-    assert blink.factor(rec, 500, led=Led())["status"] == "ready"
+    preorder._save(rec)
+    guest = {"sub": "guest:abc", "kind": "guest", "label": "g"}
+    with pytest.raises(wallets.NeedPasskey):
+        wallets.quote(None, guest, rec["order"], 9000, "knos.dev")
+    with pytest.raises(wallets.NeedPasskey):
+        wallets.prepare_accept(None, guest, rec["order"], "q1")
+    from knos_wanted import auth
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    spki = ec.generate_private_key(ec.SECP256R1()).public_key().public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
+    sub = auth.identity(spki)
+    auth._remember(sub, auth.b64u(b"cred-1"), spki)
+    with pytest.raises(ValueError, match="receivable wallet"):       # a pre-order not paid to a maker's passkey wallet
+        wallets.quote(None, {"sub": sub, "kind": "passkey", "label": "l"}, rec["order"], 9000, "knos.dev")
+    assert preorder.load(rec["order"]).get("factoring") is None        # nothing recorded off-program
 

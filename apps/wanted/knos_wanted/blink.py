@@ -1,4 +1,4 @@
-"""Pre-order with any Solana wallet: a Solana Action (Blink) and the factoring of a receivable.
+"""Pre-order with any Solana wallet: a Solana Action (Blink).
 
     GET  /actions.json                                   the Actions rules file (which paths are actions)
     GET  /api/actions/preorder?report=<hash>             the action: title, description, buttons (Solana Actions spec)
@@ -9,10 +9,7 @@ it creates the wallet's token account for this app's devnet TEST mint, tops it u
 the test mint's authority), and funds the escrow order. The wallet signs and sends it; the server never holds the
 wallet's key. Devnet only, test money.
 
-Factoring (POST /api/factor): knos_pay has an Assign instruction (0x18: an order's payment goes to another wallet),
-but the program accepts it only from a payee with a BOUND wallet (a Bind proved by GitHub or ORCID). A payee named only by
-a wallet address is refused with E_PAYEE (88). The server simulates the Assign on devnet and reports that result; when
-the program refuses, the factoring offer is a labelled SIMULATION recorded off-program, never a claim that it ran.
+Factoring is real now and signed by passkeys: knos_wanted.wallets (quote, accept, advance, collect).
 """
 from __future__ import annotations
 
@@ -92,7 +89,7 @@ def preorder_tx(report: dict, account: str, units: int, label: str = "wallet") -
         raise ValueError("account: a Solana wallet address") from None
     preorder._need()
     led = escrow.ledger()
-    authority, refs = escrow.demo_key(), preorder.referees()
+    authority, pan = escrow.demo_key(), preorder.panel()
     mint = escrow.mint(led, create=False)
     maker = (os.environ.get("KNOS_WANTED_MAKER_WALLET") or "").strip()
     n = len(preorder.of_report(report["hash"])) + 1
@@ -102,7 +99,7 @@ def preorder_tx(report: dict, account: str, units: int, label: str = "wallet") -
     cap = _Capture(led)
     doc = C.commit(claim, units=units, price=price, payee=C.parse_payee(maker), funder=_Wallet(wallet), funder_token=tok, mint=mint,
                    led=cap, stages=[("referee_pass", 10_000)], stage_work_s=[30 * 86_400],
-                   panel=(2, [str(r.pubkey()) for r in refs]), program=preorder.program(), demand_hash=report["hash"], unlisted_panel=True)
+                   panel=pan, program=preorder.program(), demand_hash=report["hash"], unlisted_panel=True)
     amount = units * price * escrow.UNIT
     setup = [pay.create_ata_ix(authority.pubkey(), w, mint) for w in (pay.FEE_OWNER, Pubkey.from_string(maker)) if led.account(pay.ata(w, mint)) is None]
     if setup:                      # the fee owner's and the maker's token accounts: made once by the server, not in the wallet's transaction
@@ -137,44 +134,3 @@ def refresh(rec: dict, led=None) -> dict:
         rec["record"] = company.record_lock(rec["report"], rec["order"], rec["units"], None)
         preorder._save(rec)
     return rec
-
-
-# ---- factoring -------------------------------------------------------------------------------------------------------
-def factor(rec: dict, discount_bps: int = 500, led=None) -> dict:
-    """Offer the maker cash now for the escrowed receivable. Simulates knos_pay's Assign on devnet; when the program
-    refuses (a wallet-only payee has no Bind), records the offer as a labelled off-program SIMULATION."""
-    from solders.hash import Hash
-    from solders.message import Message
-    from solders.pubkey import Pubkey
-    from solders.transaction import Transaction
-
-    from knos import chain
-    from knos.settle.v2 import pay
-    if not 0 <= int(discount_bps) <= 3000:
-        raise ValueError("discount_bps: 0 to 3,000")
-    led = led or escrow.ledger()
-    face = rec["units"] * int(rec.get("unit_price") or preorder.PRICE)
-    advance = face * (10_000 - int(discount_bps)) / 10_000
-    funder = escrow.demo_key().pubkey()
-    maker = Pubkey.from_string(rec["maker_wallet"])
-    ix = pay.assign_ix(maker, Pubkey.from_string(rec["order"]), rec["doc"]["payee"]["payee_id"], funder, program=preorder.program())
-    tx = Transaction.new_unsigned(Message.new_with_blockhash([ix], maker, Hash.default()))
-    sim = chain.call(led.url, "simulateTransaction", [base64.b64encode(bytes(tx)).decode(),
-                                                      {"encoding": "base64", "sigVerify": False, "replaceRecentBlockhash": True}], timeout=20)
-    v = sim.get("value") or {}
-    err = v.get("err")
-    on_chain = err is None
-    code = (((err or {}).get("InstructionError") or [None, {}])[1] or {}).get("Custom") if isinstance(err, dict) else None
-    out = {"commitment": rec["order"], "face_value": face, "discount_bps": int(discount_bps), "advance": advance, "funder": str(funder),
-           "assign_instruction": "knos_pay Assign (0x18)", "assign_simulation": {"err": err, "custom_code": code,
-                                                                                  "meaning": pay.ERRORS.get(code) if hasattr(pay, "ERRORS") and code else None}}
-    if on_chain:
-        out.update(status="ready", note="the program accepts this Assign: the maker signs the returned transaction",
-                   transaction=base64.b64encode(bytes(tx)).decode())
-    else:
-        out.update(status="SIMULATED (off-program)",
-                   note="knos_pay refused the Assign in simulation (a payee named only by a wallet has no Bind; E_PAYEE 88). "
-                        "This offer is recorded off-program as a SIMULATION: no assignment exists on chain, and the release still pays the maker.")
-    rec["factoring"] = out
-    preorder._save(rec)
-    return out

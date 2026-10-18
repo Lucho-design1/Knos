@@ -70,6 +70,14 @@ def parse_payee(text: str) -> dict:
 
 
 def payees_of(payee: dict) -> list:
+    """The payees a release pays: one, or a `split` (up to knos_pay's 4 payees, basis points summing to 10,000), e.g. the
+    maker and a referrer's share (apps/wanted knos_wanted.valley.split_payee)."""
+    split = payee.get("split")
+    if split:
+        rows = [(s["payee_id"], int(s["bps"]), Pubkey.from_string(s["wallet"])) for s in split]
+        if not 1 <= len(rows) <= pay.MAX_PAYEES or sum(b for _, b, _ in rows) != 10_000 or len({r[0] for r in rows}) != len(rows):
+            raise IdeaError("payee split: 1 to 4 distinct payees whose basis points sum to 10,000")
+        return rows
     return [(payee["payee_id"], 10_000, Pubkey.from_string(payee["wallet"]) if payee.get("wallet") else None)]
 
 

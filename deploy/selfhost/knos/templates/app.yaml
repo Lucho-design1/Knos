@@ -1,0 +1,95 @@
+{{- if not (has .Values.cluster (list "devnet" "localnet")) }}
+{{- fail "cluster: devnet or localnet only (mainnet is not approved)" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "knos.name" . }}
+  labels: {{- include "knos.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {{- include "knos.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "knos.selector" . | nindent 8 }}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 1000, fsGroup: 1000}
+      containers:
+        - name: knos
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports: [{name: http, containerPort: 8080}]
+          env:
+            - {name: KNOS_CLUSTER, value: {{ .Values.cluster | quote }}}
+            - {name: KNOS_WANTED_DEVNET_KEYPAIR, value: /etc/knos-keys/buyer.json}
+            - {name: KNOS_WANTED_RELAYER_KEYPAIR, value: /etc/knos-keys/relayer.json}
+            - {name: KNOS_WANTED_REFEREE_KEYS, value: /etc/knos-keys/panel.json}
+            {{- range $k, $v := .Values.env }}
+            - {name: {{ $k }}, value: {{ $v | quote }}}
+            {{- end }}
+            {{- if .Values.sso.enabled }}
+            - {name: KNOS_SSO_URL, value: {{ .Values.sso.externalUrl | quote }}}
+            - {name: KNOS_SSO_TEST_TENANT, value: {{ .Values.sso.tenant | quote }}}
+            {{- end }}
+          envFrom:
+            - secretRef: {name: {{ .Values.secrets.env }}, optional: {{ .Values.secrets.optional }}}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+            - {name: keys, mountPath: /etc/knos-keys, readOnly: true}
+          readinessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 10}
+          livenessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 30, failureThreshold: 5}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: keys
+          secret: {secretName: {{ .Values.secrets.keys }}, optional: {{ .Values.secrets.optional }}}
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim: {claimName: {{ include "knos.name" . }}-data}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "knos.name" . }}
+  labels: {{- include "knos.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector: {{- include "knos.selector" . | nindent 4 }}
+  ports: [{name: http, port: {{ .Values.service.port }}, targetPort: http}]
+{{- if .Values.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "knos.name" . }}-data
+  labels: {{- include "knos.labels" . | nindent 4 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- if .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  {{- end }}
+  resources: {requests: {storage: {{ .Values.persistence.size }}}}
+{{- end }}
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "knos.name" . }}
+  labels: {{- include "knos.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls: [{hosts: [{{ .Values.ingress.host | quote }}], secretName: {{ include "knos.name" . }}-tls}]
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths: [{path: /, pathType: Prefix, backend: {service: {name: {{ include "knos.name" . }}, port: {name: http}}}}]
+{{- end }}

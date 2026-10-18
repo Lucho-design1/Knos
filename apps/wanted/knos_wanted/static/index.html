@@ -7,6 +7,7 @@
 <meta name="description" content="Paste a landmark paper or an idea. Knos asks Qloo's taste data who would buy the product it enables, where, at what price, and opens pre-orders held in escrow on Solana devnet, paid to the maker only on proof.">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/style.css">
+<script>document.documentElement.dataset.view = (location.hash.slice(1).split("=")[0] || "research").replace(/[^a-z]/g, "");</script>
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Skip to the app</a>
@@ -25,6 +26,8 @@
       <a href="#fund" data-view="fund" data-i18n="nav_fund">Fund</a>
       <a href="#contribute" data-view="contribute" data-i18n="nav_contribute">Contribute</a>
       <a href="#make" data-view="make" data-i18n="nav_make">Make</a>
+      <a href="#projects" data-view="projects" data-i18n="nav_projects">Projects</a>
+      <a href="#teams" data-view="teams" data-i18n="nav_teams">Teams</a>
       <a href="#agents" data-view="agents" data-i18n="nav_agents">Agents</a>
     </nav>
   </div>
@@ -98,9 +101,12 @@
           <button id="walletBtn" type="button" data-i18n="buy_btn">Pre-order with a wallet</button>
           <p class="small"><a id="blinkLink" target="_blank" rel="noopener">Blink</a></p></div>
         <div><h3 data-i18n="buy_demo">With your passkey</h3><p class="small muted" data-i18n="buy_demo_p"></p>
-          <button id="preBtn" type="button" class="ghost" data-i18n="buy_demo_btn">Pre-order with the demo buyer</button></div>
+          <button id="preBtn" type="button" class="ghost" data-i18n="buy_demo_btn">Pre-order with my passkey</button>
+          <div id="pkWallet" class="small" hidden><span data-i18n="wallet_t">Your passkey wallet</span>: <a id="pkVault" target="_blank" rel="noopener"></a> · <b id="pkUnits">0</b> <span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span>
+            <button id="faucetBtn" type="button" class="quiet" data-i18n="faucet_btn">Get 25 devnet test units</button></div></div>
       </div>
       <div id="receipt"></div>
+      <p class="small"><button id="claimBtn" type="button" class="quiet" data-i18n="claim_btn">I make this: claim the milestone with my passkey</button> <span id="claimNote" class="small muted"></span></p>
     </section>
     <section id="tracker" class="card" hidden><h2 data-i18n="goal_l">Funding goal</h2><ul id="trackList" class="list"></ul></section>
   </section>
@@ -110,6 +116,9 @@
     <div class="row spread"><h1 data-i18n="fund_t">Back a milestone</h1><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
     <p data-i18n="fund_p"></p>
     <ul id="fundList" class="list"></ul>
+    <h2 data-i18n="lend_t">Lend against pre-orders</h2>
+    <p class="small muted" data-i18n="lend_p"></p>
+    <div class="scroll"><table id="lendTable" class="small"><thead><tr><th data-i18n="idea_l">Product</th><th data-i18n="face_l">Face value</th><th data-i18n="due_l">Due</th><th data-i18n="adv_rate">Advance rate</th><th data-i18n="adv_l">Advance</th><th data-i18n="fee_l">Your fee</th><th></th></tr></thead><tbody></tbody></table></div>
   </section>
 
   <!-- CONTRIBUTOR -->
@@ -124,6 +133,54 @@
     <div class="row spread"><h1 data-i18n="make_t">Milestones and payouts</h1><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
     <p class="small muted" data-i18n="make_p"></p>
     <ul id="makeList" class="list"></ul>
+  </section>
+
+  <!-- PROJECTS: tranches released on an independent check, parallel attempts, refund + reopen, AMC, pools, grants -->
+  <section id="v-projects" class="view" hidden>
+    <div id="projHome">
+      <div class="row spread"><h1>Projects</h1><span class="testmoney">Devnet test money — no real funds</span></div>
+      <p>One product's road, milestone by milestone. Each milestone is paid only on the maker's result and an independent check of it; a missed deadline refunds the funders and reopens it to other makers.</p>
+      <form class="card" id="newProject" onsubmit="return false" aria-labelledby="npH">
+        <h2 id="npH">Open a project</h2>
+        <fieldset class="opts"><legend>Template</legend><div id="tplPick"></div></fieldset>
+        <fieldset class="opts"><legend>Regulated product? Add regulatory milestones</legend><div id="regPick"></div></fieldset>
+        <label for="pTitle">What it makes</label><input id="pTitle" maxlength="120" placeholder="Sweat glucose watch">
+        <label for="pTeam">Team (optional)</label><input id="pTeam" maxlength="80">
+        <div class="row"><button type="button" id="pNew">Open the project</button><button type="button" class="ghost" id="pSandbox">One-day sandbox</button></div>
+      </form>
+      <ul id="projList" class="plist"></ul>
+      <section id="poolBox" class="card" hidden aria-labelledby="poolH"><h2 id="poolH">Pool across milestones</h2>
+        <p class="small">One amount, spread over several milestones of several projects: each gets its own escrow order.</p>
+        <div id="poolPick"></div>
+        <label for="poolUnits">Test units in total</label><input id="poolUnits" type="number" min="10" value="20" inputmode="numeric">
+        <button type="button" id="poolBtn">Pool with my wallet</button><p id="poolOut" class="small" aria-live="polite"></p></section>
+    </div>
+    <div id="projDetail" hidden><div id="projHead"></div><ul id="msList" class="plist"></ul></div>
+  </section>
+
+  <!-- TEAMS: SSO, a company's own multisig, ERP export, sandbox, OpenAPI -->
+  <section id="v-teams" class="view" hidden>
+    <h1>For teams and companies</h1>
+    <p>Sign in with your company's identity provider, hold money in your own multisig, and send the ledger to your accounting system.</p>
+    <section class="card" aria-labelledby="ssoH"><h2 id="ssoH">Single sign-on (SAML)</h2>
+      <label for="ssoTenant">Company tenant</label><input id="ssoTenant" maxlength="64" autocomplete="organization">
+      <button type="button" id="ssoBtn">Sign in with SSO</button><p id="ssoNote" class="small muted"></p></section>
+    <section class="card" aria-labelledby="coH"><h2 id="coH">Your company's multisig</h2>
+      <p class="small">A Squads multisig on devnet with your members' keys. Your wallet creates it and is a member; Knos holds no key. Pay milestones to its vault.</p>
+      <label for="coName">Company name</label><input id="coName" maxlength="80" autocomplete="organization">
+      <label for="coMembers">Other members' wallet addresses</label><textarea id="coMembers" rows="2"></textarea>
+      <label for="coThreshold">Signatures needed</label><input id="coThreshold" type="number" min="1" max="10" value="1" inputmode="numeric">
+      <button type="button" id="coBtn">Create with my wallet</button><p id="coOut" class="small" aria-live="polite"></p>
+      <ul id="coList" class="list"></ul></section>
+    <section class="card" aria-labelledby="erpH"><h2 id="erpH">Accounting export</h2>
+      <label for="erpProject">Project</label><select id="erpProject" class="field"></select>
+      <div class="row"><button type="button" class="quiet" id="erp_journal">Journal CSV</button><button type="button" class="quiet" id="erp_xero">Xero</button>
+        <button type="button" class="quiet" id="erp_quickbooks">QuickBooks</button><button type="button" class="quiet" id="erp_netsuite">NetSuite</button></div>
+      <p class="small muted">Every line says TEST MONEY and carries its devnet transaction.</p></section>
+    <section class="card" aria-labelledby="sbH"><h2 id="sbH">Run one real project in a day</h2>
+      <p class="small">A sandbox project from one of <span id="tplCount">5</span> templates, every milestone due within a day, on devnet test money.</p>
+      <button type="button" id="sbBtn" class="ghost">Start a sandbox</button></section>
+    <p class="small">Developers: <a href="/openapi.json">OpenAPI</a> · <a href="/mcp">MCP</a> · <a href="/api/attest/key">attestation key</a></p>
   </section>
 
   <!-- AGENTS -->
@@ -144,6 +201,8 @@
   <p><a href="/verify" data-i18n="verify_link">How we verify</a> · <a href="https://github.com/drexthealpha/Knos" rel="noopener">GitHub</a></p>
 </footer>
 <script src="/static/i18n.js" defer></script>
+<script src="/static/passkey_wallet.js" defer></script>
+<script src="/static/valley.js" defer></script>
 <script src="/static/app.js" defer></script>
 </body>
 </html>

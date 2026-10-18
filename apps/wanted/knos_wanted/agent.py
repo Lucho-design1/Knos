@@ -299,7 +299,8 @@ Add it by URL in Claude, Cursor or any MCP client. Reading needs no key; money t
 <span class="mono">knos_sign_in</span> and say in their descriptions to confirm with your human first. Everything is
 Solana devnet test money.</p>
 <p>Tools: knos_cross, knos_research_card, knos_demand_check, knos_crossings, knos_milestones, knos_tasks,
-knos_memory_recall, knos_sign_in, knos_preorder, knos_evidence, knos_task_submit.</p>
+knos_memory_recall, knos_sign_in, knos_preorder, knos_evidence, knos_task_submit, knos_templates, knos_projects,
+knos_project_open, knos_project_claim, knos_project_post, knos_openapi. The same API as OpenAPI: <a href="/openapi.json">/openapi.json</a>.</p>
 <p><a href="/">The app</a> · <a href="/verify">How we verify</a></p></main></body></html>"""
 TOOLS = [
     {"name": "knos_cross", "title": "Cross a paper to a funded product",
@@ -333,8 +334,9 @@ TOOLS = [
      "description": "Returns a session token the money tools need. " + CONFIRM,
      "inputSchema": {"type": "object", "properties": {"label": {"type": "string", "description": "who your human is (a display label)"}},
                      "required": ["label"], "additionalProperties": False}},
-    {"name": "knos_preorder", "title": "Pre-order with the demo buyer",
-     "description": "Locks units of an OPEN report in devnet escrow through the app's demo buyer. " + CONFIRM,
+    {"name": "knos_preorder", "title": "Pre-order (your human's passkey signs)",
+     "description": "Prepares a pre-order of an OPEN report: no server key buys for anyone, so it returns the page where "
+                    "your human's passkey approves it (devnet test money). " + CONFIRM,
      "inputSchema": {"type": "object", "properties": {"report": {"type": "string"}, "units": {"type": "integer"},
                                                        "session": {"type": "string"}}, "required": ["report", "units", "session"],
                      "additionalProperties": False}},
@@ -388,7 +390,8 @@ def mcp(state, msg: dict) -> dict | None:
                      for n in ("qloo_capabilities",) + WORKFLOWS]
         except Exception:  # noqa: BLE001
             extra = []
-        return ok({"tools": TOOLS + extra})
+        from .product_routes import MCP_TOOLS
+        return ok({"tools": TOOLS + MCP_TOOLS + extra})
     if method == "tools/call":
         name, args = params.get("name"), params.get("arguments") or {}
         if isinstance(name, str) and name.startswith("qloo_"):
@@ -434,7 +437,12 @@ def mcp(state, msg: dict) -> dict | None:
                 rep = state.report(str(args.get("report") or ""))
                 if rep is None:
                     raise ValueError("unknown report: run knos_cross first")
-                out = preorder.lock(rep, int(args.get("units") or 0), f"{who.get('kind')}: {who.get('label')}")
+                units = int(args.get("units") or 0)
+                if not 5 <= units <= 1000 or (rep.get("decision") or {}).get("verdict") != "OPEN":
+                    raise ValueError("units: 5 to 1000, on a report whose decision is OPEN")
+                out = {"needs": "the buyer's own passkey: an agent cannot sign for its human", "approve_at": f"/#buy={rep['hash']}",
+                       "units": units, "how": "open the page, sign in with a passkey, press 'Pre-order with my passkey'",
+                       "money": "devnet test money", "by": f"{who.get('kind')}: {who.get('label')}"}
             elif name == "knos_evidence":
                 who = _signed(args)
                 rec = preorder.load(str(args.get("commitment") or ""))
@@ -445,6 +453,9 @@ def mcp(state, msg: dict) -> dict | None:
                 out = _tasks.submit(str(args.get("round") or ""), str(args.get("name") or ""), str(args.get("code") or ""),
                                     f"{who.get('kind')}: {who.get('label')}", sub=str(who.get("sub") or ""),
                                     wallet=str(args.get("wallet") or "") or None)
+            elif isinstance(name, str) and name.startswith("knos_project") or name in ("knos_templates", "knos_openapi"):
+                from .product_routes import mcp_call
+                out = mcp_call(name, args, _signed)
             else:
                 return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": f"unknown tool {name}"}}
         except ValueError as e:

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: knos
+description: Knos in your own Kubernetes cluster - the web app and API (apps/wanted), optionally with SAML Jackson for single sign-on. Solana devnet by default.
+type: application
+version: 0.4.0
+appVersion: "0.4.0"
+home: https://github.com/drexthealpha/Knos
+sources:
+  - https://github.com/drexthealpha/Knos
+  - https://github.com/boxyhq/jackson

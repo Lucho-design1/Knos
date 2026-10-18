@@ -5,7 +5,12 @@ older confirm-each-match flow, `qloo mcp` (knos_wanted.qloo_mcp). The browser ne
     python -m knos_wanted serve            (HOST, default 127.0.0.1; PORT, default 8080)
 
 POST /api/check {idea, place?, leader?}            the report and the code-made decision (no sign-in needed)
-POST /api/preorder {report, units, maker_wallet?}  lock test units for the maker, paid only on proof (signed in)
+POST /api/wallet {}                                your passkey's wallet (made the first time); POST /api/wallet/faucet: test units
+POST /api/maker/claim {report}                     the maker's passkey claims the milestone: pre-orders pay wallets it owns
+POST /api/preorder {report, units}                 the challenge your passkey signs to lock test units for the maker
+POST /api/sign {intent, authenticatorData, clientDataJSON, signature}   relay a passkey's answer (pre-order, factoring)
+GET  /api/receivables; POST /api/lend/quote {commitment, advance_bps}; /api/factor {commitment, quote} (the maker sells);
+POST /api/lend/advance {commitment}; /api/lend/collect {commitment}      factoring, every step signed by a passkey
 POST /api/milestone {commitment, evidence_url}     verify the evidence; 2 of 3 referees sign PASS; release (signed in)
 POST /api/refund {commitment}                      past the deadline: back to the buyer (signed in)
 Rate limits per client address keep a public demo from draining the Qloo quota and the devnet test wallet.
@@ -26,16 +31,33 @@ from pathlib import Path
 import urllib.parse
 from urllib.parse import parse_qs, urlparse
 
-from . import agent, auth, blink, buyer, catalog, check, company, demand, escrow, planner, preorder, privacy, research, tasks, x402
+from . import agent, auth, blink, buyer, catalog, check, company, demand, escrow, planner, preorder, privacy, product_routes, referee, research, tasks, valley, wallets, x402
 from .qloo_mcp import AGGREGATE, Qloo, QlooUnavailable
 from .qloo_rest import Client
 
 STATIC = Path(__file__).parent / "static"
+
+
+def trusted_hops() -> int:
+    """KNOS_WANTED_TRUST_PROXY: how many proxies in front of this server append to X-Forwarded-For (Render: 1).
+    "0", unset or not a number: none, and the header is ignored."""
+    v = (os.environ.get("KNOS_WANTED_TRUST_PROXY") or "").strip()
+    return int(v) if v.isdigit() and 0 < int(v) <= 8 else 0
+
+
+def client_key(xff: str, peer: str) -> str:
+    """The address a rate limit counts. Each trusted proxy APPENDS the address it saw, so the entry the nearest
+    trusted proxy wrote is the n-th from the END; anything before it was written by the client and can be forged."""
+    hops = trusted_hops()
+    parts = [x.strip() for x in (xff or "").split(",") if x.strip()]
+    if hops and parts:
+        return parts[-hops if len(parts) >= hops else 0][:64]
+    return str(peer)[:64]
 MAX_BODY = 16_384
 SESSION_S = 30 * 60
 LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish": (10, 600), "demo": (4, 600),
           "faucet": (2, 3600), "tx": (20, 600), "check": (12, 600), "lock": (6, 600), "auth": (30, 600),
-          "milestone": (30, 600), "milestone_one": (10, 3600)}   # (calls, seconds) per client
+          "milestone": (30, 600), "milestone_one": (10, 3600), "referee": (120, 600), "product": (60, 600)}   # (calls, seconds) per client
 GLOBAL_DEMO = (60, 3600)                                           # demo pre-orders, all clients
 ROUTES = {"/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
@@ -44,9 +66,29 @@ ROUTES = {"/api/maker/start": "maker", "/api/maker/search": "search", "/api/make
           "/api/fund": "lock", "/api/task/submit": "check", "/api/anchor": "lock",
           "/api/auth/email": "auth", "/api/auth/email/verify": "auth", "/api/preorder": "lock", "/api/milestone": "milestone", "/api/refund": "lock",
           "/api/auth/challenge": "auth", "/api/auth/passkey/register": "auth", "/api/auth/passkey/login": "auth",
-          "/api/auth/google": "auth", "/api/auth/guest": "auth"}
+          "/api/auth/google": "auth", "/api/auth/guest": "auth",
+          "/api/wallet": "tx", "/api/wallet/faucet": "faucet", "/api/sign": "tx", "/api/maker/claim": "lock", "/api/lend/quote": "lock",
+          "/api/lend/advance": "lock", "/api/lend/collect": "lock"}
 SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/api/fund", "/api/task/submit", "/api/anchor",
-             "/api/preorder/demo", "/api/preorder/faucet", "/api/preorder/tx", "/api/preorder/submit")   # no anonymous money or faucet calls
+             "/api/preorder/demo", "/api/preorder/faucet", "/api/preorder/tx", "/api/preorder/submit",
+             "/api/wallet", "/api/wallet/faucet", "/api/sign", "/api/maker/claim", "/api/lend/quote", "/api/lend/advance", "/api/lend/collect")   # no anonymous money or faucet calls
+# every GET route below (do_GET), for the OpenAPI document (knos_wanted.openapi); the product routes list their own
+GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/actions/preorder": "Solana Action (Blink): pre-order metadata",
+              "/api/cross": "Poll a live crossing", "/verify": "How we verify", "/api/crossings": "Crossings, newest first",
+              "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
+              "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funder escrows",
+              "/mcp": "MCP discovery page (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
+              "/": "The app", "/api/status": "Server status", "/api/products": "Listed products", "/api/quote": "Fee quote",
+              "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
+              "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
+              "/api/receivables": "Receivables a lender can finance (passkey wallets, Huma-style terms)",
+              "/api/referee/group": "The FROST referee group (public)", "/api/referee/pending": "Open referee signing sessions",
+              "/api/referee/session": "One referee signing session", "/api/prize/evidence": "A demo prize's public evidence (the round's verdict)",
+              "/api/project/evidence": "A project attempt's public review (both pages and the claim ids)"}
+SUMMARIES = {"/api/check": "Demand check on Qloo", "/api/research": "Research card from a paper id", "/api/cross": "Start a crossing",
+             "/api/preorder": "Pre-order on proof", "/api/milestone": "Post milestone evidence; 2 of 3 referees release",
+             "/api/refund": "Refund past the deadline", "/api/fund": "Fund a milestone", "/api/factor": "Receivable financing offer",
+             "/api/anchor": "Anchor the record root on devnet", "/api/task/submit": "Submit to a contributor round"}
 
 
 class State:
@@ -134,8 +176,7 @@ def make_handler(state: State):
             pass
 
         def _client(self) -> str:
-            fwd = self.headers.get("X-Forwarded-For", "") if os.environ.get("KNOS_WANTED_TRUST_PROXY") == "1" else ""
-            return (fwd.split(",")[0].strip() or self.client_address[0])[:64]
+            return client_key(self.headers.get("X-Forwarded-For", ""), self.client_address[0])
 
         def _send(self, code: int, body, ctype: str = "application/json", headers: dict | None = None) -> None:
             data = body if isinstance(body, bytes) else json.dumps(body, default=str).encode()
@@ -161,7 +202,7 @@ def make_handler(state: State):
 
         def _base(self) -> str:
             host = self.headers.get("Host") or "localhost"
-            proto = "https" if os.environ.get("KNOS_WANTED_TRUST_PROXY") == "1" or not host.startswith(("127.", "localhost")) else "http"
+            proto = "https" if trusted_hops() or not host.startswith(("127.", "localhost")) else "http"
             return f"{proto}://{host}"
 
         def _redirect(self, to: str) -> None:
@@ -176,6 +217,8 @@ def make_handler(state: State):
         def do_GET(self):
             u = urlparse(self.path)
             qs = parse_qs(u.query)
+            if product_routes.handle_get(self, state, u, qs):
+                return None
             if u.path == "/actions.json":
                 return self._send(200, blink.RULES, headers=blink.CORS)
             if u.path == "/api/actions/preorder":
@@ -223,6 +266,9 @@ def make_handler(state: State):
                     return self._send(402, {**x402.challenge(h, self._base()), "error": str(why)[:200]})
                 return self._send(200, {**rep_, "paid": settled},
                                   headers={"X-Payment-Response": __import__("base64").b64encode(json.dumps(settled).encode()).decode()})
+            if u.path == "/api/receivables":
+                return self._send(200, {"receivables": wallets.receivables(), "money": wallets.MONEY,
+                                        "model": "PayFi receivable financing (as Huma Finance): advance rate, fee, due date, repaid by the release"})
             if u.path == "/api/commitments":
                 take = min(100, max(1, int((qs.get("take") or ["50"])[0] or 50)))
                 offset = max(0, int((qs.get("offset") or ["0"])[0] or 0))
@@ -290,6 +336,14 @@ def make_handler(state: State):
                 return self._send(200, auth.config())
             if u.path == "/api/fees":
                 return self._send(200, preorder.fee_line())
+            if u.path.startswith("/api/referee/"):            # the FROST referee hosts (knos_wanted.referee)
+                return self._send(*referee.get(u.path, qs))
+            if u.path == "/api/project/evidence":             # a project attempt's public review (both pages, claim ids)
+                page = valley.project_evidence((qs.get("id") or [""])[0])
+                return self._send(200, page, "application/json") if page else self._send(404, {"error": "unknown evidence"})
+            if u.path == "/api/prize/evidence":               # a demo prize's public evidence: the round's verdict
+                page = tasks.prize_evidence((qs.get("id") or [""])[0])
+                return self._send(200, page, "application/json") if page else self._send(404, {"error": "unknown prize"})
             return self._send(404, {"error": "not found"})
 
         def status(self) -> dict:
@@ -314,6 +368,15 @@ def make_handler(state: State):
                 return self._mcp()
             if u.path == "/api/actions/preorder":
                 return self._action(u)
+            if u.path in ("/api/referee/commit", "/api/referee/share"):   # a referee host's FROST round (signed by its transport key)
+                if not state.allow(self._client(), "referee"):
+                    return self._send(429, {"error": "too many referee posts from this address"})
+                try:
+                    return self._send(*referee.post(u.path, self._json()))
+                except ValueError as why:
+                    return self._send(400, {"error": str(why)[:200]})
+            if product_routes.handle_post(self, state, u.path):
+                return None
             kind = ROUTES.get(u.path)
             if kind is None:
                 return self._send(404, {"error": "not found"})
@@ -329,8 +392,8 @@ def make_handler(state: State):
                 if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research", "/api/cross") + SIGNED_IN:
                     return self._send(200, self.route_v2(u.path, body))
                 return self._send(200, self.route(u.path, body))
-            except auth.AuthError as why:
-                return self._send(401, {"error": str(why)[:300]})
+            except (auth.AuthError, wallets.NeedPasskey) as why:
+                return self._send(401, {"error": str(why)[:300], "needs": "passkey" if isinstance(why, wallets.NeedPasskey) else None})
             except preorder.Settled as why:
                 return self._send(409, {"error": str(why)[:300], "refused_by": "the escrow order on devnet (read from the chain)"})
             except preorder.NotVerified as why:
@@ -397,15 +460,15 @@ def make_handler(state: State):
                 return auth.email_link(str(body.get("email") or ""), self._base())
             if path == "/api/auth/email/verify":
                 return auth.email_verify(str(body.get("token") or ""))
-            if path == "/api/factor":
-                return blink.factor(preorder.load(str(body.get("commitment", ""))), int(body.get("discount_bps", 500)))
             user = self.user or {}
+            if path in ("/api/factor", "/api/wallet", "/api/wallet/faucet", "/api/maker/claim", "/api/lend/quote", "/api/lend/advance",
+                        "/api/lend/collect", "/api/sign"):
+                return self.money(path, body, user)
             if path == "/api/fund":
                 rep = state.report(body.get("report") or body.get("hash"))
                 if rep is None or rep.get("kind") != check.KIND:
                     raise ValueError("unknown report: run the crossing first")
-                return preorder.lock(rep, body.get("units", 5), f"funder {user.get('kind')}: {user.get('label')}",
-                                     _text(body.get("maker_wallet"), 44), funder=True)
+                return wallets.prepare_preorder(escrow.ledger(), user, rep, body.get("units", 5), self._rp(), funder=True)
             if path == "/api/anchor":
                 got = company.anchor()
                 if got.get("anchored"):
@@ -414,7 +477,7 @@ def make_handler(state: State):
             if path == "/api/task/submit":
                 return tasks.submit(str(body.get("round", "")), str(body.get("name", "")), str(body.get("code", "")),
                                     f"{user.get('kind')}: {user.get('label')}", sub=str(user.get("sub") or ""),
-                                    wallet=_text(body.get("wallet"), 44))
+                                    wallet=_text(body.get("wallet"), 44), base=self._base())
             if path == "/api/check":
                 idea = body.get("idea")
                 if not isinstance(idea, str) or not idea.strip():
@@ -454,12 +517,39 @@ def make_handler(state: State):
                 rep = state.report(body.get("report") or body.get("hash"))
                 if rep is None or rep.get("kind") != check.KIND:
                     raise ValueError("unknown report: run the demand check first")
-                return preorder.lock(rep, body.get("units", 5), f"{user.get('kind')}: {user.get('label')}", _text(body.get("maker_wallet"), 44))
+                return wallets.prepare_preorder(escrow.ledger(), user, rep, body.get("units", 5), self._rp())
             rec = preorder.load(str(body.get("commitment", "")))
             rec = blink.refresh(rec)
             if path == "/api/milestone":
                 return preorder.milestone(state.report(rec["report"]) or {}, rec["order"], str(body.get("evidence_url", "")))
             return preorder.refund(rec["order"])
+
+        def _rp(self) -> str:
+            return os.environ.get("KNOS_WANTED_RP_ID") or (self.headers.get("Host") or "").split(":")[0]
+
+        def money(self, path: str, body: dict, user: dict) -> dict:
+            """Every step that moves money is signed by the person's own passkey (knos_wanted.wallets)."""
+            led = escrow.ledger()
+            if path == "/api/sign":
+                return wallets.sign(led, user, body)
+            h = wallets.holder(user)
+            if path == "/api/wallet":
+                return wallets.public(led, h, self._rp())
+            if path == "/api/wallet/faucet":
+                return wallets.faucet(led, h, self._rp())
+            if path == "/api/maker/claim":
+                rep = state.report(body.get("report") or body.get("hash"))
+                if rep is None or rep.get("kind") != check.KIND:
+                    raise ValueError("unknown report: run the demand check first")
+                return wallets.claim_maker(led, user, rep, self._rp())
+            c = str(body.get("commitment", ""))
+            if path == "/api/factor":
+                return wallets.prepare_accept(led, user, c, str(body.get("quote", "")))
+            if path == "/api/lend/quote":
+                return wallets.quote(led, user, c, body.get("advance_bps", 9000), self._rp())
+            if path == "/api/lend/advance":
+                return wallets.prepare_advance(led, user, c, self._rp())
+            return wallets.prepare_collect(led, user, c, self._rp())
 
         def route(self, path: str, body: dict) -> dict:
             if path == "/api/maker/start":
@@ -508,10 +598,10 @@ def make_handler(state: State):
             if path == "/api/preorder/tx":
                 return escrow.wallet_tx(h, str(body.get("owner", "")), units)
             if path == "/api/preorder/demo":
-                res = escrow.demo_preorder(h, units)
-            else:
-                res = escrow.submit(str(body.get("transaction", "")), str(body.get("owner", "")))
-                res.update(owner=str(body.get("owner", "")), amount_units=units, order=body.get("order"), buyer_kind="wallet")
+                raise ValueError("removed: no server key buys for anyone; a pre-order is signed by your own passkey (POST /api/preorder) "
+                                 "or your own wallet (POST /api/preorder/tx)")
+            res = escrow.submit(str(body.get("transaction", "")), str(body.get("owner", "")))
+            res.update(owner=str(body.get("owner", "")), amount_units=units, order=body.get("order"), buyer_kind="wallet")
             rep = state.report(h) or catalog.get(h) or {}
             q = company.quote(units)
             res["fees"] = q
@@ -529,6 +619,7 @@ def serve(host: str | None = None, port: int | None = None) -> None:
     state = State()
     threading.Thread(target=lambda: preorder.preflight_status(force=True), daemon=True).start()   # the money path, simulated
     threading.Thread(target=tasks.available, daemon=True).start()        # seeds the demo round when no round is open
+    valley.start_sweeper()                 # missed milestone deadlines: refund + reopen, every KNOS_VALLEY_SWEEP_S seconds
     httpd = ThreadingHTTPServer((host, port), make_handler(state))
     rest_ok, rest_why = state.rest.ready()
     print(f"Knos demand check on http://{host}:{port}  Qloo REST: {'on' if rest_ok else 'off (' + rest_why + ')'}  "

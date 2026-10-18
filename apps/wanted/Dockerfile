@@ -6,22 +6,29 @@
 # QLOO_API_KEY the decision is "cannot decide: no Qloo evidence" and the MCP flow runs on Knos's MOCK (synthetic) server.
 FROM node:22.19-bookworm-slim AS node
 
+# knos-frost: the Zcash Foundation's frost-ed25519 (=3.0.0, Cargo.lock) as the referee's FROST command (knos.threshold)
+FROM rust:1.88-slim-bookworm AS frost
+WORKDIR /b
+COPY tools/knos-frost ./
+RUN cargo build --release --locked && strip target/release/knos-frost
+
 FROM python:3.12-slim
 COPY --from=node /usr/local/ /usr/local/
+COPY --from=frost /b/target/release/knos-frost /usr/local/bin/knos-frost
 RUN npm install --global --no-audit --no-fund @qloo/qloo-harness@0.1.26 && qloo --version
 WORKDIR /src
 COPY pyproject.toml README.md README.pypi.md LICENSE ./
 COPY src ./src
 COPY terms ./terms
-COPY config/fees.yaml config/leitner.yaml ./config/
+COPY config/fees.yaml config/leitner.yaml config/referee-frost.json ./config/
 COPY plugin/skills ./plugin/skills
 COPY apps/wanted ./apps/wanted
 COPY examples/autoresearch ./examples/autoresearch
-RUN pip install --no-cache-dir . "./apps/wanted[escrow,auth,config]" && sh apps/wanted/bridge/install.sh
+RUN pip install --no-cache-dir . "./apps/wanted[escrow,auth,config,evidence]" && sh apps/wanted/bridge/install.sh
 WORKDIR /app
 RUN useradd --create-home app && mkdir -p /data && chown app /data
 USER app
 ENV HOST=0.0.0.0 PORT=8080 KNOS_WANTED_CACHE=/data/qloo-mcp KNOS_WANTED_STATE=/data/state KNOS_WANTED_RECORD=/data/record \
-    PYTHONPATH=/src/apps/wanted KNOS_CLUSTER=devnet QLOO_BASE_URL=https://hackathon.api.qloo.com QLOO_TRUSTED_BASE_URL=https://hackathon.api.qloo.com
+    PYTHONPATH=/src/apps/wanted KNOS_CLUSTER=devnet KNOS_FROST_BIN=/usr/local/bin/knos-frost KNOS_REFEREE_FROST_GROUP=/src/config/referee-frost.json QLOO_BASE_URL=https://hackathon.api.qloo.com QLOO_TRUSTED_BASE_URL=https://hackathon.api.qloo.com
 EXPOSE 8080
 CMD ["python", "-m", "knos_wanted", "serve"]

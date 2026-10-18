@@ -1,0 +1,50 @@
+# Knos self-host values. The image is built from this repository: docker build -f apps/wanted/Dockerfile -t <registry>/knos:0.4.0 .
+# Secrets are never in this file: create them first (kubectl create secret generic knos-keys --from-file=buyer.json=...
+# --from-file=relayer.json=... --from-file=panel.json=...; kubectl create secret generic knos-env --from-literal=QLOO_API_KEY=<your key>).
+image:
+  repository: ghcr.io/drexthealpha/knos
+  tag: "0.4.0"
+  pullPolicy: IfNotPresent
+
+replicaCount: 1          # the app keeps its state on one volume: run one replica
+cluster: devnet          # Knos refuses any cluster but devnet or a local validator until mainnet is approved
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  host: knos.example.internal
+  tls: false
+
+persistence:
+  enabled: true
+  size: 2Gi
+  storageClass: ""
+
+# secrets created beforehand (names only)
+secrets:
+  keys: knos-keys        # buyer.json, relayer.json, panel.json: devnet TEST keys only
+  env: knos-env          # QLOO_API_KEY, KNOS_WANTED_SESSION_SECRET, KNOS_SSO_CLIENT_SECRET, KNOS_SSO_API_KEY
+  optional: true
+
+env:
+  KNOS_WANTED_RP_ID: knos.example.internal
+  KNOS_WANTED_TRUST_PROXY: "1"
+  QLOO_BASE_URL: https://hackathon.api.qloo.com
+  KNOS_VALLEY_SWEEP_S: "60"
+
+resources:
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {memory: 768Mi}
+
+# Single sign-on: SAML Jackson (boxyhq/jackson) beside Knos. With sso.enabled the app signs people in through it.
+sso:
+  enabled: false
+  image: docker.io/boxyhq/jackson:26.2.0
+  externalUrl: https://sso.knos.example.internal
+  tenant: your-company
+  dbEngine: mem          # use sql + dbUrl for anything but a trial
+  dbUrl: ""

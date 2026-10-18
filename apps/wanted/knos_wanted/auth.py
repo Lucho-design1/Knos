@@ -228,7 +228,33 @@ def register(body: dict, origin: str, label: str = "") -> dict:
     if not cred:
         raise AuthError("no credential id")
     _cred_file(cred).write_text(json.dumps({"spki": b64u(spki), "label": label[:80]}), encoding="utf-8")
+    seen = unb64u(body.get("authenticatorData", "")) if body.get("authenticatorData") else b""
+    _remember(identity(spki), cred, spki, seen)
     return issue(identity(spki), "passkey", label[:80] or identity(spki))
+
+
+def _remember(sub: str, cred_id: str, spki: bytes, auth_data: bytes = b"") -> None:
+    """What the passkey's wallet needs to predict its next assertion: its credential id, its key, and the flags and
+    sign count it answered with last (knos.settle.v2.passkey_smart.predicted_auth_data)."""
+    f = _store() / (sub.replace(":", "-") + ".wallet")
+    rec = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+    rec.update({"cred_id": cred_id, "spki": b64u(spki)})
+    if len(auth_data) >= 37:
+        rec.update({"flags": auth_data[32] & 0x3F, "sign_count": int.from_bytes(auth_data[33:37], "big")})
+    f.write_text(json.dumps(rec), encoding="utf-8")
+
+
+def credential(sub: str) -> dict | None:
+    """The passkey behind a passkey session (`sub`), as _remember kept it; None for Google, email or guest sessions."""
+    f = _store() / (str(sub).replace(":", "-") + ".wallet")
+    return json.loads(f.read_text(encoding="utf-8")) if str(sub).startswith("passkey:") and f.exists() else None
+
+
+def seen(sub: str, auth_data: bytes) -> None:
+    """Record the flags and count of the passkey's latest answer (a wallet assertion or a sign-in)."""
+    c = credential(sub)
+    if c and len(auth_data) >= 37:
+        _remember(sub, c["cred_id"], unb64u(c["spki"]), auth_data)
 
 
 def login(body: dict, origin: str, rp_id: str) -> dict:
@@ -254,6 +280,7 @@ def login(body: dict, origin: str, rp_id: str) -> dict:
         load_der_public_key(spki).verify(unb64u(body.get("signature", "")), auth + hashlib.sha256(cdj).digest(), ec.ECDSA(hashes.SHA256()))
     except InvalidSignature:
         raise AuthError("the passkey's signature does not verify") from None
+    _remember(identity(spki), body.get("id", ""), spki, auth)
     return issue(identity(spki), "passkey", rec.get("label") or identity(spki))
 
 

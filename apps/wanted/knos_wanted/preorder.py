@@ -3,12 +3,13 @@
 One pre-order = one commitment with ONE stage, "milestone" (oracle referee_pass), locked on the knos_pay 0.3.34 TEST
 program on devnet as a PANEL order: 2 of 3 referee keys release it to the maker's wallet; past its deadline anyone
 refunds it to the buyer. Who is who on this server (all devnet TEST keys, no real money):
-  buyer     KNOS_WANTED_DEVNET_KEYPAIR: the app's demo devnet wallet, acting for the signed-in user ("demo buyer, test money")
-  maker     the payee: the maker's devnet wallet (the request's maker_wallet, else KNOS_WANTED_MAKER_WALLET)
+  buyer     the signed-in person's own passkey wallet (knos_wanted.wallets: a LazorKit smart wallet; the passkey signs)
+  maker     the payee: a wallet made for this one receivable, owned by the passkey of the maker who claimed the milestone
   referees  KNOS_WANTED_REFEREE_KEYS: a JSON list of 3 secret keys (base58 strings or byte arrays) the SERVER holds.
             One server holding all three is NOT an independent panel; the commitment says UNLISTED PANEL (the keys are
             not in Knos's referee registry, config/referees.yaml).
-  relayer   KNOS_WANTED_RELAYER_KEYPAIR (default: the buyer) sends the verdicts.
+  relayer   KNOS_WANTED_RELAYER_KEYPAIR (default: the app's devnet test wallet KNOS_WANTED_DEVNET_KEYPAIR) pays fees and
+            rents, relays the passkeys' transactions and the verdicts, and is the test mint's authority (the faucet).
 The milestone is verified by code before any referee signs: the maker's evidence URL is fetched over https (public
 addresses only, no redirects, size and time limits) and must contain the commitment's claim id. Verified: 2 referees
 sign PASS over that page (its sha256 is the evidence) and the server releases. Not verified: nothing is signed, the
@@ -73,8 +74,18 @@ def referees() -> list:
     return keys
 
 
+def panel() -> tuple[int, list[str]]:
+    """The panel every new order pins: the FROST referee group (1 of 1: its group key; 2 of 3 hosts sign it,
+    knos_wanted.referee) when this server is a FROST host, else 2 of the 3 server-held keys (UNLISTED PANEL)."""
+    from . import referee
+    if referee.enabled():
+        return referee.panel()
+    return 2, [str(r.pubkey()) for r in referees()]
+
+
 def ready() -> tuple[bool, str]:
-    if not os.environ.get("KNOS_WANTED_REFEREE_KEYS") or not os.environ.get("KNOS_WANTED_DEVNET_KEYPAIR"):
+    from . import referee
+    if not (os.environ.get("KNOS_WANTED_REFEREE_KEYS") or referee.enabled()) or not os.environ.get("KNOS_WANTED_DEVNET_KEYPAIR"):
         return False, "escrow unavailable on this server"
     try:
         escrow.knos()
@@ -134,7 +145,7 @@ def of_report(report_hash: str) -> list[dict]:
     return out
 
 
-PREORDER_VIA = "signed-in pre-order (demo buyer, test money)"
+PREORDER_VIA = "pre-order signed by the buyer's passkey (test money)"
 FUNDER_VIA = ("funder money: a funder's escrow for this milestone (its own devnet order and claim id, beside the pre-orders; "
               "paid to the maker on proof, refunded after the deadline)")
 
@@ -163,55 +174,16 @@ def fee_line(units: int | None = None, unit_price: int | None = None) -> dict:
 # ---- lock ------------------------------------------------------------------------------------------------------------
 def lock(report: dict, units: int, buyer_label: str, maker_wallet: str | None = None, days: int | None = None, led=None,
          funder: bool = False) -> dict:
-    """Lock `units` test units for the maker of an OPEN report, judged by the 2-of-3 panel. Returns the commitment record.
-    The unit price is the one Qloo's evidence set (report.decision.plan.unit_price: the price tier)."""
+    """Refused: since this release a pre-order is signed by the buyer's own passkey (knos_wanted.wallets.prepare_preorder,
+    then wallets.sign). No server key buys for anyone. The report's checks still run first, so the reason given is the
+    first one that applies."""
     d = report.get("decision") or {}
     if d.get("verdict") != "OPEN" or report.get("label", "").startswith("NO QLOO"):
         raise ValueError("pre-orders open only on a report whose decision is OPEN on live Qloo evidence")
-    price = int((d.get("plan") or {}).get("unit_price") or PRICE)
     _need()
-    from solders.pubkey import Pubkey
-
-    from knos import ideas
-    from knos.ideas import commit as C
-    from knos.settle.v2 import pay
-    if isinstance(units, bool) or not isinstance(units, int) or not 5 <= units <= min(1000, d["target_units"]):
-        raise ValueError(f"units: 5 to {min(1000, d['target_units'])} (the report's target)")
-    maker = (maker_wallet or os.environ.get("KNOS_WANTED_MAKER_WALLET") or "").strip()
-    try:
-        Pubkey.from_string(maker)
-    except ValueError:
-        raise ValueError("maker_wallet: the maker's devnet wallet address (or set KNOS_WANTED_MAKER_WALLET)") from None
-    days = max(1, min(MAX_DAYS, days or int(os.environ.get("KNOS_WANTED_MILESTONE_DAYS", "30"))))
-    led = led or escrow.ledger()
-    buyer, refs, prog = escrow.demo_key(), referees(), program()
-    mint = escrow.mint(led)
-    with _lock:
-        n = len(of_report(report["hash"])) + 1
-        claim = ideas.claim(f"Pre-order {n} for: {report['idea']} (Knos demand report {report['hash'][:16]})", field_name=FIELD,
-                            kind="person", by={"app": "knos demand check", "report": report["hash"], "buyer": buyer_label[:80]})
-        tok = pay.ata(buyer.pubkey(), mint)
-        pre = [pay.create_ata_ix(buyer.pubkey(), w, mint) for w in (buyer.pubkey(), Pubkey.from_string(maker))
-               if led.account(pay.ata(w, mint)) is None]
-        if pre:
-            led.send(pre, buyer)
-        need = units * price * escrow.UNIT + pay.order_fee(units * price * escrow.UNIT)
-        have = escrow._token_units(led, tok)
-        minted = None
-        if have < need:
-            minted = led.send([escrow._mint_to_ix(mint, tok, buyer.pubkey(), -(-(need - have) // escrow.UNIT))], buyer)
-        doc = C.commit(claim, units=units, price=price, payee=C.parse_payee(maker), funder=buyer, funder_token=tok, mint=mint, led=led,
-                       stages=[("referee_pass", 10_000)], stage_work_s=[days * 86_400],
-                       panel=(2, [str(r.pubkey()) for r in refs]), program=prog, demand_hash=report["hash"], unlisted_panel=True)
-        st = doc["orders"]["stage1"]
-        rec = {"order": st["order"], "report": report["hash"], "idea": report["idea"], "claim_id": claim["id"], "units": units, "unit_price": price,
-               "via": FUNDER_VIA if funder else PREORDER_VIA, "via_kind": "funder" if funder else "preorder",
-               "buyer": f"demo buyer, test money (for {buyer_label[:80]})", "maker_wallet": maker, "status": "locked",
-               "deadline_days": days, "doc": doc, "made": doc["made"],
-               "signatures": {"mint_to_buyer": minted, "lock": st["signature"]}}
-        rec["record"] = company.record_lock(report["hash"], st["order"], units, st["signature"])
-        _save(rec)
-    return public(rec)
+    from .wallets import NeedPasskey
+    raise NeedPasskey("a pre-order is signed by the buyer's own passkey: POST /api/preorder returns the challenge, "
+                      "your passkey signs it, POST /api/sign relays it")
 
 
 def all_public(n: int = 50) -> list[dict]:
@@ -355,6 +327,17 @@ def milestone(report: dict, order: str, url: str, led=None, opener=None, resolve
     ev["chain_pin"] = pin["evidence_hash"]
     ev["chain_pin_of"] = ("sha256 of the signed evidence structure (oracle, claim id and hash, result, and the page's "
                           "sha256): knos.ideas.commit.review_evidence; this is the hash in the release transaction")
+    if (doc.get("panel") or {}).get("m") == 1:
+        # a FROST group panel: two of the three referee hosts sign, each after its own check; the release is sent
+        # when the second share arrives (knos_wanted.referee._released)
+        from . import referee
+        if not referee.enabled():
+            raise Unavailable("this commitment's referee group is not configured on this server")
+        sig = referee.start(rec, url, led)
+        with _lock:
+            rec["evidence"], rec["referee_session"] = ev, {"id": sig["session"], "github": sig["github"]}
+            _save(rec)
+        return {**public(rec), "verified": ev, "release": "signing: " + sig["needs"], "session": sig["session"], "reserve": res}
     refs = referees()
     with _lock:
         recs = [C.sign(doc, "stage1", r, led, passed=True, review=review) for r in refs[:2]]
@@ -422,7 +405,23 @@ def largest_preorder_txs() -> dict:
     wtok = pay.ata(wallet.pubkey(), mint)
     wfund = W.fund_panel_ix(p, "stage1", wallet.pubkey(), wtok, mint, 2, [bytes(r.pubkey()) for r in refs], program=program(), unlisted_panel=True)
     blink_ixs = [pay.create_ata_ix(wallet.pubkey(), wallet.pubkey(), mint), escrow._mint_to_ix(mint, wtok, buyer.pubkey(), 4001), wfund]
-    return {"blink": tx_size(blink_ixs, wallet.pubkey(), [wallet, buyer]),
+    # the passkey pre-order (knos_wanted.wallets): [secp256r1, LazorKit Execute(FundOrderWallet)] in a v0 transaction
+    # through the relayer's shared table and the wallet's own table
+    from solders.hash import Hash
+    from solders.instruction import Instruction
+    from solders.transaction import VersionedTransaction
+
+    from knos.settle.v2 import passkey_smart as ps
+    cred, key = bytes(32), bytes([2]) + bytes(range(1, 33))
+    w = ps.wallet_pda(ps.user_seed("main", cred))
+    v = ps.vault_pda(w)
+    pfund = W.fund_panel_ix(p, "stage1", v, pay.ata(v, mint), mint, 2, [bytes(r.pubkey()) for r in refs], program=program(), unlisted_panel=True)
+    prep = ps.execute(buyer.pubkey(), w, ps.authority_pda(w, cred)[0], [pfund], slot=2 ** 40, counter=2 ** 31, rp_id="knos.onrender.com", key=key)
+    pk_ixs = [ps.secp256r1_ix(key, bytes([1]) * 64, prep.auth_data + bytes(32)),
+              Instruction(prep.program, bytes([prep.discriminator]) + prep.data_payload + prep.auth_payload, prep.accounts)]
+    tables = [(Keypair().pubkey(), ps.table_addresses(program(), mint)), (Keypair().pubkey(), ps.wallet_table_addresses(w, cred, mint))]
+    passkey = len(bytes(VersionedTransaction(ps.message_v0(buyer.pubkey(), pk_ixs, tables, Hash.default()), [buyer])))
+    return {"blink": tx_size(blink_ixs, wallet.pubkey(), [wallet, buyer]), "passkey_preorder": passkey,
             "preorder": tx_size([fund], buyer.pubkey(), [buyer]),
             "preflight": tx_size([*setup, escrow._mint_to_ix(mint, tok, buyer.pubkey(), 1001), fund], buyer.pubkey(), [buyer])}
 
@@ -444,18 +443,21 @@ def _simulate(led, ixs, payer, signers) -> dict:
 
 
 def preflight(led=None) -> tuple[bool, str]:
-    """Build the transaction a 5-unit pre-order sends (test mint top-up, the stage's PANEL order with the server's 3
-    referee keys) and SIMULATE it on devnet with the demo buyer. Every import, key, config file and the buyer's SOL are
+    """Build the transaction a 5-unit pre-order sends (test mint top-up, the stage's PANEL order with the panel new
+    orders pin: preorder.panel) and SIMULATE it on devnet with the app's devnet test wallet as the funder (a health check: nothing is sent,
+    no one buys; real pre-orders are signed by the buyer's passkey). Every import, key, config file and the wallet's SOL are
     exercised; nothing is sent. (False, why) on any failure."""
     ok, why = ready()
     if not ok:
         return False, why
     try:
+        from solders.pubkey import Pubkey
+
         from knos import ideas
         from knos.ideas import wanted as W
         from knos.settle.v2 import pay
         led = led or escrow.ledger()
-        buyer, refs, prog = escrow.demo_key(), referees(), program()
+        buyer, (pm, pkeys), prog = escrow.demo_key(), panel(), program()
         ixs, signers = [], [buyer]
         try:
             mint = escrow.mint(led, create=False)
@@ -469,7 +471,7 @@ def preflight(led=None) -> tuple[bool, str]:
         ixs.append(escrow._mint_to_ix(mint, tok, buyer.pubkey(), 6))
         claim = ideas.claim("Knos demand check preflight: a 5-unit pre-order, simulated only", field_name=FIELD, kind="agent")
         p = W.plan(claim, units=5, price=PRICE, stages=[("referee_pass", 10_000)], stage_work_s=[30 * 86_400])
-        ixs.append(W.fund_panel_ix(p, "stage1", buyer.pubkey(), tok, mint, 2, [bytes(r.pubkey()) for r in refs], program=prog,
+        ixs.append(W.fund_panel_ix(p, "stage1", buyer.pubkey(), tok, mint, pm, [bytes(Pubkey.from_string(k)) for k in pkeys], program=prog,
                                    unlisted_panel=True))
         n = tx_size(ixs, buyer.pubkey(), signers)
         if n > TX_BUDGET:
@@ -489,4 +491,6 @@ def preflight_status(force: bool = False, led=None) -> dict:
             ok, why = preflight(led)
             _pre.update(at=time.time(), ok=ok, why=why)
         return {"available": _pre["ok"], "why": _pre["why"], "checked": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(_pre["at"])),
-                "preflight": "simulateTransaction of a 5-unit pre-order on devnet, every 10 minutes"}
+                "preflight": "simulateTransaction of a 5-unit pre-order on devnet, every 10 minutes",
+                "label": ("health check, nothing is sent: the app's devnet test wallet is the funder only inside the "
+                          "simulation; every real pre-order is signed by the buyer's own passkey")}

@@ -23,3 +23,9 @@ referees:
     name: knos-devnet-referee-3
     label: Knos devnet TEST referee 3 (test money only)
     test: true
+  # The FROST group key (config/referee-frost.json): ONE Ed25519 key no machine holds; 2 of its 3 key shares (the
+  # Render app server, GitHub Actions, the founder's PC) sign together. Pinned as a 1-of-1 panel (knos.threshold).
+  - key: CZ599fmDD6ATkRsbUbdZiAQE7uF9sJrGFmJ6k54ujb4E
+    name: knos-devnet-referee-frost-group
+    label: Knos devnet TEST referee group, FROST 2 of 3 hosts (test money only)
+    test: true

@@ -47,14 +47,21 @@ name: program
 #                   Only on main, on a release tag (v*), on the nightly run and when started by hand: it compiles
 #                   everything in a container with no cache (a reproducible build must not start from one), which no
 #                   branch push has to wait for.
-#   gate            after the verified builds, on main or a release tag, in this repository: asks GitHub to sign
-#                   gate:<program id>:<executable hash> for each program of the second deployment and posts each
-#                   token on the "knos tokens" issue. A relayer carries it to examples/upgrade_gate, which records
-#                   that GitHub's runner built these bytes from this commit; `deploy_v2.sh --propose` waits for the
-#                   records. It builds nothing and checks out nothing: it hashes the artifacts of this run.
+#   v3-build        the sBPF v3 deploy builds of knos_oidc and knos_pay, the bytes the upgrade multisig's proposals
+#                   carry (deploy/upgrade-0335): `scripts/build_sbf.sh v3 deploy` with cargo-build-sbf 4.4.0 (Agave
+#                   4.4.0-beta.0) and platform-tools v1.57, each archive held to its sha256 before anything in it
+#                   runs. Each build must be, byte for byte, the one V3_EXPECT names, and the buffer it names on
+#                   devnet must hold it; otherwise the job fails and nothing is signed for these builds. Only where
+#                   verified-build runs.
+#   gate            after the verified builds and the v3 builds, on main or a release tag, in this repository: asks
+#                   GitHub to sign gate:<program id>:<executable hash> for each program of the second deployment (its
+#                   verified build) and for each v3 build, and posts each token on the "knos tokens" issue. A relayer
+#                   carries it to examples/upgrade_gate, which records that GitHub's runner built these bytes from this
+#                   commit; `deploy_v2.sh --propose` and `governance.mjs upgrade propose` wait for the records. It
+#                   builds nothing and checks out nothing: it hashes the artifacts of this run.
 #
 # Time. A push to a branch waits for build-test, fuzz, interface, clippy and cargo-audit. No job needs another (gate
-# alone waits, for the verified builds), so they all run side by side and the wait is the longest single job: a second deployment is a second job beside the first, not
+# alone waits, for the verified builds and the v3 builds), so they all run side by side and the wait is the longest single job: a second deployment is a second job beside the first, not
 # more steps in it. Every Rust build starts from a cache (Swatinem/rust-cache: the registry and the compiled
 # dependencies, saved by runs on main; a program's own crates are always compiled). On a cold cache, the first run
 # after a lockfile changes, the dependencies are compiled once and that run is slower. A newer push to a branch
@@ -66,7 +73,7 @@ on:
   push:
     # examples/**: every example program is built and tested here. crates/**: the interface crates the programs and the
     # examples depend on.
-    paths: ["programs/**", "programs-v2/**", "crates/**", "examples/**", "idl/**", "src/knos/settle/**", "tests/_*.py", "tests/test_oidc*.py", "tests/test_pay*.py", "tests/test_order*.py", "tests/test_settle*.py", "tests/test_meter*.py", "tests/test_passkey*.py", "tests/test_cpi_fund.py", "tests/test_workflow_vault.py", "tests/test_upgrade_gate.py", "scripts/build_programs*.sh", "scripts/interface_fixture.py", ".github/workflows/program.yml"]
+    paths: ["programs/**", "programs-v2/**", "crates/**", "examples/**", "idl/**", "src/knos/settle/**", "tests/_*.py", "tests/test_oidc*.py", "tests/test_pay*.py", "tests/test_order*.py", "tests/test_settle*.py", "tests/test_meter*.py", "tests/test_passkey*.py", "tests/test_cpi_fund.py", "tests/test_workflow_vault.py", "tests/test_upgrade_gate.py", "scripts/build_programs*.sh", "scripts/build_sbf.sh", "deploy/upgrade-0335/HASHES-v3.txt", "scripts/interface_fixture.py", ".github/workflows/program.yml"]
   schedule:
     - cron: "41 3 * * *"
 
@@ -482,6 +489,107 @@ jobs:
           name: ${{ matrix.program }}${{ matrix.workspace == 'programs-v2' && '-v2' || '' }}-verified.so
           path: ${{ matrix.workspace }}/target/deploy/${{ matrix.program }}.so
 
+  # The sBPF v3 deploy builds (Agave 4.4 refuses an sBPF v3 file of cargo-build-sbf 2.3.13, so solana-verify's 2.3 image
+  # above cannot make them): scripts/build_sbf.sh, the one command deploy/upgrade-0335/STEPS.md step 1 gives the members,
+  # on a GitHub-hosted runner. The toolchain is named and each archive is held to the sha256 GitHub publishes for it
+  # (the release assets' digests); the panic paths are remapped (--remap-path-prefix: this checkout is /build, the
+  # cargo home /cargo), so the bytes do not depend on where the runner checks out. No Rust cache: the build starts from
+  # nothing but the toolchain. V3_EXPECT is the file of the upgrade the multisig is voting on: name, e_flags, bytes,
+  # sha256 of the file, executable hash, devnet buffer. A build that is not that line's fails the job (a commit that
+  # changes a program changes V3_EXPECT to its own upgrade's file in the same commit), and so does a buffer that does not
+  # hold it; a devnet RPC that does not answer is a warning, not a pass of the buffer (the summary says which).
+  v3-build:
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    name: v3-build (scripts/build_sbf.sh v3 deploy, held to the proposed hashes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      AGAVE_V3: v4.4.0-beta.0
+      AGAVE_V3_SHA256: 91e7913c825e77b131d66ba07bc125832fab3a78730881d5bfbc29b2542c74c2
+      PLATFORM_TOOLS: v1.57
+      PLATFORM_TOOLS_SHA256: b0f7af104adf726fff2a6a09ea2eb2f2d2965c92295f4d7388c08d140e0c2b00
+      V3_EXPECT: deploy/upgrade-0335/HASHES-v3.txt
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            ~/.local/share/agave-v3
+            ~/.cache/solana/${{ env.PLATFORM_TOOLS }}
+          key: agave-${{ env.AGAVE_V3 }}-${{ env.AGAVE_V3_SHA256 }}-tools-${{ env.PLATFORM_TOOLS }}-${{ env.PLATFORM_TOOLS_SHA256 }}-${{ runner.os }}
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/.cargo/bin/solana-verify
+          key: solana-verify-0.4
+      - name: agave and platform-tools (pinned by sha256, cached), solana-verify
+        run: |
+          set -euo pipefail
+          a="$HOME/.local/share/agave-v3/$AGAVE_V3"
+          if [ ! -x "$a/bin/cargo-build-sbf" ]; then
+            curl -sSfL -o "$RUNNER_TEMP/agave.tar.bz2" "https://github.com/anza-xyz/agave/releases/download/$AGAVE_V3/solana-release-x86_64-unknown-linux-gnu.tar.bz2"
+            echo "$AGAVE_V3_SHA256  $RUNNER_TEMP/agave.tar.bz2" | sha256sum -c -
+            tar -xjf "$RUNNER_TEMP/agave.tar.bz2" -C "$RUNNER_TEMP" && mkdir -p "$a" && cp -a "$RUNNER_TEMP/solana-release/." "$a/"
+            rm -rf "$RUNNER_TEMP/agave.tar.bz2" "$RUNNER_TEMP/solana-release"
+          fi
+          # where cargo-build-sbf looks for them; present, they are not downloaded again, and it links the toolchain
+          t="$HOME/.cache/solana/$PLATFORM_TOOLS/platform-tools"
+          if [ ! -f "$t/version.md" ]; then
+            mkdir -p "$t"
+            curl -sSfL -o "$t/platform-tools-linux-x86_64.tar.bz2" "https://github.com/anza-xyz/platform-tools/releases/download/$PLATFORM_TOOLS/platform-tools-linux-x86_64.tar.bz2"
+            echo "$PLATFORM_TOOLS_SHA256  $t/platform-tools-linux-x86_64.tar.bz2" | sha256sum -c -
+            tar -xjf "$t/platform-tools-linux-x86_64.tar.bz2" -C "$t"
+          fi
+          echo "$PLATFORM_TOOLS_SHA256  $t/platform-tools-linux-x86_64.tar.bz2" | sha256sum -c -
+          echo "$a/bin" >> "$GITHUB_PATH"
+          [ -x "$HOME/.cargo/bin/solana-verify" ] || cargo install --locked solana-verify
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: scripts/build_sbf.sh v3 deploy
+        run: |
+          cargo-build-sbf --version
+          bash scripts/build_sbf.sh v3 deploy
+      - name: each build is the one V3_EXPECT names, and so is the devnet buffer it names
+        run: |
+          set -euo pipefail
+          bad=0
+          while read -r name flags bytes sha exe buffer _; do
+            case "$name" in ''|'#'*) continue ;; esac
+            so="programs-v2/target/arch-v3/deploy/$name.so"
+            got_sha="$(sha256sum "$so" | cut -d' ' -f1)" got_exe="$(solana-verify get-executable-hash "$so")"
+            got_flags="$(od -An -tu4 -j48 -N4 "$so" | tr -d ' ')" got_bytes="$(stat -c %s "$so")"
+            if [ "$got_exe" != "$exe" ] || [ "$got_sha" != "$sha" ] || [ "$got_flags" != "$flags" ] || [ "$got_bytes" != "$bytes" ]; then
+              echo "::error::$name: this build is e_flags $got_flags, $got_bytes bytes, sha256 $got_sha, executable hash $got_exe; $V3_EXPECT names e_flags $flags, $bytes bytes, sha256 $sha, executable hash $exe. Nothing will be signed for the v3 builds."
+              bad=1; continue
+            fi
+            echo "$name: the build is $V3_EXPECT's: executable hash $exe (solana-verify get-executable-hash), sha256 $sha, $bytes bytes, sBPF v$flags" | tee -a "$GITHUB_STEP_SUMMARY"
+            mkdir -p "v3/$name" && cp "$so" "v3/$name/$name.so"
+            [ -n "$buffer" ] || continue
+            dumped=""
+            for try in 1 2 3 4 5; do
+              if solana program dump -u devnet "$buffer" "$RUNNER_TEMP/$name-buffer.so" > /dev/null 2>&1; then dumped=yes; break; fi
+              sleep $((try * 10))
+            done
+            if [ -z "$dumped" ]; then
+              echo "::warning::$name: devnet did not answer for the buffer $buffer; its bytes were NOT compared here" | tee -a "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+            on_chain="$(solana-verify get-executable-hash "$RUNNER_TEMP/$name-buffer.so")"
+            if [ "$on_chain" != "$exe" ]; then
+              echo "::error::$name: the devnet buffer $buffer holds executable hash $on_chain, not this build's $exe"; bad=1; continue
+            fi
+            echo "$name: the devnet buffer $buffer holds the same executable ($on_chain)" | tee -a "$GITHUB_STEP_SUMMARY"
+          done < "$V3_EXPECT"
+          [ "$bad" = 0 ] && [ -s v3/knos_oidc/knos_oidc.so ] && [ -s v3/knos_pay/knos_pay.so ]
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: knos_oidc-v3-deploy.so
+          path: v3/knos_oidc/knos_oidc.so
+          if-no-files-found: error
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: knos_pay-v3-deploy.so
+          path: v3/knos_pay/knos_pay.so
+          if-no-files-found: error
+
   # The upgrade gate (examples/upgrade_gate): GitHub's own signature that its runner built exactly these bytes from
   # this commit. For each program of the second deployment this job hashes the verified build of THIS run (sha256 of
   # the file without its trailing zeros: what `solana-verify get-executable-hash` prints) and asks GitHub for a token
@@ -500,10 +608,16 @@ jobs:
   # It is the only job here that may ask for a token, and it runs nothing a commit wrote: no checkout, no build, no
   # cache. The program ids are the pinned ones of programs-v2/program_ids.json, written out because nothing is
   # checked out (tests/test_program_ci.py holds this list to that file).
+  #
+  # The two sets of builds are signed apart: the verified builds when verified-build passed (all of them, or the job
+  # fails), and the v3 builds (V3_PROGRAMS) when v3-build passed, that is when they are the bytes the upgrade proposes.
+  # A failed v3-build does not hold back the verified builds' records, nor the other way round.
   gate:
-    name: gate (GitHub signs the hash of each verified build of the second deployment)
-    needs: verified-build
-    if: github.repository == 'drexthealpha/Knos' && github.event_name != 'schedule' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    name: gate (GitHub signs the hash of each verified build of the second deployment and of each v3 build)
+    needs: [verified-build, v3-build]
+    if: >-
+      !cancelled() && (needs.verified-build.result == 'success' || needs.v3-build.result == 'success') &&
+      github.repository == 'drexthealpha/Knos' && github.event_name != 'schedule' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -515,14 +629,25 @@ jobs:
         knos_pay=5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k
         knos_meter=FUMKkcE95x2kZUj1zZTCbgcYBmJ3WXPHL8pyA8J6anX
         knos_passkey=FQPX9i5kQxLYKZyyPgM2fVK9am3w1LSk1Cuoer1sSY85
+      V3_PROGRAMS: >-
+        knos_oidc=FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W
+        knos_pay=5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        if: needs.verified-build.result == 'success'
         with:
           pattern: "*-v2-verified.so"     # this run's verified builds of the second deployment, one folder each
+          path: built
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        if: needs.v3-build.result == 'success'
+        with:
+          pattern: "*-v3-deploy.so"       # this run's v3 builds, each the bytes V3_EXPECT names
           path: built
       - name: ask GitHub to sign each build's hash, and post each token where a relayer finds it
         env:
           GH_TOKEN: ${{ github.token }}
+          VERIFIED: ${{ needs.verified-build.result }}
+          V3: ${{ needs.v3-build.result }}
         run: |
           set -euo pipefail
           issue="$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq '[.[] | select(.title == "knos tokens" and (has("pull_request") | not))][0].number // empty')"
@@ -530,13 +655,26 @@ jobs:
             issue="$(gh api "repos/$GITHUB_REPOSITORY/issues" -f title="knos tokens" --jq .number \
               -f body="Knos posts here the tokens GitHub signed in this repository, one comment each. A token is no secret: it names one action on Solana and works once. Anyone may carry it there; Knos's public relay finds it here and does.")"
           fi
-          for entry in $PROGRAMS; do
-            name="${entry%%=*}" id="${entry#*=}" file="built/${entry%%=*}-v2-verified.so/${entry%%=*}.so"
-            [ -s "$file" ] || { echo "::error::this run has no verified build of $name ($file), so nothing was signed for it"; exit 1; }
-            hash="$(python3 -c 'import hashlib, sys; print(hashlib.sha256(open(sys.argv[1], "rb").read().rstrip(b"\0")).hexdigest())' "$file")"
-            token="$(curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=gate:$id:$hash" \
+          sign() {    # sign <name> <program id> <file> <what it is>
+            [ -s "$3" ] || { echo "::error::this run has no $4 of $1 ($3), so nothing was signed for it"; exit 1; }
+            hash="$(python3 -c 'import hashlib, sys; print(hashlib.sha256(open(sys.argv[1], "rb").read().rstrip(b"\0")).hexdigest())' "$3")"
+            token="$(curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=gate:$2:$hash" \
               | python3 -c 'import json, sys; print(json.load(sys.stdin)["value"])')"
             printf 'knos-gate: %s\n\n<sub>knosrelay: a GitHub-signed token. Anyone can carry it to Solana, and it can only do what it says.</sub>\n' "$token" \
               | gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body-file - > /dev/null
-            echo "$name $id: executable hash $hash; GitHub signed gate:$id:$hash, posted on #$issue for a relayer" | tee -a "$GITHUB_STEP_SUMMARY"
-          done
+            echo "$1 $2 ($4): executable hash $hash; GitHub signed gate:$2:$hash, posted on #$issue for a relayer" | tee -a "$GITHUB_STEP_SUMMARY"
+          }
+          if [ "$VERIFIED" = success ]; then
+            for entry in $PROGRAMS; do
+              sign "${entry%%=*}" "${entry#*=}" "built/${entry%%=*}-v2-verified.so/${entry%%=*}.so" "verified build"
+            done
+          else
+            echo "::warning::verified-build did not pass ($VERIFIED): nothing was signed for the verified builds" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "$V3" = success ]; then
+            for entry in $V3_PROGRAMS; do
+              sign "${entry%%=*}" "${entry#*=}" "built/${entry%%=*}-v3-deploy.so/${entry%%=*}.so" "v3 build"
+            done
+          else
+            echo "::warning::v3-build did not pass ($V3): nothing was signed for the v3 builds" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi

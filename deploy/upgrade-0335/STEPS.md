@@ -64,6 +64,16 @@ Compare the executable hash each prints with the table. (`--ungated` because the
 this source; step 1 is the evidence, as for the 0.3.29, 0.3.30 and 0.3.34 v3 buffers.) The two can run in either
 order: the knos_pay build does not need the knos_oidc one, and the other way round.
 
+**Gated from the push that adds program.yml's `v3-build` job.** That job runs `scripts/build_sbf.sh v3 deploy` on a
+GitHub-hosted runner with the toolchain above (both archives held to their sha256), fails unless the builds are the
+table's bytes and the two buffers hold them (`V3_EXPECT: deploy/upgrade-0335/HASHES-v3.txt`), and the `gate` job has
+GitHub sign `gate:<program>:<hash>` for both; the relay records them in examples/upgrade_gate. Once
+`python examples/upgrade_gate/adopt.py check --gate 2DfVEuBMWvvh3kXZaQwk2SoszJsoV1PTiK1VGCkB55HW --program <program id> --buffer <buffer>`
+exits 0 for a buffer, propose it WITHOUT `--ungated`; the propose line then names the commit and run GitHub built it in.
+A proposal already made with `--ungated` carries the same instruction on chain (the flag is only the script's own
+check before it sends): once the record exists, `adopt.py check --multisig 9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK`
+shows it gated, and it need not be made again.
+
 ## Do NOT propose these earlier buffers (superseded; all held by the vault)
 
 | buffer | program | executable hash | why not |

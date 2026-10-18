@@ -38,6 +38,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [SLOP_AUDIT.md](SLOP_AUDIT.md) | how many AI agent pull requests in the public AIDev dataset would fail Knos's checks, measured |
 | [TAMPER.md](TAMPER.md) | which cheating submissions each judge refuses, and how much correct work each accepts |
 | [KNOS_RECORD.md](KNOS_RECORD.md) | every check, cheat caught and payout as one hash-chained public file, anchored on devnet, and how to verify it |
+| [REFEREE_FROST.md](REFEREE_FROST.md) | the referee panel as one FROST key: any 2 of 3 hosts sign; the Confidential Space verifier |
 | [REFEREE.md](REFEREE.md) | the referee: Works (sealed tests, a locked judge, the cheat library, re-runs), Wanted and Makeable, and the free maintainer mode |
 | [LOAD.md](LOAD.md) | many orders open at once, in the local simulator |
 | [DRILLS.md](DRILLS.md) | the safety paths, tested on the same program files that run on devnet |

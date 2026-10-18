@@ -1,0 +1,25 @@
+# Keeps the free Render instances awake: Render's free tier sleeps a web service after 15 minutes without traffic, so a
+# visitor's first request waits for a cold start. Every 10 minutes this pings the app's health check.
+name: keepalive
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: keepalive
+  cancel-in-progress: true
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping knos.onrender.com/healthz
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -m 90 https://knos.onrender.com/healthz) && [ "$code" = "200" ] && { echo "knos: $code"; break; }
+            echo "knos: attempt $i answered ${code:-nothing}"; sleep 20
+          done
+          [ "$code" = "200" ]
+# Only the app is kept awake: Render's free tier gives 750 instance hours a month per workspace, and one service awake
+# all month uses about 744 of them. The SSO service (knos-sso) is left to sleep and wakes on its first sign-in.

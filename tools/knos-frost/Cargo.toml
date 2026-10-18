@@ -1,0 +1,24 @@
+[package]
+name = "knos-frost"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"   # zeroize 1.8 (via frost-core) needs 1.85
+license = "MIT"
+publish = false
+description = "Knos referee threshold signing: the Zcash Foundation's FROST (frost-ed25519) as a JSON command for Knos's referee hosts."
+repository = "https://github.com/drexthealpha/Knos"
+
+[[bin]]
+name = "knos-frost"
+path = "src/main.rs"
+
+[dependencies]
+# The Zcash Foundation's FROST, RFC 9591 FROST(Ed25519, SHA-512): published 23 Apr 2026 (crates.io), pinned exactly.
+frost-ed25519 = { version = "=3.0.0", features = ["serde"] }
+rand_core = { version = "0.6", features = ["getrandom"] }   # the OS's CSPRNG, the RngCore frost-ed25519 3.0.0 takes
+serde = "1"
+serde_json = "1"
+hex = "0.4"
+
+[profile.release]
+opt-level = 2

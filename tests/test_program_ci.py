@@ -48,8 +48,8 @@ def _bash() -> str:
 def test_a_second_deployment_is_a_job_beside_the_first_not_more_steps_in_it():
     doc = _doc()
     jobs = doc["jobs"]
-    # nothing waits (the wait is the longest one job), but the gate: it signs the hashes of the verified builds
-    assert {name: job["needs"] for name, job in jobs.items() if "needs" in job} == {"gate": "verified-build"}
+    # nothing waits (the wait is the longest one job), but the gate: it signs the hashes of the verified builds and of the v3 builds
+    assert {name: job["needs"] for name, job in jobs.items() if "needs" in job} == {"gate": ["verified-build", "v3-build"]}
     build = jobs["build-test"]
     legs = _legs(build)
     assert set(legs) == {"first", "second"} and build["strategy"]["fail-fast"] is False
@@ -164,7 +164,10 @@ def test_the_gate_job_has_github_sign_the_hash_of_each_verified_build_and_runs_n
     assert doc["permissions"] == {"contents": "read"}
     assert [name for name, j in doc["jobs"].items() if "id-token" in (j.get("permissions") or {})] == ["gate"]
     assert job["permissions"] == {"id-token": "write", "issues": "write"} and job["runs-on"] == "ubuntu-latest" and "uses" not in job
-    assert job["if"] == ("github.repository == 'drexthealpha/Knos' && github.event_name != 'schedule' && "
+    # it runs when either set of builds passed (each set is signed only when its own job passed: the step below), and
+    # only where the gate takes the token
+    assert job["if"] == ("!cancelled() && (needs.verified-build.result == 'success' || needs.v3-build.result == 'success') && "
+                         "github.repository == 'drexthealpha/Knos' && github.event_name != 'schedule' && "
                          "(github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))")
     assert gate.WORKFLOW == "drexthealpha/Knos/.github/workflows/program.yml" and WORKFLOW.name == "program.yml"
     lib = (ROOT / "examples" / "upgrade_gate" / "src" / "lib.rs").read_text(encoding="utf-8")
@@ -172,12 +175,15 @@ def test_the_gate_job_has_github_sign_the_hash_of_each_verified_build_and_runs_n
     # a push of a v tag starts the workflow (no branch filter; GitHub does not apply a path filter to a tag) and the builds run on it
     assert set(doc["on"]["push"]) == {"paths"} and "workflow_dispatch" in doc["on"]
     # one action, the artifacts of this run; no checkout, no cache, no toolchain, no secret
-    [down, sign] = job["steps"]
+    [down, down3, sign] = job["steps"]
     assert down["uses"].split("@")[0] == "actions/download-artifact" and down["with"] == {"pattern": "*-v2-verified.so", "path": "built"}
+    assert down3["uses"] == down["uses"] and down3["with"] == {"pattern": "*-v3-deploy.so", "path": "built"}
+    assert (down["if"], down3["if"]) == ("needs.verified-build.result == 'success'", "needs.v3-build.result == 'success'")
     pins = json.loads((ROOT / "scripts" / "action_pins.json").read_text(encoding="utf-8"))["pins"]
     assert down["uses"].split("@")[1] == pins["actions/download-artifact@v8"]
     run = sign["run"]
-    assert sign["env"] == {"GH_TOKEN": "${{ github.token }}"} and "${{" not in run and "secrets." not in json.dumps(job)
+    assert sign["env"] == {"GH_TOKEN": "${{ github.token }}", "VERIFIED": "${{ needs.verified-build.result }}", "V3": "${{ needs.v3-build.result }}"}
+    assert "${{" not in run and "secrets." not in json.dumps(job)
     assert not re.search(r"\bgit\b|cargo|solana|pip |uv |npm |checkout", run)
     # the programs are the second deployment's four, by their pinned ids, and each is an artifact verified-build uploads
     ids = json.loads((ROOT / "programs-v2" / "program_ids.json").read_text(encoding="utf-8"))
@@ -190,8 +196,14 @@ def test_the_gate_job_has_github_sign_the_hash_of_each_verified_build_and_runs_n
     [upload] = [s for s in verified["steps"] if str(s.get("uses", "")).startswith("actions/upload-artifact@")]
     assert upload["with"]["name"] == "${{ matrix.program }}${{ matrix.workspace == 'programs-v2' && '-v2' || '' }}-verified.so"
     assert upload["with"]["path"] == "${{ matrix.workspace }}/target/deploy/${{ matrix.program }}.so"
-    assert 'file="built/${entry%%=*}-v2-verified.so/${entry%%=*}.so"' in run
-    assert '"$ACTIONS_ID_TOKEN_REQUEST_URL&audience=gate:$id:$hash"' in run and "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" in run
+    assert '"built/${entry%%=*}-v2-verified.so/${entry%%=*}.so"' in run and '"built/${entry%%=*}-v3-deploy.so/${entry%%=*}.so"' in run
+    # the v3 builds signed are knos_oidc and knos_pay, by their pinned ids, the two v3-build uploads
+    named3 = dict(entry.split("=") for entry in job["env"]["V3_PROGRAMS"].split())
+    assert named3 == {name: ids[name] for name in ("knos_oidc", "knos_pay")}
+    v3 = doc["jobs"]["v3-build"]
+    uploads3 = [s["with"] for s in v3["steps"] if str(s.get("uses", "")).startswith("actions/upload-artifact@")]
+    assert uploads3 == [{"name": f"{n}-v3-deploy.so", "path": f"v3/{n}/{n}.so", "if-no-files-found": "error"} for n in named3]
+    assert '"$ACTIONS_ID_TOKEN_REQUEST_URL&audience=gate:$2:$hash"' in run and "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" in run
     assert "printf 'knos-gate: %s\\n\\n<sub>knosrelay: " in run and 'gh issue comment "$issue"' in run and '.title == "knos tokens"' in run
     # the step itself, run with stand-ins for GitHub: the audience it asks for is the client's, for the hash solana-verify prints
     bash = _bash()
@@ -199,6 +211,9 @@ def test_the_gate_job_has_github_sign_the_hash_of_each_verified_build_and_runs_n
     for name in named:
         (tmp_path / "built" / f"{name}-v2-verified.so").mkdir(parents=True)
         (tmp_path / "built" / f"{name}-v2-verified.so" / f"{name}.so").write_bytes(elf + name.encode() + bytes(300))
+    for name in named3:
+        (tmp_path / "built" / f"{name}-v3-deploy.so").mkdir(parents=True)
+        (tmp_path / "built" / f"{name}-v3-deploy.so" / f"{name}.so").write_bytes(elf + b"v3" + name.encode() + bytes(300))
     fake = tmp_path / "bin"
     fake.mkdir()
     (fake / "gh").write_text('#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$OUT/gh.log"\ncase "$*" in\n  "api repos/drexthealpha/Knos/issues?state=open"*) echo 12 ;;\n'
@@ -209,21 +224,93 @@ def test_the_gate_job_has_github_sign_the_hash_of_each_verified_build_and_runs_n
         (fake / tool).chmod(0o755)
     env = {**os.environ, "PATH": f"{fake}{os.pathsep}{os.environ['PATH']}", "OUT": str(tmp_path), "PROGRAMS": job["env"]["PROGRAMS"],
            "GITHUB_REPOSITORY": "drexthealpha/Knos", "GITHUB_STEP_SUMMARY": str(tmp_path / "summary"), "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "t",
-           "ACTIONS_ID_TOKEN_REQUEST_URL": "https://token.test/?api-version=2"}
+           "ACTIONS_ID_TOKEN_REQUEST_URL": "https://token.test/?api-version=2", "VERIFIED": "success", "V3": "success",
+           "V3_PROGRAMS": job["env"]["V3_PROGRAMS"]}
     done = subprocess.run([bash, "-c", run], cwd=tmp_path, env=env, capture_output=True, text=True)
     assert done.returncode == 0, done.stderr
     want = [gate.audience(ids[name], gate.executable_hash(elf + name.encode())) for name in named]
-    assert (tmp_path / "asked").read_text(encoding="utf-8").split() == [f"https://token.test/?api-version=2&audience={aud}" for aud in want]
+    want3 = [gate.audience(ids[name], gate.executable_hash(elf + b"v3" + name.encode())) for name in named3]
+    assert (tmp_path / "asked").read_text(encoding="utf-8").split() == [f"https://token.test/?api-version=2&audience={aud}" for aud in want + want3]
     from knos.proof import ghrelay
     posted = ghrelay.TOKEN.findall((tmp_path / "comments").read_text(encoding="utf-8"))
-    assert [kind for kind, _jwt in posted] == ["gate"] * 4 and len({jwt for _kind, jwt in posted}) == 4
+    assert [kind for kind, _jwt in posted] == ["gate"] * 6 and len({jwt for _kind, jwt in posted}) == 6
     log = (tmp_path / "gh.log").read_text(encoding="utf-8").splitlines()
-    assert len(log) == 5 and all(line == "issue comment 12 --repo drexthealpha/Knos --body-file -" for line in log[1:])     # the issue was there: none is made
-    assert all(f"{name} {ids[name]}: executable hash" in (tmp_path / "summary").read_text(encoding="utf-8") for name in named)
+    assert len(log) == 7 and all(line == "issue comment 12 --repo drexthealpha/Knos --body-file -" for line in log[1:])     # the issue was there: none is made
+    summary = (tmp_path / "summary").read_text(encoding="utf-8")
+    assert all(f"{name} {ids[name]} (verified build): executable hash" in summary for name in named)
+    assert all(f"{name} {ids[name]} (v3 build): executable hash" in summary for name in named3)
+    # one set whose job did not pass is not signed, and the other set still is
+    for result, var, signed in (("failure", "V3", want), ("failure", "VERIFIED", want3)):
+        (tmp_path / "asked").unlink()
+        part = subprocess.run([bash, "-c", run], cwd=tmp_path, env={**env, var: result}, capture_output=True, text=True)
+        assert part.returncode == 0, part.stderr
+        assert (tmp_path / "asked").read_text(encoding="utf-8").split() == [f"https://token.test/?api-version=2&audience={aud}" for aud in signed]
+        assert f"did not pass ({result}): nothing was signed" in part.stdout
     # a build that is missing from the run fails the job before anything else is signed for it
     (tmp_path / "built" / "knos_pay-v2-verified.so" / "knos_pay.so").unlink()
     again = subprocess.run([bash, "-c", run], cwd=tmp_path, env=env, capture_output=True, text=True)
     assert again.returncode == 1 and "no verified build of knos_pay" in again.stdout
+    (tmp_path / "built" / "knos_pay-v3-deploy.so" / "knos_pay.so").unlink()
+    again = subprocess.run([bash, "-c", run], cwd=tmp_path, env={**env, "VERIFIED": "failure"}, capture_output=True, text=True)
+    assert again.returncode == 1 and "no v3 build of knos_pay" in again.stdout
+
+
+def test_the_v3_builds_are_build_sbf_with_the_pinned_toolchain_and_must_be_the_proposed_bytes(tmp_path):
+    """v3-build: scripts/build_sbf.sh v3 deploy (cargo-build-sbf 4.4.0, platform-tools v1.57, both archives held to
+    their sha256), then each build against V3_EXPECT, the hashes the upgrade proposes; a build or a buffer that differs
+    fails the job, and only the builds that are V3_EXPECT's are uploaded for the gate."""
+    doc = _doc()
+    job = doc["jobs"]["v3-build"]
+    assert job["if"] == doc["jobs"]["verified-build"]["if"] and "needs" not in job and "permissions" not in job
+    assert job["env"]["AGAVE_V3"] == "v4.4.0-beta.0" and job["env"]["PLATFORM_TOOLS"] == "v1.57"
+    assert all(re.fullmatch(r"[0-9a-f]{64}", job["env"][k]) for k in ("AGAVE_V3_SHA256", "PLATFORM_TOOLS_SHA256"))
+    assert not any(str(s.get("uses", "")).startswith("Swatinem/") for s in job["steps"])     # no Rust cache: the toolchain only
+    run = _runs(job)
+    assert 'echo "$AGAVE_V3_SHA256  $RUNNER_TEMP/agave.tar.bz2" | sha256sum -c -' in run
+    assert run.count('echo "$PLATFORM_TOOLS_SHA256  $t/platform-tools-linux-x86_64.tar.bz2" | sha256sum -c -') == 2   # on a cache hit too
+    assert "bash scripts/build_sbf.sh v3 deploy" in run
+    script = (ROOT / "scripts" / "build_sbf.sh").read_text(encoding="utf-8")
+    assert 'want_sbf="4.4.0"; want_tools="v1.57"' in script and "--remap-path-prefix=$PWD=/build" in script
+    # V3_EXPECT is the 0.3.35 upgrade's file: the two buffers the multisig is asked to deploy, and their hashes
+    expect = (ROOT / job["env"]["V3_EXPECT"]).read_text(encoding="utf-8")
+    rows = {r.split()[0]: r.split() for r in expect.splitlines() if r.strip() and not r.startswith("#")}
+    assert rows["knos_pay"][4:] == ["e01605411369b40b9e6fd28595d0254f06357fbf7f5c887eef207f8d5b68ad3a", "C7MrKvNU2yxMG5RJqzCkCDGowe5T1R69j3LXz3Qj1VdA"]
+    assert rows["knos_oidc"][4:] == ["925c76f051f9c28f617dc18352fcdab6127b2d23b164eb87fcab282e02bbe968", "dJA4mokfAqG7eTKUrD1MawKbWPJrzjc72qehpujiy6V"]
+    # the check step, with stand-ins for solana-verify and solana: the right bytes pass, other bytes fail it
+    bash = _bash()
+    [check] = [s for s in job["steps"] if "V3_EXPECT" in str(s.get("run", ""))]
+    deploy = tmp_path / "programs-v2" / "target" / "arch-v3" / "deploy"
+    deploy.mkdir(parents=True)
+    elf = {n: b"\x7fELF" + bytes(44) + (3).to_bytes(4, "little") + n.encode() + bytes(64) for n in ("knos_oidc", "knos_pay")}
+    exe = {n: hashlib.sha256(b.rstrip(b"\0")).hexdigest() for n, b in elf.items()}
+    lines = ["# name  e_flags  bytes  sha256(file)  executable hash  buffer"]
+    for n, b in elf.items():
+        (deploy / f"{n}.so").write_bytes(b)
+        (tmp_path / f"{n}.chain").write_bytes(b)
+        lines.append(f"{n}  3  {len(b)}  {hashlib.sha256(b).hexdigest()}  {exe[n]}  BUF{n}")
+    (tmp_path / "expect.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    (fake / "solana-verify").write_text('#!/bin/sh\npython3 -c \'import hashlib, sys; print(hashlib.sha256(open(sys.argv[1], "rb").read().rstrip(b"\\0")).hexdigest())\' "$2"\n', encoding="utf-8")
+    (fake / "solana").write_text('#!/bin/sh\n# solana program dump -u devnet BUFknos_x OUT\ncp "$OUT/${5#BUF}.chain" "$6"\n', encoding="utf-8")
+    for tool in ("solana-verify", "solana"):
+        (fake / tool).chmod(0o755)
+    env = {**os.environ, "PATH": f"{fake}{os.pathsep}{os.environ['PATH']}", "OUT": str(tmp_path), "V3_EXPECT": str(tmp_path / "expect.txt"),
+           "RUNNER_TEMP": str(tmp_path), "GITHUB_STEP_SUMMARY": str(tmp_path / "summary")}
+    ok = subprocess.run([bash, "-c", check["run"]], cwd=tmp_path, env=env, capture_output=True, text=True)
+    assert ok.returncode == 0, ok.stdout + ok.stderr
+    assert (tmp_path / "v3" / "knos_pay" / "knos_pay.so").read_bytes() == elf["knos_pay"]
+    assert f"knos_pay: the devnet buffer BUFknos_pay holds the same executable ({exe['knos_pay']})" in (tmp_path / "summary").read_text(encoding="utf-8")
+    # a buffer that holds other bytes fails it
+    (tmp_path / "knos_oidc.chain").write_bytes(elf["knos_oidc"] + b"x")
+    bad = subprocess.run([bash, "-c", check["run"]], cwd=tmp_path, env=env, capture_output=True, text=True)
+    assert bad.returncode == 1 and "::error::knos_oidc: the devnet buffer BUFknos_oidc holds executable hash" in bad.stdout
+    # a build that is not V3_EXPECT's fails it, and is not put where the upload takes it from
+    (tmp_path / "knos_oidc.chain").write_bytes(elf["knos_oidc"])
+    shutil.rmtree(tmp_path / "v3")
+    (deploy / "knos_pay.so").write_bytes(elf["knos_pay"].replace(b"knos_pay", b"knos_pax"))
+    bad = subprocess.run([bash, "-c", check["run"]], cwd=tmp_path, env=env, capture_output=True, text=True)
+    assert bad.returncode == 1 and "::error::knos_pay: this build is" in bad.stdout and not (tmp_path / "v3" / "knos_pay").exists()
 
 
 def test_ten_thousand_random_steps_are_four_walks_side_by_side_each_from_its_own_seed():

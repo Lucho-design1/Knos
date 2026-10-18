@@ -1,0 +1,42 @@
+{
+ "v": 1,
+ "kind": "knos-referee-frost-group",
+ "scheme": "FROST(Ed25519, SHA-512), RFC 9591, frost-ed25519 3.0.0",
+ "run": "166c479f50bb44248801879a1ffb5c26",
+ "min": 2,
+ "max": 3,
+ "group_key": "CZ599fmDD6ATkRsbUbdZiAQE7uF9sJrGFmJ6k54ujb4E",
+ "group_key_hex": "aba7d2e26b90c2b281c9ddce12f8573f5a66bb98e124fee37c216ca106eb3db3",
+ "public": {
+  "header": {
+   "ciphersuite": "FROST-ED25519-SHA512-v1",
+   "version": 0
+  },
+  "min_signers": 2,
+  "verifying_key": "aba7d2e26b90c2b281c9ddce12f8573f5a66bb98e124fee37c216ca106eb3db3",
+  "verifying_shares": {
+   "0100000000000000000000000000000000000000000000000000000000000000": "d67c84248ca1a7b245f59c316675ef4c235c8798707d15e525069e55e9d35995",
+   "0200000000000000000000000000000000000000000000000000000000000000": "7c7d733db16d851ea2e1cf5eecbc9a51d57efafef588a29ac9837749f98aea3f",
+   "0300000000000000000000000000000000000000000000000000000000000000": "ea19f0e1e02604e2b623211050bc72ed0c1f4778c5bd9677139b295fae0b73ae"
+  }
+ },
+ "hosts": {
+  "1": {
+   "host": "render",
+   "transport_key": "3tAzxXSXabt4zrrHHq2YFjELPQbkrhAxe2JVvDx9ieLv"
+  },
+  "2": {
+   "host": "gh",
+   "transport_key": "5YYzjAiPkbiSz233QijZE4PuHZE6NoGHC3YH1H1pzsY7"
+  },
+  "3": {
+   "host": "pc",
+   "transport_key": "F1w3A4PT6qoceJjoT2MwTDzDzqNLambH2wSR9QtHAjmM"
+  }
+ },
+ "keygen": "distributed key generation, no dealer (knos.threshold.dkg); three separate processes",
+ "cluster": "devnet",
+ "program": "FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4",
+ "panel": "1:CZ599fmDD6ATkRsbUbdZiAQE7uF9sJrGFmJ6k54ujb4E",
+ "test": true
+}
