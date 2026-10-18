@@ -481,7 +481,7 @@ def post(pid: str, key: str, attempt: str, user: dict, url: str, role: str, fetc
         ids = _claim_ids(p, m)
         if not ids:
             raise Refused("this milestone has no locked funding yet: nothing to release")
-        body = fetch(url)
+        body = preorder.static_evidence(url, fetch)
         missing = [c for c in ids if c.encode() not in body]
         if missing:
             raise preorder.NotVerified(f"the page does not contain the milestone's claim id(s): {', '.join(missing)}")

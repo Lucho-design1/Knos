@@ -268,8 +268,22 @@ def fetch_evidence(url: str, opener=None, resolve=_public_host) -> bytes:
     return body
 
 
+CHANGING = ("this page changes on every load (two fetches gave different bytes): each referee host fetches it itself "
+            "and signs the sha256 of exactly those bytes, so a page that echoes the request (its headers, time or address) "
+            "can never be signed. Use a static page: a file in a repository or a gist, a published report")
+
+
+def static_evidence(url: str, fetch) -> bytes:
+    """The evidence page, fetched twice: the referee hosts each fetch it and sign over its bytes, so bytes that differ
+    between two loads (an echo service, a page with a timestamp) are refused here, before anyone is asked to sign."""
+    body = fetch(url)
+    if fetch(url) != body:
+        raise NotVerified(CHANGING)
+    return body
+
+
 def verify(rec: dict, url: str, opener=None, resolve=_public_host) -> tuple[dict, bytes]:
-    body = fetch_evidence(url, opener, resolve)
+    body = static_evidence(url, lambda u: fetch_evidence(u, opener, resolve))
     if rec["claim_id"].encode() not in body:
         raise NotVerified(f"the evidence page does not contain the commitment's claim id {rec['claim_id']}")
     return {"url": url, "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body), "contains_claim_id": True}, body

@@ -347,8 +347,30 @@ def lender_advances(r: Run, st: dict):
     r.shot("funder", "advanced")
 
 
+def gist_page(r: Run, st: dict) -> str:
+    """The maker publishes its result as a SECRET GitHub gist (`gh gist create`, the maker's own GitHub account) and
+    posts the file's raw URL at that revision: a static page whose bytes are the same for every referee host."""
+    name = "knos-milestone-" + st["claim"].split(":")[-1][:16] + ".txt"
+    d = Path(r.out) / "_gist"
+    d.mkdir(exist_ok=True)
+    f = d / name
+    f.write_text(f"Knos milestone result\nclaim: {st['claim']}\norder: {st['order']}\nproduct: {r.args.product}\n"
+                 f"result: the prototype was built and measured (the maker's evidence for this milestone)\n", encoding="utf-8")
+    got = subprocess.run(["gh", "gist", "create", "--desc", f"Knos milestone evidence for {st['claim']}", str(f)], capture_output=True, text=True, timeout=120)
+    if got.returncode != 0:
+        raise RuntimeError("gh gist create: " + (got.stderr or got.stdout)[-200:])
+    gid = got.stdout.strip().rstrip("/").rsplit("/", 1)[-1]
+    raw = subprocess.run(["gh", "api", f"gists/{gid}", "--jq", ".files[].raw_url"], capture_output=True, text=True, timeout=60).stdout.strip().splitlines()[0]
+    st["evidence_gist"] = {"gist": got.stdout.strip(), "raw": raw, "file": name, "secret": True}
+    r.see("maker", f"published the result as a secret gist {got.stdout.strip()} (raw, pinned to its revision: {raw})")
+    return raw
+
+
 def maker_proves(r: Run, st: dict):
     p = r.page["maker"]
+    if r.args.resume_order:                           # a re-run: post on an order that is already locked
+        st["order"], st["claim"] = r.args.resume_order, r.args.resume_claim
+        r.sign_in("maker", "make")
     if r.args.evidence_dir:
         page = (f"<!doctype html><meta charset=utf-8><title>Milestone result</title><h1>Milestone result</h1>"
                 f"<p>Claim {st['claim']}: the prototype ({r.args.product}) was built and measured; result attached.</p>")
@@ -358,7 +380,9 @@ def maker_proves(r: Run, st: dict):
         url = r.args.evidence_url_template.format(claim=st["claim"])
     elif url.startswith("@"):                              # a file holding the URL, read when the page is posted
         url = Path(url[1:]).read_text(encoding="utf-8").strip()
-    if not r.args.evidence_url_template:
+    if r.args.evidence_gist:
+        url = gist_page(r, st)
+    elif not r.args.evidence_url_template:
         url = url.rstrip("/") + "/"
     r.hook("hook_before_post")
     p.goto(r.base + "/#make", wait_until="domcontentloaded")
@@ -371,8 +395,11 @@ def maker_proves(r: Run, st: dict):
         raise RuntimeError("milestone not verified: " + _err_line(p.inner_text("body")))
     r.see("maker", f"posted the result page {url}: the FROST referee group checks it")
     r.shot("maker", "posted")
-    c = r.wait_status("maker", st["order"], "released", 60 * r.args.release_wait)
-    r.hook("hook_after_release")
+    r.hook("hook_on_session")
+    try:
+        c = r.wait_status("maker", st["order"], "released", 60 * r.args.release_wait)
+    finally:
+        r.hook("hook_after_release")                  # also when the release did not come: never leave a host paused
     r.sigs("release by the FROST referee group", c.get("signatures"))
     sess = (c.get("referee_session") or {})
     r.see("maker", f"released by the FROST group key: signers {sess.get('signers')}, signature {str(sess.get('signature'))[:16]}…, "
@@ -417,12 +444,16 @@ def contributor(r: Run, st: dict):
     if not m:
         raise RuntimeError("no prize session: " + note[:200])
     sid = next(s["id"] for s in r.api("contributor", "/api/referee/pending")["sessions"] if s["id"].startswith(m.group(1)))
-    end = time.time() + 900
+    r.hook("hook_on_session")
+    end = time.time() + 60 * r.args.release_wait
     while time.time() < end:
         s = r.api("contributor", "/api/referee/session?id=" + sid)
         if s.get("state") == "signed" and s.get("result"):
             break
         p.wait_for_timeout(5000)
+    else:
+        raise RuntimeError(f"the prize was not released in {r.args.release_wait} min: session {sid} {s.get('state')}, "
+                           f"committed {s.get('committed')}, shared {s.get('shared')}, error {s.get('error')}")
     r.sigs("prize release by the FROST referee group", s.get("result"))
     r.see("contributor", f"prize released by the FROST group (signers {s.get('signers')}): {json.dumps(s.get('result'))[:200]}")
     p.goto(f"https://explorer.solana.com/address/{w['vault']}?cluster=devnet", wait_until="domcontentloaded")
@@ -473,13 +504,18 @@ def main(argv=None) -> int:
     ap.add_argument("--front-door", default=None, help="start the researcher here and count the taps to the app")
     ap.add_argument("--evidence-url-template", default=None, help="the maker's public page, {claim} = the claim id")
     ap.add_argument("--hook-before-post", default=None, help="a shell command run before the maker posts its evidence")
-    ap.add_argument("--hook-after-release", default=None, help="a shell command run after the release")
+    ap.add_argument("--hook-after-release", default=None, help="a shell command run after the release (also when it fails)")
+    ap.add_argument("--hook-on-session", default=None, help="a shell command run when a referee session opens (e.g. dispatch referee.yml)")
+    ap.add_argument("--roles", default=",".join(ROLES), help="the roles to run, comma-separated (their steps of the story only)")
+    ap.add_argument("--resume-order", default=None, help="maker: post the evidence on this locked order (a re-run)")
+    ap.add_argument("--resume-claim", default=None, help="maker: the claim id of --resume-order")
+    ap.add_argument("--evidence-gist", action="store_true", help="the maker publishes its result as a secret gist (gh gist create)")
     ap.add_argument("--release-wait", type=int, default=15, help="minutes to wait for the referee group's release")
     ap.add_argument("--note", default="")
     ap.add_argument("--header", action="append", default=[], help="NAME:VALUE sent with every request (e.g. a tunnel's documented no-interstitial header)")
     ap.add_argument("--chromium", default=None, help="a Chrome/Chromium executable (default: Playwright's)")
     args = ap.parse_args(argv)
-    if not (args.evidence_url or args.evidence_url_template):
+    if not (args.evidence_url or args.evidence_url_template or args.evidence_gist):
         ap.error("--evidence-url or --evidence-url-template: the maker's result page must be a public https page")
     from playwright.sync_api import sync_playwright
     base, out = args.base.rstrip("/"), Path(args.out)
@@ -489,7 +525,14 @@ def main(argv=None) -> int:
         browser = pw.chromium.launch(executable_path=args.chromium) if args.chromium else pw.chromium.launch()
         r = Run(browser, base, out, args)
         t0 = time.time()
-        for role, step in STORY:
+        only = set(args.roles.split(","))
+        story = [(ro, stp) for ro, stp in STORY if ro in only]
+        if args.resume_order:                         # a re-run of the maker posts on the order it names, nothing before
+            story = [(ro, stp) for ro, stp in story if ro != "maker" or stp is maker_proves]
+        for role in ROLES:
+            if role not in only:
+                r.summary["roles"][role].update(result="NOT RUN", error="not asked for (--roles)")
+        for role, step in story:
             if any(v["result"] == "FAIL" for v in r.summary["roles"].values()) and role != "agent" and step is not contributor:
                 r.summary["roles"][role]["seen"].append(f"skipped {step.__name__}: an earlier step failed")
                 if r.summary["roles"][role]["result"] == "PASS":
@@ -510,7 +553,7 @@ def main(argv=None) -> int:
     (out / "summary.json").write_text(json.dumps(r.summary, indent=1), encoding="utf-8")
     for role, v in r.summary["roles"].items():
         print(role, v["result"], v["error"] or "", flush=True)
-    return 0 if all(v["result"] == "PASS" for v in r.summary["roles"].values()) else 1
+    return 0 if all(v["result"] in ("PASS", "NOT RUN") for v in r.summary["roles"].values()) else 1
 
 
 if __name__ == "__main__":

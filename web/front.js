@@ -796,14 +796,8 @@ function initBar() {
     else if (bar.classList.contains("open")) { bar.classList.remove("open"); menu.setAttribute("aria-expanded", "false"); menu.focus(); }
   });
   initAdded();
-  // the first screen's "Open the app" (index.html #hero-app): to the app if it answers within 2 s, else its wake page
-  // (wanted.html waits for the free instance and forwards); nothing is asked of it before the press (web/apps.js)
-  $("hero-app")?.addEventListener("click", (ev) => {
-    if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button !== 0) return;
-    ev.preventDefault(); ev.currentTarget.textContent = "Opening…";
-    const app = "https://knos.onrender.com/", late = new Promise((res) => setTimeout(() => res(false), 2000));
-    Promise.race([fetch(app + "healthz", { mode: "no-cors", cache: "no-store" }).then(() => true, () => false), late]).then((up) => { location.href = up ? app : "wanted.html"; });
-  });
+  // the first screen's "Open the app" (index.html #hero-app) is a plain link to the site's own wake page, wanted.html,
+  // which forwards to the app at once when it is awake and waits for it otherwise: this page asks no other host
   for (const type of ["click", "submit", "input", "change"]) document.addEventListener(type, keep, true);
   // a link's page is fetched while the pointer or the focus is on the link: the press finds it there
   for (const type of ["pointerover", "focusin", "touchstart"]) document.addEventListener(type, (ev) => {
