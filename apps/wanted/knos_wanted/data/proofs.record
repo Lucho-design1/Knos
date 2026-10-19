@@ -1,0 +1,124 @@
+{
+ "what": "Infrastructure proofs recorded by Knos (G-INFRA). Devnet and TEST MONEY only; test users and test certificates are labelled.",
+ "proofs": [
+  {
+   "key": "selfhost_k8s",
+   "title": "Self-host on Kubernetes: the Helm chart installed for real",
+   "where": "the founder's PC: WSL2 Ubuntu 24.04, Docker Engine (apt docker.io); k3d (k3s in Docker)",
+   "ran_at": "2026-10-18T17:35:58Z",
+   "result": "pass",
+   "summary": "helm install deploy/selfhost/knos (helm v4.3.1+gc0d08d0) on a k3d v5.9.0 cluster, image built from commit 17b881175 with apps/wanted/Dockerfile: STATUS deployed, pod Ready, PVC Bound (local-path). Through kubectl port-forward the pod answered /healthz {\"ok\": true} and served /openapi.json (3.1.0 88 paths). kind v0.33 was tried 8 times on this PC: its node boots in about 30 s on a spinning disk under load, and kind waits a fixed 30 s, so the same chart was run on k3d. The cluster was deleted after the run.",
+   "run_yourself": [
+    "docker build -f apps/wanted/Dockerfile -t knos:local .",
+    "kind create cluster --name knos-selfhost --config deploy/selfhost/kind-config.yaml && kind load docker-image knos:local --name knos-selfhost",
+    "#  or: k3d cluster create knos-selfhost && k3d image import knos:local -c knos-selfhost",
+    "helm install knos deploy/selfhost/knos -f deploy/selfhost/kind-values.yaml --wait",
+    "kubectl port-forward svc/knos-knos 8080:80 &  curl http://localhost:8080/healthz"
+   ]
+  },
+  {
+   "key": "sso_keycloak",
+   "title": "Company SSO through a self-hosted Keycloak (SAML) and SAML Jackson",
+   "where": "Keycloak (quay.io/keycloak/keycloak, dev mode) on the founder's PC: WSL2 Ubuntu 24.04, Docker Engine (apt docker.io), reached through a cloudflared quick tunnel (no account); SAML Jackson = the knos-sso Render service; the app = knos.onrender.com",
+   "ran_at": "2026-10-18T18:04:28Z",
+   "result": "pass",
+   "summary": "Playwright on a phone-size page: Teams → tenant knos-keycloak → Sign in with company SSO → Jackson → the Keycloak TEST realm's login page → test user alice → back in the app signed in as \"alice@knos-test.example (knos-keycloak)\" (session kind sso). With that session the live server signed a PNG with C2PA (claim id g-infra-sso-c2pa-1) and read it back. Keycloak runs only while this PC runs it: the tenant answers when the stack is up.",
+   "run_yourself": [
+    "docker run -p 8080:8080 --env-file kc.env -e KC_REALM_JSON=\"$(cat deploy/sso/keycloak/knos-test-realm.json)\" --entrypoint /bin/bash quay.io/keycloak/keycloak:26.4.2 -c \"$(cat deploy/sso/keycloak/start.sh)\"",
+    "Register https://<keycloak>/realms/knos-test/protocol/saml/descriptor in Jackson for your tenant (or set KNOS_SSO_KEYCLOAK_URL and the app registers tenant knos-keycloak itself)"
+   ]
+  },
+  {
+   "key": "erp_odoo",
+   "title": "Odoo Community: journal entries through XML-RPC",
+   "where": "the founder's PC: WSL2 Ubuntu 24.04, Docker Engine (apt docker.io); official odoo image + postgres:16",
+   "ran_at": "2026-10-18T18:08:26Z",
+   "result": "pass",
+   "summary": "The app's journal export (GET /api/company/export?format=journal) of two devnet test projects, imported through the ERP's own API and read back; balances equal the file's. b4d2b58a23898fe4-journal.csv: 3 entries, read back {'Assets:Knos escrow': -10.0, 'Expenses:Milestones paid': 15.0, 'Liabilities:Milestone commitments': -5.0}; a30d80bdaffcbd0e-journal.csv: 2 entries, read back {'Assets:Knos escrow': -10.0, 'Assets:Refunds receivable': 10.0}. TEST MONEY.",
+   "run_yourself": [
+    "docker run -d --name db -e POSTGRES_USER=odoo -e POSTGRES_PASSWORD=odoo postgres:16",
+    "docker run --link db -e HOST=db odoo:18.0 -- -d knos -i account --without-demo=all --stop-after-init",
+    "python -c \"from knos_wanted import erp_import; print(erp_import.to_odoo(open('journal.csv').read(), 'http://localhost:8069', 'knos', 'admin', 'admin'))\""
+   ]
+  },
+  {
+   "key": "erp_erpnext",
+   "title": "ERPNext: Journal Entries through the Frappe REST API",
+   "where": "the founder's PC: WSL2 Ubuntu 24.04, Docker Engine (apt docker.io); frappe_docker pwd.yml",
+   "ran_at": "2026-10-18T19:54:54Z",
+   "result": "not run",
+   "summary": "Not run to the end here: the importer (knos_wanted.erp_import.to_erpnext, Frappe REST) is built and tested against a fake, but on this PC frappe_docker's frappe/erpnext:v16.51.1 image was still unpacking after about 2 hours on a spinning disk and WSL stopped answering, so the run was stopped to protect the other work on this machine. Run it on a machine with an SSD.",
+   "run_yourself": [
+    "git clone https://github.com/frappe/frappe_docker && docker compose -f frappe_docker/pwd.yml up -d",
+    "python -c \"from knos_wanted import erp_import as e; print(e.to_erpnext(open('journal.csv').read(), e.Frappe('http://localhost:8080', 'Administrator', 'admin'), '<company>'))\""
+   ]
+  },
+  {
+   "key": "erp_hledger",
+   "title": "hledger: the journal CSV with the shipped rules",
+   "where": "the founder's PC: WSL2 Ubuntu 24.04, Docker Engine (apt docker.io)",
+   "ran_at": "",
+   "result": "pass",
+   "summary": "hledger balance --flat of the same two exports: ",
+   "run_yourself": [
+    "hledger -f journal.csv --rules-file knos.rules balance --flat   # knos.rules = enterprise.HLEDGER_RULES"
+   ]
+  },
+  {
+   "key": "squads_live",
+   "title": "A company's own Squads multisig, created through the live app",
+   "where": "knos.onrender.com + Solana devnet",
+   "ran_at": "2026-10-18T13:17:32Z",
+   "result": "pass",
+   "summary": "Two fresh devnet member keys; the app built Squads v4 multisig_create_v2 (2 of 2), member 1 signed and paid with its own key. Multisig AfUq3aTgfHNAS2T98g4N9YuC4U6oXoLeLHt17A6a5PTe, vault 7YV2XiQ44pH4GocpHfRfARcbzSpU9o7WHGeppeuSME6N, transaction j8YN7D9t6novjEuqy5YR7vgU1h5BYqMBcKwQHqQpkKvFresWdfmupRjuQkEUYw5rhLqJMgzaNXPFSXg5FRH2FsT. Knos holds no key in it.",
+   "run_yourself": [
+    "Teams → Your company's multisig → Create with my wallet"
+   ]
+  },
+  {
+   "key": "openapi_live",
+   "title": "OpenAPI document of the live app validated",
+   "where": "knos.onrender.com/openapi.json",
+   "ran_at": "",
+   "result": "pass",
+   "summary": "openapi-spec-validator: valid 3.1.0 88 paths 91 operations; templates: ",
+   "run_yourself": [
+    "pip install openapi-spec-validator && curl -s https://knos.onrender.com/openapi.json > o.json && python -c \"import json; from openapi_spec_validator import validate; validate(json.load(open('o.json')))\""
+   ]
+  },
+  {
+   "key": "sandbox_live",
+   "title": "One-day sandbox from a milestone template, on the live app",
+   "where": "knos.onrender.com",
+   "ran_at": "2026-10-18T20:25:49Z",
+   "result": "pass",
+   "summary": "Signed in with a guest label, POST /api/sandbox from template ai_model_eval: project 48e3923def5a1abc with 3 milestones (shares 2000, 5000, 3000 bps), each due within 86,400 s, on devnet test units.",
+   "run_yourself": [
+    "Teams → Run one real project in a day → Start a sandbox"
+   ]
+  },
+  {
+   "key": "c2pa_live",
+   "title": "C2PA-signed photo on the live server (labelled TEST certificate)",
+   "where": "knos.onrender.com",
+   "ran_at": "2026-10-18T18:04:28Z",
+   "result": "pass",
+   "summary": "POST /api/evidence/c2pa signed a 161103-byte PNG; /verify read claim id g-infra-sso-c2pa-1 back; validator: signingCredential.untrusted (a test certificate is not on the C2PA trust list).",
+   "run_yourself": [
+    "curl -X POST -H 'Authorization: Bearer <session>' -H 'Content-Type: image/png' -H 'X-Claim-Id: <claim>' --data-binary @photo.png https://knos.onrender.com/api/evidence/c2pa"
+   ]
+  },
+  {
+   "key": "sigstore",
+   "title": "This record is signed with Sigstore cosign",
+   "where": "the founder's PC: WSL2 Ubuntu 24.04, Docker Engine (apt docker.io)",
+   "ran_at": "",
+   "result": "pass",
+   "summary": "cosign sign-blob with a key made for this record (an offline Sigstore bundle, no Rekor upload), checked with cosign verify-blob. Keyless Sigstore signing with GitHub's OIDC token is how Knos's attest workflow signs payments.",
+   "run_yourself": [
+    "curl -s https://knos.onrender.com/api/proofs -o proofs.record; curl -s .../api/proofs/signature > proofs.record.sigstore; curl -s .../api/proofs/cosign.pub > cosign.pub",
+    "cosign verify-blob --key cosign.pub --bundle proofs.record.sigstore --insecure-ignore-tlog=true proofs.record"
+   ]
+  }
+ ]
+}

@@ -3,29 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Knos — proven research, funded products</title>
-<meta name="description" content="Paste a landmark paper or an idea. Knos asks Qloo's taste data who would buy the product it enables, where, at what price, and opens pre-orders held in escrow on Solana devnet, paid to the maker only on proof.">
+<title>Knos — back research that works</title>
+<meta name="description" content="Research products open for backing now. Pre-order, fund a milestone or contribute with a passkey; money waits in escrow on Solana devnet and is paid only on proof.">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/style.css">
-<script>document.documentElement.dataset.view = (location.hash.slice(1).split("=")[0] || "research").replace(/[^a-z]/g, "");</script>
+<script>document.documentElement.dataset.view = (location.hash.slice(1).split("=")[0] || "home").replace(/[^a-z]/g, "");</script>
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Skip to the app</a>
 <header class="top">
   <div class="wrap">
     <div class="bar">
-      <a class="brand" href="#research"><span class="mark" aria-hidden="true"></span>Knos</a>
+      <a class="brand" href="#home"><span class="mark" aria-hidden="true"></span>Knos</a>
       <span id="modeBadge" class="badge">…</span>
       <label class="small muted" for="lang" hidden data-i18n="lang_l">Language</label>
       <select id="lang" class="lang" aria-label="Language"></select>
       <button id="whoBtn" class="quiet" type="button" aria-controls="signin" data-i18n="sign_in">Sign in</button>
     </div>
     <nav class="roles" aria-label="Roles">
-      <a href="#research" data-view="research" data-i18n="nav_research">Research</a>
+      <a href="#home" data-view="home" data-i18n="nav_home">Home</a>
       <a href="#buy" data-view="buy" data-i18n="nav_back">Back</a>
       <a href="#fund" data-view="fund" data-i18n="nav_fund">Fund</a>
       <a href="#contribute" data-view="contribute" data-i18n="nav_contribute">Contribute</a>
       <a href="#make" data-view="make" data-i18n="nav_make">Make</a>
+      <a href="#research" data-view="research" data-i18n="nav_research">Research</a>
       <a href="#projects" data-view="projects" data-i18n="nav_projects">Projects</a>
       <a href="#teams" data-view="teams" data-i18n="nav_teams">Teams</a>
       <a href="#agents" data-view="agents" data-i18n="nav_agents">Agents</a>
@@ -38,15 +39,17 @@
     <div class="row spread"><h2 id="signinH" data-i18n="sign_in">Sign in</h2>
       <button id="signinClose" class="quiet" type="button" aria-label="Close">✕</button></div>
     <div class="stack">
+      <label for="pkName" data-i18n="name_l">Your name</label>
+      <input id="pkName" autocomplete="nickname" maxlength="60" placeholder="Ada">
       <button id="pkNew" type="button" data-i18n="pk_new">Create a passkey wallet</button>
       <button id="pkUse" type="button" class="ghost" data-i18n="pk_use">Sign in with my passkey</button>
       <p class="muted small" id="pkNote" data-i18n="pk_note"></p>
-      <div id="googleBox" hidden><div id="gsi"></div></div>
-      <a id="orcidBtn" class="button ghost" href="/auth/orcid" hidden data-i18n="orcid_btn">Sign in with ORCID</a>
-      <label for="email" data-i18n="email_l">Email</label>
-      <input id="email" type="email" autocomplete="email" maxlength="80" placeholder="you@example.com">
-      <p class="muted small" id="emailNote"></p>
-      <button id="emailBtn" type="button" class="ghost" data-i18n="email_go">Continue with email</button>
+      <p class="small muted" id="soonL" data-i18n="soon_l">Not available yet</p>
+      <div class="row soon" aria-describedby="soonL">
+        <button type="button" class="quiet" id="googleSoon" disabled>Google</button>
+        <button type="button" class="quiet" id="orcidSoon" disabled>ORCID</button>
+        <button type="button" class="quiet" id="emailSoon" disabled data-i18n="email_l">Email</button>
+      </div>
       <button id="outBtn" type="button" class="ghost" hidden data-i18n="sign_out">Sign out</button>
     </div>
   </section>
@@ -54,21 +57,28 @@
   <div id="err" class="note err" role="alert" hidden></div>
   <p id="slow" class="note row" role="status" hidden><span class="spin" aria-hidden="true"></span><span id="slowText"></span></p>
 
+  <!-- HOME: the research products open for backing now, each with its three one-tap actions -->
+  <section id="v-home" class="view" aria-labelledby="homeH">
+    <h1 id="homeH" data-i18n="home_t">Back research that works</h1>
+    <p class="lead" data-i18n="home_p">Pay only when a milestone is proven. Your passkey is your wallet.</p>
+    <ul id="homeList" class="plist hp" aria-busy="true" aria-live="polite">
+      <li class="card hp-card sk" aria-hidden="true"></li><li class="card hp-card sk" aria-hidden="true"></li><li class="card hp-card sk" aria-hidden="true"></li>
+    </ul>
+    <p class="small"><a href="#research" data-i18n="home_own">Cross your own paper</a> · <a href="/verify" data-i18n="verify_link">How we verify</a></p>
+  </section>
+
   <!-- RESEARCHER -->
-  <section id="v-research" class="view">
+  <section id="v-research" class="view" hidden>
     <h1 data-i18n="hero_t">Research that works, waiting for a market.</h1>
-    <p data-i18n="hero_p">Paste a landmark paper or describe an idea. Knos asks Qloo's taste data who would buy the product it
-      enables, where, and at what price — then opens pre-orders held in escrow and paid to the maker only on proof.</p>
-    <p class="small muted">Directional demand evidence, not a sales forecast. Every Qloo figure is aggregate taste, not a prediction about one person. <a href="/verify" data-i18n="verify_link">How we verify</a></p>
-
-
+    <p data-i18n="hero_p">Paste a paper. Qloo shows who would buy its product, where, and at what price.</p>
+    <p class="small muted">Directional demand evidence, not a sales forecast. Qloo's figures are aggregate taste, not a prediction about one person.</p>
     <form id="crossForm" class="card" autocomplete="off" aria-labelledby="crossH">
       <h2 id="crossH" data-i18n="cross_t">Start a crossing</h2>
       <label for="ref" data-i18n="cross_ref">Paper id (DOI, arXiv, PubMed, OpenAlex, patent)</label>
       <input id="ref" maxlength="200" placeholder="10.1038/nature16521" inputmode="url">
       <p class="small muted"><span data-i18n="try">Try:</span>
         <button type="button" class="chip" data-ref="10.1038/nature16521">sweat glucose sensors</button>
-        <button type="button" class="chip" data-ref="10.4049/jimmunol.155.3.1151">regulatory T cells</button>
+        <button type="button" class="chip" data-ref="10.1126/science.aam8743">water from desert air</button>
         <button type="button" class="chip" data-ref="10.1038/nm0797-797">celiac autoantigen</button></p>
       <label for="idea" data-i18n="cross_or">or your own idea</label>
       <textarea id="idea" rows="2" maxlength="500" data-i18n-ph="cross_idea"></textarea>
@@ -78,11 +88,6 @@
       </div>
       <button id="crossBtn" type="submit" data-i18n="cross_go">Run the crossing</button>
     </form>
-    <!-- below the form: it fills in after load, and above the fold it would push the form down (layout shift) -->
-    <section id="openNow" hidden>
-      <h2 data-i18n="live_products">Open for backing now</h2>
-      <ul id="openList" class="plist"></ul>
-    </section>
     <section id="timeline" class="card" hidden aria-live="polite">
       <h2 data-i18n="timeline_t">The crossing, live</h2>
       <ol id="steps" class="steps"></ol>
@@ -97,17 +102,17 @@
       <div class="row spread"><h2 id="buyH" data-i18n="buy_t">Pre-order</h2><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
       <p id="feeLine" class="small muted"></p>
       <label for="units" data-i18n="units">Units</label><input id="units" type="number" min="5" value="5" inputmode="numeric">
-      <div class="two">
-        <div><h3 data-i18n="buy_wallet">With your wallet</h3><p class="small muted" data-i18n="buy_wallet_p"></p>
-          <button id="walletBtn" type="button" data-i18n="buy_btn">Pre-order with a wallet</button>
-          <p class="small"><a id="blinkLink" target="_blank" rel="noopener">Blink</a></p></div>
-        <div><h3 data-i18n="buy_demo">With your passkey</h3><p class="small muted" data-i18n="buy_demo_p"></p>
-          <button id="preBtn" type="button" class="ghost" data-i18n="buy_demo_btn">Pre-order with my passkey</button>
-          <div id="pkWallet" class="small" hidden><span data-i18n="wallet_t">Your passkey wallet</span>: <a id="pkVault" target="_blank" rel="noopener"></a> · <b id="pkUnits">0</b> <span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span>
-            <button id="faucetBtn" type="button" class="quiet" data-i18n="faucet_btn">Get 25 devnet test units</button></div></div>
-      </div>
+      <div id="pkWallet" class="small" hidden><span data-i18n="wallet_t">Your passkey wallet</span>: <a id="pkVault" target="_blank" rel="noopener"></a> · <b id="pkUnits">0</b> <span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span>
+        <button id="faucetBtn" type="button" class="quiet" data-i18n="faucet_btn">Get 25 devnet test units</button></div>
+      <button id="preBtn" type="button" data-i18n="buy_demo_btn">Pre-order with my passkey</button>
+      <div id="noMaker" class="note" hidden><p data-i18n="no_maker">No maker yet. Commit now: you pay only when it is made.</p>
+        <button id="amcBtn" type="button" data-i18n="amc_btn">Commit to buy</button></div>
       <div id="receipt"></div>
       <p class="small"><button id="claimBtn" type="button" class="quiet" data-i18n="claim_btn">I make this: claim the milestone with my passkey</button> <span id="claimNote" class="small muted"></span></p>
+      <details class="small"><summary data-i18n="buy_wallet">With your wallet</summary>
+        <p class="small muted" data-i18n="buy_wallet_p"></p>
+        <button id="walletBtn" type="button" class="ghost" data-i18n="buy_btn">Pre-order with a wallet</button>
+        <p class="small"><a id="blinkLink" target="_blank" rel="noopener">Blink</a></p></details>
     </section>
     <section id="tracker" class="card" hidden><h2 data-i18n="goal_l">Funding goal</h2><ul id="trackList" class="list"></ul></section>
   </section>
@@ -115,24 +120,26 @@
   <!-- FUNDER -->
   <section id="v-fund" class="view" hidden>
     <div class="row spread"><h1 data-i18n="fund_t">Back a milestone</h1><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
-    <p data-i18n="fund_p"></p>
+    <p data-i18n="fund_p">Your money waits in escrow. The maker is paid only on proof.</p>
     <ul id="fundList" class="list"></ul>
     <h2 data-i18n="lend_t">Lend against pre-orders</h2>
-    <p class="small muted" data-i18n="lend_p"></p>
-    <div class="scroll"><table id="lendTable" class="small"><thead><tr><th data-i18n="idea_l">Product</th><th data-i18n="face_l">Face value</th><th data-i18n="due_l">Due</th><th data-i18n="adv_rate">Advance rate</th><th data-i18n="adv_l">Advance</th><th data-i18n="fee_l">Your fee</th><th></th></tr></thead><tbody></tbody></table></div>
+    <p class="small muted" data-i18n="lend_p">Advance a maker cash now. The release repays you.</p>
+    <ul id="lendList" class="list"></ul>
   </section>
 
   <!-- CONTRIBUTOR -->
   <section id="v-contribute" class="view" hidden>
     <h1 data-i18n="contribute_t">Open work</h1>
-    <p data-i18n="contribute_p"></p>
+    <p data-i18n="contribute_p">Join a round or make a milestone. Work is judged, then paid.</p>
     <div id="taskBox"></div>
+    <h2 data-i18n="make_need">Milestones that need a maker</h2>
+    <ul id="needList" class="list"></ul>
   </section>
 
   <!-- MAKER -->
   <section id="v-make" class="view" hidden>
     <div class="row spread"><h1 data-i18n="make_t">Milestones and payouts</h1><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
-    <p class="small muted" data-i18n="make_p"></p>
+    <p class="small muted" data-i18n="make_p">Post a public page with the claim id. Referees check it; escrow releases.</p>
     <ul id="makeList" class="list"></ul>
   </section>
 
@@ -140,7 +147,13 @@
   <section id="v-projects" class="view" hidden>
     <div id="projHome">
       <div class="row spread"><h1>Projects</h1><span class="testmoney">Devnet test money — no real funds</span></div>
-      <p>One product's road, milestone by milestone. Each milestone is paid only on the maker's result and an independent check of it; a missed deadline refunds the funders and reopens it to other makers.</p>
+      <p>A product's road, milestone by milestone. Each is paid only on proof.</p>
+      <ul id="projList" class="plist"></ul>
+      <section id="poolBox" class="card" hidden aria-labelledby="poolH"><h2 id="poolH">Pool across milestones</h2>
+        <p class="small">One amount over several milestones. Each gets its own escrow.</p>
+        <div id="poolPick"></div>
+        <label for="poolUnits">Test units in total</label><input id="poolUnits" type="number" min="10" value="20" inputmode="numeric">
+        <button type="button" id="poolBtn">Pool with my passkey</button><p id="poolOut" class="small" aria-live="polite"></p></section>
       <form class="card" id="newProject" onsubmit="return false" aria-labelledby="npH">
         <h2 id="npH">Open a project</h2>
         <fieldset class="opts"><legend>Template</legend><div id="tplPick"></div></fieldset>
@@ -149,12 +162,6 @@
         <label for="pTeam">Team (optional)</label><input id="pTeam" maxlength="80">
         <div class="row"><button type="button" id="pNew">Open the project</button><button type="button" class="ghost" id="pSandbox">One-day sandbox</button></div>
       </form>
-      <ul id="projList" class="plist"></ul>
-      <section id="poolBox" class="card" hidden aria-labelledby="poolH"><h2 id="poolH">Pool across milestones</h2>
-        <p class="small">One amount, spread over several milestones of several projects: each gets its own escrow order.</p>
-        <div id="poolPick"></div>
-        <label for="poolUnits">Test units in total</label><input id="poolUnits" type="number" min="10" value="20" inputmode="numeric">
-        <button type="button" id="poolBtn">Pool with my wallet</button><p id="poolOut" class="small" aria-live="polite"></p></section>
     </div>
     <div id="projDetail" hidden><div id="projHead"></div><ul id="msList" class="plist"></ul></div>
   </section>
@@ -162,12 +169,16 @@
   <!-- TEAMS: SSO, a company's own multisig, ERP export, sandbox, OpenAPI -->
   <section id="v-teams" class="view" hidden>
     <h1>For teams and companies</h1>
-    <p>Sign in with your company's identity provider, hold money in your own multisig, and send the ledger to your accounting system.</p>
+    <p>Company sign-in, your own multisig, and a ledger for your accounts.</p>
+    <section class="card" aria-labelledby="sbH"><h2 id="sbH">Run one real project in a day</h2>
+      <p class="small">One of <span id="tplCount">5</span> templates, every milestone due within a day. Test money.</p>
+      <button type="button" id="sbBtn">Start a sandbox</button></section>
     <section class="card" aria-labelledby="ssoH"><h2 id="ssoH">Single sign-on (SAML)</h2>
-      <label for="ssoTenant">Company tenant</label><input id="ssoTenant" maxlength="64" autocomplete="organization">
-      <button type="button" id="ssoBtn">Sign in with SSO</button><p id="ssoNote" class="small muted"></p></section>
+      <label for="ssoTenant">Company tenant</label><input id="ssoTenant" maxlength="64" autocomplete="organization" list="ssoTenants"><datalist id="ssoTenants"></datalist>
+      <button type="button" id="ssoBtn">Sign in with company SSO</button><p id="ssoNote" class="small muted"></p>
+      <ul id="ssoTest" class="list"></ul></section>
     <section class="card" aria-labelledby="coH"><h2 id="coH">Your company's multisig</h2>
-      <p class="small">A Squads multisig on devnet with your members' keys. Your wallet creates it and is a member; Knos holds no key. Pay milestones to its vault.</p>
+      <p class="small">A Squads multisig on devnet with your members' keys. Knos holds no key.</p>
       <label for="coName">Company name</label><input id="coName" maxlength="80" autocomplete="organization">
       <label for="coMembers">Other members' wallet addresses</label><textarea id="coMembers" rows="2"></textarea>
       <label for="coThreshold">Signatures needed</label><input id="coThreshold" type="number" min="1" max="10" value="1" inputmode="numeric">
@@ -177,10 +188,11 @@
       <label for="erpProject">Project</label><select id="erpProject" class="field"></select>
       <div class="row"><button type="button" class="quiet" id="erp_journal">Journal CSV</button><button type="button" class="quiet" id="erp_xero">Xero</button>
         <button type="button" class="quiet" id="erp_quickbooks">QuickBooks</button><button type="button" class="quiet" id="erp_netsuite">NetSuite</button></div>
-      <p class="small muted">Every line says TEST MONEY and carries its devnet transaction.</p></section>
-    <section class="card" aria-labelledby="sbH"><h2 id="sbH">Run one real project in a day</h2>
-      <p class="small">A sandbox project from one of <span id="tplCount">5</span> templates, every milestone due within a day, on devnet test money.</p>
-      <button type="button" id="sbBtn" class="ghost">Start a sandbox</button></section>
+      <p class="small muted">Every line says TEST MONEY and carries its devnet transaction.</p>
+      <h3 class="small">Imported into open source ERPs</h3><ul id="erpProofs" class="list"></ul></section>
+    <section class="card" aria-labelledby="pfH"><h2 id="pfH">Run for real, outside this server</h2>
+      <p class="small">Each was run on our own machine or against this live app. The record is signed with Sigstore cosign (<a href="/api/proofs">record</a> · <a href="/api/proofs/signature">signature</a> · <a href="/api/proofs/cosign.pub">key</a>).</p>
+      <ul id="proofList" class="list"></ul></section>
     <p class="small">Developers: <a href="/openapi.json">OpenAPI</a> · <a href="/mcp">MCP</a> · <a href="/api/attest/key">attestation key</a></p>
   </section>
 

@@ -8,6 +8,9 @@ restarted it. Two things here, both with nothing but the standard library (the w
                                                             waiting 2, 4, 8, ... s (or what Retry-After says)
     python -m knos.proof.chain watch                        the watchdog: starts a chain when none is alive, and
                                                             replaces a run with no heartbeat in time
+    python -m knos.proof.chain healthz [--url U]            one ping of the app's health check (every run of the chain
+                                                            does it, job `healthz`: so the app is woken about every
+                                                            4.5 minutes for as long as the chain lives; docs/reference/KEEPALIVE.md)
 
 GitHub may take a start and still answer with an error. So before a start is asked again the runs are listed, and a
 run that already took over ends the asking. When the listing fails too the start is asked again all the same: of
@@ -253,10 +256,37 @@ def watch(repo: str, me: int = 0, tries: int = TRIES, request: Callable = call, 
     return "started"
 
 
+HEALTHZ = "https://knos.onrender.com/healthz"
+
+
+def healthz(url: str = HEALTHZ, tries: int = 3, wait: float = 20.0, timeout: float = 90.0, opener=None, sleep=time.sleep, say=print) -> bool:
+    """GET the health check until it answers 200, at most `tries` times `wait` s apart (a free Render instance that
+    slept answers after its cold start, which can take most of a minute). True when it answered 200."""
+    if not url.startswith("https://"):
+        raise Refused("the health check is reached over https")
+    op = opener or urllib.request.urlopen
+    for n in range(1, tries + 1):
+        t0 = time.time()
+        try:
+            with op(urllib.request.Request(url, headers={"User-Agent": "knos always-on worker (healthz)"}), timeout=timeout) as r:
+                code = r.status
+        except urllib.error.HTTPError as e:
+            code = e.code
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            code = type(e).__name__
+        say(f"healthz attempt {n}: {code} in {time.time() - t0:.1f} s")
+        if code == 200:
+            return True
+        if n < tries:
+            sleep(wait)
+    return False
+
+
 def main(argv: list[str] | None = None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description="The relay's sequence of GitHub Actions runs (each run starts the next): start the next one, or check that one is running.")
-    ap.add_argument("command", choices=("start", "watch"))
+    ap.add_argument("command", choices=("start", "watch", "healthz"))
+    ap.add_argument("--url", default=HEALTHZ, help="healthz: the URL to ping")
     ap.add_argument("--after", default="", help="start: the run that hands over (empty: a first run)")
     ap.add_argument("--tries", type=int, default=TRIES)
     ap.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", ""))
@@ -264,6 +294,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--successor", action="store_true",
                     help="watch: run inside a chain run whose relay did not succeed; a run it starts takes over from this one")
     a = ap.parse_args(argv)
+    if a.command == "healthz":
+        try:
+            return 0 if healthz(a.url) else 1
+        except Refused as no:
+            print(f"stopped: {no}", file=sys.stderr)
+            return 1
     if not a.repo:
         ap.error("give --repo owner/name (or GITHUB_REPOSITORY)")
     try:

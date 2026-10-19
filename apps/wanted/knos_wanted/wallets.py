@@ -14,13 +14,12 @@ Steps (each `prepare_*` returns {intent, challenge}; `sign` relays the passkey's
           0.3.34 devnet test program, the funder being the buyer's vault. Refunds go back to that vault.
   maker   claim the report's milestone with a passkey: every pre-order then pays a wallet made for that one receivable,
           owned by the maker's passkey.
-  lender  quote an advance on a receivable (advance rate, its fee, the due date); the maker accepts: the maker's passkey
-          hands the receivable's wallet to the lender's passkey (TransferOwnership); the lender's passkey pays the
-          advance to the maker's wallet; on release knos_pay pays the receivable's wallet, which the lender now owns,
-          and the lender's passkey collects it.
-Why not knos_pay's Assign: Assign must be signed by the payee's BOUND wallet, and a Bind exists only for a GitHub or
-ORCID identity proven by its token (knos_pay lib.rs, 8 Bind, 24 Assign). A payee named by a wallet has none: the program
-answers E_PAYEE (88). The passkey path for a bound payee is tested in tests/test_passkey_smart_chain.py.
+  lender  the receivable sale: the lender offers cash now (an advance rate, its fee, the due date; tap one); the
+          maker's passkey sells the receivable's wallet to the lender's passkey (TransferOwnership); the lender's
+          passkey sends the advance to the maker's wallet (tap two); on release knos_pay pays the receivable's wallet,
+          which the lender owns now, and the lender's passkey collects it.
+  project a milestone of a project funded (or pooled, or granted) from the passkey's wallet, before any maker claims
+          it; or an AMC commitment: an allowance from the passkey's wallet, collected only when the milestone verifies.
 """
 from __future__ import annotations
 
@@ -248,7 +247,8 @@ def sign(led, user: dict, body: dict) -> dict:
         pre.append(led.send(prep.pre, relayer()))
     sig = _send_v0(led, ixs[len(prep.pre):], p["meta"].get("tables") or [])
     auth.seen(p["sub"], ad)
-    done = {"preorder": _done_preorder, "accept": _done_accept, "advance": _done_advance, "collect": _done_collect}[p["kind"]]
+    done = {"preorder": _done_preorder, "accept": _done_accept, "advance": _done_advance, "collect": _done_collect,
+            "project_fund": _done_project_fund, "amc": _done_amc}[p["kind"]]
     return done(led, p, sig, pre)
 
 
@@ -561,6 +561,137 @@ def _done_collect(led, p: dict, sig: str, pre: list) -> dict:
         rec["signatures"]["collect"] = sig
         preorder._save(rec)
     return preorder.public(rec)
+
+
+# ---- projects: a milestone funded, pooled or committed by a passkey -------------------------------------------------
+def prepare_project_fund(led, user: dict, pid: str, key: str, units, rp_id: str, kind: str = "funder", grant: dict | None = None,
+                         ref: str | None = None, pool: str | None = None) -> dict:
+    """A project milestone funded from the passkey's own wallet: a PANEL order of knos_pay (the same FundOrderWallet as
+    a pre-order), released on the maker's result and an independent check, refunded to this wallet after the deadline.
+    No maker is needed yet: the payee is the attempt's wallet, named in the verdict when the milestone is released."""
+    from solders.pubkey import Pubkey
+
+    from knos import ideas
+    from knos.ideas import commit as C
+    from knos.ideas import wanted as W
+    from knos.settle.v2 import passkey_fund as pf
+    from knos.settle.v2 import pay
+
+    from . import valley
+    if kind not in ("funder", "grant", "pool"):
+        raise ValueError("kind: funder, grant or pool")
+    if isinstance(units, bool) or not isinstance(units, int) or not 5 <= units <= 1000:
+        raise ValueError("units: 5 to 1,000 test units")
+    if kind == "grant":
+        grant = {k: str((grant or {}).get(k) or "").strip()[:120] for k in ("agency", "id", "url")}
+        if not grant["agency"] or not grant["id"]:
+            raise ValueError("grant: the agency and the grant's id (the award it comes from)")
+    referral = valley.load_referral(ref) if ref else None
+    p = valley.project(pid)
+    m = valley._milestone(p, key)
+    if m["status"] == "released":
+        raise ValueError("this milestone is already released")
+    preorder._need()
+    h = holder(user)
+    me = ensure(led, h, rp_id)
+    mint, prog, (pm, pkeys) = me["mint"], preorder.program(), preorder.panel()
+    claim = ideas.claim(f"Milestone '{m['name']}' of the Knos project '{p['title']}' ({pid}, funding {len(m['fundings']) + 1})",
+                        field_name=preorder.FIELD, kind="person", by={"app": "knos projects", "project": pid, "milestone": key,
+                                                                       "funder": f"passkey {h['sub']}"[:80]})
+    m_, keys_, label = C.parse_panel(f"{pm}:{','.join(pkeys)}", me["vault"], str(me["vault"]), True)
+    plan = W.plan(claim, units=units, price=1, stages=[("referee_pass", 10_000)], stage_work_s=[int(m["deadline_s"])], demand_hash=p.get("report"))
+    amount = plan["stage1"]["amount"]
+    need = amount + pay.order_fee(amount)
+    have = _units(led, me["token_account"])
+    if have < need:
+        raise ValueError(f"your passkey wallet holds {have / escrow.UNIT:g} test units; this funding needs {need / escrow.UNIT:g} "
+                         "(amount and fee): get devnet test units first")
+    fund = W.fund_panel_ix(plan, "stage1", me["vault"], me["token_account"], mint, m_, [bytes(Pubkey.from_string(k)) for k in keys_],
+                           program=prog, unlisted_panel=True)
+    order = W.panel_address(plan, "stage1", me["vault"], program=prog)
+    if led.account(order) is not None:
+        raise ValueError("this order is funded already")
+    pre = pf.rent_ixs(relayer().pubkey(), order, pay.ov_pda(order, prog), led.rent(pf.ORDER_LEN), led.rent(165))
+    if led.account(pay.ata(pay.FEE_OWNER, mint)) is None:
+        pre.insert(0, pay.create_ata_ix(relayer().pubkey(), pay.FEE_OWNER, mint))
+    prep = _prep(led, h, me, [fund], pre)
+    meta = {"cred_id": h["cred_id"], "project": pid, "milestone": key, "units": units, "deadline_s": int(m["deadline_s"]), "claim": claim,
+            "plan_hash": plan["commitment_hash"], "order": str(order), "funder_vault": str(me["vault"]), "kind": kind, "grant": grant,
+            "pool": pool, "referral": {"code": referral["code"], "wallet": referral["wallet"]} if referral else None,
+            "panel": {"m": m_, "keys": keys_, "unlisted": True, "label": label}, "program": str(prog), "mint": str(mint),
+            "warnings": plan["warnings"], "report": p.get("report"), "tables": _tables(led, mint, h)}
+    summary = {"what": f"fund the milestone '{m['name']}'" + (" (a grant)" if kind == "grant" else " (part of a pool)" if kind == "pool" else ""),
+               "amount_units": amount / escrow.UNIT, "fee_units": pay.order_fee(amount) / escrow.UNIT, "from": str(me["vault"]),
+               "order": str(order), "paid_on": "the maker's result and an independent check", "refunded_to": str(me["token_account"]),
+               "program": str(prog), "money": MONEY}
+    return _intent("project_fund", h, prep, meta, summary)
+
+
+def _done_project_fund(led, p: dict, sig: str, pre: list) -> dict:
+    from knos.ideas import commit as C
+
+    from . import valley
+    m = p["meta"]
+    order = m["order"]
+    doc = {"v": 1, "kind": "knos-idea-commitment", "claim": m["claim"], "commitment_hash": m["plan_hash"],
+           "plan_args": {"units": m["units"], "price": 1, "stages": [["referee_pass", 10_000]], "stage_work_s": [m["deadline_s"]],
+                         "demand": m["report"], "maker_github_id": None},
+           "judge": "panel", "panel": m["panel"], "payee": C.parse_payee(m["funder_vault"]), "program": m["program"], "mint": m["mint"],
+           "funder": m["funder_vault"],
+           "orders": {"stage1": {"order": order, "oracle": "referee_pass", "amount": m["units"] * escrow.UNIT, "work_s": m["deadline_s"],
+                                 "signature": sig, "note": None}},
+           "warnings": m["warnings"], "made": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "cluster": "devnet",
+           "signed_by": "the funder's passkey (LazorKit Execute, secp256r1 precompile)"}
+    C.plan_of(doc)                                         # the commitment recomputes: what was signed is what is filed
+    o = {"order": order, "project": m["project"], "milestone": m["milestone"], "claim_id": m["claim"]["id"], "units": m["units"], "unit_price": 1,
+         "kind": m["kind"], "funder": m["funder_vault"], "grant": m["grant"] if m["kind"] == "grant" else None, "pool": m["pool"],
+         "referral": m["referral"], "status": "pending", "deadline_s": m["deadline_s"], "doc": doc, "made": doc["made"],
+         "signatures": {"setup": pre[0] if pre else None}, "signed_by": "passkey"}
+    valley._save("orders", order, o)
+    with valley._lock:
+        pr = valley.project(m["project"])
+        valley._milestone(pr, m["milestone"])["fundings"].append(order)
+        valley._save("projects", m["project"], pr)
+    if m["pool"]:
+        cur = valley._safe_load("pools", m["pool"]) or {"id": m["pool"], "funder": m["funder_vault"], "units": 0, "orders": [], "made": valley._now()}
+        cur["orders"].append(order)
+        cur["units"] += m["units"]
+        valley._save("pools", m["pool"], cur)
+    return valley.confirm(order, sig, led=led)
+
+
+def prepare_amc(led, user: dict, pid: str, key: str, units, rp_id: str) -> dict:
+    """An advance-market commitment from the passkey's wallet: an allowance to the relayer (SPL Approve, signed by the
+    wallet through LazorKit). Nothing moves now; when the milestone verifies, the relayer pays the maker from it."""
+    from . import valley
+    if isinstance(units, bool) or not isinstance(units, int) or not 1 <= units <= 1000:
+        raise ValueError("units: 1 to 1,000 test units")
+    p = valley.project(pid)
+    m = valley._milestone(p, key)
+    if m["status"] == "released":
+        raise ValueError("this milestone is already released")
+    preorder._need()
+    h = holder(user)
+    me = ensure(led, h, rp_id)
+    if _units(led, me["token_account"]) < units * escrow.UNIT:
+        raise ValueError(f"your passkey wallet holds less than {units} test units: get devnet test units first")
+    rel = relayer().pubkey()
+    prep = _prep(led, h, me, [valley._approve_ix(me["token_account"], rel, me["vault"], units * escrow.UNIT)])
+    aid = valley._id("amc", str(me["vault"]), pid, key)
+    meta = {"cred_id": h["cred_id"], "amc": aid, "project": pid, "milestone": key, "units": units, "buyer": str(me["vault"]),
+            "token": str(me["token_account"]), "delegate": str(rel), "tables": _tables(led, me["mint"], h)}
+    return _intent("amc", h, prep, meta, {"what": f"commit to buy when '{m['name']}' is proven", "allowance_units": units,
+                                          "from": str(me["vault"]), "to_whom": "the maker, paid by the relayer from this allowance on proof",
+                                          "money": MONEY})
+
+
+def _done_amc(led, p: dict, sig: str, pre: list) -> dict:
+    from . import valley
+    m = p["meta"]
+    valley._save("amc", m["amc"], {"id": m["amc"], "project": m["project"], "milestone": m["milestone"], "buyer": m["buyer"], "token": m["token"],
+                                   "units": m["units"], "delegate": m["delegate"], "status": "pending", "made": valley._now(), "signatures": {},
+                                   "signed_by": "passkey"})
+    return valley.amc_confirm(m["amc"], sig, led=led)
 
 
 def b64(raw: bytes) -> str:

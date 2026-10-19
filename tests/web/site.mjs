@@ -178,6 +178,9 @@ async function mock(ctx) {
   await ctx.route("**/*", (route) => {          // registered first, so asked last: nothing but this page, GitHub and devnet
     const u = new URL(route.request().url());
     if (u.origin === new URL(base).origin) return route.continue();
+    // the app's list of research products (web/home.js asks it on a reader's first move at the bare address): it answers
+    // an empty list here, and the first screen keeps the snapshot the site ships
+    if (u.href === "https://knos.onrender.com/api/front") return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: '{"products":[],"crossing_now":[]}' });
     strangers.push(u.href); return route.abort();
   });
   await ctx.route("https://api.github.com/**", (route) => {
@@ -344,7 +347,8 @@ async function world({ wallets = [], width = 1100, passkeys = false } = {}) {
 let visits = 0;
 // a page is ready when the code of the page its hash names has arrived and run (web/front.js marks the root then: each
 // page's code is asked for when the page is first opened, not with the first screen)
-const visit = async (page, hash = "") => { await page.goto(`${base}?n=${++visits}${hash}`); await page.waitForFunction(() => document.documentElement.dataset.ready !== undefined); };
+// the check of agent work is at #check: the bare address is the research products since G-PRODUCT (tests/web/home.mjs)
+const visit = async (page, hash = "#check") => { await page.goto(`${base}?n=${++visits}${hash}`); await page.waitForFunction(() => document.documentElement.dataset.ready !== undefined); };
 // The commit the two workflow files name is read from the files themselves. A test that wants a commit there stamps it into a
 // copy of front.js, so it holds for whatever the examples say, before a release and after.
 const refs = /(\/\.github\/workflows\/[\w.-]+@)(\$\{\w+\}|[^\s`]+)/g;
@@ -454,7 +458,7 @@ await reset();
     await visit(page, "#pricing");
     check("  and is not marked on a page of the bar's own", !(await page.$eval("#more", (e) => e.classList.contains("current"))));
     const phone = await (await world({ width: 390 })).newPage();
-    await visit(phone, "");
+    await visit(phone, "#check");
     await phone.click("#menu");
     const shown = () => phone.$$eval("#nav a", (l) => l.filter((a) => a.offsetParent !== null).length);
     check("  a phone: Menu opens the bar's links and More, and never fifteen at once", (await shown()) === 6 + MENU.added.filter((a) => a.bar).length && await phone.isVisible("#more-button") && (await overflow(phone)) <= 1, await shown());
@@ -635,7 +639,7 @@ await reset();
   await page.waitForSelector("#check-one #check-verdict");
   check("a pull request link in the box is its check, at its own link", (await page.evaluate(() => location.hash)) === "#check=octo/widgets/12" && githubReads > 0
     && (await text(page, "#check-verdict")).includes("Claims nothing about tests"));
-  await page.evaluate(() => { location.hash = ""; });
+  await page.evaluate(() => { location.hash = "#check"; });          // back to the check of agent work (the bare address is the research products)
   await page.waitForFunction(() => document.getElementById("check-one").hidden && !document.getElementById("check-one").firstChild);
   check("  leaving #check clears the check", true);
   await viaForm(page, "https://github.com/octo/widgets/pull/12");
@@ -1320,8 +1324,8 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   const issuerDocs = (await import(pathToFileURL(join(root, "verifier.js")).href)).ISSUERS.map((i) => i.source);
   // the Console's sample approvals name where each was made: a comment in this project's own playground repository, never an account that is somebody else's
   check("links: the Console's sample is in the project's own playground repository", hrefs.some((h) => /^https:\/\/github\.com\/drexthealpha\/Knos\/issues\/\d+#issuecomment-\d+$/.test(h)) && !(await page.content()).includes("github.com/acme/"));
-  const bad = hrefs.filter((h) => !(h.startsWith("#") ? ["check", "fd-in", "check-a-pull-request", "protect", "fund", "claim", "pricing", "records", "network", "build", "rank", "buy", "install", "capabilities", "status", "index", "pilot", "reproduce", "demo", "shadow", "verifier", "playground", "terms", "supplier", "invoice-statement", "story", "keyholder", "sample", "record", ...MENU.added.map((a) => a.name)].includes(h.slice(1).split("=")[0])
-    : h === TEMPLATE_LINK || h === JUDGE_TEMPLATE_LINK || h === "https://drexthealpha.github.io/Knos/" || /^https:\/\/explorer\.solana\.com\/(tx\/[1-9A-HJ-NP-Za-km-z]{64,90}|address\/[1-9A-HJ-NP-Za-km-z]{32,44})\?cluster=devnet$/.test(h) || /^https:\/\/github\.com\/drexthealpha\/|^https:\/\/faucet\.circle\.com\/$|^(index|stats|operations|agent_weekly|records|statement_sample)\.json$|^(privacy|faq|wanted)\.html$|^check\/$|^terms\/(?:3\/)?[\w-]+\/\d+\.json$/.test(h) || issuerDocs.includes(h)));
+  const bad = hrefs.filter((h) => !(h.startsWith("#") ? ["check", "fd-in", "check-a-pull-request", "protect", "fund", "claim", "pricing", "records", "network", "build", "rank", "buy", "install", "capabilities", "status", "index", "pilot", "reproduce", "demo", "shadow", "verifier", "playground", "terms", "supplier", "invoice-statement", "story", "keyholder", "sample", "record", "home", "verify", ...MENU.added.map((a) => a.name)].includes(h.slice(1).split("=")[0])
+    : h === TEMPLATE_LINK || h === JUDGE_TEMPLATE_LINK || h === "https://drexthealpha.github.io/Knos/" || /^https:\/\/explorer\.solana\.com\/(tx\/[1-9A-HJ-NP-Za-km-z]{64,90}|address\/[1-9A-HJ-NP-Za-km-z]{32,44})\?cluster=devnet$/.test(h) || /^https:\/\/github\.com\/drexthealpha\/|^https:\/\/faucet\.circle\.com\/$|^(index|stats|operations|agent_weekly|records|statement_sample)\.json$|^(privacy|faq|wanted)\.html$|^wanted\.html#(back|fund|contribute)=[a-z0-9-]{3,64}$|^wanted\.html#(research|verify)$|^check\/$|^terms\/(?:3\/)?[\w-]+\/\d+\.json$/.test(h) || issuerDocs.includes(h)));
   check("links: every link goes to a view, to the site's own address, to the project's own GitHub, to a transaction or an address on devnet's explorer, to Circle's devnet faucet, to a file of the site or to an issuer's own documentation (the verifier's table)", bad.length === 0, bad);
   check("  a link that opens a new tab does not hand over the page", await page.$$eval('a[target="_blank"]', (a) => a.every((x) => /noopener/.test(x.rel))));
   await page.close();
@@ -1359,7 +1363,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await visit(page);
   await page.fill("#fd-in", "https://github.com/octo/widgets/pull/12"); await page.click('#front-door [data-fd="run"]'); await page.waitForSelector("#check-one #check-share [data-share]");
   await wide("check a pull request, with a result");
-  await page.evaluate(() => { location.hash = ""; }); await page.waitForFunction(() => document.getElementById("check-one").hidden);
+  await page.evaluate(() => { location.hash = "#check"; }); await page.waitForFunction(() => document.getElementById("check-one").hidden);
   await page.fill("#fd-in", "octo/widgets"); await page.click('#front-door [data-fd="run"]'); await page.waitForSelector("#repo-record");
   await wide("  and with a repository's record");
   await visit(page, "#protect");
@@ -2252,7 +2256,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   const page = await plain.newPage();
   const banner = async (hash) => { await reset(); load(); await visit(page, hash); await page.waitForSelector("#upgrade-banner:not([hidden])"); };
   // the first screen reads no chain: the banner is read with the first page that reads Solana, and stays from then on
-  await reset(); load(); await visit(page, ""); await page.waitForTimeout(300);
+  await reset(); load(); await visit(page, "#check"); await page.waitForTimeout(300);
   check("upgrade: the first screen asks devnet nothing and shows no banner under the bar", await page.isHidden("#upgrade-banner") && called("getMultipleAccounts").length === 0 && called("getAccountInfo").length === 0);
   // what it shows instead: one line from upgrades.json, the file of the site scripts/upgrade_feed.py writes from the multisig
   const built = JSON.parse(readFileSync(join(root, "upgrades.json"), "utf8")), builtPending = built.entries.filter((e) => e.status === "pending");
@@ -2942,4 +2946,4 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
 
 await browser.close(); server.close();
 check("no console errors", errors.length === 0, errors);
-check("nothing was asked of anyone but this page, GitHub and devnet", strangers.length === 0, strangers);
+check("nothing was asked of anyone but this page, GitHub, devnet and the app's list of products", strangers.length === 0, strangers);

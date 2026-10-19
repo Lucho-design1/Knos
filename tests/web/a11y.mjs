@@ -140,7 +140,7 @@ for (const [how, scheme, theme] of [["system", "dark", null], ["system", "light"
     await page.keyboard.press("Escape");
   } else console.log("ok   palette: this build carries no docs_index.json; the palette has its commands and no documents");
   // "/" in a field is a slash
-  await page.goto(base); await page.waitForSelector("#theme:not([hidden])");
+  await page.goto(base + "#check"); await page.waitForSelector("#theme:not([hidden])");          // the check of agent work: its box
   const field = await page.evaluateHandle(() => [...document.querySelectorAll("main input[type=text], main textarea")].find((e) => e.checkVisibility() && !e.readOnly));
   await field.asElement().focus(); await page.keyboard.type("a/b");
   check("palette: \"/\" typed in a field is a slash, and opens nothing", await page.evaluate(() => document.activeElement.value.endsWith("a/b") && !document.querySelector("dialog.k-pal[open]")));

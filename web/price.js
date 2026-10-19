@@ -253,9 +253,10 @@ export function bpsOf(text) {
 }
 
 // Whole units with at least two decimals and no more than six, no trailing zeros past the second: 50000 -> "0.05".
+let grouped = null;              // one formatter for every call: toLocaleString makes a new one each time (slow on a phone)
 export function show(units) {
   const whole = Math.trunc(units / 1_000_000), frac = String(units % 1_000_000).padStart(6, "0").replace(/0+$/, "").padEnd(2, "0");
-  return `${whole.toLocaleString("en-US")}.${frac}`;
+  return `${(grouped ||= new Intl.NumberFormat("en-US")).format(whole)}.${frac}`;
 }
 // as `show`, but a whole number of units has no decimals: 25000000 -> "25"
 export const plain = (units) => (units % 1_000_000 === 0 ? String(units / 1_000_000) : show(units));

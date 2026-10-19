@@ -15,50 +15,50 @@
 </div></div></header>
 <main class="wrap">
   <h1>How we verify</h1>
-  <p>Everything on the app is checkable without trusting this server. This page says what checks each claim, and where.</p>
+  <p>Each line says what checks a claim. Open a fold for the proof.</p>
 
-  <div class="card"><h2>The demand decision</h2>
-    <p>Qloo's taste API is the only demand oracle. Every number in a report names the call that produced it (endpoint,
-    input, output summary) and each step says how it changed the decision. The verdict and the campaign (who, where,
-    price tier, target, reserve) are computed by published rules — <span class="mono">check.RULES</span>, documented in
-    <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/DEMAND_CHECK.md" rel="noopener">DEMAND_CHECK.md</a> —
-    never by a language model. Without a Qloo key the server answers "cannot decide: no Qloo evidence" and nothing opens.
-    A report is directional demand evidence, not a sales forecast; every Qloo figure is aggregate taste, not a prediction
-    about one person.</p></div>
+  <div class="card"><h2>Demand: live taste data, decided by code</h2>
+    <p>Qloo's taste data is the demand oracle. Published rules decide, never a language model.</p>
+    <details><summary>The rules and their limits</summary>
+      <p class="small">Every number names the Qloo call that produced it. The verdict, audience, cities, price tier, target and reserve come from
+      <span class="mono">check.RULES</span> (<a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/DEMAND_CHECK.md" rel="noopener">DEMAND_CHECK.md</a>).
+      Without a Qloo key the server answers "cannot decide" and nothing opens. A report is directional demand evidence, not a sales forecast;
+      every Qloo figure is aggregate taste, not a prediction about one person.</p></details></div>
 
-  <div class="card"><h2>The money</h2>
-    <p>Pre-orders are knos_pay escrow orders on Solana devnet (test units of this app's own test mint; no real money).
-    A stage is released only by 2-of-3 referee signatures that the program checks on chain; the referee keys are held by
-    this one server and every commitment says so (<span class="mono">UNLISTED PANEL</span>). A released or refunded
-    order's account is closed, so a second release is refused by the chain itself. Deadlines refund to the buyer;
-    anyone may send the refund. Fees come from
-    <a href="https://github.com/drexthealpha/Knos/blob/main/config/fees.yaml" rel="noopener">config/fees.yaml</a>:
-    Knos takes the payout fee only on money released on proof.</p>
-    <p class="small muted">Programs: knos_pay test build <span class="mono">FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4</span> (devnet).
-    Every receipt links its transactions on explorer.solana.com.</p></div>
+  <div class="card"><h2>Money: escrow on Solana, released on proof</h2>
+    <p>Every payment waits in a knos_pay escrow order until its milestone is proven.</p>
+    <details><summary>Who can release it</summary>
+      <p class="small">A release needs the referee group's signature, which the program checks on chain. The group is a FROST
+      2-of-3 key: three separate hosts (this server, GitHub Actions, a third machine) each re-check the evidence; two must sign.
+      A released or refunded order's account is closed, so the chain refuses a second release. Past the deadline anyone may
+      send the refund. Fees: <a href="https://github.com/drexthealpha/Knos/blob/main/config/fees.yaml" rel="noopener">config/fees.yaml</a>,
+      taken only on money released on proof.</p>
+      <p class="small muted">knos_pay test build <span class="mono">FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4</span> (devnet). Every receipt links its transactions.</p></details></div>
 
-  <div class="card"><h2>The evidence</h2>
-    <p>A milestone's evidence is a public https page that must contain the commitment's claim id. The server fetches it
-    (public addresses only, no redirects, size and time limits) and the referees sign over one canonical pin:
-    <span class="mono">knos.ideas.commit.review_evidence</span>, the sha256 of the signed evidence structure, which
-    includes the page's own sha256. The receipt shows both values, and the pin is what the release transaction carries.</p></div>
+  <div class="card"><h2>Evidence: one page, one pin</h2>
+    <p>A milestone's proof is a public page containing its claim id.</p>
+    <details><summary>What the referees sign</summary>
+      <p class="small">The server fetches the page twice (public addresses only, no redirects, size and time limits) and refuses
+      a page that changes. The referees sign one pin: <span class="mono">knos.ideas.commit.review_evidence</span>, the sha256 of
+      the signed evidence structure, which includes the page's own sha256. The receipt shows both; the release carries the pin.</p></details></div>
 
-  <div class="card"><h2>The record</h2>
-    <p>Every decision, lock and release is appended to the Knos Record (a hash-chained journal with Sibyl as the agents'
-    working memory beside it), and the record's Merkle root can be anchored on devnet in a Memo transaction signed by the
-    app's test wallet. <span id="anchor" class="small muted"></span></p></div>
+  <div class="card"><h2>You: a passkey, which is also your wallet</h2>
+    <p>No account and no seed phrase. Your passkey approves every payment.</p>
+    <details><summary>How a passkey pays</summary>
+      <p class="small">The server keeps only the passkey's public key. The passkey owns a LazorKit smart wallet on devnet
+      (program FLb7fyAtkfA4TSa2uYcAT8QKHd2pkoMHgmqfnXFXo7ao); Solana's secp256r1 precompile checks each approval. A pre-order,
+      a milestone's funding, a commitment to buy, a receivable's sale, an advance and its collection are each signed by the
+      person's own passkey. The server only pays the fee and relays. Google, ORCID and email sign-in are not available yet.</p></details></div>
 
-  <div class="card"><h2>The identity</h2>
-    <p>Passkeys: the server keeps only the passkey's public key; your identity is derived from it, and sign-in is an
-    ES256 signature over a fresh challenge checked server-side. There is no seed phrase to lose. The same passkey is your
-    wallet: a LazorKit smart wallet on devnet (program FLb7fyAtkfA4TSa2uYcAT8QKHd2pkoMHgmqfnXFXo7ao) whose one owner is the
-    passkey's P-256 key. A pre-order, a sale of a receivable, a lender's advance and its collection are each signed by the
-    person's passkey and checked on chain by Solana's secp256r1 precompile; the server only pays the fee and relays. No
-    server key buys for anyone. Wallet pre-orders (Blinks) are signed by your own wallet; the server never sees the key.</p></div>
+  <div class="card"><h2>Record: an append-only journal</h2>
+    <p>Every decision, lock and release is written down, and its root anchored on devnet. <span id="anchor" class="small muted"></span></p>
+    <details><summary>What memory can and cannot prove</summary>
+      <p class="small">The journal is hash-chained; its Merkle root is anchored in a Memo transaction. Sibyl is the agents'
+      working memory beside it: lexical search only, a 5 MiB free store, no tamper evidence and no sync, so the proofs stay
+      on chain and in the journal.</p></details></div>
 
-  <div class="card"><h2>The code</h2>
-    <p>MIT licensed, one repository, tests in the tree: <a href="https://github.com/drexthealpha/Knos" rel="noopener">github.com/drexthealpha/Knos</a>.
-    The app is <span class="mono">apps/wanted/</span>; the suite runs against the Knos of the same commit.</p></div>
+  <div class="card"><h2>Code: open, tested, one repository</h2>
+    <p>MIT licensed: <a href="https://github.com/drexthealpha/Knos" rel="noopener">github.com/drexthealpha/Knos</a>, the app in <span class="mono">apps/wanted/</span>.</p></div>
 </main>
 <footer class="wrap muted small"><p>Devnet test money everywhere on this site — no real funds.</p></footer>
 <script>

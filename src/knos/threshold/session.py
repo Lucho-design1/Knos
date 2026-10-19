@@ -138,8 +138,20 @@ class Coordinator:
         return public(self.get(sid))
 
 
+    def annotate(self, sid: str, key: str, value) -> dict:
+        """Record what the server learned about a session from outside the FROST rounds (the code referee's
+        attestation: knos_wanted.referee.attest). Never a secret."""
+        if key not in ("code_referee",):
+            raise ValueError("not a field a session may be annotated with")
+        with self._lock:
+            s = self.get(sid)
+            s[key] = value
+            self._save(s)
+            return public(s)
+
+
 def public(s: dict) -> dict:
     """What any host may read: no secret is ever in a session (commitments, packages and shares are public)."""
     return {k: s.get(k) for k in ("id", "state", "digest", "request", "group_key", "min", "signers", "signing_package",
-                                  "signature", "error", "result", "opened")} | {"committed": sorted(int(k) for k in s.get("commitments", {})),
+                                  "signature", "error", "result", "opened", "code_referee")} | {"committed": sorted(int(k) for k in s.get("commitments", {})),
                                                                                 "shared": sorted(int(k) for k in s.get("shares", {}))}

@@ -53,13 +53,16 @@ async function busy(btn, text, fn) {
 }
 
 // ---- views ---------------------------------------------------------------------------------------------------------
-const VIEWS = ["research", "buy", "fund", "contribute", "make", "projects", "teams", "agents"];
+const VIEWS = ["home", "research", "buy", "fund", "contribute", "make", "projects", "teams", "agents"];
 function show() {
   err(null); slow(false, "");
   const h = location.hash;
   const m = h.match(/^#buy=([0-9a-f]{64})/);
-  let view = m ? "buy" : (h.slice(1).split("=")[0] || "research");
-  if (!VIEWS.includes(view)) view = "research";
+  const one = h.match(/^#(back|fund|contribute)=([a-z0-9-]{3,64})$/);       // a one-tap action from the front door
+  if (one && one[1] === "back") return goBack(one[2]);
+  if (h === "#verify") return location.replace("/verify");          // the front door's link to How we verify (through the wake page)
+  let view = m ? "buy" : (h.slice(1).split("=")[0] || "home");
+  if (!VIEWS.includes(view)) view = "home";
   for (const v of VIEWS) $("v-" + v).hidden = v !== view;
   document.documentElement.dataset.view = view;
   document.querySelectorAll("nav.roles a").forEach((a) => {
@@ -67,12 +70,53 @@ function show() {
     a.setAttribute("aria-current", a.dataset.view === view ? "page" : "false");
   });
   if (m) loadProduct(m[1]); else if (view === "buy") loadCrossings($("productCard"), true);
-  if (view === "research") loadOpen();
+  if (view === "home") loadHome();
   if (view === "make") loadMaker();
-  if (view === "fund") loadFund();
-  if (view === "contribute") loadTasks();
+  if (view === "fund") loadFund(one && one[2]);
+  if (view === "contribute") loadTasks(one && one[2]);
   if (view === "agents") loadAgents();
   if (window.KNOS_VIEW) window.KNOS_VIEW(view);       // projects + teams (valley.js)
+}
+
+// ---- home: the research products open for backing now (GET /api/front), each with three one-tap actions --------------
+let BOARD = null;
+async function board(fresh) {
+  if (BOARD && !fresh) return BOARD;
+  BOARD = await api("/api/front");
+  return BOARD;
+}
+const pct = (a, b) => (b ? Math.max(2, Math.min(100, Math.round((100 * a) / b))) : 0);
+function card(p) {
+  const where = (p.where || []).join(", ");
+  return `<li class="card hp-card" data-slug="${esc(p.slug)}"><p class="small muted">${esc([p.paper, where].filter(Boolean).join(" · "))}</p>
+    <h2 class="hp-t">${esc(p.title)}</h2>
+    <div class="meter" aria-hidden="true"><span style="width:${pct(p.backed_units, p.reserve_units)}%"></span></div>
+    <p class="small"><b>${esc(p.backed_units)}</b> ${t("of")} ${esc(p.reserve_units)} ${t("backed_l")}${p.escrow_units ? ` · <b>${esc(p.escrow_units)}</b> ${t("escrow_l")}` : ""}${p.maker ? "" : ` · ${t("maker_wanted")}`}</p>
+    <div class="row acts"><a class="button" href="#buy=${esc(p.report)}">${t("back_btn")}</a>
+      <a class="button ghost" href="#fund=${esc(p.slug)}">${t("fundm_btn")}</a>
+      <a class="button ghost" href="#contribute=${esc(p.slug)}">${t("contrib_btn")}</a></div></li>`;
+}
+async function loadHome() {
+  const box = $("homeList");
+  try {
+    const b = await board(true);
+    box.removeAttribute("aria-busy");
+    box.innerHTML = b.products.map(card).join("") + (b.crossing_now.length ? `<li class="note row"><span class="spin" aria-hidden="true"></span>${t("checking")}…</li>` : "") ||
+      `<li class="empty">${t("empty")}</li>`;
+    if (b.crossing_now.length && !b.products.length) setTimeout(() => { if (document.documentElement.dataset.view === "home") loadHome(); }, 5000);
+  } catch (e) { box.removeAttribute("aria-busy"); box.innerHTML = `<li class="empty">${esc(e.message)}</li>`; }
+}
+async function product(slug) {
+  for (let i = 0; i < 60; i++) {
+    const p = await api("/api/front?slug=" + encodeURIComponent(slug));
+    if (!p.pending) return p;
+    slow(true, t("checking"));
+    await new Promise((r) => setTimeout(r, 4000));
+  }
+  throw new Error(t("checking"));
+}
+async function goBack(slug) {
+  try { const p = await product(slug); location.replace("#buy=" + p.report); } catch (e) { err(e); }
 }
 window.addEventListener("hashchange", show);
 
@@ -84,7 +128,7 @@ function setSession(s) {
   $("whoBtn").textContent = s ? s.label : t("sign_in"); $("outBtn").hidden = !s; if (s) $("signin").hidden = true;
 }
 async function passkeyNew() {
-  const ch = await api("/api/auth/challenge", {}); const label = $("email").value.trim() || "Knos user";
+  const ch = await api("/api/auth/challenge", {}); const label = $("pkName").value.trim() || "Knos user";
   const cred = await navigator.credentials.create({ publicKey: { challenge: unb64u(ch.challenge), rp: { name: "Knos", id: ch.rp_id },
     user: { id: crypto.getRandomValues(new Uint8Array(16)), name: label, displayName: label }, pubKeyCredParams: [{ type: "public-key", alg: -7 }],
     attestation: "none", timeout: 60000, authenticatorSelection: { residentKey: "preferred", userVerification: "preferred" } } });
@@ -98,17 +142,8 @@ async function passkeyUse() {
   setSession(await api("/api/auth/passkey/login", { id: a.id, clientDataJSON: b64u(a.response.clientDataJSON),
     authenticatorData: b64u(a.response.authenticatorData), signature: b64u(a.response.signature) }));
 }
-function google(clientId) {
-  $("googleBox").hidden = false;
-  const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true;
-  s.onload = () => { window.google.accounts.id.initialize({ client_id: clientId, callback: async (r) => { try { setSession(await api("/api/auth/google", { credential: r.credential })); } catch (e) { err(e); } } });
-    window.google.accounts.id.renderButton($("gsi"), { theme: "outline", size: "large", width: 280 }); };
-  document.head.appendChild(s);
-}
-async function emailGo() {
-  if (status.auth && status.auth.email_provider) { const r = await api("/api/auth/email", { email: $("email").value }); $("emailNote").textContent = "→ " + r.to; }
-  else setSession(await api("/api/auth/guest", { label: $("email").value }));
-}
+// Google, ORCID and email are shown, switched off ("Not available yet"): a passkey is the one sign-in, for everyone,
+// and it is the wallet that signs every payment. Nothing here needs an account anywhere.
 
 // ---- researcher ----------------------------------------------------------------------------------------------------
 const KIND = { memory: "Memory", paper: "Paper", qloo: "Qloo", decision: "Decision" };
@@ -117,14 +152,6 @@ function stepHtml(s) {
     (s.tool ? `<p class="small mono muted">${esc(s.tool)}</p>` : "") + (s.output ? `<p>${esc(s.output)}</p>` : "") +
     (s.effect ? `<p class="effect">→ ${esc(s.effect)}</p>` : "") +
     (s.input && typeof s.input === "object" ? `<details class="small"><summary>input</summary><pre>${esc(JSON.stringify(s.input, null, 1))}</pre></details>` : "") + "</li>";
-}
-async function loadOpen() {
-  try {
-    const { crossings } = await api("/api/crossings");
-    const open = crossings.filter((c) => c.verdict === "OPEN").slice(0, 6);
-    $("openNow").hidden = !open.length;
-    $("openList").innerHTML = open.map((c) => `<li><a class="p" href="#buy=${esc(c.report)}"><span class="v">${esc(t("open_v"))}</span><br><b>${esc((c.idea || "").slice(0, 90))}</b><br><span class="small muted">${t("target")} ${c.target_units} · ${t("reserve")} ${c.reserve_units}</span></a></li>`).join("");
-  } catch (e) { $("openNow").hidden = true; }
 }
 async function cross() {
   const body = { ref: $("ref").value.trim() || undefined, idea: $("idea").value.trim() || undefined, product: $("product").value.trim() || undefined, place: $("place").value.trim() || undefined };
@@ -156,10 +183,9 @@ function outcome(r) {
 // ---- buyer ---------------------------------------------------------------------------------------------------------
 async function loadCrossings(el, withTitle) {
   try {
-    const { crossings } = await api("/api/crossings");
-    el.innerHTML = (withTitle ? `<h2>${t("buy_t")}</h2><p class="muted">${t("buy_none")}</p>` : "") + (crossings.length ?
-      "<ul class='plist'>" + crossings.map((c) => `<li><a class="p" ${c.report ? `href="#buy=${esc(c.report)}"` : ""}>${c.verdict === "OPEN" ? `<span class="v">${t("open_v")}</span><br>` : ""}<b>${esc((c.idea || c.ref || "").slice(0, 90))}</b> <span class="small muted">· ${esc(c.verdict || c.status)}</span></a></li>`).join("") + "</ul>" :
-      `<p class="empty">${t("empty")}</p>`);
+    const b = await board(true);
+    el.innerHTML = (withTitle ? `<h1>${t("buy_t")}</h1>` : "") + (b.products.length ? `<ul class="plist hp">${b.products.map(card).join("")}</ul>` :
+      `<p class="empty">${t("empty")}</p>`) + `<p class="small"><a href="#research">${t("home_own")}</a></p>`;
     $("buyBox").hidden = true; $("tracker").hidden = true;
   } catch (e) { err(e); }
 }
@@ -175,6 +201,11 @@ async function loadProduct(h) {
         (p.unserved_audience && p.unserved_audience.length ? `<p class="small">${t("unserved_l")}: ${esc(p.unserved_audience.join(", "))}</p>` : "")
         : `<div class="decision ${esc((d.verdict || "").toLowerCase())}">${esc((d.reasons || []).join("; "))}</div>`);
     $("buyBox").hidden = d.verdict !== "OPEN";
+    // no maker has claimed it yet: a buyer commits (an allowance, paid only when it is made) instead of pre-ordering
+    const fp = await api("/api/front?slug=" + h).catch(() => null);
+    report.front = fp && !fp.pending ? fp : null;
+    const noMaker = !!(report.front && !report.front.maker && report.front.project && report.front.first_milestone);
+    $("noMaker").hidden = !noMaker; $("preBtn").hidden = noMaker;
     loadWallet();
     if (r.limits) $("productCard").insertAdjacentHTML("beforeend", `<p class="small muted">${esc(r.limits)}</p>`);
     const all = [...(r.matches || []).map((m) => ({ ...m, kept: true })), ...(r.unrelated || []).map((u) => ({ name: u.name, kept: false }))];
@@ -217,45 +248,56 @@ async function walletPreorder() {
 }
 
 // ---- funder --------------------------------------------------------------------------------------------------------
-async function loadFund() {
+// One passkey step, shown in the card that asked for it (a note under the button; never a wall of text).
+function inCard(b, fn) {
+  return async () => {
+    const card = b.closest("li"); card.querySelectorAll(".note").forEach((n) => n.remove());
+    const put = (cls, html) => card.insertAdjacentHTML("beforeend", `<div class="note ${cls}" role="status">${html}</div>`);
+    if (!session) { $("signin").hidden = false; $("pkNew").focus(); put("err", esc(t("err_signin"))); return; }
+    const was = b.textContent; b.disabled = true; b.textContent = t("pk_sign") + "…";
+    try { put("ok", await fn(card)); } catch (e) { put("err", esc(e.message)); } finally { b.disabled = false; b.textContent = was; }
+  };
+}
+const tx = (sig) => (sig ? ` · <a href="${X(sig)}" target="_blank" rel="noopener">tx ${short(sig)} ↗</a>` : "");
+async function fundMilestone(p, units) {
+  const got = await KnosPasskey.approve(await api("/api/project/fund", { passkey: true, project: p.project, milestone: p.first_milestone, units, kind: "funder" }), api);
+  return `✓ ${esc(got.units)} ${t("escrow_l")} · <a href="${esc(got.explorer)}" target="_blank" rel="noopener">escrow ${short(got.order)} ↗</a>${tx((got.signatures || {}).lock)} · <a href="#projects=${esc(p.project)}">${t("open_project")}</a>`;
+}
+async function loadFund(focus) {
   try {
-    const { commitments } = await api("/api/commitments");
-    const open = commitments.filter((c) => c.status === "locked");
-    $("fundList").innerHTML = open.map((c) => `<li class="card"><b>${esc((c.idea || "").slice(0, 80))}</b> · ${esc(c.units)} × ${esc(c.unit_price)} · <a href="${X(c.commitment, "address")}" target="_blank" rel="noopener">${short(c.commitment)}</a>
-      <div class="row"><input class="fu" data-r="${esc(c.report)}" type="number" min="5" value="10" aria-label="${t("units")}" style="max-width:110px"><button class="fundBtn" data-r="${esc(c.report)}" type="button">${t("fund_btn")}</button></div>
-      ${c.factoring ? `<p class="small muted">${t("factoring_t")}: ${esc(factorNote(c.factoring))}</p>` : ""}</li>`).join("") || `<li class="empty">${t("empty")}</li>`;
-    document.querySelectorAll(".fundBtn").forEach((b) => b.onclick = async () => {
-      const card = b.closest("li"); card.querySelectorAll(".note").forEach((n) => n.remove());
-      const put = (cls, html) => card.insertAdjacentHTML("beforeend", `<div class="note ${cls}" role="status">${html}</div>`);
-      if (!session) { $("signin").hidden = false; $("pkNew").focus(); put("err", esc(t("err_signin"))); return; }
-      const was = b.textContent; b.disabled = true; b.textContent = t("loading") + "…";
-      try {
-        const units = parseInt(card.querySelector(".fu").value, 10);
-        const got = await KnosPasskey.approve(await api("/api/fund", { report: b.dataset.r, units }), api);
-        const sig = (got.signatures || {}).lock;
-        put("ok", `✓ ${esc(got.units)} · <a href="${X(got.commitment, "address")}" target="_blank" rel="noopener">escrow ${short(got.commitment)} ↗</a>` +
-          (sig ? ` · <a href="${X(sig)}" target="_blank" rel="noopener">tx ${short(sig)} ↗</a>` : "") + ` · <span class="testmoney">${t("test_money")}</span>`);
-      } catch (e) { put("err", esc(e.message)); } finally { b.disabled = false; b.textContent = was; }
-    });
+    const b = await board(true);
+    const rows = b.products.filter((p) => p.project && p.first_milestone);
+    $("fundList").innerHTML = rows.map((p) => `<li class="card${focus === p.slug ? " on" : ""}" data-slug="${esc(p.slug)}"><b>${esc(p.title)}</b>
+      <p class="small muted">${esc(p.escrow_units)} ${t("escrow_l")}</p>
+      <div class="row"><input class="fu" type="number" min="5" max="1000" value="10" aria-label="${t("units")}" style="max-width:110px">
+        <button class="fundBtn" data-slug="${esc(p.slug)}" type="button">${t("fundm_btn")}</button></div></li>`).join("") || `<li class="empty">${t("empty")}</li>`;
+    document.querySelectorAll(".fundBtn").forEach((btn) => { const p = rows.find((x) => x.slug === btn.dataset.slug);
+      btn.onclick = inCard(btn, (cardEl) => fundMilestone(p, parseInt(cardEl.querySelector(".fu").value, 10))); });
+    const f = focus && document.querySelector(`#fundList li[data-slug="${focus}"]`);
+    if (f) f.scrollIntoView({ block: "center" });
     loadLend();
   } catch (e) { err(e); }
 }
-// ---- lender: receivables, as PayFi receivable financing (advance rate, fee, due date, repaid by the release) ----------
+// ---- lender: the receivable sale, as PayFi receivable financing (advance rate, fee, due date, repaid by the release) --
+// Two taps: "Offer cash now" (an advance at 90%; the rate can be changed), then, once the maker's passkey sold the
+// receivable, "Send the advance" (the lender's passkey). After the release, "Collect the repayment".
 async function loadLend() {
   const { receivables } = await api("/api/receivables");
-  $("lendTable").querySelector("tbody").innerHTML = receivables.map((r) => { const f = r.factoring || {}; const st = f.status || "open";
-    const act = r.status !== "locked" && st !== "advanced" && st !== "assigned" ? "" :
-      st === "assigned" ? `<button class="lendGo" data-go="advance" data-c="${esc(r.commitment)}" type="button">${t("pay_adv")}</button>` :
-      st === "advanced" ? `<button class="lendGo quiet" data-go="collect" data-c="${esc(r.commitment)}" type="button">${t("collect_btn")}</button>` :
-      `<input class="ar" type="number" min="50" max="98" value="90" aria-label="${t("adv_rate")}" style="max-width:64px">% <button class="lendGo" data-go="quote" data-c="${esc(r.commitment)}" type="button">${t("quote_btn")}</button>`;
+  $("lendList").innerHTML = receivables.map((r) => { const f = r.factoring || {}; const st = f.status || "open";
     const q = (r.quotes || []).slice(-1)[0];
-    return `<tr><td>${esc((r.idea || "").slice(0, 40))}<br><span class="muted">${esc(st)}</span></td><td>${esc(r.face_units)}</td><td>${esc(r.due)}</td>
-      <td>${q ? esc(q.advance_bps / 100) + "%" : "—"}</td><td>${q ? esc(q.advance_units) : "—"}</td><td>${q ? esc(q.fee_units) + " (" + esc(q.fee_pct) + "%)" : "—"}</td><td>${act}</td></tr>`; }).join("") ||
-    `<tr><td colspan="7" class="empty">${t("empty")}</td></tr>`;
+    const act = st === "assigned" ? `<button class="lendGo" data-go="advance" data-c="${esc(r.commitment)}" type="button">${t("pay_adv")}: ${esc(f.advance_units)}</button>` :
+      st === "advanced" ? `<button class="lendGo" data-go="collect" data-c="${esc(r.commitment)}" type="button">${t("collect_btn")}</button>` :
+      st === "repaid" ? `<p class="small">✓ ${t("repaid_l")}: ${esc(f.repaid_units)}</p>` :
+      r.status !== "locked" ? "" : st === "quoted" && q ? `<p class="small muted">${t("offered_l")}: ${esc(q.advance_units)} (${esc(q.advance_bps / 100)}%) · ${t("wait_maker")}</p>` :
+      `<button class="lendGo" data-go="quote" data-c="${esc(r.commitment)}" type="button">${t("offer_btn")}: ${esc(Math.round(r.face_units * 90) / 100)}</button>
+       <details class="small"><summary>${t("adv_rate")}</summary><input class="ar" type="number" min="50" max="98" value="90" aria-label="${t("adv_rate")}" style="max-width:80px">%</details>`;
+    return `<li class="card" data-c="${esc(r.commitment)}"><b>${esc((r.idea || "").slice(0, 70))}</b>
+      <p class="small muted">${t("face_l")} ${esc(r.face_units)} · ${t("due_l")} ${esc(r.due)}${q ? ` · ${t("fee_l")} ${esc(q.fee_units)} (${esc(q.fee_pct)}%)` : ""}</p>${act}</li>`; }).join("") ||
+    `<li class="empty">${t("empty")}</li>`;
   document.querySelectorAll(".lendGo").forEach((b) => b.onclick = () => busy(b, t("pk_sign"), async () => {
     if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
     const c = b.dataset.c;
-    if (b.dataset.go === "quote") await api("/api/lend/quote", { commitment: c, advance_bps: Math.round(parseFloat(b.closest("tr").querySelector(".ar").value) * 100) });
+    if (b.dataset.go === "quote") { const ar = b.closest("li").querySelector(".ar"); await api("/api/lend/quote", { commitment: c, advance_bps: Math.round(parseFloat(ar ? ar.value : "90") * 100) }); }
     else receipt(await KnosPasskey.approve(await api("/api/lend/" + b.dataset.go, { commitment: c }), api));
     loadLend(); }));
 }
@@ -276,7 +318,23 @@ function receiptInto(el, p) {
 }
 
 // ---- contributor ---------------------------------------------------------------------------------------------------
-async function loadTasks() {
+async function loadNeed(focus) {
+  const b = await board(true).catch(() => ({ products: [] }));
+  const rows = b.products.filter((p) => p.project && p.first_milestone);
+  $("needList").innerHTML = rows.map((p) => `<li class="card${focus === p.slug ? " on" : ""}" data-slug="${esc(p.slug)}"><b>${esc(p.title)}</b>
+    <p class="small muted">${esc(p.open_milestones)} ${t("open_ms")}</p>
+    <button class="makeBtn" data-slug="${esc(p.slug)}" type="button">${t("make_btn")}</button> <a class="small" href="#projects=${esc(p.project)}">${t("open_project")}</a></li>`).join("") ||
+    `<li class="empty">${t("empty")}</li>`;
+  document.querySelectorAll(".makeBtn").forEach((btn) => { const p = rows.find((x) => x.slug === btn.dataset.slug);
+    btn.onclick = inCard(btn, async () => {
+      const a = await api("/api/project/claim", { passkey: true, project: p.project, milestone: p.first_milestone });
+      return `✓ ${t("attempt_l")} <span class="mono">${esc(a.id)}</span> · ${t("paid_passkey")} · <a href="#projects=${esc(p.project)}">${t("open_project")}</a>`;
+    }); });
+  const f = focus && document.querySelector(`#needList li[data-slug="${focus}"]`);
+  if (f) f.scrollIntoView({ block: "center" });
+}
+async function loadTasks(focus) {
+  loadNeed(focus);
   try {
     const got = await api("/api/tasks");
     const box = $("taskBox");
@@ -307,6 +365,7 @@ async function loadTasks() {
       } catch (e) { put("err", esc(e.message)); } finally { b.disabled = false; b.textContent = was; }
     });
   } catch (e) { err(e); }
+  $("v-contribute").dataset.tasks = "1";        // the rounds have their place: what follows them is shown where it stays (style.css)
 }
 
 // ---- maker ---------------------------------------------------------------------------------------------------------
@@ -359,9 +418,9 @@ async function boot() {
   langMenu(); applyLang();
   const h = location.hash;
   const m = h.match(/session=([^&]+)/);
-  if (m) { try { const tok = decodeURIComponent(m[1]); const b = tok.split(".")[0]; const pad = b + "===".slice((b.length + 3) % 4); setSession({ token: tok, ...JSON.parse(atob(pad.replace(/-/g, "+").replace(/_/g, "/"))) }); } catch (e) { } history.replaceState(null, "", "#research"); }
+  if (m) { try { const tok = decodeURIComponent(m[1]); const b = tok.split(".")[0]; const pad = b + "===".slice((b.length + 3) % 4); setSession({ token: tok, ...JSON.parse(atob(pad.replace(/-/g, "+").replace(/_/g, "/"))) }); } catch (e) { } history.replaceState(null, "", "#home"); }
   const mg = h.match(/magic=([^&]+)/);
-  if (mg) { try { setSession(await api("/api/auth/email/verify", { token: decodeURIComponent(mg[1]) })); } catch (e) { err(e); } history.replaceState(null, "", "#research"); }
+  if (mg) { try { setSession(await api("/api/auth/email/verify", { token: decodeURIComponent(mg[1]) })); } catch (e) { err(e); } history.replaceState(null, "", "#home"); }
   setSession(session);
   try {
     status = await api("/api/status");
@@ -369,20 +428,16 @@ async function boot() {
     $("modeBadge").textContent = rest.rest ? t("status_live") : t("status_off");
     $("modeBadge").className = "badge " + (rest.rest ? "live" : "off");
     const a = status.auth || {};
-    if (a.google_client_id) google(a.google_client_id);
-    $("orcidBtn").hidden = !a.orcid;
-    if (!a.passkey || !window.PublicKeyCredential) { $("pkNew").disabled = $("pkUse").disabled = true; }
-    $("emailNote").textContent = a.email_note || "";
+    if (!a.passkey || !window.PublicKeyCredential) { $("pkNew").disabled = $("pkUse").disabled = true; $("pkNote").textContent = t("pk_none"); }
   } catch (e) { err(e); }
   show();
 }
-$("whoBtn").onclick = () => { const sh = $("signin"); sh.hidden = !sh.hidden; if (!sh.hidden) ($("pkNew").disabled ? $("email") : $("pkNew")).focus(); };
+$("whoBtn").onclick = () => { const sh = $("signin"); sh.hidden = !sh.hidden; if (!sh.hidden) $("pkName").focus(); };
 $("signinClose").onclick = () => { $("signin").hidden = true; $("whoBtn").focus(); };
 document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && !$("signin").hidden) { $("signin").hidden = true; $("whoBtn").focus(); } });
 $("outBtn").onclick = () => setSession(null);
 $("pkNew").onclick = () => busy($("pkNew"), t("loading"), passkeyNew);
 $("pkUse").onclick = () => busy($("pkUse"), t("loading"), passkeyUse);
-$("emailBtn").onclick = () => busy($("emailBtn"), t("loading"), emailGo);
 document.querySelectorAll(".chip").forEach((c) => c.onclick = () => { $("ref").value = c.dataset.ref; });
 $("crossForm").onsubmit = (ev) => { ev.preventDefault(); busy($("crossBtn"), t("cross_busy"), cross); };
 $("walletBtn").onclick = () => busy($("walletBtn"), t("loading"), walletPreorder);
@@ -393,5 +448,11 @@ $("preBtn").onclick = () => busy($("preBtn"), t("loading"), async () => {
 $("faucetBtn").onclick = () => busy($("faucetBtn"), t("loading"), async () => { await api("/api/wallet/faucet", {}); loadWallet(); });
 $("claimBtn").onclick = () => busy($("claimBtn"), t("loading"), async () => {
   if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
-  const c = await api("/api/maker/claim", { report: report.hash }); $("claimNote").textContent = `${t("claimed")}: ${c.maker} · ${short(c.main_wallet)}`; });
+  const c = await api("/api/maker/claim", { report: report.hash }); await loadProduct(report.hash);
+  $("claimNote").textContent = `${t("claimed")}: ${c.maker} · ${short(c.main_wallet)}`; });
+$("amcBtn").onclick = () => busy($("amcBtn"), t("pk_sign"), async () => {
+  if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
+  const p = report.front, units = parseInt($("units").value, 10) * ((((report.decision || {}).plan) || {}).unit_price || 1);
+  const got = await KnosPasskey.approve(await api("/api/project/amc", { passkey: true, project: p.project, milestone: p.first_milestone, units }), api);
+  $("receipt").innerHTML = `<div class="decision open"><h3>${t("committed_l")}</h3><p class="testmoney">${t("test_money")}</p><p>${esc(got.units)} · ${t("amc_rule")}${tx((got.signatures || {}).approve)}</p></div>`; });
 boot();

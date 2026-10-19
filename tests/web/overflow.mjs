@@ -13,7 +13,7 @@ import { join, extname } from "node:path";
 
 export const WIDTHS = [320, 360, 390, 768, 1280];
 export const ROW_MAX = 400;
-export const PAGES = ["", "#protect", "#fund", "#money", "#task", "#anyissue", "#claim", "#pricing", "#records", "#u=alice", "#r=octo/widgets", "#rank=earners",
+export const PAGES = ["", "#check", "#verify", "#protect", "#fund", "#money", "#task", "#anyissue", "#claim", "#pricing", "#records", "#u=alice", "#r=octo/widgets", "#rank=earners",
   "#network", "#build", "#buy", "#install", "#capabilities", "#status", "#index", "#pilot", "#reproduce", "#demo", "#shadow", "#verifier", "#playground", "#terms",
   "#supplier", "#invoice-statement", "#story", "#keyholder", "#check-a-pull-request", "#record", "#record=codex", "#check=acme/app/7"];
 // THE CHECK OF ONE PULL REQUEST (web/check.js at #check=owner/repo/123, its share row web/share.js) is measured with a

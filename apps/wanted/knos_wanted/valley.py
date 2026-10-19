@@ -75,6 +75,13 @@ def _load(kind: str, key: str) -> dict:
     return json.loads(f.read_text(encoding="utf-8"))
 
 
+def _safe_load(kind: str, key: str) -> dict | None:
+    try:
+        return _load(kind, key)
+    except Refused:
+        return None
+
+
 def _all(kind: str) -> list[dict]:
     out = []
     for f in sorted(_dir(kind).glob("*.json"), key=lambda f: f.stat().st_mtime, reverse=True):
@@ -232,7 +239,17 @@ def _safe_order(oid: str) -> dict | None:
 def _order_public(o: dict) -> dict:
     return {k: o.get(k) for k in ("order", "project", "milestone", "units", "unit_price", "kind", "funder", "grant", "pool", "referral",
                                   "status", "signatures", "made", "deadline_s", "claim_id")} | {
-        "explorer": escrow.explorer(o["order"], "address")}
+        "explorer": escrow.explorer(o["order"], "address"), "trust": _trust(o)}
+
+
+def _trust(o: dict) -> dict | None:
+    """The code referee's run, its knos_oidc verification on devnet, its Sigstore attestation and the FROST release of
+    this order's referee session (knos_wanted.referee.trust); None when the order has none."""
+    from . import referee
+    try:
+        return referee.trust((o.get("referee_session") or {}).get("id"))
+    except Exception:  # noqa: BLE001 - a page never fails on what it only shows
+        return None
 
 
 def _ledger(led=None):

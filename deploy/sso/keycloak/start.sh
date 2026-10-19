@@ -1,0 +1,3 @@
+# Keycloak TEST IdP for Knos SSO (dev mode, test users only). Run: docker run -p 8080:8080 --env-file kc.env -e KC_REALM_JSON="$(cat knos-test-realm.json)" --entrypoint /bin/bash quay.io/keycloak/keycloak:26.4.2 -c "$(cat start.sh)"
+# kc.env holds KC_BOOTSTRAP_ADMIN_USERNAME/PASSWORD, KC_TEST_PASSWORD_ALICE/BOB, KC_REALM_PRIVATE_KEY/CERTIFICATE (base64 DER): never commit it.
+mkdir -p /opt/keycloak/data/import && if [ -n "$KC_REALM_JSON" ]; then printf '%s' "$KC_REALM_JSON" > /opt/keycloak/data/import/knos-test-realm.json; fi && exec /opt/keycloak/bin/kc.sh start-dev --import-realm --http-port="${PORT:-8080}" --proxy-headers=xforwarded ${KC_HOSTNAME_URL:+--hostname=$KC_HOSTNAME_URL} --cache=local --health-enabled=false --metrics-enabled=false

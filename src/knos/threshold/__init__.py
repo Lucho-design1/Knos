@@ -13,7 +13,9 @@ as it checks a single referee's, and the program pays at the first (and only) pa
 The cryptography is the Rust crate itself, run as `knos-frost` (tools/knos-frost, a JSON command): this module only
 moves its packages between hosts. Modules: session (the coordinator on the app server), participant (each host's
 signer: it re-checks the milestone itself, then signs), dkg (key generation), check (the milestone check every
-signer runs), attest (Google Confidential Space attestation tokens, for a referee that is code).
+signer runs), codeattest (the code referee's attestation: GitHub Actions run, knos_oidc on chain, Sigstore), ghoidc
+(host 2's GitHub OIDC token), attest (a Google Confidential Space token verifier: UNUSED, kept only because it is tested;
+ghoidc uses its RS256 helpers).
 """
 from __future__ import annotations
 

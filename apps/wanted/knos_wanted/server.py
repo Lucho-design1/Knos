@@ -31,7 +31,7 @@ from pathlib import Path
 import urllib.parse
 from urllib.parse import parse_qs, urlparse
 
-from . import agent, auth, blink, buyer, catalog, check, company, demand, escrow, planner, preorder, privacy, product_routes, referee, research, tasks, valley, wallets, x402
+from . import agent, auth, blink, buyer, catalog, check, company, demand, escrow, front, planner, preorder, privacy, product_routes, referee, research, tasks, valley, wallets, x402
 from .qloo_mcp import AGGREGATE, Qloo, QlooUnavailable
 from .qloo_rest import Client
 
@@ -75,6 +75,7 @@ SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/
 # every GET route below (do_GET), for the OpenAPI document (knos_wanted.openapi); the product routes list their own
 GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/actions/preorder": "Solana Action (Blink): pre-order metadata",
               "/api/cross": "Poll a live crossing", "/verify": "How we verify", "/api/crossings": "Crossings, newest first",
+              "/api/front": "Research products open for backing now (the front door's list; ?slug= one product)",
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
               "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funder escrows",
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
@@ -231,6 +232,12 @@ def make_handler(state: State):
                 return self._send(200 if got else 404, got or {"error": "unknown crossing"})
             if u.path in ("/verify", "/verify.html"):
                 return self._send(200, (STATIC / "verify.html").read_bytes(), "text/html; charset=utf-8")
+            if u.path == "/api/front":                       # the front door's list (web/home.js asks it from github.io)
+                slug = (qs.get("slug") or [""])[0]
+                if slug:
+                    got = front.resolve(state, slug)
+                    return self._send(200 if got else 404, got or {"error": "unknown product"}, headers=front.CORS)
+                return self._send(200, front.board(state), headers=front.CORS)
             if u.path == "/api/crossings":
                 take = min(100, max(1, int((qs.get("take") or ["30"])[0] or 30)))
                 offset = max(0, int((qs.get("offset") or ["0"])[0] or 0))
@@ -368,7 +375,7 @@ def make_handler(state: State):
                 return self._mcp()
             if u.path == "/api/actions/preorder":
                 return self._action(u)
-            if u.path in ("/api/referee/commit", "/api/referee/share"):   # a referee host's FROST round (signed by its transport key)
+            if u.path in ("/api/referee/commit", "/api/referee/share", "/api/referee/attest"):   # a referee host's FROST round (signed by its transport key)
                 if not state.allow(self._client(), "referee"):
                     return self._send(429, {"error": "too many referee posts from this address"})
                 try:
@@ -614,12 +621,14 @@ def make_handler(state: State):
 
 
 def serve(host: str | None = None, port: int | None = None) -> None:
+    os.environ.setdefault("SIBYL_MEMORY_TELEMETRY", "0")     # Sibyl's heartbeat is off on this server (its documented opt-out)
     host = host or os.environ.get("HOST", "127.0.0.1")
     port = port or int(os.environ.get("PORT", "8080"))
     state = State()
     threading.Thread(target=lambda: preorder.preflight_status(force=True), daemon=True).start()   # the money path, simulated
     threading.Thread(target=tasks.available, daemon=True).start()        # seeds the demo round when no round is open
     valley.start_sweeper()                 # missed milestone deadlines: refund + reopen, every KNOS_VALLEY_SWEEP_S seconds
+    front.start(state)                     # the seeded research products (a wiped disk never shows an empty app)
     httpd = ThreadingHTTPServer((host, port), make_handler(state))
     rest_ok, rest_why = state.rest.ready()
     print(f"Knos demand check on http://{host}:{port}  Qloo REST: {'on' if rest_ok else 'off (' + rest_why + ')'}  "

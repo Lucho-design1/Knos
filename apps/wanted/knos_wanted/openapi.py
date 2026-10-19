@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from . import product_routes
 
-TYPES = {"string": {"type": "string"}, "integer": {"type": "integer"}, "array": {"type": "array", "items": {}}, "object": {"type": "object"}}
+TYPES = {"string": {"type": "string"}, "integer": {"type": "integer"}, "array": {"type": "array", "items": {}}, "object": {"type": "object"}, "boolean": {"type": "boolean"}}
 
 
 def _routes():

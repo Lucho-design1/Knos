@@ -163,16 +163,19 @@ export function renderPlayground(el, env = {}) {
   };
   async function refresh() {
     const mine = ++round;
-    const [issues, bounties, outsiders, board] = await Promise.all([
-      Promise.resolve().then(() => gh(`repos/${REPO}/issues?state=open&per_page=50`)).catch(() => null),
+    const issuesP = Promise.resolve().then(() => gh(`repos/${REPO}/issues?state=open&per_page=50`)).catch(() => null);
+    const [bounties, outsiders, board] = await Promise.all([
       Promise.resolve().then(() => file("bounties.json")).catch(() => null),
       Promise.resolve().then(() => file("outsiders.json")).catch(() => null),
       Promise.resolve().then(() => file("tasks.json")).catch(() => null)]);
     if (stopped || mine !== round) return state;       // a newer read is on its way: this one is not drawn over it
     state.board = boardOf(board, (env.now || Date.now)());
     state.held = heldOf(board);
-    state.tasks = Array.isArray(issues) ? tasksOf(issues, bounties, state.board) : null;
     state.outsiders = outsiders;
+    if (state.tasks === undefined) draw();             // the site's own files are drawn at once; GitHub's list when it answers
+    const issues = await issuesP;
+    if (stopped || mine !== round) return state;
+    state.tasks = Array.isArray(issues) ? tasksOf(issues, bounties, state.board) : null;
     draw();
     return state;
   }

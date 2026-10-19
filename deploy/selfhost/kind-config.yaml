@@ -1,0 +1,15 @@
+# kind cluster for a local trial of the chart:  kind create cluster --name knos-selfhost --config deploy/selfhost/kind-config.yaml
+# etcd skips fsync: a throwaway trial cluster on a slow (spinning) disk otherwise loses its API server while kubeadm
+# bootstraps. Never use this for a cluster whose data you keep.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        etcd:
+          local:
+            extraArgs:
+              - name: unsafe-no-fsync
+                value: "true"

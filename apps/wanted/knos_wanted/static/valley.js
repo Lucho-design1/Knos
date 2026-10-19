@@ -75,22 +75,34 @@ async function loadProject(id) {
   const p = V.project = await api("/api/project?id=" + id);
   $("projHead").innerHTML = `<p class="small"><a href="#projects">← All projects</a></p><h2>${esc(p.title)}</h2>
     <p class="small muted">${esc(p.template_name)} · opened by ${esc(p.owner_label || "a signed-in user")}${p.team ? " for " + esc(p.team) : ""} · ${esc(p.money)}</p>
-    <p class="small">Each milestone is its own escrow order. It is paid only when the maker's result <em>and</em> an independent check (another person, another site) both contain its claim id. A missed deadline refunds the funders and reopens it to other makers.</p>
+    <p class="small">Each milestone has its own escrow. It pays on a result plus an independent check. A missed deadline refunds and reopens it.</p>
     <div class="row"><button type="button" class="quiet" id="refBtn">Get my referral link</button>
       <a class="button ghost small" href="/api/company/export?project=${p.id}&format=journal">Ledger CSV</a></div><p id="refOut" class="small"></p>`;
   $("refBtn").onclick = () => busy($("refBtn"), "Making link", async () => {
     if (!session) { $("signin").hidden = false; throw new Error("Sign in first."); }
-    const r = await api("/api/referral", { target: "p=" + p.id, wallet: await walletAccount() });
+    const r = await api("/api/referral", { passkey: true, target: "p=" + p.id });
     $("refOut").innerHTML = `Share <span class="mono">${esc(location.origin + r.link)}</span>: ${esc(r.rule)} (${r.share_bps / 100}%).`;
   });
   $("msList").innerHTML = p.milestones.map((m, i) => msCard(p, m, i)).join("");
   p.milestones.forEach((m, i) => wire(p, m, i));
 }
+// The code referee's four proofs for one order (knos_wanted.referee.trust): each one checks without Knos.
+function trustLine(t) {
+  if (!t) return "";
+  const a = t.attestation || {};
+  const parts = [
+    t.run ? `<a href="${esc(t.run)}" rel="noopener">referee run</a>` : `<span class="muted">referee run: waiting for GitHub Actions</span>`,
+    t.oidc_verify ? `<a href="${X(t.oidc_verify[0])}" rel="noopener">knos_oidc verification</a>` : `<span class="muted">knos_oidc verification: not yet</span>`,
+    a.ok ? `<a href="${esc(a.url || a.rekor || "#")}" rel="noopener">Sigstore attestation</a>${a.rekor && a.url ? ` (<a href="${esc(a.rekor)}" rel="noopener">Rekor</a>)` : ""}` : `<span class="muted">attestation: ${esc(a.why || "not yet")}</span>`,
+    t.release ? `<a href="${X(t.release)}" rel="noopener">FROST release</a>` : `<span class="muted">FROST release: ${esc(t.state || "waiting")} (2 of 3 hosts)</span>`,
+  ];
+  return `<br><span class="small">Code referee: ${parts.join(" · ")}</span>`;
+}
 function msCard(p, m, i) {
   const live = m.attempts.filter((a) => ["working", "result posted", "checked"].includes(a.status));
   const reg = m.kind === "regulatory" ? `<p class="small"><span class="tag">Regulatory · ${esc(m.standard)}</span> <a href="${esc(m.template)}" rel="noopener">OpenRegulatory template</a></p>` : "";
   const cap = (m.route && m.route.capacity || []).map((c) => `<li>${esc(c.name)}${c.quote && c.quote.price != null ? ` — quote ${c.quote.price} ${esc(c.quote.currency)}, ${c.quote.turnaround_days} days <span class="small muted">(${c.quote.fixture ? "fixture quote, labelled" : "live"})</span>` : ""}${c.manual ? ` — <a href="${esc(c.manual)}" rel="noopener">order on their site</a>` : ""}</li>`).join("");
-  const orders = m.orders.map((o) => `<li class="small"><a href="${o.explorer}" rel="noopener">${short(o.order)}</a> ${o.units} units · ${esc(o.kind)}${o.grant ? " (" + esc(o.grant.agency) + " " + esc(o.grant.id) + ")" : ""} · <strong>${esc(o.status)}</strong>${o.signatures && o.signatures.refund ? ` · <a href="${X(o.signatures.refund)}" rel="noopener">refund</a>` : ""}${o.signatures && o.signatures.referee_2_pass ? ` · <a href="${X(o.signatures.referee_2_pass)}" rel="noopener">release</a>` : ""}</li>`).join("");
+  const orders = m.orders.map((o) => `<li class="small"><a href="${o.explorer}" rel="noopener">${short(o.order)}</a> ${o.units} units · ${esc(o.kind)}${o.grant ? " (" + esc(o.grant.agency) + " " + esc(o.grant.id) + ")" : ""} · <strong>${esc(o.status)}</strong>${o.signatures && o.signatures.refund ? ` · <a href="${X(o.signatures.refund)}" rel="noopener">refund</a>` : ""}${o.signatures && (o.signatures.referee_2_pass || o.signatures.referee_group_pass) ? ` · <a href="${X(o.signatures.referee_2_pass || o.signatures.referee_group_pass)}" rel="noopener">release</a>` : ""}${trustLine(o.trust)}</li>`).join("");
   const atts = m.attempts.map((a) => `<li class="small">${esc(a.maker)} · <strong>${esc(a.status)}</strong>${a.result ? ` · <a href="${esc(a.result.url)}" rel="noopener nofollow">result</a>` : ""}${a.check ? ` · <a href="${esc(a.check.url)}" rel="noopener nofollow">check</a> by ${esc(a.check.by)}` : ""}${a.result ? ` · <a href="/api/attest?project=${p.id}&milestone=${m.key}&attempt=${a.id}" rel="noopener">in-toto attestation</a>` : ""} <span class="mono muted">${esc(a.id)}</span></li>`).join("");
   return `<li class="card ms" id="ms${i}"><div class="row spread"><h3>${esc(m.name)}</h3><span class="chip st-${esc(m.status)}">${esc(STATUS[m.status] || m.status)}</span></div>
     ${reg}<p class="small muted">Deadline ${dur(m.deadline_s)} after funding · ${m.locked_units} test units in escrow · ${m.amc_units} committed (AMC)${m.excluded_makers ? ` · ${m.excluded_makers} maker(s) missed it` : ""}</p>
@@ -101,7 +113,7 @@ function msCard(p, m, i) {
       <label for="u${i}">Test units</label><input id="u${i}" type="number" min="5" max="1000" value="10" inputmode="numeric">
       <label for="k${i}">As</label><select id="k${i}" class="field"><option value="funder">a funder (escrow now)</option><option value="grant">a grant (escrow now, labelled)</option><option value="amc">a buyer commitment (pays only when it verifies)</option></select>
       <div id="g${i}" hidden><label for="ga${i}">Grant agency</label><input id="ga${i}" maxlength="120"><label for="gi${i}">Grant id</label><input id="gi${i}" maxlength="120"></div>
-      <button type="button" id="f${i}">Sign with my wallet</button><p class="small muted">Devnet test units only. Your wallet signs; refunds go back to it.</p></details>
+      <button type="button" id="f${i}">Approve with my passkey</button><p class="small muted">Test units. Refunds go back to your passkey wallet.</p></details>
     <details><summary>Make it</summary>
       <button type="button" class="ghost" id="c${i}">Attempt this milestone</button>
       <label for="e${i}">Evidence page (public https, contains the claim id${m.orders[0] ? ": " + esc(m.orders[0].claim_id) : ""})</label><input id="e${i}" inputmode="url" maxlength="2000" placeholder="https://">
@@ -113,24 +125,25 @@ function wire(p, m, i) {
   const out = (h) => { $("o" + i).innerHTML = h; };
   const k = $("k" + i); if (!k) return;
   k.onchange = () => { $("g" + i).hidden = k.value !== "grant"; };
-  $("f" + i).onclick = () => busy($("f" + i), "Waiting for your wallet", async () => {
-    const units = parseInt($("u" + i).value, 10), account = await walletAccount();
+  $("f" + i).onclick = () => busy($("f" + i), "Approve on your passkey", async () => {
+    if (!session) { $("signin").hidden = false; throw new Error("Sign in with your passkey first."); }
+    const units = parseInt($("u" + i).value, 10);
     if (k.value === "amc") {
-      const a = await api("/api/project/amc", { project: p.id, milestone: m.key, units, account });
-      const sig = await walletSign(a.transaction); await settle("/api/project/amc/confirm", "amc", a.amc, sig);
-      out(`Committed. <a href="${X(sig)}" rel="noopener">Allowance on devnet</a>. ${esc(a.message)}`);
+      const a = await KnosPasskey.approve(await api("/api/project/amc", { passkey: true, project: p.id, milestone: m.key, units }), api);
+      const sig = (a.signatures || {}).approve;
+      out(`Committed ${esc(a.units)} test units: paid to the maker only when it verifies.${sig ? ` <a href="${X(sig)}" rel="noopener">Allowance on devnet</a>.` : ""}`);
     } else {
       const grant = k.value === "grant" ? { agency: $("ga" + i).value, id: $("gi" + i).value } : undefined;
-      const f = await api("/api/project/fund", { project: p.id, milestone: m.key, units, account, kind: k.value, grant, ref: ref() });
-      const sig = await walletSign(f.transaction); await settle("/api/project/confirm", "order", f.order, sig);
-      out(`Locked. <a href="${X(sig)}" rel="noopener">Escrow on devnet</a>.`);
+      const f = await KnosPasskey.approve(await api("/api/project/fund", { passkey: true, project: p.id, milestone: m.key, units, kind: k.value, grant, ref: ref() }), api);
+      const sig = (f.signatures || {}).lock;
+      out(`Locked in escrow.${sig ? ` <a href="${X(sig)}" rel="noopener">On devnet</a>.` : ""}`);
     }
     setTimeout(() => loadProject(p.id), 1500);
   });
   $("c" + i).onclick = () => busy($("c" + i), "Claiming", async () => {
     if (!session) { $("signin").hidden = false; throw new Error("Sign in first."); }
-    const a = await api("/api/project/claim", { project: p.id, milestone: m.key, wallet: await walletAccount() });
-    $("a" + i).value = a.id; out(`Attempt ${esc(a.id)} is yours; you are paid at ${short(a.wallet)}.`);
+    const a = await api("/api/project/claim", { passkey: true, project: p.id, milestone: m.key });
+    $("a" + i).value = a.id; out(`Attempt ${esc(a.id)} is yours; you are paid to your passkey wallet.`);
   });
   for (const [b, role] of [["r", "result"], ["x", "check"]]) $(b + i).onclick = () => busy($(b + i), "Fetching the page", async () => {
     if (!session) { $("signin").hidden = false; throw new Error("Sign in first."); }
@@ -146,12 +159,18 @@ function renderPool(projects) {
     <span>${esc(x.m.name)} <span class="small muted">— ${esc(x.p.title)}</span></span></label>`).join("");
 }
 async function pool() {
-  const picks = [...document.querySelectorAll("input[name=pool]:checked")].map((x) => ({ project: x.dataset.p, milestone: x.dataset.m, weight: 1 }));
-  if (picks.length < 2) throw new Error("Pick 2 to 8 milestones.");
-  const r = await api("/api/project/pool", { allocations: picks, units: parseInt($("poolUnits").value, 10), account: await walletAccount(), ref: ref() });
+  if (!session) { $("signin").hidden = false; throw new Error("Sign in with your passkey first."); }
+  const picks = [...document.querySelectorAll("input[name=pool]:checked")].map((x) => ({ project: x.dataset.p, milestone: x.dataset.m }));
+  if (picks.length < 2 || picks.length > 8) throw new Error("Pick 2 to 8 milestones.");
+  const total = parseInt($("poolUnits").value, 10), each = Math.floor(total / picks.length);
+  if (each < 5) throw new Error(`At least 5 test units per milestone (${5 * picks.length}).`);
+  const r = await api("/api/project/pool", { passkey: true });
   const sigs = [];
-  for (const t of r.transactions) { const s = await walletSign(t.transaction); await settle("/api/project/confirm", "order", t.order, s); sigs.push(s); }
-  $("poolOut").innerHTML = `Pooled ${r.units} test units over ${sigs.length} milestones: ` + sigs.map((s) => `<a href="${X(s)}" rel="noopener">${short(s)}</a>`).join(" ");
+  for (const x of picks) {          // one escrow per milestone, one passkey approval each
+    const f = await KnosPasskey.approve(await api("/api/project/fund", { passkey: true, ...x, units: each, kind: "pool", pool: r.pool, ref: ref() }), api);
+    sigs.push((f.signatures || {}).lock || f.order);
+  }
+  $("poolOut").innerHTML = `Pooled ${each * sigs.length} test units over ${sigs.length} milestones: ` + sigs.map((s) => `<a href="${X(s)}" rel="noopener">${short(s)}</a>`).join(" ");
 }
 
 // ---- teams -----------------------------------------------------------------------------------------------------------
@@ -159,11 +178,21 @@ async function loadTeams() {
   const c = await api("/api/sso/config").catch(() => ({ enabled: false }));
   $("ssoNote").textContent = c.enabled ? `Through SAML Jackson. Test IdP: ${c.test_idp}.` : "Single sign-on is not switched on on this server.";
   $("ssoBtn").disabled = !c.enabled; if (!$("ssoTenant").value) $("ssoTenant").value = c.test_tenant || "knos-test";
+  const tt = c.test_tenants || [];
+  $("ssoTenants").innerHTML = tt.map((x) => `<option value="${esc(x.tenant)}">`).join("");
+  $("ssoTest").innerHTML = c.enabled ? tt.map((x) => `<li class="small">Test tenant <button type="button" class="quiet" data-tenant="${esc(x.tenant)}">${esc(x.tenant)}</button> · ${esc(x.idp)}</li>`).join("") : "";
+  for (const b of $("ssoTest").querySelectorAll("button[data-tenant]")) b.onclick = () => { $("ssoTenant").value = b.dataset.tenant; $("ssoBtn").click(); };
   const got = await api("/api/companies").catch(() => ({ companies: [] }));
   $("coList").innerHTML = got.companies.map((x) => `<li class="small"><strong>${esc(x.name)}</strong> · ${x.threshold} of ${x.members.length} · ${esc(x.status)} · <a href="${X(x.multisig, "address")}" rel="noopener">multisig</a> · vault <span class="mono">${short(x.vault)}</span></li>`).join("") || `<li class="muted small">No companies yet.</li>`;
   const pr = await api("/api/projects").catch(() => ({ projects: [] }));
   $("erpProject").innerHTML = pr.projects.map((p) => `<option value="${p.id}">${esc(p.title)}</option>`).join("");
   $("tplCount").textContent = V.templates ? V.templates.templates.length : 5;
+  const pf = await api("/api/proofs").catch(() => ({ proofs: [] }));
+  const li = (x) => `<li class="small"><details><summary><strong>${esc(x.title)}</strong> · ${esc(x.result)} · ${esc(x.where)} · ${esc((x.ran_at || "").slice(0, 10))}</summary>
+    <p>${esc(x.summary)}</p>${(x.run_yourself || []).length ? `<p class="muted">Run it yourself:</p><pre class="mono">${esc(x.run_yourself.join("
+"))}</pre>` : ""}</details></li>`;
+  $("proofList").innerHTML = (pf.proofs || []).map(li).join("") || `<li class="muted small">No recorded proofs in this build.</li>`;
+  $("erpProofs").innerHTML = (pf.proofs || []).filter((x) => x.key.startsWith("erp_")).map(li).join("") || `<li class="muted small">None recorded.</li>`;
 }
 async function companyCreate() {
   const creator = await walletAccount();
@@ -182,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("pNew").onclick = () => busy($("pNew"), "Opening", () => openProject(false));
   $("pSandbox").onclick = () => busy($("pSandbox"), "Opening", () => openProject(true));
   $("sbBtn").onclick = () => { location.hash = "#projects"; setTimeout(() => $("pSandbox").click(), 50); };
-  $("poolBtn").onclick = () => busy($("poolBtn"), "Waiting for your wallet", pool);
+  $("poolBtn").onclick = () => busy($("poolBtn"), "Approve on your passkey", pool);
   $("ssoBtn").onclick = () => { location.href = "/auth/sso?tenant=" + encodeURIComponent($("ssoTenant").value.trim()); };
   $("coBtn").onclick = () => busy($("coBtn"), "Waiting for your wallet", companyCreate);
   const exp = (fmt) => () => { const p = $("erpProject").value; if (p) location.href = `/api/company/export?project=${p}&format=${fmt}`; };

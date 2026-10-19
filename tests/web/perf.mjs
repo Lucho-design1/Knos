@@ -90,7 +90,7 @@ const table = {};
 {
   const ctx = await world();
   const page = await ctx.newPage();
-  await page.goto(base, { waitUntil: "load" }); await ready(page);
+  await page.goto(base + "#check", { waitUntil: "load" }); await ready(page);          // the check of agent work: the bare address is the research products (tests/web/home.mjs)
   const errors = []; page.on("pageerror", (e) => errors.push(e.message));
   const time = async (name, arm, act, reset, told = false, presses = 3, limit = LIMIT_MS) => {
     const took = [];
@@ -127,7 +127,7 @@ const table = {};
   // and the code is asked for after that frame (web/front.js: `painted`, and no crossing on a first opening)
   if (await page.$('#nav a[href="#buy"]')) await time("open a page for the first time", () => window.__answer(["click"], () => { const b = document.getElementById("buy"); return b.checkVisibility() && b.childElementCount > 0; }),
     () => page.click('#nav a[href="#buy"]'),
-    async () => { await page.goto(base, { waitUntil: "load" }); await ready(page); await page.waitForSelector('#nav a[href="#buy"]', { state: "visible" }); }, false, 1, FIRST_OPEN_MS);
+    async () => { await page.goto(base + "#check", { waitUntil: "load" }); await ready(page); await page.waitForSelector('#nav a[href="#buy"]', { state: "visible" }); }, false, 1, FIRST_OPEN_MS);
 
   if (await page.$("#front-door")) {
     // the answer is whatever the front door draws first: the lines, or its pending state

@@ -54,13 +54,41 @@ relay that sees only public packages and ciphertexts. The devnet group was made 
 hosts 1 and 2 run this code only after the next push. Until the Render and GitHub shares are uploaded and deleted
 from the PC, that one machine held all three shares.
 
-## Confidential Space (a referee that is code)
+## The code referee's attestation (GitHub Actions, knos_oidc on chain, Sigstore)
 
-`knos.threshold.attest.verify` checks a Google Confidential Space attestation token: RS256 under the keys in the
-issuer's discovery document, `iss`, `aud`, time, `swname`, `hwmodel`, `dbgstat`, `support_attributes`, the pinned
-`submods.container.image_digest` and `submods.gce.project_id`. It is tested only with tokens signed by a test RSA key.
-**Deployment: BLOCKED.** Confidential Space runs on Compute Engine Confidential VMs, which need a Google Cloud
-project with a billing account. Knos has no such account. No attestation is claimed.
+The referee is code: `knos.threshold.check.milestone_digest`, run by each host itself. Host 2 runs it in GitHub
+Actions, and that run is attested with no account anywhere (`knos.threshold.codeattest`):
+
+1. **The verdict.** For every session whose digest its own check recomputed, `referee.yml`'s job `sign` writes one
+   verdict file (canonical JSON): the session, the digest the FROST group signs, the order, the evidence page's
+   sha256, and the run's repository, `workflow_ref`, commit and run id. It is kept as the run's artifact
+   `referee-verdicts`.
+2. **The attestation.** Job `attest` holds no key share and no secret. It runs `actions/attest-build-provenance`
+   v4.2.2 over the verdict files: a SLSA v1 provenance statement, signed keyless through Sigstore's public-good
+   instance (a Fulcio certificate for the run's OIDC identity, logged in Rekor). The app server checks the bundle
+   against Sigstore's public trust root with Knos's own Sigstore adapter (`knos.sources.sigstore`, whose trusted
+   root is pinned by sha256). For a bundle in a Rekor log that adapter cannot read, it uses sigstore-python 4.5.0.
+   The certificate identity must be
+   `https://github.com/drexthealpha/Knos/.github/workflows/referee.yml@refs/heads/main`, issued by GitHub Actions, at
+   the verdict's commit, and the statement's subject must be the verdict's sha256. Anyone can check the same:
+   `gh attestation verify verdict-<session>.json -R drexthealpha/Knos`, or
+   `python -m knos.threshold.codeattest verify verdict-<session>.json`.
+3. **On chain.** The same job asks for an OIDC token with the audience `knos-referee:verdict:<sha256 of the verdict>`
+   and posts it with the verdict to `POST /api/referee/attest`. The server verifies it (`knos.threshold.ghoidc`:
+   referee.yml on main of drexthealpha/Knos, by repository and owner id). Then the deployed knos_oidc verifies it on
+   devnet (`knos.settle.v2.relay.verify_only`: Write, then Step, RS256 under GitHub's key; the relayer pays the fee).
+   The token account `["tok", relayer, sha256(token)]` is then VERIFIED, owned by knos_oidc, and holds the decoded
+   claims: `repository`, `workflow_ref`, `sha`, `run_id`, and the audience that names the verdict's hash. No program
+   was changed for this. It is the verify path that knos_oidc already has.
+4. **The release** is unchanged: 2 of the 3 hosts sign the digest the verdict names.
+
+The session records all of this (`code_referee`), and the project milestone page shows four links per order: the
+referee run, the knos_oidc verification transaction, the Sigstore attestation (GitHub's attestation page and its Rekor
+entry) and the FROST release transaction.
+
+`knos.threshold.attest` (a Google Confidential Space token verifier) is **unused**: nothing calls its `verify`.
+ghoidc uses its RS256 helpers. It is kept only because it is tested. Knos runs no Confidential Space referee and
+claims none.
 
 ## Limits
 

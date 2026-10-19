@@ -28,20 +28,31 @@
     const raw = cat(new Uint8Array([p.discriminator]), hex(p.auth_payload), hex(p.signed_payload), le(p.slot, 8), b58(p.payer), le(p.counter, 4), b58(p.program));
     const got = b64u(await crypto.subtle.digest("SHA-256", raw));
     if (got !== step.challenge) throw new Error("the step the server returned does not match its challenge: nothing was signed");
-    // a pre-order: the one inner instruction is knos_pay's FundOrderWallet (tag 15) for the amount shown
-    if (step.kind === "preorder") {
-      const sp = hex(p.signed_payload); const n = sp[0]; let at = 1;
-      if (n !== 1) throw new Error("a pre-order signs exactly one instruction");
+    // a pre-order or a milestone's funding: the one inner instruction is knos_pay's FundOrderWallet (tag 15) for the
+    // amount shown; a commitment to buy (AMC): the one inner instruction is the token program's Approve (4) of it
+    const one = () => {
+      const sp = hex(p.signed_payload); let at = 1;
+      if (sp[0] !== 1) throw new Error("this step signs exactly one instruction");
       const prog = p.accounts[sp[at]]; const na = sp[at + 1]; at += 2 + na;
-      const len = sp[at] | (sp[at + 1] << 8); const data = sp.slice(at + 2, at + 2 + len);
-      const amount = Number(new DataView(data.buffer, data.byteOffset + 17, 8).getBigUint64(0, true)) / 1e6;
-      if (prog !== step.summary.program || data[0] !== 15 || Math.abs(amount - step.summary.amount_units) > 1e-9)
-        throw new Error("the pre-order to sign is not the one shown: nothing was signed");
+      const len = sp[at] | (sp[at + 1] << 8); return { prog, data: sp.slice(at + 2, at + 2 + len) };
+    };
+    const units = (data, at) => Number(new DataView(data.buffer, data.byteOffset + at, 8).getBigUint64(0, true)) / 1e6;
+    if (step.kind === "preorder" || step.kind === "project_fund") {
+      const { prog, data } = one();
+      if (prog !== step.summary.program || data[0] !== 15 || Math.abs(units(data, 17) - step.summary.amount_units) > 1e-9)
+        throw new Error("the payment to sign is not the one shown: nothing was signed");
+    }
+    if (step.kind === "amc") {
+      const { prog, data } = one();
+      if (prog !== "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" || data[0] !== 4 || Math.abs(units(data, 1) - step.summary.allowance_units) > 1e-9)
+        throw new Error("the commitment to sign is not the one shown: nothing was signed");
     }
   }
 
   async function approve(step, api) {
-    for (let i = 0; i < 3; i++) {
+    // Chrome may add a key to the client data at random ("other_keys_can_be_added_here"), so an answer can differ from
+    // the prediction more than once in a row: each round learns what the authenticator said and asks again
+    for (let i = 0; i < 5; i++) {
       await check(step);
       const a = await navigator.credentials.get({ publicKey: { challenge: unb64u(step.challenge), rpId: step.rp_id, timeout: 60000,
         userVerification: "preferred", allowCredentials: [{ type: "public-key", id: unb64u(step.credential) }] } });

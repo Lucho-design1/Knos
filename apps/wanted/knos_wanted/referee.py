@@ -14,6 +14,13 @@ one key is the FROST group key, and a milestone is released only when TWO of the
     POST /api/referee/share      {session, id, share, auth[, oidc]}         a chosen host's round 2; the second one completes
                                  the signature and the server sends the release (knos.ideas.commit.release)
 
+    POST /api/referee/attest     {session, verdict, oidc, bundle?, attestation_url?}   the CODE referee's attestation
+                                 (knos.threshold.codeattest): referee.yml's job `attest` posts the verdict its own check
+                                 wrote, a GitHub OIDC token whose audience names the verdict's sha256, and the Sigstore
+                                 bundle actions/attest-build-provenance made for it. The server checks the token, has the
+                                 DEPLOYED knos_oidc verify it on devnet (relay.verify_only), checks the bundle against
+                                 Sigstore's public trust root, and records all of it on the session (`code_referee`).
+
 Host 2's posts must also carry a GitHub Actions OIDC token (audience knos-referee) of referee.yml on main in
 drexthealpha/Knos, verified against GitHub's JWKS (knos.threshold.ghoidc). No founder-made token is needed anywhere,
 and no endpoint takes or returns a secret.
@@ -103,6 +110,80 @@ def _released(s: dict) -> dict:
     return {"status": rec["status"], "signatures": [x["signature"] for x in got["sent"]]}
 
 
+def _verify_onchain(jwt: str) -> dict:
+    """The DEPLOYED knos_oidc verifies the token on devnet; the relayer pays (its rent comes back when swept)."""
+    from knos.settle.v2 import relay
+
+    from . import escrow, preorder
+    led, payer = escrow.ledger(), preorder.relayer()
+    r = relay.verify_only(led, payer, jwt)
+    if not r.get("ok") and "not on chain yet" in str(r.get("why")):
+        relay.register_missing(led, payer)          # GitHub's genesis keys are anyone's to register (no attestation)
+        r = relay.verify_only(led, payer, jwt)
+    return r
+
+
+def _check_bundle(bundle, sha: str, commit: str) -> dict:
+    from knos.threshold import codeattest
+    if bundle:
+        return codeattest.verify_bundle(bundle, sha, commit=commit)
+    last = None
+    for b in codeattest.fetch_bundles(sha):
+        try:
+            return codeattest.verify_bundle(b, sha, commit=commit)
+        except codeattest.AttestError as why:
+            last = why
+    raise last or codeattest.AttestError("GitHub holds no attestation for this verdict yet")
+
+
+def attest(body: dict, *, coord=None, verify_token=None, onchain=None, check_bundle=None) -> dict:
+    """The code referee's attestation of one session: verdict + OIDC token (+ Sigstore bundle). Idempotent per verdict."""
+    from knos.threshold import codeattest, ghoidc
+    c = coord or coordinator()
+    sid = str(body.get("session", ""))
+    s = c.get(sid)
+    rec, sha = codeattest.check_verdict(body.get("verdict") or "", s)
+    have = s.get("code_referee") or {}
+    if have.get("verdict_sha256") == sha and (have.get("onchain") or {}).get("ok") and (have.get("attestation") or {}).get("ok"):
+        return have
+    claims = (verify_token or ghoidc.verify)(str(body.get("oidc") or ""), audience=codeattest.AUD_PREFIX + sha)
+    codeattest.check_claims(claims, rec, sha)
+    out = {"verdict_sha256": sha, "verdict": rec, "run": codeattest.run_url(rec), "commit": rec["github"]["sha"],
+           "token": {k: claims.get(k) for k in ("repository", "repository_id", "workflow_ref", "sha", "run_id", "run_attempt", "event_name", "aud", "exp")}}
+    if (have.get("onchain") or {}).get("ok") and have.get("verdict_sha256") == sha:
+        out["onchain"] = have["onchain"]
+    else:
+        r = (onchain or _verify_onchain)(str(body["oidc"]))
+        out["onchain"] = {"ok": bool(r.get("ok")), "program": "knos_oidc", "signatures": list(r.get("sigs") or []), "account": r.get("account"),
+                          "already": bool(r.get("already")), **({} if r.get("ok") else {"why": str(r.get("why"))[:200]})}
+    url = str(body.get("attestation_url") or "")
+    try:
+        att = (check_bundle or _check_bundle)(body.get("bundle"), sha, rec["github"]["sha"])
+        out["attestation"] = {**att, "rekor": codeattest.rekor_url(att.get("log_index")),
+                              "url": url if url.startswith(f"https://github.com/{codeattest.REPOSITORY}/attestations/") else None}
+    except codeattest.AttestError as why:
+        out["attestation"] = {"ok": False, "why": str(why)[:200]}
+    c.annotate(sid, "code_referee", out)
+    return out
+
+
+def trust(session_id: str | None) -> dict | None:
+    """What a milestone page shows for its referee session: the code referee's run, the knos_oidc verification
+    transaction, the Sigstore attestation, and the FROST release. None without a session or a FROST host."""
+    if not session_id or not enabled():
+        return None
+    try:
+        s = coordinator().get(session_id)
+    except ValueError:
+        return None
+    cr = s.get("code_referee") or {}
+    res = s.get("result") or {}
+    return {"session": s["id"], "state": s.get("state"), "signers": s.get("signers"), "run": cr.get("run"), "commit": cr.get("commit"),
+            "verdict_sha256": cr.get("verdict_sha256"), "oidc_verify": (cr.get("onchain") or {}).get("signatures", [])[-1:] or None,
+            "oidc_account": (cr.get("onchain") or {}).get("account"), "attestation": cr.get("attestation"),
+            "frost_signature": s.get("signature"), "release": (res.get("signatures") or [None])[0]}
+
+
 def start(rec: dict, url: str, led, kind: str = "preorder") -> dict:
     """Open a signing session for a verified milestone; host 1 signs in the background; hosts 2 and 3 poll for it."""
     from knos.threshold import check, participant
@@ -142,6 +223,8 @@ def post(path: str, body: dict) -> tuple[int, dict]:
         if path == "/api/referee/commit":
             return 200, c.commit(str(body.get("session", "")), int(body.get("id", 0)), body.get("commitments") or {}, str(body.get("auth", "")),
                                  body.get("oidc"))
+        if path == "/api/referee/attest":
+            return 200, attest(body)
         if path == "/api/referee/share":
             return 200, c.share(str(body.get("session", "")), int(body.get("id", 0)), body.get("share") or {}, str(body.get("auth", "")),
                                 body.get("oidc"))

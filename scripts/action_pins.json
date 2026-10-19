@@ -1,6 +1,7 @@
 {
  "note": "Every third-party action in .github/workflows, examples and action.yml is pinned to a full commit: a moved tag cannot change what runs. tests/test_prove.py and tests/test_install_routes.py check it.",
  "pins": {
+  "actions/attest-build-provenance@v4.2.2": "4d101475d8b20a2381f78447822ac1eab6504dd8",
   "actions/cache/restore@v6": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
   "actions/cache/save@v6": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
   "actions/cache@v6": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",

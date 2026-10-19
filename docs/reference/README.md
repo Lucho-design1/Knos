@@ -38,7 +38,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [SLOP_AUDIT.md](SLOP_AUDIT.md) | how many AI agent pull requests in the public AIDev dataset would fail Knos's checks, measured |
 | [TAMPER.md](TAMPER.md) | which cheating submissions each judge refuses, and how much correct work each accepts |
 | [KNOS_RECORD.md](KNOS_RECORD.md) | every check, cheat caught and payout as one hash-chained public file, anchored on devnet, and how to verify it |
-| [REFEREE_FROST.md](REFEREE_FROST.md) | the referee panel as one FROST key: any 2 of 3 hosts sign; the Confidential Space verifier |
+| [REFEREE_FROST.md](REFEREE_FROST.md) | the referee panel as one FROST key (2 of 3 hosts sign) and the code referee's attestation: knos_oidc on chain, Sigstore |
 | [REFEREE.md](REFEREE.md) | the referee: Works (sealed tests, a locked judge, the cheat library, re-runs), Wanted and Makeable, and the free maintainer mode |
 | [LOAD.md](LOAD.md) | many orders open at once, in the local simulator |
 | [DRILLS.md](DRILLS.md) | the safety paths, tested on the same program files that run on devnet |
@@ -52,6 +52,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [REPRODUCE.md](REPRODUCE.md) | how someone else runs it and files a signed report |
 | [REPRODUCED.md](REPRODUCED.md) | knos.yml: a research repository's claims re-run on a second machine and held-out data; contested results stay private |
 | [OPERATIONS.md](OPERATIONS.md) | whether the canary and the relay are working, from the public record |
+| [KEEPALIVE.md](KEEPALIVE.md) | keeping the app awake: every worker chain run pings it, the watchdog revives the chain, the PC daemon pings too |
 | [NUMBERS.md](../NUMBERS.md) | nine numbers about use by anyone outside, zeros included |
 | [TRANSACTION.md](../TRANSACTION.md) | one order told end to end for a finance reader: terms, a rejection, an acceptance, payment, a refused replay |
 | [FLOWS.md](FLOWS.md) | three things to try, in order: check one pull request, follow one paid task, two copies give one bill |
@@ -133,7 +134,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [ES256.md](ES256.md) | a second kind of signed token (ES256), checked in one transaction; live on devnet since 9 Oct 2026 |
 | [ALPENGLOW.md](ALPENGLOW.md) | how Knos tells a cluster runs Alpenglow, waits until a payment is final there, and how long that took on devnet |
 | [PLATFORM.md](PLATFORM.md) | the programs on today's Solana: sBPF v3 builds, a GitHub token verified in one transaction, v1 transactions, finality, and the upgrade steps |
-| [PAY_ON_PROOF.md](PAY_ON_PROOF.md) | pay on proof from any source: a Confidential Space container as the judge, m of n referee signatures, ORCID iDs as payees |
+| [PAY_ON_PROOF.md](PAY_ON_PROOF.md) | pay on proof: m of n referee signatures, ORCID iDs as payees, and a container-image judge path that has never run |
 | [CONFORMANCE.md](CONFORMANCE.md) | the formats, with test vectors and a runner |
 | [INTEGRATIONS.md](INTEGRATIONS.md) | what a bounty or work platform can take; no platform uses it |
 | [ADAPTERS.md](ADAPTERS.md) | other systems' events, and what the chain can check of them |

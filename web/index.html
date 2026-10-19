@@ -44,6 +44,38 @@
 <link rel="preload" href="fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="app.css">
+<!-- Which page opens first, decided before the first paint: the research products (#view-home) at the bare address and
+     at #home, any other page at its hash (web/front.js shows it). Without scripts both are shown, home last. -->
+<script>document.documentElement.dataset.door = /^#?(home)?$/.test(location.hash) ? "home" : "page";
+// #check opened as an address: the same page, without the browser's jump to its h1 (whose id is "check"), so it opens at
+// its first screen and the first Tab is the skip link's, as the bare address did before the research products came first
+if (location.hash === "#check") history.replaceState(null, "", location.pathname + location.search + "#check=");
+// should the page's code never run, everything is shown after a moment, as without scripts
+setTimeout(() => { delete document.documentElement.dataset.door; }, 4000);</script>
+<style>html[data-door="home"]:not(.js) #view-check { display: none; } html[data-door="page"]:not(.js) #view-home, html[data-door="page"]:not(.js) #view-verify { display: none; }
+/* a page opened at its own address is drawn once its section is chosen (web/front.js, the same task that marks .js): before that nothing of main or the foot is painted, so nothing is drawn in one place and then moved (layout shift) */
+html[data-door="page"]:not(.js) main, html[data-door="page"]:not(.js) .foot { visibility: hidden; }
+.home { min-height: calc(100vh - 110px); }
+.home h1 { font-size: clamp(30px, 7.4vw, 52px); line-height: 1.06; margin: 0 0 10px; max-width: 16em; text-wrap: balance; }
+.home .home-sub { font-size: var(--s2); color: var(--ink); margin: 0 0 18px; max-width: 30em; text-wrap: pretty; }
+.hp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.hp { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; min-width: 0; min-height: 178px; display: flex; flex-direction: column; }
+.hp .hp-src { font-size: var(--s-1); color: var(--muted); margin: 0; }
+.hp .hp-t { font-size: var(--s1); line-height: 1.3; margin: 4px 0 8px; overflow-wrap: anywhere; }
+.hp-bar { height: 6px; border-radius: 99px; background: var(--soft); overflow: hidden; }
+.hp-bar i { display: block; height: 100%; background: var(--accent); }
+.hp .hp-n { font-size: var(--s-1); color: var(--muted); margin: 6px 0 10px; } .hp .hp-n .k-num { color: var(--ink); font-weight: 600; }
+.hp .hp-act { display: flex; flex-wrap: wrap; gap: 6px; margin: auto 0 0; } .hp .hp-act .k-btn { min-height: 44px; padding: 9px 12px; font-size: 14px; }
+.home .home-more { margin: 16px 0 0; } #home-when { margin: 8px 0 0; }
+.verify-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; } .verify-list li { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.verify-list h2 { font-size: var(--s1); margin: 0 0 4px; } .verify-list p { margin: 0; color: var(--muted); }
+/* #network: the numbers (stats.json) and the signing keys (read from devnet), #status: the relay's log (read from
+   GitHub), and #pricing: the calculator (web/pricing.js), are drawn in space kept for them, so what is read
+   late moves nothing on the first screen of a phone (no layout shift) */
+/* every page is at least a screen tall, so the foot starts under the first screen: a page's module filling its section later
+   pushes nothing that is already on screen */
+main { min-height: 100vh; }
+#network-stats { min-height: 50px; } @media (max-width: 700px) { #network-keys { min-height: 460px; } #relay-status { min-height: 600px; } #bill { min-height: 520px; } }</style>
 <!-- A data file that does not load is said in one line with a button to reload, on every page (web/retry.js); before front.js. -->
 <script type="module" src="retry.js"></script>
 <!-- The first screen's control comes before the mark on a phone, and its answer before the mark too (web/front_door.js). -->
@@ -55,7 +87,7 @@
 <body>
 <a class="k-skip" href="#fd-in">Skip to the check box</a>
 <header class="bar">
-  <a class="brand" href="#check" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
+  <a class="brand" href="#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
   <nav id="nav" aria-label="Sections">
     <!-- Six links in the bar, what a customer needs; the rest are under "More": first what a customer uses, then the
          pages that prove and run Knos. A link with data-mount is a page a module fills: web/front.js shows the link when
@@ -99,8 +131,6 @@
     <button id="theme" class="ghost small" type="button" aria-label="Switch light or dark" hidden>◐</button>
   </div>
 </header>
-<aside id="upgrade-banner" class="banner" role="status" aria-live="polite" hidden></aside>
-
 <main>
   <section id="view-check" class="view">
     <!-- THE FIRST SCREEN: 56 words of prose at most, bar included (tests/web/front_door.mjs counts them as
@@ -256,6 +286,9 @@
        capabilities.json, which scripts/build_site.sh copies from docs/); web/install.js fills #install-pr. A page that
        holds nothing is not shown; web/front.js shows the link of one that does in the menu and shows the page alone at
        its hash (#buy, #install, #capabilities). -->
+  <!-- The first words of a page a module fills (web/front.js bars): shown at once, where the module puts its own,
+       while its code arrives -->
+  <script type="application/json" id="mount-heads">{"buy": {"title": "Buy work per outcome", "lede": "Fix price and terms first. Pay when GitHub's signed checks pass."}, "status": {"title": "Is the payment service running?", "lede": "See whether the relay is sending payments, and watch a full test payment."}, "index": {"title": "Agent PR Index", "lede": "How often GitHub's checks agree with “tests pass”, per agent, per week."}, "pilot": {"title": "The 30-day Pilot", "lede": "Close a supplier's invoice with evidence both sides can check."}, "reproduce": {"title": "Reproduce it yourself", "lede": "Do not take the maintainer's word. Run one command."}, "invoice-statement": {"title": "One invoice, line by line", "note": "No statement open. Check an invoice on the first screen, or open the sample."}}</script>
   <section id="buy" class="mount" aria-label="Buy work" hidden></section>
   <section id="install" class="mount" aria-label="Install" hidden>
     <h2>Install with one pull request</h2>
@@ -289,6 +322,41 @@
   <section id="story" class="mount" aria-label="Story" hidden></section>
   <section id="keyholder" class="mount" aria-label="Hold a key" hidden></section>
   <section id="record" class="mount" aria-label="Supplier record" hidden></section>
+
+  <!-- THE FIRST SCREEN at the bare address: research products people can back now, each with one-tap actions. The
+       cards are the snapshot this site ships (scripts/front_snapshot.py, from the app's GET /api/front); web/home.js
+       redraws them from the live list once the app answers, and never waits for it. A press opens the app at that
+       action (straight to it when it is awake, else through the wake page, wanted.html). Everything technical is on
+       one page, How we verify (#verify). -->
+  <section id="view-home" class="view home" aria-labelledby="home-h">
+    <h1 id="home-h">Back research that becomes real products</h1>
+    <p class="home-sub">Your money waits in escrow. Makers are paid only on proof.</p>
+    <ol class="hp-list" id="home-products" data-not-prose aria-label="Research products open for backing now">
+      <!-- home:products (scripts/front_snapshot.py) -->
+      <script type="application/json" id="home-snapshot">{"taken":"2026-10-18","rows":[{"slug":"sweat-glucose-watch","title":"A fitness watch with a sweat glucose sensor","paper":"Nature, 2016","reserve_units":48,"backed_units":0,"maker":false},{"slug":"air-water-bottle","title":"A water bottle that harvests drinking water from desert air","paper":"Science, 2017","reserve_units":54,"backed_units":0,"maker":false},{"slug":"glow-hydration-bottle","title":"A smart water bottle that glows to remind you to drink","paper":null,"reserve_units":55,"backed_units":0,"maker":false}]}</script>
+      <li class="hp" data-slug="sweat-glucose-watch"><p class="hp-src">Nature, 2016 · maker wanted</p><h3 class="hp-t">A fitness watch with a sweat glucose sensor</h3><div class="hp-bar" aria-hidden="true"><i style="width:2%"></i></div><p class="hp-n"><span class="k-num">0</span> of 48 pre-ordered</p><p class="hp-act"><a class="k-btn" href="wanted.html#back=sweat-glucose-watch" data-app="#back=sweat-glucose-watch">Back it</a> <a class="k-btn quiet" href="wanted.html#fund=sweat-glucose-watch" data-app="#fund=sweat-glucose-watch">Fund a milestone</a> <a class="k-btn quiet" href="wanted.html#contribute=sweat-glucose-watch" data-app="#contribute=sweat-glucose-watch">Contribute</a></p></li>
+      <li class="hp" data-slug="air-water-bottle"><p class="hp-src">Science, 2017 · maker wanted</p><h3 class="hp-t">A water bottle that harvests drinking water from desert air</h3><div class="hp-bar" aria-hidden="true"><i style="width:2%"></i></div><p class="hp-n"><span class="k-num">0</span> of 54 pre-ordered</p><p class="hp-act"><a class="k-btn" href="wanted.html#back=air-water-bottle" data-app="#back=air-water-bottle">Back it</a> <a class="k-btn quiet" href="wanted.html#fund=air-water-bottle" data-app="#fund=air-water-bottle">Fund a milestone</a> <a class="k-btn quiet" href="wanted.html#contribute=air-water-bottle" data-app="#contribute=air-water-bottle">Contribute</a></p></li>
+      <li class="hp" data-slug="glow-hydration-bottle"><p class="hp-src">Your idea · maker wanted</p><h3 class="hp-t">A smart water bottle that glows to remind you to drink</h3><div class="hp-bar" aria-hidden="true"><i style="width:2%"></i></div><p class="hp-n"><span class="k-num">0</span> of 55 pre-ordered</p><p class="hp-act"><a class="k-btn" href="wanted.html#back=glow-hydration-bottle" data-app="#back=glow-hydration-bottle">Back it</a> <a class="k-btn quiet" href="wanted.html#fund=glow-hydration-bottle" data-app="#fund=glow-hydration-bottle">Fund a milestone</a> <a class="k-btn quiet" href="wanted.html#contribute=glow-hydration-bottle" data-app="#contribute=glow-hydration-bottle">Contribute</a></p></li>
+      <!-- /home:products -->
+    </ol>
+    <p class="fine" id="home-when" data-not-prose>Passkey sign-in, no account · devnet test money</p>
+    <p class="home-more"><a id="home-research" href="wanted.html#research" data-app="#research">Cross your own paper</a> · <a href="#verify">How we verify</a> · <a href="#check">Pay AI agents for code</a></p>
+  </section>
+
+  <!-- HOW WE VERIFY: the proofs, signatures and reports, in one place and in plain words; each line opens its evidence. -->
+  <section id="view-verify" class="view" hidden aria-labelledby="verify-h">
+    <h1 id="verify-h">How we verify</h1>
+    <p class="lede">Every claim below opens its own evidence.</p>
+    <ol class="verify-list">
+      <li><h2>Money waits in escrow</h2><p>A Solana program holds each payment until proof arrives. <a href="#records">The public record</a></p></li>
+      <li><h2>Independent referees release it</h2><p>Two of three separate hosts re-check the proof and sign. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/REFEREE_FROST.md">The referee group</a></p></li>
+      <li><h2>Your passkey signs every payment</h2><p>The server only relays. It never holds your key. <a href="wanted.html#verify">The app's checks</a></p></li>
+      <li><h2>Demand comes from live taste data</h2><p>Qloo's data decides who wants it, where, and the price. Code decides, not a person.</p></li>
+      <li><h2>Upgrades wait in public</h2><p>A program change waits eight days, in public. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/GOVERNANCE.md">Who can change the programs</a></p></li>
+      <li><h2>Check it yourself</h2><p><a href="#verifier">Verifier</a> · <a href="#network">Numbers</a> · <a href="#judges">Check every claim yourself</a></p></li>
+    </ol>
+    <p class="devnet">Solana devnet, a test network: the money is test money, worth nothing.</p>
+  </section>
 
   <section id="view-protect" class="view" hidden>
     <h2 id="protect">Protect a repository</h2>
@@ -822,6 +890,9 @@
     </div>
   </section>
 </main>
+<!-- An upgrade of the programs that is waiting (web/app.js, read from devnet after the page is drawn): under the page,
+     so filling it moves nothing already on screen (no layout shift). -->
+<aside id="upgrade-banner" class="banner" role="status" aria-live="polite" hidden></aside>
 
 <footer class="foot">
   <span>Devnet is test mode: the money is test USDC.

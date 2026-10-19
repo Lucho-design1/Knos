@@ -12,7 +12,7 @@ import os
 import re
 import urllib.parse
 
-from . import enterprise, provenance, valley
+from . import enterprise, proofs, provenance, valley
 
 MAX_MEDIA_BODY = provenance.MAX_MEDIA
 
@@ -25,19 +25,19 @@ ROUTES = [
     ("POST", "/api/project", True, "Open a project from a template (+ regulatory sets); deadline_s for a one-day sandbox",
      {"template": "string", "title": "string", "regulatory": "array", "report": "string", "team": "string", "deadline_s": "integer"}),
     ("POST", "/api/sandbox", True, "A one-day devnet sandbox project from a template", {"template": "string", "title": "string", "team": "string"}),
-    ("POST", "/api/project/fund", False, "The devnet transaction a funder's wallet signs to fund one milestone (funder or grant)",
-     {"project": "string", "milestone": "string", "units": "integer", "account": "string", "kind": "string", "grant": "object", "ref": "string"}),
+    ("POST", "/api/project/fund", False, "Fund one milestone (funder, grant or pool): the devnet transaction a wallet signs, or with passkey=true the step your passkey approves",
+     {"project": "string", "milestone": "string", "units": "integer", "account": "string", "kind": "string", "grant": "object", "ref": "string", "pool": "string", "passkey": "boolean"}),
     ("POST", "/api/project/confirm", False, "Mark a funding locked once its order is on devnet", {"order": "string", "signature": "string"}),
     ("POST", "/api/project/pool", False, "Megafund: one funder spreads units over 2-8 milestones (one transaction each)",
      {"allocations": "array", "units": "integer", "account": "string", "ref": "string"}),
-    ("POST", "/api/project/amc", False, "Advance-market commitment: an allowance collected only when the milestone verifies",
-     {"project": "string", "milestone": "string", "units": "integer", "account": "string"}),
+    ("POST", "/api/project/amc", False, "Advance-market commitment: an allowance collected only when the milestone verifies (passkey=true: your passkey approves it)",
+     {"project": "string", "milestone": "string", "units": "integer", "account": "string", "passkey": "boolean"}),
     ("POST", "/api/project/amc/confirm", False, "Mark an AMC allowance approved once it is on devnet", {"amc": "string", "signature": "string"}),
-    ("POST", "/api/project/claim", True, "A maker attempts a milestone and binds its payee wallet", {"project": "string", "milestone": "string", "wallet": "string"}),
+    ("POST", "/api/project/claim", True, "A maker attempts a milestone and binds its payee wallet (passkey=true: paid to your passkey wallet)", {"project": "string", "milestone": "string", "wallet": "string", "passkey": "boolean"}),
     ("POST", "/api/project/post", True, "Post a result (the maker) or an independent check (someone else, another site)",
      {"project": "string", "milestone": "string", "attempt": "string", "url": "string", "role": "string"}),
     ("POST", "/api/project/sweep", True, "Run the deadline sweeper now (it also runs every minute)", {}),
-    ("POST", "/api/referral", True, "A referral link; the referrer's share is a knos_pay payee on release", {"target": "string", "wallet": "string"}),
+    ("POST", "/api/referral", True, "A referral link; the referrer's share is a knos_pay payee on release (passkey=true: paid to your passkey wallet)", {"target": "string", "wallet": "string", "passkey": "boolean"}),
     ("GET", "/r/{code}", False, "Follow a referral link", {}),
     ("GET", "/api/attest/key", False, "This server's ed25519 attestation key", {}),
     ("GET", "/api/attest", False, "in-toto Statement v1 in a DSSE envelope for an attempt's evidence",
@@ -52,6 +52,9 @@ ROUTES = [
     ("POST", "/api/company/confirm", False, "Mark a company's multisig created once it is on devnet", {"company": "string", "signature": "string"}),
     ("GET", "/api/companies", False, "Companies and their multisigs", {}),
     ("GET", "/api/company/export", False, "A project's ledger as journal, Xero, QuickBooks or NetSuite CSV", {"project": "string", "format": "string"}),
+    ("GET", "/api/proofs", False, "Recorded infrastructure proofs (kind + Helm, Keycloak SSO, Odoo/ERPNext/hledger imports, Sigstore), cosign-signed", {}),
+    ("GET", "/api/proofs/signature", False, "The cosign (Sigstore bundle) signature of /api/proofs", {}),
+    ("GET", "/api/proofs/cosign.pub", False, "The public key that signed /api/proofs", {}),
     ("GET", "/openapi.json", False, "This document", {}),
 ]
 
@@ -87,6 +90,9 @@ def handle_get(h, state, u, qs) -> bool:
             return h._send(200, provenance.public_key()) or True
         if p == "/api/attest":
             return h._send(200, provenance.attest(q("project"), q("milestone"), q("attempt"))) or True
+        if p in proofs.FILES:
+            got = proofs.raw(p)
+            return (h._send(200, got[0], got[1]) if got else h._send(404, {"error": "no recorded proofs in this build"})) or True
         if p == "/api/sso/config":
             return h._send(200, enterprise.sso_config()) or True
         if p == "/auth/sso":
@@ -169,7 +175,34 @@ def handle_post(h, state, path: str) -> bool:
         return h._send(502, {"error": f"the server could not finish this step (reference {ref}); nothing was charged", "ref": ref}) or True
 
 
+def _passkey(path: str, b: dict, user: dict, h) -> dict:
+    """The same steps signed by the person's own passkey wallet (no browser wallet, no new account): each returns the
+    step the passkey approves (static/passkey_wallet.js), relayed by POST /api/sign."""
+    from . import escrow, wallets
+    led, rp = escrow.ledger(), h._rp()
+    pid, key = str(b.get("project", "")), str(b.get("milestone", ""))
+    if path == "/api/project/fund":
+        return wallets.prepare_project_fund(led, user, pid, key, b.get("units", 5), rp, str(b.get("kind") or "funder"),
+                                            b.get("grant") if isinstance(b.get("grant"), dict) else None, _s(b.get("ref"), 20), _s(b.get("pool"), 64))
+    if path == "/api/project/amc":
+        return wallets.prepare_amc(led, user, pid, key, b.get("units", 5), rp)
+    vault = str(wallets.ensure(led, wallets.holder(user), rp)["vault"])        # where a maker or referrer is paid: its passkey wallet
+    if path == "/api/project/claim":
+        return {**valley.claim(pid, key, user, vault), "paid_to": "your passkey wallet"}
+    return {**valley.make_referral(user, vault, str(b.get("target", ""))), "paid_to": "your passkey wallet"}
+
+
+PASSKEY_PATHS = ("/api/project/fund", "/api/project/amc", "/api/project/claim", "/api/referral")
+
+
 def _post(path: str, b: dict, user: dict, h) -> dict:
+    if b.get("passkey") is True and path in PASSKEY_PATHS:
+        if not user:
+            raise ValueError("sign in with your passkey first")
+        return _passkey(path, b, user, h)
+    if path == "/api/project/pool" and b.get("passkey") is True:
+        from . import valley as v
+        return {"pool": v._id("pool", str(user.get("sub"))), "rule": "fund each milestone with POST /api/project/fund {passkey, kind: pool, pool}"}
     if path == "/api/project":
         return valley.create_project(user, str(b.get("template", "")), str(b.get("title", "")), b.get("regulatory") or [],
                                      _s(b.get("report"), 64), _s(b.get("team"), 80), b.get("deadline_s"))

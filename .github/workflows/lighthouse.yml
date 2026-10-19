@@ -1,6 +1,7 @@
-# Lighthouse CI on every push: the app (apps/wanted) is served from this commit, and Lighthouse audits it on a mobile
-# phone profile (Lighthouse's default mobile emulation and throttling). The run fails unless performance >= 90 and
-# accessibility >= 90 on the app's first screen and its Projects and Teams views (apps/wanted/lighthouserc.js).
+# Lighthouse CI on every push: the front door (the Pages build of web/, scripts/build_site.sh) and the app (apps/wanted)
+# are served from this commit, and Lighthouse audits EVERY page of both on a mobile phone profile (Lighthouse's default
+# mobile emulation and throttling). The run fails unless performance >= 90 and accessibility >= 90 on each of them:
+# the list is apps/wanted/lighthouserc.js, held to the site's and the app's own lists by tests/test_lighthouse_pages.py.
 name: lighthouse
 on:
   push:
@@ -14,7 +15,7 @@ concurrency:
 jobs:
   lhci:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -29,7 +30,12 @@ jobs:
           KNOS_WANTED_STATE=$RUNNER_TEMP/state KNOS_WANTED_CACHE=$RUNNER_TEMP/cache KNOS_WANTED_RECORD=$RUNNER_TEMP/record \
             PYTHONPATH=apps/wanted HOST=127.0.0.1 PORT=8080 nohup python -m knos_wanted serve > $RUNNER_TEMP/serve.log 2>&1 &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8080/healthz && break; sleep 1; done
-      - name: Lighthouse (mobile), assert performance and accessibility >= 90
+      - name: "Serve the front door from this commit (the Pages build, no network: the committed snapshot), compressed as Pages sends it"
+        run: |
+          bash scripts/build_site.sh "$RUNNER_TEMP/site" "$GITHUB_SHA"
+          nohup python scripts/serve_site.py "$RUNNER_TEMP/site" 8081 > "$RUNNER_TEMP/site.log" 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8081/ > /dev/null && break; sleep 1; done
+      - name: Lighthouse (mobile), every page, assert performance and accessibility >= 90
         run: npx --yes @lhci/cli@0.14.0 autorun --config=apps/wanted/lighthouserc.js
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

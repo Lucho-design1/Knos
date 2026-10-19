@@ -123,6 +123,7 @@ label.opt:has(input:checked) { border-color: var(--accent); background: var(--ac
 
 /* the view named in the URL is laid out before app.js runs (no layout shift on a deep link) */
 html[data-view]:not([data-view=research]) #v-research { display: none; }
+:is(html[data-view=research], html[data-view=buy], html[data-view=fund], html[data-view=contribute], html[data-view=make], html[data-view=projects], html[data-view=teams], html[data-view=agents]) #v-home { display: none; }
 html[data-view=buy] #v-buy[hidden],
 html[data-view=fund] #v-fund[hidden],
 html[data-view=contribute] #v-contribute[hidden],
@@ -130,5 +131,20 @@ html[data-view=make] #v-make[hidden],
 html[data-view=projects] #v-projects[hidden],
 html[data-view=teams] #v-teams[hidden],
 html[data-view=agents] #v-agents[hidden] { display: block !important; }
+/* Contribute: the milestones under the rounds are shown once the rounds are drawn, so nothing on screen is pushed down */
+#v-contribute:not([data-tasks]) > h2, #v-contribute:not([data-tasks]) > #needList { visibility: hidden; }
 #tplPick { min-height: 330px; } #regPick { min-height: 150px; }
 label.opt { font-weight: 400; font-size: var(--fs-1); margin: 6px 0; }
+
+/* home: the research products open for backing now; every card keeps its height while it loads (no layout shift) */
+.lead { font-size: var(--fs-2); color: var(--muted); margin: 0 0 6px; }
+.hp { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.hp-card { margin: 0; min-height: 196px; display: flex; flex-direction: column; gap: 4px; }
+.hp-card .hp-t { font-size: var(--fs-3); margin: 0; }
+.hp-card .acts { margin-top: auto; } .hp-card .acts .button { margin-top: 6px; padding: 8px 14px; }
+.hp-card.sk { background: linear-gradient(90deg, var(--soft), var(--surface), var(--soft)); }
+.meter { height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; margin: 6px 0 2px; }
+.meter > span { display: block; height: 100%; background: var(--accent); }
+.card.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.soon button { margin: 0; } .soon button:disabled { opacity: .7; }
+#fundList, #lendList, #needList { list-style: none; padding: 0; }

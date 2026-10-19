@@ -37,6 +37,11 @@ tests of the program pass unchanged.
 
 ## 2. A container image as the judge (Google Confidential Space)
 
+**This path is not used by Knos and has never run.** It needs a Google Cloud billing account, and Knos has none. The
+code referee Knos uses runs in GitHub Actions instead. Its run's OIDC token is verified on chain by knos_oidc, and its
+verdict carries a Sigstore attestation (REFEREE_FROST.md, "The code referee's attestation"). What follows describes
+the program's code only.
+
 An order funded with judge 1 pins a container image digest. PayOrder pays it on a Confidential Space attestation
 token when:
 

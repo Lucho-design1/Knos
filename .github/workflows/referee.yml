@@ -15,6 +15,17 @@ name: knos referee (FROST host 2 of 3)
 # Every post carries (a) this job's GitHub Actions OIDC token, audience knos-referee, which the app server verifies
 # against GitHub's published keys (repository drexthealpha/Knos by id, workflow .github/workflows/referee.yml on
 # refs/heads/main; knos.threshold.ghoidc), and (b) the host's transport signature over the session and body.
+#
+# THE CODE REFEREE'S ATTESTATION (knos.threshold.codeattest; docs/reference/REFEREE_FROST.md). For every session whose
+# digest its own check recomputed, job `sign` writes one verdict file (canonical JSON: session, digest, order, evidence
+# page sha256, and this run's repository, workflow_ref, commit and run id) and keeps it as the run's artifact. Job
+# `attest`, which holds NO key share and no secret, then:
+#   1. has actions/attest-build-provenance sign a SLSA provenance statement over the verdict files (Sigstore keyless,
+#      public-good instance: a Fulcio certificate for this run's identity, logged in Rekor; no account);
+#   2. posts each verdict, that bundle and a fresh OIDC token whose audience is knos-referee:verdict:<sha256 of the
+#      verdict> to the app server, which has the DEPLOYED knos_oidc verify the token on Solana devnet and checks the
+#      bundle against Sigstore's trust root. The milestone page shows the run, that transaction, the attestation and
+#      the FROST release.
 on:
   schedule:
     - cron: "*/5 * * * *"
@@ -25,9 +36,7 @@ on:
         required: false
         default: ""
 
-permissions:
-  contents: read
-  id-token: write   # the job's OIDC token (audience knos-referee) authenticates its posts to the app server
+permissions: {}
 
 concurrency:
   group: knos-referee
@@ -37,6 +46,11 @@ jobs:
   sign:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write   # the job's OIDC token (audience knos-referee) authenticates its posts to the app server
+    outputs:
+      verdicts: ${{ steps.kept.outputs.verdicts }}
     env:
       KNOS_CLUSTER: devnet
       KNOS_REFEREE_COORDINATOR: https://knos.onrender.com
@@ -89,7 +103,55 @@ jobs:
         run: |
           if [ -z "$KNOS_REFEREE_FROST_SHARE" ]; then echo "the repository secret KNOS_REFEREE_FROST_SHARE is not set"; exit 1; fi
           if [ -n "$SESSION" ]; then
-            python -m knos.threshold sign-session --session "$SESSION" --github-oidc
+            python -m knos.threshold sign-session --session "$SESSION" --github-oidc --verdicts referee-verdicts
           else
-            python -m knos.threshold serve --once --github-oidc
+            python -m knos.threshold serve --once --github-oidc --verdicts referee-verdicts
           fi
+      - name: the code referee's verdicts (data its own check wrote; no secret in them)
+        id: kept
+        if: always() && steps.pending.outputs.open == '1'
+        run: |
+          n="$(find referee-verdicts -name 'verdict-*.json' 2>/dev/null | wc -l)"
+          echo "verdicts: $n"
+          echo "verdicts=$n" >> "$GITHUB_OUTPUT"
+      - if: always() && steps.kept.outputs.verdicts != '' && steps.kept.outputs.verdicts != '0'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: referee-verdicts
+          path: referee-verdicts/verdict-*.json
+          if-no-files-found: ignore
+          retention-days: 90
+
+  # The attestation and the on-chain verification of the code referee's verdicts. No key share, no secret, no install:
+  # the runner's python3 runs knos.threshold.codeattest (standard library only) from this commit's src.
+  attest:
+    needs: sign
+    if: always() && needs.sign.outputs.verdicts != '' && needs.sign.outputs.verdicts != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write       # the Sigstore certificate, and the token knos_oidc verifies on chain
+      attestations: write   # actions/attest-build-provenance stores the attestation with the repository
+    env:
+      KNOS_REFEREE_COORDINATOR: https://knos.onrender.com
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: referee-verdicts
+          path: referee-verdicts
+      - name: attest the verdicts (Sigstore keyless, SLSA provenance)
+        id: att
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: referee-verdicts/verdict-*.json
+      - name: post each verdict with its OIDC token; the app server has knos_oidc verify it on devnet
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
+          BUNDLE: ${{ steps.att.outputs.bundle-path }}
+          ATTESTATION_URL: ${{ steps.att.outputs.attestation-url }}
+        run: python3 -m knos.threshold.codeattest post --dir referee-verdicts --bundle "$BUNDLE" --attestation-url "$ATTESTATION_URL"

@@ -1,4 +1,7 @@
-"""Google Confidential Space attestation tokens, for a referee that is CODE (the milestone check in a container).
+"""UNUSED: a Google Confidential Space attestation token verifier. Nothing in Knos calls `verify`; Knos runs no Confidential
+Space referee and claims none. The code referee is attested by GitHub Actions + knos_oidc on chain + Sigstore instead
+(knos.threshold.codeattest). Kept only because it is tested (tests/test_threshold_frost.py), and because ghoidc uses
+its RS256 helpers (`_b64`, `_rsa_verify`).
 
 `verify(token, ...)` checks an attestation token the way Google documents it (Confidential Space token claims and
 "Validate the token": RS256, keys from the issuer's discovery document's jwks_uri) and Knos's pins:

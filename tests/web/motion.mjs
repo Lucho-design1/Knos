@@ -46,10 +46,11 @@ const strangers = [];
 const world = async (o = {}) => {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: "dark", ...o });
   // GitHub and devnet are what the page reads when a reader asks it something; they are refused here, and counted apart
-  await ctx.route("**/*", (route) => { const u = route.request().url(); if (u.startsWith(base)) return route.continue(); if (!/^https:\/\/(api\.github\.com|api\.devnet\.solana\.com)\//.test(u)) strangers.push(u); return route.abort(); });
+  // besides GitHub and devnet, the one host the bare address may ask: the app's list of research products (web/home.js, on a reader's first move)
+  await ctx.route("**/*", (route) => { const u = route.request().url(); if (u.startsWith(base)) return route.continue(); if (!/^https:\/\/(api\.github\.com|api\.devnet\.solana\.com)\/|^https:\/\/knos\.onrender\.com\/api\/front$/.test(u)) strangers.push(u); return route.abort(); });
   return ctx;
 };
-const open = async (ctx, hash = "") => { const page = await ctx.newPage(); await page.goto(base + hash, { waitUntil: "load" }); await page.evaluate(() => document.fonts.ready); await page.waitForSelector("#mark3d .face", { state: "attached" }); return page; };
+const open = async (ctx, hash = "#check") => { const page = await ctx.newPage(); await page.goto(base + hash, { waitUntil: "load" }); await page.evaluate(() => document.fonts.ready); await page.waitForSelector("#mark3d .face", { state: "attached" }); return page; };
 const settle = (page, ms = 700) => page.waitForTimeout(ms);                      // longer than --dur-3, the longest thing that moves
 // On a loaded machine an entrance can start late, so a fixed wait may look while it still runs: wait for what the clock
 // drives to end, up to `ms`. Something that loops never ends, and is still running when it is looked at.
@@ -131,7 +132,7 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   });
   check("  a token and the mark do not travel: the caller's promise is kept at once", still.reduced && still.added === 0 && still.running === 0, still);
   // measured, page by page: nothing on it could move, and nothing does
-  for (const hash of ["", "#pricing", "#fund", "#records", "#shadow", "#playground", "#verifier", "#terms"]) {
+  for (const hash of ["#check", "#pricing", "#fund", "#records", "#shadow", "#playground", "#verifier", "#terms"]) {
     await page.goto(base + hash); await page.waitForSelector("#mark3d .face", { state: "attached" }); await settle(page, 200);
     await page.evaluate(() => { for (const d of document.querySelectorAll("details")) d.open = true; });
     const m = await movers(page);
@@ -145,7 +146,7 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
     const m = await movers(page), shown = await page.isVisible(`#buy-part-${k}`);
     check(`  #buy, ${k}: shown at once, and none of ${m.looked} elements has an animation or a transition longer than 0`, shown && m.looked > 200 && m.bad.length === 0 && (await page.evaluate(() => document.getAnimations().length)) === 0, m.bad);
   }
-  await page.goto(base); await page.waitForSelector("#mark3d .face", { state: "attached" });
+  await page.goto(base + "#check"); await page.waitForSelector("#mark3d .face", { state: "attached" });
   // the first screen's upgrade line opens at once, and the sample's lines are sorted into their groups at once
   if (await page.waitForSelector("#hero-upgrades:not([hidden])", { timeout: 3000 }).then(() => true, () => false)) {
     await page.click("#hero-upgrades > summary");
@@ -158,7 +159,7 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   check("  the sample's seven lines are in their groups at once, and nothing runs", sorted[0] === 7 && sorted[1] === 0, sorted);
   const after = await movers(page);
   check("  with the sample's answer drawn, none of its elements has an animation or a transition longer than 0", after.bad.length === 0, after.bad);
-  await page.goto(base); await page.waitForSelector("#mark3d .face", { state: "attached" });
+  await page.goto(base + "#check"); await page.waitForSelector("#mark3d .face", { state: "attached" });
   // and every state still changes, at once
   const fold = await page.evaluate(() => { const d = document.querySelector("#view-check details.k-more"); d.open = false; const shut = d.getBoundingClientRect().height; d.open = true; return [shut, d.getBoundingClientRect().height, document.getAnimations().length]; });
   check("  a fold opens to its full height at once", fold[1] > fold[0] + 10 && fold[2] === 0, fold);
@@ -243,7 +244,7 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   await page.waitForSelector("#view-pricing", { state: "visible" });
   check("  a page's first opening is no view transition: it is shown at once, and its code comes after", (await page.evaluate(() => window.transitions)) === 0 && await page.isHidden("#view-check") && (await page.evaluate(() => location.hash)) === "#pricing");
   await page.waitForFunction(() => document.documentElement.dataset.ready === "pricing");
-  await page.click(".brand"); await page.waitForSelector("#view-check", { state: "visible" });
+  await page.click(".brand"); await page.waitForSelector("#view-home", { state: "visible" });          // the wordmark goes home: the research products
   await page.waitForFunction(() => !("morph" in document.documentElement.dataset));
   const crossed = await page.evaluate(() => window.transitions);
   // the first screen is let rest before the next press, as a reader's would: pressed while its entrance still runs, the
@@ -335,7 +336,7 @@ for (const scheme of ["dark", "light"]) {
   const low = Object.entries(pairs).map(([name, [a, b]]) => [name, Math.round(ratio(a, b) * 100) / 100]).filter(([, r]) => r < 4.5);
   check(`access, ${scheme}: text is 4.5:1 or more against what it is on`, low.length === 0 && ratio(seen.ink, seen.paper) >= 7 && seen.paper !== seen.ink, [low, seen]);
   // the focus: every link, button and field of a page, reached as a keyboard reaches it
-  for (const hash of scheme === "dark" ? ["", "#fund", "#claim", "#pricing", "#records"] : [""]) {
+  for (const hash of scheme === "dark" ? ["#check", "#fund", "#claim", "#pricing", "#records"] : ["#check"]) {
     await page.goto(base + hash); await page.waitForSelector("#mark3d .face", { state: "attached" });
     await page.keyboard.press("Tab");
     const unseen = await page.evaluate(() => {
@@ -361,7 +362,7 @@ for (const scheme of ["dark", "light"]) {
   const page = await open(ctx);
   for (const width of [320, 360, 390, 768, 1024, 1280]) {
     await page.setViewportSize({ width, height: 800 });
-    await page.goto("about:blank"); await page.goto(base); await page.waitForSelector("#mark3d .face", { state: "attached" }); await settle(page, 600);
+    await page.goto("about:blank"); await page.goto(base + "#check"); await page.waitForSelector("#mark3d .face", { state: "attached" }); await settle(page, 600);
     if (width <= 860) await page.click("#menu");
     await page.click("#more-button");
     const { over, culprits } = await measure(page);
@@ -370,7 +371,7 @@ for (const scheme of ["dark", "light"]) {
   }
   await ctx.close();
 }
-check("weight: no request left the site for anyone but GitHub and devnet, which were refused", strangers.length === 0, strangers);
+check("weight: no request left the site for anyone but GitHub, devnet and the app's list of products, which were refused", strangers.length === 0, strangers);
 
 await browser.close(); server.close();
 console.log(fails ? `${fails} checks failed` : "motion: every check held");

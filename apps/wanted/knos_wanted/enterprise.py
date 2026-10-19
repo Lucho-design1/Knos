@@ -49,11 +49,34 @@ class SSOError(ValueError):
 
 
 # ---- SSO through SAML Jackson ----------------------------------------------------------------------------------------
+KEYCLOAK_TENANT = "knos-keycloak"
+KEYCLOAK_REALM = "knos-test"
+
+
+def test_idps() -> dict[str, dict]:
+    """The TEST SAML IdPs the app registers in Jackson by itself, by tenant. mocksaml.com always; the self-hosted Keycloak
+    test realm (deploy/sso/keycloak/knos-test-realm.json) when KNOS_SSO_KEYCLOAK_URL points at it."""
+    out = {os.environ.get("KNOS_SSO_TEST_TENANT", "knos-test"): {
+        "name": "mocksaml.com (public test SAML IdP: any user@example.com, any password)", "metadata": MOCKSAML_METADATA}}
+    kc = (os.environ.get("KNOS_SSO_KEYCLOAK_URL") or "").rstrip("/")
+    if kc and _safe(kc):
+        out[KEYCLOAK_TENANT] = {"name": f"Keycloak, self-hosted TEST realm {KEYCLOAK_REALM} (test users only)",
+                                "metadata": f"{kc}/realms/{KEYCLOAK_REALM}/protocol/saml/descriptor", "wake": f"{kc}/realms/{KEYCLOAK_REALM}"}
+    return out
+
+
+def _safe(url: str) -> bool:
+    u = urllib.parse.urlparse(url)
+    return u.scheme == "https" or (u.scheme == "http" and u.hostname in ("localhost", "127.0.0.1"))
+
+
 def sso_config() -> dict:
     url = (os.environ.get("KNOS_SSO_URL") or "").rstrip("/")
+    idps = test_idps()
+    first = next(iter(idps))
     return {"enabled": bool(url and os.environ.get("KNOS_SSO_CLIENT_SECRET")), "jackson": url or None,
-            "test_tenant": os.environ.get("KNOS_SSO_TEST_TENANT", "knos-test"),
-            "test_idp": "mocksaml.com (public test SAML IdP: any user@example.com, any password)"}
+            "test_tenant": first, "test_idp": idps[first]["name"],
+            "test_tenants": [{"tenant": t, "idp": v["name"]} for t, v in idps.items()]}
 
 
 def _http(method: str, url: str, data: dict | None = None, headers: dict | None = None, form: bool = False, opener=None) -> dict:
@@ -79,20 +102,28 @@ def _http(method: str, url: str, data: dict | None = None, headers: dict | None 
 
 
 def ensure_connection(tenant: str, base_url: str, opener=None) -> dict:
-    """Register the test IdP (mocksaml.com) for `tenant` in Jackson, once per process (Jackson's mem store resets)."""
+    """Register `tenant`'s TEST IdP (test_idps) in Jackson, once per process (Jackson's mem store resets)."""
     cfg = sso_config()
+    idp = test_idps().get(tenant)
+    if idp is None:
+        return {"ensured": False, "why": "not a test tenant: its connection must already exist in Jackson"}
     key = os.environ.get("KNOS_SSO_API_KEY")
     if not key:
         return {"ensured": False, "why": "KNOS_SSO_API_KEY is not set: the connection must already exist in Jackson"}
     if time.time() - _ensured.get(tenant, 0) < 600:
         return {"ensured": True, "cached": True}
+    if idp.get("wake"):     # a free-plan IdP sleeps: wake it before Jackson fetches its metadata
+        try:
+            (opener or urllib.request.urlopen)(urllib.request.Request(idp["wake"], method="GET"), timeout=120).close()
+        except (urllib.error.URLError, TimeoutError, OSError):
+            raise SSOError("the test identity provider is not reachable; it may be waking up, try again in a minute") from None
     auth = {"Authorization": f"Api-Key {key}"}
     q = urllib.parse.urlencode({"tenant": tenant, "product": PRODUCT})
     got = _http("GET", f"{cfg['jackson']}/api/v1/sso?{q}", headers=auth, opener=opener)
     if not (isinstance(got, list) and got):
         cb = base_url.rstrip("/") + "/auth/sso/callback"
         _http("POST", f"{cfg['jackson']}/api/v1/sso", headers=auth, form=True, opener=opener, data={
-            "tenant": tenant, "product": PRODUCT, "name": f"{tenant} (test IdP: mocksaml.com)", "metadataUrl": MOCKSAML_METADATA,
+            "tenant": tenant, "product": PRODUCT, "name": f"{tenant} (test IdP: {idp['name']})", "metadataUrl": idp["metadata"],
             "defaultRedirectUrl": cb, "redirectUrl": json.dumps([cb])})
     _ensured[tenant] = time.time()
     return {"ensured": True}
@@ -105,7 +136,7 @@ def sso_start(tenant: str, base_url: str, opener=None) -> str:
     tenant = (tenant or cfg["test_tenant"]).strip().lower()
     if not tenant or len(tenant) > 64 or not all(c.isalnum() or c in "-_." for c in tenant):
         raise SSOError("tenant: the company's SSO tenant (letters, digits, - _ .)")
-    if tenant == cfg["test_tenant"]:
+    if tenant in test_idps():
         ensure_connection(tenant, base_url, opener)
     verifier = secrets.token_urlsafe(48)
     state = secrets.token_urlsafe(24)

@@ -1,0 +1,80 @@
+"""The front door's first screen at the bare address: research products people can back now (web/index.html
+#view-home, web/home.js, scripts/front_snapshot.py), read from the files with no browser (tests/web/home.mjs holds the
+same in Chromium). Everything technical is one page away (#view-verify); the check of agent work keeps #check."""
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+WORD = re.compile(r"[A-Za-z0-9][\w'’%.,/-]*")
+PAGE = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+
+
+def _words(html: str) -> list[str]:
+    return WORD.findall(re.sub(r"<[^>]+>", " ", html))
+
+
+def _section(sid: str) -> str:
+    i = PAGE.index(f'<section id="{sid}"')
+    return PAGE[i:PAGE.index("</section>", i)]
+
+
+def test_the_snapshot_cards_are_the_ones_its_rows_draw():
+    run = subprocess.run([sys.executable, str(ROOT / "scripts" / "front_snapshot.py"), "--check"], capture_output=True, text=True, timeout=60)
+    assert run.returncode == 0, run.stdout + run.stderr
+
+
+def test_the_bare_address_opens_on_the_products_with_three_one_tap_actions_each():
+    home = _section("view-home")
+    assert '<h1 id="home-h">Back research that becomes real products</h1>' in home and 3 <= len(_words("Back research that becomes real products")) <= 6
+    cards = re.findall(r'<li class="hp" data-slug="([a-z0-9-]+)">(.*?)</li>', home, re.S)
+    assert 1 <= len(cards) <= 3
+    for slug, body in cards:
+        acts = re.findall(r'<a class="k-btn( quiet)?" href="wanted\.html#(back|fund|contribute)=([a-z0-9-]+)" data-app="#\2=\3">([^<]+)</a>', body)
+        assert [(a[1], a[2], a[3]) for a in acts] == [("back", slug, "Back it"), ("fund", slug, "Fund a milestone"), ("contribute", slug, "Contribute")]
+        title = re.search(r'<h3 class="hp-t">(.*?)</h3>', body)[1]
+        assert len(_words(title)) <= 12
+    # the cards are a live view's rows (data-not-prose); the prose of the first screen, the bar with it, stays in its budget
+    bar = PAGE[PAGE.index('<header class="bar">'):PAGE.index("</header>")]
+    bar = re.sub(r'<div class="more-list".*?</div>', "", bar, flags=re.S)
+    prose = re.sub(r'<ol class="hp-list".*?</ol>', " ", home, flags=re.S)
+    prose = re.sub(r'<p class="fine" id="home-when" data-not-prose>.*?</p>', " ", prose, flags=re.S)
+    prose = re.sub(r"<(button)\b[^>]*>.*?</\1>", " ", re.sub(r"<!--.*?-->", " ", prose, flags=re.S), flags=re.S)
+    n = len(_words(re.sub(r"<button\b[^>]*>.*?</button>", " ", bar, flags=re.S))) + len(_words(prose))
+    assert 12 <= n <= 56, n
+    assert 'data-not-prose aria-label="Research products open for backing now"' in home
+    # one link to what is technical, one to the check of agent work, one to the researcher's own crossing
+    assert '<a href="#verify">How we verify</a>' in home and '<a href="#check">Pay AI agents for code</a>' in home
+    assert '<a id="home-research" href="wanted.html#research" data-app="#research">Cross your own paper</a>' in home
+
+
+def test_the_page_decides_its_first_view_before_the_first_paint_and_the_router_knows_it():
+    head = PAGE[:PAGE.index("</head>")]
+    assert 'document.documentElement.dataset.door = /^#?(home)?$/.test(location.hash) ? "home" : "page";' in head
+    assert 'html[data-door="home"]:not(.js) #view-check { display: none; }' in head
+    assert PAGE.index('<section id="view-check"') < PAGE.index('<section id="view-home"')    # the first h1 stays the check's
+    views = (ROOT / "web" / "views.js").read_text(encoding="utf-8")
+    assert re.search(r'export const VIEWS = \[[^\]]*"home", "verify"\]', views)
+    front = (ROOT / "web" / "front.js").read_text(encoding="utf-8")
+    assert 'name === "" ? "home"' in front and 'import("./home.js").then((m) => m.initHome())' in front
+    js = (ROOT / "web" / "home.js").read_text(encoding="utf-8")
+    assert 'export const APP = "https://knos.onrender.com";' in js and "/api/front" in js and '"pointermove", "pointerdown", "touchstart"' in js
+    assert "if (!rows.length) return false;" in js                                     # an empty answer keeps the snapshot
+    # the app's list answers this site across origins
+    srv = (ROOT / "apps" / "wanted" / "knos_wanted" / "front.py").read_text(encoding="utf-8")
+    assert '"Access-Control-Allow-Origin": "*"' in srv
+
+
+def test_how_we_verify_is_one_page_of_short_plain_lines():
+    v = _section("view-verify")
+    assert '<h1 id="verify-h">How we verify</h1>' in v
+    items = re.findall(r"<li><h2>(.*?)</h2><p>(.*?)</p></li>", v, re.S)
+    assert len(items) >= 5
+    for head, body in items:
+        for s in re.split(r"(?<=[.?!:])\s+", re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", body)).strip()):
+            assert len(_words(s)) <= 12, s
+        assert len(_words(head)) <= 6
+    assert not re.search(r"\b(wallets?|hash(es)?|pins?|token accounts?)\b", re.sub(r"<[^>]+>", " ", v), re.I)

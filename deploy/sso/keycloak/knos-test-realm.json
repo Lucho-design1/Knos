@@ -1,0 +1,72 @@
+{
+  "realm": "knos-test",
+  "displayName": "Knos TEST identity provider (Keycloak, test users only)",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "bruteForceProtected": true,
+  "components": {
+    "org.keycloak.keys.KeyProvider": [
+      {
+        "name": "knos-test-rsa",
+        "providerId": "rsa",
+        "subComponents": {},
+        "config": {
+          "priority": ["200"],
+          "enabled": ["true"],
+          "active": ["true"],
+          "algorithm": ["RS256"],
+          "privateKey": ["${KC_REALM_PRIVATE_KEY}"],
+          "certificate": ["${KC_REALM_CERTIFICATE}"]
+        }
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "${KC_SAML_SP_ENTITY_ID:https://saml.knos.onrender.com}",
+      "name": "Knos (through SAML Jackson)",
+      "protocol": "saml",
+      "enabled": true,
+      "frontchannelLogout": true,
+      "redirectUris": ["${KC_SAML_ACS:https://knos-sso.onrender.com/api/oauth/saml}"],
+      "attributes": {
+        "saml_assertion_consumer_url_post": "${KC_SAML_ACS:https://knos-sso.onrender.com/api/oauth/saml}",
+        "saml.client.signature": "false",
+        "saml.server.signature": "true",
+        "saml.assertion.signature": "true",
+        "saml.signature.algorithm": "RSA_SHA256",
+        "saml.force.post.binding": "true",
+        "saml_force_name_id_format": "true",
+        "saml_name_id_format": "email",
+        "saml.authnstatement": "true"
+      },
+      "protocolMappers": [
+        {"name": "email", "protocol": "saml", "protocolMapper": "saml-user-property-mapper", "config": {"user.attribute": "email", "attribute.name": "email", "attribute.nameformat": "Basic"}},
+        {"name": "firstName", "protocol": "saml", "protocolMapper": "saml-user-property-mapper", "config": {"user.attribute": "firstName", "attribute.name": "firstName", "attribute.nameformat": "Basic"}},
+        {"name": "lastName", "protocol": "saml", "protocolMapper": "saml-user-property-mapper", "config": {"user.attribute": "lastName", "attribute.name": "lastName", "attribute.nameformat": "Basic"}}
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "email": "alice@knos-test.example",
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Test",
+      "enabled": true,
+      "credentials": [{"type": "password", "value": "${KC_TEST_PASSWORD_ALICE}", "temporary": false}]
+    },
+    {
+      "username": "bob",
+      "email": "bob@knos-test.example",
+      "emailVerified": true,
+      "firstName": "Bob",
+      "lastName": "Test",
+      "enabled": true,
+      "credentials": [{"type": "password", "value": "${KC_TEST_PASSWORD_BOB}", "temporary": false}]
+    }
+  ]
+}

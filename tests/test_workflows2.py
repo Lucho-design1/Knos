@@ -1868,12 +1868,12 @@ def test_the_worker_keeps_its_keys_apart_the_claim_sweep_holds_none_and_the_fauc
     permissions, with no `pull-requests` among them."""
     doc = _doc(WF / "worker.yml")
     jobs = doc["jobs"]
-    assert sorted(jobs) == ["claims", "event", "faucet", "relay", "rewatch", "watchdog"]
+    assert sorted(jobs) == ["claims", "event", "faucet", "healthz", "relay", "rewatch", "watchdog"]     # healthz: tests/test_keepalive_chain.py
     assert doc["permissions"] == {"contents": "read", "actions": "write", "issues": "write"}        # as before 0.3.19
     assert "permissions" not in jobs["relay"] and "permissions" not in jobs["event"]               # the fee key's jobs: the workflow's, and no more
     holds = {name: sorted(set(re.findall(r"secrets\.(\w+)", json.dumps(job)))) for name, job in jobs.items()}
     assert holds == {"claims": [], "event": ["KNOS_RELAY_KEY", "KNOS_RELAY_KEYS", "KNOS_WORKER_KEY"], "faucet": ["KNOS_FAUCET_KEY", "KNOS_RELAY_KEY", "KNOS_WORKER_KEY"],
-                     "relay": ["KNOS_RELAY_KEY", "KNOS_RELAY_KEYS", "KNOS_WORKER_KEY"], "rewatch": [], "watchdog": []}
+                     "healthz": [], "relay": ["KNOS_RELAY_KEY", "KNOS_RELAY_KEYS", "KNOS_WORKER_KEY"], "rewatch": [], "watchdog": []}
     # the sweep: the chain's runs only, one at a time, with the forge token and nothing else
     claims = jobs["claims"]
     assert claims["if"] == "github.event_name == 'workflow_dispatch'" and claims["concurrency"] == {"group": "knos-claims", "cancel-in-progress": False}

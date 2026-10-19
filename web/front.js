@@ -478,7 +478,7 @@ async function check(ev) {
 export const MOUNTS = ["buy", "install", "capabilities", "status", "index", "pilot", "reproduce", "shadow", "verifier", "playground", "terms", "supplier", "invoice-statement", "story", "keyholder", "record", ...Object.keys(ADDED)];
 // Which page a hash shows: a filled mount, or one of the views (web/views.js: its VIEWS and ALIAS), or the first screen.
 const viewOf = (name) => { const v = ALIAS[name] || name; return VIEWS.includes(v) && v !== "check" ? v : null; };
-export const pageOf = (hash, filled = () => true) => { const name = String(hash).replace(/^#/, "").split("=")[0]; return MOUNTS.includes(name) && filled(name) ? name : viewOf(name) || "check"; };
+export const pageOf = (hash, filled = () => true) => { const name = String(hash).replace(/^#/, "").split("=")[0]; return name === "" ? "home" : MOUNTS.includes(name) && filled(name) ? name : viewOf(name) || "check"; };
 const EXPLORER = (kind, id) => `https://explorer.solana.com/${kind}/${id}?cluster=devnet`;
 
 // ---- addresses and hashes: shown whole, and each with a button that copies it ------------------------------------------
@@ -592,7 +592,17 @@ const drawn = new Map(), empty = new Set(), fetched = new Set();
 // the pending state is on the screen before a page's code is asked for: its parsing never holds that frame back
 const painted = () => new Promise((done) => { const t = setTimeout(done, 120); globalThis.requestAnimationFrame?.(() => setTimeout(() => { clearTimeout(t); done(); }, 0)); });
 const sectionOf = (name) => $(MOUNTS.includes(name) ? name : `view-${name}`);
-const bars = (el) => { el.innerHTML = `<div class="k-skeleton" data-pending><span class="k-sr">Loading</span><i></i><i></i><i></i><i></i></div>`; };
+// a mount whose first words index.html names (#mount-heads: its title and first line, or a note for a page that opens on a
+// note: the words its module writes first) shows them at once, in the places the module puts its own, above the grey bars;
+// all of it goes as one when the page is drawn. Opened with something to show (#page=…), only the title is said before.
+let heads = null;
+const bars = (el) => {
+  if (!heads) try { heads = JSON.parse(document.getElementById("mount-heads")?.textContent || "{}"); } catch { heads = {}; }
+  const bare = !location.hash.includes("="), d = heads[el.id] || {};
+  const head = (d.title ? `<h2>${esc(d.title)}</h2>` : "") + (bare && d.lede ? `<p class="lede">${esc(d.lede)}</p>` : "") + (bare && d.note ? `<p class="fine">${esc(d.note)}</p>` : "");
+  el.innerHTML = head ? `<div data-pending style="display:contents">${head}<div class="k-skeleton"><span class="k-sr">Loading</span><i></i><i></i><i></i><i></i></div></div>`
+    : `<div class="k-skeleton" data-pending><span class="k-sr">Loading</span><i></i><i></i><i></i><i></i></div>`;
+};
 // a mount that another module fills a moment after its code has run (it reads a file first): wait for the first thing in it
 const settledMount = (el, ms = 4000) => new Promise((done) => {
   const full = () => [...el.children].some((c) => !c.matches("[data-pending]"));
@@ -603,11 +613,13 @@ const settledMount = (el, ms = 4000) => new Promise((done) => {
 });
 
 export function preload(name) {
+  const links = document.createDocumentFragment();          // put in the head at once: one change of the document, not one a file
   for (const f of PAGES[name]?.files || []) {
     if (fetched.has(f)) continue;
     fetched.add(f);
-    const l = document.createElement("link"); l.rel = "modulepreload"; l.href = f; document.head.append(l);
+    const l = document.createElement("link"); l.rel = "modulepreload"; l.href = f; links.append(l);
   }
+  if (links.childNodes.length) document.head.append(links);
 }
 
 // What was pressed in a page whose code had not arrived: made again when it has. A field typed in says so again.
@@ -682,12 +694,13 @@ function openPage(name) {
   if (el) keepFolded(el);
   if (!p || !el) { ready(); return Promise.resolve(); }
   if (!drawn.has(name)) {
-    preload(name);                // every file the page names, asked for at once, not one import level per round trip
     const mount = MOUNTS.includes(name);
     if (mount && el.childElementCount === 0) bars(el);
     el.dataset.loading = ""; el.setAttribute("aria-busy", "true");
     drawn.set(name, (async () => {
-      try { await painted(); await p.draw?.(el); await p.each?.(name); if (mount) await settledMount(el); } catch { /* said below: the page holds nothing */ }
+      // every file the page names, asked for at once (not one import level per round trip), once its title or its grey bars
+      // are on screen: the first picture of the page does not wait behind its code
+      try { await painted(); preload(name); await p.draw?.(el); await p.each?.(name); if (mount) await settledMount(el); } catch { /* said below: the page holds nothing */ }
       el.querySelector(":scope > [data-pending]")?.remove();
       delete el.dataset.loading; el.removeAttribute("aria-busy");
       keepFolded(el);
@@ -732,6 +745,9 @@ function route(moved) {
   if (name === "install" && !on) setTimeout(() => $("install-today")?.scrollIntoView?.(), 0);
   if (moved && was !== null && name !== pageOf(was, filled) && !["money", "task", "anyissue", "demo", "check-a-pull-request"].includes(raw)) globalThis.scrollTo?.(0, 0);
   const opened = openPage(name);
+  if (name === "check") checkScreen();
+  // the research products: the snapshot is already drawn; web/home.js wires the one-tap actions and asks the app for the live list
+  if (name === "home") import("./home.js").then((m) => m.initHome()).catch(() => {});
   if (name === "check" && raw === "check" && arg) mountCheck(arg); else clearCheck();
   if (name === "protect" && arg) {
     const at = arg.lastIndexOf("@");
@@ -927,15 +943,12 @@ async function elsewhere(text, out) {
   return true;
 }
 
-if (typeof document !== "undefined" && $("pr-form")) {
-  $("pr-form").addEventListener("submit", check);
-  $("protect-form")?.addEventListener("submit", protectRepo);
-  initTheme();
-  workflowFacts();
-  initBar();
-  initCopy();
-  initMotion();
-  initUpgrades();
+// THE FIRST SCREEN OF #check, asked for when that page is first shown (route): another page opened at its own address
+// does not fetch the box, the week's leaderboard, the examples or the round, which it never shows.
+let checkScreenOn = false;
+function checkScreen() {
+  if (checkScreenOn) return;
+  checkScreenOn = true;
   // THE FRONT DOOR (web/front_door.js): the first screen's one control, your own invoice checked in place. Mounted
   // here, before anything else of the page is read, so it answers even when GitHub and devnet do not.
   if ($("front-door")) import("./front_door.js").then((m) => m.renderFrontDoor($("front-door"), { elsewhere })).catch(() => {});
@@ -959,4 +972,15 @@ if (typeof document !== "undefined" && $("pr-form")) {
   firstP = import("./first.js").then((m) => { m.initFirst({ $, esc, EXPLORER, core }); return m; });
   firstP.catch(() => {});
   initDemo();
+}
+
+if (typeof document !== "undefined" && $("pr-form")) {
+  $("pr-form").addEventListener("submit", check);
+  $("protect-form")?.addEventListener("submit", protectRepo);
+  initTheme();
+  workflowFacts();
+  initBar();
+  initCopy();
+  initMotion();
+  initUpgrades();
 }

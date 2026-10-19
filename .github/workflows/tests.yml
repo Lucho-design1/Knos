@@ -80,6 +80,9 @@ jobs:
       # pytest-xdist at one version: `--dist worksteal` came with 3.2, and how tests are dealt out must not change
       # under a release.
       - run: uv pip install --system -e ".[dev]" pytest-xdist==3.8.0
+      # sigstore-python at one version: tests/test_threshold_codeattest.py checks a real Sigstore bundle against the
+      # trust root this version ships (offline), the way the app server checks the code referee's attestation.
+      - run: uv pip install --system sigstore==4.5.0
       - run: git config --global user.email ci@example.invalid && git config --global user.name ci
       # Squads Labs' deployed v4 program, read from devnet and checked against its pinned sha256, for the boundary tests
       # (tests/test_boundary.py). It needs the network: when devnet does not answer, those tests skip and say so.

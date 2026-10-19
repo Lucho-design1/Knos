@@ -105,8 +105,8 @@ export function renderStatus(el, env = {}) {
         anyone else can carry the same token with <code>knos relay</code>. It writes one line in a public log for every token it answers for.</p></details>
       <p id="relay-head" class="status" role="status" aria-live="polite">Open this page to read the relay's log.</p>
       <div id="relay-latest"></div>
-      <dl class="facts" id="relay-facts"></dl>
       <div id="relay-rounds"></div>
+      <dl class="facts" id="relay-facts"></dl>
       <p id="relay-note" class="fine"></p>
       <p><button type="button" id="relay-again" class="ghost small" hidden>Read it again</button></p>
     </div>
@@ -275,14 +275,21 @@ export function renderReproduce(el, listed, esc = escHtml) {
 // ---- all four, as web/app.js calls it ----------------------------------------------------------------------------------
 /** ctx: { $, esc, knos, RPC, EXPLORER, gh }. Pilot is words and is filled at once; Index and Reproduce when their file
  *  has come; Status is laid out at once and reads GitHub and devnet the first time its page is shown. */
+// Each of the four is drawn when it is first shown (the one opened now at once, the others when the reader goes to them):
+// a page opened at its own address reads and lays out only itself.
 export function fillMounts(ctx) {
   const { $, esc, knos, RPC, EXPLORER, gh } = ctx, file = ctx.file || jsonFile;
-  if ($("pilot")) renderPilot($("pilot"), esc);
-  if ($("index")) Promise.all([file("agent_weekly.json").catch(() => null), file("agent_index.json").catch(() => null)]).then(([weekly, feed]) => renderIndex($("index"), weekly, esc, feed));
-  if ($("reproduce")) file("reproductions.json").catch(() => null).then((listed) => renderReproduce($("reproduce"), listed, esc));
-  if (!$("status")) return null;
-  const status = renderStatus($("status"), { gh, rpc: (m, p) => knos.rpc(RPC, m, p), EXPLORER, esc, file });
-  const shown = () => { if (location.hash.replace(/^#/, "").split("=")[0] === "status") status.start(); };
+  const drawn = new Set();
+  let status = null;
+  const fill = (name) => {
+    if (drawn.has(name) || !$(name)) return;
+    drawn.add(name);
+    if (name === "pilot") renderPilot($("pilot"), esc);
+    if (name === "index") Promise.all([file("agent_weekly.json").catch(() => null), file("agent_index.json").catch(() => null)]).then(([weekly, feed]) => renderIndex($("index"), weekly, esc, feed));
+    if (name === "reproduce") file("reproductions.json").catch(() => null).then((listed) => renderReproduce($("reproduce"), listed, esc));
+    if (name === "status") status = renderStatus($("status"), { gh, rpc: (m, p) => knos.rpc(RPC, m, p), EXPLORER, esc, file });
+  };
+  const shown = () => { const name = location.hash.replace(/^#/, "").split("=")[0]; fill(name); if (name === "status") status.start(); };
   addEventListener("hashchange", shown);
   shown();
   return status;

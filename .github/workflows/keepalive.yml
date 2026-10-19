@@ -1,9 +1,12 @@
 # Keeps the free Render instances awake: Render's free tier sleeps a web service after 15 minutes without traffic, so a
-# visitor's first request waits for a cold start. Every 10 minutes this pings the app's health check.
+# visitor's first request waits for a cold start. This timer is the LAST of three pingers (docs/reference/KEEPALIVE.md):
+# every run of the always-on worker's chain pings first (worker.yml, job `healthz`, about every 4.5 minutes, revived by
+# the watchdog), and the referee PC daemon pings every 5 minutes (`python -m knos.threshold serve --healthz-every 300`).
+# GitHub's cron alone is not reliable: on 18 Oct 2026 this file's timer went more than four hours without a run.
 name: keepalive
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 permissions: {}
 concurrency:

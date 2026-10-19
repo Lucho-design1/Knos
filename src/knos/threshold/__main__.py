@@ -4,11 +4,14 @@
                                            writes DIR/share-render.json, share-github.json, share-pc.json (0600) and
                                            the PUBLIC group record (default config/referee-frost.json)
     dkg-party --id N --relay DIR --run ID --out FILE    one DKG party (what dkg-local starts; or one per host)
-    sign-session --session ID [--coordinator URL] [--github-oidc]   one signing session (GitHub Actions: share from
-                                           $KNOS_REFEREE_FROST_SHARE, the JSON itself)
-    serve [--coordinator URL] [--every S] [--once] [--github-oidc]  take part in every open session (the PC daemon;
-                                           GitHub Actions with --once --github-oidc: each post carries the job's OIDC
-                                           token, audience knos-referee)
+    sign-session --session ID [--coordinator URL] [--github-oidc] [--verdicts DIR]   one signing session (GitHub
+                                           Actions: share from $KNOS_REFEREE_FROST_SHARE, the JSON itself)
+    serve [--coordinator URL] [--every S] [--once] [--github-oidc] [--verdicts DIR] [--healthz-every S]
+                                           take part in every open session (the PC daemon; GitHub Actions with --once
+                                           --github-oidc: each post carries the job's OIDC token, audience knos-referee)
+                                           --verdicts DIR: write the code referee's verdict file for every session this
+                                           host's own check agreed with (knos.threshold.codeattest; referee.yml attests them)
+                                           --healthz-every S: also GET <coordinator>/healthz every S seconds and log it
     info                                   the group key and hosts (public)
 Never prints a share.
 """
@@ -55,6 +58,8 @@ def main(argv=None) -> int:
         else:
             c.add_argument("--every", type=float, default=30.0)
             c.add_argument("--once", action="store_true")
+            c.add_argument("--healthz-every", type=float, default=0.0, help="also GET <coordinator>/healthz this often (seconds; 0: never)")
+        c.add_argument("--verdicts", default="", help="write the code referee's verdict file of each session this host agreed with here")
         c.add_argument("--github-oidc", action="store_true", help="add this GitHub Actions job's OIDC token to every post")
     sub.add_parser("info")
     ns = ap.parse_args(argv)
@@ -91,11 +96,17 @@ def main(argv=None) -> int:
         from .ghoidc import request_token
         token = request_token
     share, client, led = _share(ns.share), HttpClient(ns.coordinator, host_token=token), chain.ledger()
+    on_verdict = None
+    if ns.verdicts:
+        from . import codeattest
+
+        def on_verdict(s, digest, ev):
+            codeattest.write(codeattest.verdict(s, digest, ev), ns.verdicts)
     if ns.cmd == "sign-session":
-        got = sign_session(share, client, ns.session, led)
+        got = sign_session(share, client, ns.session, led, on_verdict=on_verdict)
         print(json.dumps(got))
         return 0 if got["outcome"] in ("shared",) or got["outcome"].startswith("not chosen") else 1
-    serve(share, client, led, every=ns.every, once=ns.once)
+    serve(share, client, led, every=ns.every, once=ns.once, on_verdict=on_verdict, healthz_every=ns.healthz_every)
     return 0
 
 

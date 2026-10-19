@@ -38,7 +38,7 @@ for (const reduced of [true, false]) {
   // added at the moment of the press can come after the chooser
   const choosers = [];
   page.on("filechooser", (c) => choosers.push(c));
-  await page.goto(base, { waitUntil: "load" });
+  await page.goto(base + "#check", { waitUntil: "load" });          // the check of agent work (the bare address: tests/web/home.mjs)
   await page.waitForFunction(() => document.documentElement.dataset.ready === "check");
   await page.waitForSelector('#front-door [data-fd="sample"]');
   // where the focus is, whether a ring is drawn round it, and whether it is inside the window

@@ -162,7 +162,8 @@ def test_referee_yml_polls_on_a_cron_and_needs_no_founder_token():
     doc = yaml.safe_load(WF.read_text(encoding="utf-8"))
     on = doc[True] if True in doc else doc["on"]
     assert on["schedule"] == [{"cron": "*/5 * * * *"}] and "workflow_dispatch" in on
-    assert doc["permissions"] == {"contents": "read", "id-token": "write"}
+    # 0.3.29 G-TRUST: the workflow grants nothing; the signing job gets what it had (the attest job: tests/test_threshold_codeattest.py)
+    assert doc["permissions"] == {} and doc["jobs"]["sign"]["permissions"] == {"contents": "read", "id-token": "write"}
     text = WF.read_text(encoding="utf-8")
     import re
     assert re.findall(r"secrets\.(\w+)", text) == ["KNOS_REFEREE_FROST_SHARE"]

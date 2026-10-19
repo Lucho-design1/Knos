@@ -157,7 +157,7 @@ async function page() {
 
   // 1. the first screen of the site itself: 56 words at most (the outcome, who it is for, the sentence, the number and the bar), one control, the round below it
   for (const [width, height] of [[1280, 800], [390, 844], [320, 640], [768, 1024], [1920, 1080]]) {
-    const { ctx, p, strangers } = await visit("", width, { height });
+    const { ctx, p, strangers } = await visit("#check", width, { height });       // the check of agent work: the bare address is the research products (tests/web/home.mjs)
     await p.evaluate(() => document.fonts.ready); await p.waitForFunction(() => !document.getElementById("hero-board").hasAttribute("aria-busy")); await p.waitForTimeout(700);
     // prose, as tests/web/words.mjs counts it, and here with the bar: headings, sentences and links. Not counted, because
     // it is the thing itself: a control (the box, a button, the handle of a fold), a figure (.k-num), and the rows of

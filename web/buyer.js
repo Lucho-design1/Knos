@@ -414,7 +414,7 @@ export function renderBuyer(el, env = {}) {
   // or typing stops, and drawn again with every change of the amount.
   let facts = null, turn = 0, timer = 0;
   const rules = con.controls;
-  Promise.resolve().then(() => { drawFees(); drawChecks(); });       // once everything below is defined
+  setTimeout(() => { drawFees(); drawChecks(); }, 0);       // once everything below is defined, in a task of its own (the first draw is long enough)
   function drawFees() {
     const rows = rules.feeTable(c.feeBps, c);       // controls_data.js: [{ amount, fee, effectivePct: "8.00" }]
     const money = (n) => show(n), pct = (r) => `${String(r.effectivePct).replace(/%$/, "")}%`;
@@ -672,7 +672,8 @@ export function renderBuyer(el, env = {}) {
   import("./statements.js").then((m) => m.renderOrderStatement($("buy-statement-box"), { EXPLORER, gh, file: env.file }))
     .catch((e) => say($("buy-statement-box"), `The statement view did not load: ${esc(e.message)}. Reload the page.`, "bad"));
   const ready = (env.templates ? Promise.resolve(env.templates) : fetch("buyer_templates.json").then((r) => { if (!r.ok) throw new Error(`buyer_templates.json did not load (${r.status})`); return r.json(); }))
-    .then((got) => { book = got; kinds(); desk = renderProcurement($("proc"), { book, gh, now: clock, onChange: () => redraw(), fundBox: $("buy-envelope"), fee: () => c }); redraw(); })
+    .then((got) => { book = got; kinds(); return new Promise((next) => setTimeout(next, 0)); })      // the form first; the console in a task of its own
+    .then(() => { desk = renderProcurement($("proc"), { book, gh, now: clock, onChange: () => redraw(), fundBox: $("buy-envelope"), fee: () => c }); redraw(); })
     .catch((e) => { $("buy-sentence").textContent = `The templates did not load: ${e.message}. Reload the page.`; });
   const saved = recall();
   if (saved?.key) {

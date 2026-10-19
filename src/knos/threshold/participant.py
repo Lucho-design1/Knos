@@ -62,6 +62,20 @@ class HttpClient:
     def session(self, sid):
         return self._call(f"/api/referee/session?id={sid}")
 
+    def healthz(self) -> dict:
+        """GET /healthz once: {"status": HTTP status or None, "ms": time taken, "error"?}. Never raises."""
+        t0 = time.time()
+        req = urllib.request.Request(self.base + "/healthz", headers={"User-Agent": "knos-referee-frost (healthz)"})
+        try:
+            with urllib.request.urlopen(req, timeout=max(self.timeout, 90)) as r:  # noqa: S310 - https (checked above)
+                st, err = r.status, None
+        except urllib.error.HTTPError as e:
+            st, err = e.code, None
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            st, err = None, type(e).__name__
+        out = {"status": st, "ms": int((time.time() - t0) * 1000)}
+        return out if err is None else {**out, "error": err}
+
     def pending(self):
         return self._call("/api/referee/pending").get("sessions", [])
 
@@ -77,8 +91,10 @@ class HttpClient:
         return body
 
 
-def sign_session(share: dict, client, sid: str, led, *, fetcher=None, timeout: float = 900, poll: float = 2.0) -> dict:
-    """Take part in one session. Returns {"id", "session", "outcome"}: shared | not chosen | refused: <why>."""
+def sign_session(share: dict, client, sid: str, led, *, fetcher=None, timeout: float = 900, poll: float = 2.0, on_verdict=None) -> dict:
+    """Take part in one session. Returns {"id", "session", "outcome"}: shared | not chosen | refused: <why>.
+    on_verdict(session, digest, evidence): called once this host's OWN check recomputed the session's digest, before
+    any FROST round (the code referee's verdict file, knos.threshold.codeattest)."""
     pid = share["id"]
     s = client.session(sid)
     if s.get("group_key") != share["group_key"]:
@@ -90,6 +106,8 @@ def sign_session(share: dict, client, sid: str, led, *, fetcher=None, timeout: f
         return {"id": pid, "session": sid, "outcome": f"refused: {why}"}
     if digest.hex() != s["digest"]:
         return {"id": pid, "session": sid, "outcome": "refused: the session's digest is not the one this host computed"}
+    if on_verdict is not None:
+        on_verdict(s, digest, _ev)
     if s.get("state") != "round1":
         return {"id": pid, "session": sid, "outcome": "not chosen (the signers were already fixed)"}
     one = run("commit", {"key_package": share["key_package"]})
@@ -114,17 +132,24 @@ def sign_session(share: dict, client, sid: str, led, *, fetcher=None, timeout: f
     return {"id": pid, "session": sid, "outcome": "shared", "state": got.get("state")}
 
 
-def serve(share: dict, client, led, *, every: float = 30.0, once: bool = False) -> None:
-    """The PC daemon: poll the coordinator for open sessions and take part in each once."""
+def serve(share: dict, client, led, *, every: float = 30.0, once: bool = False, on_verdict=None,
+          healthz_every: float = 0.0, clock=time.time, sleep=time.sleep, log=print) -> None:
+    """The PC daemon: poll the coordinator for open sessions and take part in each once. healthz_every > 0: also GET
+    the app's /healthz that often (the PC is the second pinger beside the GitHub Actions chain; docs/reference/
+    KEEPALIVE.md) and log one JSON line per ping."""
     seen: set[str] = set()
+    last_ping = None
     while True:
+        if healthz_every > 0 and (last_ping is None or clock() - last_ping >= healthz_every):
+            last_ping = clock()
+            log(json.dumps({"id": share["id"], "healthz": client.healthz(), "at": int(last_ping)}), flush=True)
         try:
             for s in client.pending():
                 if s["id"] not in seen and share["id"] not in s.get("committed", []):
                     seen.add(s["id"])
-                    print(json.dumps(sign_session(share, client, s["id"], led)), flush=True)
+                    log(json.dumps(sign_session(share, client, s["id"], led, on_verdict=on_verdict)), flush=True)
         except FrostError as why:
-            print(json.dumps({"id": share["id"], "error": str(why)[:200]}), flush=True)
+            log(json.dumps({"id": share["id"], "error": str(why)[:200]}), flush=True)
         if once:
             return
-        time.sleep(every)
+        sleep(every)

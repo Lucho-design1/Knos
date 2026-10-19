@@ -59,3 +59,6 @@ services:
         sync: false
       - key: KNOS_SSO_CLIENT_SECRET
         sync: false
+      # the self-hosted Keycloak TEST realm (deploy/sso/keycloak), when one runs: tenant knos-keycloak is then registered itself
+      - key: KNOS_SSO_KEYCLOAK_URL
+        sync: false

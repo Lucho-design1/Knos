@@ -103,7 +103,7 @@ const mod = (a) => ((a % P) + P) % P;
 function pow(b, e) {
   let r = 1n;
   b = mod(b);
-  while (e > 0n) { if (e & 1n) r = mod(r * b); b = mod(b * b); e >>= 1n; }
+  while (e > 0n) { if (e & 1n) r = (r * b) % P; b = (b * b) % P; e >>= 1n; }      // both factors are in [0, P): one remainder
   return r;
 }
 export function onCurve(bytes) {
@@ -112,8 +112,9 @@ export function onCurve(bytes) {
   y &= (1n << 255n) - 1n;
   if (y >= P) return false;
   const u = mod(y * y - 1n), v = mod(D * y * y + 1n);
-  const x2 = mod(u * pow(v, P - 2n));
-  return x2 === 0n || pow(x2, (P - 1n) / 2n) === 1n;
+  // u / v is a square iff u * v is (v is never 0: d y^2 = -1 has no solution, -1/d not being a square mod p), so one
+  // exponentiation decides it (Euler's criterion), not an inverse and then a square test: the same answer, ~3x sooner
+  return u === 0n || pow(u * v, (P - 1n) / 2n) === 1n;
 }
 
 export async function findProgramAddress(seeds, program) {
@@ -1857,7 +1858,8 @@ export async function rpc(url, method, params) {
   }
 }
 
-const fromB64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+// a plain loop: Uint8Array.from with a callback walks the string one iterator step at a time, ~10x slower on a big read
+const fromB64 = (s) => { const b = atob(s), out = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) out[i] = b.charCodeAt(i); return out; };
 
 /** An account's data, or null when it does not exist. */
 export async function account(url, address) {

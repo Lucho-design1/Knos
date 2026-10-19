@@ -24,7 +24,7 @@ COPY config/fees.yaml config/leitner.yaml config/referee-frost.json ./config/
 COPY plugin/skills ./plugin/skills
 COPY apps/wanted ./apps/wanted
 COPY examples/autoresearch ./examples/autoresearch
-RUN pip install --no-cache-dir . "./apps/wanted[escrow,auth,config,evidence]" && sh apps/wanted/bridge/install.sh
+RUN pip install --no-cache-dir . "./apps/wanted[escrow,auth,config,evidence,attest]" && sh apps/wanted/bridge/install.sh
 WORKDIR /app
 RUN useradd --create-home app && mkdir -p /data && chown app /data
 USER app

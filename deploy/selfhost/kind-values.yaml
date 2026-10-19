@@ -1,0 +1,18 @@
+# Values for a local kind (Kubernetes in Docker) trial of the chart, with the image built from this repository:
+#   docker build -f apps/wanted/Dockerfile -t knos:local .
+#   kind create cluster --name knos-selfhost && kind load docker-image knos:local --name knos-selfhost
+#   helm install knos deploy/selfhost/knos -f deploy/selfhost/kind-values.yaml --wait
+#   kubectl port-forward svc/knos-knos 8080:80   # then http://localhost:8080/healthz
+# No secrets are needed for a trial: without devnet test keys the app runs, and escrow says it has no key.
+image:
+  repository: knos
+  tag: local
+  pullPolicy: Never      # the image was loaded into the kind node; never pull it
+env:
+  KNOS_WANTED_RP_ID: localhost
+  KNOS_WANTED_TRUST_PROXY: "0"
+  QLOO_BASE_URL: https://hackathon.api.qloo.com
+  KNOS_VALLEY_SWEEP_S: "60"
+persistence:
+  enabled: true
+  size: 1Gi              # kind's default storage class (rancher local-path) provisions it on the node

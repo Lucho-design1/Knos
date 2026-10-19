@@ -398,6 +398,26 @@ jobs:
   # in every run of the chain (each run is started by the one before it, `workflow_dispatch`), in a job of its own:
   # NO secret is named here, so the fee key is never in the job that may write to pull requests, and this job's
   # permissions are its own and not the workflow's.
+  # THE APP IS KEPT AWAKE BY THE CHAIN (docs/reference/KEEPALIVE.md). Render's free tier puts the app to sleep after 15
+  # minutes without a request, and GitHub's timer alone is not to be trusted with that: keepalive.yml's 5-minute cron
+  # went more than four hours without a run on 18 Oct 2026. Every run of the chain (each one starts the next about
+  # every 4.5 minutes; the watchdog brings a stopped chain back) pings the health check once, in a job of its own with
+  # read-only permission, no secret, a checkout of src/knos/proof only, and no install. A failed ping is red here
+  # and stops nothing: the relay does not wait for it.
+  healthz:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          sparse-checkout: src/knos/proof
+      - name: ping knos.onrender.com/healthz
+        run: python3 -I src/knos/proof/chain.py healthz
+
   claims:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
