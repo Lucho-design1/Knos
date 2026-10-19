@@ -197,9 +197,11 @@ function fillBrief(t) {
   if (t.verifier.kind === "machine") $("bCheck").value = t.verifier.check || "";
   else for (const f of ["what", "how", "who", "where"]) $("b" + f[0].toUpperCase() + f.slice(1)).value = t.verifier[f] || "";
 }
-let briefTimer = 0;
+let briefTimer = 0, briefSeq = 0;
 async function checkBrief() {
+  const seq = ++briefSeq;
   const r = await api("/api/ready", { brief: briefFromForm() });
+  if (seq !== briefSeq) return r;          // a newer check is on its way: only the answer to the form as it is now is drawn
   const box = $("bReady"), ok = r.ready;
   $("bLock").disabled = !ok;
   box.className = "ready " + (ok ? "ok" : "bad");

@@ -47,7 +47,7 @@ def test_the_bare_address_opens_on_the_products_with_three_one_tap_actions_each(
     assert 12 <= n <= 56, n
     assert 'data-not-prose aria-label="Research products open for backing now"' in home
     # one link to what is technical, one to the check of agent work, one to the researcher's own crossing
-    assert '<a href="#verify">How we verify</a>' in home and '<a href="#check">Pay AI agents for code</a>' in home
+    assert '<a href="#verify">How we verify</a>' in home and '<a href="#check" id="home-check">Check a claim</a>' in home
     assert '<a id="home-research" href="wanted.html#research" data-app="#research">Cross your own paper</a>' in home
 
 
