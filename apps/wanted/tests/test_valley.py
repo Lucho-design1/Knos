@@ -329,3 +329,32 @@ def test_ready_gate_freeze_change_request_and_kill_fee(money):
     got = valley.decide_change(p["id"], MAKER, cr["id"], True)
     assert got["status"] == "accepted" and got["project"]["frozen"]["criteria_hash"] == cr["criteria_hash"] != cr["from_hash"]
     assert a["status"] == "working"
+
+
+def test_track_record_is_one_attestation_per_wallet_read_back_from_the_chain(money):
+    from knos.platform import sas
+
+    from knos_wanted import track
+    maker, ref = str(Keypair().pubkey()), str(Keypair().pubkey())
+    rows = track.attest("p" * 16, "m1", "a1", [("maker", maker), ("referee", ref)], "c" * 64, "5" * 88, led=money.led)
+    assert [r["role"] for r in rows] == ["maker", "referee"] and all(r["signature"] for r in rows)
+    assert track.record(maker, led=money.led)["verified_milestones"] == 0          # not on chain: not shown
+    cred, schema = track._ids(money.auth.pubkey())
+    for r in rows:                                                                 # the program's account layout
+        data = sas.encode(track.LAYOUT, ["p" * 16, "m1", r["role"], "c" * 64, "5" * 88, r["wallet"]])
+        n = track.nonce("p" * 16, "m1", "a1", r["role"], r["wallet"])
+        money.led.accounts[r["attestation"]] = (bytes([2]) + bytes(n) + bytes(cred) + bytes(schema) + len(data).to_bytes(4, "little") + data
+                                                 + bytes(money.auth.pubkey()) + (0).to_bytes(8, "little") + bytes(32))
+    got = track.record(maker, led=money.led)
+    assert got["verified_milestones"] == 1 and got["attestations"][0]["on_chain"]["role"] == "maker"
+    assert track.attest("p" * 16, "m1", "a1", [("maker", maker)], "c" * 64, "5" * 88, led=money.led)[0]["signature"] is None   # once
+
+
+def test_a_company_multisig_can_be_made_by_one_passkey_vault_as_create_key_and_creator(money):
+    from knos_wanted import enterprise
+    vault = Keypair().pubkey()
+    cfg = enterprise.squads_pdas(vault)["program_config"]
+    money.led.accounts[str(cfg)] = bytes(40) + (0).to_bytes(8, "little") + bytes(Keypair().pubkey())
+    ix, rec, fee = enterprise.multisig_ix("Acme Labs", [str(vault)], 1, vault, vault, money.led)
+    signers = [a.pubkey for a in ix.accounts if a.is_signer]
+    assert signers == [vault, vault] and fee == 0 and rec["creator"] == str(vault) and rec["members"] == [str(vault)]

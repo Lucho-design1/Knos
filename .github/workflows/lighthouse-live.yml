@@ -1,0 +1,53 @@
+# Lighthouse against the LIVE site, on a hosted runner: one page (default #network of the Pages site), the same mobile
+# preset as lighthouse.yml (apps/wanted/lighthouserc.js), several cold runs (Lighthouse CI opens a fresh Chrome for
+# each). The run fails unless every run scores performance and accessibility >= 90.
+name: lighthouse live
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "The live page to measure"
+        default: "https://drexthealpha.github.io/Knos/#network"
+      runs:
+        description: "Cold runs, each must score >= 90"
+        default: "3"
+permissions:
+  contents: read
+concurrency: {group: lighthouse-live, cancel-in-progress: false}
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "22"
+      - name: The preset, pointed at the live page
+        env: {URL: "${{ inputs.url }}", RUNS: "${{ inputs.runs }}"}
+        run: |
+          node -e '
+          const c = require("./apps/wanted/lighthouserc.js");
+          c.ci.collect.url = [process.env.URL]; c.ci.collect.numberOfRuns = Math.max(1, Math.min(10, parseInt(process.env.RUNS, 10) || 3));
+          delete c.ci.assert; delete c.ci.upload;
+          require("fs").writeFileSync("lhcirc.json", JSON.stringify(c, null, 1));'
+      - name: Cold runs
+        run: npx --yes @lhci/cli@0.14.0 collect --config=lhcirc.json
+      - name: Every run >= 90
+        run: |
+          node -e '
+          const fs = require("fs"), d = ".lighthouseci";
+          const runs = fs.readdirSync(d).filter((f) => /^lhr-.*\.json$/.test(f)).sort().map((f) => JSON.parse(fs.readFileSync(`${d}/${f}`)));
+          let ok = runs.length > 0;
+          for (const r of runs) {
+            const p = Math.round(r.categories.performance.score * 100), a = Math.round(r.categories.accessibility.score * 100);
+            console.log(`${r.finalDisplayedUrl} performance ${p} accessibility ${a} TBT ${r.audits["total-blocking-time"].displayValue} LCP ${r.audits["largest-contentful-paint"].displayValue} benchmarkIndex ${r.environment.benchmarkIndex}`);
+            ok = ok && p >= 90 && a >= 90;
+          }
+          process.exit(ok ? 0 : 1);'
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: lighthouse-live
+          path: .lighthouseci/
+          retention-days: 14
