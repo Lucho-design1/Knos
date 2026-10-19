@@ -20,7 +20,9 @@ const CHAIN = "solana:devnet";
 const DEVNET = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
 const EXPLORER = (kind, id) => `https://explorer.solana.com/${kind}/${id}?cluster=devnet`;
 const link = (kind, id, text = id) => `<a class="mono" href="${esc(EXPLORER(kind, id))}" target="_blank" rel="noopener">${esc(text)}</a>`;
-const money = (u, decimals = 6, digits = 2) => (u / 10 ** decimals).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: Math.max(2, digits) });
+const moneyFormats = new Map();          // one formatter per number of digits: toLocaleString builds one on every call
+const money = (u, decimals = 6, digits = 2) => { const d = Math.max(2, digits); if (!moneyFormats.has(d)) moneyFormats.set(d, new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: d }));
+  return moneyFormats.get(d).format(u / 10 ** decimals); };
 const say = (el, html, kind = "") => { el.innerHTML = `<p class="status ${kind}">${html}</p>`; };
 const when = (t) => (t ? `${new Date(t * 1000).toISOString().slice(0, 16).replace("T", " ")} UTC` : "never");
 const took = (s) => (s == null ? "n/a" : s < 120 ? `${s} s` : s < 7200 ? `${Math.round(s / 60)} min` : `${Math.round(s / 3600)} h`);
@@ -427,7 +429,7 @@ function numbersHtml(s) {
 async function programRows(names) {
   const rows = [];
   for (const [name, address] of names) {
-    const auth = knos.upgradeAuthority(await knos.account(RPC, await knos.programData(address)));
+    const auth = knos.upgradeAuthority(await knos.account(RPC, await knos.programData(address), knos.PROGRAM_DATA_HEAD));      // its first 45 bytes, not the binary
     rows.push({ name, address, auth });
   }
   return rows;
@@ -470,7 +472,7 @@ async function keysHtml() {
   const all = await ids();
   const [now, small, large, pd] = await Promise.all([knos.chainTime(RPC),
     knos.programAccounts(RPC, all.knos_oidc, knos.v2.K_HDR + 512, 2, Uint8Array.of(64)), knos.programAccounts(RPC, all.knos_oidc, knos.v2.K_HDR + 1024, 2, Uint8Array.of(128)),
-    knos.account(RPC, await knos.programData(all.knos_oidc))]);
+    knos.account(RPC, await knos.programData(all.knos_oidc), knos.PROGRAM_DATA_HEAD)]);
   const found = [...small, ...large].map((f) => ({ ...f, key: knos.v2.readKey(f.data) })).filter((f) => f.key);
   const keys = await Promise.all(found.map(async (f) => ({ ...f.key, address: f.address, hash: (await knos.v2.keyAccountHash(f.data)).slice(0, 12) })));
   keys.sort((a, b) => a.issuer - b.issuer || a.expiresAt - b.expiresAt);

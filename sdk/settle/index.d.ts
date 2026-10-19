@@ -550,7 +550,8 @@ export function wallets(win?: unknown): Wallet[];
 
 // ---- JSON-RPC ----------------------------------------------------------------------------------------------------------------------------
 export function rpc(url: string, method: string, params: unknown[]): Promise<any>;
-export function account(url: string, address: Address): Promise<Bytes | null>;
+export function account(url: string, address: Address, slice?: { offset: number; length: number }): Promise<Bytes | null>;
+export const PROGRAM_DATA_HEAD: { offset: number; length: number };
 export interface AccountInfo { owner: Address; data: Bytes; lamports: number }
 export function accountInfo(url: string, address: Address): Promise<AccountInfo | null>;
 export function accounts(url: string, addresses: Address[]): Promise<(AccountInfo | null)[]>;

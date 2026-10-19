@@ -178,6 +178,8 @@ export function parseRep(raw) {
 // ---- who can change a program ---------------------------------------------------------------------------------------
 /** The upgrade authority in a program-data account: an address, null when the program has no upgrade authority, undefined when
  *  the bytes are not a program-data account (the program is not deployed). */
+/** The first bytes of a program's data account that upgradeAuthority reads: pass as account()'s `slice`. */
+export const PROGRAM_DATA_HEAD = { offset: 0, length: 45 };
 export function upgradeAuthority(programDataBytes) {
   if (!programDataBytes || programDataBytes.length < 45 || programDataBytes[0] !== 3) return undefined;
   return programDataBytes[12] === 1 ? b58(programDataBytes.slice(13, 45)) : null;
@@ -1861,9 +1863,11 @@ export async function rpc(url, method, params) {
 // a plain loop: Uint8Array.from with a callback walks the string one iterator step at a time, ~10x slower on a big read
 const fromB64 = (s) => { const b = atob(s), out = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) out[i] = b.charCodeAt(i); return out; };
 
-/** An account's data, or null when it does not exist. */
-export async function account(url, address) {
-  const got = await rpc(url, "getAccountInfo", [address, { encoding: "base64", commitment: "confirmed" }]);
+/** An account's data, or null when it does not exist. `slice` ({ offset, length }): only those bytes are sent (a program's
+ *  data account holds its whole binary; its upgrade authority is the first 45 bytes). */
+export async function account(url, address, slice) {
+  const opts = { encoding: "base64", commitment: "confirmed", ...(slice ? { dataSlice: { offset: slice.offset, length: slice.length } } : {}) };
+  const got = await rpc(url, "getAccountInfo", [address, opts]);
   return got.value ? fromB64(got.value.data[0]) : null;
 }
 
