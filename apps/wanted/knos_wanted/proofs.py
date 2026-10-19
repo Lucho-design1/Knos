@@ -17,7 +17,7 @@ def record() -> dict:
     f = HERE / "proofs.record"
     if not f.exists():
         return {"proofs": [], "note": "no recorded proofs in this build"}
-    return json.loads(f.read_text())
+    return json.loads(f.read_text(encoding="utf-8"))
 
 
 def raw(path: str) -> tuple[bytes, str] | None:

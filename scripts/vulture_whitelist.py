@@ -316,3 +316,7 @@ passkey_smart_.message_v0, passkey_smart_.control_filters, passkey_smart_.sole_o
 # knos.threshold: the FROST referee coordinator and host-1 signer the web app runs (apps/wanted/knos_wanted/referee.py).
 from knos.threshold import check as threshold_check_, ghoidc as ghoidc_, participant as participant_, session as session_
 threshold_check_.verdict_record, ghoidc_.GH_HOST, participant_.LocalClient, session_.Coordinator   # referee.py; tests/test_threshold_*.py
+
+# knos.threshold.codeattest: the app server's POST /api/referee/attest (apps/wanted/knos_wanted/referee.py, outside src/knos) checks
+# the verdict, the token's claims and links the Rekor entry with these.
+_.check_verdict, _.check_claims, _.rekor_url

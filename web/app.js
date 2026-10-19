@@ -497,11 +497,15 @@ async function loadNetwork() {
   fill("network-keys", keysHtml);
   fill("first-deployment", firstLive);
   const s = await stats(), box = $("network-stats");
+  // the numbers are drawn first: the cards under them are shown once they are, where they stay (index.html)
+  const drawn = () => { if ($("view-network")) $("view-network").dataset.stats = "drawn"; };
   if (!s || !s.outside || !s.apart) {
     box.innerHTML = `<p class="status">${esc(s?.error || "The numbers are built with the site; none here yet.")}</p>`;
+    drawn();
     return;
   }
   box.innerHTML = numbersHtml(s);
+  drawn();
   $("network-note").textContent = `Counted ${s.updated} by scripts/network_stats.py from the transaction history of both escrow programs.${s.error ? ` Not everything could be read: ${s.error}.` : ""}`;
 }
 

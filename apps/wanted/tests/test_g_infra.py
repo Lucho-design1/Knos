@@ -75,7 +75,7 @@ def test_keycloak_tenant_absent_without_url_and_refuses_plain_http(monkeypatch):
 
 
 def test_realm_file_has_no_secrets_and_matches_jackson():
-    text = (ROOT / "deploy/sso/keycloak/knos-test-realm.json").read_text()
+    text = (ROOT / "deploy/sso/keycloak/knos-test-realm.json").read_text(encoding="utf-8")
     realm = json.loads(text)
     assert realm["realm"] == enterprise.KEYCLOAK_REALM and realm["registrationAllowed"] is False
     for u in realm["users"]:

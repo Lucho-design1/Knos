@@ -148,7 +148,9 @@ def serve(share: dict, client, led, *, every: float = 30.0, once: bool = False, 
                 if s["id"] not in seen and share["id"] not in s.get("committed", []):
                     seen.add(s["id"])
                     log(json.dumps(sign_session(share, client, s["id"], led, on_verdict=on_verdict)), flush=True)
-        except FrostError as why:
+        except (FrostError, OSError, ValueError) as why:
+            # a refusal, or the network (a name that does not resolve, a reset, a timeout: URLError is an OSError) or a
+            # garbled answer: one line, and the next poll tries again; the daemon never stops on one bad read
             log(json.dumps({"id": share["id"], "error": str(why)[:200]}), flush=True)
         if once:
             return

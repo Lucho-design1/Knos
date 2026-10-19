@@ -280,6 +280,31 @@ def test_the_pc_daemon_pings_healthz_on_its_own_clock_and_logs_each_ping():
     assert pings == []
 
 
+
+def test_the_pc_daemon_keeps_polling_after_the_network_fails():
+    """On 19 Oct 2026 the PC host stopped on one DNS failure (URLError from /api/referee/pending): it must log and poll again."""
+    import urllib.error
+    calls, lines = [], []
+
+    class Client:
+        def pending(self):
+            calls.append(1)
+            if len(calls) == 1:
+                raise urllib.error.URLError("[Errno -3] Temporary failure in name resolution")
+            if len(calls) == 2:
+                raise TimeoutError("timed out")
+            return []
+
+        def healthz(self):
+            return {"status": 200, "ms": 1}
+
+    def sleep(sec):
+        if len(calls) >= 3:
+            raise KeyboardInterrupt
+    with pytest.raises(KeyboardInterrupt):
+        participant.serve({"id": 3, "group_key": "g"}, Client(), None, every=30, sleep=sleep, log=lambda line, **kw: lines.append(json.loads(line)))
+    assert len(calls) == 3 and [x["id"] for x in lines] == [3, 3] and "name resolution" in lines[0]["error"] and "timed out" in lines[1]["error"]
+
 def test_healthz_over_http_never_raises():
     import http.server
     import threading

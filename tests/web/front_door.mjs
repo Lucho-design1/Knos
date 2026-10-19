@@ -391,7 +391,7 @@ async function page() {
     const { ctx, p, sent, errors } = await visit("door.html", 360);
     const t0 = await p.evaluate(() => performance.now());
     await pasteInto(p, "#fd-in", verdict.pr);
-    await p.waitForFunction(() => location.hash.startsWith("#check="), null, { timeout: 2000 }).catch(() => {});
+    await p.waitForFunction(() => /^#check=./.test(location.hash), null, { timeout: 2000 }).catch(() => {});
     const went = await p.evaluate((t) => [location.hash, Math.round(performance.now() - t)], t0);
     ok("ten seconds: a pull request pasted alone goes to its check at once, with no press", went[0] === "#check=acme/app/7" && went[1] < 300, went);
     ok("  the front door asks GitHub nothing for it: the check does", sent.length === 0, sent);
@@ -427,7 +427,8 @@ async function page() {
       await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 150, downloadThroughput: Math.round(1.6e6 / 8), uploadThroughput: Math.round(750e3 / 8) });
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
     }
-    await p.goto(base); await p.waitForSelector("#front-door textarea"); await p.waitForSelector("#fd-style", { state: "attached" });      // web/front_door.js has run: the box is listened to
+    await p.goto(base + "#check"); await p.waitForSelector("#front-door textarea");      // the check of agent work: the bare address is the research products
+    await p.waitForSelector("#fd-style", { state: "attached" });      // web/front_door.js has run: the box is listened to
     return { ctx, p, asked };
   }
   {
@@ -436,7 +437,7 @@ async function page() {
     const { ctx, p, asked } = await landing();
     let presses = 0;
     await pasteInto(p, "#fd-in", verdict.pr); presses++;
-    try { await p.waitForFunction(() => location.hash.startsWith("#check="), null, { timeout: 1000 }); } catch { await p.click('[data-fd="run"]'); presses++; }
+    try { await p.waitForFunction(() => /^#check=./.test(location.hash), null, { timeout: 1000 }); } catch { await p.click('[data-fd="run"]'); presses++; }
     same("presses: landing, then a pasted link, is at its check in one press", [presses, await p.evaluate(() => location.hash)], [1, "#check=acme/app/7"]);
     if (withCheck && withShare) {
       await p.waitForFunction(() => window.__verdictAt !== undefined, null, { timeout: 10000 }).catch(() => {});
