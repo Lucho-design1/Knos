@@ -243,11 +243,6 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     <section id="demo" class="mount" aria-label="Demo" hidden></section>
 
     <h2 id="check-a-pull-request">Check a claim</h2>
-    <form id="claim-form" class="row" onsubmit="event.preventDefault();var m=(document.getElementById('claim-url').value||'').match(/github\.com\/([^\/\s]+)\/([^\/\s]+)\/pull\/(\d+)/);if(m)location.hash='#check='+m[1]+'/'+m[2]+'/'+m[3];">
-      <label for="claim-url" class="fine">Paste a pull request URL: see the agent's claim against GitHub's record, and whether money stays locked.</label>
-      <input id="claim-url" type="url" inputmode="url" placeholder="https://github.com/owner/repo/pull/123" style="min-width:0;flex:1 1 16em">
-      <button type="submit" class="k-btn" id="claim-go">Check</button>
-    </form>
     <p class="fine" id="second-fact"><a class="k-num" href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/BENCH.md">17.8%</a> of agents' first “tests pass” pull requests had a failed check: 147 of 826.</p>
     <!-- ONE BOX: a pull request, a repository or a transaction is typed in the first screen's box (#fd-in, web/front_door.js).
          This form has no field of its own: the examples put their input in it and press it (web/first.js), and a

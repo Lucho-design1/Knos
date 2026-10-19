@@ -20,6 +20,8 @@ MAX_MEDIA_BODY = provenance.MAX_MEDIA
 ROUTES = [
     ("GET", "/api/templates", False, "Milestone templates and OpenRegulatory regulatory sets", {}),
     ("GET", "/api/projects", False, "Projects, newest first", {"take": "integer"}),
+    ("GET", "/api/track", False, "A wallet's track record: its Solana Attestation Service attestations of verified milestones",
+     {"wallet": "string"}),
     ("POST", "/api/ready", False, "Ready to fund: is a brief clear enough to lock money on (free; nothing stored)", {"brief": "object"}),
     ("POST", "/api/project/brief", True, "The buyer edits a project's brief (until money locks)", {"project": "string", "brief": "object"}),
     ("POST", "/api/project/change", True, "After lock: the buyer proposes a change request (a new criteria hash)",
@@ -81,6 +83,9 @@ def handle_get(h, state, u, qs) -> bool:
             return h._send(200, {"projects": valley.projects(min(100, max(1, int(q("take", "50") or 50))))}) or True
         if p == "/api/project":
             return h._send(200, valley.public_project(valley.project(q("id")))) or True
+        if p == "/api/track":
+            from . import track
+            return h._send(200, track.record(q("wallet"))) or True
         if p == "/api/project/route":
             pr = valley.project(q("project"))
             return h._send(200, valley.route(valley._milestone(pr, q("milestone")))) or True
@@ -194,13 +199,18 @@ def _passkey(path: str, b: dict, user: dict, h) -> dict:
                                             b.get("grant") if isinstance(b.get("grant"), dict) else None, _s(b.get("ref"), 20), _s(b.get("pool"), 64))
     if path == "/api/project/amc":
         return wallets.prepare_amc(led, user, pid, key, b.get("units", 5), rp)
+    if path == "/api/company/multisig":
+        members = b.get("members") or []
+        if isinstance(members, str):
+            members = [m.strip() for m in re.split(r"[,\s]+", members) if m.strip()]
+        return wallets.prepare_company(led, user, str(b.get("name", "")), members, b.get("threshold", 1), rp)
     vault = str(wallets.ensure(led, wallets.holder(user), rp)["vault"])        # where a maker or referrer is paid: its passkey wallet
     if path == "/api/project/claim":
         return {**valley.claim(pid, key, user, vault), "paid_to": "your passkey wallet"}
     return {**valley.make_referral(user, vault, str(b.get("target", ""))), "paid_to": "your passkey wallet"}
 
 
-PASSKEY_PATHS = ("/api/project/fund", "/api/project/amc", "/api/project/claim", "/api/referral")
+PASSKEY_PATHS = ("/api/project/fund", "/api/project/amc", "/api/project/claim", "/api/referral", "/api/company/multisig")
 
 
 def _post(path: str, b: dict, user: dict, h) -> dict:

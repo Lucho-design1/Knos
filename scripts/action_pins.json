@@ -1,6 +1,7 @@
 {
  "note": "Every third-party action in .github/workflows, examples and action.yml is pinned to a full commit: a moved tag cannot change what runs. tests/test_prove.py and tests/test_install_routes.py check it.",
  "pins": {
+  "Swatinem/rust-cache@v2": "6323deb102c322ba6fcbdcafc7e3dddab59af2b6",
   "actions/attest-build-provenance@v4.2.2": "4d101475d8b20a2381f78447822ac1eab6504dd8",
   "actions/cache/restore@v6": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
   "actions/cache/save@v6": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
@@ -26,9 +27,10 @@
   "drexthealpha/Knos@v0.3.27": "KNOS_RELEASE_SHA",
   "drexthealpha/Knos@v0.3.28": "KNOS_RELEASE_SHA",
   "drexthealpha/Knos@v0.4.0": "KNOS_RELEASE_SHA",
+  "helm/kind-action@v1.15.1": "1544676c07bb3570fcb70166beaa07c4528fd4aa",
   "model-checking/kani-github-action@v1.1": "f838096619a707b0f6b2118cf435eaccfa33e51f",
   "rust-lang/crates-io-auth-action@v1.0.5": "c6f97d42243bad5fab37ca0427f495c86d5b1a18",
-  "Swatinem/rust-cache@v2": "6323deb102c322ba6fcbdcafc7e3dddab59af2b6",
+  "sigstore/cosign-installer@v4.1.2": "6f9f17788090df1f26f669e9d70d6ae9567deba6",
   "taiki-e/install-action@v2": "83ac0ad63c0167e6f06796fab0fce28db1bf3db0"
  }
 }

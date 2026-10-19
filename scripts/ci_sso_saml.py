@@ -7,13 +7,59 @@ import html
 import os
 import re
 import sys
+import urllib.error
 import urllib.parse
 
-import requests
+import http.cookiejar
+import json
+import urllib.request
 
 JK, DESC = sys.argv[1].rstrip("/"), sys.argv[2]
 CB = "http://localhost:9999/cb"
-s = requests.Session()
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k):
+        return None
+
+
+class _Resp:
+    def __init__(self, r, body):
+        self.status_code, self.url, self.headers, self.text = r.status, r.geturl(), r.headers, body.decode("utf-8", "replace")
+
+    def json(self):
+        return json.loads(self.text)
+
+    def raise_for_status(self):
+        assert self.status_code < 400, f"HTTP {self.status_code}: {self.text[:300]}"
+
+
+class _Session:
+    """What this test needs of a browser: cookies (Keycloak's Secure ones too, over http on localhost) and forms."""
+
+    def __init__(self):
+        self.cookies = http.cookiejar.CookieJar()
+
+    def _open(self, method, url, data=None, headers=None, allow_redirects=True, timeout=60):
+        for c in self.cookies:
+            c.secure = False
+        body = urllib.parse.urlencode(data).encode() if isinstance(data, dict) else data
+        req = urllib.request.Request(url, data=body, method=method, headers=headers or {})
+        hs = [urllib.request.HTTPCookieProcessor(self.cookies)] + ([] if allow_redirects else [_NoRedirect()])
+        try:
+            r = urllib.request.build_opener(*hs).open(req, timeout=timeout)
+        except urllib.error.HTTPError as e:
+            r = e
+        return _Resp(r, r.read())
+
+    def get(self, url, **k):
+        return self._open("GET", url, **k)
+
+    def post(self, url, **k):
+        return self._open("POST", url, **k)
+
+
+s = _Session()
 meta = s.get(DESC, timeout=30).text
 r = s.post(f"{JK}/api/v1/sso", headers={"Authorization": f"Api-Key {os.environ['JACKSON_API']}"}, timeout=30,
            data={"rawMetadata": meta, "tenant": "knos-keycloak", "product": "knos", "defaultRedirectUrl": CB, "redirectUrl": f'["{CB}"]',
@@ -27,7 +73,11 @@ done = s.post(html.unescape(form.group(1)), data={"username": "alice", "password
 saml = re.search(r'name="SAMLResponse" value="([^"]+)"', done.text)
 relay = re.search(r'name="RelayState" value="([^"]*)"', done.text)
 acs = re.search(r'<form[^>]*action="([^"]+)"', done.text)
-assert saml and acs, "Keycloak did not answer with a SAML response"
+if not (saml and acs):
+    msg = re.search(r'(?:kc-feedback-text|alert-error|instruction)[^>]*>([^<]{0,300})', done.text)
+    title = re.search(r"<title>([^<]*)", done.text)
+    raise SystemExit(f"Keycloak did not answer with a SAML response: HTTP {done.status_code} at {done.url.split('?')[0]}; "
+                     f"title {title.group(1).strip() if title else '-'}; says {msg.group(1).strip() if msg else '-'}")
 back = s.post(html.unescape(acs.group(1)), data={"SAMLResponse": saml.group(1), "RelayState": html.unescape(relay.group(1)) if relay else ""},
               allow_redirects=False, timeout=60)
 loc = back.headers.get("Location", "")

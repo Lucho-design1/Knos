@@ -488,6 +488,7 @@ async function keysHtml() {
 }
 
 let networkLoaded = false;
+const LIVE_AFTER_MS = 8000;
 async function loadNetwork() {
   if (networkLoaded) return;
   networkLoaded = true;
@@ -495,10 +496,22 @@ async function loadNetwork() {
   const fill = (id, make) => make().then((h) => $(id).insertAdjacentHTML("beforeend", h)).catch((e) => {
     $(id).insertAdjacentHTML("beforeend", `<p class="status bad">Devnet did not answer (${esc(e.message)}). Reload to try again.</p>`);
   });
-  fill("network-programs", programsHtml);
-  fill("network-keys", keysHtml);
-  fill("first-deployment", firstLive);
+  // the numbers come from the site's static snapshot (stats.json) and are drawn first; each devnet read starts when its
+  // section comes near the screen, on the first scroll, tap or key, or after LIVE_AFTER_MS at the latest
+  const later = (id, make) => {
+    let go = false;
+    const run = () => { if (!go) { go = true; fill(id, make); } };
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); run(); } }, { rootMargin: "300px" });
+      io.observe($(id));
+    }
+    for (const ev of ["scroll", "pointerdown", "keydown"]) addEventListener(ev, run, { once: true, passive: true });
+    setTimeout(run, LIVE_AFTER_MS);
+  };
   const s = await stats(), box = $("network-stats");
+  later("network-programs", programsHtml);
+  later("network-keys", keysHtml);
+  later("first-deployment", firstLive);
   // the numbers are drawn first: the cards under them are shown once they are, where they stay (index.html)
   const drawn = () => { if ($("view-network")) $("view-network").dataset.stats = "drawn"; };
   if (!s || !s.outside || !s.apart) {

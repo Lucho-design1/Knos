@@ -15,9 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
-      - uses: helm/kind-action@v1
-        with: {cluster_name: knos-selfhost, config: deploy/selfhost/kind-config.yaml}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: helm/kind-action@1544676c07bb3570fcb70166beaa07c4528fd4aa # v1.15.1
+        with: {cluster_name: knos-selfhost}       # kind-config.yaml skips etcd fsync for a slow local disk; runners need none
       - name: Build the image from this repository and load it into kind
         run: |
           docker build -q -f apps/wanted/Dockerfile -t knos:local .
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Keycloak (realm from deploy/sso) and SAML Jackson
         run: |
           rnd() { python3 -c 'import secrets;print(secrets.token_urlsafe(18))'; }
@@ -76,15 +76,14 @@ jobs:
           for i in $(seq 1 60); do c=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:5225/api/health || true); [ "$c" = 200 ] && break; sleep 5; done; test "$c" = 200
       - name: Sign in as the test user through SAML Jackson
         run: |
-          pip install -q requests
           python3 scripts/ci_sso_saml.py http://localhost:5225 http://localhost:8080/realms/knos-test/protocol/saml/descriptor
   cosign-keyless:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions: {contents: read, id-token: write}
     steps:
-      - uses: actions/checkout@v4
-      - uses: sigstore/cosign-installer@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
       - name: Sign the chart keyless (Sigstore, this run's OIDC identity) and verify it
         run: |
           tar -czf knos-chart.tgz -C deploy/selfhost knos
@@ -92,5 +91,5 @@ jobs:
           cosign verify-blob --bundle knos-chart.sigstore.json --certificate-oidc-issuer https://token.actions.githubusercontent.com \
             --certificate-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/selfhost-proof.yml@${GITHUB_REF}" knos-chart.tgz
           python3 -c 'import json;b=json.load(open("knos-chart.sigstore.json"));e=b.get("verificationMaterial",{}).get("tlogEntries",[{}])[0];print("rekor log index",e.get("logIndex"))'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with: {name: knos-chart-keyless, path: "knos-chart.*"}

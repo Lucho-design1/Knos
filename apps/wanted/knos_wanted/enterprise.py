@@ -37,7 +37,7 @@ import urllib.request
 from . import escrow
 
 SQUADS = "SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf"
-MOCKSAML_METADATA = "https://mocksaml.com/api/saml/metadata"
+MOCKSAML_METADATA = "https://mocksaml.com/api/namespace/knos/saml/metadata"     # the knos namespace of mocksaml.com
 PRODUCT = "knos"
 _pending: dict[str, tuple[float, dict]] = {}
 _plock = threading.Lock()
@@ -57,7 +57,7 @@ def test_idps() -> dict[str, dict]:
     """The TEST SAML IdPs the app registers in Jackson by itself, by tenant. mocksaml.com always; the self-hosted Keycloak
     test realm (deploy/sso/keycloak/knos-test-realm.json) when KNOS_SSO_KEYCLOAK_URL points at it."""
     out = {os.environ.get("KNOS_SSO_TEST_TENANT", "knos-test"): {
-        "name": "mocksaml.com (public test SAML IdP: any user@example.com, any password)", "metadata": MOCKSAML_METADATA}}
+        "name": "mocksaml.com/namespace/knos (public test SAML IdP: any user@example.com, any password)", "metadata": MOCKSAML_METADATA}}
     kc = (os.environ.get("KNOS_SSO_KEYCLOAK_URL") or "").rstrip("/")
     if kc and _safe(kc):
         out[KEYCLOAK_TENANT] = {"name": f"Keycloak, self-hosted TEST realm {KEYCLOAK_REALM} (test users only)",
@@ -120,7 +120,11 @@ def ensure_connection(tenant: str, base_url: str, opener=None) -> dict:
     auth = {"Authorization": f"Api-Key {key}"}
     q = urllib.parse.urlencode({"tenant": tenant, "product": PRODUCT})
     got = _http("GET", f"{cfg['jackson']}/api/v1/sso?{q}", headers=auth, opener=opener)
-    if not (isinstance(got, list) and got):
+    stale = [c for c in (got if isinstance(got, list) else []) if c.get("metadataUrl") and c["metadataUrl"] != idp["metadata"]]
+    for c in stale:                                       # registered against another IdP address: replace it
+        d = urllib.parse.urlencode({"clientID": c.get("clientID", ""), "clientSecret": c.get("clientSecret", "")})
+        _http("DELETE", f"{cfg['jackson']}/api/v1/sso?{d}", headers=auth, opener=opener)
+    if not (isinstance(got, list) and got) or stale:
         cb = base_url.rstrip("/") + "/auth/sso/callback"
         _http("POST", f"{cfg['jackson']}/api/v1/sso", headers=auth, form=True, opener=opener, data={
             "tenant": tenant, "product": PRODUCT, "name": f"{tenant} (test IdP: {idp['name']})", "metadataUrl": idp["metadata"],
@@ -213,13 +217,27 @@ def create_v2_data(members: list[str], threshold: int, time_lock: int = 0, memo:
 def company_multisig_tx(name: str, members: list[str], threshold: int, creator: str, led=None) -> dict:
     """The transaction the company's creator wallet signs: a Squads v4 multisig of the company's members."""
     from solders.hash import Hash
-    from solders.instruction import AccountMeta, Instruction
     from solders.keypair import Keypair
     from solders.message import Message
-    from solders.pubkey import Pubkey
     from solders.transaction import Transaction
 
     from knos import chain
+    led = led or escrow.ledger()
+    create_key = Keypair()
+    ix, rec, _ = multisig_ix(name, members, threshold, _pk(creator), create_key.pubkey(), led)
+    bh = Hash.from_string(chain.call(led.url, "getLatestBlockhash", [{"commitment": "confirmed"}])["value"]["blockhash"])
+    tx = Transaction.new_unsigned(Message.new_with_blockhash([ix], _pk(creator), bh))
+    tx.partial_sign([create_key], bh)
+    _save_company(rec)
+    return {"transaction": base64.b64encode(bytes(tx)).decode(), "company": rec["id"], "multisig": rec["multisig"], "vault": rec["vault"],
+            "message": f"Creates {rec['name']}'s Squads multisig ({rec['threshold']} of {len(rec['members'])}) on devnet. Your wallet signs and pays; Knos holds no key in it."}
+
+
+def multisig_ix(name: str, members: list[str], threshold: int, creator, create_key, led):
+    """Squads v4 multisig_create_v2 for a company: (the instruction, the company's record, the creation fee in lamports).
+    `create_key` seeds the multisig's address and signs with `creator` (a passkey wallet's vault may be both)."""
+    from solders.instruction import AccountMeta, Instruction
+    from solders.pubkey import Pubkey
     name = (name or "").strip()[:80]
     if len(name) < 2:
         raise ValueError("name: the company's name")
@@ -231,26 +249,20 @@ def company_multisig_tx(name: str, members: list[str], threshold: int, creator: 
         raise ValueError("threshold: 1 to the number of members")
     if str(creator) not in members:
         raise ValueError("creator: one of the members signs and pays for the multisig")
-    led = led or escrow.ledger()
-    create_key = Keypair()
-    pdas = squads_pdas(create_key.pubkey())
+    pdas = squads_pdas(create_key)
     cfg = led.account(pdas["program_config"])
     if cfg is None or len(cfg) < 80:
         raise ValueError("Squads v4's program config is not on this cluster")
     treasury = Pubkey.from_bytes(cfg[48:80])
+    fee = int.from_bytes(cfg[40:48], "little")
     ix = Instruction(Pubkey.from_string(SQUADS), create_v2_data(members, threshold, memo=f"Knos company: {name}"), [
         AccountMeta(pdas["program_config"], False, False), AccountMeta(treasury, False, True), AccountMeta(pdas["multisig"], False, True),
-        AccountMeta(create_key.pubkey(), True, False), AccountMeta(_pk(creator), True, True),
+        AccountMeta(create_key, True, False), AccountMeta(creator, True, True),
         AccountMeta(Pubkey.from_string("11111111111111111111111111111111"), False, False)])
-    bh = Hash.from_string(chain.call(led.url, "getLatestBlockhash", [{"commitment": "confirmed"}])["value"]["blockhash"])
-    tx = Transaction.new_unsigned(Message.new_with_blockhash([ix], _pk(creator), bh))
-    tx.partial_sign([create_key], bh)
     cid = hashlib.sha256(bytes(pdas["multisig"])).hexdigest()[:16]
     rec = {"id": cid, "name": name, "members": members, "threshold": threshold, "multisig": str(pdas["multisig"]),
            "vault": str(pdas["vault"]), "creator": str(creator), "status": "pending", "made": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-    _save_company(rec)
-    return {"transaction": base64.b64encode(bytes(tx)).decode(), "company": cid, "multisig": rec["multisig"], "vault": rec["vault"],
-            "message": f"Creates {name}'s Squads multisig ({threshold} of {len(members)}) on devnet. Your wallet signs and pays; Knos holds no key in it."}
+    return ix, rec, fee
 
 
 def _cdir():

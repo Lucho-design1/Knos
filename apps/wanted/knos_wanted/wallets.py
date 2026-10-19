@@ -248,7 +248,7 @@ def sign(led, user: dict, body: dict) -> dict:
     sig = _send_v0(led, ixs[len(prep.pre):], p["meta"].get("tables") or [])
     auth.seen(p["sub"], ad)
     done = {"preorder": _done_preorder, "accept": _done_accept, "advance": _done_advance, "collect": _done_collect,
-            "project_fund": _done_project_fund, "amc": _done_amc}[p["kind"]]
+            "project_fund": _done_project_fund, "amc": _done_amc, "company": _done_company}[p["kind"]]
     return done(led, p, sig, pre)
 
 
@@ -659,6 +659,43 @@ def _done_project_fund(led, p: dict, sig: str, pre: list) -> dict:
         cur["units"] += m["units"]
         valley._save("pools", m["pool"], cur)
     return valley.confirm(order, sig, led=led)
+
+
+COMPANY_LAMPORTS = 10_000_000           # the multisig account's rent and room, sent to the company wallet's vault first
+
+
+def prepare_company(led, user: dict, name: str, members: list, threshold, rp_id: str) -> dict:
+    """A company's Squads v4 multisig created by a passkey: the company gets its own passkey wallet (one per company
+    name), whose vault is both the multisig's create key and its creator (it signs inside LazorKit Execute, no other
+    key), and is its first member. The relayer only sends the rent to that vault and pays the fee."""
+    import hashlib
+
+    from solders.system_program import TransferParams, transfer
+
+    from . import enterprise
+    name = (name or "").strip()[:80]
+    if len(name) < 2:
+        raise ValueError("name: the company's name")
+    h = holder(user)
+    me = ensure(led, h, rp_id, "company", hashlib.sha256(name.lower().encode()).digest()[:16])
+    vault = me["vault"]
+    others = [str(m) for m in (members or []) if str(m) and str(m) != str(vault)]
+    ix, rec, fee = enterprise.multisig_ix(name, [str(vault), *others], threshold, vault, vault, led)
+    if led.account(enterprise._pk(rec["multisig"])) is not None:
+        raise ValueError("this company's multisig exists already")
+    rec["creator_kind"] = "passkey (LazorKit Execute)"
+    enterprise._save_company(rec)
+    pre = [transfer(TransferParams(from_pubkey=relayer().pubkey(), to_pubkey=vault, lamports=COMPANY_LAMPORTS + fee))]
+    prep = _prep(led, h, me, [ix], pre)
+    meta = {"cred_id": h["cred_id"], "company": rec["id"], "tables": []}
+    summary = {"what": f"create {name}'s Squads multisig ({rec['threshold']} of {len(rec['members'])})", "multisig": rec["multisig"],
+               "created_by": str(vault), "program": "Squads v4", "money": "devnet SOL for rent, sent by the relayer"}
+    return _intent("company", h, prep, meta, summary)
+
+
+def _done_company(led, p: dict, sig: str, pre: list) -> dict:
+    from . import enterprise
+    return {**enterprise.company_confirm(p["meta"]["company"], sig, led=led), "signatures": {"create": sig, "rent": pre[0] if pre else None}}
 
 
 def prepare_amc(led, user: dict, pid: str, key: str, units, rp_id: str) -> dict:

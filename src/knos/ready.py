@@ -67,7 +67,8 @@ def deadline_s(m: dict) -> int | None:
 
 def normal(m: dict, i: int = 0) -> dict:
     """One milestone's deciding fields, normalised (the form the hash and the order memo are made from)."""
-    v = m.get("verifier") if isinstance(m.get("verifier"), dict) else {}
+    raw = m.get("verifier")
+    v: dict = raw if isinstance(raw, dict) else {}
     kind = v.get("kind") if v.get("kind") in ("machine", "human") else ("machine" if v.get("check") else "human" if any(v.get(x) for x in HUMAN_FIELDS) else "")
     ver = {"kind": kind, "check": _text(v.get("check"), 100)} if kind == "machine" else \
         {"kind": kind, **{f: _text(v.get(f), 200) for f in HUMAN_FIELDS}} if kind == "human" else {"kind": ""}

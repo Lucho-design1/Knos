@@ -992,9 +992,34 @@ def _settle(pid: str, key: str, attempt: str, paid: list[dict], led, review) -> 
         m["history"].append({"at": _now(), "what": f"released to attempt {attempt}", "orders": paid, "amc": collected})
         _save("projects", pid, p)
     _journal("payout", {"project": pid, "milestone": key, "attempt": attempt, "orders": paid, "amc": collected,
-                        "evidence_sha256": [a["result"]["sha256"], a["check"]["sha256"]]})
-    return {"released": paid, "amc_collected": collected, "milestone": m["status"],
+                        "evidence_sha256": [a["result"]["sha256"], a["check"]["sha256"]]}, tenant_of(p))
+    att = _attest(p, key, aa, paid, led) if m["status"] == "released" else []
+    archive(pid)
+    return {"released": paid, "amc_collected": collected, "milestone": m["status"], "attestations": att,
             "review_sha256": hashlib.sha256(review.read_bytes()).hexdigest() if review is not None else None}
+
+
+def _attest(p: dict, key: str, a: dict, paid: list[dict], led=None) -> list[dict]:
+    """The verified milestone's track record: a Solana Attestation Service attestation to the maker's wallet and to
+    the referee group's key. A failed attestation never undoes a release; it is logged and left out."""
+    from . import preorder, track
+    try:
+        refs = [k for k in preorder.panel()[1]]
+    except Exception:  # noqa: BLE001 - a server without a panel attests the maker only
+        refs = []
+    sig = next((s for x in paid for s in (x.get("signatures") or []) if s), "")
+    try:
+        rows = track.attest(p["id"], key, a["id"], [("maker", a["wallet"])] + [("referee", k) for k in refs],
+                            (p.get("frozen") or {}).get("criteria_hash") or "", sig, led=led)
+    except Exception as why:  # noqa: BLE001
+        print(f"knos projects: attestation of {p['id']}/{key} failed: {type(why).__name__}: {str(why)[:200]}", flush=True)
+        return []
+    with _lock:
+        q = project(p["id"])
+        x = next(x for x in _milestone(q, key)["attempts"] if x["id"] == a["id"])
+        x["attestations"] = [{k: r[k] for k in ("role", "wallet", "attestation", "signature")} for r in rows]
+        _save("projects", q["id"], q)
+    return rows
 
 
 # ---- the sweeper: missed deadlines refund and reopen (B3) ------------------------------------------------------------
