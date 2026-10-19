@@ -149,3 +149,62 @@ CATALOGUE = {'v': 1,
               'cloudlab': [{'adapter': 'emerald', 'name': 'Cloud lab'}],
               'compute': [{'game': True, 'name': 'knos.game round (code scored by the sealed judge)'}],
               'none': []}}
+
+
+def _m(check):
+    return {"kind": "machine", "check": check}
+
+
+def _h(what, how, who, where):
+    return {"kind": "human", "what": what, "how": how, "who": who, "where": where}
+
+
+_PAGE = "a public https page containing the milestone's claim id"
+# Each template milestone's acceptance criteria (knos.ready): a measurable target and its verifier. A buyer's own
+# brief (template "custom") brings its own.
+CRITERIA = {
+    ("ai_model_eval", "protocol"): {"target": "1 test set sha256 (sealed) and 1 baseline score published",
+                                    "verifier": _h("the sealed test set's sha256 and the baseline score", "recomputed from the published files",
+                                                   "an independent checker who is not the maker", _PAGE)},
+    ("ai_model_eval", "result"): {"target": "score at or above the threshold on test_sealed_eval",
+                                  "verifier": _m("eval / test_sealed_eval")},
+    ("ai_model_eval", "rerun"): {"target": "re-run score within 1 point of the reported score",
+                                 "verifier": _h("the re-run score", "the published eval script on the sealed test set",
+                                                "an independent checker who is not the maker", _PAGE)},
+    ("hardware_prototype", "design"): {"target": "2 files published: the design archive and the bill of materials",
+                                       "verifier": _h("design files and bill of materials", "opened and checked against the spec's part list",
+                                                      "an independent engineer who is not the maker", _PAGE)},
+    ("hardware_prototype", "build"): {"target": "100% of the bench test steps pass on 1 unit",
+                                      "verifier": _h("each bench test step", "the published bench test procedure, logged with photos",
+                                                     "the maker, re-checked by an independent engineer", _PAGE)},
+    ("hardware_prototype", "second_unit"): {"target": "100% of the bench test steps pass on 1 unit built by another shop",
+                                            "verifier": _h("each bench test step on the second unit", "the same bench test procedure",
+                                                           "a second shop, re-checked by an independent engineer", _PAGE)},
+    ("internal_tool", "spec"): {"target": "1 spec and at least 5 acceptance tests in tests/acceptance/",
+                                "verifier": _m("ci / tests/acceptance")},
+    ("internal_tool", "accepted"): {"target": "100% of tests/acceptance/ pass on the team's data",
+                                    "verifier": _m("ci / tests/acceptance")},
+    ("internal_tool", "in_use"): {"target": "14 days in use with 0 open blocking issues",
+                                  "verifier": _h("days in use and open blocking issues", "the team's issue tracker export",
+                                                 "the team lead, re-checked by an independent checker", _PAGE)},
+    ("paper_to_pilot", "reproduce"): {"target": "the paper's key figure reproduced within 10% of its reported value",
+                                      "verifier": _h("the paper's key figure", "the paper's method, with the raw data published",
+                                                     "a lab other than the authors'", _PAGE)},
+    ("paper_to_pilot", "prototype"): {"target": "1 run at pilot scale, its yield reported in %",
+                                      "verifier": _h("the pilot-scale run's yield", "the published protocol, with the run log",
+                                                     "the maker, re-checked by an independent lab", _PAGE)},
+    ("paper_to_pilot", "pilot"): {"target": "1 run with 1 first customer, its results published",
+                                  "verifier": _h("the pilot's results", "the customer's signed acceptance and the run data",
+                                                 "the first customer, re-checked by an independent checker", _PAGE)},
+    ("vendor_deliverable", "sow"): {"target": "1 statement of work with 2 signatures",
+                                    "verifier": _h("the statement of work's signatures", "the signed document, both parties named",
+                                                   "both parties, re-checked by an independent checker", _PAGE)},
+    ("vendor_deliverable", "delivered"): {"target": "100% of the statement of work's acceptance tests pass",
+                                          "verifier": _m("ci / acceptance")},
+    ("vendor_deliverable", "warranty"): {"target": "30 days with 0 defect claims",
+                                         "verifier": _h("defect claims during the warranty", "the buyer's defect log",
+                                                        "the buyer, re-checked by an independent checker", _PAGE)},
+}
+REGULATORY_CRITERIA = {"target": "1 document with 0 empty sections of its OpenRegulatory template",
+                       "verifier": _h("the document", "section by section against its OpenRegulatory template",
+                                      "a quality reviewer who is not the maker", _PAGE)}

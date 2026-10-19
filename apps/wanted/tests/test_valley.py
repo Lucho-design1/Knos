@@ -126,8 +126,11 @@ def test_independent_check_rules_and_parallel_attempts(money, monkeypatch):
     with pytest.raises(preorder.NotVerified):
         valley.post(p["id"], "reproduce", a["id"], CHECKER, "https://repl.example.net/c", "check", fetch=lambda u: b"no id")
     seen = {}
-    monkeypatch.setattr(valley, "release", lambda pid, key, att: seen.update(att=att) or {"released": []})
-    valley.post(p["id"], "reproduce", a["id"], CHECKER, "https://repl.example.net/c", "check", fetch=fetch)
+    monkeypatch.setattr(valley, "release", lambda pid, key, att, led=None: seen.update(att=att) or {"released": []})
+    got = valley.post(p["id"], "reproduce", a["id"], CHECKER, "https://repl.example.net/c", "check", fetch=fetch)
+    assert got["verdict"]["pass"] and "att" not in seen              # human-verified: the challenge window runs first
+    assert valley.release_due(now=got["verdict"]["ends_s"] - 1) == []
+    valley.release_due(now=got["verdict"]["ends_s"])
     assert seen["att"] == a["id"]
 
 
@@ -299,3 +302,30 @@ def test_a_frost_milestone_waits_for_two_of_three_hosts_then_pays_maker_and_refe
     done = valley._load("orders", tx["order"])
     assert done["signatures"]["referee_group_pass"] == "G1" and done["paid_to"]["maker"] == wallet and done["referee_session"]["signers"] == [1, 2]
     assert valley.project(p["id"])["milestones"][0]["status"] == "released"
+
+
+def test_ready_gate_freeze_change_request_and_kill_fee(money):
+    vague = {"milestones": [{"key": "app", "name": "Make the app faster", "target": "better"}]}
+    p = valley.create_project(OWNER, "custom", "A vague app", brief=vague)
+    assert p["ready"]["label"] == "Not ready" and "app.verifier" in p["ready"]["missing"]
+    with pytest.raises(valley.Refused, match="Not ready to fund"):
+        valley.fund_tx(p["id"], "app", 10, str(Keypair().pubkey()), led=money.led)
+    clear = {"milestones": [{"key": "app", "name": "Checkout p95 latency", "target": "p95 under 300 ms on test_checkout_latency",
+                             "verifier": {"kind": "machine", "check": "ci / test_checkout_latency"}, "deadline_s": 120}], "kill_fee_bps": 1500}
+    p = valley.edit_brief(p["id"], OWNER, clear)
+    assert p["ready"]["ready"] and p["kill_fee_bps"] == 1500
+    tx = valley.fund_tx(p["id"], "app", 10, str(Keypair().pubkey()), led=money.led)
+    o = valley._load("orders", tx["order"])
+    assert o["criteria_hash"] == p["ready"]["criteria_hash"] and o["criteria_hash"] in o["doc"]["claim"]["statement"]
+    money.led.accounts[tx["order"]] = b"order"
+    valley.confirm(tx["order"], "4" * 88, led=money.led)
+    with pytest.raises(valley.Refused, match="change request"):
+        valley.edit_brief(p["id"], OWNER, clear)
+    a = valley.claim(p["id"], "app", MAKER, str(Keypair().pubkey()))
+    new = {**clear, "milestones": [{**clear["milestones"][0], "target": "p95 under 250 ms on test_checkout_latency"}]}
+    cr = valley.change_request(p["id"], OWNER, new, "tighter target")
+    with pytest.raises(valley.Refused):
+        valley.decide_change(p["id"], OWNER, cr["id"], True)                     # the buyer cannot accept its own change
+    got = valley.decide_change(p["id"], MAKER, cr["id"], True)
+    assert got["status"] == "accepted" and got["project"]["frozen"]["criteria_hash"] == cr["criteria_hash"] != cr["from_hash"]
+    assert a["status"] == "working"

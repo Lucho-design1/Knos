@@ -100,14 +100,18 @@ def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
-def _journal(kind: str, data: dict) -> dict:
-    """The decision log (Sibyl COLD, through the Knos Record): every funding, claim, release, refund and reopen."""
+def _journal(kind: str, data: dict, tenant: dict | None = None) -> dict:
+    """The decision log (Sibyl COLD, through the Knos Record): every funding, claim, release, refund and reopen, and
+    every brief version and criteria hash. A project's lines go to its own tenant claim and to its owner's."""
     rec = company._record()
     if rec is None:
         return {"recorded": False, "why": "the knos package is not installed"}
-    return company._safe(lambda: {"recorded": True, "seq": rec.append(kind, {**data, "cluster": "devnet", "money": "devnet test units"},
-                                                                     claim=company.claim_id(data.get("project", "0" * 64)),
-                                                                     domain=company.DOMAIN, root=company.root())["seq"]})
+    claims = [company.claim_id(data.get("project", "0" * 64))]
+    if tenant and tenant.get("user"):
+        claims.append(company.claim_id("user:" + tenant["user"]))
+    body = {**data, "cluster": "devnet", "money": "devnet test units", **({"tenant": {"project": tenant["project"]}} if tenant else {})}
+    return company._safe(lambda: {"recorded": True, "seq": [rec.append(kind, body, claim=c, domain=company.DOMAIN, root=company.root())["seq"]
+                                                            for c in claims][0]})
 
 
 # ---- templates -------------------------------------------------------------------------------------------------------
@@ -140,12 +144,15 @@ def _user_key(user: dict) -> str:
 
 
 def create_project(user: dict, template: str, title: str, regulatory: list[str] | None = None, report: str | None = None,
-                   team: str | None = None, deadline_s: int | None = None) -> dict:
-    """A project from a template (+ regulatory sets). `deadline_s` shortens every milestone's deadline (the one-day
-    sandbox, and the reopen demonstration): at least knos_pay's minimum of 60 s."""
+                   team: str | None = None, deadline_s: int | None = None, brief: dict | None = None) -> dict:
+    """A project from a template (+ regulatory sets), or from the buyer's own brief (template "custom"). `deadline_s`
+    shortens every milestone's deadline (the one-day sandbox, and the reopen demonstration): at least 60 s.
+    Every milestone carries its acceptance criteria (target, verifier, deadline); money locks only on a Ready brief."""
     c = catalogue()
+    if template == "custom" or brief is not None:
+        return _create_custom(user, title, brief or {}, report, team)
     if template not in c["templates"]:
-        raise Refused(f"template: one of {', '.join(c['templates'])}")
+        raise Refused(f"template: one of {', '.join(c['templates'])}, or custom with a brief")
     title = (title or "").strip()[:120]
     if len(title) < 3:
         raise Refused("title: what the project makes (3 to 120 characters)")
@@ -157,29 +164,275 @@ def create_project(user: dict, template: str, title: str, regulatory: list[str] 
         raise Refused("deadline_s: 60 to 7,776,000 seconds")
     t = c["templates"][template]
     ms = []
+    from .templates_data import CRITERIA, REGULATORY_CRITERIA
     for m in t["milestones"]:
+        cr = CRITERIA[(template, m["key"])]
         ms.append({"key": m["key"], "name": m["name"], "kind": "build", "share_bps": m["bps"], "route": m.get("route") or t["route"],
-                   "game": bool(m.get("game")), "deadline_s": deadline_s or m["days"] * 86_400})
+                   "game": bool(m.get("game")), "deadline_s": deadline_s or m["days"] * 86_400, "target": cr["target"],
+                   "verifier": cr["verifier"]})
     reg = c["regulatory"]
     for r in regulatory:
         for m in reg["sets"][r]["milestones"]:
             ms.append({"key": f"{r}_{m['key']}", "name": m["name"], "kind": "regulatory", "share_bps": 0, "route": "none", "game": False,
                        "deadline_s": deadline_s or 60 * 86_400, "standard": reg["sets"][r]["name"],
-                       "template": f"{reg['source']}/blob/{reg['commit']}/{m['path']}", "attribution": reg["attribution"]})
+                       "template": f"{reg['source']}/blob/{reg['commit']}/{m['path']}", "attribution": reg["attribution"],
+                       "target": REGULATORY_CRITERIA["target"], "verifier": dict(REGULATORY_CRITERIA["verifier"], what=f"{m['name']} ({reg['sets'][r]['name']})")})
+    return _open(user, template, t["name"], title, regulatory, report, team, ms, deadline_s is not None and deadline_s <= 86_400)
+
+
+def _create_custom(user: dict, title: str, brief: dict, report: str | None, team: str | None) -> dict:
+    title = (title or "").strip()[:120]
+    if len(title) < 3:
+        raise Refused("title: what the project makes (3 to 120 characters)")
+    if not isinstance(brief.get("milestones"), list) or not 1 <= len(brief["milestones"]) <= 12:
+        raise Refused("brief.milestones: 1 to 12 milestones")
+    from knos import ready
+    rows = [ready.normal(m if isinstance(m, dict) else {}, i) for i, m in enumerate(brief["milestones"])]
+    share = 10_000 // len(rows)
+    ms = [{"key": n["key"], "name": n["name"] or n["key"], "kind": "build", "share_bps": share, "route": "none", "game": False,
+           "deadline_s": n["deadline_s"] or ready.MIN_DEADLINE_S, "target": n["target"], "verifier": n["verifier"]} for n in rows]
+    return _open(user, "custom", "Your brief", title, [], report, team, ms, False, ready.terms(brief))
+
+
+def _brief(p: dict) -> dict:
+    """The project's brief in the ready module's shape: its milestones' criteria, the kill fee and the challenge window."""
+    return {"milestones": [{"key": m["key"], "name": m["name"], "target": m.get("target", ""), "verifier": m.get("verifier") or {},
+                            "deadline_s": m["deadline_s"]} for m in p["milestones"]],
+            "kill_fee_bps": p.get("kill_fee_bps", 0), "challenge_s": p.get("challenge_s", _ready().DEFAULT_CHALLENGE_S)}
+
+
+def _ready():
+    from knos import ready
+    return ready
+
+
+def readiness(p: dict) -> dict:
+    return _ready().check(_brief(p))
+
+
+def _version(p: dict, why: str) -> dict:
+    r = readiness(p)
+    v = {"n": len(p.get("versions") or []) + 1, "at": _now(), "why": why, "ready": r["ready"],
+         "criteria_hash": _ready().criteria_hash(_brief(p)), "missing": r["missing"][:20]}
+    p.setdefault("versions", []).append(v)
+    _journal("experiment", {"project": p["id"], "what": "brief version", "version": v["n"], "why": why, "ready": v["ready"],
+                            "criteria_hash": v["criteria_hash"], "brief": _brief(p)}, tenant_of(p))
+    return v
+
+
+def _open(user, template, template_name, title, regulatory, report, team, ms, sandbox, t=None) -> dict:
+    t = t or {"kill_fee_bps": 0, "challenge_s": _ready().DEFAULT_CHALLENGE_S}
     for m in ms:
         m.update(status="open", fundings=[], attempts=[], excluded=[], history=[{"at": _now(), "what": "opened"}])
     pid = _id(template, title, _user_key(user))
-    p = {"id": pid, "title": title, "template": template, "template_name": t["name"], "regulatory": regulatory, "report": report,
+    if _safe_load("projects", pid) is not None and template == "custom":
+        pid = _id(template, title, _user_key(user), _now(), os.urandom(4).hex())
+    p = {"id": pid, "title": title, "template": template, "template_name": template_name, "regulatory": regulatory, "report": report,
          "team": (team or "").strip()[:80] or None, "owner": _user_key(user), "owner_label": str(user.get("label") or "")[:80],
          "made": _now(), "milestones": ms, "cluster": "devnet", "money": "devnet test units of this app's test mint: no real money",
-         "sandbox": deadline_s is not None and deadline_s <= 86_400}
+         "sandbox": sandbox, "kill_fee_bps": t["kill_fee_bps"], "challenge_s": t["challenge_s"], "frozen": None, "changes": [],
+         "status": "open"}
+    _version(p, "opened")
     _save("projects", pid, p)
-    _journal("experiment", {"project": pid, "what": "project opened", "template": template, "regulatory": regulatory, "milestones": len(ms)})
+    _journal("experiment", {"project": pid, "what": "project opened", "template": template, "regulatory": regulatory, "milestones": len(ms)},
+             tenant_of(p))
     return public_project(p)
 
 
+def tenant_of(p: dict) -> dict:
+    """Sibyl tenants: one per user and one per project (each its own claim in the record)."""
+    return {"user": p.get("owner") or "", "project": p["id"]}
+
+
+def check_brief(brief: dict) -> dict:
+    """The free Ready-to-fund check (POST /api/ready, knos_ready on /mcp): nothing is stored or sent."""
+    return _ready().check(brief)
+
+
+def gate(p: dict) -> dict:
+    """Money locks only on a Ready brief, and only before the buyer cancels."""
+    if p.get("status") == "cancelled":
+        raise Refused("this project was cancelled by its buyer")
+    r = readiness(p)
+    if not r["ready"]:
+        raise Refused("Not ready to fund: " + "; ".join(r["missing"][:8]))
+    if p.get("frozen") and p["frozen"]["criteria_hash"] != r["criteria_hash"]:
+        raise Refused("the brief changed after it was locked without an accepted change request")
+    return r
+
+
+def _freeze(p: dict, order: str) -> None:
+    if not p.get("frozen"):
+        r = readiness(p)
+        p["frozen"] = {"criteria_hash": r["criteria_hash"], "at": _now(), "order": order, "kill_fee_bps": p.get("kill_fee_bps", 0),
+                       "challenge_s": p.get("challenge_s")}
+        _journal("experiment", {"project": p["id"], "what": "criteria locked", "criteria_hash": r["criteria_hash"], "order": order},
+                 tenant_of(p))
+
+
+def _set_brief(p: dict, brief: dict) -> None:
+    rd = _ready()
+    rows = [rd.normal(m if isinstance(m, dict) else {}, i) for i, m in enumerate(brief.get("milestones") or [])]
+    by = {m["key"]: m for m in p["milestones"]}
+    if {n["key"] for n in rows} != set(by):
+        raise Refused("brief: the same milestone keys as the project (" + ", ".join(by) + ")")
+    for n in rows:
+        m = by[n["key"]]
+        m.update(name=n["name"] or m["name"], target=n["target"], verifier=n["verifier"], deadline_s=n["deadline_s"] or m["deadline_s"])
+    t = rd.terms(brief)
+    p["kill_fee_bps"], p["challenge_s"] = t["kill_fee_bps"], t["challenge_s"]
+
+
+def edit_brief(pid: str, user: dict, brief: dict) -> dict:
+    """The owner edits the brief until money locks; after that only a change request the maker accepts."""
+    with _lock:
+        p = project(pid)
+        if p.get("owner") != _user_key(user):
+            raise Refused("only the project's buyer edits its brief")
+        if p.get("frozen"):
+            raise Refused("money is locked on this brief: propose a change request; the maker accepts or rejects it")
+        _set_brief(p, brief)
+        v = _version(p, "edited")
+        _save("projects", pid, p)
+    return {**public_project(p), "version": v}
+
+
+def _makers(p: dict) -> set:
+    return {a["maker_sub"] for m in p["milestones"] for a in m["attempts"]}
+
+
+def change_request(pid: str, user: dict, brief: dict, why: str = "") -> dict:
+    with _lock:
+        p = project(pid)
+        if p.get("owner") != _user_key(user):
+            raise Refused("only the project's buyer proposes a change")
+        if not p.get("frozen"):
+            raise Refused("nothing is locked yet: edit the brief directly")
+        trial = json.loads(json.dumps(p))
+        _set_brief(trial, brief)
+        r = readiness(trial)
+        if not r["ready"]:
+            raise Refused("the changed brief is Not ready: " + "; ".join(r["missing"][:8]))
+        cr = {"id": _id("change", pid, _now(), len(p["changes"]))[:10], "brief": _brief(trial), "criteria_hash": r["criteria_hash"],
+              "from_hash": p["frozen"]["criteria_hash"], "why": str(why or "")[:300], "status": "proposed", "at": _now()}
+        p["changes"].append(cr)
+        _save("projects", pid, p)
+    _journal("experiment", {"project": pid, "what": "change request", "change": cr["id"], "criteria_hash": cr["criteria_hash"]}, tenant_of(p))
+    return cr
+
+
+def decide_change(pid: str, user: dict, cid: str, accept: bool) -> dict:
+    with _lock:
+        p = project(pid)
+        cr = next((c for c in p["changes"] if c["id"] == cid), None)
+        if cr is None or cr["status"] != "proposed":
+            raise Refused("change: not an open change request on this project")
+        who = _user_key(user)
+        if who == p.get("owner") or who not in _makers(p):
+            raise Refused("the maker of this project (someone with an attempt on it) accepts or rejects a change")
+        cr["status"], cr["decided"], cr["by"] = ("accepted" if accept else "rejected"), _now(), str(user.get("label") or "maker")[:80]
+        if accept:
+            _set_brief(p, cr["brief"])
+            p["frozen"] = {**p["frozen"], "criteria_hash": cr["criteria_hash"], "at": _now(), "change": cid,
+                           "kill_fee_bps": p["kill_fee_bps"], "challenge_s": p["challenge_s"]}
+            _version(p, f"change {cid} accepted")
+        _save("projects", pid, p)
+    _journal("experiment", {"project": pid, "what": f"change {cr['status']}", "change": cid, "criteria_hash": cr["criteria_hash"]}, tenant_of(p))
+    return {**cr, "project": public_project(p)}
+
+
+def cancel(pid: str, user: dict, led=None, base: str | None = None) -> dict:
+    """The buyer cancels. A milestone a maker is working on releases the agreed kill fee to that maker and the rest
+    back to the funder, through the same referee panel; an untaken one is refunded to the funder at its deadline."""
+    with _lock:
+        p = project(pid)
+        if p.get("owner") != _user_key(user):
+            raise Refused("only the project's buyer cancels it")
+        if p.get("status") == "cancelled":
+            raise Refused("already cancelled")
+        p["status"] = "cancelled"
+        _save("projects", pid, p)
+    led = _ledger(led)
+    kf = int(p.get("kill_fee_bps") or 0)
+    out = []
+    for m in p["milestones"]:
+        a = next((x for x in m["attempts"] if x["status"] in ("working", "result posted", "verdict posted", "checked")), None)
+        for oid in m["fundings"]:
+            o = _safe_order(oid)
+            if not o or o["status"] != "locked":
+                continue
+            if a is None or kf == 0:
+                out.append({"order": oid, "status": "refunded at the deadline", "kill_fee_units": 0})
+                continue
+            from knos.ideas import commit as C
+            mk, fu = C.parse_payee(a["wallet"]), C.parse_payee(o["funder"])
+            o["doc"]["payee"] = {**mk, "split": [{"payee_id": mk["payee_id"], "bps": kf, "wallet": mk["wallet"]},
+                                                  {"payee_id": fu["payee_id"], "bps": 10_000 - kf, "wallet": fu["wallet"]}]}
+            o["kill_fee"] = {"bps": kf, "maker": a["wallet"], "units": o["units"] * kf / 10_000}
+            _save("orders", oid, o)
+            rv = {"project": pid, "milestone": m["key"], "attempt": a["id"], "result": a.get("result"), "check": a.get("check"),
+                  "rule": f"cancelled by the buyer: the maker keeps the agreed kill fee ({kf / 100:g}%), the rest returns to the funder"}
+            try:
+                got = _frost_start(pid, m["key"], a, o, rv, led, base)
+            except Refused as why:
+                got = {"order": oid, "status": f"kill fee due, not sent: {why}"}
+            out.append({**got, "kill_fee_units": o["kill_fee"]["units"]})
+    _journal("experiment", {"project": pid, "what": "cancelled by the buyer", "kill_fee_bps": kf, "orders": out}, tenant_of(p))
+    archive(pid)
+    return {"project": pid, "status": "cancelled", "kill_fee_bps": kf, "orders": out}
+
+
+def dispute(pid: str, key: str, attempt: str, user: dict, url: str) -> dict:
+    """Inside the challenge window, the buyer or the maker disputes a referee verdict with an evidence page: the
+    automatic release stops and the money stays locked (refunded at the deadline unless the panel decides again)."""
+    with _lock:
+        p = project(pid)
+        m = _milestone(p, key)
+        a = next((x for x in m["attempts"] if x["id"] == attempt), None)
+        if a is None or a["status"] != "verdict posted":
+            raise Refused("dispute: only a posted verdict inside its challenge window")
+        who = _user_key(user)
+        if who not in (p.get("owner"), a["maker_sub"]):
+            raise Refused("the buyer or the maker disputes a verdict")
+        if not re.fullmatch(r"https://[^\s]{4,2000}", url or ""):
+            raise Refused("url: the public https page with your evidence")
+        a["status"], a["dispute"] = "disputed", {"url": url, "by": str(user.get("label") or "")[:80], "at": _now()}
+        m["history"].append({"at": _now(), "what": f"verdict on attempt {attempt} disputed", "url": url})
+        _save("projects", pid, p)
+    _journal("experiment", {"project": pid, "milestone": key, "what": "verdict disputed", "attempt": attempt, "url": url}, tenant_of(p))
+    return {"attempt": attempt, "status": "disputed", "money": "stays locked"}
+
+
+def archive(pid: str) -> dict:
+    """A closed project (every milestone released, or cancelled) is archived in its Sibyl tenant."""
+    p = project(pid)
+    if p.get("archived"):
+        return {"archived": True}
+    if p.get("status") != "cancelled" and not all(m["status"] == "released" for m in p["milestones"]):
+        return {"archived": False}
+    p["archived"] = _now()
+    _save("projects", pid, p)
+    return _journal("archive", {"project": pid, "what": "project archived", "status": p.get("status"),
+                                "versions": [v["criteria_hash"] for v in p.get("versions") or []]}, tenant_of(p))
+
+
 def project(pid: str) -> dict:
-    return _load("projects", pid)
+    p = _load("projects", pid)
+    if "versions" not in p and p.get("template") in catalogue()["templates"]:
+        from .templates_data import CRITERIA, REGULATORY_CRITERIA
+        with _lock:
+            for m in p["milestones"]:
+                cr = CRITERIA.get((p["template"], m["key"])) or {**REGULATORY_CRITERIA, "verifier": dict(REGULATORY_CRITERIA["verifier"], what=m["name"])}
+                m.setdefault("target", cr["target"])
+                m.setdefault("verifier", cr["verifier"])
+            p.setdefault("kill_fee_bps", 0)
+            p.setdefault("challenge_s", _ready().DEFAULT_CHALLENGE_S)
+            p.setdefault("frozen", None)
+            p.setdefault("changes", [])
+            p.setdefault("status", "open")
+            _version(p, "acceptance criteria added")
+            _save("projects", pid, p)
+    return p
 
 
 def _milestone(p: dict, key: str) -> dict:
@@ -191,6 +444,8 @@ def _milestone(p: dict, key: str) -> dict:
 
 def public_project(p: dict) -> dict:
     out = {k: v for k, v in p.items() if k != "owner"}
+    out["ready"] = readiness(p) if "versions" in p else {"ready": False, "label": "Not ready", "missing": ["brief: opened before the check"]}
+    out.setdefault("changes", [])
     out["milestones"] = []
     for m in p["milestones"]:
         orders = [_order_public(o) for o in (_safe_order(x) for x in m["fundings"]) if o]
@@ -238,7 +493,7 @@ def _safe_order(oid: str) -> dict | None:
 
 def _order_public(o: dict) -> dict:
     return {k: o.get(k) for k in ("order", "project", "milestone", "units", "unit_price", "kind", "funder", "grant", "pool", "referral",
-                                  "status", "signatures", "made", "deadline_s", "claim_id")} | {
+                                  "status", "signatures", "made", "deadline_s", "claim_id", "criteria_hash", "kill_fee")} | {
         "explorer": escrow.explorer(o["order"], "address"), "trust": _trust(o)}
 
 
@@ -287,19 +542,19 @@ def fund_tx(pid: str, key: str, units: int, account: str, kind: str = "funder", 
     m = _milestone(p, key)
     if m["status"] == "released":
         raise Refused("this milestone is already released")
+    crit = gate(p)["criteria_hash"]
     preorder._need()
     led = _ledger(led)
     authority, pan = escrow.demo_key(), preorder.panel()        # the FROST group key (1 of 1) when configured
     mint = escrow.mint(led, create=False)
-    claim = ideas.claim(f"Milestone '{m['name']}' of the Knos project '{p['title']}' ({pid}, funding {len(m['fundings']) + 1})",
-                        field_name=preorder.FIELD, kind="person", by={"app": "knos projects", "project": pid, "milestone": key})
+    claim = ideas.claim(memo(p, m, crit), field_name=preorder.FIELD, kind="person", by={"app": "knos projects", "project": pid, "milestone": key})
     tok = pay.ata(wallet, mint)
     cap = blink._Capture(led)
     # the payee is bound when a maker claims the milestone (claim); until then the funder's own wallet stands in the
     # document (never paid: a release needs a claimed attempt, a refund always goes back to the funder)
     doc = C.commit(claim, units=units, price=1, payee=C.parse_payee(str(wallet)), funder=blink._Wallet(wallet), funder_token=tok,
                    mint=mint, led=cap, stages=[("referee_pass", 10_000)], stage_work_s=[int(m["deadline_s"])],
-                   panel=pan, program=preorder.program(), demand_hash=p.get("report"), unlisted_panel=True)
+                   panel=pan, program=preorder.program(), demand_hash=p.get("report"), unlisted_panel=True, criteria=_brief(p))
     amount = units * escrow.UNIT
     setup = [pay.create_ata_ix(authority.pubkey(), w, mint) for w in (pay.FEE_OWNER,) if led.account(pay.ata(w, mint)) is None]
     if setup:
@@ -317,7 +572,7 @@ def fund_tx(pid: str, key: str, units: int, account: str, kind: str = "funder", 
     o = {"order": st["order"], "project": pid, "milestone": key, "claim_id": claim["id"], "units": units, "unit_price": 1, "kind": kind,
          "funder": str(wallet), "grant": grant if kind == "grant" else None, "pool": pool,
          "referral": {"code": referral["code"], "wallet": referral["wallet"]} if referral else None,
-         "status": "pending", "deadline_s": int(m["deadline_s"]), "doc": doc, "made": _now(), "signatures": {}}
+         "status": "pending", "deadline_s": int(m["deadline_s"]), "doc": doc, "made": _now(), "signatures": {}, "criteria_hash": crit}
     _save("orders", st["order"], o)
     with _lock:
         p = project(pid)
@@ -326,6 +581,12 @@ def fund_tx(pid: str, key: str, units: int, account: str, kind: str = "funder", 
     return {"transaction": base64.b64encode(raw).decode(), "bytes": len(raw), "order": st["order"], "claim_id": claim["id"],
             "message": f"Locks {units} test units on '{m['name']}' (devnet). Paid to the maker only on a result and an independent check; "
                        "refunded to you after the deadline otherwise."}
+
+
+def memo(p: dict, m: dict, crit: str) -> str:
+    """The order's memo (its claim statement, committed on chain in the order's commitment hash): names the criteria hash."""
+    return (f"Milestone '{m['name']}' of the Knos project '{p['title']}' ({p['id']}, funding {len(m['fundings']) + 1}); "
+            f"criteria sha256:{crit}")
 
 
 def confirm(order: str, signature: str | None = None, led=None) -> dict:
@@ -346,9 +607,11 @@ def confirm(order: str, signature: str | None = None, led=None) -> dict:
             if m["status"] in ("open", "reopened"):
                 m["status"] = "funded"
             m["history"].append({"at": _now(), "what": f"funded {o['units']} test units ({o['kind']})", "order": order})
+            _freeze(p, order)
             _save("projects", p["id"], p)
         _journal("funding", {"project": o["project"], "milestone": o["milestone"], "order": order, "kind": o["kind"],
-                             "amount_units": o["units"], "signature": o["signatures"].get("lock"), "grant": o.get("grant")})
+                             "amount_units": o["units"], "signature": o["signatures"].get("lock"), "grant": o.get("grant"),
+                             "criteria_hash": o.get("criteria_hash")}, tenant_of(p))
     return _order_public(o)
 
 
@@ -512,13 +775,47 @@ def post(pid: str, key: str, attempt: str, user: dict, url: str, role: str, fetc
         if role == "check":
             a["check_sub"] = who
         a["status"] = "result posted" if role == "result" else "checked"
+        human = (m.get("verifier") or {}).get("kind") == "human"
+        if role == "check" and human:
+            win = int((p.get("frozen") or {}).get("challenge_s") or p.get("challenge_s") or _ready().DEFAULT_CHALLENGE_S)
+            a["status"] = "verdict posted"
+            a["verdict"] = {"pass": True, "at": _now(), "at_s": int(time.time()), "window_s": win, "ends_s": int(time.time()) + win,
+                            "by": "the referee panel (result + independent check verified)"}
         rv = _dir("evidence") / f"{pid}-{key}-{a['id']}-{role}.page"
         rv.write_bytes(body)
         m["history"].append({"at": _now(), "what": f"{role} posted on attempt {a['id']}", "sha256": ev["sha256"]})
         _save("projects", pid, p)
+    if role == "check" and a["status"] == "verdict posted":
+        _journal("experiment", {"project": pid, "milestone": key, "what": "referee verdict posted", "attempt": attempt,
+                                "window_s": a["verdict"]["window_s"]}, tenant_of(p))
+        return {"attempt": attempt, "posted": role, "evidence": ev, "verdict": a["verdict"],
+                "next": f"releases automatically after the {a['verdict']['window_s']} s challenge window unless the buyer or maker disputes"}
     if role == "check":
         return release(pid, key, attempt)
     return {"attempt": attempt, "posted": role, "evidence": ev, "next": "an independent check of this result, by another person on another site"}
+
+
+def release_due(now: int | None = None, led=None) -> list[dict]:
+    """Undisputed verdicts whose challenge window has ended are released (the sweeper calls this every SWEEP_S)."""
+    now = int(time.time()) if now is None else now
+    out = []
+    for p in _all("projects"):
+        for m in p["milestones"]:
+            for a in m["attempts"]:
+                if a["status"] == "verdict posted" and a.get("verdict", {}).get("ends_s", 1 << 62) <= now:
+                    with _lock:
+                        q = project(p["id"])
+                        aa = next(x for x in _milestone(q, m["key"])["attempts"] if x["id"] == a["id"])
+                        if aa["status"] != "verdict posted":
+                            continue
+                        aa["status"] = "checked"
+                        _milestone(q, m["key"])["history"].append({"at": _now(), "what": f"challenge window ended undisputed: releasing attempt {a['id']}"})
+                        _save("projects", p["id"], q)
+                    try:
+                        out.append({"project": p["id"], "milestone": m["key"], "attempt": a["id"], **release(p["id"], m["key"], a["id"], led=led)})
+                    except Exception as why:  # noqa: BLE001 - one failed release never stops the others
+                        out.append({"project": p["id"], "milestone": m["key"], "attempt": a["id"], "error": f"{type(why).__name__}: {str(why)[:160]}"})
+    return out
 
 
 def _site(host: str) -> str:
@@ -772,6 +1069,9 @@ def start_sweeper() -> None:
             try:
                 from . import preorder
                 if preorder.ready()[0] and _all("orders"):
+                    due = release_due()
+                    if due:
+                        print(f"knos projects sweeper: {len(due)} verdict(s) released after their challenge window", flush=True)
                     got = sweep()
                     if got["swept"]:
                         print(f"knos projects sweeper: {len(got['swept'])} order(s) refunded and reopened", flush=True)
@@ -813,6 +1113,7 @@ def amc_tx(pid: str, key: str, units: int, account: str, led=None) -> dict:
         raise Refused("account: the buyer's Solana wallet") from None
     p = project(pid)
     m = _milestone(p, key)
+    gate(p)
     if m["status"] == "released":
         raise Refused("this milestone is already released")
     preorder._need()

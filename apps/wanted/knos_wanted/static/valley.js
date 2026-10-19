@@ -53,6 +53,7 @@ async function loadProjects() {
   renderPool(got.projects);
 }
 function renderNewForm() {
+  renderBriefForm();
   const T = V.templates; if (!T || $("tplPick").dataset.done) return;
   $("tplPick").dataset.done = "1";
   $("tplPick").innerHTML = T.templates.map((t, i) => `<label class="opt"><input type="radio" name="tpl" value="${t.key}" ${i === 0 ? "checked" : ""}>
@@ -77,7 +78,9 @@ async function loadProject(id) {
     <p class="small muted">${esc(p.template_name)} · opened by ${esc(p.owner_label || "a signed-in user")}${p.team ? " for " + esc(p.team) : ""} · ${esc(p.money)}</p>
     <p class="small">Each milestone has its own escrow. It pays on a result plus an independent check. A missed deadline refunds and reopens it.</p>
     <div class="row"><button type="button" class="quiet" id="refBtn">Get my referral link</button>
-      <a class="button ghost small" href="/api/company/export?project=${p.id}&format=journal">Ledger CSV</a></div><p id="refOut" class="small"></p>`;
+      <a class="button ghost small" href="/api/company/export?project=${p.id}&format=journal">Ledger CSV</a></div><p id="refOut" class="small"></p>
+    ${readyLine(p)}${changesBlock(p)}`;
+  wireChanges(p);
   $("refBtn").onclick = () => busy($("refBtn"), "Making link", async () => {
     if (!session) { $("signin").hidden = false; throw new Error("Sign in first."); }
     const r = await api("/api/referral", { passkey: true, target: "p=" + p.id });
@@ -103,7 +106,7 @@ function msCard(p, m, i) {
   const reg = m.kind === "regulatory" ? `<p class="small"><span class="tag">Regulatory · ${esc(m.standard)}</span> <a href="${esc(m.template)}" rel="noopener">OpenRegulatory template</a></p>` : "";
   const cap = (m.route && m.route.capacity || []).map((c) => `<li>${esc(c.name)}${c.quote && c.quote.price != null ? ` — quote ${c.quote.price} ${esc(c.quote.currency)}, ${c.quote.turnaround_days} days <span class="small muted">(${c.quote.fixture ? "fixture quote, labelled" : "live"})</span>` : ""}${c.manual ? ` — <a href="${esc(c.manual)}" rel="noopener">order on their site</a>` : ""}</li>`).join("");
   const orders = m.orders.map((o) => `<li class="small"><a href="${o.explorer}" rel="noopener">${short(o.order)}</a> ${o.units} units · ${esc(o.kind)}${o.grant ? " (" + esc(o.grant.agency) + " " + esc(o.grant.id) + ")" : ""} · <strong>${esc(o.status)}</strong>${o.signatures && o.signatures.refund ? ` · <a href="${X(o.signatures.refund)}" rel="noopener">refund</a>` : ""}${o.signatures && (o.signatures.referee_2_pass || o.signatures.referee_group_pass) ? ` · <a href="${X(o.signatures.referee_2_pass || o.signatures.referee_group_pass)}" rel="noopener">release</a>` : ""}${trustLine(o.trust)}</li>`).join("");
-  const atts = m.attempts.map((a) => `<li class="small">${esc(a.maker)} · <strong>${esc(a.status)}</strong>${a.result ? ` · <a href="${esc(a.result.url)}" rel="noopener nofollow">result</a>` : ""}${a.check ? ` · <a href="${esc(a.check.url)}" rel="noopener nofollow">check</a> by ${esc(a.check.by)}` : ""}${a.result ? ` · <a href="/api/attest?project=${p.id}&milestone=${m.key}&attempt=${a.id}" rel="noopener">in-toto attestation</a>` : ""} <span class="mono muted">${esc(a.id)}</span></li>`).join("");
+  const atts = m.attempts.map((a) => `<li class="small">${esc(a.maker)} · <strong>${esc(a.status)}</strong>${a.result ? ` · <a href="${esc(a.result.url)}" rel="noopener nofollow">result</a>` : ""}${a.check ? ` · <a href="${esc(a.check.url)}" rel="noopener nofollow">check</a> by ${esc(a.check.by)}` : ""}${a.result ? ` · <a href="/api/attest?project=${p.id}&milestone=${m.key}&attempt=${a.id}" rel="noopener">in-toto attestation</a>` : ""} <span class="mono muted">${esc(a.id)}</span>${a.verdict && a.status === "verdict posted" ? ` · <span id="verdict-${esc(a.id)}">verdict: pass, releases ${new Date(a.verdict.ends_s * 1000).toLocaleTimeString()} unless disputed</span> <button type="button" class="quiet" data-dispute="${esc(a.id)}">Dispute</button>` : ""}${a.status === "disputed" ? " · money stays locked" : ""}</li>`).join("");
   return `<li class="card ms" id="ms${i}"><div class="row spread"><h3>${esc(m.name)}</h3><span class="chip st-${esc(m.status)}">${esc(STATUS[m.status] || m.status)}</span></div>
     ${reg}<p class="small muted">Deadline ${dur(m.deadline_s)} after funding · ${m.locked_units} test units in escrow · ${m.amc_units} committed (AMC)${m.excluded_makers ? ` · ${m.excluded_makers} maker(s) missed it` : ""}</p>
     ${orders ? `<ul class="list">${orders}</ul>` : ""}${atts ? `<p class="small"><strong>Attempts</strong> (up to 3 in parallel)</p><ul class="list">${atts}</ul>` : ""}
@@ -113,7 +116,7 @@ function msCard(p, m, i) {
       <label for="u${i}">Test units</label><input id="u${i}" type="number" min="5" max="1000" value="10" inputmode="numeric">
       <label for="k${i}">As</label><select id="k${i}" class="field"><option value="funder">a funder (escrow now)</option><option value="grant">a grant (escrow now, labelled)</option><option value="amc">a buyer commitment (pays only when it verifies)</option></select>
       <div id="g${i}" hidden><label for="ga${i}">Grant agency</label><input id="ga${i}" maxlength="120"><label for="gi${i}">Grant id</label><input id="gi${i}" maxlength="120"></div>
-      <button type="button" id="f${i}">Approve with my passkey</button><p class="small muted">Test units. Refunds go back to your passkey wallet.</p></details>
+      <button type="button" id="f${i}" ${p.ready && p.ready.ready && p.status !== "cancelled" ? "" : "disabled"}>Approve with my passkey</button><p class="small muted">${p.ready && p.ready.ready ? "Test units. Refunds go back to your passkey wallet." : "Locked until the brief is Ready to fund."}</p></details>
     <details><summary>Make it</summary>
       <button type="button" class="ghost" id="c${i}">Attempt this milestone</button>
       <label for="e${i}">Evidence page (public https, contains the claim id${m.orders[0] ? ": " + esc(m.orders[0].claim_id) : ""})</label><input id="e${i}" inputmode="url" maxlength="2000" placeholder="https://">
@@ -123,6 +126,11 @@ function msCard(p, m, i) {
 }
 function wire(p, m, i) {
   const out = (h) => { $("o" + i).innerHTML = h; };
+  for (const b of document.querySelectorAll(`#ms${i} button[data-dispute]`)) b.onclick = () => busy(b, "Disputing", async () => {
+    const url = $("e" + i).value.trim(); if (!/^https:\/\//.test(url)) throw new Error("Put your evidence page (https) in the evidence field first.");
+    const r = await api("/api/project/dispute", { project: p.id, milestone: m.key, attempt: b.dataset.dispute, url });
+    out(`Disputed: the money ${esc(r.money)}.`); setTimeout(() => loadProject(p.id), 800);
+  });
   const k = $("k" + i); if (!k) return;
   k.onchange = () => { $("g" + i).hidden = k.value !== "grant"; };
   $("f" + i).onclick = () => busy($("f" + i), "Approve on your passkey", async () => {
@@ -148,7 +156,7 @@ function wire(p, m, i) {
   for (const [b, role] of [["r", "result"], ["x", "check"]]) $(b + i).onclick = () => busy($(b + i), "Fetching the page", async () => {
     if (!session) { $("signin").hidden = false; throw new Error("Sign in first."); }
     const r = await api("/api/project/post", { project: p.id, milestone: m.key, attempt: $("a" + i).value.trim(), url: $("e" + i).value.trim(), role });
-    out(r.released ? (r.milestone === "signing" ? "Verified: 2 of 3 referee hosts are checking the review and signing the release." : `Released: ${r.released.map((x) => esc(x.status)).join(", ")}.`) : `Posted. Next: ${esc(r.next)}.`);
+    out(r.verdict ? `Verdict posted: pays automatically after the ${dur(r.verdict.window_s)} dispute window.` : r.released ? (r.milestone === "signing" ? "Verified: 2 of 3 referee hosts are checking the review and signing the release." : `Released: ${r.released.map((x) => esc(x.status)).join(", ")}.`) : `Posted. Next: ${esc(r.next)}.`);
     setTimeout(() => loadProject(p.id), 1500);
   });
 }
@@ -173,6 +181,99 @@ async function pool() {
   $("poolOut").innerHTML = `Pooled ${each * sigs.length} test units over ${sigs.length} milestones: ` + sigs.map((s) => `<a href="${X(s)}" rel="noopener">${short(s)}</a>`).join(" ");
 }
 
+// ---- Ready to fund: the free check before any money locks (knos.ready on the server, POST /api/ready) ---------------
+function briefFromForm() {
+  const kind = $("bKind").value, d = parseInt($("bDays").value, 10);
+  const verifier = kind === "machine" ? { kind, check: $("bCheck").value } :
+    { kind, what: $("bWhat").value, how: $("bHow").value, who: $("bWho").value, where: $("bWhere").value };
+  const win = parseInt($("bWindow").value, 10);
+  return { milestones: [{ key: "m1", name: $("bName").value, target: $("bTarget").value, verifier,
+    ...(d > 0 ? { deadline_days: d } : {}) }], kill_fee_bps: Math.round((parseFloat($("bKill").value) || 0) * 100),
+    challenge_s: win > 0 ? win : 72 * 3600 };
+}
+function fillBrief(t) {
+  $("bName").value = t.name || ""; $("bTarget").value = t.target || ""; $("bDays").value = t.deadline_days || "";
+  $("bKind").value = t.verifier.kind; $("bKind").onchange();
+  if (t.verifier.kind === "machine") $("bCheck").value = t.verifier.check || "";
+  else for (const f of ["what", "how", "who", "where"]) $("b" + f[0].toUpperCase() + f.slice(1)).value = t.verifier[f] || "";
+}
+let briefTimer = 0;
+async function checkBrief() {
+  const r = await api("/api/ready", { brief: briefFromForm() });
+  const box = $("bReady"), ok = r.ready;
+  $("bLock").disabled = !ok;
+  box.className = "ready " + (ok ? "ok" : "bad");
+  const m = r.milestones[0] || {};
+  box.innerHTML = ok ? `<strong id="bLabel">Ready</strong> · criteria <span class="mono">${esc(r.criteria_hash.slice(0, 12))}</span>`
+    : `<strong id="bLabel">Not ready</strong><ul class="list small" id="bMissing">${r.missing.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` +
+      (m.rewrite ? `<button type="button" class="quiet" id="bRewrite">Use the rewrite</button>` : "");
+  if (!ok && m.rewrite) $("bRewrite").onclick = () => { fillBrief(m.rewrite); checkBrief().catch(err); };
+  return r;
+}
+function renderBriefForm() {
+  if ($("briefBox") || !$("tplPick")) return;
+  const sec = document.createElement("div");
+  sec.id = "briefBox"; sec.className = "card";
+  sec.innerHTML = `<h3>Your brief</h3><p class="small muted">Money locks only when each milestone has a number to hit, who checks it, and a deadline. The check is free.</p>
+    <label for="bName">Milestone</label><input id="bName" maxlength="160" placeholder="Checkout p95 latency">
+    <label for="bTarget">Target (a number and unit, or a test name)</label><input id="bTarget" maxlength="300" placeholder="p95 under 300 ms on test_checkout">
+    <label for="bKind">Checked by</label><select id="bKind" class="field"><option value="machine">a GitHub check or test</option><option value="human">a person (lab, document)</option></select>
+    <div id="bMachine"><label for="bCheck">Check or test name</label><input id="bCheck" maxlength="100" placeholder="ci / test_checkout"></div>
+    <div id="bHuman" hidden><label for="bWhat">What is measured</label><input id="bWhat" maxlength="200"><label for="bHow">How</label><input id="bHow" maxlength="200">
+      <label for="bWho">Who measures it</label><input id="bWho" maxlength="200"><label for="bWhere">Where it is published</label><input id="bWhere" maxlength="200"></div>
+    <div class="row"><span><label for="bDays">Deadline (days)</label><input id="bDays" type="number" min="1" max="90" inputmode="numeric" value="14"></span>
+      <span><label for="bKill">Kill fee (%)</label><input id="bKill" type="number" min="0" max="50" step="1" inputmode="numeric" value="10"></span>
+      <span><label for="bWindow">Dispute window (s)</label><input id="bWindow" type="number" min="60" inputmode="numeric" value="259200"></span></div>
+    <p id="bReady" class="ready" role="status" aria-live="polite"></p>
+    <p class="small muted" id="bKillNote"></p>
+    <button type="button" id="bLock" disabled>Open and fund</button>`;
+  $("tplPick").closest("section, .card, div").before(sec);
+  $("bKind").onchange = () => { const h = $("bKind").value === "human"; $("bHuman").hidden = !h; $("bMachine").hidden = h; };
+  const kn = () => { $("bKillNote").textContent = `If you cancel after funding, the maker keeps ${parseFloat($("bKill").value) || 0}% as the kill fee.`; };
+  for (const el of sec.querySelectorAll("input, select")) el.addEventListener("input", () => { kn(); clearTimeout(briefTimer); briefTimer = setTimeout(() => checkBrief().catch(err), 250); });
+  kn(); checkBrief().catch(err);
+  $("bLock").onclick = () => busy($("bLock"), "Opening", async () => {
+    if (!session) { $("signin").hidden = false; throw new Error("Sign in with your passkey first."); }
+    const r = await checkBrief(); if (!r.ready) throw new Error("Not ready to fund yet.");
+    const p = await api("/api/project", { template: "custom", title: $("pTitle").value.trim() || $("bName").value.trim(), brief: briefFromForm() });
+    location.hash = "#projects=" + p.id;
+  });
+}
+function readyLine(p) {
+  const r = p.ready || {};
+  const fz = p.frozen ? ` · locked criteria <span class="mono" id="critHash">${esc(p.frozen.criteria_hash.slice(0, 12))}</span>` : "";
+  return `<p class="small"><span class="chip ${r.ready ? "st-funded" : "st-open"}" id="readyChip">${r.ready ? "Ready to fund" : "Not ready"}</span>${fz}` +
+    ` · kill fee ${(p.kill_fee_bps || 0) / 100}% · dispute window ${dur(p.challenge_s || 259200)}${p.status === "cancelled" ? " · <strong>cancelled</strong>" : ""}</p>` +
+    (r.ready ? "" : `<ul class="list small">${(r.missing || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`);
+}
+function changesBlock(p) {
+  const rows = (p.changes || []).map((c) => `<li class="small">Change ${esc(c.id)}: ${esc(c.why || "new criteria")} · <strong id="ch-${esc(c.id)}">${esc(c.status)}</strong>
+    ${c.status === "proposed" ? `<button type="button" class="quiet" data-ch="${esc(c.id)}" data-ok="1">Accept</button><button type="button" class="quiet" data-ch="${esc(c.id)}" data-ok="0">Reject</button>` : ""}</li>`).join("");
+  const propose = p.frozen && p.status !== "cancelled" ? `<details><summary class="small">Propose a change (the maker accepts or rejects)</summary>
+    <label for="chTarget">New target for "${esc(p.milestones[0].name)}"</label><input id="chTarget" maxlength="300" value="${esc(p.milestones[0].target || "")}">
+    <button type="button" class="ghost" id="chSend">Send change request</button></details>
+    <button type="button" class="quiet" id="pCancel">Cancel the project (kill fee ${(p.kill_fee_bps || 0) / 100}%)</button>` : "";
+  return `<div id="changes">${rows ? `<ul class="list">${rows}</ul>` : ""}${propose}<p id="chOut" class="small" aria-live="polite"></p></div>`;
+}
+function wireChanges(p) {
+  const out = (h) => { $("chOut").innerHTML = h; };
+  for (const b of document.querySelectorAll("#changes button[data-ch]")) b.onclick = () => busy(b, "Deciding", async () => {
+    const r = await api("/api/project/change/decide", { project: p.id, change: b.dataset.ch, accept: b.dataset.ok === "1" });
+    out(`Change ${esc(r.status)}.`); setTimeout(() => loadProject(p.id), 800);
+  });
+  if ($("chSend")) $("chSend").onclick = () => busy($("chSend"), "Sending", async () => {
+    const b = { milestones: p.milestones.map((m, i) => ({ key: m.key, name: m.name, target: i === 0 ? $("chTarget").value : m.target,
+      verifier: m.verifier, deadline_s: m.deadline_s })), kill_fee_bps: p.kill_fee_bps, challenge_s: p.challenge_s };
+    const r = await api("/api/project/change", { project: p.id, brief: b, why: "new target: " + $("chTarget").value.slice(0, 120) });
+    out(`Change ${esc(r.id)} sent to the maker.`); setTimeout(() => loadProject(p.id), 800);
+  });
+  if ($("pCancel")) $("pCancel").onclick = () => busy($("pCancel"), "Cancelling", async () => {
+    const r = await api("/api/project/cancel", { project: p.id });
+    out(`Cancelled. ${r.orders.map((o) => `${esc(o.status)}${o.kill_fee_units ? `, kill fee ${o.kill_fee_units} units to the maker` : ""}`).join("; ")}`);
+    setTimeout(() => loadProject(p.id), 1500);
+  });
+}
+
 // ---- teams -----------------------------------------------------------------------------------------------------------
 async function loadTeams() {
   const c = await api("/api/sso/config").catch(() => ({ enabled: false }));
@@ -189,8 +290,7 @@ async function loadTeams() {
   $("tplCount").textContent = V.templates ? V.templates.templates.length : 5;
   const pf = await api("/api/proofs").catch(() => ({ proofs: [] }));
   const li = (x) => `<li class="small"><details><summary><strong>${esc(x.title)}</strong> · ${esc(x.result)} · ${esc(x.where)} · ${esc((x.ran_at || "").slice(0, 10))}</summary>
-    <p>${esc(x.summary)}</p>${(x.run_yourself || []).length ? `<p class="muted">Run it yourself:</p><pre class="mono">${esc(x.run_yourself.join("
-"))}</pre>` : ""}</details></li>`;
+    <p>${esc(x.summary)}</p>${(x.run_yourself || []).length ? `<p class="muted">Run it yourself:</p><pre class="mono">${esc(x.run_yourself.join("\n"))}</pre>` : ""}</details></li>`;
   $("proofList").innerHTML = (pf.proofs || []).map(li).join("") || `<li class="muted small">No recorded proofs in this build.</li>`;
   $("erpProofs").innerHTML = (pf.proofs || []).filter((x) => x.key.startsWith("erp_")).map(li).join("") || `<li class="muted small">None recorded.</li>`;
 }

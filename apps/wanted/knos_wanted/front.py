@@ -119,6 +119,8 @@ def product(state, rep: dict, slug: str, project_id: str | None) -> dict:
     if project_id:
         try:
             p = valley.public_project(valley.project(project_id))
+            if not p["ready"]["ready"]:
+                raise valley.Refused("its generated milestones are Not ready to fund")
             for m in p["milestones"]:
                 escrow_units += m["locked_units"]
                 if m["status"] != "released" and m["kind"] == "build":

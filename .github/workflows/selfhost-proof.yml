@@ -1,0 +1,96 @@
+# Self-host proofs on GitHub's hosted runners, with no account anywhere: the Helm chart on kind answering /healthz,
+# ERPNext (frappe_docker) with a record imported and read back, Keycloak SAML sign-in through SAML Jackson, and a
+# keyless cosign signature (Sigstore, this run's GitHub OIDC identity) of the chart.
+name: selfhost proof
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["deploy/selfhost/**", "deploy/sso/**", "scripts/ci_sso_saml.py", ".github/workflows/selfhost-proof.yml"]
+permissions:
+  contents: read
+concurrency: {group: selfhost-proof, cancel-in-progress: false}
+jobs:
+  kind-helm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: helm/kind-action@v1
+        with: {cluster_name: knos-selfhost, config: deploy/selfhost/kind-config.yaml}
+      - name: Build the image from this repository and load it into kind
+        run: |
+          docker build -q -f apps/wanted/Dockerfile -t knos:local .
+          kind load docker-image knos:local --name knos-selfhost
+      - name: Helm install and /healthz
+        run: |
+          helm install knos deploy/selfhost/knos -f deploy/selfhost/kind-values.yaml --wait --timeout 15m
+          kubectl get pods -o wide
+          SVC=$(kubectl get svc -o jsonpath='{.items[?(@.metadata.name!="kubernetes")].metadata.name}' | awk '{print $1}')
+          PORT=$(kubectl get svc "$SVC" -o jsonpath='{.spec.ports[0].port}')
+          kubectl port-forward "svc/$SVC" 18080:"$PORT" >/tmp/pf.log 2>&1 &
+          for i in $(seq 1 60); do code=$(curl -s -o /tmp/h.json -w '%{http_code}' http://127.0.0.1:18080/healthz || true); [ "$code" = 200 ] && break; sleep 5; done
+          echo "healthz HTTP $code: $(head -c 300 /tmp/h.json)"; test "$code" = 200
+  erpnext-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: ERPNext from frappe_docker (pwd.yml)
+        run: |
+          git clone -q --depth 1 https://github.com/frappe/frappe_docker /tmp/fd
+          cd /tmp/fd && docker compose -f pwd.yml up -d
+          for i in $(seq 1 120); do s=$(docker compose -f pwd.yml ps -a --format '{{.Service}} {{.State}} {{.ExitCode}}' | awk '$1=="create-site"{print $2,$3}'); [ "$s" = "exited 0" ] && break; sleep 10; done
+          echo "create-site: $s"; test "$s" = "exited 0"
+          for i in $(seq 1 60); do c=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/method/ping || true); [ "$c" = 200 ] && break; sleep 5; done
+          test "$c" = 200
+      - name: Import a customer and read it back
+        run: |
+          J=/tmp/erp.cookies; NAME="Knos CI import ${GITHUB_RUN_ID}"
+          curl -sf -c $J -X POST http://127.0.0.1:8080/api/method/login -H 'Content-Type: application/json' -d '{"usr":"Administrator","pwd":"admin"}' >/dev/null
+          curl -sf -b $J -X POST http://127.0.0.1:8080/api/resource/Customer -H 'Content-Type: application/json' \
+            -d "{\"customer_name\":\"$NAME\",\"customer_type\":\"Company\"}" | tee /tmp/made.json
+          ID=$(python3 -c 'import json;print(json.load(open("/tmp/made.json"))["data"]["name"])')
+          curl -sf -b $J "http://127.0.0.1:8080/api/resource/Customer/$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' "$ID")" | tee /tmp/back.json
+          python3 -c 'import json,sys;d=json.load(open("/tmp/back.json"))["data"];assert d["customer_name"]==sys.argv[1],d;print("read back:",d["name"],d["customer_name"])' "$NAME"
+  keycloak-saml-jackson:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Keycloak (realm from deploy/sso) and SAML Jackson
+        run: |
+          rnd() { python3 -c 'import secrets;print(secrets.token_urlsafe(18))'; }
+          openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj /CN=knos-test -keyout /tmp/k.pem -out /tmp/c.pem 2>/dev/null
+          KEY=$(openssl pkcs8 -topk8 -nocrypt -in /tmp/k.pem -outform DER | base64 -w0); CERT=$(openssl x509 -in /tmp/c.pem -outform DER | base64 -w0)
+          ALICE=$(rnd); echo "::add-mask::$ALICE"; echo "ALICE=$ALICE" >> $GITHUB_ENV
+          API=$(rnd); echo "::add-mask::$API"; echo "JACKSON_API=$API" >> $GITHUB_ENV
+          docker network create sso
+          docker run -d --name kc --network sso -p 8080:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD="$(rnd)" \
+            -e KC_TEST_PASSWORD_ALICE="$ALICE" -e KC_TEST_PASSWORD_BOB="$(rnd)" -e KC_REALM_PRIVATE_KEY="$KEY" -e KC_REALM_CERTIFICATE="$CERT" \
+            -e KC_SAML_ACS=http://localhost:5225/api/oauth/saml -e KC_SAML_SP_ENTITY_ID=https://saml.knos.ci \
+            -e KC_REALM_JSON="$(cat deploy/sso/keycloak/knos-test-realm.json)" --entrypoint /bin/bash quay.io/keycloak/keycloak:26.4.2 -c "$(cat deploy/sso/keycloak/start.sh)"
+          docker run -d --name jackson --network sso -p 5225:5225 -e JACKSON_API_KEYS="$API" -e DB_ENGINE=mem -e EXTERNAL_URL=http://localhost:5225 \
+            -e SAML_AUDIENCE=https://saml.knos.ci -e NEXTAUTH_URL=http://localhost:5225 -e NEXTAUTH_SECRET="$(rnd)" -e NEXTAUTH_ADMIN_CREDENTIALS="ci@knos.test:$(rnd)" \
+            boxyhq/jackson:latest
+          for i in $(seq 1 90); do c=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/realms/knos-test/protocol/saml/descriptor || true); [ "$c" = 200 ] && break; sleep 5; done; test "$c" = 200
+          for i in $(seq 1 60); do c=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:5225/api/health || true); [ "$c" = 200 ] && break; sleep 5; done; test "$c" = 200
+      - name: Sign in as the test user through SAML Jackson
+        run: |
+          pip install -q requests
+          python3 scripts/ci_sso_saml.py http://localhost:5225 http://localhost:8080/realms/knos-test/protocol/saml/descriptor
+  cosign-keyless:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {contents: read, id-token: write}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign the chart keyless (Sigstore, this run's OIDC identity) and verify it
+        run: |
+          tar -czf knos-chart.tgz -C deploy/selfhost knos
+          cosign sign-blob --yes --bundle knos-chart.sigstore.json knos-chart.tgz
+          cosign verify-blob --bundle knos-chart.sigstore.json --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/selfhost-proof.yml@${GITHUB_REF}" knos-chart.tgz
+          python3 -c 'import json;b=json.load(open("knos-chart.sigstore.json"));e=b.get("verificationMaterial",{}).get("tlogEntries",[{}])[0];print("rekor log index",e.get("logIndex"))'
+      - uses: actions/upload-artifact@v4
+        with: {name: knos-chart-keyless, path: "knos-chart.*"}

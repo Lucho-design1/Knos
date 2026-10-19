@@ -20,6 +20,14 @@ MAX_MEDIA_BODY = provenance.MAX_MEDIA
 ROUTES = [
     ("GET", "/api/templates", False, "Milestone templates and OpenRegulatory regulatory sets", {}),
     ("GET", "/api/projects", False, "Projects, newest first", {"take": "integer"}),
+    ("POST", "/api/ready", False, "Ready to fund: is a brief clear enough to lock money on (free; nothing stored)", {"brief": "object"}),
+    ("POST", "/api/project/brief", True, "The buyer edits a project's brief (until money locks)", {"project": "string", "brief": "object"}),
+    ("POST", "/api/project/change", True, "After lock: the buyer proposes a change request (a new criteria hash)",
+     {"project": "string", "brief": "object", "why": "string"}),
+    ("POST", "/api/project/change/decide", True, "The maker accepts or rejects a change request", {"project": "string", "change": "string", "accept": "boolean"}),
+    ("POST", "/api/project/cancel", True, "The buyer cancels: the maker keeps the kill fee agreed before lock", {"project": "string"}),
+    ("POST", "/api/project/dispute", True, "Dispute a referee verdict inside its challenge window, with evidence",
+     {"project": "string", "milestone": "string", "attempt": "string", "url": "string"}),
     ("GET", "/api/project", False, "One project with its milestones, orders, attempts and routing", {"id": "string"}),
     ("GET", "/api/project/route", False, "Where a milestone's work can be bought (labs, knos.game) and its quotes", {"project": "string", "milestone": "string"}),
     ("POST", "/api/project", True, "Open a project from a template (+ regulatory sets); deadline_s for a one-day sandbox",
@@ -203,9 +211,22 @@ def _post(path: str, b: dict, user: dict, h) -> dict:
     if path == "/api/project/pool" and b.get("passkey") is True:
         from . import valley as v
         return {"pool": v._id("pool", str(user.get("sub"))), "rule": "fund each milestone with POST /api/project/fund {passkey, kind: pool, pool}"}
+    if path == "/api/ready":
+        return valley.check_brief(b.get("brief") if isinstance(b.get("brief"), dict) else b)
     if path == "/api/project":
         return valley.create_project(user, str(b.get("template", "")), str(b.get("title", "")), b.get("regulatory") or [],
-                                     _s(b.get("report"), 64), _s(b.get("team"), 80), b.get("deadline_s"))
+                                     _s(b.get("report"), 64), _s(b.get("team"), 80), b.get("deadline_s"),
+                                     b.get("brief") if isinstance(b.get("brief"), dict) else None)
+    if path == "/api/project/brief":
+        return valley.edit_brief(str(b.get("project", "")), user, b.get("brief") if isinstance(b.get("brief"), dict) else {})
+    if path == "/api/project/change":
+        return valley.change_request(str(b.get("project", "")), user, b.get("brief") if isinstance(b.get("brief"), dict) else {}, _s(b.get("why"), 300) or "")
+    if path == "/api/project/change/decide":
+        return valley.decide_change(str(b.get("project", "")), user, str(b.get("change", "")), b.get("accept") is True)
+    if path == "/api/project/cancel":
+        return valley.cancel(str(b.get("project", "")), user, base=h._base())
+    if path == "/api/project/dispute":
+        return valley.dispute(str(b.get("project", "")), str(b.get("milestone", "")), str(b.get("attempt", "")), user, str(b.get("url", "")))
     if path == "/api/sandbox":
         return valley.create_project(user, str(b.get("template") or "internal_tool"), str(b.get("title") or "One-day sandbox project"), [],
                                      None, _s(b.get("team"), 80) or "sandbox team", int(os.environ.get("KNOS_SANDBOX_DEADLINE_S", "86400")))
@@ -263,6 +284,10 @@ MCP_TOOLS = [
                          ("project", "milestone", "attempt", "url", "role", "session"))},
     {"name": "knos_openapi", "title": "This server's OpenAPI document", "description": "The same API as REST: /openapi.json.",
      "inputSchema": _obj({})},
+    {"name": "knos_ready", "title": "Ready to fund", "description": "Free check of a brief before any money locks: each milestone needs a "
+     "measurable target (number and unit, or a named test), a verifier (a GitHub check name, or what/how/who/where) and a deadline; vague "
+     "words are flagged. Returns Ready, or Not ready with the missing fields and a rewrite template. Sends nothing.",
+     "inputSchema": _obj({"brief": {"type": "object"}}, ("brief",))},
 ]
 
 
@@ -274,6 +299,8 @@ def mcp_call(name: str, args: dict, signed) -> dict:
     if name == "knos_openapi":
         from . import openapi
         return openapi.document()
+    if name == "knos_ready":
+        return valley.check_brief(args.get("brief") if isinstance(args.get("brief"), dict) else {})
     who = signed(args)
     try:
         if name == "knos_project_open":

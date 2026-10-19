@@ -148,8 +148,15 @@ def is_commitment(path: str | Path) -> bool:
 def commit(claim: dict, *, units: int, price: int, payee: dict, funder, funder_token: Pubkey, mint: Pubkey, led,
            stages: list | None = None, stage_work_s: list[int] | None = None, panel: tuple[int, list[str]] | None = None,
            program: Pubkey = pay.PAY_ID, demand_hash: str | None = None, allow_retracted: bool = False,
-           unlisted_panel: bool = False) -> dict:
-    """Lock every stage of a pull commitment and return the commitment document (the caller writes it)."""
+           unlisted_panel: bool = False, criteria: dict | None = None) -> dict:
+    """Lock every stage of a pull commitment and return the commitment document (the caller writes it). With
+    `criteria` (a brief: knos.ready), nothing locks unless the brief is Ready to fund."""
+    if criteria is not None:
+        from knos import ready
+        try:
+            ready.require(criteria)
+        except ready.NotReady as why:
+            raise IdeaError(str(why)) from None
     check_record(claim)
     if W.retraction_warning(claim) and not allow_retracted:
         raise IdeaError(W.retraction_warning(claim) or "retracted")
