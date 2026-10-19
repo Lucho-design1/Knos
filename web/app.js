@@ -527,14 +527,18 @@ async function loadNetwork() {
 
 // ---- an upgrade of a program that is waiting: the upgrade multisig's proposals, read from devnet on every load ---------------------------
 const SECURITY = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/SECURITY.md#7-the-upgrade-authority";
-const upgradesP = (async () => {
+// the first screen shows upgrades.json (the site's snapshot, web/front.js); devnet is read when a page asks for the
+// upgrades, else on the first scroll, tap or key, or after LIVE_AFTER_MS: never inside the first paint's work
+let upgradesRead = null;
+const readUpgrades = () => (upgradesRead ||= (async () => {
   try {
     const { ms, upgrades } = await pendingUpgrades(knos, RPC, await ids());
     if (!upgrades.length) return { upgrades: [], ms, now: null };
     return { upgrades, ms, now: await knos.chainTime(RPC).catch(() => null) };
   } catch { return { upgrades: [], ms: null, now: null, failed: true }; }          // not readable just now: no banner, and nothing guessed
-})();
-upgradesP.then(({ upgrades, ms, now, failed }) => {
+})());
+const upgradesP = { then: (ok, bad) => readUpgrades().then(ok, bad) };
+const banner = ({ upgrades, ms, now, failed }) => {
   // what the chain says takes the place of the first screen's line from upgrades.json (web/front.js); a chain that did not
   // answer leaves that line as it is: opened, it says when the file was written
   if (failed) return;
@@ -554,7 +558,13 @@ upgradesP.then(({ upgrades, ms, now, failed }) => {
       <code>knos exit --before-upgrade</code> lists what you hold and how to take it out before then.
       What it protects and what it does not: <a id="upgrade-security" href="${SECURITY}" target="_blank" rel="noopener">docs/reference/SECURITY.md</a>, section 7.</p></details>` + feedLine;
   $("upgrade-banner").hidden = false;
-});
+};
+{
+  let go = false;
+  const start = () => { if (!go) { go = true; readUpgrades().then(banner); } };
+  for (const ev of ["scroll", "pointerdown", "keydown"]) addEventListener(ev, start, { once: true, passive: true });
+  setTimeout(start, LIVE_AFTER_MS);
+}
 
 // ---- each page's own module, asked for when the page is first opened -----------------------------------------------------
 const once = (make) => { let p; return () => (p ||= make()); };
