@@ -635,7 +635,7 @@ def _done_collect(led, p: dict, sig: str, pre: list) -> dict:
 
 # ---- projects: a milestone funded, pooled or committed by a passkey -------------------------------------------------
 def prepare_project_fund(led, user: dict, pid: str, key: str, units, rp_id: str, kind: str = "funder", grant: dict | None = None,
-                         ref: str | None = None, pool: str | None = None) -> dict:
+                         ref: str | None = None, pool: str | None = None, private: bool = False) -> dict:
     """A project milestone funded from the passkey's own wallet: a PANEL order of knos_pay (the same FundOrderWallet as
     a pre-order), released on the maker's result and an independent check, refunded to this wallet after the deadline.
     No maker is needed yet: the payee is the attempt's wallet, named in the verdict when the milestone is released."""
@@ -689,7 +689,8 @@ def prepare_project_fund(led, user: dict, pid: str, key: str, units, rp_id: str,
             "plan_hash": plan["commitment_hash"], "order": str(order), "funder_vault": str(me["vault"]), "kind": kind, "grant": grant,
             "pool": pool, "referral": {"code": referral["code"], "wallet": referral["wallet"]} if referral else None,
             "panel": {"m": m_, "keys": keys_, "unlisted": True, "label": label}, "program": str(prog), "mint": str(mint),
-            "warnings": plan["warnings"], "report": p.get("report"), "tables": _tables(led, mint, h), "criteria_hash": crit}
+            "warnings": plan["warnings"], "report": p.get("report"), "tables": _tables(led, mint, h), "criteria_hash": crit,
+            "private": private is True}
     summary = {"what": f"fund the milestone '{m['name']}'" + (" (a grant)" if kind == "grant" else " (part of a pool)" if kind == "pool" else ""),
                "amount_units": amount / escrow.UNIT, "fee_units": pay.order_fee(amount) / escrow.UNIT, "from": str(me["vault"]),
                "order": str(order), "paid_on": "the maker's result and an independent check", "refunded_to": str(me["token_account"]),
@@ -717,7 +718,8 @@ def _done_project_fund(led, p: dict, sig: str, pre: list) -> dict:
     o = {"order": order, "project": m["project"], "milestone": m["milestone"], "claim_id": m["claim"]["id"], "units": m["units"], "unit_price": 1,
          "kind": m["kind"], "funder": m["funder_vault"], "grant": m["grant"] if m["kind"] == "grant" else None, "pool": m["pool"],
          "referral": m["referral"], "status": "pending", "deadline_s": m["deadline_s"], "doc": doc, "made": doc["made"],
-         "signatures": {"setup": pre[0] if pre else None}, "signed_by": "passkey", "criteria_hash": m.get("criteria_hash")}
+         "signatures": {"setup": pre[0] if pre else None}, "signed_by": "passkey", "criteria_hash": m.get("criteria_hash"),
+         "private": m.get("private") is True}
     valley._save("orders", order, o)
     with valley._lock:
         pr = valley.project(m["project"])

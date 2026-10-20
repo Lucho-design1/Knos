@@ -51,6 +51,8 @@ ROUTES = [
     ("POST", "/api/sandbox", True, "A one-day devnet sandbox project from a template", {"template": "string", "title": "string", "team": "string"}),
     ("POST", "/api/project/fund", False, "Fund one milestone (funder, grant or pool): the devnet transaction a wallet signs, or with passkey=true the step your passkey approves",
      {"project": "string", "milestone": "string", "units": "integer", "account": "string", "kind": "string", "grant": "object", "ref": "string", "pool": "string", "passkey": "boolean"}),
+    ("POST", "/api/project/private", False, "A private order's encrypted amount and its ZK ElGamal proofs, verified on devnet",
+     {"order": "string", "ciphertext": "base64", "pubkey_proof": "base64", "range_proof": "base64"}),
     ("POST", "/api/project/confirm", False, "Mark a funding locked once its order is on devnet", {"order": "string", "signature": "string"}),
     ("POST", "/api/project/pool", False, "Megafund: one funder spreads units over 2-8 milestones (one transaction each)",
      {"allocations": "array", "units": "integer", "account": "string", "ref": "string"}),
@@ -222,7 +224,8 @@ def _passkey(path: str, b: dict, user: dict, h) -> dict:
     pid, key = str(b.get("project", "")), str(b.get("milestone", ""))
     if path == "/api/project/fund":
         return wallets.prepare_project_fund(led, user, pid, key, b.get("units", 5), rp, str(b.get("kind") or "funder"),
-                                            b.get("grant") if isinstance(b.get("grant"), dict) else None, _s(b.get("ref"), 20), _s(b.get("pool"), 64))
+                                            b.get("grant") if isinstance(b.get("grant"), dict) else None, _s(b.get("ref"), 20), _s(b.get("pool"), 64),
+                                            private=b.get("private") is True)
     if path == "/api/project/amc":
         return wallets.prepare_amc(led, user, pid, key, b.get("units", 5), rp)
     if path == "/api/company/multisig":
@@ -281,9 +284,12 @@ def _post(path: str, b: dict, user: dict, h) -> dict:
                                      None, _s(b.get("team"), 80) or "sandbox team", int(os.environ.get("KNOS_SANDBOX_DEADLINE_S", "86400")))
     if path == "/api/project/fund":
         return valley.fund_tx(str(b.get("project", "")), str(b.get("milestone", "")), b.get("units", 5), str(b.get("account", "")),
-                              str(b.get("kind") or "funder"), b.get("grant") if isinstance(b.get("grant"), dict) else None, _s(b.get("ref"), 20))
+                              str(b.get("kind") or "funder"), b.get("grant") if isinstance(b.get("grant"), dict) else None, _s(b.get("ref"), 20),
+                              private=b.get("private") is True)
     if path == "/api/project/confirm":
         return valley.confirm(str(b.get("order", "")), _s(b.get("signature"), 100))
+    if path == "/api/project/private":
+        return valley.private_pledge(str(b.get("order", "")), b)
     if path == "/api/project/pool":
         return valley.pool_txs(b.get("allocations") or [], b.get("units", 0), str(b.get("account", "")), _s(b.get("ref"), 20))
     if path == "/api/project/amc":
@@ -337,6 +343,8 @@ MCP_TOOLS = [
      "measurable target (number and unit, or a named test), a verifier (a GitHub check name, or what/how/who/where) and a deadline; vague "
      "words are flagged. Returns Ready, or Not ready with the missing fields and a rewrite template. Sends nothing.",
      "inputSchema": _obj({"brief": {"type": "object"}}, ("brief",))},
+    {"name": "knos_usage", "title": "What was asked of Knos", "description": "In plain words: which Knos tools were called over MCP "
+     "and how many times since this server started. Reads only.", "inputSchema": _obj({})},
     {"name": "knos_milestone_prompt", "title": "The brief an agent works from", "description": "For a milestone you work on: the locked "
      "intent (goal, success check, constraints, scope) with its criteria hash, the effort level and output-token budget, and how to "
      "answer (minimal drafts, confidence first, stop when the check passes). Use it as your first instruction; do not re-derive the brief.",
@@ -344,7 +352,33 @@ MCP_TOOLS = [
 ]
 
 
+_USAGE: dict[str, int] = {}
+READ_ONLY = ("knos_templates", "knos_projects", "knos_openapi", "knos_ready", "knos_milestone_prompt", "knos_usage")
+
+
 def mcp_call(name: str, args: dict, signed) -> dict:
+    """Every tool call is counted (knos_usage says it in plain words). A read-only tool that hits a passing network
+    error is asked once more before the error is returned (self-healing); a tool that moves money never is."""
+    _USAGE[name] = _USAGE.get(name, 0) + 1
+    try:
+        return _mcp_call(name, args, signed)
+    except (ConnectionError, TimeoutError, OSError):
+        if name not in READ_ONLY:
+            raise
+        import time
+        time.sleep(1.0)
+        return _mcp_call(name, args, signed)
+
+
+def usage() -> dict:
+    rows = sorted(_USAGE.items(), key=lambda kv: -kv[1])
+    said = "; ".join(f"{n.replace('knos_', '').replace('_', ' ')}: {c} time{'s' if c != 1 else ''}" for n, c in rows) or "nothing yet"
+    return {"since": "this server started", "calls": dict(rows), "in_words": f"Asked of Knos over MCP: {said}."}
+
+
+def _mcp_call(name: str, args: dict, signed) -> dict:
+    if name == "knos_usage":
+        return usage()
     if name == "knos_templates":
         return valley.templates()
     if name == "knos_projects":

@@ -32,6 +32,9 @@ class Ledger:
         assert not hasattr(r, "err"), r
         return str(tx.signatures[0])
 
+    def send_all(self, groups, payer, signers=None):
+        return [self.send(g, payer, signers) for g in groups]
+
 
 @pytest.fixture
 def chain(monkeypatch, tmp_path):
@@ -113,3 +116,46 @@ def test_lookup_tables_are_frozen_or_deactivated_then_closed_with_their_rent_ret
     before = svm.get_balance(payer.pubkey())
     chain.led.send([chainx.alt_ix(chainx.ALT_CLOSE, t, payer.pubkey(), payer.pubkey())], payer)
     assert chain.led.account(t) is None and svm.get_balance(payer.pubkey()) > before         # closed, rent back to the relayer
+
+
+def test_a_pledge_receipt_needs_its_memo_stays_frozen_and_a_refund_burns_it_by_the_permanent_delegate(chain, monkeypatch):
+    from solders.instruction import AccountMeta, Instruction
+
+    from knos_wanted import escrow
+    owner = Keypair()
+    monkeypatch.setattr(escrow, "demo_key", lambda: owner)
+    r = chainx.pledge_receipt("o" * 44, "knos:claim:abc", 10, led=chain.led)
+    ledger = chain.led.account(r["ledger"])
+    assert int.from_bytes(ledger[64:72], "little") == 10 * 10**6 and ledger[108] == 2      # 10 receipt units, frozen
+    st = chainx._state("receipts")
+    mint, inbox = Pubkey.from_string(r["receipt_mint"]), Pubkey.from_string(st["inbox"])
+    t22 = Pubkey.from_string(chainx.TOKEN22)
+    chain.led.send([Instruction(t22, bytes([7]) + (5).to_bytes(8, "little"), [AccountMeta(mint, False, True), AccountMeta(inbox, False, True),
+                                                                             AccountMeta(chain.payer.pubkey(), True, False)]),
+                    chainx._thaw(Pubkey.from_string(r["ledger"]), mint, chain.payer.pubkey())], chain.payer)
+    with pytest.raises(AssertionError):                                       # RequiredMemoTransfers: no memo, no transfer in
+        chain.led.send([Instruction(t22, bytes([12]) + (5).to_bytes(8, "little") + bytes([6]),
+                                    [AccountMeta(inbox, False, True), AccountMeta(mint, False, False), AccountMeta(Pubkey.from_string(r["ledger"]), False, True),
+                                     AccountMeta(chain.payer.pubkey(), True, False)])], chain.payer)
+    chain.led.send([chainx._freeze(Pubkey.from_string(r["ledger"]), mint, chain.payer.pubkey())], chain.payer)
+    burned = chainx.receipt_refund("o" * 44, led=chain.led)
+    assert burned["burned"] and int.from_bytes(chain.led.account(r["ledger"])[64:72], "little") == 0     # burned by the delegate
+
+
+def test_a_private_pledge_posts_the_encrypted_amount_and_its_proofs_which_the_zk_elgamal_program_verifies(chain):
+    import base64
+    import json
+    from pathlib import Path
+    fx = json.loads((Path(__file__).parent / "data" / "private_pledge.json").read_text(encoding="utf-8"))    # @solana/zk-sdk 0.5.4
+    ct, pv, rp = (base64.b64decode(fx[k]) for k in ("ciphertext", "pubkey_proof", "range_proof"))
+    got = chainx.private_pledge("order1", ct, pv, rp, led=chain.led)
+    assert got["pubkey_signature"] and got["range_signature"] and got["ciphertext"] == fx["ciphertext"]
+    assert not {"units", "amount"} & set(got)                                                          # the amount is not in the clear
+    bad = bytearray(rp)
+    bad[-1] ^= 1                                                                                       # a false proof: the program refuses it
+    with pytest.raises(AssertionError):
+        chainx.private_pledge("order2", ct, pv, bytes(bad), led=chain.led)
+    with pytest.raises(ValueError, match="commitment"):                                                # a proof about another ciphertext
+        chainx.private_pledge("order3", bytes(32) + ct[32:], pv, rp, led=chain.led)
+    with pytest.raises(ValueError, match="bytes"):
+        chainx.private_pledge("order4", ct[:10], pv, rp, led=chain.led)

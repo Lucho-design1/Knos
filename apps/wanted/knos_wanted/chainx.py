@@ -165,6 +165,118 @@ def _ata(owner, mint):
     return Pubkey.find_program_address([bytes(owner), bytes(_pk(TOKEN22)), bytes(mint)], _pk(ATA))[0]
 
 
+# ---- pledge receipts: what is locked, on chain, beside the escrow ------------------------------------------------------
+RECEIPT_DECIMALS = 6
+
+
+def _receipt_mint(led) -> str:
+    """The pledge-receipt mint (Token-2022), made once: DefaultAccountState Frozen (a receipt never moves), a permanent
+    delegate (the relayer: a refunded pledge's receipt is burned), MintCloseAuthority, MetadataPointer + TokenMetadata."""
+    from solders.keypair import Keypair
+    st = _state("receipts")
+    if st.get("mint"):
+        return st["mint"]
+    payer, mint = _payer(), Keypair()
+    name, symbol, uri = "Knos pledge receipt", "KNOSP", "https://knos.onrender.com/#projects"
+    meta_len = 32 + 32 + 4 + len(name) + 4 + len(symbol) + 4 + len(uri) + 4
+    space = _tlv(32, 1, 32, 64)            # MintCloseAuthority, DefaultAccountState, PermanentDelegate, MetadataPointer
+    ixs = [_create(payer.pubkey(), mint.pubkey(), space, led.rent(space + 4 + meta_len), TOKEN22),
+           _ix(TOKEN22, bytes([25, 1]) + bytes(payer.pubkey()), [(mint.pubkey(), False, True)]),                  # MintCloseAuthority
+           _ix(TOKEN22, bytes([28, 0, 2]), [(mint.pubkey(), False, True)]),                                       # DefaultAccountState: Frozen
+           _ix(TOKEN22, bytes([35]) + bytes(payer.pubkey()), [(mint.pubkey(), False, True)]),                     # PermanentDelegate
+           _ix(TOKEN22, bytes([39, 0]) + bytes(payer.pubkey()) + bytes(mint.pubkey()), [(mint.pubkey(), False, True)]),
+           _ix(TOKEN22, bytes([20, RECEIPT_DECIMALS]) + bytes(payer.pubkey()) + bytes([1]) + bytes(payer.pubkey()), [(mint.pubkey(), False, True)]),
+           _ix(TOKEN22, _disc("spl_token_metadata_interface:initialize_account") + _s(name) + _s(symbol) + _s(uri),
+               [(mint.pubkey(), False, True), (payer.pubkey(), False, False), (mint.pubkey(), False, False), (payer.pubkey(), True, False)])]
+    sig = led.send(ixs, payer, [payer, mint])
+    st.update(mint=str(mint.pubkey()), signature=sig)
+    _keep("receipts", st)
+    return st["mint"]
+
+
+def _account_ixs(payer, owner, mint) -> tuple:
+    """An owner's receipt account (its Token-2022 ATA, frozen by the mint's default state) and the thaw that opens it."""
+    acct = _ata(owner, mint)
+    return acct, [_ix(ATA, bytes([1]), [(payer, True, True), (acct, False, True), (owner, False, False), (mint, False, False),
+                                        (_pk(SYSTEM), False, False), (_pk(TOKEN22), False, False)]),
+                  _thaw(acct, mint, payer)]
+
+
+def _thaw(acct, mint, authority):
+    return _ix(TOKEN22, bytes([11]), [(acct, False, True), (mint, False, False), (authority, True, False)])          # ThawAccount
+
+
+def _freeze(acct, mint, authority):
+    return _ix(TOKEN22, bytes([10]), [(acct, False, True), (mint, False, False), (authority, True, False)])          # FreezeAccount
+
+
+def _accounts(led) -> dict:
+    """The relayer's inbox (where receipts are minted) and the escrow ledger, owned by the app's escrow test wallet:
+    RequiredMemoTransfers (a pledge arrives only with its order's claim as a memo) and CpiGuard (no program moves it)."""
+    st = _state("receipts")
+    if st.get("ledger"):
+        return st
+    payer, owner, mint = _payer(), escrow.demo_key(), _pk(_receipt_mint(led))
+    inbox, ixs = _account_ixs(payer.pubkey(), payer.pubkey(), mint)
+    ledger, ixs2 = _account_ixs(payer.pubkey(), owner.pubkey(), mint)
+    ixs += ixs2 + [
+        _ix(TOKEN22, bytes([29]) + struct.pack("<HH", 8, 11), [(ledger, False, True), (payer.pubkey(), True, True), (_pk(SYSTEM), False, False),
+                                                                (owner.pubkey(), True, False)]),                # Reallocate: MemoTransfer, CpiGuard
+        _ix(TOKEN22, bytes([30, 0]), [(ledger, False, True), (owner.pubkey(), True, False)]),                    # EnableRequiredMemoTransfers
+        _ix(TOKEN22, bytes([34, 0]), [(ledger, False, True), (owner.pubkey(), True, False)]),                    # EnableCpiGuard
+        _freeze(ledger, mint, payer.pubkey())]
+    sig = led.send(ixs, payer, [payer, owner])
+    st.update(inbox=str(inbox), ledger=str(ledger), ledger_owner=str(owner.pubkey()), ledger_signature=sig)
+    _keep("receipts", st)
+    return st
+
+
+def pledge_receipt(order: str, claim_id: str, units: int, led=None) -> dict:
+    """A locked order's receipt on chain: `units` receipt units minted to the relayer's inbox, then transferred into the
+    escrow ledger with a memo naming the order and its claim (the ledger refuses a transfer without one); it stays frozen."""
+    led = led or escrow.ledger()
+    with _lock:
+        done = _state("receipt-orders")
+        if order in done:
+            return done[order]
+        payer, mint = _payer(), _pk(_receipt_mint(led))
+        st = _accounts(led)
+        inbox, ledger = _pk(st["inbox"]), _pk(st["ledger"])
+        amount = int(units) * 10 ** RECEIPT_DECIMALS
+        ixs = [_ix(TOKEN22, bytes([7]) + struct.pack("<Q", amount), [(mint, False, True), (inbox, False, True), (payer.pubkey(), True, False)]),
+               _thaw(ledger, mint, payer.pubkey()),
+               _ix(MEMO, f"knos pledge {order} claim {claim_id}".encode()[:200], [(payer.pubkey(), True, False)]),    # right before the transfer
+               _ix(TOKEN22, bytes([12]) + struct.pack("<QB", amount, RECEIPT_DECIMALS),
+                   [(inbox, False, True), (mint, False, False), (ledger, False, True), (payer.pubkey(), True, False)]),
+               _freeze(ledger, mint, payer.pubkey())]
+        sig = led.send(ixs, payer)
+        row = {"order": order, "units": units, "receipt_mint": str(mint), "ledger": str(ledger), "signature": sig, "explorer": escrow.explorer(sig)}
+        done[order] = row
+        _keep("receipt-orders", done)
+        return row
+
+
+def receipt_refund(order: str, led=None) -> dict | None:
+    """A refunded order's receipt units are burned from the ledger by the permanent delegate (the relayer, not the
+    ledger's owner), with a memo naming the order."""
+    led = led or escrow.ledger()
+    with _lock:
+        done = _state("receipt-orders")
+        row = done.get(order)
+        if not row or row.get("burned"):
+            return row
+        payer, mint, ledger = _payer(), _pk(row["receipt_mint"]), _pk(row["ledger"])
+        amount = int(row["units"]) * 10 ** RECEIPT_DECIMALS
+        sig = led.send([_ix(MEMO, f"knos refund {order}".encode(), [(payer.pubkey(), True, False)]),
+                        _thaw(ledger, mint, payer.pubkey()),
+                        _ix(TOKEN22, bytes([15]) + struct.pack("<QB", amount, RECEIPT_DECIMALS),
+                            [(ledger, False, True), (mint, False, True), (payer.pubkey(), True, False)]),       # BurnChecked, by the delegate
+                        _freeze(ledger, mint, payer.pubkey())], payer)
+        row.update(burned=sig)
+        _keep("receipt-orders", done)
+        return row
+
+
 def badges_of(wallet: str) -> list[dict]:
     return [v for v in _state("badges").values() if v["owner"] == wallet]
 
@@ -318,3 +430,30 @@ def evm_verify(eth_address: str, signature_hex: str, message: str, led=None) -> 
     s = led.send([secp256k1_ix(addr, sig[:64], rid, message.encode()), _ix(MEMO, b"knos evm attestation verified", [(payer.pubkey(), True, False)])], payer)
     return {"verified": True, "signature": s, "signer": "0x" + addr.hex(), "by": "Solana's Secp256k1 precompile",
             "explorer": escrow.explorer(s)}
+
+
+# ---- a private pledge: the amount encrypted (twisted ElGamal), proven well-formed by Solana's ZK ElGamal proof program --
+ZK_ELGAMAL = "ZkE1Gama1Proof11111111111111111111111111111"
+ZK_PUBKEY_VALIDITY, ZK_RANGE_U64 = 4, 6                    # ProofInstruction: VerifyPubkeyValidity, VerifyBatchedRangeProofU64
+CT_BYTES, PV_BYTES, RP_BYTES = 64, 96, 936                 # ciphertext; pubkey-validity proof data; batched u64 range proof data
+
+
+def private_pledge(order: str, ciphertext: bytes, pubkey_proof: bytes, range_proof: bytes, led=None) -> dict:
+    """An order whose backer keeps the amount private: the backer's browser encrypts it under the backer's own ElGamal
+    key (@solana/zk-sdk) and proves, without showing it, that the key is valid and that the ciphertext's commitment
+    holds an amount of at most 64 bits. Devnet's ZK ElGamal program verifies both proofs (a transaction with a false
+    proof fails); a memo names the order and the ciphertext's hash. Only the backer's key decrypts the amount."""
+    if (len(ciphertext), len(pubkey_proof), len(range_proof)) != (CT_BYTES, PV_BYTES, RP_BYTES):
+        raise ValueError(f"private pledge: ciphertext {CT_BYTES}, pubkey proof {PV_BYTES}, range proof {RP_BYTES} bytes")
+    if range_proof[:32] != ciphertext[:32]:
+        raise ValueError("private pledge: the range proof is not over this ciphertext's commitment")
+    led = led or escrow.ledger()
+    payer = _payer()
+    h = hashlib.sha256(ciphertext).hexdigest()
+    memo = _ix(MEMO, f"knos private pledge {order} ciphertext sha256:{h[:32]} key {pubkey_proof[:32].hex()[:16]}".encode(),
+               [(payer.pubkey(), True, False)])
+    sigs = led.send_all([[memo, _ix(ZK_ELGAMAL, bytes([ZK_PUBKEY_VALIDITY]) + pubkey_proof, [])],
+                         [_ix(ZK_ELGAMAL, bytes([ZK_RANGE_U64]) + range_proof, [])]], payer)
+    return {"ciphertext": base64.b64encode(ciphertext).decode(), "ciphertext_sha256": h, "elgamal_pubkey": base64.b64encode(pubkey_proof[:32]).decode(),
+            "pubkey_signature": sigs[0], "range_signature": sigs[1], "explorer": [escrow.explorer(s) for s in sigs],
+            "proves": "the amount is encrypted under a valid key and is 0 to 2^64 - 1; the escrow's lock still shows it on chain"}

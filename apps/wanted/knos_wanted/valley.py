@@ -280,6 +280,22 @@ def resolve(word: str, reading: str, target: str, user: dict | None = None) -> d
     return {"word": word, "patterns": got[word]}
 
 
+def grounding(p: dict) -> dict | None:
+    """The Qloo facts of the crossing a project came from (its decision report): audience, launch cities, price tier."""
+    h = p.get("report")
+    f = escrow._state_dir() / "reports" / f"{h}.report" if isinstance(h, str) and re.fullmatch(r"[0-9a-f]{64}", h) else None
+    if not f or not f.exists():
+        return None
+    try:
+        plan = (json.loads(f.read_text(encoding="utf-8")).get("decision") or {}).get("plan") or {}
+    except ValueError:
+        return None
+    who = plan.get("who") or {}
+    out = {"audience": {k: who.get(k) for k in ("age", "gender") if who.get(k)} | ({"segments": (who.get("segments") or [])[:3]} if who.get("segments") else {}),
+           "launch_cities": (plan.get("where") or [])[:3], "price_tier": plan.get("tier"), "unit_price": plan.get("unit_price"), "source": "Qloo"}
+    return {k: v for k, v in out.items() if v}
+
+
 def milestone_prompt(pid: str, key: str) -> dict:
     """What an agent working on a milestone is handed (knos.idt.agent_prompt): the locked intent and its hash, the
     effort level and token budget, Chain-of-Draft steps and the stop rule."""
@@ -287,8 +303,8 @@ def milestone_prompt(pid: str, key: str) -> dict:
     p = project(pid)
     _milestone(p, key)
     h = (p.get("frozen") or {}).get("criteria_hash")
-    out = idt.agent_prompt(_brief(p), key, h)
-    return {**out, "locked": bool(h), "project": pid}
+    out = idt.agent_prompt(_brief(p), key, h, patterns(), grounding(p))
+    return {**out, "locked": bool(h), "project": pid, "grounding": grounding(p)}
 
 
 def gate(p: dict) -> dict:
@@ -535,8 +551,32 @@ def _safe_order(oid: str) -> dict | None:
 
 def _order_public(o: dict) -> dict:
     return {k: o.get(k) for k in ("order", "project", "milestone", "units", "unit_price", "kind", "funder", "grant", "pool", "referral",
-                                  "status", "signatures", "made", "deadline_s", "claim_id", "criteria_hash", "kill_fee")} | {
+                                  "status", "signatures", "made", "deadline_s", "claim_id", "criteria_hash", "kill_fee", "receipt", "finality",
+                                  "private")} | ({"units": None} if o.get("private") else {}) | {
         "explorer": escrow.explorer(o["order"], "address"), "trust": _trust(o)}
+
+
+def private_pledge(order: str, body: dict, led=None) -> dict:
+    """The encrypted amount of a private order and its two proofs (knos_wanted.chainx.private_pledge), from the backer's
+    browser: verified on devnet by the ZK ElGamal program, kept on the order as its receipt."""
+    from . import chainx
+    o = _load("orders", order)
+    if not o.get("private"):
+        raise Refused("this order was not funded as private")
+    if o["status"] == "pending":
+        raise Refused("lock the funding first: the proofs go on chain after the lock")
+    if (o.get("receipt") or {}).get("private"):
+        return _order_public(o)
+    try:
+        ct, pv, rp = (base64.b64decode(str(body.get(k) or ""), validate=True) for k in ("ciphertext", "pubkey_proof", "range_proof"))
+        got = chainx.private_pledge(order, ct, pv, rp, led)
+    except ValueError as why:
+        raise Refused(str(why)) from None
+    with _lock:
+        o = _load("orders", order)
+        o.setdefault("receipt", {})["private"] = got
+        _save("orders", order, o)
+    return _order_public(o)
 
 
 def _trust(o: dict) -> dict | None:
@@ -554,7 +594,7 @@ def _ledger(led=None):
 
 
 def fund_tx(pid: str, key: str, units: int, account: str, kind: str = "funder", grant: dict | None = None, ref: str | None = None,
-            pool: str | None = None, led=None) -> dict:
+            pool: str | None = None, led=None, private: bool = False) -> dict:
     """The devnet transaction a funder's wallet signs to lock `units` test units on one milestone (its own panel order).
     The server co-signs only the test-unit top-up (it is the test mint's authority) and keeps the pending order."""
     from solders.hash import Hash
@@ -614,7 +654,8 @@ def fund_tx(pid: str, key: str, units: int, account: str, kind: str = "funder", 
     o = {"order": st["order"], "project": pid, "milestone": key, "claim_id": claim["id"], "units": units, "unit_price": 1, "kind": kind,
          "funder": str(wallet), "grant": grant if kind == "grant" else None, "pool": pool,
          "referral": {"code": referral["code"], "wallet": referral["wallet"]} if referral else None,
-         "status": "pending", "deadline_s": int(m["deadline_s"]), "doc": doc, "made": _now(), "signatures": {}, "criteria_hash": crit}
+         "status": "pending", "deadline_s": int(m["deadline_s"]), "doc": doc, "made": _now(), "signatures": {}, "criteria_hash": crit,
+         "private": private is True}
     _save("orders", st["order"], o)
     with _lock:
         p = project(pid)
@@ -623,6 +664,45 @@ def fund_tx(pid: str, key: str, units: int, account: str, kind: str = "funder", 
     return {"transaction": base64.b64encode(raw).decode(), "bytes": len(raw), "order": st["order"], "claim_id": claim["id"],
             "message": f"Locks {units} test units on '{m['name']}' (devnet). Paid to the maker only on a result and an independent check; "
                        "refunded to you after the deadline otherwise."}
+
+
+def _finality_async(order: str, sig: str | None, sent_at: float, url: str) -> None:
+    """A release's finality, measured: the seconds from sending it to its finalized notification (signatureSubscribe),
+    kept on the order and shown on its project page."""
+    if not sig:
+        return
+
+    def run():
+        from knos.platform import priority
+        try:
+            priority.wait_ws(url, sig, within=120.0, commitment="finalized")
+            got = {"seconds": round(time.time() - sent_at, 2), "commitment": "finalized", "via": "signatureSubscribe"}
+        except Exception as why:  # noqa: BLE001
+            got = {"error": f"{type(why).__name__}: {str(why)[:120]}"}
+        with _lock:
+            o = _safe_order(order)
+            if o is not None:
+                o["finality"] = got
+                _save("orders", order, o)
+    threading.Thread(target=run, daemon=True, name="knos-finality").start()
+
+
+def _receipt_async(kind: str, order: str, claim: str = "", units: int = 0) -> None:
+    """The order's Token-2022 pledge receipt (knos_wanted.chainx): written on lock, burned on refund, off the request's
+    path: a receipt that cannot be written never holds up the money, it is said in the log and kept on the order."""
+    def run():
+        from . import chainx
+        try:
+            got = chainx.pledge_receipt(order, claim, units) if kind == "pledge" else chainx.receipt_refund(order)
+        except Exception as why:  # noqa: BLE001
+            got = {"error": f"{type(why).__name__}: {str(why)[:160]}"}
+            print(f"knos projects: pledge receipt ({kind}) of {order}: {got['error']}", flush=True)
+        with _lock:
+            o = _safe_order(order)
+            if o is not None:
+                o.setdefault("receipt", {})[kind] = got
+                _save("orders", order, o)
+    threading.Thread(target=run, daemon=True, name="knos-receipt").start()
 
 
 def memo(p: dict, m: dict, crit: str) -> str:
@@ -648,9 +728,12 @@ def confirm(order: str, signature: str | None = None, led=None) -> dict:
             m = _milestone(p, o["milestone"])
             if m["status"] in ("open", "reopened"):
                 m["status"] = "funded"
-            m["history"].append({"at": _now(), "what": f"funded {o['units']} test units ({o['kind']})", "order": order})
+            m["history"].append({"at": _now(), "what": f"funded privately ({o['kind']})" if o.get("private") else
+                                 f"funded {o['units']} test units ({o['kind']})", "order": order})
             _freeze(p, order)
             _save("projects", p["id"], p)
+        if not o.get("private"):                # a private order's amount goes on chain only encrypted (private_pledge)
+            _receipt_async("pledge", order, o.get("claim_id") or "", o["units"])
         _journal("funding", {"project": o["project"], "milestone": o["milestone"], "order": order, "kind": o["kind"],
                              "amount_units": o["units"], "signature": o["signatures"].get("lock"), "grant": o.get("grant"),
                              "criteria_hash": o.get("criteria_hash")}, tenant_of(p))
@@ -996,6 +1079,7 @@ def frost_released(s: dict) -> dict:
     oo = C._order(doc, "stage1", led)[1]
     v = check.verdict_record(doc, "stage1", {**s["meta"]["evidence"]}, bytes.fromhex(s["digest"]), s["signature"], s["group_key"], oo.stamp)
     vled = _V1Ledger(led)
+    sent_at = time.time()
     got = C.release(doc, "stage1", [v], preorder.relayer(), vled)
     if vled.v1_sent:
         o["v1_transactions"] = vled.v1_sent
@@ -1005,6 +1089,7 @@ def frost_released(s: dict) -> dict:
     att = next((x for x in m["attempts"] if x["id"] == attempt), {})
     o["paid_to"] = {"maker": att.get("wallet"), "referrer": (o.get("referral") or {}).get("wallet"), "split": doc["payee"].get("split")}
     o["signatures"]["referee_group_pass"] = (got["sent"] or [{}])[0].get("signature")
+    _finality_async(o["order"], o["signatures"]["referee_group_pass"], sent_at, led.url)
     o["referee_session"] = {**(o.get("referee_session") or {}), "signers": s["signers"], "signature": s["signature"]}
     _save("orders", o["order"], o)
     rest = [x for x in (_safe_order(i) for i in m["fundings"]) if x and x["status"] == "locked" and x.get("release_attempt") == attempt]
@@ -1124,6 +1209,8 @@ def sweep(led=None, refund_fn=None) -> dict:
         _save("orders", o["order"], o)
         reopened = reopen(o["project"], o["milestone"], o["order"])
         done.append({"order": o["order"], "status": o["status"], "signature": o["signatures"].get("refund"), "reopened": reopened})
+        if o["status"] == "refunded":
+            _receipt_async("refund", o["order"])
         _journal("refund", {"project": o["project"], "milestone": o["milestone"], "order": o["order"],
                             "signature": o["signatures"].get("refund"), "why": "deadline passed; milestone reopened"})
     return {"swept": done, "at": _now()}

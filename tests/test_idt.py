@@ -65,3 +65,13 @@ def test_the_home_page_shows_the_measured_benchmark():
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
     assert subprocess.run([sys.executable, str(root / "scripts" / "idt_page.py"), "--check"], capture_output=True).returncode == 0
+
+
+def test_rewrite_says_what_it_assumed_and_how_sure_and_the_prompt_picks_a_sketch_paradigm_and_skills():
+    r = ready.check(VAGUE)["milestones"][0]["rewrite"]
+    assert r["assumed"]["word"] in {"faster", "better"} and r["confidence"] == "low"
+    assert idt.sketch_paradigm(CLEAR) == "chunked_symbolism"
+    assert idt.sketch_paradigm({"milestones": [{"name": "Glucose assay on 12 sweat samples"}]}) == "expert_lexicons"
+    assert idt.sketch_paradigm({"milestones": [{"name": "Reproduce the paper's claim"}]}) == "conceptual_chaining"
+    p = idt.agent_prompt(VAGUE, "speed", "ab" * 32, {"faster": [["latency", "p95 under 300 ms"]]})
+    assert "Skill: 'faster' here meant: p95 under 300 ms" in p["prompt"] and p["paradigm"] in idt.SKETCH

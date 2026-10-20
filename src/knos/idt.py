@@ -49,6 +49,16 @@ NOT_ON_CLAUDE = {
     "R20": "latent chain of thought: needs model internals Anthropic does not expose",
 }
 CHAIN_OF_DRAFT = "Think in minimal drafts: at most five words per step, symbols and numbers over sentences."
+# Sketch-of-Thought (R2): three paradigms; the router picks one per brief from its words
+SKETCH = {
+    "conceptual_chaining": "Reason as a chain of key concepts joined by arrows (claim -> evidence -> measure); no full sentences.",
+    "chunked_symbolism": "Reason in equations and code fragments: variables, values, one transformation per line.",
+    "expert_lexicons": "Reason in the field's own shorthand and abbreviations (e.g. p95, CI, BOM, MARD), terse and exact.",
+}
+SKETCH_WORDS = {
+    "chunked_symbolism": ("function", "code", "test", "latency", "ms", "api", "endpoint", "error rate", "algorithm", "score"),
+    "expert_lexicons": ("prototype", "bench", "assay", "samples", "clinical", "sensor", "hardware", "lab", "regulatory", "iso"),
+}
 STOP_RULE = "Answer as soon as the success check passes. No re-verification and no alternatives after the answer."
 CONFIDENCE_FIRST = "First line: your confidence (high/medium/low). High confidence: answer directly, no reflection pass."
 
@@ -141,7 +151,8 @@ def locked_hash(brief: dict) -> str:
     return ready.criteria_hash(brief)
 
 
-def agent_prompt(brief: dict, milestone_key: str, criteria_hash: str | None = None) -> dict:
+def agent_prompt(brief: dict, milestone_key: str, criteria_hash: str | None = None, patterns: dict | None = None,
+                 grounding: dict | None = None) -> dict:
     """What an agent working on one locked milestone receives (I1, I6, I9, R3, R8, R10, R18, R22)."""
     sk = sketch(brief)
     rt = route(brief)
@@ -151,10 +162,33 @@ def agent_prompt(brief: dict, milestone_key: str, criteria_hash: str | None = No
              f"Intent locked (criteria sha256:{h}). Do not re-derive or re-interpret the brief.",
              "Intent: " + json.dumps({"goal": sk["goal"], "success_check": m, "constraints": sk["constraints"], "scope": sk["scope"]},
                                      separators=(",", ":"), ensure_ascii=False),
-             CHAIN_OF_DRAFT, CONFIDENCE_FIRST, STOP_RULE,
+             CHAIN_OF_DRAFT, SKETCH[sketch_paradigm(brief)], CONFIDENCE_FIRST, STOP_RULE,
              "Intermediate work as JSON, equations or code sketches, never prose."]
+    lines += [f"Skill: {k}" for k in skills_for(brief, patterns)]
+    if grounding:                    # Qloo's facts about who buys and where, so the work is aimed, not guessed
+        lines.append("Grounding (Qloo): " + json.dumps(grounding, separators=(",", ":"), ensure_ascii=False))
     return {"milestone": milestone_key, "criteria_hash": h, "effort": rt["effort"], "token_budget": rt["token_budget"],
-            "difficulty": rt["difficulty"], "prompt": "\n".join(lines), "intent": sk}
+            "difficulty": rt["difficulty"], "paradigm": sketch_paradigm(brief), "prompt": "\n".join(lines), "intent": sk}
+
+
+def sketch_paradigm(brief: dict) -> str:
+    """The Sketch-of-Thought router (R2): chunked symbolism for code and numbers, expert lexicons for lab and hardware
+    work, conceptual chaining for the rest (research, product claims)."""
+    text = json.dumps(brief or {}).lower()
+    score = {k: sum(w in text for w in ws) for k, ws in SKETCH_WORDS.items()}
+    best = max(score, key=lambda k: score[k])
+    return best if score[best] else "conceptual_chaining"
+
+
+def skills_for(brief: dict, patterns: dict | None = None) -> list[str]:
+    """Reasoning skills retrieved for a task (R6, R17): the stored resolutions of the vague words this kind of brief
+    used before (the server's resolved patterns, also kept in its Sibyl record), one line each."""
+    words = ready.vague_words(json.dumps(brief or {}))
+    out = []
+    for w, rows in (patterns or {}).items():
+        if w in words or not words:
+            out += [f"'{w}' here meant: {target}" for _reading, target in rows[:2]]
+    return out[:4]
 
 
 def tiers(brief: dict) -> list[dict]:

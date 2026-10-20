@@ -122,8 +122,16 @@ def rewrite(n: dict, vague: list[str]) -> dict:
     else:
         ver = {"kind": "machine", "check": v.get("check") if v.get("check") and not vague_words(v.get("check", "")) else
                "<GitHub check or test name>"}
+    # the ambiguity-aware form (IDT I5): the interpretation assumed for the first vague word, and how sure the rewrite is
+    # (high: only a field was missing; medium: one vague word to resolve; low: several, or nothing to go on)
+    assumed = None
+    if vague:
+        from . import idt
+        first = idt.interpretations(" ".join(vague))[0]
+        assumed = {"word": first["word"], "reading": first["reading"], "target": first["target"]}
+    confidence = "high" if not vague and n["target"] else "medium" if len(vague) == 1 else "low"
     return {"key": n["key"], "name": name or "<what is delivered>", "target": target, "verifier": ver,
-            "deadline_days": (n["deadline_s"] // 86_400 or 1) if n["deadline_s"] else 14}
+            "deadline_days": (n["deadline_s"] // 86_400 or 1) if n["deadline_s"] else 14, "assumed": assumed, "confidence": confidence}
 
 
 def terms(brief: dict) -> dict:

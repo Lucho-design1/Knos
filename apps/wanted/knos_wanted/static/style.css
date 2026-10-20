@@ -158,7 +158,7 @@ label.opt { font-weight: 400; font-size: var(--fs-1); margin: 6px 0; }
 .ux-now { position: fixed; left: 50%; translate: -50% 0; top: 8px; z-index: 32; margin: 0; padding: 4px 12px; border-radius: 12px; font-size: .85rem; background: var(--ink, #222); color: var(--paper, #fff); }
 .ux-toast { position: fixed; left: 16px; right: 80px; bottom: 16px; z-index: 31; margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--ink, #222); color: var(--paper, #fff); }
 .mic { min-width: 44px; min-height: 44px; }
-.simple details, .simple .muted, .simple #poolBox, .simple .advanced { display: none !important; }
+.simple details.k-more, .simple #poolBox, .simple .advanced { display: none !important; }      /* never a money action: only explanations and the advanced pool */
 .simple { font-size: 112%; }
 .contrast { --ink: #000; --paper: #fff; --muted: #000; filter: contrast(1.15); }
 .contrast a { text-decoration: underline; }
@@ -179,5 +179,10 @@ label.opt { font-weight: 400; font-size: var(--fs-1); margin: 6px 0; }
   .ux-fab { bottom: 80px; }
   .card, .pcard { max-height: 80vh; overflow: auto; }
 }
-@media (prefers-color-scheme: dark) { .night-voice .mic { min-width: 64px; min-height: 64px; font-size: 1.5rem; } }
 button:active { transform: scale(.97); }
+.night-voice .mic { min-width: 64px; min-height: 64px; font-size: 1.5rem; }
+.ux-help { position: fixed; right: 0; top: 0; bottom: 0; width: min(320px, 90vw); padding: 16px; background: var(--surface); border-inline-start: 1px solid var(--line); overflow: auto; z-index: 40; }
+.ux-help-btn { position: fixed; right: 12px; top: 12px; min-width: 44px; min-height: 44px; border-radius: 50%; z-index: 41; }
+.ux-act { position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); min-height: 48px; padding: 12px 18px; border-radius: 24px; z-index: 30; }
+@media (min-width: 900px) { .ux-act { bottom: 24px; } }
+.step { animation-duration: calc(.25s * var(--speed, 1)); } .spin { animation-duration: calc(.8s * var(--speed, 1)); }

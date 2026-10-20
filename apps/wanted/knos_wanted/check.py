@@ -189,6 +189,19 @@ class _Run:
         self.calls: list[dict] = []
         self.on_call = on_call or (lambda c: None)       # the agent streams each call to the page as it happens
 
+    def prefetch(self, calls: list[tuple[str, dict]]) -> None:
+        """Ask independent questions at once (R21): the answers land in the client's cache, so the calls that follow,
+        made in order and numbered as always, are answered from it. A failure here is only a cache miss later."""
+        from concurrent.futures import ThreadPoolExecutor
+
+        def one(c):
+            try:
+                self.c.get(c[0], self.guide(c[1])[0] if c[0] == "/v2/insights" else c[1])
+            except Exception:  # noqa: BLE001 - asked again, in order, by get()
+                pass
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            list(ex.map(one, calls))
+
     def get(self, path: str, params: dict, what: str) -> tuple[dict | None, int | None]:
         params, dropped = self.guide(params) if path == "/v2/insights" else (params, [])
         if dropped:
@@ -432,23 +445,24 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     loc = place or DEFAULT_PLACE
     ents_only = {"signal.interests.entities": signal["signal.interests.entities"]}
     hotel = {"filter.hotel_class.min": "3"} if {"hotel", "hotels", "resort", "stay"} & set(words) else {}
-    body, s6 = run.get("/v2/insights", {"filter.type": "urn:entity:place", "filter.location.query": loc, "take": 5,
-                                        "filter.properties.business_rating.min": "3.5", "filter.external.exists": "tripadvisor", **hotel, **ents_only},
-                       f"where: named places in {loc} where this taste clusters (rated 3.5+, on Tripadvisor)")
+    q6 = {"filter.type": "urn:entity:place", "filter.location.query": loc, "take": 5, "filter.properties.business_rating.min": "3.5",
+          "filter.external.exists": "tripadvisor", **hotel, **ents_only}
+    q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **ents_only}
+    q11 = {"filter.type": "urn:tag", "diversify.by": "subtype", "diversify.take": "2", "take": 8, **signal}
+    run.prefetch([("/v2/insights", q6), ("/v2/insights", q7), ("/v2/insights", q11)])      # three independent questions, at once
+    body, s6 = run.get("/v2/insights", q6, f"where: named places in {loc} where this taste clusters (rated 3.5+, on Tripadvisor)")
     for r in (((body or {}).get("results") or {}).get("entities") or [])[:5]:
         p = r.get("properties") or {}
         geo = p.get("geocode") or {}
         area = ", ".join(str(x) for x in (geo.get("name"), geo.get("admin2_region") or geo.get("admin1_region")) if x)
         ev["places"].append({"name": r.get("name"), "area": area or str(p.get("address") or "")[:80], "price_level": p.get("price_level"),
                              "affinity": (r.get("query") or {}).get("affinity"), "src": s6})
-    body, s7 = run.get("/v2/insights", {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **ents_only},
-                       f"where: map points in {loc}")
+    body, s7 = run.get("/v2/insights", q7, f"where: map points in {loc}")
     for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:5]:
         lc, hq = h.get("location") or {}, h.get("query") or {}
         ev["where"].append({"lat": lc.get("latitude"), "lon": lc.get("longitude"), "affinity": hq.get("affinity"), "src": s7})
     ev["place"] = loc
-    body, s11 = run.get("/v2/insights", {"filter.type": "urn:tag", "diversify.by": "subtype", "diversify.take": "2", "take": 8, **signal},
-                        "taste persona: this taste's tags, one or two per family (diversify.by=subtype)")
+    body, s11 = run.get("/v2/insights", q11, "taste persona: this taste's tags, one or two per family (diversify.by=subtype)")
     tail = kind.split(":")[-1]
     rows11 = [{"name": t.get("name"), "family": t.get("subtype"), "src": s11,
                "on_kind": tail in str(t.get("subtype") or "") or bool({_norm(x) for x in tokens(t.get("name"))} & set(words))}

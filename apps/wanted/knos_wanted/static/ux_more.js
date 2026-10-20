@@ -293,9 +293,146 @@
     return es;
   };
 
+  // ---- a private pledge: the amount encrypted under the backer's own ElGamal key, two zero-knowledge proofs -----------
+  // (@solana/zk-sdk, Apache-2.0, in static/zk; loaded only when a backer asks for it). The key stays in this browser.
+  Knos.privatePledge = async function (order, units, api) {
+    const zk = await import("/static/zk/zk_sdk.js");
+    await zk.default({ module_or_path: "/static/zk/zk_sdk_bg.wasm" });
+    let seed = null;
+    try { seed = localStorage.getItem("knos.elgamal"); } catch (e) { /* private window */ }
+    if (!seed) {
+      seed = Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, "0")).join("");
+      try { localStorage.setItem("knos.elgamal", seed); } catch (e) { /* kept for this page only */ }
+    }
+    const kp = zk.ElGamalKeypair.fromSeedPhraseAndPassphrase(seed, "knos private pledge");
+    const amount = BigInt(units), r = new zk.PedersenOpening(), ct = kp.pubkey().encryptWith(amount, r);
+    const pv = new zk.PubkeyValidityProofData(kp);
+    const rp = new zk.BatchedRangeProofU64Data([ct.commitment()], BigUint64Array.of(amount), Uint8Array.of(64), [r]);
+    const b64 = (u) => btoa(String.fromCharCode(...u));
+    return api("/api/project/private", { order, ciphertext: b64(ct.toBytes()), pubkey_proof: b64(pv.toBytes()), range_proof: b64(rp.toBytes()) });
+  };
+
+  // ---- one sentence is enough: the main input for a brief -------------------------------------------------------------
+  // "Cut checkout p95 under 300 ms on test_checkout within 2 weeks" -> name, target (number + unit or a test), check, deadline
+  function sentence() {
+    const box = $("briefBox"); if (!box || $("bSay")) return;
+    box.insertAdjacentHTML("afterbegin", `<label for="bSay"><strong>Say what you want, in one sentence</strong></label>
+      <textarea id="bSay" rows="2" maxlength="400" placeholder="Cut checkout p95 under 300 ms on test_checkout within 2 weeks"></textarea>
+      <button type="button" class="ghost" id="bSayGo">Turn it into a brief</button>`);
+    $("bSayGo").onclick = () => {
+      const t = $("bSay").value.trim(); if (!t) return;
+      const dm = t.match(/(?:within|in|by)\s+(\d+)\s*(day|days|week|weeks)/i);
+      const days = dm ? (+dm[1]) * (/week/i.test(dm[2]) ? 7 : 1) : 14;
+      const tm = t.match(/\b(test_[a-z0-9_]+|[\w./-]+\.(?:py|js|ts)::[\w-]+)\b/i), test = tm ? tm[1] : "";
+      const nm = t.match(/(?:under|below|at least|above|over|<=|>=|<|>)?\s*\d[\d,.]*\s*(?:%|ms|s|seconds|minutes|hours|days|kb|mb|gb|users|samples|tests|units|points|score)\b/i);
+      const num = nm ? nm[0].trim() : "";
+      const target = [num, test ? "on " + test : ""].filter(Boolean).join(" ");
+      let name = t;
+      for (const cut of [dm ? dm[0] : "", num, test ? "on " + test : "", test]) if (cut) name = name.split(cut).join(" ");
+      name = name.replace(/\s+/g, " ").trim();
+      if (typeof fillBrief === "function") fillBrief({ name: name || t.slice(0, 80), target: target || t, deadline_days: days,
+        verifier: { kind: "machine", check: test ? "ci / " + test : "" } });
+      say(target ? "Brief filled from your sentence: check what is missing below." : "Filled what I could: add a number with its unit.");
+    };
+  }
+
+  // ---- night: a large voice button; the app icon's badge; a contextual action button ----------------------------------
+  const night = () => { const h = new Date().getHours(); root.classList.toggle("night-voice", h >= 21 || h < 6); };
+  night(); setInterval(night, 600000);
+  async function badgeCount() {
+    if (!token() || !navigator.setAppBadge) return;
+    try {
+      const p = await fetch("/api/projects").then((r) => r.json());
+      const n = (p.projects || []).reduce((a, x) => a + x.milestones.filter((m) => m.locked_units > 0 && m.status !== "released").length, 0);
+      Knos.badgeCount(n);
+    } catch (e) { /* none */ }
+  }
+  function fab() {
+    let f = $("ux-act");
+    const v = location.hash.slice(1).split("=")[0] || "home";
+    const act = { home: ["Write a brief", "#projects"], projects: ["New brief", "#projects"], buy: ["Back a product", "#buy"], fund: ["Fund a milestone", "#fund"] }[v];
+    if (!act) { if (f) f.hidden = true; return; }
+    if (!f) { f = document.createElement("a"); f.id = "ux-act"; f.className = "button ux-act"; document.body.appendChild(f); }
+    f.hidden = false; f.textContent = act[0]; f.href = act[1];
+    f.onclick = () => setTimeout(() => { const n = $("bSay") || $("bName"); if (n) n.focus(); }, 80);
+  }
+  addEventListener("hashchange", fab);
+
+  // ---- help beside the page, and a person when help is not enough -----------------------------------------------------
+  const HELP = { home: "Pick a product to back, or write a brief: money locks only when the brief is Ready.",
+    projects: "Write the brief in one sentence; the check says what is missing; tap a reading; then Open and fund.",
+    buy: "Backing pre-orders a product: your test units wait in escrow until the maker proves it.",
+    fund: "Funding locks test units on one milestone; it pays only on a result plus an independent check.",
+    make: "Claim a milestone, post a public page with its claim id, and the referees check it.",
+    teams: "Teams share a Squads multisig made by your passkey, and can sign in with SSO.",
+    research: "Paste a paper or an idea; Knos asks Qloo who wants it and where." };
+  function panel() {
+    let p = $("ux-help");
+    const v = location.hash.slice(1).split("=")[0] || "home";
+    if (!p) {
+      p = document.createElement("aside"); p.id = "ux-help"; p.className = "ux-help"; p.setAttribute("aria-label", "Help for this page"); p.hidden = true;
+      document.body.appendChild(p);
+      const b = document.createElement("button"); b.type = "button"; b.id = "ux-help-btn"; b.className = "quiet ux-help-btn"; b.textContent = "?";
+      b.setAttribute("aria-label", "Help for this page");
+      b.onclick = () => { p.hidden = !p.hidden; panel(); };
+      document.body.appendChild(b);
+    }
+    const ctx = encodeURIComponent(`Page: ${location.href}\nWhat I tried: \nWhat happened: ${(($("err") || {}).textContent || "").slice(0, 300)}`);
+    p.innerHTML = `<p class="small"><strong>This page</strong></p><p class="small">${HELP[v] || HELP.home}</p>
+      <p class="small"><a href="https://github.com/drexthealpha/Knos/issues/new?title=${encodeURIComponent("Help: " + v)}&body=${ctx}" rel="noopener">Ask a person</a> (opens GitHub with what you were doing)</p>
+      <button type="button" class="quiet" id="ux-help-x">Close</button>`;
+    $("ux-help-x").onclick = () => { p.hidden = true; };
+  }
+  addEventListener("hashchange", () => { if ($("ux-help") && !$("ux-help").hidden) panel(); });
+
+  // ---- milestone names editable in place until money locks ------------------------------------------------------------
+  function editable() {
+    const p = typeof V !== "undefined" && V.project;
+    if (!p || p.frozen || $("ux-edit-note")) return;
+    document.querySelectorAll("#msList .ms h3").forEach((h, i) => {
+      h.contentEditable = "true"; h.setAttribute("aria-label", "Milestone name, editable until money locks");
+      h.onblur = () => {
+        const name = h.textContent.trim(), m = p.milestones[i];
+        if (!name || name === m.name) return;
+        const b = { milestones: p.milestones.map((x, j) => ({ key: x.key, name: j === i ? name : x.name, target: x.target, verifier: x.verifier, deadline_s: x.deadline_s })),
+          kill_fee_bps: p.kill_fee_bps, challenge_s: p.challenge_s };
+        post("/api/project/brief", { project: p.id, brief: b }).then(() => say("Saved")).catch(() => say("Could not save that name"));
+      };
+    });
+    const head = $("projHead");
+    if (head) head.insertAdjacentHTML("beforeend", `<p class="small muted" id="ux-edit-note">Tap a milestone's name to edit it; it locks with the money.</p>`);
+  }
+
+  // ---- adaptive animation speed, a second screen for evidence ---------------------------------------------------------
+  let lastTap = 0, fast = 0;
+  document.addEventListener("pointerdown", () => {
+    const now = Date.now(); fast = now - lastTap < 350 ? Math.min(fast + 1, 6) : Math.max(fast - 1, 0); lastTap = now;
+    root.style.setProperty("--speed", String(1 - fast * 0.1));
+  }, { passive: true });
+  Knos.toSecondScreen = async function (url) {
+    if (!window.getScreenDetails) { open(url, "_blank", "noopener"); return; }
+    try {
+      const d = await window.getScreenDetails(), other = d.screens.find((x) => x !== d.currentScreen) || d.currentScreen;
+      open(url, "_blank", `left=${other.availLeft},top=${other.availTop},width=${other.availWidth},height=${other.availHeight}`);
+    } catch (e) { open(url, "_blank", "noopener"); }
+  };
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest && e.target.closest("a[rel~='nofollow']");
+    if (a && e.shiftKey) { e.preventDefault(); Knos.toSecondScreen(a.href); }
+  });
+
+  // ---- a crossing finished while you were elsewhere: a notification ---------------------------------------------------
+  const crossDone = Knos.streamCrossing;
+  Knos.streamCrossing = function (id, onStep, onDone) {
+    return crossDone(id, onStep, (d) => {
+      if (document.hidden) Knos.notify("Your crossing is done", "Knos has the answer for your paper or idea.", location.href);
+      if (onDone) onDone(d);
+    });
+  };
+
   document.addEventListener("DOMContentLoaded", () => {
-    const tick = () => { display(); drafts(); layout(); predict(); readAloud(); };
+    const tick = () => { display(); drafts(); layout(); predict(); readAloud(); sentence(); editable(); };
     new MutationObserver(tick).observe(document.body, { childList: true, subtree: true });
-    tick(); cursors();
+    tick(); cursors(); fab(); panel(); badgeCount();
   });
 })();
