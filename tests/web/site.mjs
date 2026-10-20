@@ -181,6 +181,8 @@ async function mock(ctx) {
     // the app's list of research products (web/home.js asks it on a reader's first move at the bare address): it answers
     // an empty list here, and the first screen keeps the snapshot the site ships
     if (u.href === "https://knos.onrender.com/api/front") return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: '{"products":[],"crossing_now":[]}' });
+    // devnet's second free RPC (web/netfacts.js asks it once the mocked devnet refuses a call): refused here, as if down
+    if (u.host === "devnet.rpcpool.com") return route.abort();
     strangers.push(u.href); return route.abort();
   });
   await ctx.route("https://api.github.com/**", (route) => {

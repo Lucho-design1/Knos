@@ -74,8 +74,9 @@ class Run:
         c.set_default_timeout(90_000)
         p = c.new_page()
         # the person presses Approve on each approval card (static/passkey_wallet.js) as it appears; the passkey then signs
+        # (the document itself is observed: an init script runs before documentElement exists, so observing it threw)
         p.add_init_script("new MutationObserver(() => { const b = document.getElementById('pk-approve'); if (b) b.click(); })"
-                          ".observe(document.documentElement, { childList: true, subtree: true });")
+                          ".observe(document, { childList: true, subtree: true });")
         cdp = c.new_cdp_session(p)
         cdp.send("WebAuthn.enable")
         got = cdp.send("WebAuthn.addVirtualAuthenticator", {"options": {"protocol": "ctap2", "transport": "internal", "hasResidentKey": True,

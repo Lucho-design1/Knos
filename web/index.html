@@ -55,6 +55,9 @@ setTimeout(() => { delete document.documentElement.dataset.door; }, 4000);</scri
 <style>html[data-door="home"]:not(.js) #view-check { display: none; } html[data-door="page"]:not(.js) #view-home, html[data-door="page"]:not(.js) #view-verify { display: none; }
 /* a page opened at its own address is drawn once its section is chosen (web/front.js, the same task that marks .js): before that nothing of main or the foot is painted, so nothing is drawn in one place and then moved (layout shift) */
 html[data-door="page"]:not(.js) main, html[data-door="page"]:not(.js) .foot { visibility: hidden; }
+/* a page with its own section in this file (#network, #fund...) is shown in the first paint, chosen by the script after
+   main: its heading is the first thing drawn, so Lighthouse always records a largest paint (web/front.js then routes) */
+html[data-door="page"][data-pre]:not(.js) main { visibility: visible; }
 .home { min-height: calc(100vh - 110px); }
 .home h1 { font-size: clamp(30px, 7.4vw, 52px); line-height: 1.06; margin: 0 0 10px; max-width: 16em; text-wrap: balance; }
 .home .home-sub { font-size: var(--s2); color: var(--ink); margin: 0 0 18px; max-width: 30em; text-wrap: pretty; }
@@ -896,6 +899,8 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     </div>
   </section>
 </main>
+<script>{ const v = location.hash.slice(1).split("=")[0], el = /^[a-z-]+$/.test(v) && document.getElementById("view-" + v), d = document.documentElement;
+  if (el && el.hidden && d.dataset.door === "page") { for (const s of document.querySelectorAll("section.view[id^=view-]")) s.hidden = s !== el; d.dataset.pre = v; } }</script>
 <!-- An upgrade of the programs that is waiting (web/app.js, read from devnet after the page is drawn): under the page,
      so filling it moves nothing already on screen (no layout shift). -->
 <aside id="upgrade-banner" class="banner" role="status" aria-live="polite" hidden></aside>

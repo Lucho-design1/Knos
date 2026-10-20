@@ -10,7 +10,7 @@
 //   keys        keyboard first: g p projects, g h home, / the brief, ? the list of keys
 //   drop        drop a paper or evidence file on the brief: signed with C2PA, like the camera
 //   screen      "Capture a region of my screen" as evidence (Screen Capture API), then annotate it before signing
-//   cursors     live cursors of whoever else is on the same project page (POST /api/presence, every 2 s while visible)
+//   cursors     live cursors of whoever else is on the same project page (POST /api/presence, every 15 s while visible)
 //   canvas      on a wide screen, a project's milestones on a canvas you can arrange (kept on this device)
 //   layout      "show money first" / "show proof first" rearranges a project page on request (generative layout)
 //   sound       an optional quiet cue on lock and release, panned left/right (WebAudio)
@@ -218,7 +218,7 @@
         for (const o of r.others || []) document.body.insertAdjacentHTML("beforeend", `<span class="ux-cursor" style="left:${o.x * 100}vw;top:${o.y * 100}vh">${String(o.label).replace(/[<>&]/g, "")}</span>`);
         const h = $("ux-here"); if (h) h.textContent = r.here > 1 ? `${r.here} people here now` : "";
       }).catch(() => {});
-    }, 2000);
+    }, 15000);                      // every 15 s while the tab is shown (its own server bucket, not the person's limit)
   }
 
   // ---- generative layout, canvas, variant, prediction, recovery, help ----------------------------------------------------
@@ -386,11 +386,8 @@
     if (!p) {
       p = document.createElement("aside"); p.id = "ux-help"; p.className = "ux-help"; p.setAttribute("aria-label", "Help for this page"); p.hidden = true;
       document.body.appendChild(p);
-      const b = document.createElement("button"); b.type = "button"; b.id = "ux-help-btn"; b.className = "quiet ux-help-btn"; b.textContent = "?";
-      b.setAttribute("aria-label", "Help for this page");
-      b.onclick = () => { p.hidden = !p.hidden; panel(); };
-      const who = $("whoBtn");                       // in the header beside Sign in: never over the page's own controls
-      if (who) who.insertAdjacentElement("beforebegin", b); else document.body.appendChild(b);
+      const b = $("ux-help-btn");                     // in the header beside Sign in (index.html): never over the page's own controls
+      if (b) b.onclick = () => { p.hidden = !p.hidden; panel(); };
     }
     const ctx = encodeURIComponent(`Page: ${location.href}\nWhat I tried: \nWhat happened: ${(($("err") || {}).textContent || "").slice(0, 300)}`);
     // on a project's page: what the Ready check says about its brief right now, and the first thing missing
@@ -451,7 +448,13 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     const tick = () => { display(); drafts(); layout(); predict(); readAloud(); sentence(); editable(); };
-    new MutationObserver(tick).observe(document.body, { childList: true, subtree: true });
-    tick(); cursors(); fab(); panel(); badgeCount();
+    // at most once a frame however many nodes a render adds (a project page adds hundreds at once)
+    let queued = 0;
+    new MutationObserver(() => { if (!queued) queued = requestAnimationFrame(() => { queued = 0; tick(); }); })
+      .observe(document.body, { childList: true, subtree: true });
+    tick();
+    // what the first paint does not need waits for an idle moment: cursors, the action button, help, the app badge
+    const later = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
+    later(() => { cursors(); fab(); panel(); badgeCount(); }, { timeout: 3000 });
   });
 })();

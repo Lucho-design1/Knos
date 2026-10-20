@@ -89,3 +89,14 @@ def test_rate_limit(app, monkeypatch):
     monkeypatch.setitem(server.LIMITS, "maker", (2, 600))
     codes = [call(base, "/api/maker/start", {"idea": "Board game cafe in Paris"})[0] for _ in range(3)]
     assert codes == [200, 200, 429]
+
+
+def test_presence_and_draft_autosave_never_use_up_the_persons_limit(app, monkeypatch):
+    base, _ = app
+    monkeypatch.setitem(server.LIMITS, "product", (2, 600))
+    monkeypatch.setitem(server.LIMITS, "live", (50, 600))
+    for _ in range(5):                                    # cursors every 15 s: their own bucket
+        assert call(base, "/api/presence", {"page": "a" * 16, "me": "m1", "x": 0.1, "y": 0.2})[0] == 200
+    brief = {"milestones": [{"name": "x", "target": "1 test", "verifier": {"check": "ci"}, "deadline_days": 1}]}
+    codes = [call(base, "/api/ready", {"brief": brief})[0] for _ in range(3)]
+    assert codes == [200, 200, 429]                       # the person's own steps keep their full limit

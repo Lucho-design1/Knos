@@ -57,7 +57,8 @@ MAX_BODY = 16_384
 SESSION_S = 30 * 60
 LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish": (10, 600), "demo": (4, 600),
           "faucet": (2, 3600), "tx": (20, 600), "check": (12, 600), "lock": (6, 600), "auth": (30, 600),
-          "milestone": (30, 600), "milestone_one": (10, 3600), "referee": (120, 600), "product": (60, 600)}   # (calls, seconds) per client
+          "milestone": (30, 600), "milestone_one": (10, 3600), "referee": (120, 600), "product": (60, 600),
+          "live": (120, 600)}   # (calls, seconds) per client; "live": presence and draft autosave, apart from "product"
 GLOBAL_DEMO = (60, 3600)                                           # demo pre-orders, all clients
 ROUTES = {"/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",

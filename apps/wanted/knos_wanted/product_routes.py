@@ -173,6 +173,7 @@ def _raw(h) -> bytes:
 
 
 POSTS = {r[1] for r in ROUTES if r[0] == "POST"}
+LIVE_PATHS = ("/api/presence", "/api/draft", "/api/draft/get")
 SIGNED = {r[1] for r in ROUTES if r[0] == "POST" and r[2]}
 
 
@@ -180,7 +181,9 @@ def handle_post(h, state, path: str) -> bool:
     if path not in POSTS:
         return False
     from . import auth, preorder
-    if not state.allow(h._client(), "product"):
+    # presence (every 15 s) and draft autosave (on each change) have their own bucket: they never use up the person's
+    # limit for the steps they take (a Ready check, a funding)
+    if not state.allow(h._client(), "live" if path in LIVE_PATHS else "product"):
         return h._send(429, {"error": "too many requests from this address; try again in a few minutes"}) or True
     try:
         user = auth.who(h.headers.get("Authorization"))

@@ -88,6 +88,7 @@ function agents(p) {
     <li><strong>Referee</strong>: ${a ? `attempt ${esc(a.id)}, ${esc(a.status)}` : "waiting for an attempt"}</li>
     <li><strong>Funder</strong>: ${m.locked_units} test units in escrow; paid only on a result and an independent check</li></ul>`;
 }
+const KEPT = {};          // "project:milestone index" -> the milestone's last answer, kept across loadProject's redraw
 // every decision on the project in plain words, newest first: each brief version (Ready or not, and why), and each
 // milestone's funding, claim, verdict, release, refund and reopen, as the server recorded it (the same lines go to the
 // project's decision log in the Knos Record)
@@ -123,6 +124,8 @@ async function loadProject(id) {
   $("msList").innerHTML = p.milestones.map((m, i) => msCard(p, m, i)).join("");
   watchOrders(p);
   p.milestones.forEach((m, i) => wire(p, m, i));
+  // a step's last answer (the lock, its finality) stays on the card when the project is drawn again after it
+  p.milestones.forEach((m, i) => { const k = p.id + ":" + i; if (KEPT[k] && $("o" + i)) $("o" + i).innerHTML = KEPT[k]; });
 }
 // The code referee's four proofs for one order (knos_wanted.referee.trust): each one checks without Knos.
 function trustLine(t) {
@@ -192,7 +195,7 @@ function msCard(p, m, i) {
     <p id="o${i}" class="small" aria-live="polite"></p></li>`;
 }
 function wire(p, m, i) {
-  const out = (h) => { $("o" + i).innerHTML = h; };
+  const out = (h) => { $("o" + i).innerHTML = h; KEPT[p.id + ":" + i] = h; };
   for (const b of document.querySelectorAll(`#ms${i} button[data-dispute]`)) b.onclick = () => busy(b, "Disputing", async () => {
     const url = $("e" + i).value.trim(); if (!/^https:\/\//.test(url)) throw new Error("Put your evidence page (https) in the evidence field first.");
     const r = await api("/api/project/dispute", { project: p.id, milestone: m.key, attempt: b.dataset.dispute, url });
@@ -220,7 +223,11 @@ function wire(p, m, i) {
           .catch((e2) => { const e = $("pz" + i); if (e) e.textContent = "Private proofs failed: " + e2.message; });
       }
       if (window.Knos) { Knos.haptic("lock"); if (Knos.celebrate) Knos.celebrate("Locked"); }
-      if (sig && window.Knos) Knos.finality(sig).then((r) => { const e = $("fin" + i); if (e) e.textContent = r.seconds ? `Finalized in ${r.seconds.toFixed(1)} s (${r.via}).` : "Not finalized yet."; });
+      if (sig && window.Knos) Knos.finality(sig).then((r) => {
+        const said = r.seconds ? `Finalized in ${r.seconds.toFixed(1)} s (${r.via}).` : "Not finalized yet.", k = p.id + ":" + i;
+        KEPT[k] = (KEPT[k] || "").replace(/<span id="fin\d+">[^<]*<\/span>/, `<span id="fin${i}">${esc(said)}</span>`);   // kept for the redraw
+        const e = $("fin" + i); if (e) e.textContent = said;
+      });
     }
     setTimeout(() => loadProject(p.id), 1500);
   });

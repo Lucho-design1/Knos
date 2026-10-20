@@ -155,7 +155,9 @@
   document.addEventListener("DOMContentLoaded", () => {
     sheet();
     document.body.insertAdjacentHTML("beforeend", `<p id="ux-now" class="ux-now" role="status" hidden></p>`);
-    new MutationObserver(() => { voice(); camera(); }).observe(document.body, { childList: true, subtree: true });
+    let queued = 0;                 // at most once a frame, however many nodes a render adds
+    new MutationObserver(() => { if (!queued) queued = requestAnimationFrame(() => { queued = 0; voice(); camera(); }); })
+      .observe(document.body, { childList: true, subtree: true });
     voice(); camera();
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
   });
