@@ -245,8 +245,50 @@ def tenant_of(p: dict) -> dict:
 
 
 def check_brief(brief: dict) -> dict:
-    """The free Ready-to-fund check (POST /api/ready, knos_ready on /mcp): nothing is stored or sent."""
-    return _ready().check(brief)
+    """The free Ready-to-fund check (POST /api/ready, knos_ready on /mcp): nothing is stored or sent. With it, the
+    IDT view of the brief (knos.idt): its intent sketch, ambiguity, readings to tap, at most one question, the route
+    (fast path or rewrite), the effort and token budget an agent run gets, and the milestones' tiers."""
+    from knos import idt
+    r = _ready().check(brief)
+    rt = idt.route(brief)
+    if rt["interpretations"]:
+        rt["interpretations"] = idt.interpretations(" ".join(json.dumps(m) for m in (brief or {}).get("milestones") or []), patterns())
+    return {**r, "idt": {**rt, "sketch": idt.sketch(brief), "tiers": idt.tiers(brief)}}
+
+
+def patterns() -> dict:
+    """Resolved ambiguity patterns (I7): the reading a buyer tapped for a vague word, offered first next time."""
+    f = _dir("patterns") / "resolved.json"
+    try:
+        return json.loads(f.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def resolve(word: str, reading: str, target: str, user: dict | None = None) -> dict:
+    """Keep the reading a buyer chose for a vague word (stored here and in the Sibyl record's reference line)."""
+    from knos import ready
+    word, reading, target = (str(x or "").strip()[:80] for x in (word, reading, target))
+    if word not in ready.VAGUE or not reading or not target:
+        raise Refused("resolve: a vague word, the reading chosen and its target")
+    with _lock:
+        got = patterns()
+        rows = [x for x in got.get(word, []) if x[1] != target]
+        got[word] = [[reading, target]] + rows[:4]
+        (_dir("patterns") / "resolved.json").write_text(json.dumps(got, indent=1), encoding="utf-8")
+    _journal("reference", {"what": "ambiguity pattern resolved", "word": word, "reading": reading, "target": target})
+    return {"word": word, "patterns": got[word]}
+
+
+def milestone_prompt(pid: str, key: str) -> dict:
+    """What an agent working on a milestone is handed (knos.idt.agent_prompt): the locked intent and its hash, the
+    effort level and token budget, Chain-of-Draft steps and the stop rule."""
+    from knos import idt
+    p = project(pid)
+    _milestone(p, key)
+    h = (p.get("frozen") or {}).get("criteria_hash")
+    out = idt.agent_prompt(_brief(p), key, h)
+    return {**out, "locked": bool(h), "project": pid}
 
 
 def gate(p: dict) -> dict:

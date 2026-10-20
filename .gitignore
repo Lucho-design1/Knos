@@ -33,7 +33,8 @@ programs-v2/target
 examples/*/target
 
 # agent tooling scratch
-.claude/
+.claude/*
+!.claude/skills/
 
 examples/target
 mutants/

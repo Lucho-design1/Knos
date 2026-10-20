@@ -144,7 +144,9 @@ function wire(p, m, i) {
       const grant = k.value === "grant" ? { agency: $("ga" + i).value, id: $("gi" + i).value } : undefined;
       const f = await KnosPasskey.approve(await api("/api/project/fund", { passkey: true, project: p.id, milestone: m.key, units, kind: k.value, grant, ref: ref() }), api);
       const sig = (f.signatures || {}).lock;
-      out(`Locked in escrow.${sig ? ` <a href="${X(sig)}" rel="noopener">On devnet</a>.` : ""}`);
+      out(`Locked in escrow.${sig ? ` <a href="${X(sig)}" rel="noopener">On devnet</a>.` : ""} <span id="fin${i}">Waiting for finality…</span>`);
+      if (window.Knos) Knos.haptic("lock");
+      if (sig && window.Knos) Knos.finality(sig).then((r) => { const e = $("fin" + i); if (e) e.textContent = r.seconds ? `Finalized in ${r.seconds.toFixed(1)} s (${r.via}).` : "Not finalized yet."; });
     }
     setTimeout(() => loadProject(p.id), 1500);
   });
@@ -156,6 +158,7 @@ function wire(p, m, i) {
   for (const [b, role] of [["r", "result"], ["x", "check"]]) $(b + i).onclick = () => busy($(b + i), "Fetching the page", async () => {
     if (!session) { $("signin").hidden = false; throw new Error("Sign in first."); }
     const r = await api("/api/project/post", { project: p.id, milestone: m.key, attempt: $("a" + i).value.trim(), url: $("e" + i).value.trim(), role });
+    if (r.released && window.Knos) Knos.haptic("release");
     out(r.verdict ? `Verdict posted: pays automatically after the ${dur(r.verdict.window_s)} dispute window.` : r.released ? (r.milestone === "signing" ? "Verified: 2 of 3 referee hosts are checking the review and signing the release." : `Released: ${r.released.map((x) => esc(x.status)).join(", ")}.`) : `Posted. Next: ${esc(r.next)}.`);
     setTimeout(() => loadProject(p.id), 1500);
   });
@@ -206,10 +209,24 @@ async function checkBrief() {
   $("bLock").disabled = !ok;
   box.className = "ready " + (ok ? "ok" : "bad");
   const m = r.milestones[0] || {};
-  box.innerHTML = ok ? `<strong id="bLabel">Ready</strong> · criteria <span class="mono">${esc(r.criteria_hash.slice(0, 12))}</span>`
+  const t = r.idt || {};
+  // the route an agent run gets (knos.idt.route): fast path at low effort, or the rewrite flow; and its token budget
+  const route = t.effort ? `<p class="small muted" id="bRoute">${t.path === "fast" ? "Fast path" : t.path === "rewrite" ? "Needs a rewrite" : "Full reasoning"} · agent effort ${esc(t.effort)} · budget ${Number(t.token_budget).toLocaleString()} output tokens</p>` : "";
+  const readings = !ok && (t.interpretations || []).length ? `<p class="small">Which did you mean?</p><div class="row" id="bReadings">${t.interpretations.map((x, i) =>
+    `<button type="button" class="quiet" data-reading="${i}">${esc(x.reading)}: ${esc(x.target)}</button>`).join("")}</div>` : "";
+  const ask = !ok && t.question ? `<p class="small" id="bQuestion"><strong>One question:</strong> ${esc(t.question)}</p>` : "";
+  box.innerHTML = (ok ? `<strong id="bLabel">Ready</strong> · criteria <span class="mono">${esc(r.criteria_hash.slice(0, 12))}</span>`
     : `<strong id="bLabel">Not ready</strong><ul class="list small" id="bMissing">${r.missing.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` +
-      (m.rewrite ? `<button type="button" class="quiet" id="bRewrite">Use the rewrite</button>` : "");
+      (m.rewrite ? `<button type="button" class="quiet" id="bRewrite">Use the rewrite</button>` : "")) + readings + ask + route +
+    `<p class="small muted" id="bSaving">Measured: Ready briefs need about half the reasoning tokens of vague ones (<a href="https://drexthealpha.github.io/Knos/#home-idt" rel="noopener">IDT benchmark</a>).</p>`;
   if (!ok && m.rewrite) $("bRewrite").onclick = () => { fillBrief(m.rewrite); checkBrief().catch(err); };
+  for (const b of box.querySelectorAll("button[data-reading]")) b.onclick = () => {
+    const x = t.interpretations[+b.dataset.reading];
+    $("bTarget").value = x.target;
+    (window.Knos ? Knos.queue("/api/ready/resolve", { word: x.word, reading: x.reading, target: x.target })
+      : api("/api/ready/resolve", { word: x.word, reading: x.reading, target: x.target })).catch(() => {});      // offered first next time (I7)
+    checkBrief().catch(err);
+  };
   return r;
 }
 function renderBriefForm() {

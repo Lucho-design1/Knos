@@ -42,6 +42,7 @@ def test_the_bare_address_opens_on_the_products_with_three_one_tap_actions_each(
     bar = re.sub(r'<div class="more-list".*?</div>', "", bar, flags=re.S)
     prose = re.sub(r'<ol class="hp-list".*?</ol>', " ", home, flags=re.S)
     prose = re.sub(r'<p class="fine" id="home-when" data-not-prose>.*?</p>', " ", prose, flags=re.S)
+    prose = re.sub(r'<details[^>]*data-not-prose>.*?</details>', " ", prose, flags=re.S)       # the IDT benchmark's rows
     prose = re.sub(r"<(button)\b[^>]*>.*?</\1>", " ", re.sub(r"<!--.*?-->", " ", prose, flags=re.S), flags=re.S)
     n = len(_words(re.sub(r"<button\b[^>]*>.*?</button>", " ", bar, flags=re.S))) + len(_words(prose))
     assert 12 <= n <= 56, n

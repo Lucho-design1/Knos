@@ -22,6 +22,10 @@ ROUTES = [
     ("GET", "/api/projects", False, "Projects, newest first", {"take": "integer"}),
     ("GET", "/api/track", False, "A wallet's track record: its Solana Attestation Service attestations of verified milestones",
      {"wallet": "string"}),
+    ("GET", "/api/project/prompt", False, "What an agent working on a milestone is handed: the locked intent, effort and budget",
+     {"project": "string", "milestone": "string"}),
+    ("POST", "/api/ready/resolve", False, "Keep the reading a buyer tapped for a vague word (offered first next time)",
+     {"word": "string", "reading": "string", "target": "string"}),
     ("POST", "/api/ready", False, "Ready to fund: is a brief clear enough to lock money on (free; nothing stored)", {"brief": "object"}),
     ("POST", "/api/project/brief", True, "The buyer edits a project's brief (until money locks)", {"project": "string", "brief": "object"}),
     ("POST", "/api/project/change", True, "After lock: the buyer proposes a change request (a new criteria hash)",
@@ -83,6 +87,8 @@ def handle_get(h, state, u, qs) -> bool:
             return h._send(200, {"projects": valley.projects(min(100, max(1, int(q("take", "50") or 50))))}) or True
         if p == "/api/project":
             return h._send(200, valley.public_project(valley.project(q("id")))) or True
+        if p == "/api/project/prompt":
+            return h._send(200, valley.milestone_prompt(q("project"), q("milestone"))) or True
         if p == "/api/track":
             from . import track
             return h._send(200, track.record(q("wallet"))) or True
@@ -221,6 +227,8 @@ def _post(path: str, b: dict, user: dict, h) -> dict:
     if path == "/api/project/pool" and b.get("passkey") is True:
         from . import valley as v
         return {"pool": v._id("pool", str(user.get("sub"))), "rule": "fund each milestone with POST /api/project/fund {passkey, kind: pool, pool}"}
+    if path == "/api/ready/resolve":
+        return valley.resolve(b.get("word"), b.get("reading"), b.get("target"), user)
     if path == "/api/ready":
         return valley.check_brief(b.get("brief") if isinstance(b.get("brief"), dict) else b)
     if path == "/api/project":
@@ -298,6 +306,10 @@ MCP_TOOLS = [
      "measurable target (number and unit, or a named test), a verifier (a GitHub check name, or what/how/who/where) and a deadline; vague "
      "words are flagged. Returns Ready, or Not ready with the missing fields and a rewrite template. Sends nothing.",
      "inputSchema": _obj({"brief": {"type": "object"}}, ("brief",))},
+    {"name": "knos_milestone_prompt", "title": "The brief an agent works from", "description": "For a milestone you work on: the locked "
+     "intent (goal, success check, constraints, scope) with its criteria hash, the effort level and output-token budget, and how to "
+     "answer (minimal drafts, confidence first, stop when the check passes). Use it as your first instruction; do not re-derive the brief.",
+     "inputSchema": _obj({"project": _S, "milestone": _S}, ("project", "milestone"))},
 ]
 
 
@@ -311,6 +323,8 @@ def mcp_call(name: str, args: dict, signed) -> dict:
         return openapi.document()
     if name == "knos_ready":
         return valley.check_brief(args.get("brief") if isinstance(args.get("brief"), dict) else {})
+    if name == "knos_milestone_prompt":
+        return valley.milestone_prompt(str(args.get("project", "")), str(args.get("milestone", "")))
     who = signed(args)
     try:
         if name == "knos_project_open":

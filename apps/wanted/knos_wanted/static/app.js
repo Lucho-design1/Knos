@@ -227,7 +227,14 @@ function receipt(p) {
     Object.entries(sigs).map(([k, s]) => `<p class="small">${esc(k.replace(/_/g, " "))}: <a href="${X(s)}" target="_blank" rel="noopener">${short(s)}</a>${p.finality && p.finality[k] ? ` <span class="muted">· final in ${p.finality[k].final_ms} ms (${esc(p.finality[k].commitment)})</span>` : ""}</p>`).join("") +
     (p.verified && p.verified.chain_pin ? `<p class="small">${t("evidence_pin")}: <span class="mono">${esc(p.verified.chain_pin.slice(0, 16))}…</span><br>${t("page_sha")}: <span class="mono">${esc((p.verified.sha256 || "").slice(0, 16))}…</span></p>` : "") +
     (p.verifier ? `<p class="small muted">${esc(p.verifier)}</p>` : "") +
-    `<p class="small muted">${t("claim_id")}: <span class="mono">${esc(p.claim_id)}</span></p></div>`;
+    `<p class="small muted">${t("claim_id")}: <span class="mono">${esc(p.claim_id)}</span></p></div>` +
+    `<p class="small" id="receipt-final" aria-live="polite"></p>`;
+  const lock = sigs.lock || sigs.preorder || sigs.fund || Object.values(sigs)[0];
+  if (lock && window.Knos) {          // static/ux.js: the signature's finality, pushed over devnet's WebSocket and timed here
+    Knos.haptic(sigs.release || sigs.referee_group_pass ? "release" : "lock");
+    $("receipt-final").textContent = "Waiting for finality…";
+    Knos.finality(lock).then((r) => { $("receipt-final").textContent = r.seconds ? `Finalized in ${r.seconds.toFixed(1)} s (${r.via}).` : "Not finalized yet."; });
+  }
 }
 async function loadWeb3() {
   if (window.solanaWeb3) return window.solanaWeb3;

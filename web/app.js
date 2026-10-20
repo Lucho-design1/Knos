@@ -512,6 +512,12 @@ async function loadNetwork() {
   later("network-programs", programsHtml);
   later("network-keys", keysHtml);
   later("first-deployment", firstLive);
+  later("network-facts", async () => {          // web/netfacts.js: the cluster's own answers, then live over the WebSocket
+    const nf = await import("./netfacts.js"), all = await ids();
+    const html = nf.factsHtml(await nf.facts(all.knos_pay));
+    setTimeout(() => nf.live($("network-facts"), [all.knos_pay, all.knos_oidc].filter(Boolean)), 0);
+    return html;
+  });
   // the numbers are drawn first: the cards under them are shown once they are, where they stay (index.html)
   const drawn = () => { if ($("view-network")) $("view-network").dataset.stats = "drawn"; };
   if (!s || !s.outside || !s.apart) {

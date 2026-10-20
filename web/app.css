@@ -410,7 +410,8 @@ textarea:focus-visible, input:focus-visible, select:focus-visible { box-shadow: 
 .k-stage > * { transform-style: preserve-3d; }
 
 /* .k-reveal: enters once (web/motion.js adds .in). Held back only once motion.js says it will let it go (html.k-motion) */
-.k-motion .k-reveal { opacity: 0; translate: 0 14px; transition: opacity var(--dur-3) var(--ease), translate var(--dur-3) var(--ease); }
+/* 0.01, never 0: Chrome does not count a paint at opacity 0 as the Largest Contentful Paint, so a page whose cards all fade in would record none (NO_LCP) */
+.k-motion .k-reveal { opacity: 0.01; translate: 0 14px; transition: opacity var(--dur-3) var(--ease), translate var(--dur-3) var(--ease); }
 .k-motion .k-reveal.in { opacity: 1; translate: 0 0; }
 
 /* the mark in flight (motion.js raven) and with depth (brand/mark3d.js) */
@@ -496,7 +497,7 @@ body[data-page="terms"] #terms { display: block; }
 :root { view-transition-name: none; }
 ::view-transition-group(bar) { animation: none; } ::view-transition-old(bar) { display: none; } ::view-transition-new(bar) { animation: none; }
 @keyframes k-out { to { opacity: 0; translate: 0 -8px; } }
-@keyframes k-in { from { opacity: 0; translate: 0 12px; } }
+@keyframes k-in { from { opacity: 0.01; translate: 0 12px; } }
 
 /* ==== 0.3.17: motion that says what changed, and depth from one light ==================================================
    Added names (the 0.3.16 ones stand): .k-skeleton .k-toast .k-enter .k-out .k-sr .k-pal .k-cq, and from web/motion.js
@@ -517,7 +518,7 @@ body[data-page="terms"] #terms { display: block; }
 
 /* entry and exit: a thing that appears comes up into place once; .k-out is how it leaves (motion.js leave()) */
 .k-enter, .k-toast { transition: opacity var(--dur-2) var(--ease), translate var(--dur-2) var(--ease); }
-@starting-style { .k-enter, .k-toast { opacity: 0; translate: 0 8px; } }
+@starting-style { .k-enter, .k-toast { opacity: 0.01; translate: 0 8px; } }
 .k-enter.k-out, .k-toast.k-out { opacity: 0; translate: 0 -4px; transition-duration: var(--dur-1); }
 
 /* .k-skeleton: the pending state a view shows at once (motion.js skeleton(el)). One sweep of light, then still */
@@ -541,7 +542,7 @@ body[data-page="terms"] #terms { display: block; }
     .k-motion.k-scroll .k-reveal:not(.in) { opacity: 1; translate: none; transition: none; animation: k-enter linear both; animation-timeline: view(); animation-range: cover 0 cover 120px; }
   }
 }
-@keyframes k-enter { from { opacity: 0; translate: 0 14px; } }
+@keyframes k-enter { from { opacity: 0.01; translate: 0 14px; } }
 .k-motion.k-scroll .k-reveal.in { transition: none; }
 
 /* a fold opens to its own height where the browser can go to `auto`; its words come in with it */

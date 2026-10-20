@@ -148,3 +148,19 @@ label.opt { font-weight: 400; font-size: var(--fs-1); margin: 6px 0; }
 .card.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .soon button { margin: 0; } .soon button:disabled { opacity: .7; }
 #fundList, #lendList, #needList { list-style: none; padding: 0; }
+
+/* static/ux.js: display modes, the display sheet, the "what is happening" pill */
+.ux-fab { position: fixed; right: 16px; bottom: 16px; z-index: 30; min-width: 48px; min-height: 48px; border-radius: 24px; }
+.left-hand .ux-fab { right: auto; left: 16px; }
+.ux-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; padding: 16px; display: grid; gap: 8px; background: var(--paper, #fff); border-top: 1px solid var(--line, #ccc); box-shadow: 0 -4px 16px rgba(0, 0, 0, .12); }
+.ux-sheet[hidden], .ux-now[hidden], .ux-toast[hidden] { display: none; }
+.ux-sheet button[aria-pressed="true"] { outline: 2px solid currentColor; }
+.ux-now { position: fixed; left: 50%; translate: -50% 0; top: 8px; z-index: 32; margin: 0; padding: 4px 12px; border-radius: 12px; font-size: .85rem; background: var(--ink, #222); color: var(--paper, #fff); }
+.ux-toast { position: fixed; left: 16px; right: 80px; bottom: 16px; z-index: 31; margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--ink, #222); color: var(--paper, #fff); }
+.mic { min-width: 44px; min-height: 44px; }
+.simple details, .simple .muted, .simple #poolBox, .simple .advanced { display: none !important; }
+.simple { font-size: 112%; }
+.contrast { --ink: #000; --paper: #fff; --muted: #000; filter: contrast(1.15); }
+.contrast a { text-decoration: underline; }
+.dyslexia body { font-family: Verdana, "Atkinson Hyperlegible", Tahoma, sans-serif; letter-spacing: .03em; word-spacing: .12em; line-height: 1.7; }
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

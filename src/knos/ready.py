@@ -30,14 +30,18 @@ UNITS = ("%", "ms", "s", "sec", "secs", "second", "seconds", "min", "mins", "min
          "ul", "nm", "µm", "um", "mol", "mmol", "µmol", "mm/s", "v", "mv", "a", "ma", "w", "mw", "kw", "hz", "khz", "mhz",
          "ghz", "db", "ppm", "ppb", "cells", "cell", "reads", "devices", "device", "units/day", "documents", "document",
          "sections", "section", "signatures", "signature", "customers", "customer", "weeks", "months", "month", "lines",
-         "commits", "prs", "accuracy", "auc", "f1", "rmse", "mae", "iops", "ops", "cycles", "boards", "parts", "batches")
+         "commits", "prs", "accuracy", "auc", "f1", "rmse", "mae", "iops", "ops", "cycles", "boards", "parts", "batches",
+         "percent", "trials", "trial", "prototype", "prototypes", "features", "feature", "patches", "arrays", "copies",
+         "reports", "screens", "endpoints", "steps", "participants", "patients", "litres", "liters", "mah", "wh")
 MIN_DEADLINE_S, MAX_DEADLINE_S = 60, 90 * 86_400
 DEFAULT_CHALLENGE_S = 72 * 3600
 MAX_KILL_FEE_BPS = 5000
-_NUM_UNIT = re.compile(r"(?<![\w.])(\d+(?:[.,]\d+)?)\s*(" + "|".join(sorted((re.escape(u) for u in UNITS), key=len, reverse=True))
-                       + r")(?![\w])", re.I)
+_UNIT_RE = "|".join(sorted((re.escape(u) for u in UNITS), key=len, reverse=True))
+# a number with its unit right after it, or up to two words later ("90 Lighthouse score", "1 functional prototype")
+_NUM_UNIT = re.compile(r"(?<![\w.])(\d+(?:[.,]\d+)?)\s*(?:[A-Za-z][\w-]*\s+){0,2}(" + _UNIT_RE + r")(?![\w])", re.I)
+# a named test: test_x, file.py::case, tests/..., check "name", or a joined name with "test(s)" in it (e2e-login-tests)
 _TEST = re.compile(r"(?:\btest_[A-Za-z0-9_]+|\b[\w./-]+\.(?:py|js|ts|mjs|rs|go)::[\w\[\]-]+|\b[\w./-]*tests?/[\w./-]+|"
-                   r"check\s+[\"'`][^\"'`]{2,100}[\"'`])")
+                   r"check\s+[\"'`][^\"'`]{2,100}[\"'`]|\b[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*[-_]tests?(?:[-_][A-Za-z0-9]+)*\b)")
 _CHECK_NAME = re.compile(r"^[\w .:/()\[\]@,+#-]{2,100}$")
 HUMAN_FIELDS = ("what", "how", "who", "where")
 

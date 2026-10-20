@@ -1183,6 +1183,7 @@ _MODULES = (    # (the commands it adds, how); in the order they were always reg
     (("verify",), lambda: _mod("verify.cli").register(_app, _HELP)),               # knos verify: AI policy, cheat checks, tests twice, a signed receipt (src/knos/verify/)
     (("taskpack",), lambda: _mod("taskpack").register(_app, _HELP)),              # knos taskpack export | verify | grade | rows (src/knos/taskpack/)
     (("idea",), lambda: _mod("ideas.cli").register(_app, _HELP)),                 # knos idea get | search | in | who | wanted | check | commit | state (src/knos/ideas/)
+    (("idt",), lambda: _mod("idt").register(_app, _HELP)),                        # knos idt check | draft: route a brief, draft the shortest Ready one (src/knos/idt.py)
 )
 _OWN = frozenset(name for name, _p, _s in _HELP) | {"hook", "badge", "record", "proof"}     # commands this module (or one it imports anyway) defines
 _loaded: set[int] = set()
@@ -1197,7 +1198,7 @@ def load(command: str | None = None) -> None:
         if i not in _loaded:
             _loaded.add(i)
             _MODULES[i][1]()
-    tail = [row for name in ("meter", "audit", "budget", "observe", "reproduce", "shadow", "events", "bill", "preflight", "keep", "appeal", "vault", "archive", "approve", "decide", "net", "advance", "faucet", "controls", "recall", "task", "exit", "boundary", "selfhost", "assurance", "fees", "protect", "referee", "cheats", "outcome", "gate", "verify", "self", "game", "idea") for row in _HELP if row[0] == name]   # the lines modules append: in this order always
+    tail = [row for name in ("meter", "audit", "budget", "observe", "reproduce", "shadow", "events", "bill", "preflight", "keep", "appeal", "vault", "archive", "approve", "decide", "net", "advance", "faucet", "controls", "recall", "task", "exit", "boundary", "selfhost", "assurance", "fees", "protect", "referee", "cheats", "outcome", "gate", "verify", "self", "game", "idea", "idt") for row in _HELP if row[0] == name]   # the lines modules append: in this order always
     _HELP[:] = [row for row in _HELP if row not in tail] + tail
     _arrange()
 

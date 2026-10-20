@@ -73,7 +73,8 @@ SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/
              "/api/preorder/demo", "/api/preorder/faucet", "/api/preorder/tx", "/api/preorder/submit",
              "/api/wallet", "/api/wallet/faucet", "/api/sign", "/api/maker/claim", "/api/lend/quote", "/api/lend/advance", "/api/lend/collect")   # no anonymous money or faucet calls
 # every GET route below (do_GET), for the OpenAPI document (knos_wanted.openapi); the product routes list their own
-GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/actions/preorder": "Solana Action (Blink): pre-order metadata",
+GET_ROUTES = {"/actions.json": "Solana Actions rules", "/sw.js": "The app's service worker (offline shell, background sync)",
+              "/manifest.webmanifest": "The app's web app manifest (installable, home-screen shortcuts)", "/api/actions/preorder": "Solana Action (Blink): pre-order metadata",
               "/api/cross": "Poll a live crossing", "/verify": "How we verify", "/api/crossings": "Crossings, newest first",
               "/api/front": "Research products open for backing now (the front door's list; ?slug= one product)",
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
@@ -297,6 +298,9 @@ def make_handler(state: State):
                     return self._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120]))
             if u.path in ("/", "/index.html"):
                 return self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
+            if u.path in ("/sw.js", "/manifest.webmanifest"):        # the PWA: its worker's scope is the whole app
+                ctype = "text/javascript; charset=utf-8" if u.path == "/sw.js" else "application/manifest+json"
+                return self._send(200, (STATIC / u.path[1:]).read_bytes(), ctype, {"Cache-Control": "no-cache"})
             if u.path.startswith("/static/"):
                 f = (STATIC / u.path[len("/static/"):]).resolve()
                 if STATIC.resolve() in f.parents and f.is_file():
