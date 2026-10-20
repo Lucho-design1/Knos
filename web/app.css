@@ -410,7 +410,6 @@ textarea:focus-visible, input:focus-visible, select:focus-visible { box-shadow: 
 .k-stage > * { transform-style: preserve-3d; }
 
 /* .k-reveal: enters once (web/motion.js adds .in). Held back only once motion.js says it will let it go (html.k-motion) */
-/* 0.01, never 0: Chrome does not count a paint at opacity 0 as the Largest Contentful Paint, so a page whose cards all fade in would record none (NO_LCP) */
 .k-motion .k-reveal { opacity: 0.01; translate: 0 14px; transition: opacity var(--dur-3) var(--ease), translate var(--dur-3) var(--ease); }
 .k-motion .k-reveal.in { opacity: 1; translate: 0 0; }
 

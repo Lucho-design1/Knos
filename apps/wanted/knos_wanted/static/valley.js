@@ -16,6 +16,13 @@ const STATUS = { open: "Open", funded: "Funded", claimed: "In progress", release
 
 async function walletSign(b64) {
   const w = window.phantom && window.phantom.solana || window.solflare || window.solana;
+  if (!w && window.Knos && Knos.wallets && Knos.wallets().length) {     // a Wallet Standard wallet (static/ux_more.js)
+    const signed = await Knos.standardSign(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)));
+    const r = await fetch("https://api.devnet.solana.com", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "sendTransaction", params: [btoa(String.fromCharCode(...signed)), { encoding: "base64" }] }) }).then((x) => x.json());
+    if (r.error) throw new Error(r.error.message);
+    return r.result;
+  }
   if (!w) throw new Error("Connect a Solana wallet (Phantom, Solflare) set to devnet to sign this.");
   const web3 = await loadWeb3();
   const tx = web3.Transaction.from(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)));
@@ -87,6 +94,7 @@ async function loadProject(id) {
     $("refOut").innerHTML = `Share <span class="mono">${esc(location.origin + r.link)}</span>: ${esc(r.rule)} (${r.share_bps / 100}%).`;
   });
   $("msList").innerHTML = p.milestones.map((m, i) => msCard(p, m, i)).join("");
+  watchOrders(p);
   p.milestones.forEach((m, i) => wire(p, m, i));
 }
 // The code referee's four proofs for one order (knos_wanted.referee.trust): each one checks without Knos.
@@ -101,12 +109,43 @@ function trustLine(t) {
   ];
   return `<br><span class="small">Code referee: ${parts.join(" · ")}</span>`;
 }
+// a verified attempt on chain beyond its attestations (knos_wanted.chainx): the maker's badge, the compressed log, the
+// release memo, the rent the release returned
+function onchainLine(c) {
+  if (!c) return "";
+  const parts = [];
+  if (c.badge && c.badge.mint) parts.push(`<a href="${X(c.badge.mint, "address")}" rel="noopener">badge (Token-2022, cannot be sold)</a>`);
+  if (c.log && c.log.signature) parts.push(`<a href="${X(c.log.signature)}" rel="noopener">compressed log leaf ${c.log.index}</a>`);
+  if (c.memo && c.memo.signature) parts.push(`<a href="${X(c.memo.signature)}" rel="noopener">release memo</a>`);
+  if (c.rent && typeof c.rent.returned_sol === "number") parts.push(`rent returned ${c.rent.returned_sol.toFixed(6)} SOL`);
+  return parts.length ? `<br><span class="small">On chain: ${parts.join(" · ")}</span>` : "";
+}
+// each locked escrow's balance, pushed by devnet as it changes (accountSubscribe): no polling, closed when the page changes
+let orderSocket = null;
+function watchOrders(p) {
+  if (orderSocket) { try { orderSocket.close(); } catch (e) { /* closed */ } orderSocket = null; }
+  const orders = p.milestones.flatMap((m) => m.orders.filter((o) => o.status === "locked").map((o) => o.order));
+  if (!orders.length || !window.WebSocket) return;
+  const ws = orderSocket = new WebSocket("wss://api.devnet.solana.com");
+  const ids = {};
+  ws.onopen = () => orders.forEach((o, i) => { ids[100 + i] = o; ws.send(JSON.stringify({ jsonrpc: "2.0", id: 100 + i, method: "accountSubscribe", params: [o, { commitment: "confirmed", encoding: "base64" }] })); });
+  const subs = {};
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.id && ids[m.id]) subs[m.result] = ids[m.id];
+    if (m.method === "accountNotification") {
+      const o = subs[m.params.subscription], v = m.params.result.value;
+      const el = document.querySelector(`[data-order="${o}"]`);
+      if (el) el.textContent = v ? `live: ${(v.lamports / 1e9).toFixed(6)} SOL in the account` : "live: closed (released or refunded)";
+    }
+  };
+}
 function msCard(p, m, i) {
   const live = m.attempts.filter((a) => ["working", "result posted", "checked"].includes(a.status));
   const reg = m.kind === "regulatory" ? `<p class="small"><span class="tag">Regulatory · ${esc(m.standard)}</span> <a href="${esc(m.template)}" rel="noopener">OpenRegulatory template</a></p>` : "";
   const cap = (m.route && m.route.capacity || []).map((c) => `<li>${esc(c.name)}${c.quote && c.quote.price != null ? ` — quote ${c.quote.price} ${esc(c.quote.currency)}, ${c.quote.turnaround_days} days <span class="small muted">(${c.quote.fixture ? "fixture quote, labelled" : "live"})</span>` : ""}${c.manual ? ` — <a href="${esc(c.manual)}" rel="noopener">order on their site</a>` : ""}</li>`).join("");
-  const orders = m.orders.map((o) => `<li class="small"><a href="${o.explorer}" rel="noopener">${short(o.order)}</a> ${o.units} units · ${esc(o.kind)}${o.grant ? " (" + esc(o.grant.agency) + " " + esc(o.grant.id) + ")" : ""} · <strong>${esc(o.status)}</strong>${o.signatures && o.signatures.refund ? ` · <a href="${X(o.signatures.refund)}" rel="noopener">refund</a>` : ""}${o.signatures && (o.signatures.referee_2_pass || o.signatures.referee_group_pass) ? ` · <a href="${X(o.signatures.referee_2_pass || o.signatures.referee_group_pass)}" rel="noopener">release</a>` : ""}${trustLine(o.trust)}</li>`).join("");
-  const atts = m.attempts.map((a) => `<li class="small">${esc(a.maker)} · <strong>${esc(a.status)}</strong>${a.result ? ` · <a href="${esc(a.result.url)}" rel="noopener nofollow">result</a>` : ""}${a.check ? ` · <a href="${esc(a.check.url)}" rel="noopener nofollow">check</a> by ${esc(a.check.by)}` : ""}${a.result ? ` · <a href="/api/attest?project=${p.id}&milestone=${m.key}&attempt=${a.id}" rel="noopener">in-toto attestation</a>` : ""} <span class="mono muted">${esc(a.id)}</span>${a.verdict && a.status === "verdict posted" ? ` · <span id="verdict-${esc(a.id)}">verdict: pass, releases ${new Date(a.verdict.ends_s * 1000).toLocaleTimeString()} unless disputed</span> <button type="button" class="quiet" data-dispute="${esc(a.id)}">Dispute</button>` : ""}${a.status === "disputed" ? " · money stays locked" : ""}${(a.attestations || []).map((t) => ` · <a href="/api/track?wallet=${esc(t.wallet)}" rel="noopener" class="track">${esc(t.role)} track record</a>`).join("")}</li>`).join("");
+  const orders = m.orders.map((o) => `<li class="small"><a href="${o.explorer}" rel="noopener">${short(o.order)}</a> <span class="muted" data-order="${esc(o.order)}"></span> ${o.units} units · ${esc(o.kind)}${o.grant ? " (" + esc(o.grant.agency) + " " + esc(o.grant.id) + ")" : ""} · <strong>${esc(o.status)}</strong>${o.signatures && o.signatures.refund ? ` · <a href="${X(o.signatures.refund)}" rel="noopener">refund</a>` : ""}${o.signatures && (o.signatures.referee_2_pass || o.signatures.referee_group_pass) ? ` · <a href="${X(o.signatures.referee_2_pass || o.signatures.referee_group_pass)}" rel="noopener">release</a>` : ""}${trustLine(o.trust)}</li>`).join("");
+  const atts = m.attempts.map((a) => `<li class="small">${esc(a.maker)} · <strong>${esc(a.status)}</strong>${a.result ? ` · <a href="${esc(a.result.url)}" rel="noopener nofollow">result</a>` : ""}${a.check ? ` · <a href="${esc(a.check.url)}" rel="noopener nofollow">check</a> by ${esc(a.check.by)}` : ""}${a.result ? ` · <a href="/api/attest?project=${p.id}&milestone=${m.key}&attempt=${a.id}" rel="noopener">in-toto attestation</a>` : ""} <span class="mono muted">${esc(a.id)}</span>${a.verdict && a.status === "verdict posted" ? ` · <span id="verdict-${esc(a.id)}">verdict: pass, releases ${new Date(a.verdict.ends_s * 1000).toLocaleTimeString()} unless disputed</span> <button type="button" class="quiet" data-dispute="${esc(a.id)}">Dispute</button>` : ""}${a.status === "disputed" ? " · money stays locked" : ""}${(a.attestations || []).map((t) => ` · <a href="/api/track?wallet=${esc(t.wallet)}" rel="noopener" class="track">${esc(t.role)} track record</a>`).join("")}${onchainLine(a.onchain)}</li>`).join("");
   return `<li class="card ms" id="ms${i}"><div class="row spread"><h3>${esc(m.name)}</h3><span class="chip st-${esc(m.status)}">${esc(STATUS[m.status] || m.status)}</span></div>
     ${reg}<p class="small muted">Deadline ${dur(m.deadline_s)} after funding · ${m.locked_units} test units in escrow · ${m.amc_units} committed (AMC)${m.excluded_makers ? ` · ${m.excluded_makers} maker(s) missed it` : ""}</p>
     ${orders ? `<ul class="list">${orders}</ul>` : ""}${atts ? `<p class="small"><strong>Attempts</strong> (up to 3 in parallel)</p><ul class="list">${atts}</ul>` : ""}

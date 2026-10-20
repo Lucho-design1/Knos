@@ -103,6 +103,8 @@ export function live(el, programs, WS = globalThis.WebSocket) {
     ws.send(JSON.stringify({ jsonrpc: "2.0", id: 1, method: "slotSubscribe" }));
     ws.send(JSON.stringify({ jsonrpc: "2.0", id: 2, method: "rootSubscribe" }));
     programs.forEach((p, i) => ws.send(JSON.stringify({ jsonrpc: "2.0", id: 3 + i, method: "logsSubscribe", params: [{ mentions: [p] }, { commitment: "finalized" }] })));
+    // a new or changed escrow account of the first program, pushed as it happens (the data itself is not needed here)
+    if (programs[0]) ws.send(JSON.stringify({ jsonrpc: "2.0", id: 9, method: "programSubscribe", params: [programs[0], { commitment: "confirmed", encoding: "base64", dataSlice: { offset: 0, length: 0 } }] }));
   };
   ws.onmessage = (ev) => {
     const m = JSON.parse(ev.data);
@@ -111,6 +113,11 @@ export function live(el, programs, WS = globalThis.WebSocket) {
     if (m.method === "logsNotification" && feed) {
       const v = m.params.result.value;
       feed.insertAdjacentHTML("afterbegin", `<li><a class="mono" href="https://explorer.solana.com/tx/${esc(v.signature)}?cluster=devnet" rel="noopener">${esc(v.signature.slice(0, 10))}…</a> ${v.err ? "failed" : "finalized"}</li>`);
+      while (feed.children.length > 8) feed.lastChild.remove();
+    }
+    if (m.method === "programNotification" && feed) {
+      const k = m.params.result.value.pubkey;
+      feed.insertAdjacentHTML("afterbegin", `<li>escrow account <a class="mono" href="https://explorer.solana.com/address/${esc(k)}?cluster=devnet" rel="noopener">${esc(k.slice(0, 10))}…</a> changed</li>`);
       while (feed.children.length > 8) feed.lastChild.remove();
     }
     if (clock && slot && root) clock.textContent = `Finality clock: slot ${num(slot)}, finalized ${num(root)} (${num(slot - root)} behind)`;

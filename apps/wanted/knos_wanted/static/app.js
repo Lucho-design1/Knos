@@ -158,6 +158,17 @@ async function cross() {
   const j = await api("/api/cross", body);
   $("timeline").hidden = false; $("steps").innerHTML = ""; $("outcome").innerHTML = ""; $("timeline").scrollIntoView({ behavior: "smooth" });
   let since = 0;
+  if (window.Knos && Knos.streamCrossing) {          // static/ux_more.js: the steps pushed as they happen (Server-Sent Events)
+    const done = await new Promise((res) => {
+      const es = Knos.streamCrossing(j.id, (s) => { $("steps").insertAdjacentHTML("beforeend", stepHtml(s)); since++; }, res);
+      if (!es) res(null); else es.addEventListener("error", () => res(null));
+    });
+    if (done && done.status === "done") {
+      const p = await api(`/api/cross?id=${j.id}&since=${since}`);
+      if (p.report) { const r = await api("/api/report?hash=" + p.report); report = r; outcome(r); }
+      return;
+    }
+  }
   for (let i = 0; i < 400; i++) {
     const p = await api(`/api/cross?id=${j.id}&since=${since}`);
     for (const s of p.steps) $("steps").insertAdjacentHTML("beforeend", stepHtml(s));
@@ -453,6 +464,14 @@ $("preBtn").onclick = () => busy($("preBtn"), t("loading"), async () => {
   const step = await api("/api/preorder", { report: report.hash, units: parseInt($("units").value, 10) });
   const p = await KnosPasskey.approve(step, api); receipt(p); loadProduct(report.hash); });
 $("faucetBtn").onclick = () => busy($("faucetBtn"), t("loading"), async () => { await api("/api/wallet/faucet", {}); loadWallet(); });
+// devnet SOL from the cluster's own faucet (requestAirdrop): rate limited per address and per day, which it says
+$("solBtn").onclick = () => busy($("solBtn"), t("loading"), async () => {
+  const w = await api("/api/wallet", {});
+  const r = await fetch("https://api.devnet.solana.com", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "requestAirdrop", params: [w.vault, 500000000] }) }).then((x) => x.json()).catch((e) => ({ error: { message: e.message } }));
+  $("solOut").innerHTML = r.result ? `0.5 devnet SOL on its way: <a href="${X(r.result)}" rel="noopener">${short(r.result)}</a>. Devnet may reset.`
+    : `The devnet faucet said no (${esc((r.error || {}).message || "unknown")}): try <a href="https://faucet.solana.com" rel="noopener">faucet.solana.com</a>.`;
+});
 $("claimBtn").onclick = () => busy($("claimBtn"), t("loading"), async () => {
   if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }
   const c = await api("/api/maker/claim", { report: report.hash }); await loadProduct(report.hash);

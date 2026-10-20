@@ -236,3 +236,22 @@ def test_recommendations_raise_or_lower_the_target():
     assert any(x.startswith("recommendations: 6 strong") for x in many["reasons"])
     no_rec = run(recs=(0.95,) * 6, fail="urn:entity:brand")[0]["decision"]["target_units"]    # recommendations (and trend) fail
     assert no_rec == run(fail="/v2/trending")[0]["decision"]["target_units"] == 180          # same as without them: not counted
+
+
+def test_a_filter_qloo_ignores_for_the_type_is_not_sent_and_an_empty_narrow_result_broadens_once():
+    from knos_wanted import check as C
+    sent = []
+
+    class Fake:
+        def get(self, path, params):
+            sent.append(dict(params))
+            empty = any(k.startswith("filter.properties.business_rating") for k in params)
+            body = {"results": {"entities": [] if empty else [{"name": "x"}]}}
+            return {"body": body, "source": {"call": "GET " + path, "params": params, "cached": False, "at": "now"}}
+
+    run = C._Run(Fake())
+    run.get("/v2/insights", {"filter.type": "urn:entity:movie", "filter.price_level.min": "2", "take": 3}, "movies")
+    assert "filter.price_level.min" not in sent[0] and "not sent: filter.price_level.min" in run.calls[0]["what"]
+    body, _ = run.get("/v2/insights", {"filter.type": "urn:entity:place", "filter.properties.business_rating.min": "3.5"}, "places")
+    assert body["results"]["entities"] and "filter.properties.business_rating.min" not in sent[-1]
+    assert "broadened" in run.calls[-1]["what"]

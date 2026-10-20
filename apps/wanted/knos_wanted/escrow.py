@@ -57,11 +57,25 @@ def available() -> bool:
         return False
 
 
+DEVNET_GENESIS = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG"
+_genesis_ok: dict[str, bool] = {}
+
+
 def ledger():
     chain, _, _ = knos()
     led = chain.ledger()
     if not any(x in led.url for x in ("devnet", "127.0.0.1", "localhost")):
         raise EscrowUnavailable("devnet only")
+    if "devnet" in led.url and led.url not in _genesis_ok:
+        # an endpoint named devnet is believed only when its first block is devnet's (a reset or a wrong URL is refused)
+        try:
+            got = chain.call(led.url, "getGenesisHash", [])
+        except Exception:  # noqa: BLE001 - unreachable now: checked again on the next call
+            got = None
+        if got is not None:
+            _genesis_ok[led.url] = got == DEVNET_GENESIS
+    if _genesis_ok.get(led.url) is False:
+        raise EscrowUnavailable("refused: the RPC endpoint's genesis hash is not devnet's")
     return led
 
 

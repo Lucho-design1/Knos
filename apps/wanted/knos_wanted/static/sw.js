@@ -3,7 +3,7 @@
 // sent by Background Sync when the connection is back (static/ux.js queues it).
 const SHELL = "knos-shell-v1";
 const FILES = ["/", "/static/style.css", "/static/i18n.js", "/static/passkey_wallet.js", "/static/valley.js", "/static/app.js",
-  "/static/ux.js", "/static/icon.svg", "/manifest.webmanifest"];
+  "/static/ux.js", "/static/ux_more.js", "/static/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(SHELL).then((c) => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => {

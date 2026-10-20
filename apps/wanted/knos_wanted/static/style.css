@@ -164,3 +164,20 @@ label.opt { font-weight: 400; font-size: var(--fs-1); margin: 6px 0; }
 .contrast a { text-decoration: underline; }
 .dyslexia body { font-family: Verdana, "Atkinson Hyperlegible", Tahoma, sans-serif; letter-spacing: .03em; word-spacing: .12em; line-height: 1.7; }
 .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+/* static/ux_more.js: the long-press menu, live cursors, the milestone canvas, compact density, the mobile bottom bar */
+.ux-menu { position: fixed; z-index: 33; display: grid; background: var(--paper, #fff); border: 1px solid var(--line, #ccc); border-radius: 10px; box-shadow: 0 6px 20px rgba(0, 0, 0, .15); }
+.ux-menu button { min-height: 44px; padding: 0 16px; text-align: left; background: none; border: 0; }
+.ux-cursor { position: fixed; z-index: 29; pointer-events: none; font-size: .75rem; padding: 2px 6px; border-radius: 8px; background: #3e63dd; color: #fff; translate: 6px 6px; }
+.ux-canvas { position: relative; min-height: 900px; }
+.ux-canvas > li { position: absolute; width: 32%; cursor: grab; }
+.compact { --gap: 6px; } .compact .card { padding: 10px; } .compact p { margin: 4px 0; }
+@media (max-width: 720px) {
+  nav.roles { position: fixed; left: 0; right: 0; bottom: 0; z-index: 28; display: flex; overflow-x: auto; gap: 4px; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    background: var(--paper, #fff); border-top: 1px solid var(--line, #ddd); }
+  nav.roles a { min-height: 44px; display: inline-flex; align-items: center; white-space: nowrap; }
+  body { padding-bottom: 72px; }
+  .ux-fab { bottom: 80px; }
+  .card, .pcard { max-height: 80vh; overflow: auto; }
+}
+@media (prefers-color-scheme: dark) { .night-voice .mic { min-width: 64px; min-height: 64px; font-size: 1.5rem; } }
+button:active { transform: scale(.97); }

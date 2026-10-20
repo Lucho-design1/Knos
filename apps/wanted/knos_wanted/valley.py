@@ -1061,7 +1061,33 @@ def _attest(p: dict, key: str, a: dict, paid: list[dict], led=None) -> list[dict
         x = next(x for x in _milestone(q, key)["attempts"] if x["id"] == a["id"])
         x["attestations"] = [{k: r[k] for k in ("role", "wallet", "attestation", "signature")} for r in rows]
         _save("projects", q["id"], q)
+    x["onchain"] = _onchain(p, key, a, rows, sig, led)
+    with _lock:
+        q = project(p["id"])
+        next(y for y in _milestone(q, key)["attempts"] if y["id"] == a["id"])["onchain"] = x["onchain"]
+        _save("projects", q["id"], q)
     return rows
+
+
+def _onchain(p: dict, key: str, a: dict, rows: list[dict], release_sig: str, led=None) -> dict:
+    """Beside the attestations: the maker's Token-2022 badge (non-transferable, in the project's group), a leaf in the
+    compressed track-record log, a release memo naming the brief and criteria hashes, and the rent the release gave
+    back. Each step is independent; one that fails is said, never retried in a loop and never undoes the release."""
+    from . import chainx
+    out: dict = {}
+    m = _milestone(p, key)
+    crit = (p.get("frozen") or {}).get("criteria_hash") or ""
+    brief = hashlib.sha256(json.dumps(_brief(p), sort_keys=True).encode()).hexdigest()
+    steps = {"badge": lambda: chainx.badge(p["id"], p["title"], key, m["name"], a["wallet"], f"https://knos.onrender.com/#projects={p['id']}", led=led),
+             "log": lambda: chainx.log_leaf(f"{p['id']}|{key}|{a['id']}|{','.join(r['attestation'] for r in rows)}", led=led),
+             "memo": lambda: {"signature": chainx.memo(f"knos release {release_sig} brief sha256:{brief} criteria sha256:{crit}", led=led)},
+             "rent": lambda: chainx.rent_returned(release_sig) if release_sig else None}
+    for name, run in steps.items():
+        try:
+            out[name] = run()
+        except Exception as why:  # noqa: BLE001
+            out[name] = {"error": f"{type(why).__name__}: {str(why)[:160]}"}
+    return out
 
 
 # ---- the sweeper: missed deadlines refund and reopen (B3) ------------------------------------------------------------

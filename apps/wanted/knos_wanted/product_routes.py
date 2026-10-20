@@ -20,6 +20,16 @@ MAX_MEDIA_BODY = provenance.MAX_MEDIA
 ROUTES = [
     ("GET", "/api/templates", False, "Milestone templates and OpenRegulatory regulatory sets", {}),
     ("GET", "/api/projects", False, "Projects, newest first", {"take": "integer"}),
+    ("GET", "/api/cross/stream", False, "A crossing's steps as Server-Sent Events while it runs", {"id": "string", "since": "integer"}),
+    ("POST", "/api/draft", True, "Keep the brief you are writing for your passkey (every save is a version)", {"brief": "object", "title": "string"}),
+    ("POST", "/api/draft/get", True, "Your latest draft and its timeline, on any device you sign in on", {}),
+    ("POST", "/api/draft/forget", True, "Forget every draft kept for your passkey", {}),
+    ("POST", "/api/presence", False, "Your pointer on a project page, and everyone else's there now (live cursors)",
+     {"page": "string", "me": "string", "x": "number", "y": "number", "label": "string"}),
+    ("GET", "/api/sns", False, "Who owns a .sol name on this cluster (Name Service), for a project that names one", {"name": "string"}),
+    ("GET", "/api/price", False, "A Pyth price (EUR/USD, GBP/USD, SOL/USD, BTC/USD, ETH/USD), for a milestone in another currency", {"pair": "string"}),
+    ("POST", "/api/evidence/evm", False, "Verify an EVM-signed attestation with Solana's Secp256k1 precompile (a devnet transaction)",
+     {"eth_address": "string", "signature": "string", "message": "string"}),
     ("GET", "/api/track", False, "A wallet's track record: its Solana Attestation Service attestations of verified milestones",
      {"wallet": "string"}),
     ("GET", "/api/project/prompt", False, "What an agent working on a milestone is handed: the locked intent, effort and budget",
@@ -89,6 +99,16 @@ def handle_get(h, state, u, qs) -> bool:
             return h._send(200, valley.public_project(valley.project(q("id")))) or True
         if p == "/api/project/prompt":
             return h._send(200, valley.milestone_prompt(q("project"), q("milestone"))) or True
+        if p == "/api/cross/stream":
+            from . import live
+            live.stream(h, q("id"), int(q("since", "0") or 0))
+            return True
+        if p == "/api/sns":
+            from . import chainx
+            return h._send(200, chainx.sns_owner(q("name"))) or True
+        if p == "/api/price":
+            from . import chainx
+            return h._send(200, chainx.price(q("pair", "EUR/USD"))) or True
         if p == "/api/track":
             from . import track
             return h._send(200, track.record(q("wallet"))) or True
@@ -227,6 +247,17 @@ def _post(path: str, b: dict, user: dict, h) -> dict:
     if path == "/api/project/pool" and b.get("passkey") is True:
         from . import valley as v
         return {"pool": v._id("pool", str(user.get("sub"))), "rule": "fund each milestone with POST /api/project/fund {passkey, kind: pool, pool}"}
+    if path in ("/api/draft", "/api/draft/get", "/api/draft/forget"):
+        from . import live
+        if path == "/api/draft":
+            return live.draft_save(user, b.get("brief") if isinstance(b.get("brief"), dict) else {}, str(b.get("title") or ""))
+        return live.draft_get(user) if path == "/api/draft/get" else live.draft_forget(user)
+    if path == "/api/presence":
+        from . import live
+        return live.presence(str(b.get("page", "")), str(b.get("me", "")), b.get("x", 0), b.get("y", 0), str(b.get("label") or "someone"))
+    if path == "/api/evidence/evm":
+        from . import chainx
+        return chainx.evm_verify(str(b.get("eth_address", "")), str(b.get("signature", "")), str(b.get("message", ""))[:1000])
     if path == "/api/ready/resolve":
         return valley.resolve(b.get("word"), b.get("reading"), b.get("target"), user)
     if path == "/api/ready":

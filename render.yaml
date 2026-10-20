@@ -18,6 +18,10 @@ services:
         value: "8000"
       - key: KNOS_CLUSTER
         value: devnet
+      - key: KNOS_PRIORITY            # knos.platform.priority: a priority fee from getRecentPrioritizationFees, a limit from simulateTransaction
+        value: auto
+      - key: KNOS_WS                  # confirmations by signatureSubscribe, not polling
+        value: "1"
       - key: KNOS_WANTED_TRUST_PROXY
         value: "1"
       - key: KNOS_WANTED_RP_ID

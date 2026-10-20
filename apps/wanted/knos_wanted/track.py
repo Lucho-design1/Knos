@@ -97,5 +97,7 @@ def record(wallet: str, led=None) -> dict:
         if a.credential != cred or a.schema != schema or fields.get("wallet") != wallet:
             continue
         shown.append({**r, "on_chain": fields, "explorer": escrow.explorer(r["attestation"], "address")})
+    from . import chainx
     return {"wallet": wallet, "verified_milestones": len(shown), "attestations": shown, "credential": str(cred), "schema": str(schema),
+            "badges": chainx.badges_of(wallet),
             "program": str(sas.PROGRAM), "cluster": "devnet"}

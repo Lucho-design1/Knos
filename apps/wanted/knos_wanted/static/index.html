@@ -105,7 +105,7 @@
       <p id="feeLine" class="small muted"></p>
       <label for="units" data-i18n="units">Units</label><input id="units" type="number" min="5" value="5" inputmode="numeric">
       <div id="pkWallet" class="small" hidden><span data-i18n="wallet_t">Your passkey wallet</span>: <a id="pkVault" target="_blank" rel="noopener"></a> · <b id="pkUnits">0</b> <span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span>
-        <button id="faucetBtn" type="button" class="quiet" data-i18n="faucet_btn">Get 25 devnet test units</button></div>
+        <button id="faucetBtn" type="button" class="quiet" data-i18n="faucet_btn">Get 25 devnet test units</button><button id="solBtn" type="button" class="quiet">Get devnet SOL</button></div><p class="small muted" id="solOut" aria-live="polite">Devnet may reset: test units and records here can disappear. More SOL: <a href="https://faucet.solana.com" rel="noopener">faucet.solana.com</a>.</p>
       <button id="preBtn" type="button" data-i18n="buy_demo_btn">Pre-order with my passkey</button>
       <div id="noMaker" class="note" hidden><p data-i18n="no_maker">No maker yet. Commit now: you pay only when it is made.</p>
         <button id="amcBtn" type="button" data-i18n="amc_btn">Commit to buy</button></div>
@@ -216,6 +216,7 @@
   <p><a href="/verify" data-i18n="verify_link">How we verify</a> · <a href="https://github.com/drexthealpha/Knos" rel="noopener">GitHub</a></p>
 </footer>
 <script src="/static/ux.js" defer></script>
+<script src="/static/ux_more.js" defer></script>
 <script src="/static/i18n.js" defer></script>
 <script src="/static/passkey_wallet.js" defer></script>
 <script src="/static/valley.js" defer></script>

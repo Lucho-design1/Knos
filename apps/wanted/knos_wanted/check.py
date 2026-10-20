@@ -168,6 +168,21 @@ class _Run:
     the optional parts (location, tags); its error is kept short (never Qloo's raw answer)."""
 
     OPTIONAL = ("signal.location.query", "signal.interests.tags", "filter.location.query")
+    # Qloo ignores a filter the entity type does not take, silently (docs.qloo.com/reference/parameters, the Entity Type
+    # Parameter Guide): such a parameter is dropped here and the call says so, instead of looking applied
+    PLACE_ONLY = ("filter.price_level.", "filter.hotel_class.", "filter.properties.business_rating.", "filter.external.resy.",
+                  "filter.external.tripadvisor.")
+    ENTITY_ONLY = ("filter.popularity.", "filter.external.exists", "filter.parents.types")
+    # filters that can empty a result: when they do, the call is made once more without them and says it broadened
+    NARROWING = ("filter.popularity.", "filter.price_level.", "filter.hotel_class.", "filter.properties.business_rating.",
+                 "filter.external.exists")
+
+    @classmethod
+    def guide(cls, params: dict) -> tuple[dict, list[str]]:
+        t = str(params.get("filter.type") or "")
+        drop = [k for k in params if (k.startswith(cls.PLACE_ONLY) and t != "urn:entity:place")
+                or (k.startswith(cls.ENTITY_ONLY) and not t.startswith("urn:entity:"))]
+        return {k: v for k, v in params.items() if k not in drop}, drop
 
     def __init__(self, client: Client, on_call=None):
         self.c = client
@@ -175,6 +190,9 @@ class _Run:
         self.on_call = on_call or (lambda c: None)       # the agent streams each call to the page as it happens
 
     def get(self, path: str, params: dict, what: str) -> tuple[dict | None, int | None]:
+        params, dropped = self.guide(params) if path == "/v2/insights" else (params, [])
+        if dropped:
+            what += f" (not sent: {', '.join(dropped)}, which Qloo ignores for {params.get('filter.type')})"
         tries = [params]
         light = {k: v for k, v in params.items() if k not in self.OPTIONAL}
         if light != params and not (path == "/v2/insights" and params.get("filter.type") == "urn:heatmap"):
@@ -192,6 +210,13 @@ class _Run:
                                **({"note": "retried without location/tags after Qloo refused them"} if p is not params else {})})
             self.calls[-1]["body_digest"] = _digest(got["body"])
             self.on_call(self.calls[-1])
+            narrow = [k for k in p if k.startswith(self.NARROWING)]
+            if narrow and not _results(got["body"]) and not getattr(self, "_broadening", False):
+                self._broadening = True                  # empty under the narrowing filters: broaden once, and say so
+                try:
+                    return self.get(path, {k: v for k, v in p.items() if k not in narrow}, what + f" (broadened: nothing with {', '.join(narrow)})")
+                finally:
+                    self._broadening = False
             return got["body"], n
         m = re.search(r"HTTP (\d{3})", str(err))
         short = f"Qloo could not answer this part (HTTP {m.group(1)})" if m else ("Qloo's monthly call budget is spent" if "budget" in str(err)
@@ -322,8 +347,10 @@ def _recommend(run: _Run, kind: str, signal: dict, known: set) -> dict | None:
     """Qloo's recommendations for this taste (/v2/insights filter.type = the idea's kind): products next to the idea.
     Strong neighbours (affinity >= rules) that are not already matched are adjacent demand."""
     thin = {"backfill.cross_domain.take": "5"} if len(known) < 3 else {}    # thin matches: cross-domain backfill, not a refusal
+    weight = {"signal.demographics.audiences.weight": "medium"} if signal.get("signal.demographics.audiences") else {}
     body, src = run.get("/v2/insights", {"filter.type": kind, "take": 10, "feature.explainability": "true", "bias.trends": "high",
-                                         **thin, **signal}, "recommendations: what this audience also likes (bias.trends high"
+                                         "filter.popularity.min": "0.2", **weight, **thin, **signal},
+                        "recommendations: what this audience also likes (popularity at least 0.2, bias.trends high"
                                          + (", cross-domain backfill)" if thin else ")"))
     if src is None:
         return None
@@ -404,8 +431,10 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
                      "top_gender": max(gender, key=gender.get) if gender else None, "src": s5}
     loc = place or DEFAULT_PLACE
     ents_only = {"signal.interests.entities": signal["signal.interests.entities"]}
-    body, s6 = run.get("/v2/insights", {"filter.type": "urn:entity:place", "filter.location.query": loc, "take": 5, **ents_only},
-                       f"where: named places in {loc} where this taste clusters")
+    hotel = {"filter.hotel_class.min": "3"} if {"hotel", "hotels", "resort", "stay"} & set(words) else {}
+    body, s6 = run.get("/v2/insights", {"filter.type": "urn:entity:place", "filter.location.query": loc, "take": 5,
+                                        "filter.properties.business_rating.min": "3.5", "filter.external.exists": "tripadvisor", **hotel, **ents_only},
+                       f"where: named places in {loc} where this taste clusters (rated 3.5+, on Tripadvisor)")
     for r in (((body or {}).get("results") or {}).get("entities") or [])[:5]:
         p = r.get("properties") or {}
         geo = p.get("geocode") or {}

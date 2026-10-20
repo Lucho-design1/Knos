@@ -58,7 +58,7 @@ export function reveal(root = document) {
   if (prefersReduced() || !has("IntersectionObserver")) { for (const el of all) el.classList.add("in"); return; }
   const tied = has("CSS") && CSS.supports?.("animation-timeline: view()");
   seen ||= new IntersectionObserver((list) => { for (const e of list) if (e.isIntersecting) { e.target.classList.add("in"); seen.unobserve(e.target); } }, { rootMargin: tied ? "0px 0px -120px 0px" : "0px 0px -8% 0px" });
-  document.documentElement.classList.add("k-motion");            // only now may the stylesheet hold a .k-reveal back
+  document.documentElement.classList.add("k-motion");            // only now may the stylesheet hold a .k-reveal back (at opacity 0.01, not 0: an opacity-0 paint is never the LCP)
   if (tied) document.documentElement.classList.add("k-scroll");
   for (const el of all) seen.observe(el);
 }
