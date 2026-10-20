@@ -319,9 +319,22 @@ async function loadLend() {
     else receipt(await KnosPasskey.approve(await api("/api/lend/" + b.dataset.go, { commitment: c }), api));
     loadLend(); }));
 }
+// the wallet's track-record badges (Token-2022, non-transferable), read from devnet: getTokenAccountsByOwner, then each
+// one's balance with getTokenAccountBalance
+async function badges(owner) {
+  const rpc = (m, p) => fetch("https://api.devnet.solana.com", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: m, params: p }) }).then((r) => r.json()).then((j) => j.result);
+  const got = await rpc("getTokenAccountsByOwner", [owner, { programId: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" }, { encoding: "jsonParsed" }]);
+  const rows = (got && got.value) || [];
+  const bal = await Promise.all(rows.map((a) => rpc("getTokenAccountBalance", [a.pubkey]).catch(() => null)));
+  let el = $("pkBadges");
+  if (!el) { $("pkWallet").insertAdjacentHTML("beforeend", `<p class="small" id="pkBadges"></p>`); el = $("pkBadges"); }
+  el.innerHTML = rows.length ? `Track-record badges: ${rows.map((a, i) => `<a href="${X(a.account.data.parsed.info.mint, "address")}" rel="noopener">${short(a.account.data.parsed.info.mint)}</a> ×${esc((bal[i] && bal[i].value && bal[i].value.uiAmountString) || "1")}`).join(" · ")}` : "No track-record badges yet: a verified milestone gives one.";
+}
 async function loadWallet() {
   if (!session || session.kind !== "passkey") { $("pkWallet").hidden = true; return; }
-  try { const w = await api("/api/wallet", {}); $("pkWallet").hidden = false; $("pkVault").textContent = short(w.vault); $("pkVault").href = w.explorer; $("pkUnits").textContent = w.balance_units; }
+  try { const w = await api("/api/wallet", {}); $("pkWallet").hidden = false; $("pkVault").textContent = short(w.vault); $("pkVault").href = w.explorer; $("pkUnits").textContent = w.balance_units;
+    badges(w.vault).catch(() => {}); }
   catch (e) { $("pkWallet").hidden = true; }
 }
 // server notes the page knows are shown in the reader's language (the server's English stays in the API)

@@ -253,7 +253,7 @@ def check_brief(brief: dict) -> dict:
     rt = idt.route(brief)
     if rt["interpretations"]:
         rt["interpretations"] = idt.interpretations(" ".join(json.dumps(m) for m in (brief or {}).get("milestones") or []), patterns())
-    return {**r, "idt": {**rt, "sketch": idt.sketch(brief), "tiers": idt.tiers(brief)}}
+    return {**r, "idt": {**rt, "sketch": idt.sketch(brief), "tiers": idt.tiers(brief), "benchmark": idt.benchmark_for(brief)}}
 
 
 def patterns() -> dict:
@@ -1163,6 +1163,8 @@ def start_sweeper() -> None:
                 from . import preorder
                 if preorder.ready()[0] and _all("orders"):
                     due = release_due()
+                    from . import wallets
+                    wallets.retire_tables(_ledger())          # retired lookup tables: deactivate, then close (rent back)
                     if due:
                         print(f"knos projects sweeper: {len(due)} verdict(s) released after their challenge window", flush=True)
                     got = sweep()

@@ -215,7 +215,7 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   await page.$eval("#view-check .how", (e) => e.scrollIntoView({ block: "center", behavior: "instant" }));
   await page.waitForFunction(() => document.querySelector("#view-check .how > li").classList.contains("in"));
   await settle(page);
-  check("  a section below the fold waits, enters when it is scrolled to, and stays", card.reveal && !card.in && card.opacity === "0" && (await page.$eval("#view-check .how > li", (c) => getComputedStyle(c).opacity)) === "1", card);
+  check("  a section below the fold waits, enters when it is scrolled to, and stays", card.reveal && !card.in && card.opacity === "0.01" && (await page.$eval("#view-check .how > li", (c) => getComputedStyle(c).opacity)) === "1", card);
   // a card leans to the pointer and comes back
   await page.evaluate(() => { const c = document.createElement("div"); c.className = "k-card"; c.id = "lean"; c.dataset.tilt = ""; c.textContent = "A card"; document.querySelector("#view-check .how").before(c); c.scrollIntoView({ block: "center", behavior: "instant" }); });
   await page.waitForFunction(() => document.getElementById("lean").classList.contains("in"));

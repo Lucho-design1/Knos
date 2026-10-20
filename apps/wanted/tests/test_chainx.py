@@ -73,3 +73,43 @@ def test_a_badge_is_non_transferable_has_its_metadata_and_is_a_member_of_the_pro
 def test_a_release_memo_is_sent_and_the_tree_size_matches_the_program(chain):
     assert chainx.memo("knos release abc brief sha256:" + "a" * 64, led=chain.led)
     assert chainx.tree_size(14, 64) == 56 + 24 + 64 * (32 + 32 * 14 + 8) + (32 * 14 + 40)
+
+
+EVM = {"address": "0x19e7e376e7c213b7e7e7e46cc70a5dd086daff2a", "message": "knos lab result: 12 samples within 4% of the blood reference",
+       "signature": "755bd97eddcac667515a8cba4896af572aa42aa1d821f4437c65d09dd071707c333bea0ad141f25bd9a634f48925aea22e35ddcbe359a88db48fb2ccf68204941b"}
+
+
+def test_an_evm_signed_attestation_is_checked_by_the_secp256k1_precompile(chain):
+    # signed by eth_account with the fixed test key 0x11..11 over keccak256(message): the precompile recovers its signer
+    got = chainx.evm_verify(EVM["address"], EVM["signature"], EVM["message"], led=chain.led)
+    assert got["verified"] and got["signer"] == EVM["address"]
+    with pytest.raises(AssertionError):                                     # another signer: the transaction fails
+        chainx.evm_verify("0x" + "22" * 20, EVM["signature"], EVM["message"], led=chain.led)
+    with pytest.raises(AssertionError):                                     # another message: the transaction fails
+        chainx.evm_verify(EVM["address"], EVM["signature"], EVM["message"] + ".", led=chain.led)
+
+
+def test_lookup_tables_are_frozen_or_deactivated_then_closed_with_their_rent_returned(chain):
+    from solders.account import Account
+    svm, payer = chain.led.svm, chain.payer
+    svm.warp_to_slot(100)
+
+    def table(n_addrs: int = 3):
+        # a lookup table in the program's own layout: LookupTable tag 1, deactivation slot u64::MAX, last extended slot,
+        # its start index, the authority (Some), 2 bytes of padding, then the addresses from byte 56
+        t = Keypair().pubkey()
+        data = (1).to_bytes(4, "little") + (2**64 - 1).to_bytes(8, "little") + (90).to_bytes(8, "little") + bytes([0]) + bytes([1]) + bytes(payer.pubkey())
+        data += bytes(56 - len(data)) + b"".join(bytes(Keypair().pubkey()) for _ in range(n_addrs))
+        svm.set_account(t, Account(lamports=chain.led.rent(len(data)), data=data, owner=Pubkey.from_string(chainx.ALT), executable=False))
+        return t
+
+    frozen, t = table(), table()
+    chain.led.send([chainx.alt_ix(chainx.ALT_FREEZE, frozen, payer.pubkey())], payer)      # a wallet's table: frozen
+    with pytest.raises(AssertionError):
+        chain.led.send([chainx.alt_ix(chainx.ALT_DEACTIVATE, frozen, payer.pubkey())], payer)   # frozen for good
+    chain.led.send([chainx.alt_ix(chainx.ALT_DEACTIVATE, t, payer.pubkey())], payer)      # a retired shared table
+    assert int.from_bytes(chain.led.account(t)[4:12], "little") != 2**64 - 1                 # deactivated
+    svm.warp_to_slot(700)                                                                   # past the deactivation cooldown
+    before = svm.get_balance(payer.pubkey())
+    chain.led.send([chainx.alt_ix(chainx.ALT_CLOSE, t, payer.pubkey(), payer.pubkey())], payer)
+    assert chain.led.account(t) is None and svm.get_balance(payer.pubkey()) > before         # closed, rent back to the relayer

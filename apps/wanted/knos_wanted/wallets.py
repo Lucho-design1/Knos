@@ -124,6 +124,8 @@ def _table(led, name: str, addrs: list) -> tuple:
             got = ps.read_table(led.account(t))
             if got[:len(addrs)] == list(addrs):
                 return t, got
+            if not name.startswith("wallet:"):                # a shared table that no longer fits: retired, its rent comes back
+                known.setdefault("_retired", []).append(known[name])
         recent = int(led.recent_slot()) if hasattr(led, "recent_slot") else _slot(led) - 2
         t, ixs = ps.create_table_ixs(relayer().pubkey(), relayer().pubkey(), recent, list(addrs))
         led.send(ixs, relayer())
@@ -135,9 +137,47 @@ def _table(led, name: str, addrs: list) -> tuple:
                 led.tick()
             else:
                 time.sleep(0.4)
+        if name.startswith("wallet:"):                       # a wallet's table never changes: frozen, so nobody can change it
+            from . import chainx
+            try:
+                led.send([chainx.alt_ix(chainx.ALT_FREEZE, t, relayer().pubkey())], relayer())
+            except Exception:  # noqa: BLE001 - an unfrozen table still serves; freezing is a guarantee, not a need
+                pass
         known[name] = str(t)
         _write(f, known)
         return t, list(addrs)
+
+
+def retire_tables(led) -> list[dict]:
+    """The relayer's retired lookup tables: deactivated first, then closed once the cooldown passed (rent returned to
+    the relayer). The sweeper calls this; each table moves one step per call."""
+    from solders.pubkey import Pubkey
+
+    from . import chainx
+    f = _dir("wallets") / "tables.json"
+    out = []
+    with _lock:
+        known = _read(f) or {}
+        keep = []
+        for t in known.get("_retired", []):
+            data = led.account(Pubkey.from_string(t))
+            if data is None:
+                continue                                         # closed already
+            deactivated = int.from_bytes(data[4:12], "little") != (1 << 64) - 1
+            try:
+                if not deactivated:
+                    sig = led.send([chainx.alt_ix(chainx.ALT_DEACTIVATE, Pubkey.from_string(t), relayer().pubkey())], relayer())
+                    out.append({"table": t, "step": "deactivated", "signature": sig})
+                else:
+                    sig = led.send([chainx.alt_ix(chainx.ALT_CLOSE, Pubkey.from_string(t), relayer().pubkey(), relayer().pubkey())], relayer())
+                    out.append({"table": t, "step": "closed", "signature": sig, "rent_returned_lamports": len(data) and led.rent(len(data))})
+                    continue
+            except Exception as why:  # noqa: BLE001 - still cooling down: tried again on the next sweep
+                out.append({"table": t, "step": "waiting", "why": str(why)[:120]})
+            keep.append(t)
+        known["_retired"] = keep
+        _write(f, known)
+    return out
 
 
 def _tables(led, mint, h: dict | None = None) -> list:
@@ -195,7 +235,37 @@ def faucet(led, h: dict, rp_id: str) -> dict:
 
 
 # ---- intents: what waits for a passkey ------------------------------------------------------------------------------
+_fee_seen: dict = {}
+
+
+def network_fee() -> dict | None:
+    """What devnet charges for the step before anyone signs: getFeeForMessage on a one-memo message the relayer pays
+    (every passkey step is sent by the relayer, one signature). Asked at most once a minute."""
+    import base64
+
+    from solders.hash import Hash
+    from solders.instruction import Instruction
+    from solders.message import Message
+    from solders.pubkey import Pubkey
+
+    from knos import chain
+    if time.time() - _fee_seen.get("at", 0) < 60:
+        return _fee_seen.get("fee")
+    try:
+        url = escrow.ledger().url
+        bh = chain.call(url, "getLatestBlockhash", [{"commitment": "confirmed"}])["value"]["blockhash"]
+        memo = Instruction(Pubkey.from_string("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"), b"knos", [])
+        msg = Message.new_with_blockhash([memo], relayer().pubkey(), Hash.from_string(bh))
+        got = chain.call(url, "getFeeForMessage", [base64.b64encode(bytes(msg)).decode(), {"commitment": "confirmed"}])
+        fee = {"lamports": got["value"], "sol": got["value"] / 1e9, "paid_by": "the relayer (not you)", "method": "getFeeForMessage"}
+    except Exception:  # noqa: BLE001 - the step still works; the card then says the fee could not be read
+        fee = None
+    _fee_seen.update(at=time.time(), fee=fee)
+    return fee
+
+
 def _intent(kind: str, h: dict, prep, meta: dict, summary: dict) -> dict:
+    summary = {**summary, "network_fee": network_fee()}
     with _lock:
         now = time.time()
         for k in [k for k, v in _pending.items() if now - v["at"] > INTENT_S]:

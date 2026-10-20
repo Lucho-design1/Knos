@@ -1,0 +1,230 @@
+{
+ "v": 1,
+ "model": "sonnet",
+ "effort": "medium",
+ "tasks": 20,
+ "ratio_vague_to_ready": 2.08,
+ "raw": "https://github.com/drexthealpha/Knos/blob/main/docs/idt/runs.json",
+ "rows": [
+  {
+   "task": "c01",
+   "kind": "code",
+   "vague_output_tokens": 3380,
+   "ready_output_tokens": 67,
+   "saved_output_tokens": 3313,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "Can you make something that cleans up phone numbers? It should be robust.",
+   "ready": "Write a Python function normalize_phone(s: str) -> str. Target: return only the digits of s, keeping one leading '+' if s starts with '+'. Check: normalize_phone('+1 (415) 555-0100') == '+14155550100' and normalize_phone('020 7946 0958') == '02079460958'. Reply with one ```python block only."
+  },
+  {
+   "task": "c02",
+   "kind": "code",
+   "vague_output_tokens": 151,
+   "ready_output_tokens": 53,
+   "saved_output_tokens": 98,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "I need a better way to split text into chunks for my app.",
+   "ready": "Write a Python function chunk(text: str, n: int) -> list[str] that splits text into consecutive pieces of at most n characters, in order, losing nothing. Check: chunk('abcdefg', 3) == ['abc', 'def', 'g'] and chunk('', 3) == []. Reply with one ```python block only."
+  },
+  {
+   "task": "c03",
+   "kind": "code",
+   "vague_output_tokens": 1718,
+   "ready_output_tokens": 63,
+   "saved_output_tokens": 1655,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "Write something to work out how long ago a date was, make it nice.",
+   "ready": "Write a Python function days_between(a: str, b: str) -> int for ISO dates 'YYYY-MM-DD', returning the absolute number of days between them. Check: days_between('2026-10-20', '2026-10-01') == 19 and days_between('2024-02-28', '2024-03-01') == 2. Reply with one ```python block only."
+  },
+  {
+   "task": "c04",
+   "kind": "code",
+   "vague_output_tokens": 204,
+   "ready_output_tokens": 107,
+   "saved_output_tokens": 97,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "Make a function to validate emails properly.",
+   "ready": "Write a Python function is_email(s: str) -> bool returning True when s has exactly one '@', a non-empty local part, and a domain with at least one '.' that neither starts nor ends with '.'. Check: is_email('a@b.co') is True, is_email('a@b') is False, is_email('@b.co') is False, is_email('a@@b.co') is False. Reply with one ```python block only."
+  },
+  {
+   "task": "c05",
+   "kind": "code",
+   "vague_output_tokens": 669,
+   "ready_output_tokens": 58,
+   "saved_output_tokens": 611,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "Could you write a cleaner slug generator for blog posts?",
+   "ready": "Write a Python function slugify(title: str) -> str: lowercase, every run of characters that are not a-z or 0-9 becomes one '-', no leading or trailing '-'. Check: slugify('Hello, World!') == 'hello-world' and slugify('  Knos  2026 ') == 'knos-2026'. Reply with one ```python block only."
+  },
+  {
+   "task": "c06",
+   "kind": "code",
+   "vague_output_tokens": 80,
+   "ready_output_tokens": 93,
+   "saved_output_tokens": -13,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "I want to improve how we compute averages, some data is messy.",
+   "ready": "Write a Python function mean_of_numbers(xs: list) -> float | None that averages only the int and float items of xs (bool excluded) and returns None when there are none. Check: mean_of_numbers([1, 2, 'x', None, 3]) == 2.0 and mean_of_numbers(['a']) is None and mean_of_numbers([True, 4]) == 4.0. Reply with one ```python block only."
+  },
+  {
+   "task": "c07",
+   "kind": "code",
+   "vague_output_tokens": 169,
+   "ready_output_tokens": 72,
+   "saved_output_tokens": 97,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "Help me deal with duplicates in a list in a smart way.",
+   "ready": "Write a Python function dedupe(xs: list) -> list that removes repeated items and keeps the first occurrence of each, in the original order. Check: dedupe([3, 1, 3, 2, 1]) == [3, 1, 2] and dedupe([]) == []. Reply with one ```python block only."
+  },
+  {
+   "task": "c08",
+   "kind": "code",
+   "vague_output_tokens": 581,
+   "ready_output_tokens": 226,
+   "saved_output_tokens": 355,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "Make a quick, modern helper to format money amounts.",
+   "ready": "Write a Python function fmt_units(micro: int) -> str that formats an amount given in millionths (6 decimals) with exactly 2 decimals and comma thousands separators, rounding half up. Check: fmt_units(1234567890) == '1,234.57' and fmt_units(5) == '0.00' and fmt_units(1_005_000) == '1.01'. Reply with one ```python block only."
+  },
+  {
+   "task": "c09",
+   "kind": "code",
+   "vague_output_tokens": 274,
+   "ready_output_tokens": 118,
+   "saved_output_tokens": 156,
+   "vague_passed": true,
+   "ready_passed": true,
+   "vague": "Write a function that checks whether brackets in code are fine.",
+   "ready": "Write a Python function balanced(s: str) -> bool returning True when every (, [ and { in s is closed by the matching bracket in the right order; other characters are ignored. Check: balanced('f(a[1]{x})') is True, balanced('(]') is False, balanced('((') is False, balanced('') is True. Reply with one ```python block only."
+  },
+  {
+   "task": "c10",
+   "kind": "code",
+   "vague_output_tokens": 554,
+   "ready_output_tokens": 111,
+   "saved_output_tokens": 443,
+   "vague_passed": false,
+   "ready_passed": false,
+   "vague": "Can you make the word counter better?",
+   "ready": "Write a Python function top_words(text: str, k: int) -> list[tuple[str, int]] returning the k most frequent lowercase words (a word is a run of letters a-z), most frequent first, ties broken alphabetically. Check: top_words('b a b c a b', 2) == [('b', 3), ('a', 2)] and top_words('', 3) == []. Reply with one ```python block only."
+  },
+  {
+   "task": "r01",
+   "kind": "brief",
+   "vague_output_tokens": 208,
+   "ready_output_tokens": 846,
+   "saved_output_tokens": -638,
+   "vague_passed": false,
+   "ready_passed": false,
+   "vague": "Turn the sweat glucose sensor paper into milestones for a fitness watch. Make it good.",
+   "ready": "Make a Knos brief for a fitness watch with a sweat glucose sensor (Nature 2016, doi 10.1038/nature16521). Output one ```json block: {\"milestones\": [3 items, each {\"key\", \"name\", \"target\" (a number with its unit), \"verifier\": {\"kind\": \"human\", \"what\", \"how\", \"who\", \"where\"}, \"deadline_days\" (1-90)}], \"kill_fee_bps\": 1000, \"challenge_s\": 259200}. No other text."
+  },
+  {
+   "task": "r02",
+   "kind": "brief",
+   "vague_output_tokens": 825,
+   "ready_output_tokens": 701,
+   "saved_output_tokens": 124,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "Plan the steps for building a desert air water bottle, roughly.",
+   "ready": "Make a Knos brief for a water bottle that harvests drinking water from desert air (MOF sorbent, Science 2017). Output one ```json block: {\"milestones\": [3 items, each {\"key\", \"name\", \"target\" (a number with its unit), \"verifier\": {\"kind\": \"human\", \"what\", \"how\", \"who\", \"where\"}, \"deadline_days\" (1-90)}], \"kill_fee_bps\": 1000, \"challenge_s\": 259200}. No other text."
+  },
+  {
+   "task": "r03",
+   "kind": "brief",
+   "vague_output_tokens": 158,
+   "ready_output_tokens": 240,
+   "saved_output_tokens": -82,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "Give me milestones to make our checkout faster.",
+   "ready": "Make a Knos brief for cutting checkout latency in a web shop. Output one ```json block: {\"milestones\": [2 items, each {\"key\", \"name\", \"target\" (a number with its unit or a named test), \"verifier\": {\"kind\": \"machine\", \"check\" (a GitHub check name)}, \"deadline_days\" (1-90)}], \"kill_fee_bps\": 500, \"challenge_s\": 86400}. No other text."
+  },
+  {
+   "task": "r04",
+   "kind": "brief",
+   "vague_output_tokens": 351,
+   "ready_output_tokens": 277,
+   "saved_output_tokens": 74,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "We want a robust login system, break it into milestones.",
+   "ready": "Make a Knos brief for adding passkey sign-in to a web app. Output one ```json block: {\"milestones\": [2 items, each {\"key\", \"name\", \"target\" (a number with its unit or a named test), \"verifier\": {\"kind\": \"machine\", \"check\" (a GitHub check name)}, \"deadline_days\" (1-90)}], \"kill_fee_bps\": 500, \"challenge_s\": 86400}. No other text."
+  },
+  {
+   "task": "r05",
+   "kind": "brief",
+   "vague_output_tokens": 581,
+   "ready_output_tokens": 240,
+   "saved_output_tokens": 341,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "Milestones for a modern dashboard redesign please.",
+   "ready": "Make a Knos brief for a dashboard redesign measured by Lighthouse. Output one ```json block: {\"milestones\": [2 items, each {\"key\", \"name\", \"target\" (a number with its unit, e.g. a Lighthouse score), \"verifier\": {\"kind\": \"machine\", \"check\" (a GitHub check name)}, \"deadline_days\" (1-90)}], \"kill_fee_bps\": 500, \"challenge_s\": 86400}. No other text."
+  },
+  {
+   "task": "r06",
+   "kind": "brief",
+   "vague_output_tokens": 90,
+   "ready_output_tokens": 444,
+   "saved_output_tokens": -354,
+   "vague_passed": false,
+   "ready_passed": false,
+   "vague": "Help me plan an AI model eval project, improve accuracy.",
+   "ready": "Make a Knos brief for an AI model evaluation on a sealed test set. Output one ```json block: {\"milestones\": [3 items, each {\"key\", \"name\", \"target\" (a number with its unit or a named test), \"verifier\": {\"kind\": \"machine\", \"check\"} or {\"kind\": \"human\", \"what\", \"how\", \"who\", \"where\"}, \"deadline_days\" (1-90)}], \"kill_fee_bps\": 1000, \"challenge_s\": 259200}. No other text."
+  },
+  {
+   "task": "r07",
+   "kind": "brief",
+   "vague_output_tokens": 1507,
+   "ready_output_tokens": 784,
+   "saved_output_tokens": 723,
+   "vague_passed": false,
+   "ready_passed": false,
+   "vague": "Plan a hardware prototype for a smart bottle, keep it clean.",
+   "ready": "Make a Knos brief for a smart water bottle that glows to remind you to drink. Output one ```json block: {\"milestones\": [3 items, each {\"key\", \"name\", \"target\" (a number with its unit), \"verifier\": {\"kind\": \"human\", \"what\", \"how\", \"who\", \"where\"}, \"deadline_days\" (1-90)}], \"kill_fee_bps\": 1000, \"challenge_s\": 259200}. No other text."
+  },
+  {
+   "task": "r08",
+   "kind": "brief",
+   "vague_output_tokens": 74,
+   "ready_output_tokens": 520,
+   "saved_output_tokens": -446,
+   "vague_passed": false,
+   "ready_passed": false,
+   "vague": "Break the vendor deliverable into steps so we make progress.",
+   "ready": "Make a Knos brief for a vendor delivering an internal reporting tool. Output one ```json block: {\"milestones\": [3 items, each {\"key\", \"name\", \"target\" (a number with its unit or a named test), \"verifier\": {\"kind\": \"machine\", \"check\"} or {\"kind\": \"human\", \"what\", \"how\", \"who\", \"where\"}, \"deadline_days\" (1-90)}], \"kill_fee_bps\": 1500, \"challenge_s\": 259200}. No other text."
+  },
+  {
+   "task": "r09",
+   "kind": "brief",
+   "vague_output_tokens": 259,
+   "ready_output_tokens": 705,
+   "saved_output_tokens": -446,
+   "vague_passed": false,
+   "ready_passed": true,
+   "vague": "Milestones to reproduce a battery paper, nice and scalable.",
+   "ready": "Make a Knos brief to reproduce a solid-state battery paper's key result (capacity retention after cycling). Output one ```json block: {\"milestones\": [3 items, each {\"key\", \"name\", \"target\" (a number with its unit), \"verifier\": {\"kind\": \"human\", \"what\", \"how\", \"who\", \"where\"}, \"deadline_days\" (1-90)}], \"kill_fee_bps\": 1000, \"challenge_s\": 259200}. No other text."
+  },
+  {
+   "task": "r10",
+   "kind": "brief",
+   "vague_output_tokens": 532,
+   "ready_output_tokens": 217,
+   "saved_output_tokens": 315,
+   "vague_passed": false,
+   "ready_passed": false,
+   "vague": "Help us improve our API reliability with some milestones.",
+   "ready": "Make a Knos brief for API reliability work. Output one ```json block: {\"milestones\": [2 items, each {\"key\", \"name\", \"target\" (a number with its unit, e.g. an error rate in %), \"verifier\": {\"kind\": \"machine\", \"check\" (a GitHub check name)}, \"deadline_days\" (1-90)}], \"kill_fee_bps\": 500, \"challenge_s\": 86400}. No other text."
+  }
+ ]
+}

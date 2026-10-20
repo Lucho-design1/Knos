@@ -252,6 +252,7 @@ async function mock(ctx) {
     if (method === "getProgramAccounts") {
       // one program's accounts that cannot be read (a rate limit on the extra query), the rest of devnet answering
       if (chain.downFor && params[0] === chain.downFor.program) return route.fulfill({ status: 200, contentType: "application/json", headers: cors, body: JSON.stringify({ jsonrpc: "2.0", id: 1, error: { code: -32429, message: chain.downFor.message } }) });
+      if (!params[1] || !params[1].filters) return reply([]);          // a read of every account of a program (the feature gate): none here
       const filters = params[1].filters, size = filters[0].dataSize, memcmp = filters[1]?.memcmp, want = memcmp && fromB58(memcmp.bytes);
       return reply([...chain.accounts].filter(([, a]) => a.owner === params[0] && a.data.length === size
         && (!memcmp || want.every((b, i) => a.data[memcmp.offset + i] === b))).map(([pubkey, a]) => ({ pubkey, account: info(a) })));

@@ -238,6 +238,21 @@ def overthinking(text: str, output_tokens: int, check: Callable[[str], bool]) ->
     return None
 
 
+def benchmark_for(brief: dict) -> dict | None:
+    """The measured benchmark brief closest to this one (shared words), with its own output tokens vague vs Ready, and
+    the whole benchmark's ratio. What the page says a brief like this saved, from real runs (scripts/idt_bench.py)."""
+    f = Path(__file__).with_name("idt_benchmark.json")
+    try:
+        data = json.loads(f.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    words = set(re.findall(r"[a-z]{4,}", json.dumps(brief or {}).lower()))
+    best = max(data["rows"], key=lambda r: len(words & set(re.findall(r"[a-z]{4,}", (r["vague"] + " " + r["ready"]).lower()))))
+    return {"task": best["task"], "vague_output_tokens": best["vague_output_tokens"], "ready_output_tokens": best["ready_output_tokens"],
+            "saved_output_tokens": best["saved_output_tokens"], "ready_passed": best["ready_passed"], "vague_passed": best["vague_passed"],
+            "overall_ratio": data["ratio_vague_to_ready"], "tasks": data["tasks"], "raw": data["raw"]}
+
+
 def fingerprint(brief: dict) -> str:
     return hashlib.sha256(json.dumps(sketch(brief), sort_keys=True).encode()).hexdigest()[:16]
 
@@ -256,7 +271,7 @@ def register(app, help_lines: list | None = None) -> None:
     def check_(brief: Path = typer.Argument(..., help="A brief as JSON: {milestones: [...], kill_fee_bps, challenge_s}"),
                milestone: str = typer.Option("", "--prompt-for", help="also print the prompt an agent gets for this milestone key")) -> None:
         b = json.loads(brief.read_text(encoding="utf-8"))
-        out = {"ready": ready.check(b)["ready"], "route": route(b), "sketch": sketch(b), "tiers": tiers(b), "not_on_claude": NOT_ON_CLAUDE}
+        out = {"ready": ready.check(b)["ready"], "route": route(b), "sketch": sketch(b), "tiers": tiers(b), "benchmark": benchmark_for(b), "not_on_claude": NOT_ON_CLAUDE}
         if milestone:
             out["agent_prompt"] = agent_prompt(b, milestone)
         typer.echo(json.dumps(out, indent=1, ensure_ascii=False))

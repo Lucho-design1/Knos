@@ -49,7 +49,24 @@
     }
   }
 
+  // the approval card: what this step does, in plain words, before the passkey is asked (the passkey then signs exactly that)
+  function card(s) {
+    return new Promise((ok, no) => {
+      const f = s.network_fee, el = document.createElement("div");
+      el.className = "ux-sheet"; el.id = "pk-card"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Approve this step");
+      const rows = [["What", s.what], ["Amount", s.amount_units != null ? `${s.amount_units} test units` : s.allowance_units != null ? `${s.allowance_units} test units (allowance)` : null],
+        ["Fee", s.fee_units != null ? `${s.fee_units} test units` : null], ["Network fee", f ? `${f.lamports.toLocaleString()} lamports, paid by ${f.paid_by}` : null],
+        ["If it fails", s.refunded_to ? "refunded to your wallet" : null], ["Money", s.money]].filter((r) => r[1]);
+      el.innerHTML = `<p class="small"><strong>Approve with your passkey</strong></p>` + rows.map(([k, v]) => `<p class="small"><span class="muted">${k}:</span> ${String(v).replace(/[<>&]/g, "")}</p>`).join("") +
+        `<div class="row"><button type="button" id="pk-approve">Approve</button><button type="button" class="quiet" id="pk-cancel">Cancel</button></div>`;
+      document.body.appendChild(el);
+      el.querySelector("#pk-approve").onclick = () => { el.remove(); ok(); };
+      el.querySelector("#pk-cancel").onclick = () => { el.remove(); no(new Error("cancelled: nothing was signed")); };
+      el.querySelector("#pk-approve").focus();
+    });
+  }
   async function approve(step, api) {
+    await card(step.summary || {});
     // Chrome may add a key to the client data at random ("other_keys_can_be_added_here"), so an answer can differ from
     // the prediction more than once in a row: each round learns what the authenticator said and asks again
     for (let i = 0; i < 5; i++) {

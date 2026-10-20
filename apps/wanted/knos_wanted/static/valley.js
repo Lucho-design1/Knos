@@ -86,8 +86,14 @@ async function loadProject(id) {
     <p class="small">Each milestone has its own escrow. It pays on a result plus an independent check. A missed deadline refunds and reopens it.</p>
     <div class="row"><button type="button" class="quiet" id="refBtn">Get my referral link</button>
       <a class="button ghost small" href="/api/company/export?project=${p.id}&format=journal">Ledger CSV</a></div><p id="refOut" class="small"></p>
-    ${readyLine(p)}${changesBlock(p)}`;
+    ${readyLine(p)}${changesBlock(p)}
+    <details class="small"><summary>A .sol name for this project</summary><label for="snsIn">Name</label><input id="snsIn" maxlength="60" placeholder="myproject.sol">
+      <button type="button" class="quiet" id="snsGo">Look it up</button><p id="snsOut" aria-live="polite"></p></details>`;
   wireChanges(p);
+  $("snsGo").onclick = () => busy($("snsGo"), "Reading devnet", async () => {      // Name Service: who owns the name on this cluster
+    const r = await api("/api/sns?name=" + encodeURIComponent($("snsIn").value.trim()));
+    $("snsOut").innerHTML = r.registered ? `${esc(r.name)} is owned by <a href="${X(r.owner, "address")}" rel="noopener">${short(r.owner)}</a>.` : `${esc(r.name)} is not registered on devnet.`;
+  });
   $("refBtn").onclick = () => busy($("refBtn"), "Making link", async () => {
     if (!session) { $("signin").hidden = false; throw new Error("Sign in first."); }
     const r = await api("/api/referral", { passkey: true, target: "p=" + p.id });
@@ -257,8 +263,13 @@ async function checkBrief() {
   box.innerHTML = (ok ? `<strong id="bLabel">Ready</strong> · criteria <span class="mono">${esc(r.criteria_hash.slice(0, 12))}</span>`
     : `<strong id="bLabel">Not ready</strong><ul class="list small" id="bMissing">${r.missing.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` +
       (m.rewrite ? `<button type="button" class="quiet" id="bRewrite">Use the rewrite</button>` : "")) + readings + ask + route +
-    `<p class="small muted" id="bSaving">Measured: Ready briefs need about half the reasoning tokens of vague ones (<a href="https://drexthealpha.github.io/Knos/#home-idt" rel="noopener">IDT benchmark</a>).</p>`;
+    (t.benchmark ? `<p class="small muted" id="bSaving">Measured on the closest benchmark brief (${esc(t.benchmark.task)}): vague ${t.benchmark.vague_output_tokens.toLocaleString()}, Ready ${t.benchmark.ready_output_tokens.toLocaleString()} reasoning tokens (${t.benchmark.saved_output_tokens >= 0 ? "saved " + t.benchmark.saved_output_tokens.toLocaleString() : "Ready used " + (-t.benchmark.saved_output_tokens).toLocaleString() + " more"}; Ready ${t.benchmark.ready_passed ? "passed" : "did not pass"}, vague ${t.benchmark.vague_passed ? "passed" : "did not"}). Over ${t.benchmark.tasks} briefs Ready used ${t.benchmark.overall_ratio}x fewer. <a href="${esc(t.benchmark.raw)}" rel="noopener">Raw runs</a>.</p>` : "");
   if (!ok && m.rewrite) $("bRewrite").onclick = () => { fillBrief(m.rewrite); checkBrief().catch(err); };
+  const money = ($("bTarget").value || "").match(/(\d[\d,]*(?:\.\d+)?)\s*(EUR|GBP|SOL|BTC|ETH)\b/i);
+  if (money) api(`/api/price?pair=${money[2].toUpperCase()}/USD`).then((px) => {      // Pyth's price account on devnet
+    const v = parseFloat(money[1].replace(/,/g, "")) * px.price;
+    box.insertAdjacentHTML("beforeend", `<p class="small muted" id="bPrice">${esc(money[1])} ${esc(money[2].toUpperCase())} ≈ ${v.toLocaleString("en-US", { maximumFractionDigits: 2 })} USD (<a href="${esc(px.explorer)}" rel="noopener">Pyth on devnet</a>)</p>`);
+  }).catch(() => {});
   for (const b of box.querySelectorAll("button[data-reading]")) b.onclick = () => {
     const x = t.interpretations[+b.dataset.reading];
     $("bTarget").value = x.target;

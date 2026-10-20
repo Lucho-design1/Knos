@@ -10,7 +10,7 @@
   memo(...)         a Memo after every release: "knos release <signature> brief sha256:<h> criteria sha256:<h>".
   rent_returned(sig) the lamports the release's closed accounts gave back, read from the transaction's own meta.
   sns_owner(name)   the owner of a .sol name (Name Service: the name account under the .sol root), when a project names one.
-  price(pair)       a Pyth price (Hermes, no account), for a milestone that states a value in another currency.
+  price(pair)       a Pyth price read from its devnet price account, for a milestone stated in another currency.
   evm_verify(...)   an EVM-signed attestation (a lab instrument, a sensor) verified by Solana's Secp256k1 precompile in
                     a transaction: a wrong signature fails the transaction, so success is the proof.
 State (the group mints, the tree, the badges) is kept beside the other server state (escrow._state_dir()).
@@ -22,7 +22,6 @@ import hashlib
 import json
 import struct
 import threading
-import urllib.request
 from pathlib import Path
 
 from . import escrow
@@ -36,12 +35,14 @@ NOOP = "noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV"
 SECP256K1 = "KeccakSecp256k11111111111111111111111111111"
 NAME_PROGRAM = "namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX"
 SOL_TLD = "58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx"
-HERMES = "https://hermes.pyth.network/v2/updates/price/latest"
+PYTH_PUSH = "pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT"       # Pyth's push oracle: one price account per feed (shard 0)
+PYTH_RECEIVER = "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ"
 PYTH_IDS = {"EUR/USD": "a995d00bb36a63cef7fd2c287dc105fc8f3d93779f062f09551b0af3e81ec30b",
             "GBP/USD": "84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1",
             "SOL/USD": "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
             "BTC/USD": "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
-            "ETH/USD": "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"}
+            "ETH/USD": "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+            "USDC/USD": "eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a"}
 DEPTH, BUFFER = 14, 64
 _lock = threading.Lock()
 
@@ -168,6 +169,17 @@ def badges_of(wallet: str) -> list[dict]:
     return [v for v in _state("badges").values() if v["owner"] == wallet]
 
 
+# ---- address lookup tables: freeze, deactivate, close (create and extend are knos.settle.v2.passkey_smart) ----------
+ALT = "AddressLookupTab1e1111111111111111111111111"
+ALT_FREEZE, ALT_DEACTIVATE, ALT_CLOSE = 1, 3, 4
+
+
+def alt_ix(kind: int, table, authority, recipient=None):
+    """The lookup-table program's FreezeLookupTable (1), DeactivateLookupTable (3) or CloseLookupTable (4): a u32 tag."""
+    metas = [(table, False, True), (authority, True, False)] + ([(recipient, False, True)] if kind == ALT_CLOSE else [])
+    return _ix(ALT, struct.pack("<I", kind), metas)
+
+
 # ---- the compressed track-record log --------------------------------------------------------------------------------
 def tree_size(depth: int = DEPTH, buffer: int = BUFFER) -> int:
     """The concurrent merkle tree's account: its 56-byte header, then sequence, active index and buffer size (24),
@@ -175,19 +187,34 @@ def tree_size(depth: int = DEPTH, buffer: int = BUFFER) -> int:
     return 56 + 24 + buffer * (32 + 32 * depth + 8) + (32 * depth + 32 + 8)
 
 
+TREE_SEED = "knos-track-log-v1"
+
+
+def tree_address(payer=None):
+    """The log's address: derived from the relayer and a fixed seed (System create-with-seed), the same on every start."""
+    from solders.pubkey import Pubkey
+    payer = payer or _payer().pubkey()
+    return Pubkey.create_with_seed(payer, TREE_SEED, _pk(COMPRESSION))
+
+
 def _tree(led) -> str:
-    from solders.keypair import Keypair
+    from solders.system_program import CreateAccountWithSeedParams, create_account_with_seed
+    payer = _payer()
+    tree = tree_address(payer.pubkey())
     st = _state("tree")
-    if st.get("tree"):
+    if st.get("tree") == str(tree) and led.account(tree) is not None:
         return st["tree"]
-    payer, tree = _payer(), Keypair()
-    size = tree_size()
-    ixs = [_create(payer.pubkey(), tree.pubkey(), size, led.rent(size), COMPRESSION),
-           _ix(COMPRESSION, _disc("global:init_empty_merkle_tree") + struct.pack("<II", DEPTH, BUFFER),
-               [(tree.pubkey(), False, True), (payer.pubkey(), True, False), (_pk(NOOP), False, False)])]
-    sig = led.send(ixs, payer, [payer, tree])
-    _keep("tree", {"tree": str(tree.pubkey()), "signature": sig, "depth": DEPTH, "buffer": BUFFER, "leaves": 0})
-    return str(tree.pubkey())
+    if led.account(tree) is None:
+        size = tree_size()
+        ixs = [create_account_with_seed(CreateAccountWithSeedParams(from_pubkey=payer.pubkey(), to_pubkey=tree, base=payer.pubkey(), seed=TREE_SEED,
+                                                                    lamports=led.rent(size), space=size, owner=_pk(COMPRESSION))),
+               _ix(COMPRESSION, _disc("global:init_empty_merkle_tree") + struct.pack("<II", DEPTH, BUFFER),
+                   [(tree, False, True), (payer.pubkey(), True, False), (_pk(NOOP), False, False)])]
+        sig = led.send(ixs, payer)
+        _keep("tree", {"tree": str(tree), "signature": sig, "depth": DEPTH, "buffer": BUFFER, "leaves": 0, "seed": TREE_SEED})
+    else:
+        _keep("tree", {**st, "tree": str(tree)})
+    return str(tree)
 
 
 def log_leaf(text: str, led=None) -> dict:
@@ -196,7 +223,7 @@ def log_leaf(text: str, led=None) -> dict:
         tree = _tree(led)
         payer = _payer()
         leaf = hashlib.sha256(text.encode()).digest()
-        sig = led.send([_ix(COMPRESSION, _disc("global:append") + leaf, [(tree, False, True), (payer.pubkey(), True, False), (_pk(NOOP), False, False)])], payer)
+        sig = led.send([_ix(COMPRESSION, _disc("global:append") + leaf, [(_pk(tree), False, True), (payer.pubkey(), True, False), (_pk(NOOP), False, False)])], payer)
         st = _state("tree")
         st["leaves"] = st.get("leaves", 0) + 1
         _keep("tree", st)
@@ -240,20 +267,32 @@ def sns_owner(name: str, url: str | None = None) -> dict:
     if not v:
         return {"name": label + ".sol", "account": str(acct), "owner": None, "registered": False}
     data = base64.b64decode(v["data"][0])
+    if v.get("owner") != NAME_PROGRAM or len(data) < 96:     # a name record: parent 32, owner 32, class 32, then the data
+        return {"name": label + ".sol", "account": str(acct), "owner": None, "registered": False}
     return {"name": label + ".sol", "account": str(acct), "owner": str(Pubkey.from_bytes(data[32:64])), "registered": True}
 
 
-def price(pair: str, opener=None) -> dict:
-    """The latest Pyth price of a pair (Hermes, the public price service): price, confidence, publish time."""
-    pid = PYTH_IDS.get(pair.upper())
-    if not pid:
+def price(pair: str, url: str | None = None) -> dict:
+    """The latest Pyth price of a pair, read from devnet: the feed's price update account (Pyth's push oracle, shard 0)."""
+    from solders.pubkey import Pubkey
+
+    from knos import chain
+    fid = PYTH_IDS.get(pair.upper())
+    if not fid:
         raise ValueError(f"pair: one of {', '.join(PYTH_IDS)}")
-    req = urllib.request.Request(f"{HERMES}?ids[]={pid}&parsed=true", headers={"User-Agent": "knos"})
-    with (opener or urllib.request.urlopen)(req, timeout=20) as r:
-        p = json.loads(r.read())["parsed"][0]["price"]
-    scale = 10 ** int(p["expo"])
-    return {"pair": pair.upper(), "price": int(p["price"]) * scale, "confidence": int(p["conf"]) * scale, "publish_time": p["publish_time"],
-            "source": "Pyth (Hermes)", "feed": pid}
+    acct = Pubkey.find_program_address([struct.pack("<H", 0), bytes.fromhex(fid)], _pk(PYTH_PUSH))[0]
+    v = (chain.call(url or escrow.ledger().url, "getAccountInfo", [str(acct), {"encoding": "base64", "commitment": "confirmed"}]) or {}).get("value")
+    if not v or v.get("owner") != PYTH_RECEIVER:
+        raise ValueError(f"no Pyth price account for {pair} on this cluster")
+    d = base64.b64decode(v["data"][0])
+    o = 41 + (1 if d[40] == 0 else 0)      # the verification level: Partial carries one more byte (its signature count) than Full
+    feed = d[o:o + 32]
+    px, conf, expo, published = struct.unpack_from("<qQiq", d, o + 32)
+    if feed.hex() != fid:
+        raise ValueError("the price account names another feed")
+    scale = 10.0 ** expo
+    return {"pair": pair.upper(), "price": px * scale, "confidence": conf * scale, "publish_time": published, "account": str(acct),
+            "source": "Pyth price update account on Solana devnet", "explorer": escrow.explorer(str(acct), "address")}
 
 
 def secp256k1_ix(eth_address: bytes, signature: bytes, recovery_id: int, message: bytes):
