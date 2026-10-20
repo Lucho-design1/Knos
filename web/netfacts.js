@@ -4,13 +4,17 @@
 // Live, over the cluster's WebSocket (no polling): slotSubscribe + rootSubscribe (the finality clock) and logsSubscribe
 // on Knos's two programs (an activity feed). The genesis hash is checked first: an endpoint that is not devnet is refused.
 const DEVNET = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
-export const ENDPOINTS = ["https://api.devnet.solana.com"];
-export const WSS = "wss://api.devnet.solana.com";
+// Solana's public devnet RPC, then a second free one that needs no account (Triton's devnet pool): used when the first
+// keeps answering 429 or cannot be reached
+export const ENDPOINTS = ["https://api.devnet.solana.com", "https://devnet.rpcpool.com"];
+export const WSS = ["wss://api.devnet.solana.com", "wss://devnet.rpcpool.com"];
 const FEATURE = "Feature111111111111111111111111111111111111";
 const MEMO = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 const TEST_MINT = "5XJJTDxBF1LqbQ9MAURyYUnHCPcd4JHxjdy9or2gWjsX";   // the lab escrow's test-unit mint (labs_devnet.json)
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// an unanswered fact, short enough for a phone's table cell (the reason, cut to its first words)
+const no = (e) => "not answered: " + String(e).replace(/\s+/g, " ").slice(0, 28);
 const num = (n) => (typeof n === "number" ? n.toLocaleString("en-US") : String(n));
 
 let id = 0;
@@ -20,12 +24,16 @@ export async function rpc(method, params = [], url = ENDPOINTS[0], fetcher = glo
     let r;
     try {
       r = await fetcher(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: ++id, method, params }) });
-    } catch (e) { return { error: `unreachable (${e.message})` }; }
-    if (r.status === 429) { await sleep(1000 * 2 ** i); continue; }
+    } catch (e) { return url === ENDPOINTS[0] ? rpc(method, params, ENDPOINTS[1], fetcher) : { error: `unreachable (${e.message})` }; }
+    if (r.status === 429) {                 // a method devnet throttles for everyone answers the same on a retry: said at once
+      const said = typeof r.text === "function" ? await r.text().catch(() => "") : "";
+      if (/specific RPC call/i.test(said)) return { error: "throttled for this method" };
+      await sleep(1000 * 2 ** i); continue;
+    }
     const j = await r.json().catch(() => ({ error: { message: `HTTP ${r.status}` } }));
     return j.error ? { error: j.error.message || String(j.error.code) } : { result: j.result };
   }
-  return { error: "rate limited (429) after 4 tries" };
+  return url === ENDPOINTS[0] ? rpc(method, params, ENDPOINTS[1], fetcher) : { error: "rate limited (429) after 4 tries" };
 }
 
 const ALPHA = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -75,26 +83,28 @@ export async function facts(payer, call = rpc) {
   ];
   const slot = (await call("getSlot", [{ commitment: "finalized" }])).result;
   const rows = [["genesis hash", g.result === DEVNET ? "devnet" : g.error || "?", "getGenesisHash"]];
-  const got = await Promise.all(asks.map(([name, m, p, f]) => call(m, p ?? (m === "getBlockTime" ? [slot] : [slot, 5])).then((r) => [name, r.error ? `not answered here: ${r.error}` : f(r.result), m])));
-  rows.push(...got);
-  // one validator's share: its leader slots this epoch, its vote account's last inflation reward
-  const v0 = (await call("getVoteAccounts", [])).result?.current?.[0];
-  if (v0) {
-    const ls = await call("getLeaderSchedule", [null, { identity: v0.nodePubkey }]);
-    rows.push(["leader slots this epoch (one validator)", ls.error ? `not answered here: ${ls.error}` : num((ls.result?.[v0.nodePubkey] || []).length), "getLeaderSchedule"]);
-    const ir = await call("getInflationReward", [[v0.votePubkey]]);
-    rows.push(["last inflation reward (one vote account, SOL)", ir.error ? `not answered here: ${ir.error}` : ir.result?.[0] ? (ir.result[0].amount / 1e9).toFixed(4) : "none", "getInflationReward"]);
-  }
-  const tl = await call("getTokenLargestAccounts", [TEST_MINT]);
-  rows.push(["largest holders of the Knos test units", tl.error ? `not answered here: ${tl.error}` : `${num(tl.result?.value?.length ?? 0)} listed`, "getTokenLargestAccounts"]);
+  // one validator's share (its leader slots this epoch, its vote account's last inflation reward) and the test units'
+  // largest holders, asked beside the rest so a throttled method does not hold the table up
+  const share = async () => {
+    const v0 = (await call("getVoteAccounts", [])).result?.current?.[0];
+    if (!v0) return [];
+    const [ls, ir] = await Promise.all([call("getLeaderSchedule", [null, { identity: v0.nodePubkey }]), call("getInflationReward", [[v0.votePubkey]])]);
+    return [["leader slots this epoch (one validator)", ls.error ? no(ls.error) : num((ls.result?.[v0.nodePubkey] || []).length), "getLeaderSchedule"],
+      ["last inflation reward (one vote account, SOL)", ir.error ? no(ir.error) : ir.result?.[0] ? (ir.result[0].amount / 1e9).toFixed(4) : "none", "getInflationReward"]];
+  };
+  const holders = call("getTokenLargestAccounts", [TEST_MINT]).then((tl) => [["largest holders of the Knos test units",
+    tl.error ? no(tl.error) : `${num(tl.result?.value?.length ?? 0)} listed`, "getTokenLargestAccounts"]]);
+  const [got, more, held] = await Promise.all([Promise.all(asks.map(([name, m, p, f]) => call(m, p ?? (m === "getBlockTime" ? [slot] : [slot, 5]))
+    .then((r) => [name, r.error ? no(r.error) : f(r.result), m]))), share(), holders]);
+  rows.push(...got, ...more, ...held);
   if (hash) {
     const v = await call("isBlockhashValid", [hash, { commitment: "processed" }]);
-    rows.push(["latest blockhash valid", v.error ? `not answered: ${v.error}` : String(v.result.value), "isBlockhashValid"]);
+    rows.push(["latest blockhash valid", v.error ? no(v.error) : String(v.result.value), "isBlockhashValid"]);
     const fee = await call("getFeeForMessage", [memoMessage(payer, hash), { commitment: "processed" }]);
-    rows.push(["fee for a one-memo transaction (lamports)", fee.error ? `not answered: ${fee.error}` : num(fee.result.value), "getFeeForMessage"]);
+    rows.push(["fee for a one-memo transaction (lamports)", fee.error ? no(fee.error) : num(fee.result.value), "getFeeForMessage"]);
   }
   const ft = await call("getProgramAccounts", [FEATURE, { encoding: "base64", dataSlice: { offset: 0, length: 1 } }]);
-  rows.push(["active features (feature gate)", ft.error ? `not answered here: ${ft.error}` : `${num(ft.result.filter((a) => atob(a.account.data[0]).charCodeAt(0) === 1).length)} of ${num(ft.result.length)}`, "getProgramAccounts"]);
+  rows.push(["active features (feature gate)", ft.error ? no(ft.error) : `${num(ft.result.filter((a) => atob(a.account.data[0]).charCodeAt(0) === 1).length)} of ${num(ft.result.length)}`, "getProgramAccounts"]);
   return rows;
 }
 
@@ -107,11 +117,11 @@ export function factsHtml(rows) {
 /** Live over the WebSocket: the processed and rooted (finalized) slots, and the logs of `programs`. Returns stop(). */
 export function live(el, programs, WS = globalThis.WebSocket) {
   if (!WS) return () => {};
-  const ws = new WS(WSS);
-  let slot = 0, root = 0, blocks = 0, updates = 0;
+  let slot = 0, root = 0, blocks = 0, updates = 0, ws, at = 0;
   const streams = {};
   const clock = el.querySelector("#finality-clock"), feed = el.querySelector("#activity-feed");
-  ws.onopen = () => {
+  const open = () => { ws = new WS(WSS[at]); wire(); };
+  const wire = () => { ws.onopen = () => {
     ws.send(JSON.stringify({ jsonrpc: "2.0", id: 1, method: "slotSubscribe" }));
     ws.send(JSON.stringify({ jsonrpc: "2.0", id: 2, method: "rootSubscribe" }));
     programs.forEach((p, i) => ws.send(JSON.stringify({ jsonrpc: "2.0", id: 3 + i, method: "logsSubscribe", params: [{ mentions: [p] }, { commitment: "finalized" }] })));
@@ -138,9 +148,13 @@ export function live(el, programs, WS = globalThis.WebSocket) {
     if (m.method === "blockNotification") blocks++;
     if (m.method === "slotsUpdatesNotification") updates++;
     if ((m.id === 10 || m.id === 11) && m.error) streams[m.id] = "not offered by this RPC";
-    if (clock && slot && root) clock.textContent = `Finality clock: slot ${num(slot)}, finalized ${num(root)} (${num(slot - root)} behind); `
-      + `blocks ${streams[10] || num(blocks)}, slot updates ${streams[11] || num(updates)}`;
+    if (clock && slot && root) clock.textContent = `Finality clock: slot ${num(slot)}, finalized ${num(root)} (${num(slot - root)} behind). `
+      + `Blocks: ${streams[10] ? "not offered here" : num(blocks)}. Slot updates: ${streams[11] ? "not offered here" : num(updates)}.`;
   };
-  ws.onerror = () => { if (clock) clock.textContent = "Finality clock: the WebSocket did not connect here."; };
+  ws.onerror = () => {                      // the second RPC's socket when the first does not connect
+    if (++at < WSS.length && !slot) open();
+    else if (clock) clock.textContent = "Finality clock: the WebSocket did not connect here.";
+  }; };
+  open();
   return () => ws.close();
 }

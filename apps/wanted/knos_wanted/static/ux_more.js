@@ -21,6 +21,11 @@
 //   privacy     "What Knos keeps" and "Forget this device": everything this app stored here, cleared in one tap
 //   badge       the app icon shows how many of your milestones are waiting (Badging API, where installed)
 //   stream      a crossing's steps arrive as they happen (EventSource on /api/cross/stream)
+//   private     "Keep the amount private": the amount encrypted under your own ElGamal key, proven on devnet (static/zk)
+//   sentence    "Say what you want, in one sentence" fills the brief; night: a large voice button after 21:00
+//   act         a contextual action button on list pages; help: a panel per page with "Ask a person" (a GitHub issue)
+//   edit        milestone names editable in place until money locks; speed: animations follow your tapping pace
+//   screens     shift-click evidence opens it on a second screen; done: a quiet check mark on lock and release
 "use strict";
 (function () {
   const root = document.documentElement;
@@ -312,6 +317,14 @@
     return api("/api/project/private", { order, ciphertext: b64(ct.toBytes()), pubkey_proof: b64(pv.toBytes()), range_proof: b64(rp.toBytes()) });
   };
 
+  // ---- a quiet success: a check mark that fades, no sound unless sound is on, still under reduced motion ---------------
+  Knos.celebrate = function (word) {
+    const el = document.createElement("p");
+    el.className = "ux-done"; el.setAttribute("role", "status"); el.textContent = "✓ " + word;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1800);
+  };
+
   // ---- one sentence is enough: the main input for a brief -------------------------------------------------------------
   // "Cut checkout p95 under 300 ms on test_checkout within 2 weeks" -> name, target (number + unit or a test), check, deadline
   function sentence() {
@@ -321,14 +334,14 @@
       <button type="button" class="ghost" id="bSayGo">Turn it into a brief</button>`);
     $("bSayGo").onclick = () => {
       const t = $("bSay").value.trim(); if (!t) return;
-      const dm = t.match(/(?:within|in|by)\s+(\d+)\s*(day|days|week|weeks)/i);
+      const dm = t.match(/\b(?:within|in|by)\s+(\d+)\s*(days?|weeks?)\b/i);
       const days = dm ? (+dm[1]) * (/week/i.test(dm[2]) ? 7 : 1) : 14;
       const tm = t.match(/\b(test_[a-z0-9_]+|[\w./-]+\.(?:py|js|ts)::[\w-]+)\b/i), test = tm ? tm[1] : "";
       const nm = t.match(/(?:under|below|at least|above|over|<=|>=|<|>)?\s*\d[\d,.]*\s*(?:%|ms|s|seconds|minutes|hours|days|kb|mb|gb|users|samples|tests|units|points|score)\b/i);
       const num = nm ? nm[0].trim() : "";
       const target = [num, test ? "on " + test : ""].filter(Boolean).join(" ");
       let name = t;
-      for (const cut of [dm ? dm[0] : "", num, test ? "on " + test : "", test]) if (cut) name = name.split(cut).join(" ");
+      for (const cut of [dm ? dm[0] : "", test ? "on " + test : "", test, num ? "on " + num : "", num]) if (cut) name = name.split(cut).join(" ");
       name = name.replace(/\s+/g, " ").trim();
       if (typeof fillBrief === "function") fillBrief({ name: name || t.slice(0, 80), target: target || t, deadline_days: days,
         verifier: { kind: "machine", check: test ? "ci / " + test : "" } });
@@ -350,7 +363,8 @@
   function fab() {
     let f = $("ux-act");
     const v = location.hash.slice(1).split("=")[0] || "home";
-    const act = { home: ["Write a brief", "#projects"], projects: ["New brief", "#projects"], buy: ["Back a product", "#buy"], fund: ["Fund a milestone", "#fund"] }[v];
+    // list pages only: on one project's page (#projects=id) its own buttons are the actions
+    const act = location.hash.includes("=") ? null : { home: ["Write a brief", "#projects"], projects: ["New brief", "#projects"], buy: ["Back a product", "#buy"], fund: ["Fund a milestone", "#fund"] }[v];
     if (!act) { if (f) f.hidden = true; return; }
     if (!f) { f = document.createElement("a"); f.id = "ux-act"; f.className = "button ux-act"; document.body.appendChild(f); }
     f.hidden = false; f.textContent = act[0]; f.href = act[1];
@@ -375,10 +389,15 @@
       const b = document.createElement("button"); b.type = "button"; b.id = "ux-help-btn"; b.className = "quiet ux-help-btn"; b.textContent = "?";
       b.setAttribute("aria-label", "Help for this page");
       b.onclick = () => { p.hidden = !p.hidden; panel(); };
-      document.body.appendChild(b);
+      const who = $("whoBtn");                       // in the header beside Sign in: never over the page's own controls
+      if (who) who.insertAdjacentElement("beforebegin", b); else document.body.appendChild(b);
     }
     const ctx = encodeURIComponent(`Page: ${location.href}\nWhat I tried: \nWhat happened: ${(($("err") || {}).textContent || "").slice(0, 300)}`);
-    p.innerHTML = `<p class="small"><strong>This page</strong></p><p class="small">${HELP[v] || HELP.home}</p>
+    // on a project's page: what the Ready check says about its brief right now, and the first thing missing
+    const pr = typeof V !== "undefined" && V.project && location.hash.includes("=") ? V.project : null;
+    const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const now = pr && pr.ready ? `<p class="small"><strong>This brief:</strong> ${esc(pr.ready.label)}${pr.ready.missing && pr.ready.missing[0] ? ": " + esc(pr.ready.missing[0]) : ""}</p>` : "";
+    p.innerHTML = `<p class="small"><strong>This page</strong></p><p class="small">${HELP[v] || HELP.home}</p>${now}
       <p class="small"><a href="https://github.com/drexthealpha/Knos/issues/new?title=${encodeURIComponent("Help: " + v)}&body=${ctx}" rel="noopener">Ask a person</a> (opens GitHub with what you were doing)</p>
       <button type="button" class="quiet" id="ux-help-x">Close</button>`;
     $("ux-help-x").onclick = () => { p.hidden = true; };

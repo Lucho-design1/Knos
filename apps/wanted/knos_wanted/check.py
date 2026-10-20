@@ -167,7 +167,8 @@ class _Run:
     """One check's Qloo calls, numbered so every figure can cite its source. A failed call is retried once without
     the optional parts (location, tags); its error is kept short (never Qloo's raw answer)."""
 
-    OPTIONAL = ("signal.location.query", "signal.interests.tags", "filter.location.query")
+    OPTIONAL = ("signal.location.query", "signal.interests.tags", "filter.location.query", "output.heatmap.boundary", "sort_by",
+                "offset", "filter.tags", "operator.filter.tags")
     # Qloo ignores a filter the entity type does not take, silently (docs.qloo.com/reference/parameters, the Entity Type
     # Parameter Guide): such a parameter is dropped here and the call says so, instead of looking applied
     PLACE_ONLY = ("filter.price_level.", "filter.hotel_class.", "filter.properties.business_rating.", "filter.external.resy.",
@@ -175,7 +176,7 @@ class _Run:
     ENTITY_ONLY = ("filter.popularity.", "filter.external.exists", "filter.parents.types")
     # filters that can empty a result: when they do, the call is made once more without them and says it broadened
     NARROWING = ("filter.popularity.", "filter.price_level.", "filter.hotel_class.", "filter.properties.business_rating.",
-                 "filter.external.exists")
+                 "filter.external.exists", "filter.tags", "operator.filter.tags")
 
     @classmethod
     def guide(cls, params: dict) -> tuple[dict, list[str]]:
@@ -207,8 +208,9 @@ class _Run:
         if dropped:
             what += f" (not sent: {', '.join(dropped)}, which Qloo ignores for {params.get('filter.type')})"
         tries = [params]
-        light = {k: v for k, v in params.items() if k not in self.OPTIONAL}
-        if light != params and not (path == "/v2/insights" and params.get("filter.type") == "urn:heatmap"):
+        keep = ("filter.location.query",) if path == "/v2/insights" and params.get("filter.type") == "urn:heatmap" else ()
+        light = {k: v for k, v in params.items() if k not in self.OPTIONAL or k in keep}
+        if light != params:
             tries.append(light)
         err = None
         for p in tries:
@@ -342,7 +344,10 @@ def _buyer_group(run: _Run, idea: str, every: list[dict]) -> dict | None:
     stems = {_stem(w) for w in tokens(named) if len(w) > 3 and w not in STOP}
     if not stems:
         return None
-    body, src = run.get("/v2/audiences", {"filter.audience.types": ",".join(AUDIENCE_TYPES), "take": 300},
+    kinds, _st = run.get("/v2/audiences/types", {"take": 50}, "Qloo's audience types")
+    live = [t.get("type") or t.get("id") for t in (((kinds or {}).get("results") or {}).get("audience_types") or []) if isinstance(t, dict)]
+    types = [t for t in live if isinstance(t, str) and t.startswith("urn:audience:")] or list(AUDIENCE_TYPES)
+    body, src = run.get("/v2/audiences", {"filter.audience.types": ",".join(types), "take": 300},
                         "the named buyer group: Qloo's audience segments")
     for a in (((body or {}).get("results") or {}).get("audiences") or []):
         name = str(a.get("name") or "")
@@ -394,13 +399,17 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     kind = ev["product_type"] = kind_of(idea)
     q_words = [w for w in words if w not in kind_words()] or words
     query = " ".join(q_words[:5]) + (f" {place}" if place and kind == "urn:entity:place" else "")
-    body, src = run.get("/search", {"query": query, "types": kind, "take": 12}, "closest existing products")
+    body, src = run.get("/search", {"query": query, "types": kind, "take": 12, "sort_by": "match"}, "closest existing products")
     if src is None:
         return ev
     rel = [w for w in words if w not in kind_words()] or words
     found = _dedupe([_ent(r, src, rel) for r in _results(body) if r.get("entity_id")])
     # Qloo's text search reads a long query as one phrase: when nothing relevant comes back, ask again with the idea's
     # word pairs (at most 2 more calls), keeping only what passes the same relevance gate.
+    if not any(m["relevant"] for m in found) and len(_results(body)) >= 12:     # the next page of the same answer first
+        b2, s2 = run.get("/search", {"query": query, "types": kind, "take": 12, "offset": 12, "sort_by": "match"},
+                         "closest existing products (the next 12)")
+        found = _dedupe(found + [_ent(r, s2, rel) for r in _results(b2) if r.get("entity_id")]) if s2 else found
     if not any(m["relevant"] for m in found) and len(q_words) > 2:
         for pair in (q_words[:2], q_words[-2:]):
             b2, s2 = run.get("/search", {"query": " ".join(pair), "types": kind, "take": 12}, "closest existing products (word pair)")
@@ -446,8 +455,10 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     ents_only = {"signal.interests.entities": signal["signal.interests.entities"]}
     hotel = {"filter.hotel_class.min": "3"} if {"hotel", "hotels", "resort", "stay"} & set(words) else {}
     q6 = {"filter.type": "urn:entity:place", "filter.location.query": loc, "take": 5, "filter.properties.business_rating.min": "3.5",
-          "filter.external.exists": "tripadvisor", **hotel, **ents_only}
-    q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **ents_only}
+          "filter.external.exists": "tripadvisor", **hotel, **ents_only,
+          # the idea's taste tags, any of them (union), so a place matches on one: broadened away when they empty it
+          **({"filter.tags": ",".join(t["id"] for t in ev["tags"][:3]), "operator.filter.tags": "union"} if ev["tags"] else {})}
+    q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, "output.heatmap.boundary": "city", **ents_only}
     q11 = {"filter.type": "urn:tag", "diversify.by": "subtype", "diversify.take": "2", "take": 8, **signal}
     run.prefetch([("/v2/insights", q6), ("/v2/insights", q7), ("/v2/insights", q11)])      # three independent questions, at once
     body, s6 = run.get("/v2/insights", q6, f"where: named places in {loc} where this taste clusters (rated 3.5+, on Tripadvisor)")

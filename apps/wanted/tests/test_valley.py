@@ -358,3 +358,24 @@ def test_a_company_multisig_can_be_made_by_one_passkey_vault_as_create_key_and_c
     ix, rec, fee = enterprise.multisig_ix("Acme Labs", [str(vault)], 1, vault, vault, money.led)
     signers = [a.pubkey for a in ix.accounts if a.is_signer]
     assert signers == [vault, vault] and fee == 0 and rec["creator"] == str(vault) and rec["members"] == [str(vault)]
+
+
+def test_a_private_funding_hides_its_amount_mints_no_public_receipt_and_takes_its_proofs_after_the_lock(money, monkeypatch):
+    seen = []
+    monkeypatch.setattr(valley, "_receipt_async", lambda *a, **k: seen.append(a))
+    p = valley.create_project(OWNER, "paper_to_pilot", "MOF water bottle")
+    tx = valley.fund_tx(p["id"], "reproduce", 10, str(Keypair().pubkey()), led=money.led, private=True)
+    with pytest.raises(valley.Refused, match="lock the funding first"):
+        valley.private_pledge(tx["order"], {}, led=money.led)
+    money.led.accounts[tx["order"]] = b"order"
+    got = valley.confirm(tx["order"], "4" * 88, led=money.led)
+    assert got["private"] is True and got["units"] is None and not seen          # no public pledge receipt
+    m = valley.public_project(valley.project(p["id"]))["milestones"][0]
+    assert m["locked_units"] == 10 and m["orders"][0]["units"] is None and "privately" in m["history"][-1]["what"]
+    from knos_wanted import chainx
+    monkeypatch.setattr(chainx, "private_pledge", lambda order, ct, pv, rp, led=None: {"range_signature": "5" * 88, "ct": len(ct)})
+    body = {"ciphertext": base64.b64encode(bytes(64)).decode(), "pubkey_proof": "", "range_proof": ""}
+    assert valley.private_pledge(tx["order"], body, led=money.led)["receipt"]["private"]["ct"] == 64
+    public = valley.fund_tx(p["id"], "reproduce", 10, str(Keypair().pubkey()), led=money.led)
+    with pytest.raises(valley.Refused, match="not funded as private"):
+        valley.private_pledge(public["order"], body, led=money.led)

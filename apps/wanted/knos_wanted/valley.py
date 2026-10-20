@@ -506,8 +506,9 @@ def public_project(p: dict) -> dict:
     out.setdefault("changes", [])
     out["milestones"] = []
     for m in p["milestones"]:
-        orders = [_order_public(o) for o in (_safe_order(x) for x in m["fundings"]) if o]
-        locked = sum(o["units"] * o["unit_price"] for o in orders if o["status"] == "locked")
+        raw = [o for o in (_safe_order(x) for x in m["fundings"]) if o]
+        orders = [_order_public(o) for o in raw]
+        locked = sum(o["units"] * o["unit_price"] for o in raw if o["status"] == "locked")
         pledged = sum(a["units"] for a in amc_of(p["id"], m["key"]) if a["status"] == "approved")
         out["milestones"].append({**{k: v for k, v in m.items() if k not in ("fundings", "excluded")},
                                   "attempts": [{k: v for k, v in a.items() if k not in ("maker_sub", "check_sub")} for a in m["attempts"]],

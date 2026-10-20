@@ -69,6 +69,10 @@ class RpcError(ValueError):
         self.code = code        # the JSON-RPC error code when the endpoint gave one (-32601: Method not found)
 
 
+DEVNET_URL = "https://api.devnet.solana.com"
+DEVNET_FALLBACK = "https://devnet.rpcpool.com"     # a second free devnet RPC (no account), once the first keeps answering 429
+
+
 def call(url: str, method: str, params: list, timeout: float = 10.0) -> Any:
     body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": method, "params": params}).encode()
     req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json", "User-Agent": "knos"})
@@ -79,6 +83,8 @@ def call(url: str, method: str, params: list, timeout: float = 10.0) -> Any:
                 got = json.loads(resp.read())
             break
         except urllib.error.HTTPError as e:
+            if e.code == 429 and wait_s is None and url.rstrip("/") == DEVNET_URL:
+                return call(DEVNET_FALLBACK, method, params, timeout)
             if e.code != 429 or wait_s is None:
                 raise
             asked = str(e.headers.get("Retry-After", "") if e.headers else "")    # the endpoint's own figure, when it gives one

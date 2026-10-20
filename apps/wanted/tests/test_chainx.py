@@ -142,14 +142,31 @@ def test_a_pledge_receipt_needs_its_memo_stays_frozen_and_a_refund_burns_it_by_t
     assert burned["burned"] and int.from_bytes(chain.led.account(r["ledger"])[64:72], "little") == 0     # burned by the delegate
 
 
+# a private pledge of 25 units made with @solana/zk-sdk 0.5.4 (ElGamalKeypair, PedersenOpening, encryptWith,
+# PubkeyValidityProofData, BatchedRangeProofU64Data over the ciphertext's commitment, 64 bits)
+PLEDGE_CT = ("iglmBN4gagEG646YZERyhA6B2ktvoIbZ8J1BevyyEzewxfodQ6V+mzgRZqd/79q5xIz8tLV4v4HoMDbu5XBjSQ==")
+PLEDGE_PV = ("dPskQ5FooiKcVWl27yYSmC/M1MW3hxmTwuAHmHK/VTKgRTYt/E2h5eqdvLqB/EpvVJFbkplDQIEmG2KNlvWrGxB60iIC0vl24TDT"
+          "Nwuv7loYIqUqwhbkOcMhoSo4jVsC")
+PLEDGE_RP = ("iglmBN4gagEG646YZERyhA6B2ktvoIbZ8J1BevyyEzcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAApp0JWkDSTTn7sQXADL2q6P47byW/EIlaOGg8qeWEIiEYh+bg"
+          "UM06tYJxTOFxu2ZJaAQkh2TeJn8vYKzVKTf5FnL7TFURDi1Mt0XrjqgwKFRzJCL6RIB0v0i1NR6jjV0bvGcn0WgccUz7sx3Ta3sM"
+          "z71uSXshmNDq6Z9N9+vwQULLD0DivzHKxx+O4x786RrkrVCAU0gv03xPVbPFJSPHAuD9zX0h8usVHDroBrjA7vbeyxUPvjLDM45I"
+          "M6cJWy0MhBvS3bI85OKaC/19hUsb5X4iWY5qoV9xtaJqWOIBAQs2oCHyaQ49L3OHrVCyc5CC/tNQp4MypcDHZldi2xJeLMCrnShT"
+          "wFDoO5SZlgjdejCVGz1J95z/U6YqFJHraQVcLCXNZoDw0r2C8qOUuJ2mueKJc8PGLwSBMk7IyB2zni6MjfFqBDr2KcPEaKbuPDHz"
+          "/pTHADTMJUxDAi0fxnNmYphJsZ6AkTLoak3aFBPlK/j/97Ql8MawbKIfdf8d7yxJ0GycxfgIesHHMUBZNZMYhBUnzZLU0b69q32+"
+          "aPT4oi7GZoSEmn2sfuUdlQJ6ehP2WBbFwfQMuZfarER4sbVpdw7lT3o8RmzanQeaQRyhNRXZbtxdi/h+3pMkeOTfk3I1aghMOhFq"
+          "OfPuAqVsS7fNYgEcNMHI5II+0qQ4dseXYHBCqUDxJ20vhTWWOGnSMQssgc82fLo0zOnmjHhYoIs6DBbfBjp8bhCAYk2IJbu74Y0S"
+          "IXPg9iQztS8G6UTPumUkhIO0HI8XP9TodRCFXmtQQSEbnGotaSVBtVmse+642FS4P/GL/HZH9TIvedCYbonFGZaoi1gaqEn0Up+5"
+          "ATi5BQBWSB13q0xIcahHn+xJSzKG/G1oOxcImZpy+LB58V4K")
+
+
 def test_a_private_pledge_posts_the_encrypted_amount_and_its_proofs_which_the_zk_elgamal_program_verifies(chain):
     import base64
-    import json
-    from pathlib import Path
-    fx = json.loads((Path(__file__).parent / "data" / "private_pledge.json").read_text(encoding="utf-8"))    # @solana/zk-sdk 0.5.4
-    ct, pv, rp = (base64.b64decode(fx[k]) for k in ("ciphertext", "pubkey_proof", "range_proof"))
+    ct, pv, rp = (base64.b64decode(x) for x in (PLEDGE_CT, PLEDGE_PV, PLEDGE_RP))
     got = chainx.private_pledge("order1", ct, pv, rp, led=chain.led)
-    assert got["pubkey_signature"] and got["range_signature"] and got["ciphertext"] == fx["ciphertext"]
+    assert got["pubkey_signature"] and got["range_signature"] and got["ciphertext"] == PLEDGE_CT
     assert not {"units", "amount"} & set(got)                                                          # the amount is not in the clear
     bad = bytearray(rp)
     bad[-1] ^= 1                                                                                       # a false proof: the program refuses it

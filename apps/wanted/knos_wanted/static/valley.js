@@ -77,6 +77,27 @@ async function openProject(sandbox) {
     : await api("/api/project", { template: tpl, title: $("pTitle").value.trim(), regulatory: regs, team: $("pTeam").value.trim() });
   location.hash = "#projects=" + p.id;
 }
+// who is working on this project, each a separate role you can see: the researcher (what an agent on a milestone is
+// handed: the locked intent), the referee (the latest attempt's verdict), the funder (what escrow holds and the rule)
+function agents(p) {
+  const m = p.milestones.find((x) => x.status !== "released") || p.milestones[0];
+  if (!m) return "";
+  const a = (m.attempts || []).slice(-1)[0];
+  return `<ul class="list small" id="agents-strip" aria-label="Who is working on this">
+    <li><strong>Researcher</strong>: <a href="/api/project/prompt?project=${esc(p.id)}&milestone=${esc(m.key)}" rel="noopener">what an agent on "${esc(m.name)}" is handed</a></li>
+    <li><strong>Referee</strong>: ${a ? `attempt ${esc(a.id)}, ${esc(a.status)}` : "waiting for an attempt"}</li>
+    <li><strong>Funder</strong>: ${m.locked_units} test units in escrow; paid only on a result and an independent check</li></ul>`;
+}
+// every decision on the project in plain words, newest first: each brief version (Ready or not, and why), and each
+// milestone's funding, claim, verdict, release, refund and reopen, as the server recorded it (the same lines go to the
+// project's decision log in the Knos Record)
+function decisions(p) {
+  const rows = [...(p.versions || []).map((v) => ({ at: v.at, what: `brief version ${v.n}: ${v.ready ? "Ready to fund" : "not ready"}${v.why ? " (" + v.why + ")" : ""}` })),
+    ...p.milestones.flatMap((m) => (m.history || []).map((h) => ({ at: h.at, what: `${m.name}: ${h.what}` })))]
+    .sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 40);
+  return rows.length ? `<details class="small" id="decisions"><summary>What was decided, and why (${rows.length})</summary><ol class="list">${
+    rows.map((r) => `<li><span class="muted">${esc(String(r.at || "").replace("T", " ").slice(0, 16))}</span> ${esc(r.what)}</li>`).join("")}</ol></details>` : "";
+}
 function dur(s) { return s >= 86400 ? Math.round(s / 86400) + " days" : s >= 3600 ? Math.round(s / 3600) + " h" : Math.round(s / 60) + " min"; }
 async function loadProject(id) {
   $("projHome").hidden = true; $("projDetail").hidden = false;
@@ -86,7 +107,7 @@ async function loadProject(id) {
     <p class="small">Each milestone has its own escrow. It pays on a result plus an independent check. A missed deadline refunds and reopens it.</p>
     <div class="row"><button type="button" class="quiet" id="refBtn">Get my referral link</button>
       <a class="button ghost small" href="/api/company/export?project=${p.id}&format=journal">Ledger CSV</a></div><p id="refOut" class="small"></p>
-    ${readyLine(p)}${changesBlock(p)}
+    ${readyLine(p)}${changesBlock(p)}${agents(p)}${decisions(p)}
     <details class="small"><summary>A .sol name for this project</summary><label for="snsIn">Name</label><input id="snsIn" maxlength="60" placeholder="myproject.sol">
       <button type="button" class="quiet" id="snsGo">Look it up</button><p id="snsOut" aria-live="polite"></p></details>`;
   wireChanges(p);
@@ -198,7 +219,7 @@ function wire(p, m, i) {
           if (e) e.innerHTML = z.range_signature ? `Amount private: <a href="${X(z.pubkey_signature)}" rel="noopener">key proof</a> and <a href="${X(z.range_signature)}" rel="noopener">range proof</a> verified by devnet's ZK ElGamal program.` : "Proofs not posted."; })
           .catch((e2) => { const e = $("pz" + i); if (e) e.textContent = "Private proofs failed: " + e2.message; });
       }
-      if (window.Knos) Knos.haptic("lock");
+      if (window.Knos) { Knos.haptic("lock"); if (Knos.celebrate) Knos.celebrate("Locked"); }
       if (sig && window.Knos) Knos.finality(sig).then((r) => { const e = $("fin" + i); if (e) e.textContent = r.seconds ? `Finalized in ${r.seconds.toFixed(1)} s (${r.via}).` : "Not finalized yet."; });
     }
     setTimeout(() => loadProject(p.id), 1500);
@@ -211,7 +232,7 @@ function wire(p, m, i) {
   for (const [b, role] of [["r", "result"], ["x", "check"]]) $(b + i).onclick = () => busy($(b + i), "Fetching the page", async () => {
     if (!session) { $("signin").hidden = false; throw new Error("Sign in first."); }
     const r = await api("/api/project/post", { project: p.id, milestone: m.key, attempt: $("a" + i).value.trim(), url: $("e" + i).value.trim(), role });
-    if (r.released && window.Knos) Knos.haptic("release");
+    if (r.released && window.Knos) { Knos.haptic("release"); if (Knos.celebrate) Knos.celebrate("Released"); }
     out(r.verdict ? `Verdict posted: pays automatically after the ${dur(r.verdict.window_s)} dispute window.` : r.released ? (r.milestone === "signing" ? "Verified: 2 of 3 referee hosts are checking the review and signing the release." : `Released: ${r.released.map((x) => esc(x.status)).join(", ")}.`) : `Posted. Next: ${esc(r.next)}.`);
     setTimeout(() => loadProject(p.id), 1500);
   });

@@ -64,7 +64,10 @@ class FakeQloo:
             if self.group_aff is not None:
                 rows.insert(1, {"name": "Running (Hobbies And Interests)", "types": "urn:audience", "query": {"affinity": self.group_aff}})
             return {"results": {"entities": rows[:p.get("take", 6)]}}
+        if path == "/v2/audiences/types":
+            return {"results": {"audience_types": [{"type": "urn:audience:hobbies_and_interests"}]}}
         if path == "/v2/audiences":
+            assert p["filter.audience.types"] == "urn:audience:hobbies_and_interests"      # the types Qloo listed, not a fixed list
             return {"results": {"audiences": [{"name": "Running", "id": "urn:audience:hobbies_and_interests:running"},
                                               {"name": "Video Gamer", "id": "urn:audience:hobbies_and_interests:video_gamer"}]}}
         if t == "urn:entity:destination":
@@ -255,3 +258,19 @@ def test_a_filter_qloo_ignores_for_the_type_is_not_sent_and_an_empty_narrow_resu
     body, _ = run.get("/v2/insights", {"filter.type": "urn:entity:place", "filter.properties.business_rating.min": "3.5"}, "places")
     assert body["results"]["entities"] and "filter.properties.business_rating.min" not in sent[-1]
     assert "broadened" in run.calls[-1]["what"]
+
+
+def test_a_refused_optional_parameter_is_dropped_but_a_heatmap_keeps_its_place():
+    asked = []
+
+    class C:
+        def get(self, path, params):
+            asked.append(dict(params))
+            if "output.heatmap.boundary" in params or "operator.filter.tags" in params:
+                raise QlooError(f"GET {path}: HTTP 400")
+            return {"body": {"results": {"heatmap": [{"query": {"affinity": 1}}]}}, "source": {"call": "GET " + path, "params": params, "cached": False, "at": "t"}}
+    run = check._Run(C())
+    body, n = run.get("/v2/insights", {"filter.type": "urn:heatmap", "filter.location.query": "Lagos", "output.heatmap.boundary": "city"}, "where")
+    assert n == 1 and asked[-1] == {"filter.type": "urn:heatmap", "filter.location.query": "Lagos"}
+    body, n = run.get("/v2/insights", {"filter.type": "urn:entity:place", "filter.tags": "urn:tag:a", "operator.filter.tags": "union"}, "places")
+    assert n == 2 and "filter.tags" not in asked[-1]

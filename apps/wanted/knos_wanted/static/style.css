@@ -177,12 +177,16 @@ label.opt { font-weight: 400; font-size: var(--fs-1); margin: 6px 0; }
   nav.roles a { min-height: 44px; display: inline-flex; align-items: center; white-space: nowrap; }
   body { padding-bottom: 72px; }
   .ux-fab { bottom: 80px; }
+  html { scroll-padding-bottom: 136px; }          /* a control scrolled into view lands above the bottom nav and Aa */
   .card, .pcard { max-height: 80vh; overflow: auto; }
 }
 button:active { transform: scale(.97); }
 .night-voice .mic { min-width: 64px; min-height: 64px; font-size: 1.5rem; }
 .ux-help { position: fixed; right: 0; top: 0; bottom: 0; width: min(320px, 90vw); padding: 16px; background: var(--surface); border-inline-start: 1px solid var(--line); overflow: auto; z-index: 40; }
-.ux-help-btn { position: fixed; right: 12px; top: 12px; min-width: 44px; min-height: 44px; border-radius: 50%; z-index: 41; }
-.ux-act { position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); min-height: 48px; padding: 12px 18px; border-radius: 24px; z-index: 30; }
-@media (min-width: 900px) { .ux-act { bottom: 24px; } }
+.ux-help-btn { min-width: 44px; min-height: 44px; border-radius: 50%; }
+.ux-act { position: fixed; right: 16px; bottom: 76px; min-height: 48px; padding: 12px 18px; border-radius: 24px; z-index: 30; }
+.left-hand .ux-act { right: auto; left: 16px; }
+@media (max-width: 720px) { .ux-act { bottom: calc(140px + env(safe-area-inset-bottom)); } }
 .step { animation-duration: calc(.25s * var(--speed, 1)); } .spin { animation-duration: calc(.8s * var(--speed, 1)); }
+.ux-done { pointer-events: none; position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); margin: 0; padding: 8px 16px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); z-index: 45; animation: rise calc(.25s * var(--speed, 1)) ease; }
+.reduce-motion .ux-done { animation: none; }
