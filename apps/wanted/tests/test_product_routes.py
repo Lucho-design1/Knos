@@ -151,3 +151,24 @@ def test_a_project_is_archived_by_its_buyer_or_the_operator_and_stays_readable(a
     st, got = post({"project": pb, "why": "proof run"}, key)
     assert st == 200 and got["archived"]["by"] == "operator" and pb not in listed()
     assert call(base, f"/api/project?id={pb}")[1]["unlisted"]["why"] == "proof run"             # still readable by id
+
+
+def test_knos_usage_records_a_goals_token_use_only_with_the_operators_key(app, monkeypatch, tmp_path):
+    """M11: the operator records a goal's measured token use through knos_usage; anyone reads it; nobody else writes it."""
+    from knos_wanted import escrow
+    base, _ = app
+    monkeypatch.setattr(escrow, "_state_dir", lambda: tmp_path)
+    monkeypatch.setenv("KNOS_ADMIN_KEY", "k" * 40)
+    rec = {"v": 1, "goal": "TASK-X", "output_tokens": 1200, "input_tokens": 40, "messages": 9, "since": "2026-10-21T00:00:00Z"}
+
+    def mcp(args, key=None):
+        req = urllib.request.Request(base + "/mcp", json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                     "params": {"name": "knos_usage", "arguments": args}}).encode(),
+                                     {"Content-Type": "application/json", **({"X-Knos-Admin": key} if key else {})})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read())["result"]
+    refused = mcp({"record": rec})
+    assert refused.get("isError") and "X-Knos-Admin" in refused["content"][0]["text"]
+    got = json.loads(mcp({"record": rec}, "k" * 40)["content"][0]["text"])
+    assert got["goals"]["TASK-X"]["output_tokens"] == 1200
+    assert json.loads(mcp({})["content"][0]["text"])["goals"]["TASK-X"]["messages"] == 9   # anyone reads it

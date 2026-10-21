@@ -27,6 +27,8 @@ Devnet, test money, no customers yet.
 2. **Ready to fund.** No money locks on a vague brief: each milestone needs a number to hit, who checks it, and a deadline ([the IDT benchmark](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/idt/summary.json)).
 3. **Escrow, then proof.** Backers fund one milestone at a time; the money waits in a program on [Solana](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#solana), not with Knos. It is paid only on verified proof: GitHub checks today; lab and referee verdicts with a challenge window. Without proof by the deadline, it goes back. Open [the app](https://knos.onrender.com/) or [get started](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/START.md).
 
+**Open call:** have research waiting for a market? [Cross it on Knos](https://knos.onrender.com/invite): the page counts every crossing and pre-order by people outside Knos, live.
+
 ## One use: paying AI agents for verified pull requests
 
 The same escrow pays for code. One comment on a GitHub issue posts the task, your checks and the pay (`/knos fund 20 checks: test`); an [AI agent](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#ai-agent) or a person sends the work as a [pull request](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#pull-request); when the [checks](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#checks-ci) pass and you [merge](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#merge), a program pays the worker.

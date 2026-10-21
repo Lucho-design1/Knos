@@ -5,7 +5,7 @@ const APP = "https://knos.onrender.com";
 const CSS = `fieldset.fam{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;min-width:0}
 fieldset.fam legend{font-weight:600;padding:0 4px}.famrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:6px 0}
 .famrow .famq{flex:0 0 7.5rem;font-weight:600}.famrow select,.famrow input{flex:1 1 8rem;min-width:0;min-height:44px}.famrow input.yr{flex:0 1 6rem}
-.famrow label.chk{display:inline-flex;align-items:center;gap:4px}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.famrow label.chk{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;white-space:nowrap}.famrow label.chk input{flex:0 0 auto;width:auto;min-height:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 details.famadv summary{cursor:pointer;min-height:44px;display:flex;align-items:center}.famgrid{display:grid;gap:10px}
 .famset{display:grid;gap:4px;grid-template-columns:repeat(auto-fill,minmax(min(100%,12rem),1fr))}.famset>b{grid-column:1/-1}
 @media (max-width:420px){.famrow .famq{flex-basis:100%}}`;

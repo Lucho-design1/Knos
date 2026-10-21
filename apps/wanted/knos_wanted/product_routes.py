@@ -369,7 +369,9 @@ MCP_TOOLS = [
      "words are flagged. Returns Ready, or Not ready with the missing fields and a rewrite template. Sends nothing.",
      "inputSchema": _obj({"brief": {"type": "object"}}, ("brief",))},
     {"name": "knos_usage", "title": "What was asked of Knos", "description": "In plain words: which Knos tools were called over MCP "
-     "and how many times since this server started. Reads only.", "inputSchema": _obj({})},
+     "and how many times since this server started, and the token use recorded for Knos's own goals (shown beside the 2.08x IDT "
+     "ratio). Reads only, except `record`: the operator (its X-Knos-Admin key) records a goal's measured token use.",
+     "inputSchema": _obj({"record": {"type": "object", "description": "a goal's measured token use (scripts/goal_usage.py); the operator only"}})},
     {"name": "knos_milestone_prompt", "title": "The brief an agent works from", "description": "For a milestone you work on: the locked "
      "intent (goal, success check, constraints, scope) with its criteria hash, the effort level and output-token budget, and how to "
      "answer (minimal drafts, confidence first, stop when the check passes). Use it as your first instruction; do not re-derive the brief.",
@@ -395,15 +397,31 @@ def mcp_call(name: str, args: dict, signed) -> dict:
         return _mcp_call(name, args, signed)
 
 
-def usage() -> dict:
+def usage(record: dict | None = None) -> dict:
     rows = sorted(_USAGE.items(), key=lambda kv: -kv[1])
     said = "; ".join(f"{n.replace('knos_', '').replace('_', ' ')}: {c} time{'s' if c != 1 else ''}" for n, c in rows) or "nothing yet"
-    return {"since": "this server started", "calls": dict(rows), "in_words": f"Asked of Knos over MCP: {said}."}
+    if record is not None:                       # a goal's token use, measured from its transcript; the operator records it
+        from . import outside
+        if not _admin(getattr(outside.CTX, "headers", None) and outside.CTX.headers.get("X-Knos-Admin")):
+            raise ValueError("record: the operator's X-Knos-Admin key records a goal's token use")
+        keep = {k: record.get(k) for k in ("v", "goal", "measured_with", "output_tokens", "input_tokens", "cache_read_input_tokens",
+                                           "cache_creation_input_tokens", "messages", "since", "until")}
+        if not isinstance(keep["goal"], str) or not all(isinstance(keep[k], int) and keep[k] >= 0 for k in ("output_tokens", "input_tokens", "messages")):
+            raise ValueError("record: goal, and output_tokens, input_tokens, messages as whole numbers")
+        valley._save("pages", "goal_usage", {"goals": {**_goals(), keep["goal"]: keep}})
+    return {"since": "this server started", "calls": dict(rows), "in_words": f"Asked of Knos over MCP: {said}.", "goals": _goals()}
+
+
+def _goals() -> dict:
+    try:
+        return valley._load("pages", "goal_usage").get("goals") or {}
+    except valley.Refused:
+        return {}
 
 
 def _mcp_call(name: str, args: dict, signed) -> dict:
     if name == "knos_usage":
-        return usage()
+        return usage(args.get("record") if isinstance(args.get("record"), dict) else None)
     if name == "knos_templates":
         return valley.templates()
     if name == "knos_projects":

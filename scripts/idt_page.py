@@ -20,6 +20,8 @@ RAW = "https://github.com/drexthealpha/Knos/blob/main/docs/idt/runs.json"
 PACKAGED = ROOT / "src" / "knos" / "idt_benchmark.json"
 QLOO = ROOT / "docs" / "idt" / "qloo_summary.json"
 QLOO_RAW = "https://github.com/drexthealpha/Knos/blob/main/docs/idt/qloo_runs.json"
+SELF = ROOT / "docs" / "idt" / "self_usage.json"
+SELF_RAW = "https://github.com/drexthealpha/Knos/blob/main/docs/idt/self_usage.json"
 MARK = re.compile(r"(<!-- home:idt -->)(.*?)(<!-- /home:idt -->)", re.S)
 
 
@@ -37,8 +39,18 @@ def block(s: dict) -> str:
             f"Ready: {s['ready_output_tokens']:,} tokens, {pct(s['ready_pass_rate'])} passed.</p>"
             f"<div class=\"k-table\"><table><thead><tr><th scope=\"col\">Task</th><th scope=\"col\">Vague</th><th scope=\"col\">Ready</th>"
             f"<th scope=\"col\">Saved</th><th scope=\"col\">Passed</th></tr></thead><tbody>{rows}</tbody></table></div>"
-            f"<p class=\"fine\">Output tokens include thinking. <a href=\"{RAW}\" rel=\"noopener\">Every run, raw</a>.</p></details>"
+            f"<p class=\"fine\">Output tokens include thinking. <a href=\"{RAW}\" rel=\"noopener\">Every run, raw</a>.</p>" + self_line() + "</details>"
             + qloo_block() + "</section>\n    ")
+
+
+def self_line() -> str:
+    """Knos's own goal, measured the same way (its Claude Code transcript), recorded through the knos_usage MCP tool."""
+    if not SELF.exists():
+        return ""
+    u = json.loads(SELF.read_text(encoding="utf-8"))
+    return (f"<p class=\"fine\" id=\"idt-self\">Building this with Claude Code: the {html.escape(str(u['goal']))} goal used "
+            f"{u['output_tokens']:,} output tokens over {u['messages']:,} messages ({html.escape(str(u['since'])[:10])}), recorded through "
+            f"<code>knos_usage</code>. <a href=\"{SELF_RAW}\" rel=\"noopener\">Raw</a>.</p>")
 
 
 def qloo_block() -> str:

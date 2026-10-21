@@ -1,0 +1,26 @@
+# M6 test_fresh_setup: SUBMISSION.md's setup block, run as written, in a fresh python:3.12 container (the image the
+# submission names). The block clones the public repository itself, so this job needs no checkout and no secret: no
+# Qloo key here, so the demand check must answer that it cannot decide. Pass: /healthz answers and the check answers.
+name: fresh setup
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["SUBMISSION.md", ".github/workflows/fresh-setup.yml"]
+permissions: {}
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container: python:3.12
+    steps:
+      - name: the setup block of SUBMISSION.md, at this commit
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/SUBMISSION.md" -o SUBMISSION.md
+          awk '/^## 5\. Setup/{s=1} s && /^```bash$/{f=1; next} f && /^```$/{exit} f' SUBMISSION.md > setup.sh
+          echo "---- the block, as SUBMISSION.md has it"; cat setup.sh
+          echo "---- run"
+          bash -e setup.sh | tee out.txt
+          grep -q '"ok": true' out.txt
+          grep -Eq "(CANNOT_DECIDE|OPEN|REFUSE)$" out.txt
+          echo "PASS test_fresh_setup"
