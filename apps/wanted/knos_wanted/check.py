@@ -428,6 +428,10 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     kind = ev["product_type"] = kind_of(idea)
     q_words = [w for w in words if w not in kind_words()] or words
     query = " ".join(q_words[:5]) + (f" {place}" if place and kind == "urn:entity:place" else "")
+    q_fams = {"filter.parents.types": kind, "take": 10}
+    q_tags = {"filter.query": " ".join(q_words[:6]), "feature.semantic_search": "true", "feature.typo_tolerance": "true",
+              "filter.parents.types": kind, "take": 8}
+    run.prefetch([("/v2/tags/types", q_fams), ("/v2/tags", q_tags)])     # they need only the idea's words: asked with the search
     body, src = run.get("/search", {"query": query, "types": kind, "take": 12, "sort_by": "match"}, "closest existing products")
     if src is None:
         return ev
@@ -460,11 +464,9 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         lead = max(ev["matches"], key=lambda m: len(m["matched_words"]) + 2 * len(m["name_words"]) + (m.get("popularity") or 0))
     near = [m for m in ev["matches"] if lead is None or m["id"] != lead["id"]][:3]
     ev["leader"] = lead
-    fams, _sf = run.get("/v2/tags/types", {"filter.parents.types": kind, "take": 10}, f"tag families Qloo keeps for {kind.split(':')[-1]}s")
+    fams, _sf = run.get("/v2/tags/types", q_fams, f"tag families Qloo keeps for {kind.split(':')[-1]}s")
     ev["tag_families"] = [t.get("type") for t in ((fams or {}).get("results") or {}).get("tag_types") or []][:8]
-    body, s4 = run.get("/v2/tags", {"filter.query": " ".join(q_words[:6]), "feature.semantic_search": "true",
-                                    "feature.typo_tolerance": "true", "filter.parents.types": kind,
-                                    "take": 8}, "taste tags: semantic search (typo-tolerant) of the product phrase")
+    body, s4 = run.get("/v2/tags", q_tags, "taste tags: semantic search (typo-tolerant) of the product phrase")
     if body is not None:
         for t in ((body or {}).get("results") or {}).get("tags") or []:
             if t.get("id") and t["id"] not in {x["id"] for x in ev["tags"]} and {_norm(x) for x in tokens(t.get("name"))} & set(words):
