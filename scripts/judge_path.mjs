@@ -7,7 +7,9 @@ import { chromium } from "playwright";
 
 const SITE = process.argv[2] || "https://drexthealpha.github.io/Knos/";
 const OUT = process.argv[3] || ".";
-const IDEAS = ["a plant-based burger chain", "a smart water bottle that glows to remind you to drink", "a true-crime podcast about art heists"];
+// JUDGE_IDEAS="a|b|c" asks other ideas (ones never asked before reach Qloo live, past the server's 7-day cache)
+const IDEAS = process.env.JUDGE_IDEAS ? process.env.JUDGE_IDEAS.split("|") :
+  ["a plant-based burger chain", "a smart water bottle that glows to remind you to drink", "a true-crime podcast about art heists"];
 const fails = [];
 const ok = (c, what, extra) => { console.log((c ? "ok   " : "FAIL ") + what + (extra ? " " + JSON.stringify(extra) : "")); if (!c) fails.push(what); };
 

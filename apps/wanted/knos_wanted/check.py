@@ -200,7 +200,7 @@ class _Run:
                 self.c.get(c[0], self.guide(c[1])[0] if c[0] == "/v2/insights" else c[1])
             except Exception:  # noqa: BLE001 - asked again, in order, by get()
                 pass
-        with ThreadPoolExecutor(max_workers=4) as ex:
+        with ThreadPoolExecutor(max_workers=7) as ex:
             list(ex.map(one, calls))
 
     def get(self, path: str, params: dict, what: str, broaden: bool = True) -> tuple[dict | None, int | None]:
@@ -447,15 +447,11 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     if not sig_ents:
         return ev
     signal = {"signal.interests.entities": ",".join(sig_ents), **({"signal.location.query": place} if place else {})}
-    body, s5 = run.get("/v2/insights", {"filter.type": "urn:demographics", **signal}, "who: age and gender affinity")
-    demo = ((body or {}).get("results") or {}).get("demographics") or []
-    q = ((demo[0] or {}).get("query") or {}) if demo else {}
-    if q.get("age") or q.get("gender"):
-        age, gender = q.get("age") or {}, q.get("gender") or {}
-        ev["who"] = {"age": age, "gender": gender, "top_age": max(age, key=age.get) if age else None,
-                     "top_gender": max(gender, key=gender.get) if gender else None, "src": s5}
     loc = place or DEFAULT_PLACE
     ents_only = {"signal.interests.entities": signal["signal.interests.entities"]}
+    cc = market_country(loc)
+    q10 = {"filter.type": "urn:entity:destination", "take": 8, "feature.explainability": "true",
+           **({"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}), **ents_only}
     hotel = {"filter.hotel_class.min": "3"} if {"hotel", "hotels", "resort", "stay"} & set(words) else {}
     q6 = {"filter.type": "urn:entity:place", "filter.location.query": loc, "take": 5, "filter.properties.business_rating.min": "3.5",
           "filter.external.exists": "tripadvisor", **hotel, **ents_only,
@@ -463,7 +459,19 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
           **({"filter.tags": ",".join(t["id"] for t in ev["tags"][:3]), "operator.filter.tags": "union"} if ev["tags"] else {})}
     q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, "output.heatmap.boundary": "city", **ents_only}
     q11 = {"filter.type": "urn:tag", "diversify.by": "subtype", "diversify.take": "2", "take": 8, **signal}
-    run.prefetch([("/v2/insights", q6), ("/v2/insights", q7), ("/v2/insights", q11)])      # three independent questions, at once
+    q6_broad = {k: v for k, v in q6.items() if not k.startswith(run.NARROWING)}            # its broadened retry, ready too
+    # every question that needs only the matched products, at once: the first verdict waits on the slowest of them,
+    # not on their sum; the in-order calls below are then answered from the cache, numbered as always
+    run.prefetch([("/v2/insights", {"filter.type": "urn:demographics", **signal}), ("/v2/insights", q6), ("/v2/insights", q6_broad),
+                  ("/v2/insights", q7), ("/v2/insights", q11), ("/v2/insights", q10),
+                  ("/v2/insights", {"filter.type": "urn:audience", "take": 20, **signal})])
+    body, s5 = run.get("/v2/insights", {"filter.type": "urn:demographics", **signal}, "who: age and gender affinity")
+    demo = ((body or {}).get("results") or {}).get("demographics") or []
+    q = ((demo[0] or {}).get("query") or {}) if demo else {}
+    if q.get("age") or q.get("gender"):
+        age, gender = q.get("age") or {}, q.get("gender") or {}
+        ev["who"] = {"age": age, "gender": gender, "top_age": max(age, key=age.get) if age else None,
+                     "top_gender": max(gender, key=gender.get) if gender else None, "src": s5}
     body, s6 = run.get("/v2/insights", q6, f"where: named places in {loc} where this taste clusters (rated 3.5+, on Tripadvisor)")
     for r in (((body or {}).get("results") or {}).get("entities") or [])[:5]:
         p = r.get("properties") or {}
@@ -496,10 +504,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     if ev["buyer_group"] and ev["buyer_group"].get("id"):
         signal = {**signal, "signal.demographics.audiences": ev["buyer_group"]["id"]}       # the named group steers the later calls
     ev["price"] = price_tier(every, [p_.get("price_level") for p_ in ev["places"]])
-    cc = market_country(loc)
-    scope = {"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}
-    body, s10 = run.get("/v2/insights", {"filter.type": "urn:entity:destination", "take": 8, "feature.explainability": "true",
-                                         **scope, **ents_only}, f"launch cities: destinations in {loc} where this taste is strongest")
+    body, s10 = run.get("/v2/insights", q10, f"launch cities: destinations in {loc} where this taste is strongest")
     for r in (((body or {}).get("results") or {}).get("entities") or []):
         geo = (r.get("properties") or {}).get("geocode") or {}
         if cc and geo.get("country_code") and geo["country_code"] != cc:

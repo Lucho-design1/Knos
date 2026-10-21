@@ -148,7 +148,8 @@ async function passkeyUse() {
 // ---- researcher ----------------------------------------------------------------------------------------------------
 const KIND = { memory: "Memory", paper: "Paper", qloo: "Qloo", decision: "Decision" };
 function stepHtml(s) {
-  return `<li class="step ${esc(s.kind)}"${s.kind === "qloo" ? ` data-qloo data-call="${esc(s.call || "")}"` : ""}><div class="row"><span class="tag">${KIND[s.kind] || s.kind}</span><b>${esc(s.title)}</b><span class="muted small">${esc(s.at)}</span></div>` +
+  // a Qloo call, or a decision made from Qloo's answers (who, where, the price tier, the escrow): each links to its trace
+  return `<li class="step ${esc(s.kind)}"${s.kind === "qloo" || s.kind === "decision" ? ` data-qloo data-call="${esc(s.call || "")}"` : ""}><div class="row"><span class="tag">${KIND[s.kind] || s.kind}</span><b>${esc(s.title)}</b><span class="muted small">${esc(s.at)}</span></div>` +
     (s.tool ? `<p class="small mono muted">${esc(s.tool)}</p>` : "") + (s.output ? `<p>${esc(s.output)}</p>` : "") +
     (s.effect ? `<p class="effect">→ ${esc(s.effect)}</p>` : "") +
     (s.input && typeof s.input === "object" ? `<details class="small"><summary>input</summary><pre>${esc(JSON.stringify(s.input, null, 1))}</pre></details>` : "") + "</li>";
