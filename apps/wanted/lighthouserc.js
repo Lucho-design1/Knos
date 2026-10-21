@@ -25,6 +25,9 @@ module.exports = {
           "deviceScaleFactor": 1.75
         },
         "chromeFlags": "--no-sandbox --headless=new",
+        // the live app is not this commit: wanted.html (the page that wakes it) stays on itself here and is measured as
+        // the site serves it, instead of following to whatever knos.onrender.com runs (the app is measured on :8080)
+        "blockedUrlPatterns": ["https://knos.onrender.com/*"],
         "onlyCategories": [
           "performance",
           "accessibility",

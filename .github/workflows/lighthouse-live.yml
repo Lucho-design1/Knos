@@ -29,8 +29,16 @@ jobs:
           node -e '
           const c = require("./apps/wanted/lighthouserc.js");
           c.ci.collect.url = [process.env.URL]; c.ci.collect.numberOfRuns = Math.max(1, Math.min(10, parseInt(process.env.RUNS, 10) || 3));
-          delete c.ci.assert; delete c.ci.upload;
+          delete c.ci.assert; delete c.ci.upload; delete c.ci.collect.settings.blockedUrlPatterns;   // live: the app is the page
           require("fs").writeFileSync("lhcirc.json", JSON.stringify(c, null, 1));'
+      # Chrome itself is opened once on a blank page first: a fresh runner's first launch reads the browser from a cold
+      # disk, which the first measured run paid for (front.js 1.5 s of script against 0.05 s on the runs after it).
+      # Nothing of the site is fetched: every measured run is still a fresh profile with an empty cache.
+      - name: Open Chrome once (no page)
+        run: |
+          npx --yes @lhci/cli@0.14.0 healthcheck --fatal || true
+          CHROME=$(node -e 'console.log(require("chrome-launcher").Launcher.getInstallations()[0] || "")' 2>/dev/null || true)
+          "${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --dump-dom about:blank > /dev/null 2>&1 || true
       - name: Cold runs
         run: npx --yes @lhci/cli@0.14.0 collect --config=lhcirc.json
       - name: Every run >= 90

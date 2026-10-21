@@ -901,7 +901,9 @@ function initTheme() {
 // is shown in the same task as the press, and the heading and the mark cross to their new places where the browser has
 // view transitions and is quick with them. A reader who asked for no movement gets the plain page.
 function initMotion() {
-  import("./brand/mark3d.js").then((m) => m.mount3dMark($("mark3d"))).catch(() => {});
+  // the 3D mark (WebGL) is drawn at the first idle moment, never in the work before the first paint
+  const idle = globalThis.requestIdleCallback || ((f) => setTimeout(f, 1500));
+  idle(() => import("./brand/mark3d.js").then((m) => m.mount3dMark($("mark3d"))).catch(() => {}), { timeout: 4000 });
   document.addEventListener("click", (ev) => {
     if (ev.defaultPrevented || ev.button || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
     const to = ev.target.closest?.('a[href^="#"]')?.getAttribute("href");
