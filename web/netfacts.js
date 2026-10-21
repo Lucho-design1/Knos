@@ -11,6 +11,8 @@ export const WSS = ["wss://api.devnet.solana.com", "wss://devnet.rpcpool.com"];
 const FEATURE = "Feature111111111111111111111111111111111111";
 const MEMO = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 const TEST_MINT = "5XJJTDxBF1LqbQ9MAURyYUnHCPcd4JHxjdy9or2gWjsX";   // the lab escrow's test-unit mint (labs_devnet.json)
+const RELAYER = "FRXXJkfpwasEpttH5dvDwkySuJzL5D5swjA52U7TMeRD";  // the app's relayer: buyers' AMC allowances are approved to it
+const TOKEN = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // an unanswered fact, short enough for a phone's table cell (the reason, cut to its first words)
@@ -94,9 +96,32 @@ export async function facts(payer, call = rpc) {
   };
   const holders = call("getTokenLargestAccounts", [TEST_MINT]).then((tl) => [["largest holders of the Knos test units",
     tl.error ? no(tl.error) : `${num(tl.result?.value?.length ?? 0)} listed`, "getTokenLargestAccounts"]]);
-  const [got, more, held] = await Promise.all([Promise.all(asks.map(([name, m, p, f]) => call(m, p ?? (m === "getBlockTime" ? [slot] : [slot, 5]))
-    .then((r) => [name, r.error ? no(r.error) : f(r.result), m]))), share(), holders]);
-  rows.push(...got, ...more, ...held);
+  // the ledger and the node behind this RPC, and the escrow's own token reads: the test units' supply, and the buyer
+  // allowances delegated to the relayer (each AMC commitment is an approve() to it)
+  // a block's vote tally is kept only until it is rooted: asked of the newest processed slot
+  const tip = (await call("getSlot", [{ commitment: "processed" }])).result ?? slot;
+  const ledger = [
+    ["transactions processed (finalized)", "getTransactionCount", [{ commitment: "finalized" }], (r) => num(r)],
+    ["newest slot's votes (share of stake, deepest lockout)", "getBlockCommitment", [tip], (r) => r.commitment && r.totalStake
+      ? `${(100 * r.commitment.reduce((a, x) => a + x, 0) / r.totalStake).toFixed(0)}%` : "none kept by this RPC"],
+    ["blocks produced this epoch", "getBlockProduction", [{ commitment: "finalized" }], (r) => num(Object.values(r.value.byIdentity).reduce((a, x) => a + x[1], 0))],
+    ["confirmed blocks in the last 10 slots", "getBlocks", [slot - 10, slot], (r) => num(r.length)],
+    ["next 5 confirmed blocks from 10 slots back", "getBlocksWithLimit", [slot - 10, 5], (r) => num(r.length)],
+    ["first block this RPC still holds", "getFirstAvailableBlock", [], (r) => num(r)],
+    ["lowest slot in this RPC's ledger", "minimumLedgerSlot", [], (r) => num(r)],
+    ["highest snapshot slot", "getHighestSnapshotSlot", [], (r) => num(r.full)],
+    ["this RPC node's identity", "getIdentity", [], (r) => String(r.identity).slice(0, 8) + "…"],
+    ["max retransmit slot", "getMaxRetransmitSlot", [], (r) => num(r)],
+    ["max shred insert slot", "getMaxShredInsertSlot", [], (r) => num(r)],
+    ["leader of this slot", "getSlotLeader", [{ commitment: "finalized" }], (r) => String(r).slice(0, 8) + "…"],
+    ["inflation governor (initial / terminal)", "getInflationGovernor", [], (r) => `${(r.initial * 100).toFixed(1)}% / ${(r.terminal * 100).toFixed(1)}%`],
+    ["Knos test units in existence", "getTokenSupply", [TEST_MINT], (r) => r.value.uiAmountString],
+    ["buyer allowances delegated to the relayer (accounts)", "getTokenAccountsByDelegate", [RELAYER, { programId: TOKEN }, { encoding: "jsonParsed" }], (r) => num(r.value.length)],
+  ];
+  const [got, more, held, led] = await Promise.all([Promise.all(asks.map(([name, m, p, f]) => call(m, p ?? (m === "getBlockTime" ? [slot] : [slot, 5]))
+    .then((r) => [name, r.error ? no(r.error) : f(r.result), m]))), share(), holders,
+    Promise.all(ledger.map(([name, m, p, f]) => call(m, p).then((r) => { try { return [name, r.error ? no(r.error) : f(r.result), m]; } catch (e) { return [name, no(e.message), m]; } })))]);
+  rows.push(...got, ...more, ...held, ...led);
   if (hash) {
     const v = await call("isBlockhashValid", [hash, { commitment: "processed" }]);
     rows.push(["latest blockhash valid", v.error ? no(v.error) : String(v.result.value), "isBlockhashValid"]);
@@ -117,8 +142,10 @@ export function factsHtml(rows) {
 /** Live over the WebSocket: the processed and rooted (finalized) slots, and the logs of `programs`. Returns stop(). */
 export function live(el, programs, WS = globalThis.WebSocket) {
   if (!WS) return () => {};
-  let slot = 0, root = 0, blocks = 0, updates = 0, ws, at = 0;
-  const streams = {};
+  let slot = 0, root = 0, blocks = 0, updates = 0, votes = 0, ws, at = 0;
+  const streams = {}, subs = [];
+  const kinds = { 1: "slot", 2: "root", 9: "program", 10: "block", 11: "slotsUpdates", 12: "vote" };
+  programs.forEach((_, i) => { kinds[3 + i] = "logs"; });
   const clock = el.querySelector("#finality-clock"), feed = el.querySelector("#activity-feed");
   const open = () => { ws = new WS(WSS[at]); wire(); };
   const wire = () => { ws.onopen = () => {
@@ -130,9 +157,12 @@ export function live(el, programs, WS = globalThis.WebSocket) {
     ws.send(JSON.stringify({ jsonrpc: "2.0", id: 10, method: "blockSubscribe", params: ["all", { commitment: "finalized", transactionDetails: "none", rewards: false }] }));
     ws.send(JSON.stringify({ jsonrpc: "2.0", id: 11, method: "slotsUpdatesSubscribe" }));
     if (programs[0]) ws.send(JSON.stringify({ jsonrpc: "2.0", id: 9, method: "programSubscribe", params: [programs[0], { commitment: "confirmed", encoding: "base64", dataSlice: { offset: 0, length: 0 } }] }));
+    // votes: only RPCs started with --rpc-pubsub-enable-vote-subscription offer it (the docs' own note); asked, and said when not
+    ws.send(JSON.stringify({ jsonrpc: "2.0", id: 12, method: "voteSubscribe" }));
   };
   ws.onmessage = (ev) => {
     const m = JSON.parse(ev.data);
+    if (kinds[m.id] && typeof m.result === "number") subs.push([kinds[m.id], m.result]);   // kept for the unsubscribe on stop
     if (m.method === "slotNotification") slot = m.params.result.slot;
     if (m.method === "rootNotification") root = m.params.result;
     if (m.method === "logsNotification" && feed) {
@@ -147,14 +177,20 @@ export function live(el, programs, WS = globalThis.WebSocket) {
     }
     if (m.method === "blockNotification") blocks++;
     if (m.method === "slotsUpdatesNotification") updates++;
-    if ((m.id === 10 || m.id === 11) && m.error) streams[m.id] = "not offered by this RPC";
+    if (m.method === "voteNotification") votes++;
+    if ((m.id === 10 || m.id === 11 || m.id === 12) && m.error) streams[m.id] = "not offered by this RPC";
     if (clock && slot && root) clock.textContent = `Finality clock: slot ${num(slot)}, finalized ${num(root)} (${num(slot - root)} behind). `
-      + `Blocks: ${streams[10] ? "not offered here" : num(blocks)}. Slot updates: ${streams[11] ? "not offered here" : num(updates)}.`;
+      + `Blocks: ${streams[10] ? "not offered here" : num(blocks)}. Slot updates: ${streams[11] ? "not offered here" : num(updates)}. `
+      + `Votes: ${streams[12] ? "not offered here" : num(votes)}.`;
   };
   ws.onerror = () => {                      // the second RPC's socket when the first does not connect
     if (++at < WSS.length && !slot) open();
     else if (clock) clock.textContent = "Finality clock: the WebSocket did not connect here.";
   }; };
   open();
-  return () => ws.close();
+  // stop: each stream unsubscribed by the id the cluster gave it (<kind>Unsubscribe), then the socket closed
+  return () => {
+    if (ws && ws.readyState === 1) subs.forEach(([k, id], i) => ws.send(JSON.stringify({ jsonrpc: "2.0", id: 100 + i, method: `${k}Unsubscribe`, params: [id] })));
+    setTimeout(() => ws.close(), 400);    // their answers (true) come back before the socket goes
+  };
 }

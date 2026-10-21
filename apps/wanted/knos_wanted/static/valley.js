@@ -77,6 +77,16 @@ async function openProject(sandbox) {
     : await api("/api/project", { template: tpl, title: $("pTitle").value.trim(), regulatory: regs, team: $("pTeam").value.trim() });
   location.hash = "#projects=" + p.id;
 }
+// the brief's "Grounding (Qloo)" line: the Qloo facts of the demand check this project came from (who, where, price
+// tier, comparables), the same facts every agent working on a milestone is handed
+function groundingLine(p) {
+  const g = p.grounding;
+  if (!g) return "";
+  const a = g.audience || {}, who = [a.age && String(a.age).replace(/_/g, " "), a.gender, ...(a.segments || [])].filter(Boolean).join(", ");
+  const bits = [who && "who: " + who, (g.launch_cities || []).length && "where: " + g.launch_cities.join(", "), g.price_tier && "price tier: " + g.price_tier,
+    (g.comparables || []).length && "comparables: " + g.comparables.join(", ")].filter(Boolean);
+  return bits.length ? `<p class="small" id="grounding"><b>Grounding (Qloo)</b>: ${esc(bits.join(" · "))}</p>` : "";
+}
 // who is working on this project, each a separate role you can see: the researcher (what an agent on a milestone is
 // handed: the locked intent), the referee (the latest attempt's verdict), the funder (what escrow holds and the rule)
 function agents(p) {
@@ -108,7 +118,7 @@ async function loadProject(id) {
     <p class="small">Each milestone has its own escrow. It pays on a result plus an independent check. A missed deadline refunds and reopens it.</p>
     <div class="row"><button type="button" class="quiet" id="refBtn">Get my referral link</button>
       <a class="button ghost small" href="/api/company/export?project=${p.id}&format=journal">Ledger CSV</a></div><p id="refOut" class="small"></p>
-    ${readyLine(p)}${changesBlock(p)}${agents(p)}${decisions(p)}
+    ${readyLine(p)}${groundingLine(p)}${changesBlock(p)}${agents(p)}${decisions(p)}
     <details class="small"><summary>A .sol name for this project</summary><label for="snsIn">Name</label><input id="snsIn" maxlength="60" placeholder="myproject.sol">
       <button type="button" class="quiet" id="snsGo">Look it up</button><p id="snsOut" aria-live="polite"></p></details>`;
   wireChanges(p);
@@ -153,13 +163,17 @@ function onchainLine(c) {
 // each locked escrow's balance, pushed by devnet as it changes (accountSubscribe): no polling, closed when the page changes
 let orderSocket = null;
 function watchOrders(p) {
-  if (orderSocket) { try { orderSocket.close(); } catch (e) { /* closed */ } orderSocket = null; }
+  if (orderSocket) {        // each escrow's stream unsubscribed by the id devnet gave it (accountUnsubscribe), then closed
+    const old = orderSocket; orderSocket = null;
+    try { Object.keys(old.subs || {}).forEach((id, i) => old.send(JSON.stringify({ jsonrpc: "2.0", id: 900 + i, method: "accountUnsubscribe", params: [Number(id)] }))); } catch (e) { /* closed */ }
+    setTimeout(() => { try { old.close(); } catch (e) { /* closed */ } }, 300);
+  }
   const orders = p.milestones.flatMap((m) => m.orders.filter((o) => o.status === "locked").map((o) => o.order));
   if (!orders.length || !window.WebSocket) return;
   const ws = orderSocket = new WebSocket("wss://api.devnet.solana.com");
   const ids = {};
   ws.onopen = () => orders.forEach((o, i) => { ids[100 + i] = o; ws.send(JSON.stringify({ jsonrpc: "2.0", id: 100 + i, method: "accountSubscribe", params: [o, { commitment: "confirmed", encoding: "base64" }] })); });
-  const subs = {};
+  const subs = ws.subs = {};
   ws.onmessage = (ev) => {
     const m = JSON.parse(ev.data);
     if (m.id && ids[m.id]) subs[m.result] = ids[m.id];
@@ -186,7 +200,8 @@ function msCard(p, m, i) {
       <label for="k${i}">As</label><select id="k${i}" class="field"><option value="funder">a funder (escrow now)</option><option value="grant">a grant (escrow now, labelled)</option><option value="amc">a buyer commitment (pays only when it verifies)</option></select>
       <label class="small"><input type="checkbox" id="pv${i}"> Keep the amount private (encrypted, proven on devnet)</label>
       <div id="g${i}" hidden><label for="ga${i}">Grant agency</label><input id="ga${i}" maxlength="120"><label for="gi${i}">Grant id</label><input id="gi${i}" maxlength="120"></div>
-      <button type="button" id="f${i}" ${p.ready && p.ready.ready && p.status !== "cancelled" ? "" : "disabled"}>Approve with my passkey</button><p class="small muted">${p.ready && p.ready.ready ? "Test units. Refunds go back to your passkey wallet." : "Locked until the brief is Ready to fund."}</p></details>
+      <button type="button" id="f${i}" ${p.ready && p.ready.ready && p.status !== "cancelled" ? "" : "disabled"}>Approve with my passkey</button><p class="small muted">${p.ready && p.ready.ready ? "Test units. Refunds go back to your passkey wallet." : "Locked until the brief is Ready to fund."}</p>${p.ready && p.ready.ready && p.status !== "cancelled"
+        ? `<p class="small">Or from any wallet: <a id="sp${i}" href="${esc(payLink(p.id, m.key, 10))}">Solana Pay</a></p>` : ""}</details>
     <details><summary>Make it</summary>
       <button type="button" class="ghost" id="c${i}">Attempt this milestone</button>
       <label for="e${i}">Evidence page (public https, contains the claim id${m.orders[0] ? ": " + esc(m.orders[0].claim_id) : ""})</label><input id="e${i}" inputmode="url" maxlength="2000" placeholder="https://">
@@ -194,6 +209,8 @@ function msCard(p, m, i) {
       <div class="row"><button type="button" class="ghost" id="r${i}">Post my result</button><button type="button" class="ghost" id="x${i}">Post an independent check</button></div></details>`}
     <p id="o${i}" class="small" aria-live="polite"></p></li>`;
 }
+// Solana Pay transaction request (blink.PAY_PATH): the wallet asks this server for the milestone's funding transaction
+const payLink = (pid, key, units) => "solana:" + encodeURIComponent(`${location.origin}/api/pay/fund?` + new URLSearchParams({ project: pid, milestone: key, units }));
 function wire(p, m, i) {
   const out = (h) => { $("o" + i).innerHTML = h; KEPT[p.id + ":" + i] = h; };
   for (const b of document.querySelectorAll(`#ms${i} button[data-dispute]`)) b.onclick = () => busy(b, "Disputing", async () => {
@@ -203,6 +220,7 @@ function wire(p, m, i) {
   });
   const k = $("k" + i); if (!k) return;
   k.onchange = () => { $("g" + i).hidden = k.value !== "grant"; };
+  if ($("sp" + i)) $("u" + i).oninput = () => { $("sp" + i).href = payLink(p.id, m.key, parseInt($("u" + i).value, 10) || 5); };
   $("f" + i).onclick = () => busy($("f" + i), "Approve on your passkey", async () => {
     if (!session) { $("signin").hidden = false; throw new Error("Sign in with your passkey first."); }
     const units = parseInt($("u" + i).value, 10);
@@ -340,7 +358,10 @@ function renderBriefForm() {
   $("bLock").onclick = () => busy($("bLock"), "Opening", async () => {
     if (!session) { $("signin").hidden = false; throw new Error("Sign in with your passkey first."); }
     const r = await checkBrief(); if (!r.ready) throw new Error("Not ready to fund yet.");
-    const p = await api("/api/project", { template: "custom", title: $("pTitle").value.trim() || $("bName").value.trim(), brief: briefFromForm() });
+    // a brief written from a demand check carries its report: its Qloo facts become the brief's "Grounding (Qloo)" line
+    let report; try { report = sessionStorage.getItem("knos.report") || undefined; } catch (e) { report = undefined; }
+    const p = await api("/api/project", { template: "custom", title: $("pTitle").value.trim() || $("bName").value.trim(), brief: briefFromForm(), report });
+    try { sessionStorage.removeItem("knos.report"); } catch (e) { /* private window */ }
     location.hash = "#projects=" + p.id;
   });
 }

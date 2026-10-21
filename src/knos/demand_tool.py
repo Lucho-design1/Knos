@@ -13,6 +13,8 @@ import urllib.error
 import urllib.request
 from typing import Any, NoReturn
 
+from . import qloo_families
+
 OPT_IN_ENV, OPT_IN_WORD = "KNOS_MCP_TOOLS", "demand"
 DEFAULT_URL = "https://knos.onrender.com"
 TIMEOUT_S = 120
@@ -27,7 +29,8 @@ MCP_TOOLS: list[dict[str, Any]] = [{
                     "Every number names the Qloo call that produced it. Directional demand evidence, not a sales forecast."),
     "properties": {"idea": {"type": "string", "description": "the product idea in plain words (8 to 500 characters)"},
                    "place": {"type": "string", "description": "where to look for demand (a city or country); default United States"},
-                   "leader": {"type": "string", "description": "the market leader to compare against; default Qloo's top match"}},
+                   "leader": {"type": "string", "description": "the market leader to compare against; default Qloo's top match"},
+                   **{k: qloo_families.schema(k) for k in qloo_families.FIELDS}},
     "required": ["idea"],
 }]
 
@@ -45,7 +48,11 @@ def demand_check(args: dict) -> dict:
     idea = args.get("idea")
     if not isinstance(idea, str) or not 8 <= len(idea.strip()) <= 500:
         _fail("idea: the product idea in 8 to 500 characters")
-    body = {"idea": idea.strip(), **{k: args[k] for k in ("place", "leader") if isinstance(args.get(k), str) and args[k].strip()}}
+    try:
+        opts = qloo_families.options({k: args[k] for k in qloo_families.FIELDS if k in args})
+    except ValueError as why:
+        _fail(str(why))
+    body = {"idea": idea.strip(), **{k: args[k] for k in ("place", "leader") if isinstance(args.get(k), str) and args[k].strip()}, **opts}
     url = base_url()
     if not url.startswith(("https://", "http://127.0.0.1", "http://localhost")):
         _fail("KNOS_WANTED_URL must be an https URL (or a local server)")
@@ -56,10 +63,10 @@ def demand_check(args: dict) -> dict:
             rep = json.loads(r.read(2_000_000))
     except urllib.error.HTTPError as e:
         try:
-            why = json.loads(e.read(4000) or b"{}").get("error", "")
+            said = json.loads(e.read(4000) or b"{}").get("error", "")
         except ValueError:
-            why = ""
-        _fail(f"the demand check at {url} answered HTTP {e.code}{': ' + why if why else ''}")
+            said = ""
+        _fail(f"the demand check at {url} answered HTTP {e.code}{': ' + said if said else ''}")
     except (urllib.error.URLError, TimeoutError, OSError, ValueError) as e:
         _fail(f"the demand check at {url} could not be reached ({type(e).__name__}); set KNOS_WANTED_URL to the hosted app")
     d = rep.get("decision") or {}

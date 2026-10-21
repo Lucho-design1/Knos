@@ -73,6 +73,10 @@ BUCKET = _Bucket(RATE_PER_S)
 _COUNT_LOCK = threading.Lock()
 
 
+# the parameters Qloo takes only in a JSON body (docs.qloo.com: "can only be supplied when using POST HTTP method")
+POST_ONLY = ("filter.exclude.entities.query", "signal.interests.entities.query")
+
+
 def cache_dir() -> Path:
     base = os.environ.get("KNOS_WANTED_CACHE") or str(Path.home() / ".cache" / "knos-demand-check")
     return Path(base) / "qloo-rest"
@@ -155,9 +159,11 @@ class Client:
         os.replace(tmp, d / f"{k}.qloo")
 
     def get(self, path: str, params: dict | None = None) -> dict:
+        """One Qloo call. GET, except when a parameter Qloo takes only in a JSON body is set (POST_ONLY): then POST."""
         params = {k: v for k, v in (params or {}).items() if v is not None and v != ""}
-        k = cache_key("GET", path, params)
-        src = {"call": f"GET {path}", "params": params}
+        method = "POST" if any(k in POST_ONLY for k in params) else "GET"
+        k = cache_key(method, path, params)
+        src = {"call": f"{method} {path}", "params": params}
         hit = self._cached(k)
         if hit is not None and hit.get("error"):
             raise QlooError(hit["error"] + " (cached refusal)")
@@ -168,16 +174,19 @@ class Client:
             raise NoKey(why)
         self._count_one()
         self.bucket.take()
-        url = self.base + path + ("?" + urllib.parse.urlencode(params) if params else "")
-        req = urllib.request.Request(url, headers={"x-api-key": self._key, "Accept": "application/json",
-                                                   "User-Agent": "knos-demand-check/0.3.34"})
+        headers = {"x-api-key": self._key, "Accept": "application/json", "User-Agent": "knos-demand-check/0.3.34"}
+        if method == "POST":
+            req = urllib.request.Request(self.base + path, data=json.dumps(params).encode(), method="POST",
+                                         headers={**headers, "Content-Type": "application/json"})
+        else:
+            req = urllib.request.Request(self.base + path + ("?" + urllib.parse.urlencode(params) if params else ""), headers=headers)
         body = None
         for attempt in range(2):
             try:
                 with self.opener(req, timeout=TIMEOUT_S) as r:
                     raw = r.read(MAX_BYTES + 1)
                 if len(raw) > MAX_BYTES:
-                    raise QlooError(f"GET {path}: answer larger than {MAX_BYTES} bytes")
+                    raise QlooError(f"{method} {path}: answer larger than {MAX_BYTES} bytes")
                 body = json.loads(raw or b"{}")
                 break
             except urllib.error.HTTPError as e:
@@ -185,7 +194,7 @@ class Client:
                     time.sleep(1.0)
                     continue
                 self.live_calls += 1
-                msg = f"GET {path}: HTTP {e.code}"     # Qloo's own error text is not passed on to users
+                msg = f"{method} {path}: HTTP {e.code}"     # Qloo's own error text is not passed on to users
                 if 400 <= e.code < 500 and e.code != 429:
                     self._store(k, None, error=msg)  # a refused question is not asked again for a day
                 raise QlooError(msg) from None
@@ -193,7 +202,7 @@ class Client:
                 if attempt == 0:
                     time.sleep(1.0)
                     continue
-                raise QlooError(f"GET {path}: {type(e).__name__}") from None
+                raise QlooError(f"{method} {path}: {type(e).__name__}") from None
         self.live_calls += 1
         self._store(k, body)
         return {"body": body, "source": {**src, "cached": False, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(self.clock()))}}

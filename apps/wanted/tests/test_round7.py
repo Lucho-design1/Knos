@@ -118,6 +118,17 @@ def test_the_blink(http):
     assert c == 400 and "escrow unavailable" in e["message"]                          # no escrow keys in tests: refused plainly
 
 
+def test_solana_pay_funds_a_milestone_from_any_wallet(http):
+    from knos_wanted import blink
+    base, st = http
+    link = blink.pay_link(base, "prj_x", "m1", 7)
+    assert link.startswith("solana:http") and "%3Fproject%3Dprj_x%26milestone%3Dm1%26units%3D7" in link   # the spec's URL-encoded link
+    c, g, h = get(base, "/api/pay/fund?project=prj_x&milestone=m1&units=7")
+    assert c == 200 and g["label"] and g["icon"].endswith("/static/icon.svg") and h["Access-Control-Allow-Origin"] == "*"
+    c, e, _ = post(base, "/api/pay/fund?project=prj_x&milestone=m1&units=7", {"account": "So11111111111111111111111111111111111111112"})
+    assert c == 400 and e["message"]                                                   # an unknown project is refused plainly
+
+
 def test_sign_in_providers_switch_on_with_their_keys(monkeypatch):
     for k in ("GOOGLE_CLIENT_ID", "ORCID_CLIENT_ID", "ORCID_CLIENT_SECRET", "RESEND_API_KEY", "KNOS_WANTED_EMAIL_FROM"):
         monkeypatch.delenv(k, raising=False)

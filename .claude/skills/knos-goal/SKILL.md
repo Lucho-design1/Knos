@@ -10,7 +10,10 @@ description: How to run a Knos goal token-efficiently in Claude Code (intent ske
 2. **Route by difficulty** (R4/R18). Routine edits: terse, no re-reading a file you just wrote, low effort.
    Reason deeply only on a failing test or a wrong live result.
 3. **Drafts, not prose** (R3). Status lines are short drafts; no recaps of what was already said.
-4. **Recall before re-deriving** (R6/R17). Search knos-mind and Sibyl (`memory_search`) for the fact first.
+4. **Recall before re-deriving** (R6/R17). Search knos-mind and Sibyl (`memory_search`, `memory_recall`,
+   `memory_list`) for the fact first. Keep the goal's plan and cursor in Sibyl's HOT state (`memory_set_state` /
+   `memory_get_state`), each lesson as a fact (`memory_remember`), and each shipped step in the journal
+   (`memory_record_event`). Sibyl's MCP server runs in WSL (`sibyl setup` refuses on native Windows).
 5. **Batch** (R21). Independent reads and commands go in one call.
 6. **No overhead loops.** No subagents, worktrees or background watch loops; poll a run only for its result.
    `CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0` keeps an idle goal from re-sending the whole context.

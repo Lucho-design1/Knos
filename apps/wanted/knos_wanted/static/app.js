@@ -154,7 +154,8 @@ function stepHtml(s) {
     (s.input && typeof s.input === "object" ? `<details class="small"><summary>input</summary><pre>${esc(JSON.stringify(s.input, null, 1))}</pre></details>` : "") + "</li>";
 }
 async function cross() {
-  const body = { ref: $("ref").value.trim() || undefined, idea: $("idea").value.trim() || undefined, product: $("product").value.trim() || undefined, place: $("place").value.trim() || undefined };
+  const body = { ref: $("ref").value.trim() || undefined, idea: $("idea").value.trim() || undefined, product: $("product").value.trim() || undefined, place: $("place").value.trim() || undefined,
+    ...(window.KnosDemand ? KnosDemand.values($("demandOpts")) : {}) };     // the Qloo families' options (static/demand_opts.js)
   const j = await api("/api/cross", body);
   $("timeline").hidden = false; $("steps").innerHTML = ""; $("outcome").innerHTML = ""; $("timeline").scrollIntoView({ behavior: "smooth" });
   let since = 0;
@@ -188,7 +189,13 @@ function outcome(r) {
     (p ? `<p><b>${t("for_l")}:</b> ${esc((p.who.age || "").replace(/_/g, " "))}, ${esc(p.who.gender)} · ${esc((p.who.segments || []).slice(0, 3).join(", "))}</p>
       <p><b>${t("where_l")}:</b> ${esc((p.where || []).join(", ") || "—")}</p><p><b>${t("price_l")}:</b> ${p.unit_price} ${esc(status.money_word || "test units")} (${esc(p.tier)})</p>
       <p><b>${t("goal_l")}:</b> ${p.target_units} · ${t("reserve")} ${p.reserve_units}</p>
-      <p><a class="button" href="#buy=${r.hash}">${t("open_product")}</a></p>` : `<ul>${(d.reasons || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`) + "</div>";
+      <p><a class="button" href="#buy=${r.hash}">${t("open_product")}</a></p>` : `<ul>${(d.reasons || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`) + "</div>" +
+    (window.KnosDemand ? KnosDemand.answers(r) : "") +
+    `<p><button type="button" class="ghost" id="toBrief">Write a Ready brief from this check</button></p>`;
+  $("toBrief").onclick = () => {       // the brief's project keeps this report: its Qloo facts ground the brief
+    try { sessionStorage.setItem("knos.report", r.hash); } catch (e) { /* private window: the brief is still written */ }
+    location.hash = "#projects";
+  };
 }
 
 // ---- buyer ---------------------------------------------------------------------------------------------------------
@@ -471,6 +478,8 @@ $("pkNew").onclick = () => busy($("pkNew"), t("loading"), passkeyNew);
 $("pkUse").onclick = () => busy($("pkUse"), t("loading"), passkeyUse);
 document.querySelectorAll(".chip").forEach((c) => c.onclick = () => { $("ref").value = c.dataset.ref; });
 $("crossForm").onsubmit = (ev) => { ev.preventDefault(); busy($("crossBtn"), t("cross_busy"), cross); };
+// the demand options draw once the deferred script is there (DOMContentLoaded runs after every deferred script)
+document.addEventListener("DOMContentLoaded", () => { if (window.KnosDemand) KnosDemand.mount($("demandOpts"), ""); });
 $("walletBtn").onclick = () => busy($("walletBtn"), t("loading"), walletPreorder);
 $("preBtn").onclick = () => busy($("preBtn"), t("loading"), async () => {
   if (!session) { $("signin").hidden = false; throw new Error(t("err_signin")); }

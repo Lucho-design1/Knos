@@ -38,13 +38,14 @@ def test_x402_challenge_and_settlement(monkeypatch):
     monkeypatch.setattr(escrow, "demo_key", lambda: Keypair())
     ch = x402.challenge("a" * 64, "https://knos.example")
     acc = ch["accepts"][0]
-    assert ch["x402Version"] == 1 and acc["scheme"] == "exact" and acc["network"] == "solana-devnet"
-    assert acc["maxAmountRequired"] == str(x402.PRICE_UNITS * escrow.UNIT) and "test money" in acc["description"]
+    assert ch["x402Version"] == 2 and acc["scheme"] == "exact" and acc["network"] == "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1"
+    assert acc["amount"] == str(x402.PRICE_UNITS * escrow.UNIT) and "test money" in ch["resource"]["description"]
+    assert json.loads(base64.b64decode(x402.header(ch))) == ch                     # PAYMENT-REQUIRED carries the same object
     assert "USDC" in acc["extra"]["note"]
     with pytest.raises(ValueError, match="base64 JSON"):
         x402.settle("not-base64!!")
     with pytest.raises(ValueError, match="x402Version"):
-        x402.settle(base64.b64encode(json.dumps({"x402Version": 2}).encode()).decode())
+        x402.settle(base64.b64encode(json.dumps({"x402Version": 1, "scheme": "exact", "network": "solana-devnet"}).encode()).decode())
     from knos import chain
     calls = []
 
@@ -52,8 +53,7 @@ def test_x402_challenge_and_settlement(monkeypatch):
         calls.append(method)
         return "5" * 64 if method == "sendTransaction" else {"value": [{"confirmationStatus": "confirmed"}]}
     monkeypatch.setattr(chain, "call", fake)
-    hdr = base64.b64encode(json.dumps({"x402Version": 1, "scheme": "exact", "network": "solana-devnet",
-                                       "payload": {"transaction": "T" * 200}}).encode()).decode()
+    hdr = x402.header({"x402Version": 2, "accepted": acc, "payload": {"transaction": "T" * 200}})
     out = x402.settle(hdr)
     assert out["success"] and out["transaction"] == "5" * 64 and calls[0] == "sendTransaction"
 

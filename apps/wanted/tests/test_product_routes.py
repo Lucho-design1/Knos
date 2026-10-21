@@ -79,3 +79,23 @@ def test_pages_have_the_views(app):
     assert st == 200 and b'id="v-projects"' in page and b'id="v-teams"' in page and b"/static/valley.js" in page
     st, js = call(base, "/static/valley.js")
     assert st == 200 and b"KNOS_VIEW" in js
+
+
+def test_every_tool_mcp_lists_is_answered_by_a_handler(app):
+    """tools/call on each name tools/list gives: a tool may refuse empty arguments, but never 'unknown tool'."""
+    _, state = app
+    tools = agent.mcp(state, {"jsonrpc": "2.0", "id": 1, "method": "tools/list"})["result"]["tools"]
+    assert {"knos_ready", "knos_usage", "knos_milestone_prompt"} <= {t["name"] for t in tools}
+    unknown = []
+    for i, t in enumerate(tools):
+        got = agent.mcp(state, {"jsonrpc": "2.0", "id": 10 + i, "method": "tools/call", "params": {"name": t["name"], "arguments": {}}})
+        said = json.dumps(got.get("error") or got.get("result") or {})
+        if "unknown tool" in said:
+            unknown.append(t["name"])
+    assert not unknown, unknown
+    ready = agent.mcp(state, {"jsonrpc": "2.0", "id": 99, "method": "tools/call", "params": {"name": "knos_ready", "arguments": {"brief": {
+        "milestones": [{"name": "Login under 300 ms", "target": "p95 under 300 ms on test_login", "verifier": {"kind": "machine", "check": "ci / test_login"},
+                        "deadline_days": 7}]}}}})
+    assert ready["result"]["structuredContent"]["ready"] is True
+    assert "knos_ready" in agent.mcp(state, {"jsonrpc": "2.0", "id": 100, "method": "tools/call",
+                                             "params": {"name": "knos_usage", "arguments": {}}})["result"]["structuredContent"]["calls"]

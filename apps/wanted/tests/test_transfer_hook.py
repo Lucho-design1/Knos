@@ -1,0 +1,102 @@
+"""programs-hook/knos_hook in LiteSVM (Token-2022 is built in): a project-credit mint with the TransferHook extension
+pointing at the hook; its rules name the project's escrow owner; a transfer into the escrow's account passes, a transfer
+to anyone else fails the transaction. Needs the built program (cargo build-sbf): KNOS_HOOK_SO, else skipped."""
+import os
+import struct
+from pathlib import Path
+
+import pytest
+from solders.instruction import AccountMeta, Instruction
+from solders.keypair import Keypair
+from solders.litesvm import LiteSVM
+from solders.message import Message
+from solders.pubkey import Pubkey
+from solders.system_program import CreateAccountParams, create_account
+from solders.transaction import Transaction
+
+SO = Path(os.environ.get("KNOS_HOOK_SO", r"C:\Users\zulab\knos-v1-private\e2-hook\out\knos_hook.so"))
+pytestmark = pytest.mark.skipif(not SO.exists(), reason="the hook program is not built here (cargo build-sbf programs-hook/knos_hook)")
+
+TOKEN22 = Pubkey.from_string("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+ATA = Pubkey.from_string("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")
+SYSTEM = Pubkey.from_string("11111111111111111111111111111111")
+EXECUTE = bytes([105, 37, 101, 197, 75, 251, 102, 26])
+INIT = bytes([43, 34, 13, 49, 167, 88, 235, 235])
+MINT_LEN = 234          # base mint padded to 165, account type 1, TransferHook TLV 2 + 2 + 64
+
+
+def send(svm, ixs, payer, signers=()):
+    tx = Transaction([payer, *signers], Message.new_with_blockhash(ixs, payer.pubkey(), svm.latest_blockhash()), svm.latest_blockhash())
+    return svm.send_transaction(tx)
+
+
+def logs(r) -> list[str]:
+    m = r.meta() if callable(getattr(r, "meta", None)) else getattr(r, "meta", r)
+    got = getattr(m, "logs", getattr(r, "logs", []))
+    return list(got() if callable(got) else got)
+
+
+def ata(owner, mint):
+    return Pubkey.find_program_address([bytes(owner), bytes(TOKEN22), bytes(mint)], ATA)[0]
+
+
+@pytest.fixture
+def chain():
+    svm = LiteSVM()
+    hook = Keypair().pubkey()
+    svm.add_program(hook, SO.read_bytes())
+    payer, mint, escrow, stranger = Keypair(), Keypair(), Keypair(), Keypair()
+    svm.airdrop(payer.pubkey(), 10_000_000_000)
+    rent = svm.minimum_balance_for_rent_exemption(MINT_LEN)
+    ixs = [create_account(CreateAccountParams(from_pubkey=payer.pubkey(), to_pubkey=mint.pubkey(), lamports=rent, space=MINT_LEN, owner=TOKEN22)),
+           # TransferHookExtension::Initialize (36, 0): authority, the hook program
+           Instruction(TOKEN22, bytes([36, 0]) + bytes(payer.pubkey()) + bytes(hook), [AccountMeta(mint.pubkey(), False, True)]),
+           # InitializeMint2 (20): 0 decimals, mint authority payer, no freeze authority
+           Instruction(TOKEN22, bytes([20, 0]) + bytes(payer.pubkey()) + bytes([0]) + bytes(32), [AccountMeta(mint.pubkey(), False, True)])]
+    assert not hasattr(send(svm, ixs, payer, [mint]), "err")
+    validation = Pubkey.find_program_address([b"extra-account-metas", bytes(mint.pubkey())], hook)[0]
+    rules = Pubkey.find_program_address([b"rules", bytes(mint.pubkey())], hook)[0]
+    init = Instruction(hook, INIT + bytes(escrow.pubkey()), [AccountMeta(validation, False, True), AccountMeta(mint.pubkey(), False, False),
+                       AccountMeta(payer.pubkey(), True, True), AccountMeta(SYSTEM, False, False), AccountMeta(rules, False, True)])
+    assert not hasattr(send(svm, [init], payer), "err")
+    accts = {}
+    for who in (payer, escrow, stranger):
+        a = ata(who.pubkey(), mint.pubkey())
+        accts[who.pubkey()] = a
+        ix = Instruction(ATA, bytes([1]), [AccountMeta(payer.pubkey(), True, True), AccountMeta(a, False, True), AccountMeta(who.pubkey(), False, False),
+                                          AccountMeta(mint.pubkey(), False, False), AccountMeta(SYSTEM, False, False), AccountMeta(TOKEN22, False, False)])
+        assert not hasattr(send(svm, [ix], payer), "err")
+    mint_to = Instruction(TOKEN22, bytes([7]) + struct.pack("<Q", 100), [AccountMeta(mint.pubkey(), False, True),
+                          AccountMeta(accts[payer.pubkey()], False, True), AccountMeta(payer.pubkey(), True, False)])
+    assert not hasattr(send(svm, [mint_to], payer), "err")
+    return svm, hook, payer, mint.pubkey(), escrow, stranger, accts, validation, rules
+
+
+def transfer(c, to, amount=10):
+    svm, hook, payer, mint, _, _, accts, validation, rules = c
+    ix = Instruction(TOKEN22, bytes([12]) + struct.pack("<QB", amount, 0),
+                     [AccountMeta(accts[payer.pubkey()], False, True), AccountMeta(mint, False, False), AccountMeta(accts[to], False, True),
+                      AccountMeta(payer.pubkey(), True, False), AccountMeta(rules, False, False), AccountMeta(hook, False, False),
+                      AccountMeta(validation, False, False)])
+    svm.expire_blockhash()
+    return send(svm, [ix], payer)
+
+
+def test_credits_move_only_into_the_escrow_the_rules_name(chain):
+    svm, hook, payer, mint, escrow, stranger, accts, validation, rules = chain
+    ok = transfer(chain, escrow.pubkey())
+    assert not hasattr(ok, "err"), ok
+    assert any(str(hook) in line for line in logs(ok))                                          # Token-2022 called the hook
+    assert int.from_bytes(bytes(svm.get_account(accts[escrow.pubkey()]).data)[64:72], "little") == 10
+    refused = transfer(chain, stranger.pubkey())
+    assert hasattr(refused, "err") and "custom program error: 0x1" in " ".join(logs(refused))  # Custom(1): not allowed
+    v = bytes(svm.get_account(validation).data)
+    assert v[:8] == EXECUTE and v[17:49] == bytes(rules)                                     # the Execute TLV lists the rules account
+
+
+def test_only_the_mint_authority_sets_the_rules(chain):
+    svm, hook, payer, mint, escrow, stranger, accts, validation, rules = chain
+    svm.airdrop(stranger.pubkey(), 1_000_000_000)
+    again = Instruction(hook, INIT + bytes(stranger.pubkey()), [AccountMeta(validation, False, True), AccountMeta(mint, False, False),
+                        AccountMeta(stranger.pubkey(), True, True), AccountMeta(SYSTEM, False, False), AccountMeta(rules, False, True)])
+    assert hasattr(send(svm, [again], stranger), "err")

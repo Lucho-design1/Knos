@@ -134,3 +134,24 @@ def refresh(rec: dict, led=None) -> dict:
         rec["record"] = company.record_lock(rec["report"], rec["order"], rec["units"], None)
         preorder._save(rec)
     return rec
+
+
+# Solana Pay transaction request (docs.solanapay.com, spec "Transaction Request"): a milestone funded from any wallet
+# that scans or opens `solana:<url-encoded link>`. GET answers the label and icon; POST {"account"} answers the same
+# funding transaction a wallet signs on the project page (valley.fund_tx: the milestone's own escrow order).
+PAY_PATH = "/api/pay/fund"
+
+
+def pay_link(base: str, project: str, milestone: str, units: int = 5) -> str:
+    from urllib.parse import quote, urlencode
+    return "solana:" + quote(f"{base}{PAY_PATH}?" + urlencode({"project": project, "milestone": milestone, "units": int(units)}), safe="")
+
+
+def pay_get(base: str) -> dict:
+    return {"label": "Knos milestone escrow (devnet test units)", "icon": base + "/static/icon.svg"}
+
+
+def pay_post(project: str, milestone: str, units: int, account: str) -> dict:
+    from . import valley
+    got = valley.fund_tx(project, milestone, units, account)
+    return {"transaction": got["transaction"], "message": got["message"][:200]}

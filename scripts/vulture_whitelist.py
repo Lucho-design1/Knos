@@ -320,3 +320,6 @@ threshold_check_.verdict_record, ghoidc_.GH_HOST, participant_.LocalClient, sess
 # knos.threshold.codeattest: the app server's POST /api/referee/attest (apps/wanted/knos_wanted/referee.py, outside src/knos) checks
 # the verdict, the token's claims and links the Rekor entry with these.
 _.check_verdict, _.check_claims, _.rekor_url
+
+# knos.demand_cli: `knos demand` is a Typer command; Typer calls it by its decorator, never by name.
+_.demand_

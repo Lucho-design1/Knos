@@ -21,6 +21,8 @@ def _routes():
     for p, summary in server.GET_ROUTES.items():
         if ("GET", p) not in seen:
             rows.append(("GET", p, False, summary, {}))
+    rows.append(("POST", "/api/pay/fund", False, "Solana Pay transaction request: {account} -> the milestone's funding transaction to sign",
+                 {"project": "string", "milestone": "string", "units": "integer", "account": "string"}))
     rows.append(("POST", "/mcp", False, "Hosted MCP (Streamable HTTP, JSON-RPC 2.0): Knos's tools for agents", {}))
     return rows
 
@@ -41,6 +43,12 @@ def document(base: str = "https://knos.onrender.com") -> dict:
         elif fields:
             op["requestBody"] = {"required": True, "content": {"application/json": {"schema": {
                 "type": "object", "properties": {k: TYPES.get(t, {"type": "string"}) for k, t in fields.items()}}}}}
+        if method == "POST" and path in DEMAND_BODIES:      # the demand check: every Qloo family field, typed, with an example
+            op["requestBody"] = {"required": True, "content": {"application/json": {"schema": demand_body(path),
+                                 "examples": {"who-and-where": {"summary": "Who and where",
+                                              "value": {"idea": "trail running shoes for ultramarathons", "age": "24_and_younger", "near": "Austin", "radius": 5000}},
+                                              "price-and-brand": {"summary": "Price tier and who serves it",
+                                              "value": {"idea": "a cold brew coffee shop", "near": "Seattle", "price_level": "1", "references_brand": "Starbucks"}}}}}}
         if params:
             op["parameters"] = params
         paths.setdefault(path, {})[method.lower()] = op
@@ -52,6 +60,22 @@ def document(base: str = "https://knos.onrender.com") -> dict:
             "components": {"securitySchemes": {"session": {"type": "http", "scheme": "bearer",
                                                            "description": "the session token a sign-in returns (passkey, SSO, Google, ORCID, email, guest)"}}},
             "paths": dict(sorted(paths.items()))}
+
+
+DEMAND_BODIES = {"/api/check": "idea", "/api/cross": "ref or idea"}
+
+
+def demand_body(path: str) -> dict:
+    """The body of a demand check: the idea (or paper), the market, and every family field of knos.qloo_families."""
+    from knos import qloo_families as Q
+    props = {"idea": {"type": "string", "description": "the product idea, 8 to 500 characters", "examples": ["a cold brew coffee shop"]},
+             "place": {"type": "string", "description": "the launch market (city or country)", "examples": ["Austin"]},
+             "leader": {"type": "string", "description": "the market leader to compare against", "examples": ["Starbucks"]}}
+    if path == "/api/cross":
+        props = {"ref": {"type": "string", "description": "a paper id (DOI, arXiv, PubMed, OpenAlex, patent)", "examples": ["10.1038/nature16521"]},
+                 **props, "product": {"type": "string", "description": "the product phrase"}}
+    props.update({k: Q.schema(k) for k in Q.FIELDS})
+    return {"type": "object", "properties": props, **({"required": ["idea"]} if path == "/api/check" else {}), "additionalProperties": False}
 
 
 def _path_params(path: str) -> list[str]:

@@ -59,7 +59,9 @@ LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish"
           "faucet": (2, 3600), "tx": (20, 600), "check": (12, 600), "lock": (6, 600), "auth": (30, 600),
           "milestone": (30, 600), "milestone_one": (10, 3600), "referee": (120, 600), "product": (60, 600),
           "live": (120, 600)}   # (calls, seconds) per client; "live": presence and draft autosave, apart from "product"
-GLOBAL_DEMO = (60, 3600)                                           # demo pre-orders, all clients
+GLOBAL_DEMO = (60, 3600)
+FRONT_ORIGINS = ("https://drexthealpha.github.io",)               # the front door, allowed to read the demand check
+DEMAND_CORS = ("/api/check", "/api/demand/fields")                                           # demo pre-orders, all clients
 ROUTES = {"/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
@@ -76,8 +78,10 @@ SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/
 # every GET route below (do_GET), for the OpenAPI document (knos_wanted.openapi); the product routes list their own
 GET_ROUTES = {"/actions.json": "Solana Actions rules", "/sw.js": "The app's service worker (offline shell, background sync)",
               "/manifest.webmanifest": "The app's web app manifest (installable, home-screen shortcuts)", "/api/actions/preorder": "Solana Action (Blink): pre-order metadata",
+              "/api/pay/fund": "Solana Pay transaction request: the label and icon a wallet shows before funding a milestone",
               "/api/cross": "Poll a live crossing", "/verify": "How we verify", "/api/crossings": "Crossings, newest first",
               "/api/front": "Research products open for backing now (the front door's list; ?slug= one product)",
+              "/api/demand/fields": "The Qloo demand families F1-F8: every option's name, Qloo parameter, kind, help and example",
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
               "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funder escrows",
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
@@ -186,6 +190,11 @@ def make_handler(state: State):
             self.send_response(code)
             for k, v in (headers or {}).items():
                 self.send_header(k, v)
+            # the front door (GitHub Pages) runs the same demand check from the browser: these answers, to that origin only,
+            # never with credentials (no sign-in is needed to check demand)
+            if urlparse(self.path).path in DEMAND_CORS and self.headers.get("Origin") in FRONT_ORIGINS and "Access-Control-Allow-Origin" not in (headers or {}):
+                self.send_header("Access-Control-Allow-Origin", self.headers["Origin"])
+                self.send_header("Vary", "Origin")
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(data)))
             self.send_header("X-Content-Type-Options", "nosniff")
@@ -229,11 +238,16 @@ def make_handler(state: State):
                 if rep is None:
                     return self._send(404, {"message": "unknown report"}, headers=blink.CORS)
                 return self._send(200, blink.action(rep, self._base()), headers=blink.CORS)
+            if u.path == blink.PAY_PATH:
+                return self._send(200, blink.pay_get(self._base()), headers=blink.CORS)
             if u.path == "/api/cross":
                 got = agent.poll((qs.get("id") or [""])[0], int((qs.get("since") or ["0"])[0] or 0))
                 return self._send(200 if got else 404, got or {"error": "unknown crossing"})
             if u.path in ("/verify", "/verify.html"):
                 return self._send(200, (STATIC / "verify.html").read_bytes(), "text/html; charset=utf-8")
+            if u.path == "/api/demand/fields":               # one table for every interface's controls (knos.qloo_families)
+                from . import families as _fam
+                return self._send(200, _fam.fields())
             if u.path == "/api/front":                       # the front door's list (web/home.js asks it from github.io)
                 slug = (qs.get("slug") or [""])[0]
                 if slug:
@@ -266,15 +280,16 @@ def make_handler(state: State):
                     return self._send(404, {"error": "unknown report"})
                 if not x402.ready():
                     return self._send(503, {"error": "the paid route needs the devnet escrow configured"})
-                pay_h = self.headers.get("X-Payment") or self.headers.get("X-PAYMENT")
+                pay_h = self.headers.get("PAYMENT-SIGNATURE")
                 try:
                     if not pay_h:
-                        return self._send(402, x402.challenge(h, self._base()))
+                        ch = x402.challenge(h, self._base())
+                        return self._send(402, ch, headers={"PAYMENT-REQUIRED": x402.header(ch)})
                     settled = x402.settle(pay_h)
                 except ValueError as why:
-                    return self._send(402, {**x402.challenge(h, self._base()), "error": str(why)[:200]})
-                return self._send(200, {**rep_, "paid": settled},
-                                  headers={"X-Payment-Response": __import__("base64").b64encode(json.dumps(settled).encode()).decode()})
+                    ch = {**x402.challenge(h, self._base()), "error": str(why)[:200]}
+                    return self._send(402, ch, headers={"PAYMENT-REQUIRED": x402.header(ch)})
+                return self._send(200, {**rep_, "paid": settled}, headers={"PAYMENT-RESPONSE": x402.header(settled)})
             if u.path == "/api/receivables":
                 return self._send(200, {"receivables": wallets.receivables(), "money": wallets.MONEY,
                                         "model": "PayFi receivable financing (as Huma Finance): advance rate, fee, due date, repaid by the release"})
@@ -378,7 +393,7 @@ def make_handler(state: State):
             u = urlparse(self.path)
             if u.path == "/mcp":
                 return self._mcp()
-            if u.path == "/api/actions/preorder":
+            if u.path in ("/api/actions/preorder", blink.PAY_PATH):
                 return self._action(u)
             if u.path in ("/api/referee/commit", "/api/referee/share", "/api/referee/attest"):   # a referee host's FROST round (signed by its transport key)
                 if not state.allow(self._client(), "referee"):
@@ -450,6 +465,10 @@ def make_handler(state: State):
                 return self._send(429, {"message": "too many pre-orders from this address; try again later"}, headers=blink.CORS)
             try:
                 body = self._json()
+                if u.path == blink.PAY_PATH:                    # Solana Pay: fund a milestone from any wallet
+                    one = lambda k: (qs.get(k) or [""])[0]  # noqa: E731
+                    return self._send(200, blink.pay_post(one("project"), one("milestone"), int(one("units") or 5), str(body.get("account", ""))),
+                                      headers=blink.CORS)
                 rep = state.report((qs.get("report") or [""])[0])
                 if rep is None:
                     raise ValueError("unknown report")
@@ -466,7 +485,11 @@ def make_handler(state: State):
             if path == "/api/cross":
                 ref, idea = _text(body.get("ref"), 200), _text(body.get("idea"), 500)
                 privacy.check({"idea": idea, "place": body.get("place")})
-                job = agent.start(state, ref=ref, idea=idea, place=_text(body.get("place")), product=_text(body.get("product"), 200))
+                from knos import qloo_families
+                opts = {k: body[k] for k in qloo_families.FIELDS if k in body}
+                privacy.check({k: v for k, v in opts.items() if isinstance(v, str)})
+                job = agent.start(state, ref=ref, idea=idea, place=_text(body.get("place")), product=_text(body.get("product"), 200),
+                                  options=opts)
                 return {"id": job["id"], "status": job["status"]}
             if path == "/api/auth/email":
                 return auth.email_link(str(body.get("email") or ""), self._base())
@@ -498,7 +521,13 @@ def make_handler(state: State):
                 ex = body.get("exclude") or []
                 if not isinstance(ex, list) or len(ex) > 20 or not all(isinstance(x, str) and len(x) < 80 for x in ex):
                     raise ValueError("exclude: a list of up to 20 Qloo entity ids the maker unticked")
-                rep = check.demand_check(idea, _text(body.get("place")), _text(body.get("leader"), 80), client=state.rest, exclude=ex)
+                from knos import qloo_families
+                opts = {k: body[k] for k in qloo_families.FIELDS if k in body and k != "exclude"}   # the families' fields, by name
+                if ex:
+                    opts["exclude"] = ",".join(ex)
+                privacy.check({k: v for k, v in opts.items() if isinstance(v, str)})
+                rep = check.demand_check(idea, _text(body.get("place")), _text(body.get("leader"), 80), client=state.rest, exclude=ex,
+                                         options=opts)
                 rep["fees"] = preorder.fee_line()
                 card = state.cards.get(str(body.get("research") or ""))
                 if card:

@@ -20,6 +20,8 @@ import secrets
 import threading
 import time
 
+from knos import qloo_families
+
 from . import check, company, preorder, research
 
 JOBS: dict[str, dict] = {}
@@ -200,7 +202,8 @@ def run(job: dict, state) -> None:
             if not refused:
                 hot_set("lock:" + key, {**hot_get("lock:" + key), "cursor": "qloo evidence"})
         idea = (product or (card or {}).get("product") or job.get("idea") or "").strip()
-        rep = check.demand_check(idea, job.get("place"), job.get("leader"), client=state.rest, on_call=_qloo_step(job))
+        rep = check.demand_check(idea, job.get("place"), job.get("leader"), client=state.rest, on_call=_qloo_step(job),
+                                 options=job.get("options"))
         rep["fees"] = preorder.fee_line()
         if card:
             rep["research"] = {**card, "why_never_crossed": research.why_never_crossed(card, rep)}
@@ -249,10 +252,11 @@ def run(job: dict, state) -> None:
 
 
 def start(state, *, ref: str | None = None, idea: str | None = None, place: str | None = None, product: str | None = None,
-          leader: str | None = None, wait: bool = False) -> dict:
+          leader: str | None = None, wait: bool = False, options: dict | None = None) -> dict:
     if not (ref or idea):
         raise ValueError("paste a paper id (DOI, arXiv, PubMed, OpenAlex) or describe an idea")
-    job = {"id": secrets.token_hex(8), "ref": ref, "idea": idea, "place": place, "product": product, "leader": leader,
+    options = qloo_families.options(options)          # checked before the crossing starts, so a bad field is said at once
+    job = {"id": secrets.token_hex(8), "ref": ref, "idea": idea, "place": place, "product": product, "leader": leader, "options": options,
            "status": "running", "steps": [], "started": time.time(), "report": None, "card": None}
     with _lock:
         JOBS[job["id"]] = job
@@ -307,14 +311,21 @@ TOOLS = [
      "description": "Paper id (DOI, arXiv, PubMed, OpenAlex) -> research card -> Qloo evidence at every decision -> who, where, price "
                     "tier, escrow target and reserve, and OPEN or REFUSE. Returns every step with its Qloo call, input, output and effect.",
      "inputSchema": {"type": "object", "properties": {"ref": {"type": "string"}, "idea": {"type": "string"}, "place": {"type": "string"},
-                                                       "product": {"type": "string"}}, "additionalProperties": False}},
+                                                       "product": {"type": "string"}, **{k: qloo_families.schema(k) for k in qloo_families.FIELDS}},
+                     "additionalProperties": False}},
     {"name": "knos_research_card", "title": "Read a landmark paper",
      "description": "Paper id -> the proven result (quoted), citations, retraction status, Nobel recognition, the product it enables.",
      "inputSchema": {"type": "object", "properties": {"ref": {"type": "string"}}, "required": ["ref"], "additionalProperties": False}},
     {"name": "knos_demand_check", "title": "Is this product wanted? (Qloo)",
-     "description": "A product idea -> Qloo evidence -> a decision made by code.",
-     "inputSchema": {"type": "object", "properties": {"idea": {"type": "string"}, "place": {"type": "string"}}, "required": ["idea"],
-                     "additionalProperties": False}},
+     "description": "A product idea -> Qloo evidence -> a decision made by code. Every Qloo demand family is a typed argument: "
+                    "who (age, gender, audiences), gaps (hide_leader, exclude, popularity_max), where (near, radius, location, geohash, "
+                    "region names), price tier (price_level, price range), who serves it (references_brand, quality, sort, ratings), "
+                    "product kind and years (film/TV/book/person), look up (lookup, entity_id), and `qloo` for any other documented parameter.",
+     "inputSchema": {"type": "object", "properties": {"idea": {"type": "string", "description": "the product idea (8-500 characters)"},
+                                                      "place": {"type": "string", "description": "the launch market"},
+                                                      "leader": {"type": "string", "description": "the market leader to compare"},
+                                                      **{k: qloo_families.schema(k) for k in qloo_families.FIELDS}},
+                     "required": ["idea"], "additionalProperties": False}},
     {"name": "knos_crossings", "title": "Crossings on this server",
      "description": "Every crossing this server ran, newest first: id, paper or idea, verdict, report hash.",
      "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
@@ -364,6 +375,12 @@ def _signed(args: dict) -> dict:
     return who
 
 
+def _product_tools() -> set:
+    """The names product_routes.MCP_TOOLS lists, each answered by product_routes.mcp_call."""
+    from .product_routes import MCP_TOOLS
+    return {t["name"] for t in MCP_TOOLS}
+
+
 def mcp(state, msg: dict) -> dict | None:
     """One JSON-RPC message of the Streamable HTTP transport (POST /mcp). Notifications get no answer (None)."""
     mid, method, params = msg.get("id"), msg.get("method"), msg.get("params") or {}
@@ -399,6 +416,10 @@ def mcp(state, msg: dict) -> dict | None:
             if name not in ("qloo_capabilities",) + WORKFLOWS:
                 return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": f"unknown tool {name}"}}
             import json as _json
+            if name == "qloo_capabilities":            # not a workflow: what the qloo server said at its handshake
+                got = {"mode": getattr(state.q, "mode", "mock"), "server": getattr(state.q, "server", None),
+                       "tools": getattr(state.q, "tools", []), "capabilities": getattr(state.q, "capabilities", {})}
+                return ok({"content": [{"type": "text", "text": _json.dumps(got, default=str)[:60_000]}], "structuredContent": got})
             try:
                 got = state.q.call(name, dict(args), why="proxied for an outside agent over Knos's MCP", step=name)
             except QlooUnavailable as e:
@@ -406,16 +427,19 @@ def mcp(state, msg: dict) -> dict | None:
             return ok({"content": [{"type": "text", "text": _json.dumps(got, default=str)[:60_000]}], "structuredContent": got})
         try:
             if name == "knos_cross":
-                job = start(state, ref=args.get("ref"), idea=args.get("idea"), place=args.get("place"), product=args.get("product"), wait=True)
+                job = start(state, ref=args.get("ref"), idea=args.get("idea"), place=args.get("place"), product=args.get("product"), wait=True,
+                            options={k: args[k] for k in qloo_families.FIELDS if k in args})
                 rep = state.report(job["report"]) if job.get("report") else None
                 out = {"status": job["status"], "error": job.get("error"), "steps": job["steps"], "report": job.get("report"),
                        "decision": (rep or {}).get("decision")}
             elif name == "knos_research_card":
                 out = research.research_card(str(args.get("ref") or ""))
             elif name == "knos_demand_check":
-                rep = check.demand_check(str(args.get("idea") or ""), args.get("place"), client=state.rest)
+                opts = {k: args[k] for k in qloo_families.FIELDS if k in args}
+                rep = check.demand_check(str(args.get("idea") or ""), args.get("place"), args.get("leader"), client=state.rest, options=opts)
                 state.keep_check(rep)
-                out = {"report": rep["hash"], "decision": rep["decision"], "calls": rep["calls"]}
+                out = {"report": rep["hash"], "decision": rep["decision"], "families": rep.get("families") or {},
+                       "grounding": rep.get("grounding") or {}, "calls": rep["calls"]}
             elif name == "knos_crossings":
                 out = {"crossings": crossings(state)}
             elif name == "knos_milestones":
@@ -453,7 +477,7 @@ def mcp(state, msg: dict) -> dict | None:
                 out = _tasks.submit(str(args.get("round") or ""), str(args.get("name") or ""), str(args.get("code") or ""),
                                     f"{who.get('kind')}: {who.get('label')}", sub=str(who.get("sub") or ""),
                                     wallet=str(args.get("wallet") or "") or None)
-            elif isinstance(name, str) and name.startswith("knos_project") or name in ("knos_templates", "knos_openapi"):
+            elif name in _product_tools():          # every tool product_routes lists is answered by it (knos_ready, knos_usage, ...)
                 from .product_routes import mcp_call
                 out = mcp_call(name, args, _signed)
             else:

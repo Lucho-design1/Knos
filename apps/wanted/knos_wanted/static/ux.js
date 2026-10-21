@@ -35,10 +35,12 @@
     return new Promise((ok) => {
       let done = false;
       const ws = new WebSocket(WSS);
-      const end = (v) => { if (!done) { done = true; try { ws.close(); } catch (e) { /* closed */ } ok(v); } };
+      let sub = null;           // a notified signature's stream ends by itself; one still open (a timeout) is unsubscribed
+      const end = (v) => { if (!done) { done = true; try { if (sub !== null && !v.via.startsWith("signatureSubscribe")) ws.send(JSON.stringify({ jsonrpc: "2.0", id: 2, method: "signatureUnsubscribe", params: [sub] })); ws.close(); } catch (e) { /* closed */ } ok(v); } };
       ws.onopen = () => ws.send(JSON.stringify({ jsonrpc: "2.0", id: 1, method: "signatureSubscribe", params: [sig, { commitment: "finalized" }] }));
       ws.onmessage = (ev) => {
         const m = JSON.parse(ev.data);
+        if (m.id === 1 && typeof m.result === "number") sub = m.result;
         if (m.method === "signatureNotification") end({ seconds: (performance.now() - t0) / 1000, err: m.params.result.value.err, via: "signatureSubscribe" });
       };
       ws.onerror = () => viaStatus().then(end);

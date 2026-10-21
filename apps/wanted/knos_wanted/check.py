@@ -203,7 +203,7 @@ class _Run:
         with ThreadPoolExecutor(max_workers=4) as ex:
             list(ex.map(one, calls))
 
-    def get(self, path: str, params: dict, what: str) -> tuple[dict | None, int | None]:
+    def get(self, path: str, params: dict, what: str, broaden: bool = True) -> tuple[dict | None, int | None]:
         params, dropped = self.guide(params) if path == "/v2/insights" else (params, [])
         if dropped:
             what += f" (not sent: {', '.join(dropped)}, which Qloo ignores for {params.get('filter.type')})"
@@ -226,7 +226,7 @@ class _Run:
             self.calls[-1]["body_digest"] = _digest(got["body"])
             self.on_call(self.calls[-1])
             narrow = [k for k in p if k.startswith(self.NARROWING)]
-            if narrow and not _results(got["body"]) and not getattr(self, "_broadening", False):
+            if broaden and narrow and not _results(got["body"]) and not getattr(self, "_broadening", False):
                 self._broadening = True                  # empty under the narrowing filters: broaden once, and say so
                 try:
                     return self.get(path, {k: v for k, v in p.items() if k not in narrow}, what + f" (broadened: nothing with {', '.join(narrow)})")
@@ -680,7 +680,11 @@ def annotate(rep: dict) -> None:
 
 
 def demand_check(idea: str, place: str | None = None, leader: str | None = None, client: Client | None = None,
-                 today: dt.date | None = None, exclude: list[str] | None = None, on_call=None) -> dict:
+                 today: dt.date | None = None, exclude: list[str] | None = None, on_call=None, options: dict | None = None) -> dict:
+    from knos import qloo_families
+
+    from . import families
+    opts = qloo_families.options(options)          # the families' options (knos.qloo_families): refused when unknown or malformed
     idea = " ".join(str(idea or "").split())
     if not 8 <= len(idea) <= 500:
         raise ValueError("describe the idea in 8 to 500 characters")
@@ -693,6 +697,8 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
     empty = {"product_type": None, "words": content_words(idea, place), "matches": [], "unrelated": [], "excluded": [], "leader": None,
              "tags": [], "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
     ev = gather(run, idea, place, leader, today, set(exclude or [])) if ok else empty
+    if ok and opts:                                # F1-F8: each asked-for family's own calls, numbered with the rest
+        ev["families"] = families.answer(run, ev, idea, place, opts)
     failed = [c for c in run.calls if c.get("error") and c["what"].startswith(ESSENTIAL)]
     missing = [c for c in run.calls if c.get("error") and c not in failed]
     live = ok and bool(run.calls) and not failed
@@ -725,6 +731,8 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
                      "persona": [x["name"] for x in ev.get("persona") or []][:6],
                      "ladder": [{k: r[k] for k in ("name", "affinity", "popularity")} for r in ev.get("ladder") or []][:6],
                      "venue_price_level": pr.get("venue_price_level"), "venue_check": pr.get("venue_check")}
+    rep["options"] = opts
+    rep["grounding"] = families.grounding(rep)
     annotate(rep)
     rep["hash"] = report_hash(rep)
     return rep

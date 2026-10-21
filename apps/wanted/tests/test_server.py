@@ -100,3 +100,15 @@ def test_presence_and_draft_autosave_never_use_up_the_persons_limit(app, monkeyp
     brief = {"milestones": [{"name": "x", "target": "1 test", "verifier": {"check": "ci"}, "deadline_days": 1}]}
     codes = [call(base, "/api/ready", {"brief": brief})[0] for _ in range(3)]
     assert codes == [200, 200, 429]                       # the person's own steps keep their full limit
+
+
+def test_the_demand_fields_and_the_front_door_may_read_the_check(app):
+    base, _ = app
+    req = urllib.request.Request(base + "/api/demand/fields", headers={"Origin": "https://drexthealpha.github.io"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        spec = json.loads(r.read())
+        assert r.headers.get("Access-Control-Allow-Origin") == "https://drexthealpha.github.io"
+    assert set(spec["families"]) == {f"F{i}" for i in range(1, 9)} and spec["families"]["F1"]["label"] == "Who"
+    other = urllib.request.Request(base + "/api/demand/fields", headers={"Origin": "https://evil.example"})
+    with urllib.request.urlopen(other, timeout=30) as r:
+        assert r.headers.get("Access-Control-Allow-Origin") is None

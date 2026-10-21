@@ -287,12 +287,17 @@ def grounding(p: dict) -> dict | None:
     if not f or not f.exists():
         return None
     try:
-        plan = (json.loads(f.read_text(encoding="utf-8")).get("decision") or {}).get("plan") or {}
+        rep = json.loads(f.read_text(encoding="utf-8"))
     except ValueError:
         return None
+    plan = (rep.get("decision") or {}).get("plan") or {}
+    fam = rep.get("grounding") or {}                # the families' answers (knos_wanted.families.grounding)
     who = plan.get("who") or {}
-    out = {"audience": {k: who.get(k) for k in ("age", "gender") if who.get(k)} | ({"segments": (who.get("segments") or [])[:3]} if who.get("segments") else {}),
-           "launch_cities": (plan.get("where") or [])[:3], "price_tier": plan.get("tier"), "unit_price": plan.get("unit_price"), "source": "Qloo"}
+    out = {"audience": {k: who.get(k) for k in ("age", "gender") if who.get(k)} | ({"segments": (who.get("segments") or fam.get("segments") or [])[:3]}
+                                                                                   if who.get("segments") or fam.get("segments") else {}),
+           "launch_cities": (plan.get("where") or fam.get("cities") or [])[:3], "price_tier": plan.get("tier") or fam.get("price_tier"),
+           "unit_price": plan.get("unit_price"), "comparables": (fam.get("comparables") or [])[:4],
+           "asked": {k: v for k, v in (rep.get("options") or {}).items() if k not in ("qloo", "qloo_calls")}, "source": "Qloo"}
     return {k: v for k, v in out.items() if v}
 
 
@@ -504,6 +509,7 @@ def public_project(p: dict) -> dict:
     out = {k: v for k, v in p.items() if k != "owner"}
     out["ready"] = readiness(p) if "versions" in p else {"ready": False, "label": "Not ready", "missing": ["brief: opened before the check"]}
     out.setdefault("changes", [])
+    out["grounding"] = grounding(p)                 # the Ready brief's "Grounding (Qloo)" line: who, where, price tier, comparables
     out["milestones"] = []
     for m in p["milestones"]:
         raw = [o for o in (_safe_order(x) for x in m["fundings"]) if o]
