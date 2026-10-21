@@ -48,7 +48,7 @@ def self_line() -> str:
     if not SELF.exists():
         return ""
     u = json.loads(SELF.read_text(encoding="utf-8"))
-    return (f"<p class=\"fine\" id=\"idt-self\">Building this with Claude Code: the {html.escape(str(u['goal']))} goal used "
+    return (f"<p class=\"fine\" id=\"idt-self\">Building this with a coding agent: the {html.escape(str(u['goal']))} goal used "
             f"{u['output_tokens']:,} output tokens over {u['messages']:,} messages ({html.escape(str(u['since'])[:10])}), recorded through "
             f"<code>knos_usage</code>. <a href=\"{SELF_RAW}\" rel=\"noopener\">Raw</a>.</p>")
 

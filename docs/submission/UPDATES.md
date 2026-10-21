@@ -2,11 +2,7 @@
 
 Every commit on `main` since the Submission Period opened (2026-09-30), by day, from `git log` (`scripts/submission_log.py`). Each line links its commit.
 
-179 commits over 20 days.
-
-## 2026-09-30 (1)
-
-- [`20170d4`](https://github.com/drexthealpha/Knos/commit/20170d4) Knos 0.3.0
+179 commits over 19 days.
 
 ## 2026-10-01 (59)
 
@@ -225,7 +221,7 @@ Every commit on `main` since the Submission Period opened (2026-09-30), by day, 
 - [`d55186e`](https://github.com/drexthealpha/Knos/commit/d55186e) Knos: a second free devnet RPC, every decision in plain words, help that never covers a button
 - [`71d74b9`](https://github.com/drexthealpha/Knos/commit/71d74b9) Knos: cursors never use up your limit, #network paints at once, finality stays on the card
 
-## 2026-10-21 (15)
+## 2026-10-21 (16)
 
 - [`165b635`](https://github.com/drexthealpha/Knos/commit/165b635) Knos: the app's header stays on one line; Lighthouse measures this commit, not the live app
 - [`364db67`](https://github.com/drexthealpha/Knos/commit/364db67) Knos: every Qloo family on every interface, and Solana and Sibyl covered row by row
@@ -242,3 +238,4 @@ Every commit on `main` since the Submission Period opened (2026-09-30), by day, 
 - [`b120bdb`](https://github.com/drexthealpha/Knos/commit/b120bdb) Knos: a report's independent parts ask Qloo at once
 - [`d513cd5`](https://github.com/drexthealpha/Knos/commit/d513cd5) Knos: places, persona tags and launch cities join the report's concurrent parts
 - [`2884b2d`](https://github.com/drexthealpha/Knos/commit/2884b2d) Knos: the tag questions go to Qloo with the first search
+- [`807b17d`](https://github.com/drexthealpha/Knos/commit/807b17d) Knos: the hackathon submission, a fresh-container setup check, uptime from GitHub's record, and this goal's own tokens
