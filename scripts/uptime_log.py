@@ -44,8 +44,9 @@ def summary(rows: list[dict], since: str, until: str) -> dict:
     green = [t(r["at"]) for r in rows if r["conclusion"] == "success"]
     edges = [t(since + "T00:00:00Z")] + green + [min(t(until + "T23:59:59Z"), dt.datetime.now(dt.timezone.utc))]
     gap = max((b - a for a, b in zip(edges, edges[1:])), default=dt.timedelta(0))
+    started = edges[-1] > edges[0]          # a window that has not begun has no gap yet, not a negative one
     return {"from": since, "to": until, "runs": len(rows), "green": len(green), "failed": sum(1 for r in rows if r["conclusion"] == "failure"),
-            "longest_gap_minutes": round(gap.total_seconds() / 60, 1)}
+            "longest_gap_minutes": round(gap.total_seconds() / 60, 1) if started else None}
 
 
 def main(argv=None) -> int:
