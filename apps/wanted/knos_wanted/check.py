@@ -25,6 +25,7 @@ import hashlib
 import json
 import math
 import re
+import threading
 
 from .qloo_rest import LIVE_LABEL, Client, QlooError
 
@@ -190,6 +191,7 @@ class _Run:
         self.calls: list[dict] = []
         self.on_call = on_call or (lambda c: None)       # the agent streams each call to the page as it happens
         self._inflight: dict = {}                          # prefetched questions still being answered: key -> Future
+        self._numbering = threading.Lock()                 # parts of a report ask at once; each call keeps one number
 
     def prefetch(self, calls: list[tuple[str, dict]]) -> None:
         """Ask independent questions at once (R21): the answers land in the client's cache, so the calls that follow,
@@ -207,7 +209,15 @@ class _Run:
             self._inflight[_key(path, p)] = ex.submit(one, path, p)
         ex.shutdown(wait=False)
 
-    def get(self, path: str, params: dict, what: str, broaden: bool = True, wait_s: float | None = None) -> tuple[dict | None, int | None]:
+    def _add(self, rec: dict) -> dict:
+        with self._numbering:
+            rec = {"n": len(self.calls) + 1, **rec}
+            self.calls.append(rec)
+        self.on_call(rec)
+        return rec
+
+    def get(self, path: str, params: dict, what: str, broaden: bool = True, wait_s: float | None = None,
+            _broadened: bool = False) -> tuple[dict | None, int | None]:
         """One numbered call. A prefetched question is waited for (up to `wait_s` seconds when given: a call that decides
         nothing need not hold up the verdict), then read from the cache."""
         params, dropped = self.guide(params) if path == "/v2/insights" else (params, [])
@@ -217,16 +227,15 @@ class _Run:
                 fut.result(timeout=wait_s)
             except Exception:  # noqa: BLE001 - concurrent.futures.TimeoutError: not answered within wait_s
                 if wait_s is not None and not fut.done():
-                    self.calls.append({"n": len(self.calls) + 1, "call": f"GET {path}", "what": what, "params": params,
-                                       "error": f"Qloo had not answered within {wait_s:g} s; left out of this report (it decides nothing)"})
-                    self.on_call(self.calls[-1])
+                    self._add({"call": f"GET {path}", "what": what, "params": params,
+                               "error": f"Qloo had not answered within {wait_s:g} s; left out of this report (it decides nothing)"})
                     return None, None
         if dropped:
             what += f" (not sent: {', '.join(dropped)}, which Qloo ignores for {params.get('filter.type')})"
         tries = [params]
         keep = ("filter.location.query",) if path == "/v2/insights" and params.get("filter.type") == "urn:heatmap" else ()
         light = {k: v for k, v in params.items() if k not in self.OPTIONAL or k in keep}
-        if light != params:
+        if light != params and wait_s is None:             # a call that decides nothing gets no second, slower try
             tries.append(light)
         err = None
         for p in tries:
@@ -235,28 +244,22 @@ class _Run:
             except QlooError as e:
                 err = e
                 continue
-            n = len(self.calls) + 1
-            self.calls.append({"n": n, "call": got["source"]["call"], "what": what, "params": got["source"]["params"],
-                               "cached": got["source"]["cached"], "at": got["source"]["at"],
-                               **({"note": "retried without location/tags after Qloo refused them"} if p is not params else {})})
-            self.calls[-1]["body_digest"] = _digest(got["body"])
-            self.on_call(self.calls[-1])
+            rec = self._add({"call": got["source"]["call"], "what": what, "params": got["source"]["params"],
+                             "cached": got["source"]["cached"], "at": got["source"]["at"], "body_digest": _digest(got["body"]),
+                             **({"note": "retried without location/tags after Qloo refused them"} if p is not params else {})})
             narrow = [k for k in p if k.startswith(self.NARROWING)]
-            if broaden and narrow and not _results(got["body"]) and not getattr(self, "_broadening", False):
-                self._broadening = True                  # empty under the narrowing filters: broaden once, and say so
-                try:
-                    return self.get(path, {k: v for k, v in p.items() if k not in narrow}, what + f" (broadened: nothing with {', '.join(narrow)})")
-                finally:
-                    self._broadening = False
-            return got["body"], n
+            if broaden and narrow and not _results(got["body"]) and not _broadened:
+                # empty under the narrowing filters: broaden once, and say so
+                return self.get(path, {k: v for k, v in p.items() if k not in narrow}, what + f" (broadened: nothing with {', '.join(narrow)})",
+                                _broadened=True)
+            return got["body"], rec["n"]
         m = re.search(r"HTTP (\d{3})", str(err))
         code = m.group(1) if m else ""
         short = ("Qloo refused this server's API key (HTTP %s): no Qloo data was used" % code if code in ("401", "403") else
                  "Qloo's rate limit for this event key was reached (HTTP 429, after one retry): try again in a minute" if code == "429" else
                  f"Qloo could not answer this part (HTTP {code})" if code else
                  "Qloo's monthly call budget is spent" if "budget" in str(err) else "Qloo could not be reached")
-        self.calls.append({"n": len(self.calls) + 1, "call": f"GET {path}", "what": what, "params": params, "error": short})
-        self.on_call(self.calls[-1])
+        self._add({"call": f"GET {path}", "what": what, "params": params, "error": short})
         return None, None
 
 
@@ -510,9 +513,13 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
               for t in (((body or {}).get("results") or {}).get("tags") or [])[:8]]
     ev["persona"] = [r for r in rows11 if r["on_kind"]] or rows11[:2]     # cross-domain noise stays out of the headline
     ev["persona_all"] = rows11
-    if len(ev["matches"]) >= 2:
+    signal_before = dict(signal)
+
+    def ladder():
+        if len(ev["matches"]) < 2:
+            return
         ladder_ids = ",".join(m["id"] for m in ev["matches"][:6])
-        body, s12 = run.get("/v2/insights", {"filter.type": kind, "filter.results.entities": ladder_ids, "take": 6, **signal},
+        body, s12 = run.get("/v2/insights", {"filter.type": kind, "filter.results.entities": ladder_ids, "take": 6, **signal_before},
                             "brand ladder: the matched products ranked against this taste (filter.results.entities)")
         ev["ladder"] = sorted([{"name": e.get("name"), "affinity": (e.get("query") or {}).get("affinity"), "popularity": e.get("popularity"),
                                 "src": s12} for e in (((body or {}).get("results") or {}).get("entities") or [])],
@@ -532,10 +539,22 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         if len(ev["cities"]) < 5:
             ev["cities"].append({"name": r.get("name"), "country": geo.get("country_code"), "affinity": (r.get("query") or {}).get("affinity"),
                                  "because": [x.get("entity_id") for x in why][:3], "src": s10})
-    ev["recommended"] = _recommend(run, kind, signal, {m["id"] for m in ev["matches"]} | ({lead["id"]} if lead else set()))
-    ev["trend"] = _trend(run, lead, today)
-    if lead:
-        ev["versus"] = _versus(run, near, lead, signal, ev["audiences"])
+    # four independent parts, at once (each its own Qloo calls; the call list is numbered as each answer lands)
+    from concurrent.futures import ThreadPoolExecutor
+    seen = {m["id"] for m in ev["matches"]} | ({lead["id"]} if lead else set())
+
+    def recommended():
+        ev["recommended"] = _recommend(run, kind, signal, seen)
+
+    def trend():
+        ev["trend"] = _trend(run, lead, today)
+
+    def versus():
+        if lead:
+            ev["versus"] = _versus(run, near, lead, signal, ev["audiences"])
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        for f in [ex.submit(x) for x in (ladder, recommended, trend, versus)]:
+            f.result()
     # the map points decide nothing (check.decide reads no `where`) and Qloo's heatmap is its slowest answer: read last,
     # so its wait overlaps everything above (it was asked at the start, with the other independent questions)
     body, s7 = run.get("/v2/insights", q7, f"where: map points in {loc}", wait_s=MAP_WAIT_S)
