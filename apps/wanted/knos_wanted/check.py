@@ -498,22 +498,43 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         age, gender = q.get("age") or {}, q.get("gender") or {}
         ev["who"] = {"age": age, "gender": gender, "top_age": max(age, key=age.get) if age else None,
                      "top_gender": max(gender, key=gender.get) if gender else None, "src": s5}
-    body, s6 = run.get("/v2/insights", q6, f"where: named places in {loc} where this taste clusters (rated 3.5+, on Tripadvisor)")
-    for r in (((body or {}).get("results") or {}).get("entities") or [])[:5]:
-        p = r.get("properties") or {}
-        geo = p.get("geocode") or {}
-        area = ", ".join(str(x) for x in (geo.get("name"), geo.get("admin2_region") or geo.get("admin1_region")) if x)
-        ev["places"].append({"name": r.get("name"), "area": area or str(p.get("address") or "")[:80], "price_level": p.get("price_level"),
-                             "affinity": (r.get("query") or {}).get("affinity"), "src": s6})
-    ev["place"] = loc
-    body, s11 = run.get("/v2/insights", q11, "taste persona: this taste's tags, one or two per family (diversify.by=subtype)")
-    tail = kind.split(":")[-1]
-    rows11 = [{"name": t.get("name"), "family": t.get("subtype"), "src": s11,
-               "on_kind": tail in str(t.get("subtype") or "") or bool({_norm(x) for x in tokens(t.get("name"))} & set(words))}
-              for t in (((body or {}).get("results") or {}).get("tags") or [])[:8]]
-    ev["persona"] = [r for r in rows11 if r["on_kind"]] or rows11[:2]     # cross-domain noise stays out of the headline
-    ev["persona_all"] = rows11
     signal_before = dict(signal)
+    every, _ = _audience(run, signal, "audience segments ranked by affinity", take=20)
+    ev["audiences"] = every[:6]
+    ev["buyer_group"] = _buyer_group(run, idea, every)
+    if ev["buyer_group"] and ev["buyer_group"].get("id"):
+        signal = {**signal, "signal.demographics.audiences": ev["buyer_group"]["id"]}       # the named group steers the later calls
+    ev["place"] = loc
+    seen = {m["id"] for m in ev["matches"]} | ({lead["id"]} if lead else set())
+
+    def places():
+        body, s6 = run.get("/v2/insights", q6, f"where: named places in {loc} where this taste clusters (rated 3.5+, on Tripadvisor)")
+        for r in (((body or {}).get("results") or {}).get("entities") or [])[:5]:
+            p = r.get("properties") or {}
+            geo = p.get("geocode") or {}
+            area = ", ".join(str(x) for x in (geo.get("name"), geo.get("admin2_region") or geo.get("admin1_region")) if x)
+            ev["places"].append({"name": r.get("name"), "area": area or str(p.get("address") or "")[:80], "price_level": p.get("price_level"),
+                                 "affinity": (r.get("query") or {}).get("affinity"), "src": s6})
+
+    def persona():
+        body, s11 = run.get("/v2/insights", q11, "taste persona: this taste's tags, one or two per family (diversify.by=subtype)")
+        tail = kind.split(":")[-1]
+        rows11 = [{"name": t.get("name"), "family": t.get("subtype"), "src": s11,
+                   "on_kind": tail in str(t.get("subtype") or "") or bool({_norm(x) for x in tokens(t.get("name"))} & set(words))}
+                  for t in (((body or {}).get("results") or {}).get("tags") or [])[:8]]
+        ev["persona"] = [r for r in rows11 if r["on_kind"]] or rows11[:2]     # cross-domain noise stays out of the headline
+        ev["persona_all"] = rows11
+
+    def cities():
+        body, s10 = run.get("/v2/insights", q10, f"launch cities: destinations in {loc} where this taste is strongest")
+        for r in (((body or {}).get("results") or {}).get("entities") or []):
+            geo = (r.get("properties") or {}).get("geocode") or {}
+            if cc and geo.get("country_code") and geo["country_code"] != cc:
+                continue                       # the launch cities stay inside the chosen market
+            why = ((r.get("query") or {}).get("explainability") or {}).get("signal.interests.entities") or []
+            if len(ev["cities"]) < 5:
+                ev["cities"].append({"name": r.get("name"), "country": geo.get("country_code"), "affinity": (r.get("query") or {}).get("affinity"),
+                                     "because": [x.get("entity_id") for x in why][:3], "src": s10})
 
     def ladder():
         if len(ev["matches"]) < 2:
@@ -524,24 +545,6 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         ev["ladder"] = sorted([{"name": e.get("name"), "affinity": (e.get("query") or {}).get("affinity"), "popularity": e.get("popularity"),
                                 "src": s12} for e in (((body or {}).get("results") or {}).get("entities") or [])],
                               key=lambda r: -(r["affinity"] or 0))
-    every, _ = _audience(run, signal, "audience segments ranked by affinity", take=20)
-    ev["audiences"] = every[:6]
-    ev["buyer_group"] = _buyer_group(run, idea, every)
-    if ev["buyer_group"] and ev["buyer_group"].get("id"):
-        signal = {**signal, "signal.demographics.audiences": ev["buyer_group"]["id"]}       # the named group steers the later calls
-    ev["price"] = price_tier(every, [p_.get("price_level") for p_ in ev["places"]])
-    body, s10 = run.get("/v2/insights", q10, f"launch cities: destinations in {loc} where this taste is strongest")
-    for r in (((body or {}).get("results") or {}).get("entities") or []):
-        geo = (r.get("properties") or {}).get("geocode") or {}
-        if cc and geo.get("country_code") and geo["country_code"] != cc:
-            continue                       # the launch cities stay inside the chosen market
-        why = ((r.get("query") or {}).get("explainability") or {}).get("signal.interests.entities") or []
-        if len(ev["cities"]) < 5:
-            ev["cities"].append({"name": r.get("name"), "country": geo.get("country_code"), "affinity": (r.get("query") or {}).get("affinity"),
-                                 "because": [x.get("entity_id") for x in why][:3], "src": s10})
-    # four independent parts, at once (each its own Qloo calls; the call list is numbered as each answer lands)
-    from concurrent.futures import ThreadPoolExecutor
-    seen = {m["id"] for m in ev["matches"]} | ({lead["id"]} if lead else set())
 
     def recommended():
         ev["recommended"] = _recommend(run, kind, signal, seen)
@@ -552,9 +555,12 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     def versus():
         if lead:
             ev["versus"] = _versus(run, near, lead, signal, ev["audiences"])
-    with ThreadPoolExecutor(max_workers=4) as ex:
-        for f in [ex.submit(x) for x in (ladder, recommended, trend, versus)]:
+    # the independent parts, at once (each its own Qloo calls; the call list is numbered as each answer lands)
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=7) as ex:
+        for f in [ex.submit(x) for x in (places, persona, cities, ladder, recommended, trend, versus)]:
             f.result()
+    ev["price"] = price_tier(every, [p_.get("price_level") for p_ in ev["places"]])
     # the map points decide nothing (check.decide reads no `where`) and Qloo's heatmap is its slowest answer: read last,
     # so its wait overlaps everything above (it was asked at the start, with the other independent questions)
     body, s7 = run.get("/v2/insights", q7, f"where: map points in {loc}", wait_s=MAP_WAIT_S)
