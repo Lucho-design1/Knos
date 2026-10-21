@@ -78,8 +78,9 @@ ROWS = [
     u("CpiGuard", "Token-2022", f"{CHX}::CpiGuard", EXT, app="the escrow's receipt ledger refuses transfers by another program (CPI)", api="`POST /api/project/fund`"),
     u("PermanentDelegate", "Token-2022", f"{CHX}::PermanentDelegate", EXT, app="a refunded pledge's receipt is burned by the relayer (permanent delegate)", api="`POST /api/project/fund`", cli=READ["cli"]),
     u("NonTransferableAccount", "Token-2022", f"{T22}::NonTransferableAccount", EXT, **READ),
-    u("TransferHook", "Token-2022", "programs-hook/knos_hook/src/lib.rs::allowed_owner", EXT, cli="program `knos_hook`: project credits move only into the escrow its rules name (LiteSVM test "
-      "apps/wanted/tests/test_transfer_hook.py); the devnet deploy waits on the deployer's faucet funding"),
+    u("TransferHook", "Token-2022", "apps/wanted/knos_wanted/chainx.py::project_credits", EXT,
+      app="project page: 'Project credits ... held only in escrow' (each lock's units, moved in through knos_hook)",
+      api="`GET /api/project` (credits: mint, hook, rules)", cli=READ["cli"]),
     u("TransferHookAccount", "Token-2022", f"{T22}::TransferHookAccount", EXT, **READ),
     u("ConfidentialTransferFeeConfig", "Token-2022", f"{T22}::ConfidentialTransferFeeConfig", EXT, **READ),
     u("ConfidentialTransferFeeAmount", "Token-2022", f"{T22}::ConfidentialTransferFeeAmount", EXT, **READ),

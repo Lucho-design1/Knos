@@ -14,6 +14,8 @@ MAX_ITEMS = 10
 MAX_LEN = 80
 SAFE = re.compile(r"^(\d{4}-\d{2}-\d{2}|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}"
                   r"|urn:[a-z0-9:_.-]+|mock-[a-z0-9_-]+)$")
+# a WKT geometry (Qloo's filter.location: a launch area as POINT or POLYGON), numbers only: a place to sell in, not a person
+WKT = re.compile(r"^(POINT|POLYGON|MULTIPOLYGON)\s*\([-0-9.,\s()]{3,400}\)$", re.I)
 PATTERNS = [
     (re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"), "an e-mail address"),
     (re.compile(r"(?<![\w-])@[A-Za-z0-9_]{2,}"), "a social handle"),
@@ -42,7 +44,7 @@ def problems(value, where: str = "input") -> list[str]:
         for i, v in enumerate(value):
             out += problems(v, f"{where}[{i}]")
     elif isinstance(value, str):
-        if SAFE.match(value):      # a Qloo id or tag URN, or an ISO date: not free text
+        if SAFE.match(value) or WKT.match(value):      # a Qloo id or tag URN, an ISO date, a WKT area: not free text
             return out
         if len(value) > MAX_LEN and not where.endswith(("idea",)):
             out.append(f"{where}: at most {MAX_LEN} characters")

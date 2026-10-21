@@ -114,6 +114,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [AUTORESEARCH.md](AUTORESEARCH.md) | autoresearch for anyone: agents change one file, the referee keeps or refuses each run, sealed data decides payment |
 | [GAME.md](GAME.md) | the Knos game: people and AI scientists attack one sealed goal at once; a pooled pot split by the referee's verdicts |
 | [DEMAND_CHECK.md](DEMAND_CHECK.md) | the demand check on Qloo's MCP server: a maker's demand report, a buyer agent, pre-orders in a devnet escrow |
+| [QLOO-COVERAGE.md](QLOO-COVERAGE.md) | every Qloo parameter, type and endpoint the docs list, and where a person sets it on each interface |
 | [IDEAS.md](IDEAS.md) | an idea in from anyone or any research source, every field; demand, then pull commitments released in stages |
 | [NEBIUS.md](NEBIUS.md) | Nemotron models on Nebius Token Factory as Knos coders and cheat explainers, Tavily provenance; the referee still decides |
 | [LABS.md](LABS.md) | cloud labs and fabs through one interface: the lab paid on protocol and QC, the researcher on the outcome |
@@ -133,6 +134,8 @@ The documents in this folder are listed below, with the eight front pages too.
 | [SELF.md](SELF.md) | Knos builds Knos: agents improve product code, judged by the referee from main, paid on devnet |
 | [ES256.md](ES256.md) | a second kind of signed token (ES256), checked in one transaction; live on devnet since 9 Oct 2026 |
 | [ALPENGLOW.md](ALPENGLOW.md) | how Knos tells a cluster runs Alpenglow, waits until a payment is final there, and how long that took on devnet |
+| [SOLANA-COVERAGE.md](SOLANA-COVERAGE.md) | every Solana devnet RPC method, Token-2022 extension, program, payment path and upgrade, used or not and why |
+| [SIBYL-COVERAGE.md](SIBYL-COVERAGE.md) | every capability of Sibyl Memory's free plan (CLI, MCP tools, tiers), used or not and why |
 | [PLATFORM.md](PLATFORM.md) | the programs on today's Solana: sBPF v3 builds, a GitHub token verified in one transaction, v1 transactions, finality, and the upgrade steps |
 | [PAY_ON_PROOF.md](PAY_ON_PROOF.md) | pay on proof: m of n referee signatures, ORCID iDs as payees, and a container-image judge path that has never run |
 | [CONFORMANCE.md](CONFORMANCE.md) | the formats, with test vectors and a runner |

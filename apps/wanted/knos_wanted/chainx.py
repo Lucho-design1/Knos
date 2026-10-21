@@ -11,6 +11,9 @@
   rent_returned(sig) the lamports the release's closed accounts gave back, read from the transaction's own meta.
   sns_owner(name)   the owner of a .sol name (Name Service: the name account under the .sol root), when a project names one.
   price(pair)       a Pyth price read from its devnet price account, for a milestone stated in another currency.
+  project_credits(...) a project's credits: a Token-2022 mint whose TransferHook is knos_hook (programs-hook/), with rules
+                    naming the escrow's owner, so a credit moves only into the escrow; each lock's units are minted and
+                    moved in through the hook (a transfer anywhere else fails on chain, Custom(1)).
   evm_verify(...)   an EVM-signed attestation (a lab instrument, a sensor) verified by Solana's Secp256k1 precompile in
                     a transaction: a wrong signature fails the transaction, so success is the proof.
 State (the group mints, the tree, the badges) is kept beside the other server state (escrow._state_dir()).
@@ -89,6 +92,75 @@ def _s(text: str) -> bytes:
 def _create(payer, new, space: int, lamports: int, owner: str):
     from solders.system_program import CreateAccountParams, create_account
     return create_account(CreateAccountParams(from_pubkey=payer, to_pubkey=new, lamports=lamports, space=space, owner=_pk(owner)))
+
+
+# ---- Token-2022 project credits through the transfer hook (programs-hook/knos_hook, deployed on devnet) -----------------
+HOOK = "AFQFtodihz5jAHpVBUk87AkH8FJsQdmHt8Z5NKLWRj1T"
+HOOK_INIT = bytes([43, 34, 13, 49, 167, 88, 235, 235])     # the SPL Transfer Hook interface's InitializeExtraAccountMetaList
+CREDIT_LEN = 234                                         # base mint padded to 165, account type 1, TransferHook TLV 2 + 2 + 64
+
+
+def _find(seeds: list, program: str):
+    from solders.pubkey import Pubkey
+    return Pubkey.find_program_address(seeds, _pk(program))[0]
+
+
+def _hook_pdas(mint) -> tuple:
+    return _find([b"extra-account-metas", bytes(_pk(mint))], HOOK), _find([b"rules", bytes(_pk(mint))], HOOK)
+
+
+def _credit_mint(led, pid: str) -> dict:
+    """The project's credit mint, made once: TransferHook -> knos_hook, and the hook's rules naming the escrow's owner."""
+    from solders.keypair import Keypair
+    st = _state("credits")
+    if pid in st:
+        return st[pid]
+    payer, mint, owner = _payer(), Keypair(), escrow.demo_key().pubkey()
+    validation, rules = _hook_pdas(mint.pubkey())
+    ixs = [_create(payer.pubkey(), mint.pubkey(), CREDIT_LEN, led.rent(CREDIT_LEN), TOKEN22),
+           _ix(TOKEN22, bytes([36, 0]) + bytes(payer.pubkey()) + bytes(_pk(HOOK)), [(mint.pubkey(), False, True)]),   # TransferHook init
+           _ix(TOKEN22, bytes([20, 0]) + bytes(payer.pubkey()) + bytes([0]), [(mint.pubkey(), False, True)])]          # InitializeMint2, 0 dp
+    sig = led.send(ixs, payer, [payer, mint])
+    rule = led.send([_ix(HOOK, HOOK_INIT + bytes(owner), [(validation, False, True), (mint.pubkey(), False, False), (payer.pubkey(), True, True),
+                                                         (SYSTEM, False, False), (rules, False, True)])], payer)
+    st[pid] = {"mint": str(mint.pubkey()), "hook": HOOK, "rules": str(rules), "validation": str(validation), "escrow_owner": str(owner),
+               "signature": sig, "rules_signature": rule}
+    _keep("credits", st)
+    return st[pid]
+
+
+def credit_transfer_ix(mint, source, dest, authority, amount: int):
+    """TransferChecked of project credits with the accounts the hook's validation list names (rules, hook, validation)."""
+    validation, rules = _hook_pdas(mint)
+    return _ix(TOKEN22, bytes([12]) + struct.pack("<QB", int(amount), 0),
+               [(_pk(source), False, True), (_pk(mint), False, False), (_pk(dest), False, True), (_pk(authority), True, False),
+                (rules, False, False), (_pk(HOOK), False, False), (validation, False, False)])
+
+
+def project_credits(pid: str, order: str, units: int, led=None) -> dict:
+    """A locked order's units as the project's credits, held in the escrow: minted to the relayer, moved in through the hook."""
+    led = led or escrow.ledger()
+    with _lock:
+        done = _state("credit-orders")
+        if order in done:
+            return done[order]
+        c, payer = _credit_mint(led, pid), _payer()
+        mint, owner = _pk(c["mint"]), _pk(c["escrow_owner"])
+        inbox, vault = _ata(payer.pubkey(), mint), _ata(owner, mint)
+        make = [_ix(ATA, bytes([1]), [(payer.pubkey(), True, True), (a, False, True), (w, False, False), (mint, False, False),
+                                      (SYSTEM, False, False), (TOKEN22, False, False)]) for a, w in ((inbox, payer.pubkey()), (vault, owner))]
+        ixs = [*make, _ix(TOKEN22, bytes([7]) + struct.pack("<Q", int(units)), [(mint, False, True), (inbox, False, True), (payer.pubkey(), True, False)]),
+               credit_transfer_ix(mint, inbox, vault, payer.pubkey(), int(units))]
+        sig = led.send(ixs, payer)
+        row = {"order": order, "units": units, "credit_mint": c["mint"], "hook": HOOK, "escrow_account": str(vault), "signature": sig,
+               "explorer": escrow.explorer(sig)}
+        done[order] = row
+        _keep("credit-orders", done)
+        return row
+
+
+def credits_of(pid: str) -> dict | None:
+    return _state("credits").get(pid)
 
 
 # ---- Token-2022 badges ----------------------------------------------------------------------------------------------

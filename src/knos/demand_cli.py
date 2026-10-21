@@ -6,19 +6,15 @@ body, with dashes): --age, --gender, --hide-leader, --exclude, --popularity-max,
 documented Qloo parameter. It POSTs to the hosted demand check (KNOS_WANTED_URL, default https://knos.onrender.com), where
 Qloo is called server side; no Qloo key is needed here. Read-only: nothing is locked or signed.
 """
-from __future__ import annotations
-
 import json
+import re
 import urllib.error
 import urllib.request
-from typing import TYPE_CHECKING
 
 from . import qloo_families as Q
 
-if TYPE_CHECKING:                                    # typer is imported when the command registers (the CLI's lazy modules)
-    import typer
-
 BY_FLAG = {Q.flag(k): k for k in Q.FIELDS}
+ID = re.compile(r"[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}")   # a Qloo entity id
 
 
 def parse(args: list[str]) -> dict:
@@ -30,6 +26,16 @@ def parse(args: list[str]) -> dict:
         if not a.startswith("--"):
             raise ValueError(f"unexpected argument {a!r}: options are --name value (knos demand --help)")
         name, _, val = a.partition("=")
+        if name == "--year":                         # --year 2015 or --year 2015-2024: the two year fields at once
+            if not val:
+                i += 1
+                val = args[i] if i < len(args) else ""
+            lo, _, hi = val.partition("-")
+            if not lo.strip().isdigit() or (hi and not hi.strip().isdigit()):
+                raise ValueError("--year YYYY or --year YYYY-YYYY")
+            out["year_min"], out["year_max"] = lo.strip(), (hi or lo).strip()
+            i += 1
+            continue
         if name not in BY_FLAG:
             raise ValueError(f"unknown option {name} (knos demand --help lists them)")
         field = BY_FLAG[name]
@@ -46,6 +52,8 @@ def parse(args: list[str]) -> dict:
             if not k or not v:
                 raise ValueError("--qloo PARAM=VALUE (a parameter docs.qloo.com documents)")
             out.setdefault("qloo", {})[k] = v
+        elif field == "exclude" and not all(ID.fullmatch(x.strip()) for x in val.split(",") if x.strip()):
+            out["exclude_names"] = val                # names, as the app's Gaps control takes them: Qloo resolves each one
         else:
             out[field] = val
         i += 1
@@ -54,6 +62,7 @@ def parse(args: list[str]) -> dict:
 
 def flags_help() -> str:
     rows = [f"{Q.flag(k)} ({Q.FIELDS[k][0]}): {Q.FIELDS[k][3]} [Qloo {Q.FIELDS[k][1]}]" for k in Q.FIELDS]
+    rows.append("--year YYYY[-YYYY] (F6): both --year-min and --year-max at once; --exclude also takes names (sent as --exclude-names)")
     return "\n\n".join(rows)
 
 
@@ -88,14 +97,14 @@ def summary(rep: dict) -> dict:
 def register(app, help_lines: list | None = None) -> None:
     """`knos demand "<idea>" [--flags]` on the main app. `help_lines`: cli._HELP."""
     import importlib
-    globals()["typer"] = importlib.import_module("typer")   # the annotations below are strings (postponed); Typer resolves them here
+    typer = importlib.import_module("typer")          # annotations here are evaluated (no postponed annotations in this module)
 
     if help_lines is not None:
         help_lines.append(("demand", "Demand", "Is it wanted? Qloo's demand check with every family's option as a flag."))
 
     @app.command("demand", context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
                  help="Qloo demand check: who, gaps, where, price tier, who serves it, media kind, look up.\n\n" + flags_help())
-    def demand_(ctx: typer.Context,
+    def demand_(ctx: typer.Context,  # type: ignore[name-defined]  # typer: imported on registration only
                 idea: str = typer.Argument(..., help="the product idea in plain words (8 to 500 characters)"),
                 place: str = typer.Option("", "--place", help="the launch market (city or country)"),
                 leader: str = typer.Option("", "--leader", help="the market leader to compare against"),

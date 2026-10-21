@@ -146,3 +146,15 @@ def test_every_interface_reads_the_one_table():
     assert app_js == (root / "web" / "demand_opts.js").read_text(encoding="utf-8")             # the front door draws the same controls
     for f in ("age", "gender", "hide_leader", "popularity_max", "near", "radius", "price_level", "references_brand", "product_kind", "year_min"):
         assert f'data-f="{f}"' in app_js
+
+
+def test_a_wkt_launch_area_is_not_taken_for_a_phone_number():
+    """F3's documented form (a WKT POINT or POLYGON) passes the personal-data guard; a phone number still does not."""
+    import pytest
+
+    from knos_wanted import privacy
+    privacy.check({"near": "POINT(-97.74 30.27)", "location": "POLYGON((-97.8 30.2, -97.7 30.2, -97.7 30.3, -97.8 30.2))"})
+    with pytest.raises(privacy.PersonalData):
+        privacy.check({"near": "+1 512 555 0199"})
+    with pytest.raises(privacy.PersonalData):
+        privacy.check({"near": "POINT(1 2) call me on 512 555 0199"})

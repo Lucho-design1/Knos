@@ -510,6 +510,8 @@ def public_project(p: dict) -> dict:
     out["ready"] = readiness(p) if "versions" in p else {"ready": False, "label": "Not ready", "missing": ["brief: opened before the check"]}
     out.setdefault("changes", [])
     out["grounding"] = grounding(p)                 # the Ready brief's "Grounding (Qloo)" line: who, where, price tier, comparables
+    from . import chainx
+    out["credits"] = chainx.credits_of(p["id"])     # the project's credit mint: moves only into its escrow (the transfer hook)
     out["milestones"] = []
     for m in p["milestones"]:
         raw = [o for o in (_safe_order(x) for x in m["fundings"]) if o]
@@ -694,7 +696,7 @@ def _finality_async(order: str, sig: str | None, sent_at: float, url: str) -> No
     threading.Thread(target=run, daemon=True, name="knos-finality").start()
 
 
-def _receipt_async(kind: str, order: str, claim: str = "", units: int = 0) -> None:
+def _receipt_async(kind: str, order: str, claim: str = "", units: int = 0, pid: str = "") -> None:
     """The order's Token-2022 pledge receipt (knos_wanted.chainx): written on lock, burned on refund, off the request's
     path: a receipt that cannot be written never holds up the money, it is said in the log and kept on the order."""
     def run():
@@ -704,10 +706,19 @@ def _receipt_async(kind: str, order: str, claim: str = "", units: int = 0) -> No
         except Exception as why:  # noqa: BLE001
             got = {"error": f"{type(why).__name__}: {str(why)[:160]}"}
             print(f"knos projects: pledge receipt ({kind}) of {order}: {got['error']}", flush=True)
+        credits = None
+        if kind == "pledge" and pid:            # the units as project credits, moved into the escrow through the transfer hook
+            try:
+                credits = chainx.project_credits(pid, order, units)
+            except Exception as why:  # noqa: BLE001
+                credits = {"error": f"{type(why).__name__}: {str(why)[:160]}"}
+                print(f"knos projects: project credits of {order}: {credits['error']}", flush=True)
         with _lock:
             o = _safe_order(order)
             if o is not None:
                 o.setdefault("receipt", {})[kind] = got
+                if credits is not None:
+                    o["receipt"]["credits"] = credits
                 _save("orders", order, o)
     threading.Thread(target=run, daemon=True, name="knos-receipt").start()
 
@@ -740,7 +751,7 @@ def confirm(order: str, signature: str | None = None, led=None) -> dict:
             _freeze(p, order)
             _save("projects", p["id"], p)
         if not o.get("private"):                # a private order's amount goes on chain only encrypted (private_pledge)
-            _receipt_async("pledge", order, o.get("claim_id") or "", o["units"])
+            _receipt_async("pledge", order, o.get("claim_id") or "", o["units"], o["project"])
         _journal("funding", {"project": o["project"], "milestone": o["milestone"], "order": order, "kind": o["kind"],
                              "amount_units": o["units"], "signature": o["signatures"].get("lock"), "grant": o.get("grant"),
                              "criteria_hash": o.get("criteria_hash")}, tenant_of(p))

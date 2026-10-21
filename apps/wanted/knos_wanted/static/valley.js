@@ -87,6 +87,11 @@ function groundingLine(p) {
     (g.comparables || []).length && "comparables: " + g.comparables.join(", ")].filter(Boolean);
   return bits.length ? `<p class="small" id="grounding"><b>Grounding (Qloo)</b>: ${esc(bits.join(" · "))}</p>` : "";
 }
+// the project's credits (Token-2022 with the knos_hook transfer hook): they move only into this project's escrow
+function creditsLine(p) {
+  const c = p.credits;
+  return c && c.mint ? `<p class="small" id="credits">Project credits: <a class="mono" href="https://explorer.solana.com/address/${esc(c.mint)}?cluster=devnet" rel="noopener">${esc(c.mint.slice(0, 8))}…</a>, held only in escrow (a transfer hook refuses any other account).</p>` : "";
+}
 // who is working on this project, each a separate role you can see: the researcher (what an agent on a milestone is
 // handed: the locked intent), the referee (the latest attempt's verdict), the funder (what escrow holds and the rule)
 function agents(p) {
@@ -118,7 +123,7 @@ async function loadProject(id) {
     <p class="small">Each milestone has its own escrow. It pays on a result plus an independent check. A missed deadline refunds and reopens it.</p>
     <div class="row"><button type="button" class="quiet" id="refBtn">Get my referral link</button>
       <a class="button ghost small" href="/api/company/export?project=${p.id}&format=journal">Ledger CSV</a></div><p id="refOut" class="small"></p>
-    ${readyLine(p)}${groundingLine(p)}${changesBlock(p)}${agents(p)}${decisions(p)}
+    ${readyLine(p)}${groundingLine(p)}${creditsLine(p)}${changesBlock(p)}${agents(p)}${decisions(p)}
     <details class="small"><summary>A .sol name for this project</summary><label for="snsIn">Name</label><input id="snsIn" maxlength="60" placeholder="myproject.sol">
       <button type="button" class="quiet" id="snsGo">Look it up</button><p id="snsOut" aria-live="polite"></p></details>`;
   wireChanges(p);

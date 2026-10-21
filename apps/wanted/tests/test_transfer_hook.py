@@ -14,7 +14,9 @@ from solders.pubkey import Pubkey
 from solders.system_program import CreateAccountParams, create_account
 from solders.transaction import Transaction
 
-SO = Path(os.environ.get("KNOS_HOOK_SO", r"C:\Users\zulab\knos-v1-private\e2-hook\out\knos_hook.so"))
+# the build deployed on devnet at AFQFtodihz5jAHpVBUk87AkH8FJsQdmHt8Z5NKLWRj1T (cargo build-sbf in programs-hook/knos_hook;
+# 74,664 bytes, the same bytes `solana program dump` returns for that address)
+SO = Path(os.environ.get("KNOS_HOOK_SO") or Path(__file__).resolve().parents[3] / "programs-hook" / "knos_hook" / "deployed" / "knos_hook_devnet.so")
 pytestmark = pytest.mark.skipif(not SO.exists(), reason="the hook program is not built here (cargo build-sbf programs-hook/knos_hook)")
 
 TOKEN22 = Pubkey.from_string("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
@@ -100,3 +102,24 @@ def test_only_the_mint_authority_sets_the_rules(chain):
     again = Instruction(hook, INIT + bytes(stranger.pubkey()), [AccountMeta(validation, False, True), AccountMeta(mint, False, False),
                         AccountMeta(stranger.pubkey(), True, True), AccountMeta(SYSTEM, False, False), AccountMeta(rules, False, True)])
     assert hasattr(send(svm, [again], stranger), "err")
+
+
+def test_a_lock_becomes_project_credits_held_in_the_escrow_through_the_hook(monkeypatch, tmp_path):
+    """knos_wanted.chainx.project_credits on the hook at its devnet address: the credits land in the escrow's account."""
+    from test_chainx import Ledger
+
+    from knos_wanted import chainx, escrow, preorder
+    led, payer, owner = Ledger(), Keypair(), Keypair()
+    led.svm.add_program(Pubkey.from_string(chainx.HOOK), SO.read_bytes())
+    led.svm.airdrop(payer.pubkey(), 10_000_000_000)
+    monkeypatch.setattr(preorder, "relayer", lambda: payer)
+    monkeypatch.setattr(escrow, "_state_dir", lambda: tmp_path)
+    monkeypatch.setattr(escrow, "demo_key", lambda: owner)
+    monkeypatch.setattr(escrow, "explorer", lambda sig: "x")
+    got = chainx.project_credits("prj_" + "a" * 12, "ORDER1", 7, led=led)
+    assert chainx.project_credits("prj_" + "a" * 12, "ORDER1", 7, led=led) == got                 # once per order
+    vault = bytes(led.svm.get_account(Pubkey.from_string(got["escrow_account"])).data)
+    assert vault[32:64] == bytes(owner.pubkey()) and int.from_bytes(vault[64:72], "little") == 7
+    c = chainx.credits_of("prj_" + "a" * 12)
+    assert c["hook"] == chainx.HOOK and c["escrow_owner"] == str(owner.pubkey())
+    assert bytes(led.svm.get_account(Pubkey.from_string(c["rules"])).data)[:33] == b"" + bytes(owner.pubkey())   # version 1 | owner
