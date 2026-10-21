@@ -200,6 +200,12 @@ def handle_post(h, state, path: str) -> bool:
             mime = (h.headers.get("Content-Type") or "").split(";")[0].strip()
             return h._send(200, provenance.c2pa_read(_raw(h), mime)) or True
         b = h._json()
+        if path == "/api/project" and isinstance(b.get("report"), str):
+            # the project's Grounding (Qloo) line reads its report from disk (valley.grounding); a crossing recalled from
+            # memory was kept only in this server's memory, so it is written there now
+            rep = state.report(b["report"])
+            if rep is not None:
+                state.keep_check(rep)
         return h._send(200, _post(path, b, user or {}, h)) or True
     except preorder.Settled as why:
         return h._send(409, {"error": str(why)[:300]}) or True

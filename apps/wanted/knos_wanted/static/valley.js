@@ -84,7 +84,9 @@ function groundingLine(p) {
   if (!g) return "";
   const a = g.audience || {}, who = [a.age && String(a.age).replace(/_/g, " "), a.gender, ...(a.segments || [])].filter(Boolean).join(", ");
   const bits = [who && "who: " + who, (g.launch_cities || []).length && "where: " + g.launch_cities.join(", "), g.price_tier && "price tier: " + g.price_tier,
-    (g.comparables || []).length && "comparables: " + g.comparables.join(", ")].filter(Boolean);
+    (g.comparables || []).length && "comparables: " + g.comparables.join(", "),
+    // what the person asked Qloo (the demand options), apart from what Qloo answered for the product overall
+    Object.keys(g.asked || {}).length && "asked: " + Object.entries(g.asked).map(([k, v]) => `${k.replace(/_/g, " ")} ${Array.isArray(v) ? v.join(", ") : String(v).replace(/_/g, " ")}`).join("; ")].filter(Boolean);
   return bits.length ? `<p class="small" id="grounding"><b>Grounding (Qloo)</b>: ${esc(bits.join(" · "))}</p>` : "";
 }
 // the project's credits (Token-2022 with the knos_hook transfer hook): they move only into this project's escrow

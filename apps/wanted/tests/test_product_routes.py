@@ -99,3 +99,22 @@ def test_every_tool_mcp_lists_is_answered_by_a_handler(app):
     assert ready["result"]["structuredContent"]["ready"] is True
     assert "knos_ready" in agent.mcp(state, {"jsonrpc": "2.0", "id": 100, "method": "tools/call",
                                              "params": {"name": "knos_usage", "arguments": {}}})["result"]["structuredContent"]["calls"]
+
+
+def test_a_project_opened_on_a_recalled_crossing_keeps_its_grounding_line(app, monkeypatch, tmp_path):
+    """A crossing recalled from memory is kept only in the server's memory; opening a project on it writes the report
+    where the project's Grounding (Qloo) line reads it (live: the line was missing on such a project)."""
+    from knos_wanted import escrow
+    base, state = app
+    monkeypatch.setattr(escrow, "_state_dir", lambda: tmp_path)
+    h = "c" * 64
+    state.keep({"hash": h, "idea": "a recovery shoe", "decision": {"verdict": "OPEN", "plan": {"who": {"age": "25_to_29", "gender": "female"},
+                "where": ["Austin"], "tier": "premium", "unit_price": 3}}, "grounding": {"comparables": ["Tracksmith"]}})
+    assert not (tmp_path / "reports" / f"{h}.report").exists()
+    tok = call(base, "/api/auth/guest", {"label": "tester"})[1]["token"]
+    brief = {"milestones": [{"key": "m1", "name": "Sell-through", "target": "200 pairs in 60 days on test_sell_through",
+                             "verifier": {"kind": "machine", "check": "ci / test_sell_through"}, "deadline_days": 14}]}
+    st, p = call(base, "/api/project", {"template": "custom", "title": "Recovery shoe", "brief": brief, "report": h}, tok)
+    assert st == 200, p
+    g = call(base, f"/api/project?id={p['id']}")[1]["grounding"]
+    assert g["launch_cities"] == ["Austin"] and g["comparables"] == ["Tracksmith"] and g["source"] == "Qloo"

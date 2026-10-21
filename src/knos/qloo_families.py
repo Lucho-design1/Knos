@@ -11,11 +11,14 @@ F8 is the rest of the Entity Type Parameter Guide: `qloo` takes any documented p
 """
 from __future__ import annotations
 
+import re
+
 AGES = ("24_and_younger", "25_to_29", "30_to_34", "35_to_44", "45_to_54", "55_and_older")
 KINDS = {"film": "urn:entity:movie", "tv": "urn:entity:tv_show", "book": "urn:entity:book", "person": "urn:entity:person",
          "artist": "urn:entity:artist", "brand": "urn:entity:brand", "podcast": "urn:entity:podcast", "game": "urn:entity:videogame",
          "place": "urn:entity:place", "destination": "urn:entity:destination"}
 WEIGHTS = ("low", "medium", "high", "higher")
+WKT = re.compile(r"^\s*(POINT|POLYGON|MULTIPOLYGON)\s*\(", re.I)
 
 # name: (family, Qloo parameter, kind of value, one line for a person, example)
 #   kinds: str, int, float, ids (comma list), names (comma list, sent as a JSON array), enum:<a|b>, list:<a|b>, bool
@@ -200,4 +203,8 @@ def options(raw: dict | None) -> dict:
     if unknown:
         raise ValueError(f"unknown demand option(s): {', '.join(unknown)} (see knos_wanted.families / docs/qloo)")
     out = {k: coerce(k, v) for k, v in raw.items()}
+    # a WKT area typed where a name goes: Qloo reads filter.location.query as a name ("POINT(...)" found High Point, NC),
+    # so it is sent as filter.location, the parameter Qloo documents for WKT
+    if isinstance(out.get("near"), str) and WKT.match(out["near"]) and not out.get("location"):
+        out["location"] = out.pop("near")
     return {k: v for k, v in out.items() if v is not None}

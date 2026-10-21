@@ -158,3 +158,11 @@ def test_a_wkt_launch_area_is_not_taken_for_a_phone_number():
         privacy.check({"near": "+1 512 555 0199"})
     with pytest.raises(privacy.PersonalData):
         privacy.check({"near": "POINT(1 2) call me on 512 555 0199"})
+
+
+def test_a_wkt_point_typed_as_near_is_sent_as_filter_location():
+    """Qloo reads filter.location.query as a name (live: "POINT(-97.74 30.27)" answered from High Point, NC), so a WKT area in
+    `near` goes to `location` (filter.location), the parameter Qloo documents for WKT; a name stays a name."""
+    from knos import qloo_families as Q
+    assert Q.options({"near": "POINT(-97.74 30.27)", "radius": 500}) == {"location": "POINT(-97.74 30.27)", "radius": 500}
+    assert Q.options({"near": "Austin"}) == {"near": "Austin"}
