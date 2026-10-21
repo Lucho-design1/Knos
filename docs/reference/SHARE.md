@@ -9,7 +9,7 @@ Nothing is posted, sent or stored by the site: each way is a thing the reader do
 | The link | `https://drexthealpha.github.io/Knos/#check=owner/repo/123`. Opening it checks the pull request again, from GitHub as it is then; the address bar holds it as soon as a result is shown. |
 | Copy the result | The verdict, the sentence that claimed the tests pass, the failed checks by class, and the link, as text. |
 | Post on X | Opens X's own compose box ([web intent](https://docs.x.com/x-for-websites/post-button/guides/web-intent)) with those words and the link, within X's 280 characters. The reader posts it, or not. |
-| Download the card | A 1200 x 630 PNG drawn in the browser from web/brand/card.js: the pull request, the verdict, the claim, the counts and "checked by Knos: the neutral meter". |
+| Download the card | A 1200 x 630 PNG drawn in the browser from web/brand/card.js: the pull request, the verdict, the claim, the counts and "checked by Knos". |
 
 **Link previews show the site's card, not the verdict.** X, Slack and other sites draw a preview from a page's
 `og:image` without running its script, and the part after `#` never reaches a server, so every shared link previews as

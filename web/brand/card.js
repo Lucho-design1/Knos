@@ -15,6 +15,6 @@ export const CARD = {
   // the baseline of each row, from the top
   row: { top: 112, verdict: 200, counts: 478, foot: 572 },   // the claim follows the verdict's last line
   mark: 44,                                    // the mark's height at the top left
-  sign: "checked by Knos: the neutral meter",
+  sign: "checked by Knos",
   host: "drexthealpha.github.io/Knos",
 };

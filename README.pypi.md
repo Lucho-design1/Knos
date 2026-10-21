@@ -7,27 +7,33 @@
   </picture>
 </h1>
 
-**The neutral meter for AI agent work: neither side keeps the count.**
+**Knos carries research across the valley of death: each step is paid only on verified proof.**
 
-Pay AI agents only when your checks pass.
+From a paper or idea to a product people want: a demand check on Qloo, a Ready brief, escrow on Solana, paid on proof.
 
-For teams that pay AI coding agents on GitHub: a program holds the pay until your checks pass.
+Ready briefs: 2.08x fewer reasoning tokens, 70% vs 5% passed ([measured](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/idt/summary.json)).
 
-Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check.
+Devnet, test money, no customers yet.
 
-[Check a pull request](https://drexthealpha.github.io/Knos/) · [Check every claim yourself](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/JUDGES.md)
+[Check demand](https://drexthealpha.github.io/Knos/#demand) · [Check every claim yourself](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/JUDGES.md)
 
 ## How it works
 
-![You set the rules first. The money moves only when the work passes them.](https://raw.githubusercontent.com/drexthealpha/Knos/v0.4.0/docs/diagrams/readme-1.svg)
+![No money locks on a vague brief. Each step is paid only when its proof is verified.](https://raw.githubusercontent.com/drexthealpha/Knos/v0.4.0/docs/diagrams/readme-1.svg)
+
+*No money locks on a vague brief. Each step is paid only when its proof is verified.*
+
+1. **Is it wanted?** A [demand check](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/DEMAND_CHECK.md) asks Qloo's taste data who would buy the product, where, and at what price.
+2. **Ready to fund.** No money locks on a vague brief: each milestone needs a number to hit, who checks it, and a deadline ([the IDT benchmark](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/idt/summary.json)).
+3. **Escrow, then proof.** Backers fund one milestone at a time; the money waits in a program on [Solana](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#solana), not with Knos. It is paid only on verified proof: GitHub checks today; lab and referee verdicts with a challenge window. Without proof by the deadline, it goes back. Open [the app](https://knos.onrender.com/) or [get started](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/START.md).
+
+## One use: paying AI agents for verified pull requests
+
+The same escrow pays for code. One comment on a GitHub issue posts the task, your checks and the pay (`/knos fund 20 checks: test`); an [AI agent](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#ai-agent) or a person sends the work as a [pull request](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#pull-request); when the [checks](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#checks-ci) pass and you [merge](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#merge), a program pays the worker.
+
+![You set the rules first. The money moves only when the work passes them.](https://raw.githubusercontent.com/drexthealpha/Knos/v0.4.0/docs/diagrams/readme-2.svg)
 
 *You set the rules first. The money moves only when the work passes them.*
-
-1. One comment on an issue (a task's page on GitHub) posts the task, your checks and the pay: `/knos fund 20 checks: test`.
-2. An [AI agent](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#ai-agent) or a person sends the work as a [pull request](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#pull-request).
-3. When the [checks](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#checks-ci) pass and you [merge](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#merge) the work, a program pays the worker.
-
-**Ready to try it on your own repository?** [Get started in five minutes](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/START.md).
 
 ## Try it in ten seconds
 
@@ -43,7 +49,7 @@ GitHub (where your code lives) [signs](https://github.com/drexthealpha/Knos/blob
 
 A workflow is the script that runs your checks. A commit is one saved version of the code.
 
-![GitHub signs which workflow ran, on which commit. Both sides rebuild the same bill, and a program pays.](https://raw.githubusercontent.com/drexthealpha/Knos/v0.4.0/docs/diagrams/readme-2.svg)
+![GitHub signs which workflow ran, on which commit. Both sides rebuild the same bill, and a program pays.](https://raw.githubusercontent.com/drexthealpha/Knos/v0.4.0/docs/diagrams/readme-3.svg)
 
 *GitHub signs which workflow ran, on which commit. Both sides rebuild the same bill, and a program pays.*
 
@@ -114,7 +120,7 @@ Pull request, devnet, multisig and more, each in one plain line: [docs/WORDS.md]
 
 ### What is Knos?
 
-Knos is the neutral meter for [AI agent](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#ai-agent) work. Neither side keeps the count.
+Knos takes research from a paper to a product people want. It pays each step only on verified proof.
 
 ### How does Knos pay an AI agent?
 
@@ -136,9 +142,9 @@ A program on [Solana](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORD
 
 Not once the checks pass and the work is merged. Before that, the buyer still chooses whether to merge.
 
-### What is a neutral meter?
+### Who keeps the count of accepted work?
 
-A count of work that neither side keeps alone. A program checks GitHub's [signature](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#signed) of which workflow ran, on which commit.
+Neither side alone. A program checks GitHub's [signature](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#signed) of which workflow ran, on which commit.
 
 ### How do I try Knos?
 

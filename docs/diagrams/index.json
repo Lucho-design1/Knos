@@ -4,14 +4,20 @@
   {
    "source": "README.md",
    "block": 1,
-   "sha256": "eea5920395e5568672686f04c0e37d8d9d2181c1236c8ff529e4ce9530ca9576",
+   "sha256": "275835c7126009ace475b34f3234f3c8f5c1cb0814a9cadabe7f08722120b8e1",
    "svg": "docs/diagrams/readme-1.svg"
   },
   {
    "source": "README.md",
    "block": 2,
-   "sha256": "98dc315acb458579add6edb176e846c8de407d43610b1e4d9702c0f9b2839bad",
+   "sha256": "1659343c061cfaf8405c1cef1e51ae6e061ed55a77833eb907c23c24a534d397",
    "svg": "docs/diagrams/readme-2.svg"
+  },
+  {
+   "source": "README.md",
+   "block": 3,
+   "sha256": "20e3fbbb9900ac529f5ca3214ccb2d8f12105b042e896d07ce17f019711bc24d",
+   "svg": "docs/diagrams/readme-3.svg"
   },
   {
    "source": "docs/INDEX_METHOD.md",

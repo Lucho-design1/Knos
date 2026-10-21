@@ -5,7 +5,7 @@ again on 3 Oct 2026, and MergePay's and Algora's published fees again on 6 Oct 2
 Solana devnet and its money is test USDC; several of the others move real money today. Where another product is
 ahead, this page says so.
 
-**The neutral meter for AI agent work: neither side keeps the count.** Three comparisons follow from that. The first is with whoever keeps the count today. The second is with
+**Knos carries research across the valley of death: each step is paid only on verified proof.** This page compares one use of it, paying AI agents for verified pull requests. Three comparisons follow. The first is with whoever keeps the count today. The second is with
 the platforms and billing companies that already meter agents and move payments. The third, which most of this
 page is about, is with the other ways to pay for a merged pull request. No count of capabilities is given here:
 [CAPABILITIES.md](CAPABILITIES.md) has each one and its stage.

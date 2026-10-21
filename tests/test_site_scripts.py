@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTCOME = "Pay AI agents only when your checks pass."
+OUTCOME = "Check an AI agent's pull request before it is paid."
 STEPS = ["one", "two", "three", "four", "five", "six", "seven"]
 
 

@@ -1,6 +1,6 @@
 # Market, money, and what can stop this
 
-**The neutral meter for AI agent work: neither side keeps the count.**
+**Knos carries research across the valley of death: each step is paid only on verified proof.**
 
 Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check ([backtest.json](../backtest.json)).
 Of first agent pull requests that claimed passing tests, 17.8% had a failed check (147 of 826 repositories in the
@@ -85,7 +85,7 @@ in the table above are live on the public devnet program ids since 9 October 202
 | Salesforce, Agentforce | a conversation, or Flex Credits per action | 2 USD per conversation; 500 USD per 100,000 Flex Credits, an action taking 20 | Salesforce | **[vendor page]** [pricing](https://www.salesforce.com/agentforce/pricing/), read 6 Oct 2026 and again 7 Oct 2026 |
 
 In every row the seller keeps the count the buyer is billed on. That is the gap. These five prices show that
-sellers price by outcome. They do not show that any buyer wants a separate neutral meter: nobody has been asked.
+sellers price by outcome. They do not show that any buyer wants a separate count of agent work: nobody has been asked.
 Two people who sell or study these contracts say so:
 
 - "Attribution disputes are where these contracts fall apart. Outcome-based pricing only scales where both parties

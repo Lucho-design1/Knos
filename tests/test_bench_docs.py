@@ -237,17 +237,24 @@ def test_the_one_sentence_leads_the_readme_and_the_site_and_the_readmes_first_sc
     lines = [line for line in first.splitlines() if line.strip()]
     merged = json.loads((ROOT / "docs" / "backtest.json").read_text(encoding="utf-8"))["reviewed"]["overall"]
     number = f"Of {merged['prs']} merged agent pull requests claiming passing tests, {merged['test_or_build_check_failed']['prs']} failed a test, build, lint or type check."
-    # the site's first screen, line for line where they share lines: the one sentence (the one noun leads it), the customer
-    # outcome, who it is for, the one number, one link to the site and one to the page that checks every claim: five
-    # lines, sixty-four words at most
-    outcome = "Pay AI agents only when your checks pass."
-    assert lines[0] == f"**{cc.SENTENCE}**" and cc.SENTENCE.startswith("The neutral meter ") and lines[1] == outcome and lines[3] == number and len(lines) == 5
-    assert lines[2] == "For teams that pay AI coding agents on GitHub: a program holds the pay until your checks pass."
-    assert lines[4] == "[Check a pull request](https://drexthealpha.github.io/Knos/) · [Check every claim yourself](docs/JUDGES.md)"
+    # the story first: the one sentence (the name leads it), the flow, the measured IDT line (docs/idt/summary.json), the
+    # status once, one link to the demand check and one to the page that checks every claim: five lines, sixty-four words
+    # at most. The number of agent pull requests belongs to one use of Knos, below.
+    idt = json.loads((ROOT / "docs" / "idt" / "summary.json").read_text(encoding="utf-8"))
+    measured = (f"Ready briefs: {idt['ratio_vague_to_ready']}x fewer reasoning tokens, {round(100 * idt['ready_pass_rate'])}% vs "
+                f"{round(100 * idt['vague_pass_rate'])}% passed ([measured](docs/idt/summary.json)).")
+    assert lines[0] == f"**{cc.SENTENCE}**" and cc.SENTENCE.startswith("Knos carries research ") and len(lines) == 5
+    assert lines[1] == "From a paper or idea to a product people want: a demand check on Qloo, a Ready brief, escrow on Solana, paid on proof." and lines[2] == measured
+    assert lines[3] == "Devnet, test money, no customers yet."
+    assert lines[4] == "[Check demand](https://drexthealpha.github.io/Knos/#demand) · [Check every claim yourself](docs/JUDGES.md)"
     hero = (ROOT / "web" / "index.html").read_text(encoding="utf-8").split('<div class="hero-words">')[1].split("</form>")[0]
-    # the site's first screen leads with the outcome as its heading, says who it is for, then the one sentence and the number
-    assert f">{outcome}</h1>" in hero and 'id="hero-who"' in hero and f">{cc.SENTENCE}</p>" in hero
-    assert hero.index(outcome) < hero.index('id="hero-who"') < hero.index(cc.SENTENCE) < hero.index('id="hero-fact"')
+    # the check of agent work (one use of Knos) leads with what it does, says it is one use, then Knos in a few words and
+    # the number; the one sentence is folded under "What is here", before what a work order is
+    use, short = "Check an AI agent's pull request before it is paid.", "Research to products people want, paid on proof."
+    assert f">{use}</h1>" in hero and 'id="hero-who"' in hero and f">{short}</p>" in hero
+    assert hero.index(use) < hero.index('id="hero-who"') < hero.index(short) < hero.index('id="hero-fact"')
+    one_use = readme.split("\n## One use: paying AI agents for verified pull requests\n", 1)[1].split("\n## ", 1)[0]
+    assert "`/knos fund " in one_use and "```mermaid" in one_use and number not in first          # the number: below, in "The number"
     # the ONE command is the first line under "Read more", no longer on the first screen
     command = [line for line in readme.split("\n## Read more\n", 1)[1].splitlines() if line.strip()][0]
     assert re.match(r"`[^`]+`: ", command) and "knos shadow" in command and "&&" not in command and readme.count("`uvx knos shadow invoice.csv`") == 1
@@ -259,7 +266,7 @@ def test_the_one_sentence_leads_the_readme_and_the_site_and_the_readmes_first_sc
     parts = dict(zip(*[iter(re.split(r"(?m)^## (.+)$", readme.split("\n---\n", 1)[0])[1:])] * 2))
     assert "17.8%" in parts["The number"] and "](docs/reference/BENCH.md)" in parts["The number"] and "](docs/backtest.json)" in parts["The number"]
     how, fudge, real = "How it works", "Why nobody can fudge the count", "Is it real?"
-    assert "`/knos fund " in parts[how] and "knos meter reconcile" in parts[fudge] and "](https://drexthealpha.github.io/Knos/check/)" in parts["Try it in ten seconds"]
+    assert "](docs/reference/DEMAND_CHECK.md)" in parts[how] and "knos meter reconcile" in parts[fudge] and "](https://drexthealpha.github.io/Knos/check/)" in parts["Try it in ten seconds"]
     assert len([line for line in parts["The number"].splitlines() if line.strip()]) <= 3
     assert list(parts).index(how) == 0 and list(parts).index(fudge) < list(parts).index(real) < list(parts).index("Check every claim yourself") < list(parts).index("The number")
     assert parts[real].split("<!-- bench:today -->")[0].count("](docs/reference/DISCLOSURE.md)") == 1 and "test money only" in parts[real] and "no customers yet" in parts[real]

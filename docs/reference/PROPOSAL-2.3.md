@@ -117,7 +117,7 @@ The payment no longer waits for it.
 
 ### 2. A fee that does not depend on the answer
 
-Today Knos is paid only when the work is paid. So Knos gains when a judge says yes. A neutral meter should gain nothing
+Today Knos is paid only when the work is paid. So Knos gains when a judge says yes. A count both sides rely on should gain nothing
 from either answer. The proposal charges the fee when the order is funded. The rate stays 0.30%, with a floor of 0.05.
 A refund gives back the whole amount, but not the fee. A revert gives back the holdback, but not the fee on it.
 

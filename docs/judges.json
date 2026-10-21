@@ -1,7 +1,7 @@
 {
  "title": "Check every claim yourself (for judges and buyers)",
- "sentence": "The neutral meter for AI agent work: neither side keeps the count.",
- "pitch": "Knos lets buyers and suppliers agree what AI work earned payment, and independently prove that agreement later.",
+ "sentence": "Knos carries research across the valley of death: each step is paid only on verified proof.",
+ "pitch": "Knos lets backers and makers agree what work earned payment, and independently prove that agreement later.",
  "number": "Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check.",
  "claim": "two parties who distrust each other compute the same bill from evidence a third party signed, and the program releases the money on that signature.",
  "why_solana": "Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public.",

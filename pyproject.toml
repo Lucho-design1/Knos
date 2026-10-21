@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "knos"
 version = "0.4.0"
-description = "The neutral meter for AI agent work: neither side keeps the count."
+description = "Knos carries research across the valley of death: each step is paid only on verified proof."
 readme = "README.pypi.md"   # README.md with its links pinned to the tag (scripts/bump_version.py writes it)
 license = { file = "LICENSE" }
 requires-python = ">=3.10"

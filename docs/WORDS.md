@@ -98,7 +98,7 @@ To accept a pull request. Its change joins the main code.
 
 ### Meter
 
-What counts the work both sides agree on. Knos is a neutral meter: neither side keeps the count alone.
+What counts the work both sides agree on. Neither side keeps that count alone.
 
 ### Multisig
 

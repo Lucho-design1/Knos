@@ -148,7 +148,7 @@ Not built yet: a random draw of judges, a stake for each judge, flat pay per jud
 
 ## 6. A fee that ignores the verdict
 
-Today a refunded order gets its fee back. So Knos earns only when the answer is yes. A neutral meter should gain nothing
+Today a refunded order gets its fee back. So Knos earns only when the answer is yes. A count both sides rely on should gain nothing
 from either answer.
 
 The proposal: charge the fee when the order is funded. The rate stays 0.30%, with a floor of 0.05. A refund gives back

@@ -43,7 +43,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 PITCH = ["README.md", "web/index.html"]
-SENTENCE = "The neutral meter for AI agent work: neither side keeps the count."
+SENTENCE = "Knos carries research across the valley of death: each step is paid only on verified proof."
 # what a work order is, in five sentences: on the home page, folded under "What is here"
 LONG = ("A work order is a task, its budget and the terms that decide when it is done. All three are fixed before work "
         "starts. A bounty on an issue is the smallest work order. When the work is merged, GitHub signs which checks ran. "

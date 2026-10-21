@@ -2,7 +2,7 @@
 
 **Close a supplier's invoice with evidence both sides can check.**
 
-The neutral meter for AI agent work: neither side keeps the count.
+Knos carries research across the valley of death: each step is paid only on verified proof.
 
 This is the one thing Knos offers for money today. It is an offer, not a record: **nobody has bought it, nobody has
 been asked, and there is no legal entity to invoice from yet.** Nothing on this page reports demand. The last

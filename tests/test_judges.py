@@ -42,7 +42,7 @@ def test_the_page_is_one_page_thirteen_rows_five_zeros_and_the_file_is_the_page(
     lines = [line for line in page.splitlines() if line.strip()]
     assert lines[0].startswith("<img ") and lines[2].startswith(j.PLAIN) and j.head(page) == lines[1:2] + lines[3:]   # the mark, the summary
     lines = j.head(page)
-    assert lines[1] == "**The neutral meter for AI agent work: neither side keeps the count.**"
+    assert lines[1] == "**Knos carries research across the valley of death: each step is paid only on verified proof.**"
     assert lines[2] == j.PITCH == data["pitch"]                                          # the pitch line is the second line
     assert lines[3] == "Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check."
     assert [r["thing"] for r in data["rows"]] == j.JUDGED and len(data["rows"]) == 13

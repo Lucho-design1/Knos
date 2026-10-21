@@ -1,6 +1,6 @@
 # Why Knos
 
-**The neutral meter for AI agent work: neither side keeps the count.**
+**Knos carries research across the valley of death: each step is paid only on verified proof.**
 
 Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check ([backtest.json](../backtest.json)).
 Of first agent pull requests that claimed passing tests, 17.8% had a failed check. That is 147 of 826 repositories in the Agent PR Index ([BENCH.md](BENCH.md)).

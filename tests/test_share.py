@@ -31,7 +31,7 @@ def test_the_card_is_the_size_of_the_sites_link_preview() -> None:
     page = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
     assert re.search(r"width: 1200,\s*height: 630,", card)
     assert '<meta property="og:image:width" content="1200">' in page and '<meta property="og:image:height" content="630">' in page
-    assert 'sign: "checked by Knos: the neutral meter"' in card
+    assert 'sign: "checked by Knos"' in card
 
 
 def test_a_check_is_shared_by_link_copy_post_card_and_badge() -> None:

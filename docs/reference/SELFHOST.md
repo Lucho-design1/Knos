@@ -1,6 +1,6 @@
 # Customer-hosted: the record API, the relay and the approver in the buyer's own cloud
 
-**The neutral meter for AI agent work: neither side keeps the count.**
+**Knos carries research across the valley of death: each step is paid only on verified proof.**
 
 Knos hosts no server. A buyer that wants one runs it. It is one image, three roles and one config file. This page says
 what the bundle is, how to start it, how people sign in, and what it does not do yet.

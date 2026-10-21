@@ -6,37 +6,47 @@
   </picture>
 </h1>
 
-**The neutral meter for AI agent work: neither side keeps the count.**
+**Knos carries research across the valley of death: each step is paid only on verified proof.**
 
-Pay AI agents only when your checks pass.
+From a paper or idea to a product people want: a demand check on Qloo, a Ready brief, escrow on Solana, paid on proof.
 
-For teams that pay AI coding agents on GitHub: a program holds the pay until your checks pass.
+Ready briefs: 2.08x fewer reasoning tokens, 70% vs 5% passed ([measured](docs/idt/summary.json)).
 
-Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check.
+Devnet, test money, no customers yet.
 
-[Check a pull request](https://drexthealpha.github.io/Knos/) · [Check every claim yourself](docs/JUDGES.md)
+[Check demand](https://drexthealpha.github.io/Knos/#demand) · [Check every claim yourself](docs/JUDGES.md)
 
 ## How it works
 
 ```mermaid
 flowchart TB
-    task["You post a task, your rules for done, and the money"]
-    work["An AI agent or a person does the work"]
-    checks["GitHub runs your checks"]
-    paid["The worker is paid automatically, once you merge the work"]
-    back["Nobody is paid. At the deadline, the money comes back to you"]
-    task --> work --> checks
-    checks -->|pass| paid
-    checks -->|fail| back
+    idea["A paper or an idea"] --> demand["Demand check on Qloo: who wants it, where, at what price"]
+    demand --> ready["A Ready brief: each milestone has a number, who checks it, and a deadline"]
+    ready --> escrow["Backers fund milestones; the money waits in escrow on Solana"]
+    escrow --> proof["The maker posts a result; a check judges it"]
+    proof -->|verified| paid["The maker is paid for that milestone"]
+    proof -->|not verified by the deadline| back["Nobody is paid; the money goes back to the backers"]
+```
+
+*No money locks on a vague brief. Each step is paid only when its proof is verified.*
+
+1. **Is it wanted?** A [demand check](docs/reference/DEMAND_CHECK.md) asks Qloo's taste data who would buy the product, where, and at what price.
+2. **Ready to fund.** No money locks on a vague brief: each milestone needs a number to hit, who checks it, and a deadline ([the IDT benchmark](docs/idt/summary.json)).
+3. **Escrow, then proof.** Backers fund one milestone at a time; the money waits in a program on [Solana](docs/WORDS.md#solana), not with Knos. It is paid only on verified proof: GitHub checks today; lab and referee verdicts with a challenge window. Without proof by the deadline, it goes back. Open [the app](https://knos.onrender.com/) or [get started](docs/START.md).
+
+## One use: paying AI agents for verified pull requests
+
+The same escrow pays for code. One comment on a GitHub issue posts the task, your checks and the pay (`/knos fund 20 checks: test`); an [AI agent](docs/WORDS.md#ai-agent) or a person sends the work as a [pull request](docs/WORDS.md#pull-request); when the [checks](docs/WORDS.md#checks-ci) pass and you [merge](docs/WORDS.md#merge), a program pays the worker.
+
+```mermaid
+flowchart TB
+    task["You post a task, your rules for done, and the money"] --> work["An AI agent or a person does the work"]
+    work --> checks["GitHub runs your checks"]
+    checks -->|pass| paid["The worker is paid automatically, once you merge the work"]
+    checks -->|fail| back["Nobody is paid. At the deadline, the money comes back to you"]
 ```
 
 *You set the rules first. The money moves only when the work passes them.*
-
-1. One comment on an issue (a task's page on GitHub) posts the task, your checks and the pay: `/knos fund 20 checks: test`.
-2. An [AI agent](docs/WORDS.md#ai-agent) or a person sends the work as a [pull request](docs/WORDS.md#pull-request).
-3. When the [checks](docs/WORDS.md#checks-ci) pass and you [merge](docs/WORDS.md#merge) the work, a program pays the worker.
-
-**Ready to try it on your own repository?** [Get started in five minutes](docs/START.md).
 
 ## Try it in ten seconds
 
@@ -54,14 +64,9 @@ A workflow is the script that runs your checks. A commit is one saved version of
 
 ```mermaid
 flowchart TB
-    money["The money waits on Solana, not with Knos"]
-    run["GitHub runs your checks and signs what ran"]
-    copies["You and they each keep a copy"]
-    bill["Both copies give the same bill"]
-    pay["A program checks the signature, then pays"]
-    money --> run
-    run --> copies --> bill
-    run --> pay
+    money["The money waits on Solana, not with Knos"] --> run["GitHub runs your checks and signs what ran"]
+    run --> copies["You and they each keep a copy"] --> bill["Both copies give the same bill"]
+    run --> pay["A program checks the signature, then pays"]
 ```
 
 *GitHub signs which workflow ran, on which commit. Both sides rebuild the same bill, and a program pays.*
@@ -133,7 +138,7 @@ Pull request, devnet, multisig and more, each in one plain line: [docs/WORDS.md]
 
 ### What is Knos?
 
-Knos is the neutral meter for [AI agent](docs/WORDS.md#ai-agent) work. Neither side keeps the count.
+Knos takes research from a paper to a product people want. It pays each step only on verified proof.
 
 ### How does Knos pay an AI agent?
 
@@ -155,9 +160,9 @@ A program on [Solana](docs/WORDS.md#solana) holds it, not Knos. Today one person
 
 Not once the checks pass and the work is merged. Before that, the buyer still chooses whether to merge.
 
-### What is a neutral meter?
+### Who keeps the count of accepted work?
 
-A count of work that neither side keeps alone. A program checks GitHub's [signature](docs/WORDS.md#signed) of which workflow ran, on which commit.
+Neither side alone. A program checks GitHub's [signature](docs/WORDS.md#signed) of which workflow ran, on which commit.
 
 ### How do I try Knos?
 

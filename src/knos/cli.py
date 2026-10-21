@@ -43,8 +43,8 @@ from rich.console import Console
 from . import badge, ghwords, version
 
 _app = typer.Typer(add_completion=False, pretty_exceptions_enable=False, no_args_is_help=True,
-                  help="The neutral meter for AI agent work: neither side keeps the count. "
-                       "Start with `knos check`, `knos init`, `knos claim` or `knos status`.")
+                  help="Knos carries research across the valley of death: each step is paid only on verified proof. "
+                       "Start with `knos demand`, `knos check`, `knos init` or `knos status`.")
 
 for _stream in (sys.stdout, sys.stderr):   # a Windows console's code page cannot encode everything a PR says
     try:

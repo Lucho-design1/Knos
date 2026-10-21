@@ -1,7 +1,7 @@
 {
   "name": "knos",
   "version": "0.4.0",
-  "description": "The neutral meter for AI agent work: neither side keeps the count.",
+  "description": "Knos carries research across the valley of death: each step is paid only on verified proof.",
   "mcpServers": {
     "knos": {
       "command": "uvx",

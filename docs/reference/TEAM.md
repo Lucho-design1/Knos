@@ -1,6 +1,6 @@
 # Who builds Knos, and who it needs
 
-The neutral meter for AI agent work: neither side keeps the count.
+Knos carries research across the valley of death: each step is paid only on verified proof.
 
 Everything below the first section is a plan, and no part of it is a fact.
 

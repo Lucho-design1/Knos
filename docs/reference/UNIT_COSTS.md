@@ -1,6 +1,6 @@
 # Unit costs: what one unit costs Knos to deliver
 
-**The neutral meter for AI agent work: neither side keeps the count.**
+**Knos carries research across the valley of death: each step is paid only on verified proof.**
 
 The price book ([MARKET.md](MARKET.md), section 3) says what a unit is sold for. This page says what one costs to
 deliver, and how much it may cost if the line is to keep a gross margin of 90% or of 95%.

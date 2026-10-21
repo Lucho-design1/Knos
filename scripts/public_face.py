@@ -46,10 +46,12 @@ REPO = "drexthealpha/Knos"
 SITE = "https://drexthealpha.github.io/Knos/"
 SERVER = "io.github.drexthealpha/knos"
 # the repository's topics as GitHub lists them: what Knos is and what it serves (docs/reference/X402.md, server.json)
-TOPICS = ("ai-agents", "coding-agents", "metering", "invoice-reconciliation", "oidc", "github-actions", "solana", "escrow", "mcp",
-          "mcp-server", "x402")
+TOPICS = ("research", "valley-of-death", "demand-validation", "qloo", "escrow", "milestones", "solana", "devnet", "ai-agents",
+          "github-actions", "mcp-server", "x402")
 STALE = ("Bounties that pay", "Paid GitHub bounties", "Hire any AI agent", "shared memory", "local memory", "memory every coding agent",
-         "memory for every coding agent", "memory for coding agents")
+         "memory for every coding agent", "memory for coding agents",
+         # the 0.3-0.4 headline: paying AI agents for checked code is one use of Knos now, never what it is
+         "neutral meter", "neither side keeps the count", "Pay AI agents", "pay AI coding agents", "AI agent work", "pays coding agents")
 
 EXACT, BEGINS, PART = "exactly the sentence", "begins with the sentence", "names no older product"
 JSON_FACES: tuple[tuple[str, str], ...] = (
@@ -119,14 +121,14 @@ def sentence(root: Path = ROOT) -> str:
     return got.strip()
 
 
-# The line under the sentence on the site's first screen and the README's (tests/test_bench_docs.py): what a person
-# searching reads first, so it is the title (60 characters at most: tests/test_seo.py).
-OUTCOME = "Pay AI agents only when your checks pass."
+# The sentence in a few words: what a person searching reads first, so it is the title (60 characters at most:
+# tests/test_seo.py).
+OUTCOME = "Research to products people want, paid on proof."
 
 
 def title(said: str) -> str:
-    """The site's title: the name, then the line under the sentence on the first screen (tests/web/site.mjs holds the
-    page to the same words). The descriptions begin with the sentence `said` itself."""
+    """The site's title: the name, then the sentence in a few words (tests/web/site.mjs holds the page to the same
+    words). The descriptions begin with the sentence `said` itself."""
     return "Knos. " + OUTCOME
 
 

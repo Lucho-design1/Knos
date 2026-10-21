@@ -135,7 +135,7 @@ for (const [w, h] of [[375, 812], [390, 844], [320, 640], [1280, 800]]) {
   ok("verify: How we verify is its own page, in plain lines of twelve words at most", v.shown && !v.home && v.h1 === "How we verify" && v.items.length >= 5 && v.long.length === 0, v);
   await page.goto(`${base}#check`, { waitUntil: "load" });
   await page.waitForTimeout(500);
-  ok("#check: the check of agent work keeps its first screen", await page.isVisible("#front-door") && !(await page.isVisible("#view-home")) && (await page.textContent("h1")).trim() === "Pay AI agents only when your checks pass.");
+  ok("#check: the check of agent work keeps its first screen", await page.isVisible("#front-door") && !(await page.isVisible("#view-home")) && (await page.textContent("h1")).trim() === "Check an AI agent's pull request before it is paid.");
   await ctx.close();
 }
 

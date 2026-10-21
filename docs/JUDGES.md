@@ -2,11 +2,11 @@
 
 # Check every claim yourself (for judges and buyers)
 
-**In plain words.** A buyer pays only for work that passes the buyer's tests. It runs on [test money](WORDS.md#test-usdc), and no customer has paid yet. Three links show it working.
+**In plain words.** Backers pay for passing work. Devnet, [test money](WORDS.md#test-usdc), no customers yet. Links show it.
 
-**The neutral meter for AI agent work: neither side keeps the count.**
+**Knos carries research across the valley of death: each step is paid only on verified proof.**
 
-Knos lets buyers and suppliers agree what AI work earned payment, and independently prove that agreement later.
+Knos lets backers and makers agree what work earned payment, and independently prove that agreement later.
 
 Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check.
 

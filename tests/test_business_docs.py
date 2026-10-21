@@ -14,7 +14,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
-ONE = "The neutral meter for AI agent work: neither side keeps the count."
+ONE = "Knos carries research across the valley of death: each step is paid only on verified proof."
 NUMBER = "Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check"
 SECOND = "Of first agent pull requests that claimed passing tests, 17.8% had a failed check"
 OLD = "the neutral count and settlement for software work priced per outcome"
@@ -408,7 +408,7 @@ def test_market_shows_where_the_count_applies_next_and_the_competitors_reread_to
     assert [r.split(" | ")[0].strip("| ") for r in rows] == ["Software delivery", "Customer operations", "Data operations", "Back-office processing",
                                                              "Agent services bought by other agents"]
     assert table.count("(OUTCOMES.md)") >= 3 and (ROOT / "docs" / "reference" / "OUTCOMES.md").is_file() and (ROOT / "examples" / "agent_pays_agent").is_dir()
-    assert "They do not show that any buyer wants a separate neutral meter" in market
+    assert "They do not show that any buyer wants a separate count of agent work" in market
     for link in ("https://www.intercom.com/pricing", "https://www.zendesk.com/pricing/", "https://www.salesforce.com/agentforce/pricing/",
                  "https://sourcegraph.com/changelog/agentic-batch-changes-ga", "https://aws.amazon.com/bedrock/agentcore/pricing/",
                  "https://stripe.com/billing/pricing", "https://mergepay.fun"):

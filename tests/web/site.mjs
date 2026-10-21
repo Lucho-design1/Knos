@@ -380,12 +380,12 @@ await reset();
   served.front = stamp(COMMIT);                  // so the Protect view hands out its links whatever commit the examples name
   const page = await plain.newPage();
   await visit(page);
-  const SHORT = "Pay AI agents only when your checks pass.";
+  const SHORT = "Check an AI agent's pull request before it is paid.";
   const LEAD = "A work order is a task, its budget and the terms that decide when it is done. All three are fixed before work starts. A bounty on an issue is the smallest work order. When the work is merged, GitHub signs which checks ran. A Solana program checks that signature before it pays. No person holds the money in between.";
   check("front door renders: the outcome, then what a work order is", (await text(page, "h1")) === SHORT && (await text(page, "#view-check .lede")) === LEAD);
   // the title is the line under the sentence, for a person searching (scripts/public_face.py `title`); every description begins with the sentence
-  const TITLE = "Knos. Pay AI agents only when your checks pass.";
-  const ONE = "The neutral meter for AI agent work: neither side keeps the count.";        // the sentence: every description begins with it
+  const TITLE = "Knos. Research to products people want, paid on proof.";
+  const ONE = "Knos carries research across the valley of death: each step is paid only on verified proof.";        // the sentence: every description begins with it
   const begins = async (sel) => ((await page.getAttribute(sel, "content")) || "").startsWith(ONE + " ");
   check("  the title and the card of a shared link say the line under the sentence, every description begins with the sentence, and nothing else describes the product", (await page.title()) === TITLE
     && (await page.getAttribute('meta[property="og:title"]', "content")) === TITLE && (await page.getAttribute('meta[name="twitter:title"]', "content")) === TITLE

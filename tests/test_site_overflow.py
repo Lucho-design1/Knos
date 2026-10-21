@@ -21,12 +21,13 @@ ROOT = Path(__file__).resolve().parents[1]
 BROWSERS = "/opt/pw-browsers"          # where this project's machines keep Chromium; anywhere else playwright's default holds
 
 
-ONE = "The neutral meter for AI agent work: neither side keeps the count."
+ONE = "Knos carries research across the valley of death: each step is paid only on verified proof."
 WORD = re.compile(r"[A-Za-z0-9][\w'’%.,/-]*")
 
 
-OUTCOME = "Pay AI agents only when your checks pass."       # the customer outcome: the h1
-WHO = "For teams and maintainers who pay AI agents or contributors for code."   # who it is for, under the h1
+OUTCOME = "Check an AI agent's pull request before it is paid."       # the check of agent work, one use of Knos: the h1
+WHO = "One use of Knos: pay for code only when its checks pass."   # who it is for, under the h1
+SHORT = "Research to products people want, paid on proof."      # Knos in a few words, under it (the one sentence is folded under "What is here")
 
 
 def _words(html: str) -> list[str]:
@@ -90,8 +91,8 @@ def test_the_first_screen_says_forty_words_at_most() -> None:
     # the 56 words are counted as tests/web/front_door.mjs counts them in a browser: prose (headings, sentences, links),
     # the bar with them. A control (a button) and a figure (.k-num) are the thing itself, not a statement about it. Since
     # the outcome is the h1, and who it is for and the sentence stand under it, inside the same 56.
-    assert f'<p class="hero-who" id="hero-who">{WHO}</p>' in hero and f'<p class="hero-outcome" id="hero-outcome">{ONE}</p>' in hero
-    assert hero.index(f">{OUTCOME}</h1>") < hero.index(WHO) < hero.index(f">{ONE}</p>") < hero.index('id="hero-fact"')
+    assert f'<p class="hero-who" id="hero-who">{WHO}</p>' in hero and f'<p class="hero-outcome" id="hero-outcome">{SHORT}</p>' in hero
+    assert hero.index(f">{OUTCOME}</h1>") < hero.index(WHO) < hero.index(f">{SHORT}</p>") < hero.index('id="hero-fact"')
 
     def prose(html: str) -> list[str]:
         html = re.sub(r"<button\b[^>]*>.*?</button>", " ", html, flags=re.S)

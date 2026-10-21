@@ -1,4 +1,4 @@
-"""knos - The neutral meter for AI agent work: neither side keeps the count."""
+"""knos - Knos carries research across the valley of death: each step is paid only on verified proof."""
 
 
 def version() -> str:

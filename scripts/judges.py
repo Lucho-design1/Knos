@@ -44,7 +44,7 @@ CRITERIA = ["How well it works", "Potential impact", "Novelty", "User experience
 FACTORS = ["Founder and market fit", "Insight", "Product and execution", "Potential market size", "Founder communication",
            "Viability", "Traction"]
 JUDGED = CRITERIA + FACTORS
-PITCH = ("Knos lets buyers and suppliers agree what AI work earned payment, and independently prove that agreement "
+PITCH = ("Knos lets backers and makers agree what work earned payment, and independently prove that agreement "
          "later.")
 DAYS = "Days to approve: from the day a buyer gets a supplier's invoice to the day someone allowed to approve it does."
 WHY_SOLANA = ("Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every "

@@ -46,7 +46,7 @@ import capabilities as cap  # noqa: E402
 import provenance as prov  # noqa: E402
 
 DOC = "docs/reference/MANIFEST.md"
-SENTENCE = "The neutral meter for AI agent work: neither side keeps the count."
+SENTENCE = "Knos carries research across the valley of death: each step is paid only on verified proof."
 REPO = "https://github.com/drexthealpha/Knos"
 LIMITS = "## Outstanding limits"
 TX = "https://explorer.solana.com/tx/{}?cluster=devnet"

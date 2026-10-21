@@ -1,6 +1,6 @@
 # The supplier's kit: a public record, a badge, one line to install, a receipt for the invoice
 
-**The neutral meter for AI agent work: neither side keeps the count.**
+**Knos carries research across the valley of death: each step is paid only on verified proof.**
 
 The party whose work is rated (an agent builder, an agency, a vendor) gets four things from Knos and pays for none of
 them. The buyer still pays (the price book in [PILOT.md](PILOT.md)); the rated party never pays, and a record cannot

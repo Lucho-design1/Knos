@@ -249,7 +249,7 @@ def test_the_sdk_readme_and_registry_descriptions_are_held_to_the_price_book_too
                                                        "This release (0.3.20) adds a reader.\n", encoding="utf-8")
     (root / "sdk" / "settle" / "package.json").write_text('{\n  "name": "knos-settle",\n  "description": "A client. Meter: 100,000 evaluations '
                                                           'a month free, then 0.05 USD."\n}\n', encoding="utf-8")
-    (root / "server.json").write_text('{"description": "The neutral meter. Record: 0.10 USD a lookup."}', encoding="utf-8")
+    (root / "server.json").write_text('{"description": "Knos carries research. Record: 0.10 USD a lookup."}', encoding="utf-8")
     found = _found(root)
     assert found == [("price", "sdk/settle/README.md", 3), ("release", "sdk/settle/README.md", 5), ("price", "sdk/settle/package.json", 3)]
 

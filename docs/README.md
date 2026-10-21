@@ -4,7 +4,7 @@
 
 **In plain words.** These eight pages tell you what Knos is and how to use it. Start with [the story](STORY.md), or [try it](START.md) in five minutes. When a word is new to you, look it up in [the word list](WORDS.md).
 
-**The neutral meter for AI agent work: neither side keeps the count.**
+**Knos carries research across the valley of death: each step is paid only on verified proof.**
 
 ```mermaid
 flowchart TB

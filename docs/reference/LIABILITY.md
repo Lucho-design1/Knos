@@ -1,6 +1,6 @@
 # When the count is wrong
 
-The neutral meter can be wrong. This page lists the ways, and for each one who notices, what evidence exists, what
+Knos's count of accepted work can be wrong. This page lists the ways, and for each one who notices, what evidence exists, what
 the software does about it, and what it does not do.
 
 **Read this first.** This page describes mechanisms. It is not a contract and it is not legal advice. Today there is:
