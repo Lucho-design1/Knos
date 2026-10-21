@@ -42,6 +42,8 @@ ROUTES = [
      {"project": "string", "brief": "object", "why": "string"}),
     ("POST", "/api/project/change/decide", True, "The maker accepts or rejects a change request", {"project": "string", "change": "string", "accept": "boolean"}),
     ("POST", "/api/project/cancel", True, "The buyer cancels: the maker keeps the kill fee agreed before lock", {"project": "string"}),
+    ("POST", "/api/project/archive", False, "Take a project off the public list (still readable by id): its buyer, signed in, or the operator's X-Knos-Admin key",
+     {"project": "string", "why": "string"}),
     ("POST", "/api/project/dispute", True, "Dispute a referee verdict inside its challenge window, with evidence",
      {"project": "string", "milestone": "string", "attempt": "string", "url": "string"}),
     ("GET", "/api/project", False, "One project with its milestones, orders, attempts and routing", {"id": "string"}),
@@ -177,6 +179,13 @@ LIVE_PATHS = ("/api/presence", "/api/draft", "/api/draft/get")
 SIGNED = {r[1] for r in ROUTES if r[0] == "POST" and r[2]}
 
 
+def _admin(given) -> bool:
+    """The operator's key (KNOS_ADMIN_KEY, a Render secret), compared in constant time; no key set means no admin."""
+    import hmac
+    want = os.environ.get("KNOS_ADMIN_KEY") or ""
+    return len(want) >= 32 and isinstance(given, str) and hmac.compare_digest(given.encode(), want.encode())
+
+
 def handle_post(h, state, path: str) -> bool:
     if path not in POSTS:
         return False
@@ -200,6 +209,11 @@ def handle_post(h, state, path: str) -> bool:
             mime = (h.headers.get("Content-Type") or "").split(";")[0].strip()
             return h._send(200, provenance.c2pa_read(_raw(h), mime)) or True
         b = h._json()
+        if path == "/api/project/archive":
+            admin = _admin(h.headers.get("X-Knos-Admin"))
+            if not admin and not user:
+                return h._send(401, {"error": "sign in as the project's buyer, or send the operator's X-Knos-Admin key"}) or True
+            return h._send(200, valley.unlist(str(b.get("project", "")), user, admin, str(b.get("why") or ""))) or True
         if path == "/api/project" and isinstance(b.get("report"), str):
             # the project's Grounding (Qloo) line reads its report from disk (valley.grounding); a crossing recalled from
             # memory was kept only in this server's memory, so it is written there now

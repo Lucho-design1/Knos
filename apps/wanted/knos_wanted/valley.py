@@ -526,7 +526,24 @@ def public_project(p: dict) -> dict:
 
 
 def projects(n: int = 50) -> list[dict]:
-    return [public_project(p) for p in _all("projects")[:n]]
+    """The public list: every project not archived, newest first. An archived one stays readable by its id."""
+    return [public_project(p) for p in _all("projects") if not p.get("unlisted")][:n]
+
+
+def unlist(pid: str, user: dict | None = None, admin: bool = False, why: str = "") -> dict:
+    """POST /api/project/archive: take a project off the public list (it stays readable by id). Its buyer archives their own; the operator's admin
+    key (KNOS_ADMIN_KEY on the server, never shown) archives any, e.g. a test project left by a proof run. Money is
+    untouched: a project with locked funding is refused, cancel it first."""
+    with _lock:
+        p = project(pid)
+        if not admin and p.get("owner") != _user_key(user or {}):
+            raise Refused("only the project's buyer (or the operator) archives it")
+        if any(o and o.get("status") == "locked" for m in p["milestones"] for o in (_safe_order(x) for x in m["fundings"])):
+            raise Refused("money is locked on this project: cancel it first, then archive it")
+        if not p.get("unlisted"):      # apart from `archived` (a closed project's Sibyl record), which stays listed
+            p["unlisted"] = {"at": _now(), "by": "operator" if admin else "buyer", "why": str(why or "")[:200]}
+            _save("projects", pid, p)
+    return {"project": pid, "archived": p["unlisted"], "listed": False, "readable_at": f"/api/project?id={pid}"}
 
 
 # ---- routing to existing capacity (B2) -------------------------------------------------------------------------------

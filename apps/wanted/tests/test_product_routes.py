@@ -118,3 +118,36 @@ def test_a_project_opened_on_a_recalled_crossing_keeps_its_grounding_line(app, m
     assert st == 200, p
     g = call(base, f"/api/project?id={p['id']}")[1]["grounding"]
     assert g["launch_cities"] == ["Austin"] and g["comparables"] == ["Tracksmith"] and g["source"] == "Qloo"
+
+
+def test_a_project_is_archived_by_its_buyer_or_the_operator_and_stays_readable(app, monkeypatch, tmp_path):
+    """Archived: off the public list (GET /api/projects, knos_projects), still at /api/project?id=. Only its buyer or the
+    operator's key (KNOS_ADMIN_KEY) may; a wrong key, another account or no session is refused."""
+    from knos_wanted import escrow
+    base, _ = app
+    monkeypatch.setattr(escrow, "_state_dir", lambda: tmp_path)
+    key = "k" * 40
+    monkeypatch.setenv("KNOS_ADMIN_KEY", key)
+    tok = call(base, "/api/auth/guest", {"label": "buyer"})[1]["token"]
+    other = call(base, "/api/auth/guest", {"label": "someone else"})[1]["token"]
+    pa = call(base, "/api/project", {"template": "internal_tool", "title": "Mine"}, tok)[1]["id"]
+    pb = call(base, "/api/project", {"template": "internal_tool", "title": "Left by a test"}, tok)[1]["id"]
+    listed = lambda: [p["id"] for p in call(base, "/api/projects")[1]["projects"]]  # noqa: E731
+    assert {pa, pb} <= set(listed())
+    assert call(base, "/api/project/archive", {"project": pa})[0] == 401                          # no session, no key
+    assert call(base, "/api/project/archive", {"project": pa}, other)[0] == 400                   # not the buyer
+    st, got = call(base, "/api/project/archive", {"project": pa}, tok)
+    assert st == 200 and got["archived"]["by"] == "buyer" and pa not in listed()
+
+    def post(body, header):
+        req = urllib.request.Request(base + "/api/project/archive", data=json.dumps(body).encode(),
+                                     headers={"Content-Type": "application/json", "X-Knos-Admin": header})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read() or b"{}")
+    assert post({"project": pb}, "wrong" * 8)[0] == 401
+    st, got = post({"project": pb, "why": "proof run"}, key)
+    assert st == 200 and got["archived"]["by"] == "operator" and pb not in listed()
+    assert call(base, f"/api/project?id={pb}")[1]["unlisted"]["why"] == "proof run"             # still readable by id
