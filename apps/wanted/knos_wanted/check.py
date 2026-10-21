@@ -189,22 +189,38 @@ class _Run:
         self.c = client
         self.calls: list[dict] = []
         self.on_call = on_call or (lambda c: None)       # the agent streams each call to the page as it happens
+        self._inflight: dict = {}                          # prefetched questions still being answered: key -> Future
 
     def prefetch(self, calls: list[tuple[str, dict]]) -> None:
         """Ask independent questions at once (R21): the answers land in the client's cache, so the calls that follow,
         made in order and numbered as always, are answered from it. A failure here is only a cache miss later."""
         from concurrent.futures import ThreadPoolExecutor
 
-        def one(c):
+        def one(path, p):
             try:
-                self.c.get(c[0], self.guide(c[1])[0] if c[0] == "/v2/insights" else c[1])
+                self.c.get(path, p)
             except Exception:  # noqa: BLE001 - asked again, in order, by get()
                 pass
-        with ThreadPoolExecutor(max_workers=7) as ex:
-            list(ex.map(one, calls))
+        ex = ThreadPoolExecutor(max_workers=len(calls) or 1)
+        for path, params in calls:                         # sent at once; get() waits for its own, never asks twice
+            p = self.guide(params)[0] if path == "/v2/insights" else params
+            self._inflight[_key(path, p)] = ex.submit(one, path, p)
+        ex.shutdown(wait=False)
 
-    def get(self, path: str, params: dict, what: str, broaden: bool = True) -> tuple[dict | None, int | None]:
+    def get(self, path: str, params: dict, what: str, broaden: bool = True, wait_s: float | None = None) -> tuple[dict | None, int | None]:
+        """One numbered call. A prefetched question is waited for (up to `wait_s` seconds when given: a call that decides
+        nothing need not hold up the verdict), then read from the cache."""
         params, dropped = self.guide(params) if path == "/v2/insights" else (params, [])
+        fut = self._inflight.pop(_key(path, params), None)
+        if fut is not None:
+            try:
+                fut.result(timeout=wait_s)
+            except Exception:  # noqa: BLE001 - concurrent.futures.TimeoutError: not answered within wait_s
+                if wait_s is not None and not fut.done():
+                    self.calls.append({"n": len(self.calls) + 1, "call": f"GET {path}", "what": what, "params": params,
+                                       "error": f"Qloo had not answered within {wait_s:g} s; left out of this report (it decides nothing)"})
+                    self.on_call(self.calls[-1])
+                    return None, None
         if dropped:
             what += f" (not sent: {', '.join(dropped)}, which Qloo ignores for {params.get('filter.type')})"
         tries = [params]
@@ -392,6 +408,13 @@ def _informative(rows: list[dict]) -> list[dict]:
     return [a for a in rows if isinstance(a.get("affinity"), (int, float)) and a["affinity"] > RULES["informative_affinity"]]
 
 
+MAP_WAIT_S = 2.0          # how long the verdict waits, at the end, for Qloo's heatmap (the slowest answer; it decides nothing)
+
+
+def _key(path: str, params: dict) -> str:
+    return path + "?" + json.dumps(params, sort_keys=True, default=str)
+
+
 def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: dt.date, exclude: set[str]) -> dict:
     ev: dict = {"product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
                 "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
@@ -479,10 +502,6 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         area = ", ".join(str(x) for x in (geo.get("name"), geo.get("admin2_region") or geo.get("admin1_region")) if x)
         ev["places"].append({"name": r.get("name"), "area": area or str(p.get("address") or "")[:80], "price_level": p.get("price_level"),
                              "affinity": (r.get("query") or {}).get("affinity"), "src": s6})
-    body, s7 = run.get("/v2/insights", q7, f"where: map points in {loc}")
-    for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:5]:
-        lc, hq = h.get("location") or {}, h.get("query") or {}
-        ev["where"].append({"lat": lc.get("latitude"), "lon": lc.get("longitude"), "affinity": hq.get("affinity"), "src": s7})
     ev["place"] = loc
     body, s11 = run.get("/v2/insights", q11, "taste persona: this taste's tags, one or two per family (diversify.by=subtype)")
     tail = kind.split(":")[-1]
@@ -517,6 +536,12 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     ev["trend"] = _trend(run, lead, today)
     if lead:
         ev["versus"] = _versus(run, near, lead, signal, ev["audiences"])
+    # the map points decide nothing (check.decide reads no `where`) and Qloo's heatmap is its slowest answer: read last,
+    # so its wait overlaps everything above (it was asked at the start, with the other independent questions)
+    body, s7 = run.get("/v2/insights", q7, f"where: map points in {loc}", wait_s=MAP_WAIT_S)
+    for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:5]:
+        lc, hq = h.get("location") or {}, h.get("query") or {}
+        ev["where"].append({"lat": lc.get("latitude"), "lon": lc.get("longitude"), "affinity": hq.get("affinity"), "src": s7})
     return ev
 
 

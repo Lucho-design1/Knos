@@ -87,3 +87,27 @@ def test_the_safe_use_page_maps_every_rule_of_the_kit():
     defined = {m for f in here.glob("test_*.py") for m in re.findall(r"(?m)^def (test_[a-z_]+)", f.read_text(encoding="utf-8"))}
     files = {f.stem for f in here.glob("test_*.py")}
     assert tests - {"test_provenance_ui"} <= defined | files, tests - defined - files      # each named test exists
+
+
+def test_a_slow_heatmap_does_not_hold_up_the_verdict(tmp_path):
+    """M7: a prefetched question that decides nothing is waited for only `wait_s`; then the report says it is left out,
+    and a question that answers in time is read from the cache, not asked twice."""
+    import io
+    import time as _t
+
+    class Slow(Opener):
+        def __call__(self, req, timeout=None):
+            self.n += 1
+            if "urn%3Aheatmap" in req.full_url:
+                _t.sleep(2.0)
+            return io.BytesIO(json.dumps({"results": {"heatmap": [], "entities": []}}).encode())
+    op = Slow()
+    run = check._Run(client(tmp_path, op))
+    heat = {"filter.type": "urn:heatmap", "filter.location.query": "Austin", "take": 5, "output.heatmap.boundary": "city"}
+    quick = {"filter.type": "urn:demographics", "signal.interests.entities": "E1"}
+    run.prefetch([("/v2/insights", heat), ("/v2/insights", quick)])
+    t0 = _t.time()
+    run.get("/v2/insights", quick, "who")
+    body, n = run.get("/v2/insights", heat, "where: map points", wait_s=0.2)
+    assert _t.time() - t0 < 1.5 and body is None and n is None and "had not answered" in run.calls[-1]["error"]
+    assert op.n == 2                                                                       # each question asked once
