@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knos. Cross your research into a product</title>
+<meta name="description" content="Bring a paper or an idea: Knos checks the demand on Qloo, writes a Ready brief, and opens pre-orders paid only on verified proof. Devnet, test money, no customers yet.">
+<meta property="og:title" content="Knos. Cross your research into a product">
+<meta property="og:description" content="Bring a paper or an idea: a demand check on Qloo, a Ready brief, pre-orders paid only on verified proof.">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top"><div class="wrap"><div class="bar">
+  <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>Knos</a>
+  <a href="/" class="small">← app</a>
+</div></div></header>
+<main class="wrap">
+  <h1>Cross your research into a product</h1>
+  <p>Bring a paper or an idea. Knos asks Qloo who wants it, where and at what price, then opens pre-orders paid only on proof.</p>
+  <p class="small">Devnet, test money, no customers yet. No sign-up to check demand.</p>
+  <p><a class="button" href="/#research">Check my idea</a></p>
+  <div class="card" id="counter" aria-live="polite">
+    <h2>People outside Knos so far</h2>
+    <p><b id="n-cross">…</b> crossings started · <b id="n-commit">…</b> pre-order commitments locked</p>
+    <p class="small muted" id="n-since"></p>
+    <details class="small"><summary>What is counted</summary><p id="n-rule"></p>
+      <p>Every row is listed at <a href="/api/outside/rows">/api/outside/rows</a>; the numbers are their sum.</p></details>
+  </div>
+  <div class="card">
+    <h2>Share it</h2>
+    <p class="small">Know someone with research waiting for a market?</p>
+    <p><button type="button" id="share">Share this page</button> <span id="shared" class="small muted" aria-live="polite"></span></p>
+    <p class="small mono" id="link"></p>
+  </div>
+  <p class="small"><a href="/with-without">With and without Qloo</a> · <a href="/qloo-safe-use">How Knos uses Qloo safely</a> ·
+    <a href="https://github.com/drexthealpha/Knos" rel="noopener">Source</a></p>
+</main>
+<script>
+const link = location.origin + "/invite";
+document.getElementById("link").textContent = link;
+document.getElementById("share").onclick = async () => {
+  const said = document.getElementById("shared");
+  try {
+    if (navigator.share) { await navigator.share({ title: "Knos", text: "Cross your research into a product, paid only on proof.", url: link }); said.textContent = "Shared."; }
+    else { await navigator.clipboard.writeText(link); said.textContent = "Link copied."; }
+  } catch (e) { said.textContent = "Copy the link below."; }
+};
+fetch("/api/outside").then((r) => r.json()).then((t) => {
+  document.getElementById("n-cross").textContent = t.crossings;
+  document.getElementById("n-commit").textContent = t.commitments;
+  document.getElementById("n-since").textContent = t.since ? "Since " + t.since.slice(0, 10) + "." : "None yet: the first one could be yours.";
+  document.getElementById("n-rule").textContent = t.rule;
+}).catch(() => { document.getElementById("n-since").textContent = "The counter did not answer."; });
+</script>
+</body>
+</html>

@@ -766,6 +766,8 @@ def confirm(order: str, signature: str | None = None, led=None) -> dict:
         if signature and re.fullmatch(r"[1-9A-HJ-NP-Za-km-z]{64,90}", signature):
             o["signatures"]["lock"] = signature
         _save("orders", order, o)
+        from . import outside
+        outside.note("commitment", order, "milestone funding")
         with _lock:
             p = project(o["project"])
             m = _milestone(p, o["milestone"])
@@ -1371,6 +1373,8 @@ def amc_confirm(aid: str, signature: str | None = None, led=None) -> dict:
         a["status"] = "approved"
         if signature and re.fullmatch(r"[1-9A-HJ-NP-Za-km-z]{64,90}", signature):
             a["signatures"]["approve"] = signature
+        from . import outside
+        outside.note("commitment", str(a.get("token") or a.get("id") or ""), "advance market commitment")
         _save("amc", aid, a)
         _journal("funding", {"project": a["project"], "milestone": a["milestone"], "amc": aid, "kind": "amc", "amount_units": a["units"],
                              "signature": a["signatures"].get("approve")})

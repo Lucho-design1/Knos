@@ -111,6 +111,12 @@ def relayer():
     return _kp(v) if v else escrow.demo_key()
 
 
+def _counted(rec: dict) -> None:
+    if rec.get("status") == "locked":
+        from . import outside
+        outside.note("commitment", rec.get("order") or "", rec.get("via_kind") or "preorder")
+
+
 def _dir() -> Path:
     d = escrow._state_dir() / "commitments"
     d.mkdir(parents=True, exist_ok=True)
@@ -122,6 +128,7 @@ def _save(rec: dict) -> None:
     tmp = f.with_suffix(".tmp")
     tmp.write_text(json.dumps(rec, indent=1), encoding="utf-8")
     os.replace(tmp, f)
+    _counted(rec)                          # a locked commitment, once, on the outside counter (knos_wanted.outside)
 
 
 def load(order: str) -> dict:

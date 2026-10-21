@@ -53,15 +53,16 @@ def summary(rep: dict) -> dict:
 def main(publish: bool) -> int:
     rows = []
     for field, idea in IDEAS:
-        s1, with_ = post("/api/check", {"idea": idea})
-        s2, without = post("/api/check", {"idea": idea, "without_qloo": True})
+        op = {"X-Knos-Admin": os.environ.get("KNOS_ADMIN_KEY", "")}       # the operator's run: past the per-address limits
+        s1, with_ = post("/api/check", {"idea": idea}, op)
+        s2, without = post("/api/check", {"idea": idea, "without_qloo": True}, op)
         if s1 != 200 or s2 != 200:
             print(f"FAIL {field}: {idea}: HTTP {s1}/{s2} {with_.get('error') or without.get('error')}")
             return 1
         a, b = summary(with_), summary(without)
         changed = [k for k in ("verdict", "audience", "cities", "tier") if a[k] != b[k]]
         for h in (a["hash"], b["hash"]):
-            post("/api/trace/keep", {"hash": h})
+            post("/api/trace/keep", {"hash": h}, op)
         rows.append({"field": field, "idea": idea, "with": a, "without": b, "changed": changed})
         print(f"{'changed' if changed else 'same   '} {field:9} {idea[:46]:46} with: {a['verdict']}, {a['audience'] or '-'}, "
               f"{'/'.join(a['cities']) or '-'}, {a['tier'] or '-'} | unset: {b['verdict']} | {','.join(changed) or '-'}", flush=True)

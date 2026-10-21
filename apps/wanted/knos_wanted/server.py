@@ -31,6 +31,7 @@ from pathlib import Path
 import urllib.parse
 from urllib.parse import parse_qs, urlparse
 
+from . import outside
 from . import agent, auth, blink, buyer, catalog, check, company, demand, escrow, front, planner, preorder, privacy, product_routes, referee, research, tasks, valley, wallets, x402
 from .qloo_mcp import AGGREGATE, Qloo, QlooUnavailable
 from .qloo_rest import Client
@@ -62,7 +63,7 @@ LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish"
 GLOBAL_DEMO = (60, 3600)
 FRONT_ORIGINS = ("https://drexthealpha.github.io",)               # the front door, allowed to read the demand check
 DEMAND_CORS = ("/api/check", "/api/demand/fields")                                           # demo pre-orders, all clients
-ROUTES = {"/api/trace/keep": "check", "/api/qloo-diff": "check", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
+ROUTES = {"/api/trace/keep": "product", "/api/qloo-diff": "product", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
           "/api/check": "check", "/api/research": "check", "/api/cross": "check", "/api/factor": "lock",
@@ -79,6 +80,8 @@ SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/
 PAGES = {"/trace": "trace.html", "/trace.html": "trace.html", "/with-without": "with_without.html", "/with-without.html": "with_without.html",
          "/qloo-safe-use": "qloo_safe_use.html", "/qloo-safe-use.html": "qloo_safe_use.html", "/invite": "invite.html", "/invite.html": "invite.html"}
 GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/trace": "A demand report's Qloo calls, redacted: endpoint, params, ids, excerpt, limit",
+              "/api/outside": "The outside counter: crossings and pre-order commitments by people outside Knos, summed from the store",
+              "/api/outside/rows": "Every row the outside counter sums (kind, time, crossing id or order address, via)",
               "/api/qloo-diff": "The \"With and without Qloo\" table: 20 ideas, each checked with Qloo and with the key unset", "/sw.js": "The app's service worker (offline shell, background sync)",
               "/manifest.webmanifest": "The app's web app manifest (installable, home-screen shortcuts)", "/api/actions/preorder": "Solana Action (Blink): pre-order metadata",
               "/api/pay/fund": "Solana Pay transaction request: the label and icon a wallet shows before funding a milestone",
@@ -231,6 +234,7 @@ def make_handler(state: State):
 
         def do_GET(self):
             u = urlparse(self.path)
+            outside.begin(self.headers)
             qs = parse_qs(u.query)
             if product_routes.handle_get(self, state, u, qs):
                 return None
@@ -254,6 +258,10 @@ def make_handler(state: State):
                 from . import trace as _trace
                 t = _trace.load(state, (qs.get("hash") or [""])[0])
                 return self._send(200 if t else 404, t or {"error": "unknown report: no trace kept for it"})
+            if u.path == "/api/outside":                     # the outside counter, from the store (knos_wanted.outside)
+                return self._send(200, outside.totals())
+            if u.path == "/api/outside/rows":
+                return self._send(200, {"rows": outside.rows(), "rule": outside.RULE})
             if u.path == "/api/qloo-diff":                   # the table behind "With and without Qloo"
                 try:
                     return self._send(200, valley._load("pages", "qloo_diff"))
@@ -405,6 +413,7 @@ def make_handler(state: State):
 
         def do_POST(self):
             u = urlparse(self.path)
+            outside.begin(self.headers)                   # the outside counter reads who is asking (knos_wanted.outside)
             if u.path == "/mcp":
                 return self._mcp()
             if u.path in ("/api/actions/preorder", blink.PAY_PATH):
@@ -421,7 +430,8 @@ def make_handler(state: State):
             kind = ROUTES.get(u.path)
             if kind is None:
                 return self._send(404, {"error": "not found"})
-            if not state.allow(self._client(), kind):
+            # the operator's own measured runs (scripts/qloo_decision_diff.py) carry its key and skip the per-address limits
+            if not product_routes._admin(self.headers.get("X-Knos-Admin")) and not state.allow(self._client(), kind):
                 return self._send(429, {"error": "too many requests from this address; try again in a few minutes"})
             try:
                 body = self._json()
@@ -504,6 +514,7 @@ def make_handler(state: State):
                 privacy.check({k: v for k, v in opts.items() if isinstance(v, str)})
                 job = agent.start(state, ref=ref, idea=idea, place=_text(body.get("place")), product=_text(body.get("product"), 200),
                                   options=opts)
+                outside.note("crossing", job["id"], "crossing")
                 return {"id": job["id"], "status": job["status"]}
             if path == "/api/auth/email":
                 return auth.email_link(str(body.get("email") or ""), self._base())
