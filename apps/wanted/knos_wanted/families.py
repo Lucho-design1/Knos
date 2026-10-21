@@ -206,8 +206,11 @@ def answer(run, ev: dict, idea: str, place: str | None, o: dict) -> dict:
 
     # F4 at what price, where: the heatmap's hot areas for the tier
     if any(k in o for k in FIELDS_OF["F4"]):
-        p = {"filter.type": "urn:heatmap", "take": 8, "output.heatmap.boundary": "urn:geohash", **(sig or {}),
-             "filter.location.query": o.get("near") or place or "New York City"}
+        # where: the WKT area or locality id asked (filter.location, with its radius), else the place named; with neither,
+        # New York City, said in the call's params
+        where = ({"filter.location": o["location"], **({"filter.location.radius": o["radius"]} if "radius" in o else {})} if o.get("location")
+                 else {"filter.location.query": o.get("near") or place or "New York City"})
+        p = {"filter.type": "urn:heatmap", "take": 8, "output.heatmap.boundary": "urn:geohash", **(sig or {}), **where}
         dims = [d for d, f in (("price_level", "price_level"), ("hotel_class", "hotel_class")) if f in o]
         if dims:
             p["heatmap.dimensions"] = ",".join(dims)
@@ -216,9 +219,9 @@ def answer(run, ev: dict, idea: str, place: str | None, o: dict) -> dict:
         body, n = run.get("/v2/insights", p, "family F4: where the price tier is hot (heatmap)", broaden=False)
         rows = ((body or {}).get("results") or {}).get("heatmap") or []
         hot = [{"geohash": (r.get("location") or {}).get("geohash"), "affinity": (r.get("query") or {}).get("affinity")} for r in rows[:8] if isinstance(r, dict)]
-        place_p = {"filter.type": "urn:entity:place", "take": 6, **_params(o, FIELDS_OF["F4"], "urn:entity:place"),
-                   "filter.location.query": o.get("near") or place or "New York City"}
-        b2, n2 = (run.get("/v2/insights", place_p, "family F4: places in the price range", broaden=False) if len(place_p) > 3 else (None, None))
+        price = _params(o, FIELDS_OF["F4"], "urn:entity:place")          # the price range, as places take it
+        place_p = {"filter.type": "urn:entity:place", "take": 6, **price, **where}
+        b2, n2 = (run.get("/v2/insights", place_p, "family F4: places in the price range", broaden=False) if price else (None, None))
         out["F4"] = {"question": Q.QUESTIONS["F4"], "call": n, "params": p, "hot": hot, **({"places_call": n2, "places": _names(b2)} if n2 else {})}
 
     # F7 look up exact things

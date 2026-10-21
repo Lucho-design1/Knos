@@ -166,3 +166,18 @@ def test_a_wkt_point_typed_as_near_is_sent_as_filter_location():
     from knos import qloo_families as Q
     assert Q.options({"near": "POINT(-97.74 30.27)", "radius": 500}) == {"location": "POINT(-97.74 30.27)", "radius": 500}
     assert Q.options({"near": "Austin"}) == {"near": "Austin"}
+
+
+def test_f4_heatmap_uses_the_wkt_area_asked():
+    """F4's heatmap is asked of the WKT area given (filter.location and its radius), not a place by name."""
+    from knos_wanted import families
+    seen = []
+
+    class Run:
+        def get(self, path, params, what, broaden=True):
+            seen.append(dict(params))
+            return {"results": {"heatmap": [], "entities": []}}, len(seen)
+
+    families.answer(Run(), {}, "a recovery shoe", None, {"location": "POINT(-97.74 30.27)", "radius": 500, "price_level": "1"})
+    heat = next(p for p in seen if p.get("filter.type") == "urn:heatmap")
+    assert heat["filter.location"] == "POINT(-97.74 30.27)" and heat["filter.location.radius"] == 500 and "filter.location.query" not in heat
