@@ -654,11 +654,32 @@ def make_handler(state: State):
     return H
 
 
+def _restore_projects(budget_s: float = 60.0) -> None:
+    """A redeploy starts on an empty disk: read the projects back from their devnet records (knos_wanted.chainstate),
+    within `budget_s`; a failure is said in the log and the app starts anyway."""
+    from . import chainstate
+    if not chainstate.on() or any(valley._dir("projects").glob("*.json")):
+        return
+    box: dict = {}
+
+    def run():
+        try:
+            box["n"] = chainstate.restore(lambda kind, key, obj: valley._save(kind, key, obj, chain=False))
+        except Exception as why:  # noqa: BLE001
+            box["error"] = f"{type(why).__name__}: {str(why)[:200]}"
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+    t.join(budget_s)
+    print(f"knos chainstate: restored {box.get('n', 0)} project(s) from devnet" + (f"; {box['error']}" if "error" in box else "")
+          + ("" if not t.is_alive() else f"; still reading after {budget_s:.0f} s"), flush=True)
+
+
 def serve(host: str | None = None, port: int | None = None) -> None:
     os.environ.setdefault("SIBYL_MEMORY_TELEMETRY", "0")     # Sibyl's heartbeat is off on this server (its documented opt-out)
     host = host or os.environ.get("HOST", "127.0.0.1")
     port = port or int(os.environ.get("PORT", "8080"))
     state = State()
+    _restore_projects()                    # before serving: the projects kept on devnet, when this disk has none
     threading.Thread(target=lambda: preorder.preflight_status(force=True), daemon=True).start()   # the money path, simulated
     threading.Thread(target=tasks.available, daemon=True).start()        # seeds the demo round when no round is open
     valley.start_sweeper()                 # missed milestone deadlines: refund + reopen, every KNOS_VALLEY_SWEEP_S seconds

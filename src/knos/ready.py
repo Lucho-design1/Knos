@@ -69,8 +69,20 @@ def deadline_s(m: dict) -> int | None:
     return d
 
 
+def clean(brief) -> dict:
+    """A brief in the shape every check reads: an object whose milestones are a list of objects, each verifier an
+    object. Anything else (a list, a string, a number) is dropped here, so a malformed brief is answered Not ready,
+    naming its fields, and never reaches code that would fail on it (TASK-QLOO-CHAMPION M10)."""
+    b = dict(brief) if isinstance(brief, dict) else {}
+    ms = b.get("milestones")
+    b["milestones"] = [{**m, "verifier": m["verifier"] if isinstance(m.get("verifier"), dict) else {}} if isinstance(m, dict) else {}
+                       for m in ms] if isinstance(ms, list) else []
+    return b
+
+
 def normal(m: dict, i: int = 0) -> dict:
     """One milestone's deciding fields, normalised (the form the hash and the order memo are made from)."""
+    m = m if isinstance(m, dict) else {}
     raw = m.get("verifier")
     v: dict = raw if isinstance(raw, dict) else {}
     kind = v.get("kind") if v.get("kind") in ("machine", "human") else ("machine" if v.get("check") else "human" if any(v.get(x) for x in HUMAN_FIELDS) else "")
@@ -142,18 +154,23 @@ def terms(brief: dict) -> dict:
 
 
 def criteria_hash(brief: dict) -> str:
-    ms = [normal(m, i) for i, m in enumerate(brief.get("milestones") or [])]
+    ms = [normal(m, i) for i, m in enumerate(clean(brief)["milestones"])]
     body = {"v": 1, "milestones": ms, **terms(brief)}
     return hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
 
 
 def check(brief: dict) -> dict:
     """Ready, or Not ready with the exact missing fields and a rewrite template per milestone. Free, sends nothing."""
-    if not isinstance(brief, dict):
-        brief = {}
-    ms = brief.get("milestones")
-    rows = [check_milestone(m if isinstance(m, dict) else {}, i) for i, m in enumerate(ms if isinstance(ms, list) else [])]
+    raw = brief.get("milestones") if isinstance(brief, dict) else None
+    brief = clean(brief)
+    rows = [check_milestone(m, i) for i, m in enumerate(brief["milestones"])]
     problems = [] if rows else ["milestones: at least one"]
+    if raw is not None and not isinstance(raw, list):
+        problems.append("milestones: a list of milestone objects")
+    elif isinstance(raw, list):
+        problems += [f"milestones[{i}]: an object (key, name, target, verifier, deadline)" for i, m in enumerate(raw) if not isinstance(m, dict)]
+    problems += [f"m{i + 1}.verifier: an object (kind machine with check, or kind human with what, how, who, where), not text"
+                 for i, m in enumerate(raw if isinstance(raw, list) else []) if isinstance(m, dict) and isinstance(m.get("verifier"), str)]
     if len(rows) > 12:
         problems.append("milestones: at most 12")
     if len({r["key"] for r in rows}) != len(rows):

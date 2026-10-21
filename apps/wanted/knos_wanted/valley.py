@@ -58,11 +58,18 @@ def _dir(kind: str) -> Path:
     return d
 
 
-def _save(kind: str, key: str, obj: dict) -> dict:
+def _save(kind: str, key: str, obj: dict, chain: bool = True) -> dict:
+    if kind == "projects" and obj.get("report") and not obj.get("grounding_snapshot"):
+        g = grounding(obj)                         # kept on the project: its report file does not survive a redeploy
+        if g:
+            obj["grounding_snapshot"] = g
     f = _dir(kind) / f"{key}.json"
     tmp = f.with_suffix(".tmp")
     tmp.write_text(json.dumps(obj, indent=1, default=str), encoding="utf-8")
     os.replace(tmp, f)
+    if chain:
+        from . import chainstate
+        chainstate.queue_save(kind, key, obj)      # and on devnet, so it survives a redeploy (KNOS_STATE_ON_CHAIN=1)
     return obj
 
 
@@ -249,7 +256,8 @@ def check_brief(brief: dict) -> dict:
     IDT view of the brief (knos.idt): its intent sketch, ambiguity, readings to tap, at most one question, the route
     (fast path or rewrite), the effort and token budget an agent run gets, and the milestones' tiers."""
     from knos import idt
-    r = _ready().check(brief)
+    r = _ready().check(brief)                 # names what is malformed, from the brief as it was sent
+    brief = _ready().clean(brief)              # the rest reads a clean shape: a malformed brief is never a server error
     rt = idt.route(brief)
     if rt["interpretations"]:
         rt["interpretations"] = idt.interpretations(" ".join(json.dumps(m) for m in (brief or {}).get("milestones") or []), patterns())
@@ -285,11 +293,11 @@ def grounding(p: dict) -> dict | None:
     h = p.get("report")
     f = escrow._state_dir() / "reports" / f"{h}.report" if isinstance(h, str) and re.fullmatch(r"[0-9a-f]{64}", h) else None
     if not f or not f.exists():
-        return None
+        return p.get("grounding_snapshot")         # the report is gone (a redeploy): the line as it was when saved
     try:
         rep = json.loads(f.read_text(encoding="utf-8"))
     except ValueError:
-        return None
+        return p.get("grounding_snapshot")
     plan = (rep.get("decision") or {}).get("plan") or {}
     fam = rep.get("grounding") or {}                # the families' answers (knos_wanted.families.grounding)
     who = plan.get("who") or {}

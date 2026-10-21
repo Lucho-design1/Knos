@@ -147,8 +147,27 @@ def _json(out: str, start: str):
     return json.JSONDecoder().raw_decode(out[i:])[0] if i >= 0 else None
 
 
+# Workflows that are not CI of a commit: the always-on relay restarts itself every few minutes on the newest commit and
+# never finishes, so waiting for it would never pass (TASK-QLOO-CHAMPION M9). Matched by the file's own `name:`.
+NOT_CI = (".github/workflows/worker.yml",)
+
+
+def _not_ci_names(repo: Path) -> set[str]:
+    names = set()
+    for rel in NOT_CI:
+        f = Path(repo) / rel
+        try:
+            m = re.search(r"(?m)^name:\s*(.+?)\s*$", f.read_text(encoding="utf-8"))
+        except OSError:
+            continue
+        if m:
+            names.add(m.group(1).strip("'\""))
+    return names
+
+
 def ci(repo: Path, sha: str | None = None, runner=None) -> Result:
-    """Every GitHub Actions run for this commit completed and every job in it succeeded (`gh run list` + `gh run view`)."""
+    """Every GitHub Actions run for this commit completed and every job in it succeeded (`gh run list` + `gh run view`).
+    Runs of the workflows in NOT_CI (the always-on relay) are not CI of the commit and are left out."""
     sha = sha or head(repo)
     run = runner or (lambda args: _run(["gh", *args], repo, 60))
     code, out = run(["run", "list", "--commit", sha, "--json", "databaseId,status,conclusion,workflowName"])
@@ -158,8 +177,11 @@ def ci(repo: Path, sha: str | None = None, runner=None) -> Result:
         runs = _json(out, "[") or []
     except ValueError:
         runs = []
+    skip = _not_ci_names(repo)
+    ignored = [r for r in runs if r.get("workflowName") in skip]
+    runs = [r for r in runs if r.get("workflowName") not in skip]
     if not runs:
-        return Result("ci", False, f"no CI run for {sha[:8]} yet: push it, then wait for CI", {"sha": sha})
+        return Result("ci", False, f"no CI run for {sha[:8]} yet: push it, then wait for CI", {"sha": sha, "ignored": len(ignored)})
     bad, pending = [], []
     for r in runs:
         if r.get("status") != "completed":
@@ -172,7 +194,7 @@ def ci(repo: Path, sha: str | None = None, runner=None) -> Result:
                 bad.append(f"{r.get('workflowName')}/{j.get('name')}: {j.get('conclusion')}")
         if not jobs and r.get("conclusion") != "success":
             bad.append(f"{r.get('workflowName')}: {r.get('conclusion')}")
-    ev = {"sha": sha, "runs": len(runs), "failed": bad, "pending": pending}
+    ev = {"sha": sha, "runs": len(runs), "failed": bad, "pending": pending, "ignored": len(ignored)}
     if pending:
         return Result("ci", False, f"CI still running for {sha[:8]}: {', '.join(pending)}", ev)
     if bad:

@@ -379,3 +379,24 @@ def test_a_private_funding_hides_its_amount_mints_no_public_receipt_and_takes_it
     public = valley.fund_tx(p["id"], "reproduce", 10, str(Keypair().pubkey()), led=money.led)
     with pytest.raises(valley.Refused, match="not funded as private"):
         valley.private_pledge(public["order"], body, led=money.led)
+
+
+def test_ready_bad_input():
+    """M10: ten malformed briefs are answered Not ready, naming the field; none is a server error."""
+    from knos_wanted import valley
+    good = {"key": "m1", "name": "Sell-through", "target": "200 pairs in 60 days on test_x",
+            "verifier": {"kind": "machine", "check": "ci / test_x"}, "deadline_days": 14}
+    bad = {"m1.verifier: an object": {"milestones": [{**good, "verifier": "a person checks it"}]},
+           "m1.deadline": {"milestones": [{**good, "deadline_days": "2026-11-30"}]},
+           "milestones: a list": {"milestones": "build it"},
+           "milestones[0]: an object": {"milestones": [42]},
+           "milestones: at least one": {},
+           "milestones: at least one ": [good],
+           "m1.deadline ": {"milestones": [{**good, "deadline_days": -5}]},
+           "kill_fee_bps": {"milestones": [good], "kill_fee_bps": "ten percent"},
+           "m1.verifier": {"milestones": [{**good, "verifier": {"kind": "vibes"}}]},
+           "m1.name": {"milestones": [{**good, "target": None, "name": None}]}}
+    for field, brief in bad.items():
+        r = valley.check_brief(brief)
+        assert r["ready"] is False and r["label"] == "Not ready" and any(m.startswith(field.strip()) for m in r["missing"]), (field, r["missing"])
+    assert valley.check_brief({"milestones": [good]})["ready"] is True

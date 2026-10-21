@@ -561,3 +561,19 @@ def test_ci_reads_gh_json_followed_by_a_notice(tmp_path):
         return 0, '{"jobs": [{"name": "tests", "conclusion": "failure"}]}' + notice
     r = checks.ci(tmp_path, "a" * 40, runner=gh)
     assert not r.ok and "ci/tests: failure" in r.detail
+
+
+def test_guard_ignores_relay(tmp_path):
+    """M9: a commit whose only unfinished runs are the always-on relay (.github/workflows/worker.yml) passes the CI
+    check; another workflow still running does not."""
+    wf = tmp_path / ".github" / "workflows"
+    wf.mkdir(parents=True)
+    (wf / "worker.yml").write_text("name: always-on worker\non: workflow_dispatch\n", encoding="utf-8")
+    relay = {"databaseId": 9, "status": "in_progress", "conclusion": None, "workflowName": "always-on worker"}
+    done = {"databaseId": 1, "status": "completed", "conclusion": "success", "workflowName": "tests"}
+    view = (0, json.dumps({"jobs": [{"name": "pytest", "conclusion": "success"}]}))
+    got = checks.ci(tmp_path, "a" * 40, runner=lambda a: {("run", "list"): (0, json.dumps([relay, relay, done])), ("run", "view"): view}[tuple(a[:2])])
+    assert got.ok and got.evidence["ignored"] == 2, got.detail
+    other = {**relay, "workflowName": "lighthouse"}
+    got = checks.ci(tmp_path, "a" * 40, runner=lambda a: {("run", "list"): (0, json.dumps([relay, other, done])), ("run", "view"): view}[tuple(a[:2])])
+    assert not got.ok and "lighthouse" in got.detail
