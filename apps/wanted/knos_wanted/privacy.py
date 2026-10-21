@@ -29,6 +29,29 @@ PATTERNS = [
 ]
 
 
+# Asking Qloo to infer something about people: "Qloo results ... should not be used to infer a person's identity,
+# sensitive traits, health, financial status, political views, or eligibility for housing, employment, credit, insurance"
+# (kit docs/SAFE_USE.md). Refused when a text asks to infer (a verb) something sensitive (a topic) about people (a noun),
+# or to decide someone's eligibility. A product for a health or money need is not refused: only inference about people.
+INFER = re.compile(r"\b(infer\w*|predict\w*|guess\w*|identif\w+|determin\w+|find(?:ing)? out|figur\w* out|reveal\w*|profil\w+|deduc\w+|work out)\b", re.I)
+PEOPLE = re.compile(r"\b(persons?|people|someone|somebody|individuals?|users?|customers?|employees?|applicants?|tenants?|voters?|neighbou?rs?|"
+                    r"patients?|visitors?|followers?|students?|candidates?|my (?:friend|wife|husband|partner|boss|child)\w*|their|his|her|whose)\b", re.I)
+SENSITIVE = re.compile(r"\b(health\w*|ill(?:ness)?|diseases?|diagnos\w*|diabet\w*|cancer|pregnan\w*|mental|depress\w*|disabilit\w*|hiv|"
+                       r"financ\w*|income|salar\w*|debts?|credit ?scores?|wealth\w*|poor|bankrupt\w*|politic\w*|votes?|voting|religio\w*|"
+                       r"sexual\w*|gay|lesbian|transgender|ethnic\w*|race|racial|immigra\w*|citizenship|identity|identities|real names?)\b", re.I)
+ELIGIBLE = re.compile(r"\b(eligib\w*|approve|reject|deny|screen\w*|decide who gets)\b.{0,60}\b(loans?|credit|housing|rent\w*|jobs?|hir\w+|"
+                      r"employ\w*|insurance|mortgage\w*)\b", re.I)
+
+
+def sensitive(text: str) -> str | None:
+    """Why a text asks Qloo for what the kit forbids, or None."""
+    if ELIGIBLE.search(text):
+        return "it asks to decide someone's eligibility (housing, work, credit or insurance)"
+    if INFER.search(text) and PEOPLE.search(text) and SENSITIVE.search(text):
+        return "it asks to infer a person's health, finances, politics or identity"
+    return None
+
+
 class PersonalData(ValueError):
     """Refused before any Qloo call: the text looks like personal data."""
 
@@ -51,6 +74,9 @@ def problems(value, where: str = "input") -> list[str]:
         for rx, what in PATTERNS:
             if rx.search(value):
                 out.append(f"{where} looks like {what}")
+        why = sensitive(value)
+        if why:
+            out.append(f"{where}: {why}, which Knos refuses (Qloo describes aggregate taste, never a person)")
     return out
 
 

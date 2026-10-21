@@ -62,7 +62,7 @@ LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish"
 GLOBAL_DEMO = (60, 3600)
 FRONT_ORIGINS = ("https://drexthealpha.github.io",)               # the front door, allowed to read the demand check
 DEMAND_CORS = ("/api/check", "/api/demand/fields")                                           # demo pre-orders, all clients
-ROUTES = {"/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
+ROUTES = {"/api/trace/keep": "check", "/api/qloo-diff": "check", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
           "/api/check": "check", "/api/research": "check", "/api/cross": "check", "/api/factor": "lock",
@@ -76,7 +76,10 @@ SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/
              "/api/preorder/demo", "/api/preorder/faucet", "/api/preorder/tx", "/api/preorder/submit",
              "/api/wallet", "/api/wallet/faucet", "/api/sign", "/api/maker/claim", "/api/lend/quote", "/api/lend/advance", "/api/lend/collect")   # no anonymous money or faucet calls
 # every GET route below (do_GET), for the OpenAPI document (knos_wanted.openapi); the product routes list their own
-GET_ROUTES = {"/actions.json": "Solana Actions rules", "/sw.js": "The app's service worker (offline shell, background sync)",
+PAGES = {"/trace": "trace.html", "/trace.html": "trace.html", "/with-without": "with_without.html", "/with-without.html": "with_without.html",
+         "/qloo-safe-use": "qloo_safe_use.html", "/qloo-safe-use.html": "qloo_safe_use.html", "/invite": "invite.html", "/invite.html": "invite.html"}
+GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/trace": "A demand report's Qloo calls, redacted: endpoint, params, ids, excerpt, limit",
+              "/api/qloo-diff": "The \"With and without Qloo\" table: 20 ideas, each checked with Qloo and with the key unset", "/sw.js": "The app's service worker (offline shell, background sync)",
               "/manifest.webmanifest": "The app's web app manifest (installable, home-screen shortcuts)", "/api/actions/preorder": "Solana Action (Blink): pre-order metadata",
               "/api/pay/fund": "Solana Pay transaction request: the label and icon a wallet shows before funding a milestone",
               "/api/cross": "Poll a live crossing", "/verify": "How we verify", "/api/crossings": "Crossings, newest first",
@@ -245,6 +248,17 @@ def make_handler(state: State):
                 return self._send(200 if got else 404, got or {"error": "unknown crossing"})
             if u.path in ("/verify", "/verify.html"):
                 return self._send(200, (STATIC / "verify.html").read_bytes(), "text/html; charset=utf-8")
+            if u.path in PAGES:                              # the trace, "With and without Qloo", Qloo safe use, the invite
+                return self._send(200, (STATIC / PAGES[u.path]).read_bytes(), "text/html; charset=utf-8")
+            if u.path == "/api/trace":                       # a report's Qloo calls, redacted (knos_wanted.trace)
+                from . import trace as _trace
+                t = _trace.load(state, (qs.get("hash") or [""])[0])
+                return self._send(200 if t else 404, t or {"error": "unknown report: no trace kept for it"})
+            if u.path == "/api/qloo-diff":                   # the table behind "With and without Qloo"
+                try:
+                    return self._send(200, valley._load("pages", "qloo_diff"))
+                except valley.Refused:
+                    return self._send(404, {"error": "the table has not been published yet"})
             if u.path == "/api/demand/fields":               # one table for every interface's controls (knos.qloo_families)
                 from . import families as _fam
                 return self._send(200, _fam.fields())
@@ -416,7 +430,7 @@ def make_handler(state: State):
                     return self._send(401, {"error": "sign in first (passkey, Google or a guest label)"})
                 if u.path == "/api/milestone" and not state.allow("commitment:" + str(body.get("commitment", ""))[:64], "milestone_one"):
                     return self._send(429, {"error": "this commitment had 10 evidence posts in the last hour; try again later"})
-                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research", "/api/cross") + SIGNED_IN:
+                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research", "/api/cross", "/api/trace/keep", "/api/qloo-diff") + SIGNED_IN:
                     return self._send(200, self.route_v2(u.path, body))
                 return self._send(200, self.route(u.path, body))
             except (auth.AuthError, wallets.NeedPasskey) as why:
@@ -526,8 +540,11 @@ def make_handler(state: State):
                 if ex:
                     opts["exclude"] = ",".join(ex)
                 privacy.check({k: v for k, v in opts.items() if isinstance(v, str)})
-                rep = check.demand_check(idea, _text(body.get("place")), _text(body.get("leader"), 80), client=state.rest, exclude=ex,
-                                         options=opts)
+                without = body.get("without_qloo") is True        # the same check with the key unset (the comparison)
+                rep = check.demand_check(idea, _text(body.get("place")), _text(body.get("leader"), 80),
+                                         client=Client(key="") if without else state.rest, exclude=ex, options=opts)
+                if without:
+                    rep["without_qloo"] = True
                 rep["fees"] = preorder.fee_line()
                 card = state.cards.get(str(body.get("research") or ""))
                 if card:
@@ -535,6 +552,18 @@ def make_handler(state: State):
                 rep["record"] = company.record_check(rep)          # the decision in the agent's memory (Sibyl)
                 state.keep_check(rep)
                 return rep
+            if path == "/api/trace/keep":                   # keep a report's trace on devnet: something links to it
+                from . import trace as _trace
+                return _trace.keep(state, str(body.get("hash") or ""))
+            if path == "/api/qloo-diff":                     # the operator publishes the "With and without Qloo" table
+                if not product_routes._admin(self.headers.get("X-Knos-Admin")):
+                    raise auth.AuthError("the operator's X-Knos-Admin key publishes this table")
+                rows = body.get("rows")
+                if not isinstance(rows, list) or not 1 <= len(rows) <= 60:
+                    raise ValueError("rows: 1 to 60")
+                doc = {"v": 1, "made": body.get("made"), "summary": body.get("summary"), "rows": rows, "rule": body.get("rule")}
+                valley._save("pages", "qloo_diff", doc)
+                return {"published": len(rows), "page": "/with-without"}
             if path == "/api/research":
                 card = research.research_card(str(body.get("ref") or ""), product=_text(body.get("product"), 200))
                 with state.lock:
@@ -664,7 +693,16 @@ def _restore_projects(budget_s: float = 60.0) -> None:
 
     def run():
         try:
-            box["n"] = chainstate.restore(lambda kind, key, obj: valley._save(kind, key, obj, chain=False))
+            from . import trace as _trace
+
+            def put(kind, key, obj):
+                if kind == "projects":
+                    valley._save(kind, key, obj, chain=False)
+                elif kind == "traces":
+                    _trace.restore_save(kind, key, obj)
+                else:
+                    valley._save(kind, key, obj, chain=False)
+            box["n"] = chainstate.restore(put)
         except Exception as why:  # noqa: BLE001
             box["error"] = f"{type(why).__name__}: {str(why)[:200]}"
     t = threading.Thread(target=run, daemon=True)

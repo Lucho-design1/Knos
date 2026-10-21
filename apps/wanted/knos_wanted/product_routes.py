@@ -220,6 +220,8 @@ def handle_post(h, state, path: str) -> bool:
             rep = state.report(b["report"])
             if rep is not None:
                 state.keep_check(rep)
+                from . import trace
+                trace.keep(state, rep["hash"])             # its Grounding line links to this trace: kept on devnet too
         return h._send(200, _post(path, b, user or {}, h)) or True
     except preorder.Settled as why:
         return h._send(409, {"error": str(why)[:300]}) or True

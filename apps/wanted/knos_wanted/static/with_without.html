@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knos. With and without Qloo</title>
+<meta name="description" content="Twenty ideas from ten fields, each run through Knos's demand check with Qloo and with the Qloo key unset: what Qloo changes, row by row, each with its trace.">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.ww{width:100%;border-collapse:collapse;font-size:.9rem}
+.ww th,.ww td{text-align:left;vertical-align:top;padding:6px 8px;border-bottom:1px solid var(--line, #ddd);overflow-wrap:anywhere}
+.ww .chg{font-weight:600}
+.ww-wrap{overflow-x:auto}
+@media (max-width:640px){.ww thead{display:none}.ww tr{display:block;border-bottom:1px solid var(--line, #ddd);padding:8px 0}
+  .ww td{display:block;border:0;padding:2px 0}.ww td::before{content:attr(data-h) ": ";font-weight:600}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><div class="bar">
+  <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>Knos</a>
+  <a href="/" class="small">← app</a>
+</div></div></header>
+<main class="wrap">
+  <h1>With and without Qloo</h1>
+  <p>The same demand check, twice per idea: once with Qloo, once with the Qloo key unset.</p>
+  <p id="ww-sum" class="small"></p>
+  <p class="small muted">Qloo describes aggregate taste: not causal, not about a person. A row counts as changed when Qloo changes the verdict,
+    the audience, the launch cities or the price tier. Shown as measured, whatever it shows.</p>
+  <div class="ww-wrap"><table class="ww" id="ww"><thead><tr><th scope="col">Field</th><th scope="col">Idea</th><th scope="col">With Qloo</th>
+    <th scope="col">Key unset</th><th scope="col">Changed</th><th scope="col">Traces</th></tr></thead><tbody></tbody></table></div>
+  <p class="small muted" id="ww-rule"></p>
+  <p class="small"><a href="/qloo-safe-use">How Knos uses Qloo safely</a> · <a href="/">Check your own idea</a></p>
+</main>
+<script>
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const side = (x) => [x.verdict, x.audience, (x.cities || []).join(", "), x.tier].filter(Boolean).map(esc).join(" · ") || "none";
+(async () => {
+  const r = await fetch("/api/qloo-diff");
+  const d = await r.json();
+  if (!r.ok) { document.getElementById("ww-sum").textContent = d.error || "Not published yet."; return; }
+  const s = d.summary || {};
+  document.getElementById("ww-sum").innerHTML = `<b>${esc(s.changed)} of ${esc(s.rows)}</b> ideas changed with Qloo (verdict ${esc(s.verdict)}, audience ${esc(s.audience)}, cities ${esc(s.cities)}, price tier ${esc(s.tier)}). Run ${esc(d.made)}.`;
+  document.getElementById("ww-rule").textContent = d.rule || "";
+  document.querySelector("#ww tbody").innerHTML = d.rows.map((x) => `<tr data-qloo>
+    <td data-h="Field">${esc(x.field)}</td><td data-h="Idea">${esc(x.idea)}</td>
+    <td data-h="With Qloo">${side(x.with)}</td><td data-h="Key unset">${side(x.without)}</td>
+    <td data-h="Changed" class="chg">${esc((x.changed || []).join(", ") || "nothing")}</td>
+    <td data-h="Traces"><a data-trace href="/trace.html?hash=${esc(x.with.hash)}">with Qloo</a> · <a href="/trace.html?hash=${esc(x.without.hash)}">key unset</a></td></tr>`).join("");
+})();
+</script>
+</body>
+</html>

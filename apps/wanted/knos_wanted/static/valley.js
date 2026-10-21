@@ -87,7 +87,8 @@ function groundingLine(p) {
     (g.comparables || []).length && "comparables: " + g.comparables.join(", "),
     // what the person asked Qloo (the demand options), apart from what Qloo answered for the product overall
     Object.keys(g.asked || {}).length && "asked: " + Object.entries(g.asked).map(([k, v]) => `${k.replace(/_/g, " ")} ${Array.isArray(v) ? v.join(", ") : String(v).replace(/_/g, " ")}`).join("; ")].filter(Boolean);
-  return bits.length ? `<p class="small" id="grounding"><b>Grounding (Qloo)</b>: ${esc(bits.join(" · "))}</p>` : "";
+  const src = window.KnosDemand && p.report ? KnosDemand.src("", p.report) : "";       // the trace kept for this project's report
+  return bits.length ? `<p class="small" id="grounding" data-qloo><b>Grounding (Qloo)</b>: ${esc(bits.join(" · "))}${src}</p>` : "";
 }
 // the project's credits (Token-2022 with the knos_hook transfer hook): they move only into this project's escrow
 function creditsLine(p) {

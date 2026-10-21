@@ -234,8 +234,11 @@ class _Run:
                     self._broadening = False
             return got["body"], n
         m = re.search(r"HTTP (\d{3})", str(err))
-        short = f"Qloo could not answer this part (HTTP {m.group(1)})" if m else ("Qloo's monthly call budget is spent" if "budget" in str(err)
-                                                                                   else "Qloo could not be reached")
+        code = m.group(1) if m else ""
+        short = ("Qloo refused this server's API key (HTTP %s): no Qloo data was used" % code if code in ("401", "403") else
+                 "Qloo's rate limit for this event key was reached (HTTP 429, after one retry): try again in a minute" if code == "429" else
+                 f"Qloo could not answer this part (HTTP {code})" if code else
+                 "Qloo's monthly call budget is spent" if "budget" in str(err) else "Qloo could not be reached")
         self.calls.append({"n": len(self.calls) + 1, "call": f"GET {path}", "what": what, "params": params, "error": short})
         self.on_call(self.calls[-1])
         return None, None

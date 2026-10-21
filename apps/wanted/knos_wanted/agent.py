@@ -133,7 +133,8 @@ def _step(job: dict, kind: str, title: str, *, tool: str = "", inp=None, out="",
 def _qloo_step(job: dict):
     def on_call(c: dict) -> None:
         effect = next((e for k, e in check.EFFECTS if c["what"].startswith(k)), "evidence")
-        _step(job, "qloo", c["what"], tool=c["call"], inp=c.get("params"), out=c.get("error") or c.get("body_digest") or "", effect=effect)
+        st = _step(job, "qloo", c["what"], tool=c["call"], inp=c.get("params"), out=c.get("error") or c.get("body_digest") or "", effect=effect)
+        st["call"] = c.get("n")            # the report's call number: the page links the step to its trace (/trace.html#call-n)
     return on_call
 
 

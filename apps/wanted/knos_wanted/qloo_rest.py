@@ -195,6 +195,10 @@ class Client:
                     continue
                 self.live_calls += 1
                 msg = f"{method} {path}: HTTP {e.code}"     # Qloo's own error text is not passed on to users
+                if e.code in (401, 403):                     # said plainly, never a silent fallback (kit docs/API_ACCESS.md)
+                    msg += ": Qloo refused this server's API key (missing, wrong or expired); no Qloo data was used"
+                elif e.code == 429:
+                    msg += ": Qloo's rate limit for this event key was reached (after one retry); try again in a minute"
                 if 400 <= e.code < 500 and e.code != 429:
                     self._store(k, None, error=msg)  # a refused question is not asked again for a day
                 raise QlooError(msg) from None
