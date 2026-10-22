@@ -122,6 +122,11 @@ jobs:
           npx --yes @lhci/cli@0.14.0 healthcheck --fatal || true
           CHROME=$(node -e 'console.log(require("chrome-launcher").Launcher.getInstallations()[0] || "")' 2>/dev/null || true)
           "${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --dump-dom about:blank > /dev/null 2>&1 || true
+      - name: Warm each server once (every measured run is still a fresh browser with an empty cache)
+        run: |
+          for u in $(node -e 'console.log(JSON.parse(require("fs").readFileSync("scripts/public_pages.json","utf8")).pages.join(" "))'); do
+            curl -fsS -m 120 -o /dev/null "$u" || true
+          done
       - name: Three cold runs of every public page
         run: |
           npx --yes @lhci/cli@0.14.0 collect --config=lhci-site.json

@@ -156,6 +156,7 @@ def proof() -> dict:
 
 SPEED = '<li data-v="speed"><b>…</b> to verdict</li>'
 STATUS = '<li data-v="status"><b>Ready cards</b></li>'
+COST = '<li data-v="cost"><b>$0</b> per check</li>'
 
 
 def fill(html: str, v: dict) -> str:
@@ -164,6 +165,11 @@ def fill(html: str, v: dict) -> str:
     s = (v.get("speed") or {}).get("median_s")
     if isinstance(s, (int, float)):
         html = html.replace(SPEED, f'<li data-v="speed"><b>{s:g} s</b> to verdict</li>')
+    c = v.get("cost") or {}
+    per, brief = c.get("api_usd_per_check"), c.get("usd_per_ready_brief")
+    if isinstance(per, (int, float)):                # the same words vectors.js writes: nothing moves when it runs
+        html = html.replace(COST, f'<li data-v="cost"><b>${per:g}</b> per check' + (f", <b>${brief:g}</b> per brief" if isinstance(brief, (int, float)) else "")
+                            + "</li>")
     n = (v.get("status") or {}).get("ready_cards_attested")
     if isinstance(n, int) and not isinstance(n, bool):
         html = html.replace(STATUS, f'<li data-v="status"><b>{n} Ready card{"" if n == 1 else "s"}</b></li>')
@@ -175,7 +181,7 @@ _filled: list = [0.0, None]
 
 def filled(html: str) -> str:
     """fill() with this server's numbers, read at most once a minute."""
-    if SPEED not in html and STATUS not in html:
+    if SPEED not in html and STATUS not in html and COST not in html:
         return html
     if _filled[1] is None or time.monotonic() - _filled[0] > 60:
         try:
