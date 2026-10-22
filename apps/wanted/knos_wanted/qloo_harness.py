@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sys
 import subprocess
 import threading
 import time
@@ -45,6 +46,8 @@ class Harness:
         self.command, self.env = command, env
         self.proc: subprocess.Popen | None = None
         self.lock, self.n, self.failed_at, self.answered = threading.Lock(), 0, 0.0, 0
+        self.starting = threading.Lock()              # held through the handshake: no question goes before it ends
+        self.ready = False
         self.waiting: dict[int, list] = {}            # request id -> [event, answer]: many questions in flight at once
 
     def _cmd(self) -> list[str] | None:
@@ -92,9 +95,17 @@ class Harness:
             self.waiting.pop(sid, None)
 
     def _ensure(self) -> None:
-        with self.lock:
-            if self.proc is not None and self.proc.poll() is None:
+        if self.ready and self.proc is not None and self.proc.poll() is None:
+            return
+        with self.starting:
+            if self.ready and self.proc is not None and self.proc.poll() is None:
                 return
+            self.ready = False
+            self._start()
+            self.ready = True
+
+    def _start(self) -> None:
+        with self.lock:
             env = {**os.environ, **(self.env or {})}
             if env.get("QLOO_BASE_URL") and not env.get("QLOO_TRUSTED_BASE_URL"):
                 env["QLOO_TRUSTED_BASE_URL"] = env["QLOO_BASE_URL"]   # the harness trusts only the endpoint it is told
@@ -128,8 +139,10 @@ class Harness:
                 return None
             self.answered += 1
             return body
-        except (OSError, ValueError, TimeoutError, AssertionError):
+        except (OSError, ValueError, TimeoutError, AssertionError) as why:
             self.failed_at = time.monotonic()
+            print(f"qloo harness: {type(why).__name__}: {str(why)[:120]}; REST for a minute", file=sys.stderr, flush=True)
+            self.ready = False
             with self.lock:
                 if self.proc is not None:
                     self.proc.kill()
