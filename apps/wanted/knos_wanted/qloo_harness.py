@@ -45,7 +45,8 @@ class Harness:
     def __init__(self, command: list[str] | None = None, env: dict | None = None):
         self.command, self.env = command, env
         self.proc: subprocess.Popen | None = None
-        self.lock, self.n, self.failed_at, self.answered = threading.Lock(), 0, 0.0, 0
+        self.lock, self.n, self.answered = threading.Lock(), 0, 0
+        self.failed_at: float | None = None           # never 0: a fresh machine's clock starts near 0
         self.starting = threading.Lock()              # held through the handshake: no question goes before it ends
         self.ready = False
         self.waiting: dict[int, list] = {}            # request id -> [event, answer]: many questions in flight at once
@@ -126,7 +127,7 @@ class Harness:
 
     def call(self, tool: str, args: dict) -> dict | None:
         """Qloo's answer body from the harness, or None (not installed, failed in the last minute, or not answered)."""
-        if not self.enabled() or time.monotonic() - self.failed_at < 60:
+        if not self.enabled() or (self.failed_at is not None and time.monotonic() - self.failed_at < 60):
             return None
         try:
             self._ensure()
@@ -136,6 +137,8 @@ class Harness:
                 text = "".join(c.get("text", "") for c in res.get("content") or [] if isinstance(c, dict))
                 body = json.loads(text) if text.strip().startswith("{") else None
             if res.get("isError") or not isinstance(body, dict) or body.get("success") is False:
+                text = "".join(c.get("text", "") for c in res.get("content") or [] if isinstance(c, dict))
+                print(f"qloo harness: {tool} answered no result ({text[:120]!r}); REST for this call", file=sys.stderr, flush=True)
                 return None
             self.answered += 1
             return body
