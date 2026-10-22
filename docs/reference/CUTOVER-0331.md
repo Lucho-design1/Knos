@@ -2,9 +2,11 @@
 
 The founder's steps, with every command, for the repositories [MONOREPO.md](MONOREPO.md) could not simply copy: the
 two trust anchors (knos-workflows, knos-oidc-rotate), and knos-labs, knos-playground, knos-rc. Old repositories stay
-until the step that deletes them, and deleting is his action. What the 0.3.34 branch (ONE-KNOS, 15 Oct 2026) did and
-what still waits is said under each section ("Done on the 0.3.34 branch"); `main` and tag v0.3.28, the Colosseum
-entry, are untouched until 5 Dec 2026, so no repository they link to is deleted before 6 Dec 2026.
+until the step that deletes them, and deleting is his action.
+
+What the 0.3.34 branch (ONE-KNOS, 15 Oct 2026) did and what still waits is said under each section ("Done on the
+0.3.34 branch"); `main` and tag v0.3.28, the Colosseum entry, are untouched until 5 Dec 2026, so no repository they
+link to is deleted before 6 Dec 2026.
 
 
 **One branch (16 Oct 2026).** drexthealpha/Knos has one branch, `main`. The branches `workflows`, `oidc-rotate` and `labs` of 15 Oct were replaced by tags that keep the same commits: `workflows-<sha12>` (every published set), `oidc-rotate-<sha12>` and `archive/labs`; every other old branch whose commits were not in `main` is kept as `archive/<name>`. The steps below that name `refs/heads/...` are the record of 15 Oct.
@@ -94,14 +96,18 @@ branch of Knos holding the same commits, then new callers naming it.
 Done on the 0.3.34 branch (15 Oct 2026). Steps 1 and 3, locally in the coordinator's clone: `workflows` =
 96b243f1b1dd5c975a0318dd9709a0da22b98dcd (the old repository's `main`, 17 commits, the pinned commit is its tip), tag
 `workflows-96b243f1b1dd`, and a tag `workflows-<sha12>` for every other commit an open escrow pins: def6ac689479,
-b7196a2ad17c, 5b26b1cddeae, 43c8605d155e, 160edd4e19fc, 64b31fae2b00. No terms document and no program id names a
-commit of it. Every workflow file on every commit of the branch is `on: workflow_call`; `attest.yml` (0.3.13 on) is also
-`workflow_dispatch` (a run by hand by someone who can write to Knos), and none runs on a push. Step 5: done in this
-branch's tree (`move`, `fold`, `front_workflow.py`, terms 3 version 2 of bug-fix, dataset-batch and migration, and
-`release.py workflows` writing into a worktree of `workflows`; `pinned_workflows.py check` passes). Waits: the push of
-`workflows` and its tags (the release's one push), step 2 (the founder's rulesets), step 4 (the first live payment on
-the new home), `main` (after 5 Dec 2026), step 6 (outside repositories), step 7 (from 6 Dec 2026, after the last open
-escrow above, 2026-11-13 15:48 UTC).
+b7196a2ad17c, 5b26b1cddeae, 43c8605d155e, 160edd4e19fc, 64b31fae2b00.
+
+No terms document and no program id names a commit of it. Every workflow file on every commit of the branch is `on:
+workflow_call`; `attest.yml` (0.3.13 on) is also `workflow_dispatch` (a run by hand by someone who can write to Knos),
+and none runs on a push.
+
+Step 5: done in this branch's tree (`move`, `fold`, `front_workflow.py`, terms 3 version 2 of bug-fix, dataset-batch and
+migration, and `release.py workflows` writing into a worktree of `workflows`; `pinned_workflows.py check` passes).
+
+Waits: the push of `workflows` and its tags (the release's one push), step 2 (the founder's rulesets), step 4 (the first
+live payment on the new home), `main` (after 5 Dec 2026), step 6 (outside repositories), step 7 (from 6 Dec 2026, after
+the last open escrow above, 2026-11-13 15:48 UTC).
 
 
 ## 2. knos-oidc-rotate (a program upgrade, signed through Squads)
@@ -182,13 +188,15 @@ git push origin labs
 then change the two links (CHANGELOG.md, DISCLOSURE.md) to `https://github.com/drexthealpha/Knos/tree/archive/labs` and delete
 the repository. Nothing in Knos runs or imports it.
 
-Done on the 0.3.34 branch (15 Oct 2026): fetched, main = ed6136f9e3e1dd45b3d0c97facd1608b98175625 (one commit, 306
-files), kept as the local branch `labs-src`; its `.github/workflows`: fund.yml, prove.yml, relay.yml (workflow_call),
-prove-demo.yml (workflow_dispatch), fuzz.yml, index.yml, worker.yml (schedule, workflow_dispatch), network.yml (push,
-release, schedule, workflow_dispatch), program.yml (push, workflow_dispatch), tests.yml (push, pull_request, schedule,
-workflow_dispatch). The links in CHANGELOG.md, DISCLOSURE.md, docs/reference/README.md and `knos init`'s note name
-`https://github.com/drexthealpha/Knos/tree/archive/labs`. Waits: the commit that removes `.github/workflows` and the push of
-`labs` (the release's one push), then the deletion, from 6 Dec 2026 (tag v0.3.28 links it).
+Done on the 0.3.34 branch (15 Oct 2026): fetched, main = ed6136f9e3e1dd45b3d0c97facd1608b98175625 (one commit, 306 files),
+kept as the local branch `labs-src`; its `.github/workflows`: fund.yml, prove.yml, relay.yml (workflow_call), prove-demo.yml
+(workflow_dispatch), fuzz.yml, index.yml, worker.yml (schedule, workflow_dispatch), network.yml (push, release, schedule,
+workflow_dispatch), program.yml (push, workflow_dispatch), tests.yml (push, pull_request, schedule, workflow_dispatch). The
+links in CHANGELOG.md, DISCLOSURE.md, docs/reference/README.md and `knos init`'s note name
+`https://github.com/drexthealpha/Knos/tree/archive/labs`.
+
+Waits: the commit that removes `.github/workflows` and the push of `labs` (the release's one push), then the deletion, from
+6 Dec 2026 (tag v0.3.28 links it).
 
 ## 4. knos-playground and knos-rc (not folded)
 
@@ -199,21 +207,27 @@ workflow_dispatch). The links in CHANGELOG.md, DISCLOSURE.md, docs/reference/REA
   (FAUCET_ISSUE), `src/knos/claim_guard.py`, `src/knos/commands.py` (FAUCET_WHERE), `src/knos/controls.py`, and
   waiting until its open funded tasks are paid or refunded.
 
-  Done on the 0.3.34 branch (15 Oct 2026; the founder decided yes on 14 Oct): every constant and page above names
-  drexthealpha/Knos, and so do `scripts/pages_data.py`, `scripts/exercise_public.py`, `scripts/task_board.py`,
-  `examples/witnessed/witness.py`, the console's sample and the docs; `python scripts/small_repos.py fold` writes the
-  playground's files into Knos (the issue template `fund-a-test-task.md`, `words.py`, `check.py`, `tasks/<task>.py`
-  and their public examples, the starter checks under `.knos/acceptance/1..200/`); the faucet is the `faucet` job of
-  Knos's own `worker.yml`. `FAUCET_ISSUE` and `FAUCET_WHERE` list the faucet issue by its label, so no number is
-  written. Waits: the founder opens one issue in drexthealpha/Knos titled "Faucet: test USDC for your first task",
-  labels it `faucet` and pins it, and adds the secrets `KNOS_FAUCET_KEY` and `KNOS_RELAY_KEY` to Knos
-  ([FAUCET.md](FAUCET.md)), when the branch reaches `main` (after 5 Dec 2026). knos-playground's 35 open orders free
-  themselves by 2026-11-13 15:48 UTC; it can be deleted from 6 Dec 2026.
-- knos-rc is the staging copy of Knos itself. Since 0.3.34 `.github/workflows/hermetic.yml` runs in Knos too, and
-  docs/kani.json, docs/capabilities.json, docs/facts.json, the fuzz count in docs/bench.json, OUTCOMES.md, RELAY.md
-  and VERIFIER.md cite runs of Knos ([MONOREPO.md](MONOREPO.md), its row). Still cited from knos-rc: `tests_passing`
-  in docs/bench.json (re-source it from a green tests.yml run of Knos), REPRODUCE.md's own run, two rows of BENCH.md
-  and the staging rehearsal of `scripts/exercise_public.py`. Re-source the first two, then delete it.
+Done on the 0.3.34 branch (15 Oct 2026; the founder decided yes on 14 Oct): every constant and page above names
+drexthealpha/Knos, and so do `scripts/pages_data.py`, `scripts/exercise_public.py`, `scripts/task_board.py`,
+`examples/witnessed/witness.py`, the console's sample and the docs; `python scripts/small_repos.py fold` writes the
+playground's files into Knos (the issue template `fund-a-test-task.md`, `words.py`, `check.py`, `tasks/<task>.py` and
+their public examples, the starter checks under `.knos/acceptance/1..200/`); the faucet is the `faucet` job of Knos's
+own `worker.yml`.
+
+`FAUCET_ISSUE` and `FAUCET_WHERE` list the faucet issue by its label, so no number is written.
+
+Waits: the founder opens one issue in drexthealpha/Knos titled "Faucet: test USDC for your first task", labels it
+`faucet` and pins it, and adds the secrets `KNOS_FAUCET_KEY` and `KNOS_RELAY_KEY` to Knos ([FAUCET.md](FAUCET.md)),
+when the branch reaches `main` (after 5 Dec 2026). knos-playground's 35 open orders free themselves by 2026-11-13
+15:48 UTC; it can be deleted from 6 Dec 2026. - knos-rc is the staging copy of Knos itself.
+
+Since 0.3.34 `.github/workflows/hermetic.yml` runs in Knos too, and docs/kani.json, docs/capabilities.json,
+docs/facts.json, the fuzz count in docs/bench.json, OUTCOMES.md, RELAY.md and VERIFIER.md cite runs of Knos
+([MONOREPO.md](MONOREPO.md), its row). Still cited from knos-rc: `tests_passing` in docs/bench.json (re-source it
+from a green tests.yml run of Knos), REPRODUCE.md's own run, two rows of BENCH.md and the staging rehearsal of
+`scripts/exercise_public.py`.
+
+Re-source the first two, then delete it.
 
 ## 5. The template repositories and knos-wanted
 

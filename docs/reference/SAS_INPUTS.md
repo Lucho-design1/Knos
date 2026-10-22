@@ -3,7 +3,9 @@
 Knos writes its acceptance receipts as Solana Attestation Service attestations ([RECEIPT.md](RECEIPT.md)). This page is
 the other direction: an attestation someone else signed is a condition Knos checks before it counts evidence or
 releases money. An accreditation body attests that a lab is accredited; a core facility attests that a sample was run;
-a reviewer panel attests a result. None of them needs GitHub or CI, only a key its credential authorizes.
+a reviewer panel attests a result.
+
+None of them needs GitHub or CI, only a key its credential authorizes.
 
 `knos.platform.sas.check(ledger, credential, schema, subject, expect=...)` follows the service's own verification rules
 ([README, "Verifying an attestation from another program"](https://github.com/solana-foundation/solana-attestation-service),

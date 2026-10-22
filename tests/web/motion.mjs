@@ -47,7 +47,7 @@ const world = async (o = {}) => {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: "dark", ...o });
   // GitHub and devnet are what the page reads when a reader asks it something; they are refused here, and counted apart
   // besides GitHub and devnet, the one host the bare address may ask: the app's list of research products (web/home.js, on a reader's first move)
-  await ctx.route("**/*", (route) => { const u = route.request().url(); if (u.startsWith(base)) return route.continue(); if (!/^https:\/\/(api\.github\.com|api\.devnet\.solana\.com)\/|^https:\/\/knos\.onrender\.com\/api\/front$/.test(u)) strangers.push(u); return route.abort(); });
+  await ctx.route("**/*", (route) => { const u = route.request().url(); if (u.startsWith(base)) return route.continue(); if (!/^https:\/\/(api\.github\.com|api\.devnet\.solana\.com)\/|^https:\/\/knos\.onrender\.com\/api\/(front|proof|vectors)$/.test(u)) strangers.push(u); return route.abort(); });
   return ctx;
 };
 const open = async (ctx, hash = "#check") => { const page = await ctx.newPage(); await page.goto(base + hash, { waitUntil: "load" }); await page.evaluate(() => document.fonts.ready); await page.waitForSelector("#mark3d .face", { state: "attached" }); return page; };
@@ -121,7 +121,7 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   check("  the pointer over it turns nothing", (await page.$eval("#mark3d", (e) => e.getAttribute("style"))) === null && (await page.evaluate(() => document.getAnimations().length)) === 0);
   check("  nothing is held back to be revealed", await page.evaluate(() => !document.documentElement.classList.contains("k-motion") && [...document.querySelectorAll("main .card")].every((c) => getComputedStyle(c).opacity === "1")));
   await page.evaluate(() => { window.transitions = 0; if (document.startViewTransition) { const real = document.startViewTransition.bind(document); document.startViewTransition = (f) => { window.transitions++; return real(f); }; } });
-  await page.click('#nav a[href="#pricing"]');
+  await page.click("#more-button"); await page.click('#more-list a[href="#pricing"]');     // Pricing is under More
   await page.waitForFunction(() => location.hash === "#pricing" && !document.getElementById("view-pricing").hidden);
   check("  a change of page changes at once", await page.isVisible("#view-pricing") && await page.isHidden("#view-check") && (await page.evaluate(() => window.transitions + document.getAnimations().length)) === 0);
   const still = await page.evaluate(async () => {
@@ -240,7 +240,7 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   // a change of page morphs
   await page.evaluate(() => { scrollTo(0, 0); window.transitions = 0; const real = document.startViewTransition.bind(document); document.startViewTransition = (f) => { window.transitions++; return real(f); }; });
   // a page opened for the first time is shown in the task of the press, its code still on its way: nothing to cross to yet
-  await page.click('#nav a[href="#pricing"]');
+  await page.click("#more-button"); await page.click('#more-list a[href="#pricing"]');     // Pricing is under More
   await page.waitForSelector("#view-pricing", { state: "visible" });
   check("  a page's first opening is no view transition: it is shown at once, and its code comes after", (await page.evaluate(() => window.transitions)) === 0 && await page.isHidden("#view-check") && (await page.evaluate(() => location.hash)) === "#pricing");
   await page.waitForFunction(() => document.documentElement.dataset.ready === "pricing");
@@ -251,7 +251,7 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   // browser's picture of it costs more than MORPH_BUDGET_MS on a slow runner (160-210 ms against 135-150 rested, measured
   // in WSL), web/motion.js then rightly stops crossing, and the crossing below has nothing to show (seen: [])
   await settle(page);
-  await page.click('#nav a[href="#pricing"]');
+  await page.click("#more-button"); await page.click('#more-list a[href="#pricing"]');     // Pricing is under More
   await page.waitForSelector("#view-pricing", { state: "visible" });
   check("  from then on a link to another page is a view transition, and the page asked for is shown", crossed === 1 && (await page.evaluate(() => window.transitions)) === 2 && await page.isHidden("#view-check") && (await page.evaluate(() => location.hash)) === "#pricing");
   await settle(page);
@@ -371,7 +371,7 @@ for (const scheme of ["dark", "light"]) {
   }
   await ctx.close();
 }
-check("weight: no request left the site for anyone but GitHub, devnet and the app's list of products, which were refused", strangers.length === 0, strangers);
+check("weight: no request left the site for anyone but GitHub, devnet and the app's list of products, proof and numbers, which were refused", strangers.length === 0, strangers);
 
 await browser.close(); server.close();
 console.log(fails ? `${fails} checks failed` : "motion: every check held");

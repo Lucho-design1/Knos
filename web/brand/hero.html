@@ -1,13 +1,17 @@
 <div class="k-hero" id="k-hero" data-api="{API}" data-app="{APP}">
   <h1 id="k-mission" class="k-mission">Carry research from every field of science across the valley of death.</h1>
-  <p class="k-lede">Paste a paper or an idea. Qloo shows who would buy it, where, and at what price.</p>
   <form class="k-ask" id="k-ask" autocomplete="off" role="search" aria-label="Check demand">
     <input id="k-q" name="q" type="text" aria-label="A DOI, an arXiv id or an idea" maxlength="500" placeholder="A DOI, an arXiv id or an idea" enterkeyhint="go" spellcheck="false">
     <button id="k-go" type="submit">Check demand</button>
   </form>
-  <p class="k-try"><span>Try</span>
-    <button type="button" class="k-chip" data-q="10.1038/nature16521">sweat glucose sensor</button>
-    <button type="button" class="k-chip" data-q="10.1126/science.aam8743">water from desert air</button>
-    <button type="button" class="k-chip" data-q="a smart water bottle that glows to remind you to drink">a glowing water bottle</button></p>
+  <p class="k-try" aria-label="Examples, one per technology">
+    <button type="button" class="k-chip" data-tech="ai" data-q="an AI tutor for high school math">AI tutor</button>
+    <button type="button" class="k-chip" data-tech="web3" data-q="a crypto wallet for teenagers">Web3 wallet</button>
+    <button type="button" class="k-chip" data-tech="quantum" data-q="a quantum computing course for teenagers">Quantum course</button>
+    <button type="button" class="k-chip" data-tech="energy" data-q="a home battery that charges from the grid at night">Energy battery</button>
+    <button type="button" class="k-chip" data-tech="biotech" data-q="10.1038/nature16521">Biotech sensor</button>
+    <button type="button" class="k-chip" data-tech="materials" data-q="10.1126/science.aam8743">Materials water</button>
+    <button type="button" class="k-chip" data-tech="pqc" data-q="a post-quantum encrypted messaging app">PQC messaging</button></p>
   <div id="k-card" class="k-slot" aria-live="polite"></div>
+<!-- k-vectors -->
 </div>

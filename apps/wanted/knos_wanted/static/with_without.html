@@ -35,12 +35,15 @@
   <a class="brand" href="/#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
   <nav id="nav" aria-label="Knos">
     <a href="/#home">Check demand</a>
+    <a href="/companies">Companies</a>
+    <a href="/fields">Fields</a>
     <a href="/#projects">Projects</a>
-    <a href="https://drexthealpha.github.io/Knos/#pricing">Pricing</a>
     <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
     <div class="more" id="more">
       <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
       <div class="more-list" id="more-list">
+        <a href="/money">The money</a>
+        <a href="https://drexthealpha.github.io/Knos/#pricing">Pricing</a>
         <a href="/#verify">How we verify</a>
         <a href="/#buy">Back a product</a>
         <a href="/#fund">Fund a milestone</a>
@@ -73,8 +76,7 @@
   <h1>With and without Qloo</h1>
   <p>Twenty ideas from ten fields, each answered twice: from open signals only, then with Qloo added.</p>
   <p id="ww-sum" class="ww-sum"></p>
-  <p class="small muted">Open signals: Wikimedia pageviews, GDELT news, Hacker News, OpenAlex, World Bank and Wikidata, all keyless, each named as
-    its own source. Qloo describes aggregate taste: not causal, not about a person. Shown as measured, whatever it shows.</p>
+  <p class="small muted">Six keyless open sources, each named. Qloo: aggregate taste, not causal.</p>
   <ol class="ww-list" id="ww" aria-label="Ideas, open signals and Qloo"></ol>
   <details class="small"><summary>The rules</summary><ul id="ww-rules"></ul><p id="ww-rule"></p></details>
   <p class="small"><a href="/qloo-safe-use">How Knos uses Qloo safely</a> · <a href="/">Check your own idea</a></p>
@@ -118,7 +120,7 @@ const sig = (x, ph) => x[1] === null || x[1] === undefined ? `<li>${esc(x[0])}: 
     <span class="ww-field">${esc(x.field)}</span><h2>${esc(x.idea)}</h2>
     <div class="ww-sides">
       <section class="ww-side"><h3>Open signals only</h3><p>${word(open(x).verdict)}${open(x).tier ? ` · price tier ${esc(open(x).tier)}` : ""}</p>
-        <p class="muted">No audience, no cities: no open source says who or where.</p><ul>${(open(x).signals || []).map((g) => sig(g, open(x).phrase)).join("")}</ul></section>
+<ul>${(open(x).signals || []).map((g) => sig(g, open(x).phrase)).join("")}</ul></section>
       <section class="ww-side" data-qloo><h3>With Qloo added</h3><p>${word(x.with.verdict)}</p>
         <p>${esc(x.with.audience || "no audience")} · ${esc((x.with.cities || []).join(", ") || "no cities")} · ${esc(x.with.tier ? "price tier " + x.with.tier : "no price tier")}</p>
         <p><a data-trace href="/trace.html?hash=${esc(x.with.hash)}">The Qloo calls: request, result and limit</a></p></section>

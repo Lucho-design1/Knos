@@ -8,7 +8,9 @@
 
 A key is a secret that lets its holder sign. The programs (code on Solana that holds the money) obey a few keys. Today
 the founder holds all of them. So one person could change the programs, after a public wait. The plan adds key holders
-who are not the founder. It gives code changes and fees different keys. And it leaves the guardian one power: to pause.
+who are not the founder. It gives code changes and fees different keys.
+
+And it leaves the guardian one power: to pause.
 
 **Outside key holders today: 0.** An outside key holder is a person who is not the founder and holds a key. Nobody has
 been asked yet. [KEYHOLDER.md](KEYHOLDER.md) says how a person can ask to be one.
@@ -74,11 +76,12 @@ Published: the upgrade that sets the new `FEE_OWNER`, its address in
 
 ### Step 4: a guardian that can only pause
 
-Pausing stops new funding for at most 7 days, then ends by itself. It never moves money. It never stops a payment, a
-refund or a withdrawal. Today the guardian can do two more things in the verifier. It can approve a new signing key
-(a key GitHub signs with), which lets the verifier say yes. And it can refuse a key for ever. The plan keeps only pauses. Refusing a key becomes
-a pause of that key, which ends by itself unless the upgrade keys confirm it. Approving a new key moves to the upgrade
-keys, behind the time lock. This needs an upgrade of the verifier (knos_oidc).
+Pausing stops new funding for at most 7 days, then ends by itself. It never moves money. It never stops a payment, a refund or a withdrawal.
+Today the guardian can do two more things in the verifier. It can approve a new signing key (a key GitHub signs with), which lets the verifier
+say yes.
+
+And it can refuse a key for ever. The plan keeps only pauses. Refusing a key becomes a pause of that key, which ends by itself unless the
+upgrade keys confirm it. Approving a new key moves to the upgrade keys, behind the time lock. This needs an upgrade of the verifier (knos_oidc).
 
 Published: the upgrade, and a test that the guardian can sign nothing but a pause.
 

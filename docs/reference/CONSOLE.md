@@ -1,15 +1,17 @@
 # The console: an operator's guide
 
 The Buy page of the site (`#buy`, [`web/buyer.js`](../../web/buyer.js) and [`web/console.js`](../../web/console.js)) is for
-the person who authorises a payment and has to defend it afterwards, and for the supplier on the other side. It is a
-static page: it reads GitHub's public API, Solana devnet and this site's own files, and nothing else. It sends nothing
-to Solana. Money is test USDC on devnet.
+the person who authorises a payment and has to defend it afterwards, and for the supplier on the other side. It is a static
+page: it reads GitHub's public API, Solana devnet and this site's own files, and nothing else. It sends nothing to Solana.
+
+Money is test USDC on devnet.
 
 The page is in four parts, one shown at a time under its tab: **Offers** (fund one piece of work in three steps, and the
 standing offers a repository's files hold), **Budgets** (the envelopes), **Approvals** (who approves each offer, and what
 needs a person) and **Invoice** (what happened to an order, one deliverable's seven answers, the month's statement).
-This guide says where the page answers each of the seven questions that person is asked, how many steps a governed
-order takes, and what the page does not do.
+
+This guide says where the page answers each of the seven questions that person is asked, how many steps a governed order
+takes, and what the page does not do.
 
 ## The seven questions, and where each is answered
 
@@ -44,8 +46,9 @@ is:
 
 Before that upgrade executed (9 Oct 2026) the public program charged the 0.3.14 fee (knos_pay 2.1): never less than
 0.40, so an order of 5 cost 8.00%. The page still shows it when the program answers as 2.1. A line under the fee says
-which rule the number is and what the other rule would charge. Orders funded before the upgrade keep the rate fixed at
-their funding.
+which rule the number is and what the other rule would charge.
+
+Orders funded before the upgrade keep the rate fixed at their funding.
 
 | Order | Fee (0.3.14 fee, knos_pay 2.1) | Fee as a share |
 | ---: | ---: | ---: |
@@ -93,10 +96,12 @@ its policy is met, those lines stay within their purchase order, and the line is
 lines resolve themselves into one action, **Approve N ordinary lines**; every other line is an exception, read on its
 own, in the words above. The version changes whenever a rule does, so a record is always read against its own rules.
 
-The approver has two actions. **Approve N ordinary lines** asks for a name and a role (a limit and a reason are
-optional) and records what `knos statement approve` records (a status file beside the statement; a line held as over its purchase order is left
-out, and the command line reads that status as its own: `tests/test_site_approver.py`). **Message the supplier** opens
-a message that is already written: the line, the reason, what settles it. Nothing is sent by the page.
+The approver has two actions. **Approve N ordinary lines** asks for a name and a role (a limit and a reason are optional) and records what
+`knos statement approve` records (a status file beside the statement; a line held as over its purchase order is left out, and the command line
+reads that status as its own: `tests/test_site_approver.py`). **Message the supplier** opens a message that is already written: the line, the
+reason, what settles it.
+
+Nothing is sent by the page.
 
 **The approval record.** Approving also makes `statement-<invoice>.approval.json` (kind `knos-approval-record`,
 version 1): the statement's sha256, the policy with its version and the approver's limit (and the policy's sha256),
@@ -137,8 +142,9 @@ lets it through and that the issue was not billed before. From an empty page it 
 
 Then, on GitHub: paste, and press Comment. No YAML is edited and no terminal is opened. The number is counted by
 `tests/web/buyer.mjs` in headless Chromium against mocked chain data, and `tests/test_site_buyer.py` fails if this
-page states another. Leaving the template as it is makes it 2 fields. Naming who will post the comment, so that the
-"who may spend" rule is judged too, adds one optional field.
+page states another. Leaving the template as it is makes it 2 fields.
+
+Naming who will post the comment, so that the "who may spend" rule is judged too, adds one optional field.
 
 What the count does not include, and what was not measured:
 
@@ -171,19 +177,22 @@ What the count does not include, and what was not measured:
 
 ## Private repositories
 
-When the repository is private, or the terms are the private template, step 1 shows a panel before funding. In
-short: a supplier cannot settle a private order alone, because only a run of the buyer's own workflow can accept
-the work; the evidence stays where the buyer controls access; and an arbiter can be named in the funding comment,
-and only then. Knos has no neutral evaluator with its own access to a private repository and keeps no copy of the
-evidence for the supplier. [SECURITY.md](SECURITY.md) has the full account.
+When the repository is private, or the terms are the private template, step 1 shows a panel before funding.
+
+In short: a supplier cannot settle a private order alone, because only a run of the buyer's own workflow can
+accept the work; the evidence stays where the buyer controls access; and an arbiter can be named in the funding
+comment, and only then.
+
+Knos has no neutral evaluator with its own access to a private repository and keeps no copy of the evidence for
+the supplier. [SECURITY.md](SECURITY.md) has the full account.
 
 ## Procurement: offers, budgets, approvals, one deliverable
 
 (Added in Knos 0.3.17, 6 Oct 2026.) The four parts of the page read files in the buyer's repository (`.knos/procurement/`;
-[CONTROLS.md](CONTROLS.md), section 9, is their schema). Until a repository is named they show a made-up
-organisation, set in this project's own repository (drexthealpha/Knos, whose issues are the playground) with made-up
-accounts, and say so. Naming a public repository reads its files through GitHub's API. The page writes
-nothing anywhere.
+[CONTROLS.md](CONTROLS.md), section 9, is their schema). Until a repository is named they show a made-up organisation, set
+in this project's own repository (drexthealpha/Knos, whose issues are the playground) with made-up accounts, and say so.
+
+Naming a public repository reads its files through GitHub's API. The page writes nothing anywhere.
 
 | Screen | What it shows | What leaves the page |
 | --- | --- | --- |

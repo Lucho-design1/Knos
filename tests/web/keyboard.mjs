@@ -102,9 +102,9 @@ for (const reduced of [true, false]) {
   }
   // the menu, by keyboard: Enter opens it, Escape closes it and gives the focus back
   await page.focus("#menu"); await page.keyboard.press("Enter");
-  check(`${tag}: Enter on Menu opens the bar's links`, (await page.getAttribute("#menu", "aria-expanded")) === "true" && await page.isVisible('#nav a[href="#pricing"]'));
+  check(`${tag}: Enter on Menu opens the bar's links`, (await page.getAttribute("#menu", "aria-expanded")) === "true" && await page.isVisible('#nav > a[href="#home"]'));
   await page.keyboard.press("Escape");
-  check(`${tag}: Escape closes it and gives Menu the focus back`, (await page.getAttribute("#menu", "aria-expanded")) === "false" && await page.isHidden('#nav a[href="#pricing"]') && (await at()).id === "menu");
+  check(`${tag}: Escape closes it and gives Menu the focus back`, (await page.getAttribute("#menu", "aria-expanded")) === "false" && await page.isHidden('#nav > a[href="#home"]') && (await at()).id === "menu");
   check(`${tag}: nobody outside the site was asked, and no error`, strangers.length === 0 && errors.length === 0, [strangers, errors]);
   await ctx.close();
 }

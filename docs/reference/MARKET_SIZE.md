@@ -6,8 +6,9 @@
 
 Knos has no share of any of this. Nothing has been sold, and Knos's revenue is 0. Every outside figure has its
 link, its date and one label: **[company-reported]** (the company said it, not audited) or **[press]** (a news
-report, often from an unnamed person). **[assumption]** means we chose the number; nobody measured it. Each source
-was read on 10 Oct 2026. Nothing here is a forecast.
+report, often from an unnamed person). **[assumption]** means we chose the number; nobody measured it.
+
+Each source was read on 10 Oct 2026. Nothing here is a forecast.
 
 ```mermaid
 flowchart TB

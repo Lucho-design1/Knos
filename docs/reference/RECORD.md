@@ -4,7 +4,9 @@
 
 The party whose work is rated (an agent builder, an agency, a vendor) gets four things from Knos and pays for none of
 them. The buyer still pays (the price book in [PILOT.md](PILOT.md)); the rated party never pays, and a record cannot
-be bought or changed for money. One limit, first: Knos wrote these records and nobody outside Knos has reviewed them.
+be bought or changed for money.
+
+One limit, first: Knos wrote these records and nobody outside Knos has reviewed them.
 
 | what | command | what it writes |
 |---|---|---|
@@ -13,10 +15,12 @@ be bought or changed for money. One limit, first: Knos wrote these records and n
 | the install | one `uses:` line (below) | the free check on every pull request, posted once, with its receipt |
 | the receipt for an invoice | `knos record receipt <acceptance receipt file>` | one PDF page and its JSON |
 
-The record's page on the site is `#record=<slug>`. The file and its page are free, static and unsigned, and each
-says the day it was built. The price book's Record line (0.10 USD a lookup, paid per call) is a server anyone can run
-and Knos does not host; its answer adds a signature with an expiry, a summary and the history a supplier grants:
-[section 5](#5-the-lookup-priced-for-machines). Record budget: zero revenue until someone buys it.
+The record's page on the site is `#record=<slug>`. The file and its page are free, static and unsigned, and each says
+the day it was built.
+
+The price book's Record line (0.10 USD a lookup, paid per call) is a server anyone can run and Knos does not host;
+its answer adds a signature with an expiry, a summary and the history a supplier grants: [section
+5](#5-the-lookup-priced-for-machines). Record budget: zero revenue until someone buys it.
 
 ## 1. The record
 
@@ -35,7 +39,9 @@ overturned on appeal, reverted. Each count is `{"n", "from", "evidence"}`: `n` i
 Accepted and rejected come from the log when it holds the supplier, and from the memory otherwise: they are never
 added, because both would count the same work. Insufficient evidence, disputed and reverted are the log's; appealed
 and overturned are the memory's. `orders.parts` says which sources were read, the log's head and the repositories
-recalled. `orders.sample`, `orders.period` and `orders.category` stand beside the counts.
+recalled.
+
+`orders.sample`, `orders.period` and `orders.category` stand beside the counts.
 
 **`public`: from public pull requests, not from Knos orders.** For an agent the Agent PR Index measures
 ([INDEX.md](INDEX.md)), its row of the newest week: the merged pull requests that claimed passing tests (`sample`),
@@ -48,9 +54,11 @@ Nothing in the file is a score. `sha256` is the SHA-256 of the file's canonical 
 
 What the records hold today: one file for each agent the index ranks, and each holds its index row only. The
 `public` part is that row: the merged pull requests that claimed passing tests, how many had a failed check, the
-interval, the weeks read. Every count of `orders` is zero with sample zero, and the file says so: no work has been
-settled through Knos for any ranked agent, and **no record holds a Knos order of an outside supplier yet**. A
-record is therefore not yet something to price a supplier on ([ADVANCE.md](ADVANCE.md)).
+interval, the weeks read.
+
+Every count of `orders` is zero with sample zero, and the file says so: no work has been settled through Knos for
+any ranked agent, and **no record holds a Knos order of an outside supplier yet**. A record is therefore not yet
+something to price a supplier on ([ADVANCE.md](ADVANCE.md)).
 
 ## 2. The badge
 
@@ -84,13 +92,16 @@ jobs:
     uses: drexthealpha/Knos/.github/workflows/supplier.yml@v0.4.0
 ```
 
-The last line is the install. It runs the free check on every pull request and none of the pull request's code,
-posts the result as one comment that later runs rewrite, and attaches the receipt as the artifact
-`knos-receipt-<pull request>` (`knos.check-receipt/1`: the repository, the pull request, the head commit, the result,
-the judge's evidence and its sha256). A pull request from a fork runs with a token that can only read: no comment is
-posted then, and the result is the job's summary and conclusion. That receipt is the check's own record, signed by
-nobody; it is not an acceptance receipt and nothing is paid on it. Name the workflow by a full commit sha instead of
-the tag when a moved tag must not change what runs.
+The last line is the install. It runs the free check on every pull request and none of the pull request's code, posts
+the result as one comment that later runs rewrite, and attaches the receipt as the artifact `knos-receipt-<pull
+request>` (`knos.check-receipt/1`: the repository, the pull request, the head commit, the result, the judge's
+evidence and its sha256).
+
+A pull request from a fork runs with a token that can only read: no comment is posted then, and the result is the
+job's summary and conclusion. That receipt is the check's own record, signed by nobody; it is not an acceptance
+receipt and nothing is paid on it.
+
+Name the workflow by a full commit sha instead of the tag when a moved tag must not change what runs.
 
 ## 4. The receipt to send with an invoice
 
@@ -98,8 +109,10 @@ the tag when a moved tag must not change what runs.
 version 2 or later) and writes one A4 page and its JSON (`knos.invoice-receipt/1`): what was agreed (the order, the
 terms' hash, the amount), what was delivered (the repository, the pull request, the commit), what was accepted (the
 verdict, the checks, when, what was paid), by which evaluator (its kind and version, the issuer that signed for it,
-its independence), and the evidence hashes. A receipt that does not check gets no page. The page names the one
-command that checks the receipt file with no network:
+its independence), and the evidence hashes.
+
+A receipt that does not check gets no page. The page names the one command that checks the receipt file with no
+network:
 
 ```
 knos receipt <file>
@@ -109,11 +122,13 @@ The page restates the receipt; the receipt file is the evidence, and the supplie
 
 ## 5. The lookup, priced for machines
 
-`knos record serve <offer.json>` (`python -m knos.record_api`, [`examples/record_api`](../../examples/record_api))
-serves the records two ways: `/records/<slug>.json` free, and `/lookup/<slug>` for 0.10 test USDC a call, paid
-through the proposed x402 `knos-order` scheme ([X402.md](X402.md), "Record"). One order buys fifty lookups (50 x 0.10 = 5.00),
-because the program takes no order under 5.00; each call is signed by the wallet that funded the order, and a replayed call is
-refused. The reader pays. The rated supplier never pays, for its record or for a grant.
+`knos record serve <offer.json>` (`python -m knos.record_api`, [`examples/record_api`](../../examples/record_api)) serves the
+records two ways: `/records/<slug>.json` free, and `/lookup/<slug>` for 0.10 test USDC a call, paid through the proposed x402
+`knos-order` scheme ([X402.md](X402.md), "Record").
+
+One order buys fifty lookups (50 x 0.10 = 5.00), because the program takes no order under 5.00; each call is signed by the
+wallet that funded the order, and a replayed call is refused. The reader pays. The rated supplier never pays, for its record
+or for a grant.
 
 **budget: zero revenue until someone buys it.** Knos hosts no such server, no judge signs for lookups served, and
 nobody outside has paid for one. The paid answer below is built and tested here; it has not been served on devnet.
@@ -139,7 +154,9 @@ nobody outside has paid for one. The paid answer below is built and tested here;
 The answer (`knos.record-answer/1`) is signed over the record's `sha256`, the events log's head when the record was
 built from one, the cluster time and slot the server read from the Clock account, `produced` and `expires`. The three
 times work like a certificate's validity check ([RFC 6960](https://www.rfc-editor.org/rfc/rfc6960)): made at, valid
-from, valid until (producedAt, thisUpdate, nextUpdate). The reader holds the answer to its own clock.
+from, valid until (producedAt, thisUpdate, nextUpdate).
+
+The reader holds the answer to its own clock.
 
 ```
 knos record verify answer.json --operator <the operator's public key>
@@ -176,23 +193,28 @@ knos record grant <slug> --reader <the reader's wallet> --field disputes --field
 
 The reader sends the grant with its paid call (header `Record-Grant`). The server releases a field only when the
 grant is signed by the key its operator holds for that supplier (`--suppliers`, a file of slug and public key), names
-the wallet that paid, names the field, and is in force. Otherwise the field reads `not granted`, with what it would
-hold and never the data. The operator decides which key is a supplier's: nothing on chain binds the two yet.
+the wallet that paid, names the field, and is in force.
+
+Otherwise the field reads `not granted`, with what it would hold and never the data. The operator decides which key
+is a supplier's: nothing on chain binds the two yet.
 
 ### The summary
 
 One function for every supplier (`knos.record_answer.summary`): accepted, rejected, insufficient evidence and
 disputed over deliverables with a verdict; reverted over deliverables on record; overturned over rejections appealed;
 failed checks over merged pull requests that claimed passing tests. Each is `{k, n, of, share, ci95}`, the interval
-computed as the Agent PR Index computes it ([INDEX.md](INDEX.md)). `score` is `null`: nothing is weighted or added
-into one figure. Not a rating of defect-free work.
+computed as the Agent PR Index computes it ([INDEX.md](INDEX.md)).
+
+`score` is `null`: nothing is weighted or added into one figure. Not a rating of defect-free work.
 
 ### Availability
 
 The answer carries the operator's promise. The default, and the only one on devnet: uptime none, support none,
-retention none. An operator states its own in the offer's `availability`. `knos record serve --health` (and
-`GET /health`) says whether the records are readable, whether the chain answers, whether answers are signed and by
-which key, and whether the count of each order survives a restart; it exits 0 only when the server can answer.
+retention none. An operator states its own in the offer's `availability`.
+
+`knos record serve --health` (and `GET /health`) says whether the records are readable, whether the chain answers,
+whether answers are signed and by which key, and whether the count of each order survives a restart; it exits 0
+only when the server can answer.
 
 ## What this does not show
 

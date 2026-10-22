@@ -2,8 +2,10 @@
 
 A chain is public and permanent. Nothing written to it can be erased or corrected, and anyone can read it without
 asking. This page says, for each way of using Knos, what a stranger can learn, so a buyer can decide before the
-first order. Everything here is on Solana devnet with test USDC. [SECURITY.md](SECURITY.md) section 12 and
-[CONTROLS.md](CONTROLS.md) hold the same facts with the tests that check them.
+first order. Everything here is on Solana devnet with test USDC.
+
+[SECURITY.md](SECURITY.md) section 12 and [CONTROLS.md](CONTROLS.md) hold the same facts with the tests that
+check them.
 
 ## 1. What a payment reveals, even for a private repository
 
@@ -47,10 +49,11 @@ It does not hide:
 It also changes who is trusted: nobody outside the organisation can check what the attestor read. That is on the
 receipt, under "What trust remains".
 
-A buyer who cannot let even an attestor's tokens name its repositories, or a supplier who will not rely on a judge
-the buyer alone controls, has another path: the acceptance runs on a runner inside the network, only a verdict, hashes
-and the forge's signed token leave, and the evidence is sealed to both parties ([PRIVATE.md](PRIVATE.md)). No
-customer has run it.
+A buyer who cannot let even an attestor's tokens name its repositories, or a supplier who will not rely on a judge the
+buyer alone controls, has another path: the acceptance runs on a runner inside the network, only a verdict, hashes and
+the forge's signed token leave, and the evidence is sealed to both parties ([PRIVATE.md](PRIVATE.md)).
+
+No customer has run it.
 
 A private repository that relays its own tokens with its own key posts nothing as a comment and writes nothing to
 the public relay's log. `knos receipt mirror` and `knos bundle make` build nothing for a private order, so neither
@@ -62,14 +65,18 @@ The meter counts attested evaluations. In its individual mode each evaluation is
 buyer's id, the seller's id, the order, the artifact, the policy, the milestone and the verdict.
 
 In batch mode none of that is on chain per evaluation. Each evaluation is one line of a ledger file that the buyer
-keeps, and the seller keeps its own, wherever each chooses: a repository, a bucket, a disk. The chain receives one
-record per batch: the buyer's id, the seller's id, the month, a sequence number, how many evaluations, how many
-accepted, their value, and one 32-byte fingerprint (a Merkle root) of all the evaluations' ids.
+keeps, and the seller keeps its own, wherever each chooses: a repository, a bucket, a disk.
 
-So the chain shows that these two parties did this much business this month, and nothing about which orders,
-which artifacts or which verdicts. A party who holds the ledger can prove one evaluation was counted (an inclusion
-proof against the root) without showing the others. A seller's own count of the same month is on chain beside the
-buyer's, so a difference between them is public as two numbers; which evaluations differ is in the ledgers only.
+The chain receives one record per batch: the buyer's id, the seller's id, the month, a sequence number, how many
+evaluations, how many accepted, their value, and one 32-byte fingerprint (a Merkle root) of all the evaluations'
+ids.
+
+So the chain shows that these two parties did this much business this month, and nothing about which orders, which
+artifacts or which verdicts. A party who holds the ledger can prove one evaluation was counted (an inclusion proof
+against the root) without showing the others.
+
+A seller's own count of the same month is on chain beside the buyer's, so a difference between them is public as
+two numbers; which evaluations differ is in the ledgers only.
 
 ## 4. Retention
 
@@ -105,16 +112,19 @@ data someone shows you now is the data that was hashed then. It proves two thing
 
 `knos observe <order address | transaction>` plays the outsider. It reads only what anyone can read with no account
 and no permission: the transactions and accounts of the Knos programs, and GitHub's public API with no credential
-(`--offline` skips that). For each fact it says whether the outsider learns it, learns only a hash of it, or does
-not, and which log line, account field or token claim it was read from. `knos observe --graph <owner id>` does the
-same for an organisation's whole history; `--json` prints either as data.
+(`--offline` skips that).
+
+For each fact it says whether the outsider learns it, learns only a hash of it, or does not, and which log line,
+account field or token claim it was read from. `knos observe --graph <owner id>` does the same for an
+organisation's whole history; `--json` prints either as data.
 
 The three tables below are that command's output for one recorded history: three work orders funded from one
 organisation's Balance on the programs' test builds (LiteSVM), kept in `tests/data/observe.json`. They are written
 between the marks by `python -m knos.observe --render-doc`, and `tests/test_observe.py` fails when they are stale or
-when the programs no longer write what the record holds. The ids, names and addresses are the test's own; the
-amounts are test money. Names were not looked up (`--offline`), so a name is shown only where a signed token
-carried it.
+when the programs no longer write what the record holds.
+
+The ids, names and addresses are the test's own; the amounts are test money. Names were not looked up (`--offline`),
+so a name is shown only where a signed token carried it.
 
 ### A public order
 
@@ -199,8 +209,9 @@ before.
 So a private order still tells an outsider: which organisation paid, which GitHub account was paid and at which
 wallet, how much, the fee, when it was funded and when it was accepted, which attestor repository judged it and who
 started that run, the commit that was accepted (as a hash), and that it came from the same Balance as the
-organisation's other orders. Two orders of similar size to one payee a day apart are a supplier relationship,
-whatever the repository is called.
+organisation's other orders.
+
+Two orders of similar size to one payee a day apart are a supplier relationship, whatever the repository is called.
 
 ### The whole history of one organisation
 
@@ -227,8 +238,9 @@ Each of these puts less on a public chain. None of them is a privacy guarantee, 
 
 What none of these hide: the GitHub ids of the two parties wherever the programs record them, the wallet of
 whoever pays the transaction fees, the attestor or judge repository of any token that reaches the chain, and the
-fact, the time and the size of every transaction that does. A chain is the wrong place for a relationship whose
-existence is the secret.
+fact, the time and the size of every transaction that does.
+
+A chain is the wrong place for a relationship whose existence is the secret.
 
 Confidential evidence stays in the customer's storage: code, logs, check output, the terms' text and salt of a
 private order, and a batch's ledger are never sent to the chain, and Knos runs no server that receives them

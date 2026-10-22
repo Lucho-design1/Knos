@@ -12,15 +12,16 @@ pub const WORKFLOW: &[u8] = b"OWNER/REPO/.github/workflows/knos-gate.yml@";
 ```
 
 The install link: `init --link OWNER/REPO` (command 1 below) prints a link. It opens GitHub's page for adding
-`.github/workflows/knos-gate.yml` to your repository, already filled in, as a pull request. The site's Install page
-builds the same kind of link for `knos.yml` (`installLink` in [`web/install.js`](../../web/install.js)). That workflow builds your
-program on a GitHub-hosted runner on `main` and on release tags, and has your gate record the build. It needs one
-secret, `GATE_FEE_PAYER`: a key with a little devnet SOL that can do nothing else.
+`.github/workflows/knos-gate.yml` to your repository, already filled in, as a pull request. The site's Install page builds the
+same kind of link for `knos.yml` (`installLink` in [`web/install.js`](../../web/install.js)).
 
-What each record proves: GitHub's own runner ran that workflow file, from that repository, at a named commit of
-`main` or a release tag, and built program bytes whose hash is the one in the record `["build", program, hash]`. `check` then shows, before a vote, whether each pending upgrade's buffer holds recorded
-bytes. It does not prove the commit is good, and nothing on chain makes the multisig wait for a record ("What it
-cannot do", below).
+That workflow builds your program on a GitHub-hosted runner on `main` and on release tags, and has your gate record the build. It
+needs one secret, `GATE_FEE_PAYER`: a key with a little devnet SOL that can do nothing else.
+
+What each record proves: GitHub's own runner ran that workflow file, from that repository, at a named commit of `main` or a release tag, and built program bytes whose hash is the one in the record
+`["build", program, hash]`. `check` then shows, before a vote, whether each pending upgrade's buffer holds recorded bytes.
+
+It does not prove the commit is good, and nothing on chain makes the multisig wait for a record ("What it cannot do", below).
 
 Before the pull request: deploy your gate once (command 1) and hand your program to a time-locked multisig
 (command 2). Teams that already build in a workflow of their own can add the job in `my_gate/gate-job.yml` to it
@@ -42,10 +43,11 @@ Adopters today: 0 ([COMPOSE.md](COMPOSE.md), "Who uses the upgrade gate"). Knos'
 
 ## Three commands
 
-Before them, once: a Squads v4 multisig whose time lock is your delay. The time lock is a number of seconds on the
-multisig account (`timeLock` of `multisigCreateV2` in the Squads SDK; `SetTimeLock` in a config transaction:
-[Squads documentation](https://docs.squads.so/main/development/cli/commands)). Knos uses 691,200 s, 8 days (since 11 Oct 2026; 172,800 s, 48 hours, before). You
-also need the Knos repository checked out and installed (`pip install .`), and the Solana command line.
+Before them, once: a Squads v4 multisig whose time lock is your delay. The time lock is a number of seconds on the multisig account (`timeLock` of
+`multisigCreateV2` in the Squads SDK; `SetTimeLock` in a config transaction: [Squads documentation](https://docs.squads.so/main/development/cli/commands)). Knos
+uses 691,200 s, 8 days (since 11 Oct 2026; 172,800 s, 48 hours, before).
+
+You also need the Knos repository checked out and installed (`pip install .`), and the Solana command line.
 
 **1. Make your gate.** It needs no network. It writes your own copy of the gate program (a Rust crate) and the job your build workflow adds.
 
@@ -53,12 +55,13 @@ also need the Knos repository checked out and installed (`pip install .`), and t
 python examples/upgrade_gate/adopt.py init --repo-id 123456789 --workflow OWNER/REPO/.github/workflows/knos-gate.yml --gate-id GATE_ADDRESS --out my_gate --link OWNER/REPO
 ```
 
-`--repo-id` is `gh api repos/OWNER/REPO --jq .id`; `--gate-id` is `solana address -k gate.json` of a key you made.
-Then build and deploy it with your own key, as any program:
-`cd my_gate && cargo build-sbf && solana program deploy -u devnet --program-id gate.json target/deploy/upgrade_gate.so`.
-Open the link it printed and propose the file as a pull request (or copy `my_gate/.github/workflows/knos-gate.yml`
-by hand; set `PROGRAM` and `MANIFEST` in it to your program). After each build on `main` or a tag it asks GitHub to
-sign `gate:<program>:<hash>` and has the gate record it (`adopt.py record`, fees from a key that holds no power).
+`--repo-id` is `gh api repos/OWNER/REPO --jq .id`; `--gate-id` is `solana address -k gate.json` of a key you made. Then
+build and deploy it with your own key, as any program: `cd my_gate && cargo build-sbf && solana program deploy -u devnet
+--program-id gate.json target/deploy/upgrade_gate.so`.
+
+Open the link it printed and propose the file as a pull request (or copy `my_gate/.github/workflows/knos-gate.yml` by
+hand; set `PROGRAM` and `MANIFEST` in it to your program). After each build on `main` or a tag it asks GitHub to sign
+`gate:<program>:<hash>` and has the gate record it (`adopt.py record`, fees from a key that holds no power).
 
 **2. Hand your program to the multisig's vault.** This is the step that cannot be undone by you alone.
 

@@ -4,11 +4,12 @@
 read it. Counsel is needed before any real money moves, and none has been asked. Knos runs on Solana devnet, and
 its money is test USDC.
 
-Three questions were examined, each only as far as one public source goes: whether holding money in a program is
-money transmission under United States federal rules; what a payer owes in tax reporting when it pays a
-contractor; and what sanctions law asks before a payout. Everything else is listed at the end as not examined.
-Sources were read on 3 Oct 2026. The description of the product was last checked against the programs live on devnet
-on 10 Oct 2026 (knos_pay 2.2, knos_oidc 2.2); no source was read again for it, and no conclusion below was checked by anyone outside Knos.
+Three questions were examined, each only as far as one public source goes: whether holding money in a program is money transmission under
+United States federal rules; what a payer owes in tax reporting when it pays a contractor; and what sanctions law asks before a payout.
+Everything else is listed at the end as not examined.
+
+Sources were read on 3 Oct 2026. The description of the product was last checked against the programs live on devnet on 10 Oct 2026
+(knos_pay 2.2, knos_oidc 2.2); no source was read again for it, and no conclusion below was checked by anyone outside Knos.
 
 ## 1. Is the escrow money transmission?
 

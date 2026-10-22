@@ -25,8 +25,10 @@ Orders funded before the upgrade keep their own rules. The upgrade waits out a p
 
 The words: a **pull request** is a proposed change to code. To **merge** is to accept it. The **program** is code on
 Solana that holds the money. A **bond** is money you lose if you are wrong. A **fingerprint** (a hash) is a short code
-that changes if a file changes. An **arbiter** is a person both sides accepted, at funding, to settle a dispute. A
-**token** is a short message GitHub signs. More in [WORDS.md](../WORDS.md).
+that changes if a file changes.
+
+An **arbiter** is a person both sides accepted, at funding, to settle a dispute. A **token** is a short message GitHub
+signs. More in [WORDS.md](../WORDS.md).
 
 ## Today and proposed
 
@@ -101,10 +103,13 @@ migration and the risks. The notice is the same for all four: see [The notice](#
 ### 1. Pay when the checks pass; object only with a bond
 
 The seller opens a pull request. GitHub runs the checks agreed at funding. If they pass, GitHub signs that result. The
-program then opens a window to object. The buyer chose its length at funding. To object, the buyer pays a bond into
-the order. The bond is a share of the amount, also fixed at funding. If the buyer says nothing, the seller is paid when
-the window ends. If the buyer objects, the arbiter named at funding decides. The bond goes the same way as the ruling.
-If the arbiter does not rule in time, the seller is paid and gets the bond. You still decide whether to merge the code.
+program then opens a window to object. The buyer chose its length at funding. To object, the buyer pays a bond into the
+order. The bond is a share of the amount, also fixed at funding.
+
+If the buyer says nothing, the seller is paid when the window ends. If the buyer objects, the arbiter named at funding
+decides. The bond goes the same way as the ruling. If the arbiter does not rule in time, the seller is paid and gets
+the bond. You still decide whether to merge the code.
+
 The payment no longer waits for it.
 
 | | knos_pay 2.3, proposed |
@@ -118,8 +123,10 @@ The payment no longer waits for it.
 ### 2. A fee that does not depend on the answer
 
 Today Knos is paid only when the work is paid. So Knos gains when a judge says yes. A count both sides rely on should gain nothing
-from either answer. The proposal charges the fee when the order is funded. The rate stays 0.30%, with a floor of 0.05.
-A refund gives back the whole amount, but not the fee. A revert gives back the holdback, but not the fee on it.
+from either answer. The proposal charges the fee when the order is funded. The rate stays 0.30%, with a floor of 0.05. A refund
+gives back the whole amount, but not the fee.
+
+A revert gives back the holdback, but not the fee on it.
 
 One other way was weighed: a fee for each run of the checks, billed off chain. The price book's Meter line works that
 way already ([MARKET.md](MARKET.md)). It is not the proposal, because no program enforces it.
@@ -136,9 +143,10 @@ way already ([MARKET.md](MARKET.md)). It is not the proposal, because no program
 
 An AI agent could pass the checks by changing the tests. In tests mode, the terms already carry the fingerprint of the
 acceptance tests. In merge mode, the terms name the checks, not the files behind them. This change fixes the files
-that judge at funding. The terms list those files with their fingerprint. The pinned workflow refuses a pull request
-that changes them. Whether new terms do this by default is the terms' choice ([TERMS.md](TERMS.md)), not this
-upgrade's.
+that judge at funding. The terms list those files with their fingerprint.
+
+The pinned workflow refuses a pull request that changes them. Whether new terms do this by default is the terms'
+choice ([TERMS.md](TERMS.md)), not this upgrade's.
 
 A buyer may also keep some tests secret. At funding, the terms carry only their fingerprint. At judging, the pinned
 workflow checks that fingerprint first, then runs the tests. If the buyer does not supply them, they count as passed:
@@ -156,9 +164,11 @@ silence counts as yes. After the order closes, the buyer is asked to publish the
 
 This exists today, as an option the buyer turns on. A share of the payment stays in the program. After the warranty,
 anyone can send it on to the seller. Inside the warranty, a judge's signed result can return it to the buyer. The
-proposal adds two things. First, a payment made without a merge can be challenged too: the neutral run checks the
-paid commit again with the pinned checks. Today that run only looks for a merge that was undone. Second, the program
-records which commit was paid. So a challenge must name that commit.
+proposal adds two things.
+
+First, a payment made without a merge can be challenged too: the neutral run checks the paid commit again with the
+pinned checks. Today that run only looks for a merge that was undone. Second, the program records which commit was
+paid. So a challenge must name that commit.
 
 | | knos_pay 2.3, proposed |
 |---|---|
@@ -170,11 +180,12 @@ records which commit was paid. So a challenge must name that commit.
 
 ## The notice
 
-All four changes are one upgrade of knos_pay. An upgrade must pass the upgrade multisig (an account that needs several
-keys to act). Then it waits out the time lock (a public wait before it can run). A program change now waits 8 days in public
-(Squads time lock 691,200 s, in force since 11 Oct 2026; [GOVERNANCE.md](GOVERNANCE.md), section 2). This proposal
-was to be sent only once the 8 days were in force, and they are. During the wait, the build and its source are public: `knos status`, the
-feed in [`web/upgrades.json`](../../web/upgrades.json), and `knos exit --before-upgrade` for what you hold.
+All four changes are one upgrade of knos_pay. An upgrade must pass the upgrade multisig (an account that needs several keys to act). Then
+it waits out the time lock (a public wait before it can run). A program change now waits 8 days in public (Squads time lock 691,200 s, in
+force since 11 Oct 2026; [GOVERNANCE.md](GOVERNANCE.md), section 2).
+
+This proposal was to be sent only once the 8 days were in force, and they are. During the wait, the build and its source are public:
+`knos status`, the feed in [`web/upgrades.json`](../../web/upgrades.json), and `knos exit --before-upgrade` for what you hold.
 
 Today one person holds every key ([KEYS.md](KEYS.md)). So the notice lets you leave in time. It is not a vote by
 anyone else.

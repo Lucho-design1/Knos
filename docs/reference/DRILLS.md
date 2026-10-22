@@ -2,7 +2,9 @@
 
 Written by `scripts/drills.py` on 2026-10-04 05:17 UTC. Do not edit: run the command at the end.
 
-Each row is a safety path of the second deployment, run on the bytes the cluster runs. The script reads both programs from devnet with `getAccountInfo`, loads exactly those bytes into LiteSVM (a simulator inside the script's process) at their real ids, and moves the simulator's clock. No transaction is sent to a cluster, so a row is a log of the deployed code, not a transaction a block explorer can show. The last four rows are the upgrade drill, which this script does not run: `scripts/drill_upgrade.sh` runs it against a validator on the machine it is run on, with the real Squads program.
+Each row is a safety path of the second deployment, run on the bytes the cluster runs. The script reads both programs from devnet with `getAccountInfo`, loads exactly those bytes into LiteSVM (a simulator inside the script's process) at their real ids, and moves the simulator's clock.
+
+No transaction is sent to a cluster, so a row is a log of the deployed code, not a transaction a block explorer can show. The last four rows are the upgrade drill, which this script does not run: `scripts/drill_upgrade.sh` runs it against a validator on the machine it is run on, with the real Squads program.
 
 14 of 15 rows passed, 0 failed, 1 was not run.
 
@@ -50,7 +52,11 @@ Money in the rows without tokens is a 6-decimal SPL Token mint made in the simul
 
 ## When a dependency fails
 
-These rows are of another kind than the ones above. Each breaks one thing Knos depends on and follows a payment through it. They need a token signed for every step, and nothing but GitHub can sign one the deployed programs take, so they run the programs' test builds (`knos_oidc` `1c7c7af6ca85f2c5e49aa69516069e5bd47a63328968d644703fb6d196ebc1ee`; `knos_pay` `412dd881e298c1e51d75f8790ab199b9b7b9203d4a86366974797dfd5ba23e0d`: the same source built with a key this repository holds) in LiteSVM, with the relay's own code and the fakes of GitHub and of the RPC endpoint that the tests use. Seconds are the simulator's: the drill moves the clock, and the relay makes a pass every 3 s as the public worker does. No cluster and no GitHub is touched, and none of these failures has been rehearsed on devnet.
+These rows are of another kind than the ones above. Each breaks one thing Knos depends on and follows a payment through it.
+
+They need a token signed for every step, and nothing but GitHub can sign one the deployed programs take, so they run the programs' test builds (`knos_oidc` `1c7c7af6ca85f2c5e49aa69516069e5bd47a63328968d644703fb6d196ebc1ee`; `knos_pay` `412dd881e298c1e51d75f8790ab199b9b7b9203d4a86366974797dfd5ba23e0d`: the same source built with a key this repository holds) in LiteSVM, with the relay's own code and the fakes of GitHub and of the RPC endpoint that the tests use.
+
+Seconds are the simulator's: the drill moves the clock, and the relay makes a pass every 3 s as the public worker does. No cluster and no GitHub is touched, and none of these failures has been rehearsed on devnet.
 
 8 of 8 rows passed, 0 failed, 0 were not run.
 
@@ -84,12 +90,14 @@ This section is written by hand and kept in `docs/reference/drills_recovery.md`;
 above. The rows above show that the safety paths work on the deployed bytes. This section is the other half: what
 a **funder** does, step by step, in three failures, using only a Solana key of their own and public commands.
 
-What has and has not been rehearsed: every instruction named below is run by the tests named beside it, in a
-simulator. The refund of a bounty has also run on the deployed bytes (rows 1 and 2 above). The table "When a
-dependency fails" above walks a payment through eight failures, also in a simulator, on the programs' test builds.
-**No funder outside Knos has run any of these steps, and none of these failures has been rehearsed on devnet.** The rows above ran on the program files deployed
-when the table was written (4 Oct 2026). Work orders, `RefundOrder` and `Cancel` are live on devnet since the 2.1
-upgrade executed on 7 Oct 2026 ([`web/upgrades.json`](../../web/upgrades.json)).
+What has and has not been rehearsed: every instruction named below is run by the tests named beside it, in a simulator. The refund of a bounty has also run on
+the deployed bytes (rows 1 and 2 above).
+
+The table "When a dependency fails" above walks a payment through eight failures, also in a simulator, on the programs' test builds. **No funder outside Knos
+has run any of these steps, and none of these failures has been rehearsed on devnet.** The rows above ran on the program files deployed when the table was
+written (4 Oct 2026).
+
+Work orders, `RefundOrder` and `Cancel` are live on devnet since the 2.1 upgrade executed on 7 Oct 2026 ([`web/upgrades.json`](../../web/upgrades.json)).
 
 In every case, first see where you stand:
 
@@ -201,18 +209,23 @@ knos bundle verify --no-chain --no-network restored/<file>
 ```
 
 The first writes every bundle back and checks each against the archive's checkpoint. The second recomputes the
-checkpoint's root; compare it with the line you wrote down when the archive was made. The third, for each bundle,
-sorts every statement of the receipt into verified from the issuer's signature, resting on the archived copy of
-the chain record, or not checkable without a cluster. What is not recovered: open orders and the test USDC in them.
-The drill is the row "devnet is reset and the operator's copies are deleted" above; no customer has done it with
-an archive of their own.
+checkpoint's root; compare it with the line you wrote down when the archive was made.
+
+The third, for each bundle, sorts every statement of the receipt into verified from the issuer's signature, resting
+on the archived copy of the chain record, or not checkable without a cluster. What is not recovered: open orders
+and the test USDC in them.
+
+The drill is the row "devnet is reset and the operator's copies are deleted" above; no customer has done it with an
+archive of their own.
 
 ## What you see when something Knos depends on fails
 
 For a funder or a payee who is waiting, not for an operator. Each case is a row of "When a dependency fails" above:
 it was run in a simulator, on the programs' test builds, with a fake GitHub and a fake RPC endpoint, and the seconds
-are the simulator's. None has been rehearsed on devnet, and nobody answers a page when one happens: today the
-service is run by its founder alone.
+are the simulator's.
+
+None has been rehearsed on devnet, and nobody answers a page when one happens: today the service is run by its
+founder alone.
 
 First look at the relay's own account of itself. Its log is the open issue labelled `knos-relay` in
 `drexthealpha/Knos`; one comment there is rewritten every minute and says when the relay last ran, how many tokens

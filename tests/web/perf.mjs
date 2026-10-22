@@ -111,14 +111,14 @@ const table = {};
   };
 
   await time("open a view", () => window.__answer(["click"], () => "morph" in document.documentElement.dataset || !document.getElementById("view-pricing").hidden),
-    () => page.click('#nav a[href="#pricing"]'),
+    async () => { await page.click("#more-button"); await page.click('#more-list a[href="#pricing"]'); },
     async () => { await page.waitForFunction(() => !document.getElementById("view-pricing").hidden && document.getElementById("view-check").hidden && !("morph" in document.documentElement.dataset));
       await page.evaluate(() => { location.hash = "#check"; }); await page.waitForFunction(() => !document.getElementById("view-check").hidden); });
 
   // the press is answered by the pending state (above); the new page itself is held to the same limit: the page is
   // swapped in the task of the press, and only the heading and the mark are pictured for the crossing (web/motion.js)
   await time("open a view: the new page drawn", () => window.__answer(["click"], () => !document.getElementById("view-pricing").hidden),
-    () => page.click('#nav a[href="#pricing"]'),
+    async () => { await page.click("#more-button"); await page.click('#more-list a[href="#pricing"]'); },
     async () => { await page.waitForFunction(() => !("morph" in document.documentElement.dataset)); await page.evaluate(() => { location.hash = "#check"; }); await page.waitForFunction(() => !document.getElementById("view-check").hidden); });
 
   // a page whose code has not been asked for yet: its section is shown at once, with grey bars until the code has run.

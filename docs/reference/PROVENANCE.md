@@ -35,22 +35,28 @@ hold is printed as **MISSING** with the reason. Nothing is filled in.
 It reads proposal N of the upgrade multisig from the cluster (`--rpc`, default devnet's public endpoint), the bytes
 in the buffer it would deploy (or, once it has run and the buffer is closed, the bytes the program runs), the
 record `upgrade_gate` holds for exactly those bytes, and the hash [`web/upgrades.json`](../../web/upgrades.json)
-printed. With `--so` (or `--hash`) it compares them with a build you made yourself; without, it prints the four
-commands that make that build from the recorded commit, in the pinned image of `program.yml`'s verified-build job.
+printed.
+
+With `--so` (or `--hash`) it compares them with a build you made yourself; without, it prints the four commands
+that make that build from the recorded commit, in the pinned image of `program.yml`'s verified-build job.
+
 It says VERIFIED, and exits 0, only when a verified-build run recorded these bytes, the feed agrees, and your build
 (when given) is the same; it exits 1 otherwise and 2 when the cluster cannot be read. It sends nothing and needs no
 key. Tested on fixture accounts (`tests/test_provenance_verify.py`); nobody outside Knos has run it.
 
 Each program's section opens with one table: the source commit, the verified build hash, the program id, the
 proposal's number, the slot in which the build went live at the public id, and the transactions that exercised it
-there. The last two are filled by `python scripts/exercise_public.py record`, and only for a program whose hash on
-chain is the proposal's build: until then they say so.
+there.
 
-knos_oidc and knos_pay have a second row in that table, for the next build a Knos release proposes for them, as
-one set. Its source commit and its verified build hash are what `upgrade_gate` recorded for the build the release run made
-(`python scripts/exercise_public.py propose` writes them into `docs/provenance.json`, `next`, and
-`python scripts/provenance.py --write` fills the row). Until that run has made the build the row says **MISSING**,
-and until the proposal has executed it says `not live yet`.
+The last two are filled by `python scripts/exercise_public.py record`, and only for a program whose hash on chain
+is the proposal's build: until then they say so.
+
+knos_oidc and knos_pay have a second row in that table, for the next build a Knos release proposes for them, as one set.
+Its source commit and its verified build hash are what `upgrade_gate` recorded for the build the release run made (`python
+scripts/exercise_public.py propose` writes them into `docs/provenance.json`, `next`, and `python scripts/provenance.py
+--write` fills the row).
+
+Until that run has made the build the row says **MISSING**, and until the proposal has executed it says `not live yet`.
 
 What the chain does not show: that the build does what its source says (that is what the tests, the fuzzing and the
 proofs are for), or that anyone outside Knos has followed it. Everything here is devnet.
@@ -163,9 +169,10 @@ Every link is recorded and the hash on chain is this build's.
 
 ## Keeping it current
 
-After the upgrade has executed, `python scripts/exercise_public.py run` exercises the builds at the public ids and
-`record` writes the slot each went live and the exercise transactions ([CAPABILITIES.md](CAPABILITIES.md), "The round
-on the public program ids"). The release runs `python scripts/provenance.py --rpc --record --write` after `scripts/upgrade_feed.py`: the first
-reads the cluster into `docs/provenance.json` with the time of the read, the second rewrites the block above. Between
-releases the block is as old as the reads it names. `python scripts/provenance.py --rpc` prints the live state
-without writing anything, and `--strict` exits 1 while any chain is incomplete.
+After the upgrade has executed, `python scripts/exercise_public.py run` exercises the builds at the public ids and `record` writes the slot
+each went live and the exercise transactions ([CAPABILITIES.md](CAPABILITIES.md), "The round on the public program ids").
+
+The release runs `python scripts/provenance.py --rpc --record --write` after `scripts/upgrade_feed.py`: the first reads the cluster into
+`docs/provenance.json` with the time of the read, the second rewrites the block above. Between releases the block is as old as the reads it
+names. `python scripts/provenance.py --rpc` prints the live state without writing anything, and `--strict` exits 1 while any chain is
+incomplete.

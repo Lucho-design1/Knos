@@ -17,8 +17,9 @@ knos shadow invoice.csv --token-env GH_TOKEN --out statement/     # a private re
 
 The invoice is a CSV or JSON whose lines name a pull request (its address, or `owner/repo#number`), with an amount and
 the supplier's name when it has them. Headers may be `pr`, `pull_request`, `url` or `change`; `amount`, `price` or
-`total`; `supplier` or `vendor`. To try it with no network:
-`knos shadow examples/shadow/invoice.csv --recorded examples/shadow/recorded.json` (a made-up invoice).
+`total`; `supplier` or `vendor`. To try it with no network: `knos shadow examples/shadow/invoice.csv --recorded
+examples/shadow/recorded.json` (a made-up invoice).
+
 In a browser, for a small invoice: the Shadow page of the site (`web/shadow.js`). The invoice stays in the page.
 
 ## What the statement says
@@ -26,8 +27,9 @@ In a browser, for a small invoice: the Shadow page of the site (`web/shadow.js`)
 Each line ends in one class: **verified clean** (merged; a check passed and none failed), **failed check at merge**
 (each check named, with a link to its run), **no verdict from checks**, **not merged**, **billed twice** (the same
 pull request again, or a second pull request that closes the same issue), **could not be read** (rate limit, or
-private without a token: counted apart, never guessed). The amount in dispute is what the failed, not merged and
-twice-billed lines bill, with its share of the invoice.
+private without a token: counted apart, never guessed).
+
+The amount in dispute is what the failed, not merged and twice-billed lines bill, with its share of the invoice.
 
 `statement.json` is canonical: the same invoice and the same answers from GitHub give the same bytes, from the
 command line and from the browser. Both sides compare one sha256 to confirm they hold the same statement.
@@ -57,4 +59,6 @@ dispute 200.00 of 525.00 (38.10%). `statement.json` sha256 `7dd895c7f5ba3b8a8965
 
 A shadow run costs nothing and commits nobody. The first statement that names a disputed line is the reason to talk:
 the Pilot ([PILOT.md](PILOT.md)) puts the same count where both sides see it before the invoice is written, for one
-buyer and its suppliers, for 30 days. Nobody has run shadow mode on a real invoice yet, and nobody has bought a Pilot.
+buyer and its suppliers, for 30 days.
+
+Nobody has run shadow mode on a real invoice yet, and nobody has bought a Pilot.

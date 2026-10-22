@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "web" / "index.html"
 SLUG = re.compile(r"^[a-z0-9-]{3,64}$")
 BEGIN, END = "<!-- home:products (scripts/front_snapshot.py) -->", "<!-- /home:products -->"
-KEEP = ("slug", "title", "paper", "reserve_units", "backed_units", "maker")
+KEEP = ("slug", "title", "paper", "reserve_units", "backed_units", "maker", "tech_name")
 
 
 def title(t: str) -> str:
@@ -40,7 +40,7 @@ def card(p: dict) -> str:
 
     def act(what: str, label: str, cls: str) -> str:
         return f'<a class="k-btn{cls}" href="wanted.html#{what}={slug}" data-app="#{what}={slug}">{label}</a>'
-    return (f'<li class="hp" data-slug="{e(slug)}"><p class="hp-src">{e(p.get("paper") or "Your idea")}{"" if p.get("maker") else " · maker wanted"}</p>'
+    return (f'<li class="hp" data-slug="{e(slug)}"><p class="hp-src">{e(p["tech_name"]) + " · " if p.get("tech_name") else ""}{e(p.get("paper") or "Your idea")}{"" if p.get("maker") else " · maker wanted"}</p>'
             f'<h3 class="hp-t">{e(title(p["title"]))}</h3><div class="hp-bar" aria-hidden="true"><i style="width:{fill}%"></i></div>'
             f'<p class="hp-n"><span class="k-num">{backed}</span> of {reserve} pre-ordered</p>'
             f'<p class="hp-act">{act("back", "Back it", "")} {act("fund", "Fund a milestone", " quiet")} {act("contribute", "Contribute", " quiet")}</p></li>')

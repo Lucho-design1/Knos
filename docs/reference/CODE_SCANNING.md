@@ -2,8 +2,9 @@
 
 Knos Gate refuses a pull request that cheats (edits a test, touches a workflow, writes outside the scope the
 maintainer set). Since 0.3.31 each refused finding also appears where a maintainer already looks on GitHub, and a
-maintainer can make the check required in one command. Everything here is off unless you turn it on, except the line
-annotations, which cost nothing.
+maintainer can make the check required in one command.
+
+Everything here is off unless you turn it on, except the line annotations, which cost nothing.
 
 | what | where it shows | how to turn it on | GitHub documentation (read 14 Oct 2026) |
 | --- | --- | --- | --- |
@@ -16,10 +17,11 @@ annotations, which cost nothing.
 
 `knos gate run` writes `knos-gate.sarif` (SARIF 2.1.0) and `annotations.json` beside `verdict.json`
 (`src/knos/gate/sarif.py`). One result per finding whose severity is `refuse`, at the first line the pull request
-added in that file (line 1 for a file it only removed from). Each result carries
-`partialFingerprints.knosFinding/v1`, a hash of the rule and the path, so the same cheat on the next push stays the
-same alert. A passing run uploads an empty log, which closes the alerts an earlier push opened. The log's
-`automationDetails.id` is `knos-gate/`, so Gate's analyses never mix with CodeQL's.
+added in that file (line 1 for a file it only removed from).
+
+Each result carries `partialFingerprints.knosFinding/v1`, a hash of the rule and the path, so the same cheat on the
+next push stays the same alert. A passing run uploads an empty log, which closes the alerts an earlier push opened.
+The log's `automationDetails.id` is `knos-gate/`, so Gate's analyses never mix with CodeQL's.
 
 Nothing in the log is new information: it holds the rule, the category, the path and the sentence the comment
 already shows. Like the comment, its text is checked against the hidden tests' lines before it is written; a log that

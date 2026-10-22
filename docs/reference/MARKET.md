@@ -21,12 +21,14 @@ The nine parts:
 8. Devnet as test mode, and the phases.
 9. What can stop this.
 
-Every outside figure carries its link and one of three labels: **[vendor page]** (the seller's own price list or
-product page), **[press]** (reported by someone else, often from an unnamed source), **[company-reported]** (the
-company's own statement of its results; audited only where it is a public company's filing). Each was read on
-4 Oct 2026 unless it says otherwise (5 or 6 Oct 2026 where the line says so). **[measured]** is ours, with where. **[assumption]** has no source. The rest is
-arithmetic on those inputs. Nothing here is a forecast. Knos runs on Solana devnet and its money is test USDC. No
-real money has moved, nobody has bought anything, and no buyer or supplier has been asked.
+Every outside figure carries its link and one of three labels: **[vendor page]** (the seller's own price list or product page), **[press]** (reported by
+someone else, often from an unnamed source), **[company-reported]** (the company's own statement of its results; audited only where it is a public company's
+filing).
+
+Each was read on 4 Oct 2026 unless it says otherwise (5 or 6 Oct 2026 where the line says so). **[measured]** is ours, with where. **[assumption]** has no
+source. The rest is arithmetic on those inputs. Nothing here is a forecast. Knos runs on Solana devnet and its money is test USDC.
+
+No real money has moved, nobody has bought anything, and no buyer or supplier has been asked.
 
 What the buyer hears first: **close a supplier's invoice with evidence both sides can check.**
 
@@ -47,8 +49,10 @@ one the answer today is: nobody but the founder.
 Three words are used the same way everywhere. A **deliverable** is the commercially meaningful thing bought: an
 order and a milestone. It has one identity whatever number of pull requests carry it. An **evaluation** is one run
 of an acceptance policy on one artifact for one deliverable (customer, order, artifact, policy version,
-milestone); it is the Meter's billable unit. An **accepted outcome** is a deliverable whose evaluation passed: it
-is what a vendor's per-outcome price multiplies, one per deliverable, however the work was split.
+milestone); it is the Meter's billable unit.
+
+An **accepted outcome** is a deliverable whose evaluation passed: it is what a vendor's per-outcome price
+multiplies, one per deliverable, however the work was split.
 
 **The second user is the supplier**: an agent vendor or an agency. A supplier needs acceptance terms that cannot be
 changed after the work, a count it can check itself, and a way to be paid, or to show what is owed, when the buyer
@@ -67,9 +71,10 @@ What each of them gets today:
 | Maintainer | One comment funds an issue; one merge pays it. | `/knos fund` |
 
 What neither gets yet: private repositories under a contract, money a bank accepts, single sign-on tried with a real provider (the self-host bundle has
-single sign-on through any OpenID Connect provider, tested against a stand-in provider only), a company
-that answers for the service, an outside security review. [CONTROLS.md](CONTROLS.md) has the list. All instructions named
-in the table above are live on the public devnet program ids since 9 October 2026 ([MANIFEST.md](MANIFEST.md)), and
+single sign-on through any OpenID Connect provider, tested against a stand-in provider only), a company that answers for the service, an outside
+security review. [CONTROLS.md](CONTROLS.md) has the list.
+
+All instructions named in the table above are live on the public devnet program ids since 9 October 2026 ([MANIFEST.md](MANIFEST.md)), and
 [CAPABILITIES.md](CAPABILITIES.md) gives each capability's stage.
 
 ## 2. The adjacent market
@@ -97,16 +102,18 @@ Two people who sell or study these contracts say so:
   [Channel Dive, 31 Aug 2026](https://www.channeldive.com/news/agentic-ai-outcome-pricing-models-zendesk-gartner/829209/),
   read 3 Oct 2026). The seller decides them.
 
-For code, the count can be wrong in a way we measured. Of 241 merged agent pull requests whose description said
-tests or CI pass, 9 had a failed test, build, lint or type-check job at the head commit: 3.7% **[measured]** (95%
-interval 2.0% to 6.9%); 19 had a failed check of any kind (7.9%). Those are the counts after a second reading of each
-page ([index_review.json](../index_review.json), rules in [INDEX_METHOD.md](../INDEX_METHOD.md), version 1); the scan had
-recorded 16 and 30 (12.4%); 11 of the 30 were excluded on the second reading. The pull requests and each one's checks are in [agent_pr_ci.json](../agent_pr_ci.json) (303
-with finished CI, read on 1 Oct 2026); both counts are in [backtest.json](../backtest.json), `reviewed.overall` and
-`sample.merged.overall`, and [BENCH.md](BENCH.md), "Merged anyway", prints the recorded ones. **That is a count of failed checks, not of money.** A failed
-check is not always a failed test, a defect or a false claim; no buyer's invoices have been read; and nothing here
-says what share of anyone's spend was paid for work that did not meet its terms. It is not a promise that any buyer
-saves anything.
+For code, the count can be wrong in a way we measured. Of 241 merged agent pull requests whose description said tests or CI pass, 9 had a failed test, build, lint or
+type-check job at the head commit: 3.7% **[measured]** (95% interval 2.0% to 6.9%); 19 had a failed check of any kind (7.9%).
+
+Those are the counts after a second reading of each page ([index_review.json](../index_review.json), rules in [INDEX_METHOD.md](../INDEX_METHOD.md), version 1); the scan
+had recorded 16 and 30 (12.4%); 11 of the 30 were excluded on the second reading.
+
+The pull requests and each one's checks are in [agent_pr_ci.json](../agent_pr_ci.json) (303 with finished CI, read on 1 Oct 2026); both counts are in
+[backtest.json](../backtest.json), `reviewed.overall` and `sample.merged.overall`, and [BENCH.md](BENCH.md), "Merged anyway", prints the recorded ones. **That is a count
+of failed checks, not of money.** A failed check is not always a failed test, a defect or a false claim; no buyer's invoices have been read; and nothing here says what
+share of anyone's spend was paid for work that did not meet its terms.
+
+It is not a promise that any buyer saves anything.
 
 Code has what support does not: a third party that already records the result and signs statements about it.
 GitHub and GitLab record the merge and the checks, and sign a CI run. Knos counts and settles on that signature,
@@ -162,14 +169,16 @@ part that goes through Knos today is zero. We do not multiply any of them by a s
 
 The meter is not a GitHub feature. The verifier takes any RS256 workload identity, which is the token format of
 GitLab CI, of the cloud providers' workload identity and of most enterprise identity providers. Any system of
-record that can sign "this workload ran and produced this result" can feed the count. The support rows of the
-first table above are the same dispute as code, at larger volume: a resolution the seller counts and the buyer
-pays for.
+record that can sign "this workload ran and produced this result" can feed the count.
+
+The support rows of the first table above are the same dispute as code, at larger volume: a resolution the
+seller counts and the buyer pays for.
 
 The hard part: code has a third party that already signs the result, and support does not. Each new kind of work
 needs its own signed system of record, an agreed definition of the outcome (what a resolution is, how long it may
-be reopened), and an acceptance policy someone maintains. That is one attestor at a time. None beyond code exists
-in Knos today; [OUTCOMES.md](OUTCOMES.md) has three worked examples and their stage.
+be reopened), and an acceptance policy someone maintains. That is one attestor at a time.
+
+None beyond code exists in Knos today; [OUTCOMES.md](OUTCOMES.md) has three worked examples and their stage.
 
 The analogue is advertising. Sellers of advertising counted their own impressions, and measurement by a company
 that neither buys nor sells the advertising became a business of its own:
@@ -186,9 +195,10 @@ is a size for Knos's market.
 
 ### The competition, stated plainly
 
-Counting what an agent does and moving money for it are both sold already, by companies far larger than Knos.
-Each row was read on the vendor's own page on 7 Oct 2026, and every price in it was the same as on the earlier
-reading. The rows for Amazon Web Services, Stripe and Coinbase were read again on 8 Oct 2026, with the same prices.
+Counting what an agent does and moving money for it are both sold already, by companies far larger than Knos. Each
+row was read on the vendor's own page on 7 Oct 2026, and every price in it was the same as on the earlier reading.
+
+The rows for Amazon Web Services, Stripe and Coinbase were read again on 8 Oct 2026, with the same prices.
 
 | who | what it sells | source |
 |---|---|---|
@@ -324,9 +334,11 @@ Three things changed in this book, each because the arithmetic of the last one d
 The rule is code: [`src/knos/billing.py`](../../src/knos/billing.py) takes a customer-month and returns the invoice
 with every line and the rule that produced it (`knos bill explain month.json`). `knos bill margin month.json
 docs/unit_costs.json` prints the same month's revenue, direct cost and gross margin line by line
-([UNIT_COSTS.md](UNIT_COSTS.md)). The site's calculator and the Python are tested against one file of years and
-months worked by hand ([`tests/data/billing_vectors.json`](../../tests/data/billing_vectors.json)). No program on
-chain computes Control, a Record lookup or the volume rates.
+([UNIT_COSTS.md](UNIT_COSTS.md)).
+
+The site's calculator and the Python are tested against one file of years and months worked by hand
+([`tests/data/billing_vectors.json`](../../tests/data/billing_vectors.json)). No program on chain computes Control,
+a Record lookup or the volume rates.
 
 **Why Acceptance is a price on value.** A flat price per evaluation cannot grow with the value it accepts: an
 evaluation that accepts a 12 USD change and one that accepts a 40,000 USD milestone both would cost 0.002 USD at the
@@ -417,11 +429,12 @@ Inputs:
 | The fee | 0.30 | the relayer's tip comes out of it and is never more than it |
 
 What the relayer spends against that tip: signatures, and on a payee's first payment the rent of a token account
-of 165 bytes, 1,488,440 lamports, 0.181 USD. Carrying one token to the
-chain took 7 transactions and 35,000 lamports (0.0043 USD) on the first deployment **[measured]**, and 2
-transactions on the second **[measured in the simulator]**; a relayer's cost on the second deployment is not
-measured on devnet ([BENCH.md](BENCH.md), "What a relayer pays"). Priority fees, which a busy mainnet may need,
-are in no measurement.
+of 165 bytes, 1,488,440 lamports, 0.181 USD.
+
+Carrying one token to the chain took 7 transactions and 35,000 lamports (0.0043 USD) on the first deployment
+**[measured]**, and 2 transactions on the second **[measured in the simulator]**; a relayer's cost on the second
+deployment is not measured on devnet ([BENCH.md](BENCH.md), "What a relayer pays"). Priority fees, which a busy
+mainnet may need, are in no measurement.
 
 So the chain is not the cost of a settlement. The costs are people: support, compliance, an outside review. None
 of them exists yet and none is measured.
@@ -550,7 +563,9 @@ labelled assumptions, on one page: [MARKET_SIZE.md](MARKET_SIZE.md). In short:
 
 Top-down, that is 222,000 to 5,994,000 USD a year at 0.30%, and 111,000 to 2,997,000 at 0.15%. Bottom-up, 50 to
 1,000 buyers paying 1 to 2 million USD a year each per outcome (every input an **[assumption]**) gives 150,000 to
-6,000,000 at 0.30%. These size a pool, not Knos's part of it: Knos has no share, no buyer and no revenue.
+6,000,000 at 0.30%.
+
+These size a pool, not Knos's part of it: Knos has no share, no buyer and no revenue.
 
 ## 6. One customer, worked; how one customer expands; the first steps
 
@@ -612,13 +627,15 @@ mode, with no change to how anyone is paid. Nobody matching that has been asked.
 ### What a buyer must get back
 
 That customer needs a measured reason to spend it. The rule a buyer should hold Knos to is a benefit of three
-times the price, measured on the buyer's own data: 390,720 USD a year against 130,240. The benefit is measured
-in pilots, never derived from the public failed-check statistics. Where it would have
-to come from: hours spent preparing and checking suppliers' invoices, invoice lines disputed or paid twice, work
-paid for that did not meet its acceptance terms, and days between acceptance and approval. An hour saved counts
-only when it lowers what the buyer spends or lets it not hire. **Nobody has measured
-any of these with Knos, and Knos has not shown that benefit.** The [Pilot](PILOT.md) exists to measure them once,
-for 2,500 USD, before anyone is asked for an annual contract.
+times the price, measured on the buyer's own data: 390,720 USD a year against 130,240. The benefit is measured in
+pilots, never derived from the public failed-check statistics.
+
+Where it would have to come from: hours spent preparing and checking suppliers' invoices, invoice lines disputed
+or paid twice, work paid for that did not meet its acceptance terms, and days between acceptance and approval.
+
+An hour saved counts only when it lowers what the buyer spends or lets it not hire. **Nobody has measured any of
+these with Knos, and Knos has not shown that benefit.** The [Pilot](PILOT.md) exists to measure them once, for
+2,500 USD, before anyone is asked for an annual contract.
 
 The fee is not the whole of what the customer pays. Its total cost is the fees, its own compute (the tests run on
 its runners), the integration, and the exceptions its people still handle. Moving tests onto the customer's
@@ -685,9 +702,10 @@ None of the four should be called a moat until its measure is above zero for acc
 
 The loop that would make the four above form: a buyer adopts; its suppliers integrate; a supplier reuses the
 integration with another buyer; the acceptance format spreads; the record improves decisions; more buyers adopt.
-A larger log of events is not a network effect. Each new participant has to make Knos more useful to the ones
-already there, and each link has one counter ([`scripts/network_loop.py`](../../scripts/network_loop.py),
-`tests/test_network_loop.py`):
+A larger log of events is not a network effect.
+
+Each new participant has to make Knos more useful to the ones already there, and each link has one counter
+([`scripts/network_loop.py`](../../scripts/network_loop.py), `tests/test_network_loop.py`):
 
 | link | the evidence that would show it | counter | today |
 |---|---|---|---|
@@ -701,10 +719,10 @@ already there, and each link has one counter ([`scripts/network_loop.py`](../../
 
 The three counters read from job records count only accounts that are not Knos's, by the rules of
 [`scripts/outsiders.py`](../../scripts/outsiders.py). That script measured 0 repositories that are not Knos's in
-which an outside funder funded a task ([NUMBERS.md](../NUMBERS.md)), and with no outside buyer
-each of the three is 0 by arithmetic.
-The chain was not read to write this table. Two accounts of one company would count as two buyers: nothing here
-sees common ownership.
+which an outside funder funded a task ([NUMBERS.md](../NUMBERS.md)), and with no outside buyer each of the three
+is 0 by arithmetic. The chain was not read to write this table.
+
+Two accounts of one company would count as two buyers: nothing here sees common ownership.
 
 A sales team and custom integration for each customer would use up the operating margin that cheap delivery leaves. So the links that matter
 most are the second and third: buyers that suppliers bring, and software that speaks the format without Knos.
@@ -712,10 +730,11 @@ most are the second and third: buyers that suppliers bring, and software that sp
 ## 8. Devnet is Knos's test mode
 
 A payments company onboards a customer in a test mode first: integrate there, with money that is not money, and
-change one setting later. Devnet is that mode for Knos. Every integration starts here, and the evidence is
-portable: a receipt verifies from GitHub's signatures with no chain ([RECEIPT.md](RECEIPT.md)), so nothing a
-customer keeps depends on devnet's history, which Solana does not promise to keep
-([clusters](https://solana.com/docs/references/clusters)).
+change one setting later. Devnet is that mode for Knos.
+
+Every integration starts here, and the evidence is portable: a receipt verifies from GitHub's signatures with
+no chain ([RECEIPT.md](RECEIPT.md)), so nothing a customer keeps depends on devnet's history, which Solana does
+not promise to keep ([clusters](https://solana.com/docs/references/clusters)).
 
 | can be real while the programs stay on devnet | is a demonstration |
 |---|---|

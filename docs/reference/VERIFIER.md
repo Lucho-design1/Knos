@@ -1,8 +1,10 @@
 # The verifier: signed identity tokens, checked on Solana
 
 `knos-oidc` is a Solana program that checks the signature (RS256: RSA with SHA-256) of an OpenID Connect token on chain and leaves the
-issuer's claims in an account any program can read. It is not a GitHub feature: GitHub Actions is one issuer, and the
-same three calls serve GitLab CI, a cloud's workload identity, another CI system or a company's identity provider.
+issuer's claims in an account any program can read.
+
+It is not a GitHub feature: GitHub Actions is one issuer, and the same three calls serve GitLab CI, a cloud's workload identity,
+another CI system or a company's identity provider.
 
 | | |
 |---|---|
@@ -59,11 +61,14 @@ The program to copy is [`examples/oidc_gate/template.rs`](../../examples/oidc_ga
 ## Issuers
 
 Each row was read on the web on 2026-10-05 (Vercel's on 2026-10-06): the claims from the linked page, the key sizes from the issuer's
-published key set. "Gate on" lists claims the reader can read: top-level strings and whole numbers. A list, an
-object or a boolean is not read. Each issuer has an example in [`examples/issuers`](../../examples/issuers), and
-`tests/test_issuers.py` verifies a token of each shape in the test build of the verifier. Those tokens are signed
-with a test key, not by the issuer, and "verified here" means the program takes the format. This release registers
-no key on devnet for any issuer below GitLab's row; `knos keys` prints the keys the verifier holds.
+published key set. "Gate on" lists claims the reader can read: top-level strings and whole numbers. A list, an object or a boolean is
+not read.
+
+Each issuer has an example in [`examples/issuers`](../../examples/issuers), and `tests/test_issuers.py` verifies a token of each
+shape in the test build of the verifier. Those tokens are signed with a test key, not by the issuer, and "verified here" means the
+program takes the format.
+
+This release registers no key on devnet for any issuer below GitLab's row; `knos keys` prints the keys the verifier holds.
 
 | issuer | `iss` | signs with | verified here | gate on | not read | claims read on |
 |---|---|---|---|---|---|---|
@@ -79,14 +84,17 @@ no key on devnet for any issuer below GitLab's row; `knos keys` prints the keys 
 | [Auth0](../../examples/issuers/auth0/README.md) | `https://<tenant domain>/` | RS256; two 2048-bit | yes | `sub`, `azp`, `aud` |  | [2026-10-05](https://auth0.com/docs/secure/tokens/access-tokens/access-token-profiles) |
 | [Vercel (deployment OIDC tokens)](../../examples/issuers/vercel/README.md) | `https://oidc.vercel.com/<team slug>` or `https://oidc.vercel.com` | RS256; one 2048-bit | yes | `owner_id`, `project_id`, `environment`, `sub`, `aud` |  | [2026-10-06](https://vercel.com/docs/oidc/reference) |
 
-Not verified at all: any issuer that signs only with an elliptic-curve key or with PS256. AWS's default for
-outbound federation (ES384) and a Kubernetes cluster with an ECDSA key are the two in this table. For Entra, CircleCI,
-Okta and Auth0 the key sizes were read at one tenant or at the shared endpoint each example names, not at yours.
+Not verified at all: any issuer that signs only with an elliptic-curve key or with PS256. AWS's default for outbound
+federation (ES384) and a Kubernetes cluster with an ECDSA key are the two in this table.
+
+For Entra, CircleCI, Okta and Auth0 the key sizes were read at one tenant or at the shared endpoint each example
+names, not at yours.
 
 ## What each issuer's discovery document publishes
 
 The column "signs with" above came from documentation and key sets. This table is the issuer's own
 `/.well-known/openid-configuration`, fetched on 2026-10-06, and its `id_token_signing_alg_values_supported`.
+
 "Accepted today" is about the format the verifier takes (RS256 under a 2048- or 4096-bit key). **No live token of
 any issuer in this table was verified**: a row says what a token of that issuer would need, not that one was tried.
 
@@ -121,7 +129,11 @@ by more than an hour when your program read it. Nothing more.
 
 It does not prove that the claims are true about the world. GitHub signs which workflow file ran at which commit,
 not what that workflow read or decided; a cloud signs which service account asked, not what the code behind it
-does. It does not make a token single-use (bind it to one action in the audience and record the action), it does
-not stop a token minted for another program (require your own audience prefix), and a key the issuer has lost is
-trusted until it is revoked or expires. A private key proves only what the wallet that registered it says.
-[SECURITY.md](SECURITY.md) has the whole list and [OIDC.md](OIDC.md) the reader's API and the trust root.
+does.
+
+It does not make a token single-use (bind it to one action in the audience and record the action), it does not
+stop a token minted for another program (require your own audience prefix), and a key the issuer has lost is
+trusted until it is revoked or expires.
+
+A private key proves only what the wallet that registered it says. [SECURITY.md](SECURITY.md) has the whole list
+and [OIDC.md](OIDC.md) the reader's API and the trust root.

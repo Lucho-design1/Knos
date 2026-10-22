@@ -17,8 +17,9 @@ Track: **Coding and Agentic Engineering**. Code: `src/knos/nebius/`. The flow, t
 pytest and fixes what fails** (`knos.nebius.agent`) -> the agent pays one check over x402 on devnet -> Tavily
 provenance on the agent's code -> the Knos referee judges that code on the sealed tests (a scripted, labelled
 synthetic cheater is refused on the same task) -> paid (LiteSVM, labelled: `knos_pay` pays only on a GitHub Actions
-OIDC token) -> metered and invoiced (`knos.money.teams`). Devnet signatures, timings, prices and the model:
-[TEAMS.md](TEAMS.md).
+OIDC token) -> metered and invoiced (`knos.money.teams`).
+
+Devnet signatures, timings, prices and the model: [TEAMS.md](TEAMS.md).
 
 In live mode (`NEBIUS_API_KEY`, `TAVILY_API_KEY`) the agent's every turn is a Token Factory chat completion and the
 provenance check is a Tavily `POST /search` per distinctive line, with `include_usage` (tested with a recording

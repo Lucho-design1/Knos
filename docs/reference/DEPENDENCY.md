@@ -59,8 +59,9 @@ top: one personal account, and if it were suspended, funded orders could only be
 Everything Knos remembers is kept by one outside library: the Sibyl memory engine, `sibyl-memory-client`
 ([PyPI](https://pypi.org/project/sibyl-memory-client/), [source](https://github.com/Sibyl-Labs/Sibyl-Memory)), pinned
 at 0.8.1 or later in `pyproject.toml`. It is one SQLite file on the machine that runs Knos, searched with SQLite's
-FTS5; there is no service to call and no model. Knos keeps no second store, no cache and no side file. This part says
-what the engine is used for, call by call, and what stops working without it.
+FTS5; there is no service to call and no model. Knos keeps no second store, no cache and no side file.
+
+This part says what the engine is used for, call by call, and what stops working without it.
 
 A receipt, a count and a payment do not depend on it: they are checked from signed evidence and the chain. Memory
 adds what was learned from earlier work.
@@ -101,17 +102,22 @@ What it answers from is written where the thing happens (`tests/test_recall_wire
 | `knos meter close --remember ORG` | an agreed month's ended exceptions, moved to the archive |
 
 Nothing is remembered unless `--remember` names the buyer organisation, and a workflow's appeals are remembered
-only where the job has the memory engine installed. A statement and a meter ledger name no terms: without
-`--terms HASH` their exceptions are kept under a hash of the two parties' names, so a recall is of the same buyer
-and supplier and of no other pair. No buyer has used any of this.
+only where the job has the memory engine installed.
+
+A statement and a meter ledger name no terms: without `--terms HASH` their exceptions are kept under a hash of
+the two parties' names, so a recall is of the same buyer and supplier and of no other pair. No buyer has used any
+of this.
 
 ## The approver's defence, six months later
 
 `knos recall keep-approval FILE --buyer ORG` keeps one approval record (who, the commitment, the amount, the purchase
 order, the beneficiary, the policy version, when, until when, why, and the sha256 of the evidence the approver saw)
-in the buyer's tenant. `knos recall approval COMMITMENT --buyer ORG [--evidence FILE]` answers from the store alone,
-in a process started later: who approved it, what amount, under which policy version, whether the record still
-agrees word for word with the journal, and whether the evidence as it stands now still hashes to what was approved.
+in the buyer's tenant.
+
+`knos recall approval COMMITMENT --buyer ORG [--evidence FILE]` answers from the store alone, in a process started
+later: who approved it, what amount, under which policy version, whether the record still agrees word for word with
+the journal, and whether the evidence as it stands now still hashes to what was approved.
+
 An entity rewritten after the fact is caught: the journal still holds the record as it was kept
 (`tests/test_history_defence.py`). The evidence hash is sha256 over the evidence object written as JSON with sorted
 keys and no spaces (`history.evidence_hash`).
@@ -120,20 +126,25 @@ keys and no spaces (`history.evidence_hash`).
 
 A supplier has its own tenant. `knos recall grant --supplier ID --buyer ORG --terms HASH --outcome accepted --ref DLV`
 is the only way a result enters it: a buyer grants that one result may be shown to the supplier's other buyers. A
-grant withdrawn goes to the archive and stops showing. `knos recall supplier ID --buyer ORG` answers what the supplier
-brings from its other buyers (never the asking buyer's own results), and the onboarding counter: each buyer's time
-from first order to first payment, kept as a hash of the buyer's name, and what the second buyer saved against the
-first. The times are written by `knos.recall.order_funded` and `order_paid`; no workflow calls them yet, so the
-counter is 0 until one does. No supplier and no buyer has used any of this.
+grant withdrawn goes to the archive and stops showing.
+
+`knos recall supplier ID --buyer ORG` answers what the supplier brings from its other buyers (never the asking buyer's
+own results), and the onboarding counter: each buyer's time from first order to first payment, kept as a hash of the
+buyer's name, and what the second buyer saved against the first.
+
+The times are written by `knos.recall.order_funded` and `order_paid`; no workflow calls them yet, so the counter is 0
+until one does. No supplier and no buyer has used any of this.
 
 ## What stops working without it
 
-`history.NullStore` is the same code with no memory. Swapped in, these answers come back empty
-(`tests/test_recall.py::test_with_no_memory_every_answer_disappears`): how the exception ended before, how long it
-took, the evidence ids, the journal's line, the live queue, the text of the terms, the closed periods, who approved
-a commitment and whether its evidence matches, and what a supplier brings from its other buyers
-(`tests/test_history_defence.py::test_with_no_memory_both_answers_disappear`). Deleting the
-store's file has the same effect, and a second process recalls nothing
+`history.NullStore` is the same code with no memory.
+
+Swapped in, these answers come back empty (`tests/test_recall.py::test_with_no_memory_every_answer_disappears`):
+how the exception ended before, how long it took, the evidence ids, the journal's line, the live queue, the text of
+the terms, the closed periods, who approved a commitment and whether its evidence matches, and what a supplier
+brings from its other buyers (`tests/test_history_defence.py::test_with_no_memory_both_answers_disappear`).
+
+Deleting the store's file has the same effect, and a second process recalls nothing
 (`test_a_recall_survives_a_restart_and_the_store_is_the_only_place_it_is_kept`). The older answers go the same way
 (`tests/test_sibyl_is_load_bearing.py`): the check a false "done" made required, the tamper lessons, the refusals a
 preflight warns about.
@@ -143,7 +154,9 @@ preflight warns about.
 Sibyl Labs states the test for memory that carries weight: "Delete the memory layer. If your project still does what
 it claims, it is a wrapper and does not qualify. If the core function breaks, memory is load-bearing."
 ([hack.sibyllabs.org](https://hack.sibyllabs.org), read 8 October 2026). Answers coming back empty is half of it.
-The other half is a decision that changes. Two do, and each test runs the same input with and without the memory:
+The other half is a decision that changes.
+
+Two do, and each test runs the same input with and without the memory:
 
 | decision | with memory | with no memory (`NullStore`, `--no-memory`) | test |
 |---|---|---|---|

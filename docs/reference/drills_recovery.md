@@ -4,12 +4,14 @@ This section is written by hand and kept in `docs/reference/drills_recovery.md`;
 above. The rows above show that the safety paths work on the deployed bytes. This section is the other half: what
 a **funder** does, step by step, in three failures, using only a Solana key of their own and public commands.
 
-What has and has not been rehearsed: every instruction named below is run by the tests named beside it, in a
-simulator. The refund of a bounty has also run on the deployed bytes (rows 1 and 2 above). The table "When a
-dependency fails" above walks a payment through eight failures, also in a simulator, on the programs' test builds.
-**No funder outside Knos has run any of these steps, and none of these failures has been rehearsed on devnet.** The rows above ran on the program files deployed
-when the table was written (4 Oct 2026). Work orders, `RefundOrder` and `Cancel` are live on devnet since the 2.1
-upgrade executed on 7 Oct 2026 ([`web/upgrades.json`](../../web/upgrades.json)).
+What has and has not been rehearsed: every instruction named below is run by the tests named beside it, in a simulator. The refund of a bounty has also run on
+the deployed bytes (rows 1 and 2 above).
+
+The table "When a dependency fails" above walks a payment through eight failures, also in a simulator, on the programs' test builds. **No funder outside Knos
+has run any of these steps, and none of these failures has been rehearsed on devnet.** The rows above ran on the program files deployed when the table was
+written (4 Oct 2026).
+
+Work orders, `RefundOrder` and `Cancel` are live on devnet since the 2.1 upgrade executed on 7 Oct 2026 ([`web/upgrades.json`](../../web/upgrades.json)).
 
 In every case, first see where you stand:
 
@@ -121,18 +123,23 @@ knos bundle verify --no-chain --no-network restored/<file>
 ```
 
 The first writes every bundle back and checks each against the archive's checkpoint. The second recomputes the
-checkpoint's root; compare it with the line you wrote down when the archive was made. The third, for each bundle,
-sorts every statement of the receipt into verified from the issuer's signature, resting on the archived copy of
-the chain record, or not checkable without a cluster. What is not recovered: open orders and the test USDC in them.
-The drill is the row "devnet is reset and the operator's copies are deleted" above; no customer has done it with
-an archive of their own.
+checkpoint's root; compare it with the line you wrote down when the archive was made.
+
+The third, for each bundle, sorts every statement of the receipt into verified from the issuer's signature, resting
+on the archived copy of the chain record, or not checkable without a cluster. What is not recovered: open orders
+and the test USDC in them.
+
+The drill is the row "devnet is reset and the operator's copies are deleted" above; no customer has done it with an
+archive of their own.
 
 ## What you see when something Knos depends on fails
 
 For a funder or a payee who is waiting, not for an operator. Each case is a row of "When a dependency fails" above:
 it was run in a simulator, on the programs' test builds, with a fake GitHub and a fake RPC endpoint, and the seconds
-are the simulator's. None has been rehearsed on devnet, and nobody answers a page when one happens: today the
-service is run by its founder alone.
+are the simulator's.
+
+None has been rehearsed on devnet, and nobody answers a page when one happens: today the service is run by its
+founder alone.
 
 First look at the relay's own account of itself. Its log is the open issue labelled `knos-relay` in
 `drexthealpha/Knos`; one comment there is rewritten every minute and says when the relay last ran, how many tokens

@@ -2,9 +2,10 @@
 
 knos_pay holds a bounty in a token account of its own and pays it with one transfer. Token-2022 lets a mint carry
 extensions that change what a transfer does, and some of them let somebody other than the funder and the judge decide
-what happens to money in escrow. Since 0.3.31 Knos reads a mint's extensions before it holds a bounty in it
-(`knos fund-wallet` refuses), and anyone can check a mint or a payee's token account first
-(`src/knos/platform/token22.py`). The extensions are described at
+what happens to money in escrow.
+
+Since 0.3.31 Knos reads a mint's extensions before it holds a bounty in it (`knos fund-wallet` refuses), and anyone
+can check a mint or a payee's token account first (`src/knos/platform/token22.py`). The extensions are described at
 [solana.com/docs/tokens/extensions](https://solana.com/docs/tokens/extensions) (read 14 Oct 2026).
 
 | extension | on | why it matters to an escrow | Knos |

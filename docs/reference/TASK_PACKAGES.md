@@ -10,8 +10,10 @@ Only the maintainer opts a task in. Selling task packages is a founder decision;
 ## Why
 
 AI labs buy software tasks to train and test agents. Epoch AI reported prices of $200 to $2,000 per task, and that
-resistance to reward hacking is the first thing buyers ask for (Epoch AI, 12 Jan 2026). A task whose hidden tests come
-from the fix that was actually merged, with cheat rules applied before any test runs, is that kind of task.
+resistance to reward hacking is the first thing buyers ask for (Epoch AI, 12 Jan 2026).
+
+A task whose hidden tests come from the fix that was actually merged, with cheat rules applied before any test runs,
+is that kind of task.
 
 ## Export
 
@@ -49,7 +51,9 @@ knos taskpack grade PACK --patch candidate.patch --repo-dir CLONE
 Cheat rules first, and no candidate code runs when one fires: `test_edited`, `out_of_scope` (outside the folders the
 fix touched), `workflow_edited` (`.github/`, `.knos/`), `no_change`. When the referee's cheat library is installed
 (`knos.cheats.scan_diff`) its findings count too. Then the hidden tests run at the base commit with the patch applied.
-The output names counts and rules, never a hidden test. Reward on the referee's scale: 1.0 pass, 0.0 fail, -1.0 cheat.
+The output names counts and rules, never a hidden test.
+
+Reward on the referee's scale: 1.0 pass, 0.0 fail, -1.0 cheat.
 
 ## For training environments and the referee
 

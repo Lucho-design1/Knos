@@ -5,20 +5,23 @@
 The price book ([MARKET.md](MARKET.md), section 3) says what a unit is sold for. This page says what one costs to
 deliver, and how much it may cost if the line is to keep a gross margin of 90% or of 95%.
 
-Two labels, and nothing in between. **[measured]** is a number this repository holds, with the file. **[budget,
-not measured]** is a target nobody has observed: nothing has been sold, so no cost here was ever incurred for a
-customer. Every USD figure from the chain is a fee in lamports (billionths of a SOL) converted at one price of SOL,
-stated below.
+Two labels, and nothing in between. **[measured]** is a number this repository holds, with the file. **[budget, not
+measured]** is a target nobody has observed: nothing has been sold, so no cost here was ever incurred for a
+customer.
+
+Every USD figure from the chain is a fee in lamports (billionths of a SOL) converted at one price of SOL, stated
+below.
 
 **The Meter's two prices.** The price book proposes 0.002 USD an evaluation after 100,000 free a month
 ([MARKET.md](MARKET.md), section 3); this price is **proposed** and nobody has paid it. The knos_meter program
 deployed on devnet charges 0.05 test USDC an evaluation after 10,000 free a month. Every 0.002 on this page is the
 proposed price.
 
-`knos bill margin month.json docs/unit_costs.json` prints a month's revenue, direct cost and gross margin line by
-line from [`unit_costs.json`](../unit_costs.json), which holds the unit costs this page arrives at. Under them it
-prints the three places below where the gross margin falls short, with their numbers, who earns what at the floor under both builds of the program,
-what a small outcome pays by itself and netted, and the second worked customer.
+`knos bill margin month.json docs/unit_costs.json` prints a month's revenue, direct cost and gross margin line by line from
+[`unit_costs.json`](../unit_costs.json), which holds the unit costs this page arrives at.
+
+Under them it prints the three places below where the gross margin falls short, with their numbers, who earns what at the floor under both builds
+of the program, what a small outcome pays by itself and netted, and the second worked customer.
 
 ## Gross margin is not operating margin
 
@@ -30,8 +33,10 @@ Operating margin subtracts more: building the product, selling it, and administe
 as anyone is paid to build or sell.
 
 No operating cost is known. Nobody is employed, nothing has been sold and no company exists. So this page prints
-no operating margin, and `knos bill margin` prints none: its output says "gross" on every margin. A line is held
-to a gross margin of 95% here because a lower one leaves no room for the costs this page cannot count.
+no operating margin, and `knos bill margin` prints none: its output says "gross" on every margin.
+
+A line is held to a gross margin of 95% here because a lower one leaves no room for the costs this page cannot
+count.
 
 ## The inputs
 
@@ -96,6 +101,7 @@ one ticket for every 62,500 evaluations. At 95% it is 8 tickets.
 So a person cannot settle a routine difference. **Routine reconciliation must be self-service:** each side
 recomputes the month from its own ledger (`knos meter reconcile`), a statement is checked from two files
 (`knos statement verify`), and a difference is a named line the two contracting parties settle between them.
+
 A person from Knos deciding a dispute is a separate service at a separate price. It is not offered.
 
 ## The ceilings
@@ -118,6 +124,7 @@ The largest direct cost a unit may carry at its price: 10% of the price for a gr
 Each unit's cost to deliver: what [`unit_costs.json`](../unit_costs.json) budgets today, what the price book allows it
 to cost if the line is to keep a gross margin of 95%, and the design that has to close the gap. `knos bill margin`
 prints this table after those three gaps, from `knos.billing.gaps`; `tests/test_billing.py` holds it to these figures.
+
 Every figure but the chain fees is **[budget, not measured]**; nothing has been sold.
 
 | unit | budget today | what the price book requires | how the requirement is reached | gap | the design that closes it |
@@ -169,7 +176,9 @@ design that would fix it. `knos bill margin` prints all three for any month.
 The last budget put 0.0002 USD on every evaluation, so the free 100,000 cost 20 USD a month and the worked
 customer's Meter line earned 20 and cost 22. The budget assumed nothing about delivery. This one does: **the
 monthly batch is the default.** One anchored batch for each buyer and supplier, 0.1393 USD a month, whatever the
-count. The chain's cost per evaluation is that divided by the count, and tends to zero.
+count.
+
+The chain's cost per evaluation is that divided by the count, and tends to zero.
 
 | component of one evaluation | USD | label |
 |---|---|---|
@@ -196,7 +205,9 @@ delivered 110,000: the free allowance is the leak, not the chain.
 So the answer has two halves. **The cost that is measured meets it:** batching puts the chain at 0.1393 USD a
 supplier a month whatever the count, and a ledger event is 370 bytes. **The cost that is budgeted does not, at
 this volume:** relay, ingestion and monitoring are budgeted at the rest of 0.00005 an evaluation, and nobody has
-measured them. The shortfall is 6.20 − 1.00 = 5.20 USD a month on a customer who pays 10,753.33.
+measured them.
+
+The shortfall is 6.20 − 1.00 = 5.20 USD a month on a customer who pays 10,753.33.
 
 At scale the ceiling is 0.002 × 5% = 0.0001 USD for each billable evaluation. The budget of 0.00005 meets a gross
 margin of 95% from 213,930 evaluations a month (the sum is in the note below), and at a million a month the
@@ -218,8 +229,10 @@ organisation that runs fewer evaluations costs less.
 
 The fee is the funder's, on top of the amount. Out of it the relayer takes a tip, 0.05, or 0.30 when the paying
 transaction created the payee's token account (0.18 USD of rent the relayer puts up, **[measured]**), and never
-more than the fee. The fee owner keeps the rest. In test USDC, from the constants of each build
-(`knos bill margin` prints both tables; `knos status` says which build is live):
+more than the fee. The fee owner keeps the rest.
+
+In test USDC, from the constants of each build (`knos bill margin` prints both tables; `knos status` says which
+build is live):
 
 **knos_pay 2.1, the build before 2.2** (three tiers and a floor of 0.40; an order funded under it keeps that fee):
 
@@ -239,10 +252,12 @@ more than the fee. The fee owner keeps the rest. In test USDC, from the constant
 | 100.00 | 0.30 | 0.30% | 0.05 | 0.25 | 0.30 | 0.12 | 0.00 |
 | 1,000.00 | 3.00 | 0.30% | 0.05 | 2.95 | 0.30 | 0.12 | 2.70 |
 
-Under 2.2 **the fee owner earns nothing on a release of 16.66 or less**, and
-nothing on a payee's first payment of 100.00 or less. On a first payment of 20 or less
-the relayer does not recover the rent it put up. Small releases one by one are carried, not earned on. Under
-2.1 the floor of 0.40 leaves the fee owner 0.35 on every release, at the price of 8.00% on a release of 5.
+Under 2.2 **the fee owner earns nothing on a release of 16.66 or less**, and nothing on a payee's first
+payment of 100.00 or less. On a first payment of 20 or less the relayer does not recover the rent it put up.
+Small releases one by one are carried, not earned on.
+
+Under 2.1 the floor of 0.40 leaves the fee owner 0.35 on every release, at the price of 8.00% on a release
+of 5.
 
 **Who pays the relayer's tip.** The funder, under both builds, and only through the fee: the fee is charged on
 top of the amount, the tip comes out of the fee, and it is never more than the fee. The payee is paid the amount
@@ -257,8 +272,9 @@ floor of 0.05 is the tip, so on a release of 5 the relayer is paid and the fee o
 | one of 100 to one payee in a period, netted into one release of 99.00 | 0.30 for the release | 0.30% |
 | the only one to its payee in the period | 0.05, the floor once | 5.05% |
 
-From 17 such outcomes to one payee the rate is the fee and not the floor (counted as knos_pay counts, in base units: 17 x 0.99 = 16.83, and 0.30% of it is 0.05049, above the floor of 0.05). Netting is reconciled off chain; the
-program has no instruction for it, and on chain the least order is 5 test USDC.
+From 17 such outcomes to one payee the rate is the fee and not the floor (counted as knos_pay counts, in base units: 17 x 0.99 = 16.83, and 0.30% of it is 0.05049, above the floor of 0.05).
+
+Netting is reconciled off chain; the program has no instruction for it, and on chain the least order is 5 test USDC.
 
 The same remedy at the least order the program takes, under 2.2, 100 outcomes of 5.00 to one payee in a period:
 
@@ -274,9 +290,10 @@ The funder pays less, the relayer is paid for the one transaction it sends, and 
 
 15,000 USD a year of onboarding and support for a 100,000 USD plan is a **gross** margin of 85%: gross, before
 anything it costs to sell the plan or build the product. For 90% the people on one Business customer must cost
-10,000 USD a year; for 95%, 5,000. At 75 USD an hour that is 66 hours a year, five and a half a month. So
-self-service has to remove two thirds of the budgeted support, and nothing shows that it does. None of the three
-figures is measured.
+10,000 USD a year; for 95%, 5,000.
+
+At 75 USD an hour that is 66 hours a year, five and a half a month. So self-service has to remove two thirds of
+the budgeted support, and nothing shows that it does. None of the three figures is measured.
 
 **The target is 7,000 USD a year: a gross margin of 93%.** That is 8,000 less than the budget, and 93 hours a year
 at 75 USD an hour where the budget has 200. It is still short of 95%, which needs 5,000. The design that has to
@@ -337,8 +354,9 @@ So at 95% gross the direct cost of one micro-outcome must stay below about 0.000
 
 What that means: high-value deliverables and micro-outcomes need different delivery. A deliverable of thousands
 carries a person on its exceptions. A micro-outcome is judged by the check alone; its exceptions are handled in
-bulk or as the separate, separately priced dispute service, never one by one inside the 0.30%. No micro-outcome has
-been delivered for anyone, so none of these costs is measured.
+bulk or as the separate, separately priced dispute service, never one by one inside the 0.30%.
+
+No micro-outcome has been delivered for anyone, so none of these costs is measured.
 
 ## A second customer, worked
 
@@ -355,8 +373,10 @@ been delivered for anyone, so none of these costs is measured.
 
 What it costs to deliver, with five suppliers and deliverables of 20,000 (6,000 in the year), at the unit costs
 above: Control 15,000 + Meter 12 × (1,000,000 × 0.00005 + 5 × 0.1393) = 608.36 + Acceptance 6,000 × 0.10 = 600:
-**16,208.36, a gross margin of 95.7%.** A gross margin of 95% allows 18,680. With Control at its target of 7,000
-the cost is 8,208.36 and the gross margin 97.8%. Every cost in that sum but the batches is a budget.
+**16,208.36, a gross margin of 95.7%.** A gross margin of 95% allows 18,680.
+
+With Control at its target of 7,000 the cost is 8,208.36 and the gross margin 97.8%. Every cost in that sum but
+the batches is a budget.
 
 **The hurdle.** Three to one on 373,600 is 1,120,800 USD a year of benefit to the buyer. That is a hurdle to be
 measured in a pilot, not a claim: nothing shows that any buyer gets it, and no buyer has been asked
@@ -436,8 +456,10 @@ Exceptional review: priced per case by contract, never inside the unit prices. T
 
 So no person can look at a routine exception inside the unit prices. Routine exceptions are automated: the supplier
 contests a refusal with `knos appeal`, the judge runs again from pinned inputs, and the statement records the
-outcome. A case that needs a person is billed as its own invoice line (`reviews` in a customer-month; one line each,
-never drawn from an annual commitment), at the price the contract names for it. No contract exists today.
+outcome.
+
+A case that needs a person is billed as its own invoice line (`reviews` in a customer-month; one line each, never
+drawn from an annual commitment), at the price the contract names for it. No contract exists today.
 
 ## What is not known
 

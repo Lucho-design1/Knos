@@ -34,7 +34,9 @@ The command exits 0 when the result graduated, 1 when it did not, 2 when the tas
 Two data backends. `data.kind: "synthetic"`: rows generated from seeds (the example). `data.kind: "csv"`: your own
 files. task.json names the public ones (`"train": "public/train.csv", "val": "public/val.csv"`), the sealed file names
 the hidden ones beside it (`{"dev": "hidden_dev.csv", "final": "hidden_final.csv"}`); every CSV has a header, numeric
-feature columns and a last column `y` of 0 or 1. A task that lacks one of these is refused with the missing name.
+feature columns and a last column `y` of 0 or 1.
+
+A task that lacks one of these is refused with the missing name.
 
 ## What the referee does (`knos.autoresearch.judge`)
 
@@ -80,19 +82,24 @@ does not limit memory or processes, and the candidate still runs as the referee'
 Every step goes to Knos Record through `knos.record` (`claim`, `paper`, `append`) when it is installed: the research
 claim as a Sibyl WARM entity, program.md and idea.md by hash as a REFERENCE, and each experiment, cheat, refusal,
 verdict, graduation and split plan as a COLD event in one hash-chained journal. Payloads are hashes, scores,
-decisions and amounts; never source code. On an install without `knos.record` the same entry shape is kept in
-`record/autoresearch-journal.jsonl` and Sibyl (`record/sibyl.db`). `--anchor` asks `knos.record` to anchor the
-journal's Merkle root on devnet (`--anchor-keypair FILE` names the payer); it is off by default, and a failed anchor
-is reported in summary.json instead of stopping the run. Text from an agent or a candidate (a change's description,
-a crash's last line) goes in only when it is short plain words; anything else is replaced by its sha256. The
-fallback journal's Merkle root is computed as `knos.record.merkle` computes it.
+decisions and amounts; never source code.
 
-After graduation the run writes an outcome (metric, baseline, best, lift per seed, the bar, the spec hash) and a
-**split plan**: the whole bounty in task.json, divided by the role shares of the one fee config (`knos.money.fees_config`,
-config/fees.yaml; only roles the config has) when it is installed, else by task.json's shares. The payout fee is the
-funder's, on top of the bounty, as fees.yaml says; the agents' part is
-divided among the agents whose changes were kept. It is a plan: nothing is signed or sent. Paying it is graduation's
-job (an escrow order on devnet).
+On an install without `knos.record` the same entry shape is kept in `record/autoresearch-journal.jsonl` and Sibyl
+(`record/sibyl.db`). `--anchor` asks `knos.record` to anchor the journal's Merkle root on devnet (`--anchor-keypair
+FILE` names the payer); it is off by default, and a failed anchor is reported in summary.json instead of stopping
+the run.
+
+Text from an agent or a candidate (a change's description, a crash's last line) goes in only when it is short plain
+words; anything else is replaced by its sha256. The fallback journal's Merkle root is computed as
+`knos.record.merkle` computes it.
+
+After graduation the run writes an outcome (metric, baseline, best, lift per seed, the bar, the spec hash) and a **split
+plan**: the whole bounty in task.json, divided by the role shares of the one fee config (`knos.money.fees_config`,
+config/fees.yaml; only roles the config has) when it is installed, else by task.json's shares.
+
+The payout fee is the funder's, on top of the bounty, as fees.yaml says; the agents' part is divided among the agents
+whose changes were kept. It is a plan: nothing is signed or sent. Paying it is graduation's job (an escrow order on
+devnet).
 
 ## A measured run (synthetic data)
 
@@ -109,16 +116,19 @@ Experiments: 12; kept 7, discarded 5, refused 0, failed 0. Lift on the final set
 Wall time for the whole run: 47.5 s. The record held 19 entries and verified. The kept changes, in order: squared
 features, pairwise products, batch 16, learning rate 0.1, 20 epochs, learning rate 0.2, L2 0.001.
 
-The same command run again while other jobs loaded the VM (load average 9.8 on 4 CPUs) took 115.6 s: experiment 11
-(40 epochs) ran past the 20-second budget and failed, so 4 were discarded and 1 failed; every other decision and every
-score above came out the same. That run used a wall-clock budget; since v0.3.34 the budget is CPU time with a
-wall-clock backstop, so host load no longer decides pass or fail (an outside judge's baseline failed on a loaded VM).
+The same command run again while other jobs loaded the VM (load average 9.8 on 4 CPUs) took 115.6 s: experiment 11 (40
+epochs) ran past the 20-second budget and failed, so 4 were discarded and 1 failed; every other decision and every
+score above came out the same.
 
-The split plan, from a re-run in the merged v0.3.29 tree (same scores; 106.9 s at load average 10.9) with its fee
-config (the shares were placeholders then; the founder decided the same 60/25/10/5 on 14 Oct 2026, config/fees.yaml): bounty 100 test USDC
-(a demo amount) split researcher 66.68, agent 27.77, referee 5.55; the payout fee 0.30 is the funder's, on top, so the
-funder pays 100.30 on chain (the 5% bounty fee decided on 14 Oct 2026 includes that 0.30; its off-chain rest is not
-part of this plan: see MONEY.md). No transaction.
+That run used a wall-clock budget; since v0.3.34 the budget is CPU time with a wall-clock backstop, so host load no
+longer decides pass or fail (an outside judge's baseline failed on a loaded VM).
+
+The split plan, from a re-run in the merged v0.3.29 tree (same scores; 106.9 s at load average 10.9) with its fee config (the shares were
+placeholders then; the founder decided the same 60/25/10/5 on 14 Oct 2026, config/fees.yaml): bounty 100 test USDC (a demo amount) split
+researcher 66.68, agent 27.77, referee 5.55; the payout fee 0.30 is the funder's, on top, so the funder pays 100.30 on chain (the 5%
+bounty fee decided on 14 Oct 2026 includes that 0.30; its off-chain rest is not part of this plan: see MONEY.md).
+
+No transaction.
 
 ## What is not done here
 

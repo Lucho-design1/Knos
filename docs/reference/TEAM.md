@@ -102,13 +102,15 @@ First 90 days, this person would own:
 
 For: he has won before with the memory engine Knos still runs on (first of 92 at the Sibyl Labs hackathon, above).
 He works with coding agents every day, and the problem is his own, since his agents reported passing tests that had
-not passed. He measured it on public data before building for it ([BENCH.md](BENCH.md)). He ships, in public, and
-writes down what is not done.
+not passed. He measured it on public data before building for it ([BENCH.md](BENCH.md)).
+
+He ships, in public, and writes down what is not done.
 
 Against: the buyer is the person who approves a supplier's invoice, and he has never sold to that person, has
 not spoken to one about this, and has never worked in procurement or finance. A procurement process may refuse
-a pseudonym. So the fit is with the supplier's side and with the engineering. The buyer's side
-is the first role above, and it is empty.
+a pseudonym. So the fit is with the supplier's side and with the engineering.
+
+The buyer's side is the first role above, and it is empty.
 
 ## What an outside key holder would do
 
@@ -132,6 +134,7 @@ This is a plan. **None of it has been done**, and its first step waits on a seco
 
 Today the pinned workflows, the key-rotation and claim workflows, the relay, the site and the source all live in
 one personal GitHub account. If that account were suspended or lost, funded orders could only be refunded.
+
 [GOVERNANCE.md](GOVERNANCE.md), section 9, has the steps with what changes in the pins and what a paying
 repository must re-pin; [DEPENDENCY.md](DEPENDENCY.md) has what each step needs. In short:
 

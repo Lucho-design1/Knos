@@ -210,8 +210,10 @@ bounty on an issue is the smallest one.
 
 ## History
 
-Knos 0.1 (1–7 Sep 2026) was shared memory for coding agents, built on Sibyl Labs' memory engine. 0.2 and 0.3.0–0.3.9 (30 Sep – 2 Oct)
-tried coordination, budgets and a jobs market before the measurement showed where the problem was
-([the tag `archive/labs` of drexthealpha/Knos](https://github.com/drexthealpha/Knos/tree/archive/labs)). 0.3.10 to 0.3.15 are the two deployments, work
-orders, the count and the console. 0.3.16 put an invoice check on the site. [DISCLOSURE.md](DISCLOSURE.md) says what
-was built when and what came from elsewhere; [the changelog](../../CHANGELOG.md) has every release.
+Knos 0.1 (1–7 Sep 2026) was shared memory for coding agents, built on Sibyl Labs' memory engine. 0.2 and 0.3.0–0.3.9 (30 Sep – 2 Oct) tried
+coordination, budgets and a jobs market before the measurement showed where the problem was ([the tag `archive/labs` of
+drexthealpha/Knos](https://github.com/drexthealpha/Knos/tree/archive/labs)). 0.3.10 to 0.3.15 are the two deployments, work orders, the count and the
+console.
+
+0.3.16 put an invoice check on the site. [DISCLOSURE.md](DISCLOSURE.md) says what was built when and what came from elsewhere; [the
+changelog](../../CHANGELOG.md) has every release.

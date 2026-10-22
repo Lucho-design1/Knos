@@ -62,8 +62,8 @@ LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish"
           "live": (120, 600)}   # (calls, seconds) per client; "live": presence and draft autosave, apart from "product"
 GLOBAL_DEMO = (60, 3600)
 FRONT_ORIGINS = ("https://drexthealpha.github.io",)               # the front door, allowed to read the demand check
-DEMAND_CORS = ("/api/check", "/api/demand/fields", "/api/cross", "/api/report")                                           # demo pre-orders, all clients
-ROUTES = {"/api/trace/keep": "product", "/api/qloo-diff": "product", "/api/open-signals": "check", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
+DEMAND_CORS = ("/api/check", "/api/demand/fields", "/api/cross", "/api/report", "/api/vectors", "/api/proof", "/api/ready/card", "/api/money")                                           # demo pre-orders, all clients
+ROUTES = {"/api/trace/keep": "product", "/api/qloo-diff": "product", "/api/open-signals": "check", "/api/ready/card": "product", "/api/company/need": "product", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
           "/api/check": "check", "/api/research": "check", "/api/cross": "check", "/api/factor": "lock",
@@ -77,9 +77,15 @@ SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/
              "/api/preorder/demo", "/api/preorder/faucet", "/api/preorder/tx", "/api/preorder/submit",
              "/api/wallet", "/api/wallet/faucet", "/api/sign", "/api/maker/claim", "/api/lend/quote", "/api/lend/advance", "/api/lend/collect")   # no anonymous money or faucet calls
 # every GET route below (do_GET), for the OpenAPI document (knos_wanted.openapi); the product routes list their own
-PAGES = {"/trace": "trace.html", "/trace.html": "trace.html", "/with-without": "with_without.html", "/with-without.html": "with_without.html",
+PAGES = {"/fields": "fields.html", "/money": "money.html", "/companies": "companies.html", "/trace": "trace.html", "/trace.html": "trace.html", "/with-without": "with_without.html", "/with-without.html": "with_without.html",
          "/qloo-safe-use": "qloo_safe_use.html", "/qloo-safe-use.html": "qloo_safe_use.html", "/invite": "invite.html", "/invite.html": "invite.html"}
-GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/trace": "A demand report's Qloo calls, redacted: endpoint, params, ids, excerpt, limit",
+GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/fields": "Fields: 7 bottlenecks by 7 technologies, 49 cells, each live or next",
+              "/api/money": "The money page: each number with its source, and the share Knos needs for $1B a year at the live fee",
+              "/api/vectors": "The seven product-value vectors, measured: cost, speed, friction, trust, capability, access, status",
+              "/api/proof": "The latest real verdict this server reached (shown first on both front doors)",
+              "/api/ready/card": "A Ready card, read back from its devnet attestation (?hash= the criteria hash)",
+              "/api/solvers": "Proven solvers first: wallets by verified milestones, each read back from devnet",
+              "/fields": "Fields", "/money": "The money", "/companies": "Companies", "/api/trace": "A demand report's Qloo calls, redacted: endpoint, params, ids, excerpt, limit",
               "/api/outside": "The outside counter: crossings and pre-order commitments by people outside Knos, summed from the store",
               "/api/outside/rows": "Every row the outside counter sums (kind, time, crossing id or order address, via)",
               "/api/qloo-diff": "The \"With and without Qloo\" table: 20 ideas, each checked with Qloo and with the key unset", "/sw.js": "The app's service worker (offline shell, background sync)",
@@ -98,7 +104,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/trace": "A demand r
               "/api/referee/group": "The FROST referee group (public)", "/api/referee/pending": "Open referee signing sessions",
               "/api/referee/session": "One referee signing session", "/api/prize/evidence": "A demo prize's public evidence (the round's verdict)",
               "/api/project/evidence": "A project attempt's public review (both pages and the claim ids)"}
-SUMMARIES = {"/api/check": "Demand check on Qloo", "/api/open-signals": "Demand from open signals only (no Qloo, keyless)", "/api/research": "Research card from a paper id", "/api/cross": "Start a crossing",
+SUMMARIES = {"/api/check": "Demand check on Qloo", "/api/company/need": "Companies: one sentence to a Ready brief, a private demand check and an opened milestone", "/api/ready/card": "Attest a Ready brief on devnet: the shareable card", "/api/open-signals": "Demand from open signals only (no Qloo, keyless)", "/api/research": "Research card from a paper id", "/api/cross": "Start a crossing",
              "/api/preorder": "Pre-order on proof", "/api/milestone": "Post milestone evidence; 2 of 3 referees release",
              "/api/refund": "Refund past the deadline", "/api/fund": "Fund a milestone", "/api/factor": "Receivable financing offer",
              "/api/anchor": "Anchor the record root on devnet", "/api/task/submit": "Submit to a contributor round"}
@@ -262,6 +268,36 @@ def make_handler(state: State):
                 return self._send(200, outside.totals())
             if u.path == "/api/outside/rows":
                 return self._send(200, {"rows": outside.rows(), "rule": outside.RULE})
+            if u.path == "/api/fields":                      # the fields page: 7 bottlenecks by 7 technologies
+                from .fields_data import FIELDS
+                return self._send(200, FIELDS)
+            if u.path == "/api/money":                       # the money page: the pools, and the share Knos needs at the live fee
+                f = preorder.fee_line()
+                bps = f.get("rate_bps") or 0
+                from .money_data import MONEY
+                doc = MONEY
+                need = 1e9 / (bps / 1e4) if bps else None              # $1B a year of fees, before costs, at the live payout fee
+                shares = [{"id": x["id"], "share": need / x["usd"]} for x in doc["pools"] if need and x.get("usd")]
+                return self._send(200, {**doc, "fee": {"rate_bps": bps, "status": f.get("status"), "source": "config/fees.yaml"},
+                                        "target_usd": 1e9, "needed_usd": need, "shares": shares,
+                                        "assumes": "fees taken only on money released on proof; before costs"})
+            if u.path == "/api/solvers":                     # proven solvers first: verified milestones, read back from devnet
+                from . import companies
+                return self._send(200, companies.solvers())
+            if u.path == "/api/vectors":                     # the seven product-value vectors, measured
+                from . import vectors
+                return self._send(200, vectors.vectors())
+            if u.path == "/api/proof":                       # the latest real verdict, drawn first on both front doors
+                from . import vectors
+                return self._send(200, vectors.proof())
+            if u.path == "/api/ready/card":
+                from . import track
+                h = (qs.get("hash") or [""])[0]
+                if not re.fullmatch(r"[0-9a-f]{64}", h):
+                    return self._send(400, {"error": "hash: the brief's criteria hash (64 hex)"})
+                return self._send(200, track.ready_card_get(h))
+            if re.fullmatch(r"/ready/[0-9a-f]{64}", u.path):
+                return self._send(200, (STATIC / "ready.html").read_bytes(), "text/html; charset=utf-8")
             if u.path == "/api/qloo-diff":                   # the table behind "With and without Qloo"
                 try:
                     return self._send(200, valley._load("pages", "qloo_diff"))
@@ -440,7 +476,7 @@ def make_handler(state: State):
                     return self._send(401, {"error": "sign in first (passkey, Google or a guest label)"})
                 if u.path == "/api/milestone" and not state.allow("commitment:" + str(body.get("commitment", ""))[:64], "milestone_one"):
                     return self._send(429, {"error": "this commitment had 10 evidence posts in the last hour; try again later"})
-                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research", "/api/cross", "/api/trace/keep", "/api/qloo-diff", "/api/open-signals") + SIGNED_IN:
+                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research", "/api/cross", "/api/trace/keep", "/api/qloo-diff", "/api/open-signals", "/api/ready/card", "/api/company/need") + SIGNED_IN:
                     return self._send(200, self.route_v2(u.path, body))
                 return self._send(200, self.route(u.path, body))
             except (auth.AuthError, wallets.NeedPasskey) as why:
@@ -552,6 +588,7 @@ def make_handler(state: State):
                     opts["exclude"] = ",".join(ex)
                 privacy.check({k: v for k, v in opts.items() if isinstance(v, str)})
                 without = body.get("without_qloo") is True        # the same check with the key unset (the comparison)
+                t0 = time.perf_counter()
                 rep = check.demand_check(idea, _text(body.get("place")), _text(body.get("leader"), 80),
                                          client=Client(key="") if without else state.rest, exclude=ex, options=opts)
                 if without:
@@ -560,9 +597,21 @@ def make_handler(state: State):
                 card = state.cards.get(str(body.get("research") or ""))
                 if card:
                     rep["research"] = {**card, "why_never_crossed": research.why_never_crossed(card, rep)}
+                rep["elapsed_ms"] = round((time.perf_counter() - t0) * 1000)
                 rep["record"] = company.record_check(rep)          # the decision in the agent's memory (Sibyl)
                 state.keep_check(rep)
+                from . import vectors
+                vectors.note("check", rep["elapsed_ms"], rep, state)   # speed and cost, measured; a real verdict is the proof shown first
                 return rep
+            if path == "/api/company/need":                # companies mode: one sentence -> Ready brief, private check, opened milestone
+                if not self.user:
+                    raise auth.AuthError("sign in first: company SSO (one press), or any Knos session")
+                from . import companies
+                return companies.need(_text(body.get("need"), 300) or "", self.user, body.get("open") is True, state)
+            if path == "/api/ready/card":                  # a Ready brief, attested on devnet once: the shareable card
+                from . import track
+                brief = body.get("brief") if isinstance(body.get("brief"), dict) else body
+                return track.ready_card(brief)
             if path == "/api/open-signals":                 # the no-Qloo baseline: keyless public sources, each named
                 from . import open_signals
                 idea = _text(body.get("idea"), 500) or ""

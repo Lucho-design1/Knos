@@ -2,9 +2,10 @@
 
 An evidence bundle (`knos bundle make`) holds everything a payment's verdict was derived from: the receipt, the token
 the issuer signed, the key, the terms, and an archived copy of the chain record. [RECEIPT.md](RECEIPT.md) says what
-`knos bundle verify --no-chain` proves from it when the cluster is gone. This page is about keeping it: sealed to the
-people who may open it, exported in plain for the customer, removed on a schedule, and checkpointed so that anyone
-can later show a bundle existed.
+`knos bundle verify --no-chain` proves from it when the cluster is gone.
+
+This page is about keeping it: sealed to the people who may open it, exported in plain for the customer, removed on a
+schedule, and checkpointed so that anyone can later show a bundle existed.
 
 Nothing here needs a server, an account, a cluster or Knos's operator. The code is `src/knos/vault.py` and
 `src/knos/vault_crypto.py`; the tests are `tests/test_vault.py`.
@@ -79,16 +80,18 @@ each of the three keys.
 
 The header is in the clear on purpose: a checkpoint and a retention policy work without any key. Whoever stores a
 sealed file therefore sees how many bundles there are, how large, when each was sealed, and the labels and public
-keys of the recipients. They do not see a repository, an amount, a payee or a verdict. If the labels themselves are
-confidential, use neutral ones (`a`, `b`, `c`).
+keys of the recipients. They do not see a repository, an amount, a payee or a verdict.
+
+If the labels themselves are confidential, use neutral ones (`a`, `b`, `c`).
 
 ## Checkpoints
 
-A checkpoint is `{type: knos.vault-checkpoint, version: 1, at, count, entries, root, previous, signature}`.
-`entries` are the bundles' SHA-256 hashes in order. `root` is the SHA-256 of the bytes `knos.vault.checkpoint.v1`,
-one zero byte, the count as 8 bytes (big-endian), and the hashes as raw bytes in order. `previous` is the root of the
-checkpoint before, so a series of them forms a chain. With `--sign` the checkpoint carries an Ed25519 signature made
-with a Solana keypair file; without it, it is a hash.
+A checkpoint is `{type: knos.vault-checkpoint, version: 1, at, count, entries, root, previous, signature}`. `entries`
+are the bundles' SHA-256 hashes in order. `root` is the SHA-256 of the bytes `knos.vault.checkpoint.v1`, one zero
+byte, the count as 8 bytes (big-endian), and the hashes as raw bytes in order.
+
+`previous` is the root of the checkpoint before, so a series of them forms a chain. With `--sign` the checkpoint
+carries an Ed25519 signature made with a Solana keypair file; without it, it is a hash.
 
 The command prints one line, `knos-vault-checkpoint:v1:<root>`. Put it somewhere both parties will find it later
 and neither can rewrite alone: an email to the other side, a transaction memo, a notary's register. That is all
@@ -96,9 +99,11 @@ and neither can rewrite alone: an email to the other side, a transaction memo, a
 
 What `knos vault verify` then shows: the root is the hash of the entries, the signature holds if there is one, and
 every listed bundle is held (in a vault folder, an export archive or a folder of plain bundles). With `--root` it
-also holds the checkpoint to the root you wrote down. It shows that a bundle held today is one of those that existed
-when the root was written down. It does not show that the bundle is true; `knos bundle verify` does that, from the
-issuer's signature. A signature says a key's holder made the checkpoint; who holds the key is not in the file.
+also holds the checkpoint to the root you wrote down.
+
+It shows that a bundle held today is one of those that existed when the root was written down. It does not show that
+the bundle is true; `knos bundle verify` does that, from the issuer's signature. A signature says a key's holder
+made the checkpoint; who holds the key is not in the file.
 
 ## Retention
 
@@ -121,16 +126,19 @@ kept can no longer prove anything about its contents to anyone.
 `tests/test_vault.py::test_restore_from_the_export_alone_after_the_working_copy_and_the_chain_are_gone`, and the row
 "devnet is reset and the operator's copies are deleted" in [DRILLS.md](DRILLS.md): a bundle is sealed to three keys
 and exported; the working folder is deleted and the chain forgets the order; the archive alone is restored; and
-`knos bundle verify --no-chain --no-network` passes on every restored receipt. The test chain holds one order, so
-"every" is one bundle there. It has not been rehearsed with a customer's archive.
+`knos bundle verify --no-chain --no-network` passes on every restored receipt.
+
+The test chain holds one order, so "every" is one bundle there. It has not been rehearsed with a customer's archive.
 
 Once on a real bundle, on 6 Oct 2026: the bundle of a work order paid on devnet at the staging program ids (transaction
 `63wT5rhY…`, 40,960 bytes, sha256 `fae63726…`, made by `knos bundle make` on 5 Oct) was sealed to three keys made for the
 run with `knos vault keygen`; each of the three opened it to the same bytes; it was exported, the vault folder was
 deleted, and `knos vault restore` gave it back from the archive alone, checked against the archive's checkpoint
-(`knos-vault-checkpoint:v1:72680419…`). `knos bundle verify --no-chain --no-network` passed on the restored copy, with
-`KNOS_PROGRAM_IDS` naming the staging ids it was paid on. Without them it is refused, and the refusal says the bundle
-is from another deployment of the programs. The keys and the archive were the founder's: nobody else held one.
+(`knos-vault-checkpoint:v1:72680419…`).
+
+`knos bundle verify --no-chain --no-network` passed on the restored copy, with `KNOS_PROGRAM_IDS` naming the staging ids
+it was paid on. Without them it is refused, and the refusal says the bundle is from another deployment of the programs.
+The keys and the archive were the founder's: nobody else held one.
 
 ## Limits
 

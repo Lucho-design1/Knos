@@ -6,11 +6,11 @@ test exists the row says **no test yet**. Instruction names are those documented
 [`knos_meter/src/lib.rs`](../../programs-v2/knos_meter/src/lib.rs) and
 [`knos_passkey/src/lib.rs`](../../programs-v2/knos_passkey/src/lib.rs); the source is the authority.
 
-This page describes the programs of this tree (`knos_pay` 2.2, which the public program id runs since 9 October 2026;
-`knos_meter` 1.1, `knos_passkey` 1.1) on Solana devnet, with test USDC. Nobody outside Knos has reviewed the programs, these statements or the tests. The tests run the
-programs in a simulator (LiteSVM); [DRILLS.md](DRILLS.md) says which paths have run on the deployed bytes.
-`tests/test_invariants_doc.py` checks that every test file and test name on this page exists, and
-[`invariants.json`](../invariants.json) is the same list for a program to read.
+This page describes the programs of this tree (`knos_pay` 2.2, which the public program id runs since 9 October 2026; `knos_meter` 1.1, `knos_passkey` 1.1) on Solana
+devnet, with test USDC. Nobody outside Knos has reviewed the programs, these statements or the tests.
+
+The tests run the programs in a simulator (LiteSVM); [DRILLS.md](DRILLS.md) says which paths have run on the deployed bytes. `tests/test_invariants_doc.py` checks that
+every test file and test name on this page exists, and [`invariants.json`](../invariants.json) is the same list for a program to read.
 
 **The machine.** `test_a_random_machine_of_orders_tokens_and_replays_keeps_every_invariant` in
 `tests/test_invariants_machine.py` checks invariants 1, 2, 3, 5, 8 and 9 together. From a fixed list of random seeds it takes
@@ -221,8 +221,10 @@ exactly what the first relay gave them.
 
 The fee is one pure function of the amount: 0.30% of it rounded down, at least 0.05. One rate, no tiers, no cap. An
 order's funder pays it on top (`order_fee`), and nothing else is ever taken from an order; a job's is taken out of
-its amount and is never more than it (`fee_of`). 5.00 pays 0.05; 100.00 pays 0.30; 1,000.00 pays 3.00; 5,000.00 pays
-15.00; 100,000.00, the most an order holds on devnet, pays 300.00.
+its amount and is never more than it (`fee_of`).
+
+5.00 pays 0.05; 100.00 pays 0.30; 1,000.00 pays 3.00; 5,000.00 pays 15.00; 100,000.00, the most an order holds on
+devnet, pays 300.00.
 
 - **Enforced by:** `FundOrderWallet` and `FundOrderBalance` take `amount + order_fee(amount)` and store the rate and
   the fee in the order; `TopUp` takes the fee of the new amount less the fee already there; a Plan (`SetPlan`, signed
@@ -266,26 +268,29 @@ its amount and is never more than it (`fee_of`). 5.00 pays 0.05; 100.00 pays 0.3
     fixed seed (`cargo test --release` in `programs-v2/fee_proofs`, not run by pytest);
   - a job's fee, at every u64 amount: never more than the amount: **verified**.
 
-  So the statement over every amount an order may hold is **verified**, in parts by rate. The one harness over every
-  u64 amount and every rate from 10 to 30 at once, `an_orders_fee_is_between_its_floor_and_the_one_rate_for_every_amount`
-  in `proofs.rs`, is verified too: it states that the fee is at least 0.05 and at most the larger of 0.05 and
-  `bps_of(amount, 30)`, the program's own 0.30% rounded down; that amount plus fee fits a u64 for every amount the
-  program takes; and that a job's fee is never more than its amount. It does not finish in 180 seconds, so
-  `program.yml` runs it in a job of its own (`kani-fee-bounds`, 350 minutes), which verified it with Kani 0.68.0
-  (CBMC 6.11.0) and Kani's default solver, CaDiCaL, not cvc5: run 37575047633 in 8,296 seconds and the nightly run
-  37608154723 in 8,360 seconds, at commits whose `knos_pay` source is this tree's (the top of
-  [`kani.json`](../kani.json)). That `bps_of(amount, 30)` is itself at most 0.30% of the amount is the result above that
-  rests on cvc5's translation.
-- **The meter:** the fee of a month is the count beyond the free allowance times the rate, taken from prepaid
-  Credits, and a batch that Credits cannot pay is refused whole
-  (`test_the_first_ten_thousand_evaluations_of_a_month_are_free_and_credits_never_go_below_zero` in
-  `tests/test_meter_chain.py`; `tests/test_meter_batch.py`).
-- **A top-up:** `test_a_top_up_pays_the_difference_between_the_two_schedule_values_at_every_size` (across the floor,
-  and to the most an order holds) and `test_a_top_up_of_a_balances_order_keeps_the_plans_rate` in
-  `tests/test_invariants_gaps.py`. The Kani harness
-  `what_a_funder_puts_in_is_what_the_payees_the_relayer_and_the_fee_owner_take_out` proves, for every amount an order
-  may have at 6 decimals and every rate, that the amount and its fee are exactly what the payees, the tip and
-  `FEE_OWNER` receive when the order is paid in one payment.
+So the statement over every amount an order may hold is **verified**, in parts by rate.
+
+The one harness over every u64 amount and every rate from 10 to 30 at once,
+`an_orders_fee_is_between_its_floor_and_the_one_rate_for_every_amount` in `proofs.rs`, is verified too: it states that
+the fee is at least 0.05 and at most the larger of 0.05 and `bps_of(amount, 30)`, the program's own 0.30% rounded down;
+that amount plus fee fits a u64 for every amount the program takes; and that a job's fee is never more than its amount.
+
+It does not finish in 180 seconds, so `program.yml` runs it in a job of its own (`kani-fee-bounds`, 350 minutes), which
+verified it with Kani 0.68.0 (CBMC 6.11.0) and Kani's default solver, CaDiCaL, not cvc5: run 37575047633 in 8,296 seconds
+and the nightly run 37608154723 in 8,360 seconds, at commits whose `knos_pay` source is this tree's (the top of
+[`kani.json`](../kani.json)).
+
+That `bps_of(amount, 30)` is itself at most 0.30% of the amount is the result above that rests on cvc5's translation. -
+**The meter:** the fee of a month is the count beyond the free allowance times the rate, taken from prepaid Credits, and
+a batch that Credits cannot pay is refused whole
+(`test_the_first_ten_thousand_evaluations_of_a_month_are_free_and_credits_never_go_below_zero` in
+`tests/test_meter_chain.py`; `tests/test_meter_batch.py`). - **A top-up:**
+`test_a_top_up_pays_the_difference_between_the_two_schedule_values_at_every_size` (across the floor, and to the most an
+order holds) and `test_a_top_up_of_a_balances_order_keeps_the_plans_rate` in `tests/test_invariants_gaps.py`.
+
+The Kani harness `what_a_funder_puts_in_is_what_the_payees_the_relayer_and_the_fee_owner_take_out` proves, for every
+amount an order may have at 6 decimals and every rate, that the amount and its fee are exactly what the payees, the tip
+and `FEE_OWNER` receive when the order is paid in one payment.
 
 ### 9. A Balance never spends past its limits
 
@@ -310,11 +315,12 @@ workflows that may spend it; and never more than it holds.
 
 ## One economic deliverable pays once
 
-The invariants above are about one order on chain. A deliverable can also meet a refund, a second funding, a standing
-order, an assignment, a warranty, a payment in parts, and a second way to pay (a "rail"): a bank transfer. Each row says what identifies the
-payment, what makes it once, and the test that checks it. An on-chain "paid once" does not cover a bank transfer by
-itself: the last row is the bank rail's own rule ([RAILS.md](RAILS.md), "An answer that is not clear is never a no").
-[`invariants.json`](../invariants.json) has the same rows under `economic_idempotency`.
+The invariants above are about one order on chain. A deliverable can also meet a refund, a second funding, a standing order, an assignment,
+a warranty, a payment in parts, and a second way to pay (a "rail"): a bank transfer. Each row says what identifies the payment, what makes
+it once, and the test that checks it.
+
+An on-chain "paid once" does not cover a bank transfer by itself: the last row is the bank rail's own rule ([RAILS.md](RAILS.md), "An answer
+that is not clear is never a no"). [`invariants.json`](../invariants.json) has the same rows under `economic_idempotency`.
 
 | through | its identity | made once by | checked by |
 |---|---|---|---|
@@ -356,10 +362,12 @@ or a seller's own books must still reconcile these:
 ## Records across systems: completeness and finality
 
 The programs make each payment once on chain. A statement is a record of those payments and of GitHub's answers, kept
-off chain; two such records can agree and still both miss an event. `knos statement complete <file> --sources
-<file>` ([`completeness.py`](../../src/knos/completeness.py)) sets a statement against its sources (the orders the chain
-paid in the period, and what GitHub answers for each pull request and run its lines name) and lists every difference
-as an exception. Nothing is fixed in place, and an exception never changes the count silently.
+off chain; two such records can agree and still both miss an event.
+
+`knos statement complete <file> --sources <file>` ([`completeness.py`](../../src/knos/completeness.py)) sets a statement
+against its sources (the orders the chain paid in the period, and what GitHub answers for each pull request and run its
+lines name) and lists every difference as an exception. Nothing is fixed in place, and an exception never changes the
+count silently.
 
 | case | what the record does | checked by |
 |---|---|---|
@@ -390,13 +398,13 @@ A bank that pays a transfer it first reported as rejected is detected and said (
 
 ## An upgrade and an order already funded
 
-An order's account holds its own schedule: the amount, the fee it was funded with (`fee`, escrowed on top of the
-amount), the rate fixed at funding (`fee_bps`), the deadline, the terms hash, the workflow commit and whether it has
-the presentation grace. The build that funded it is read from its incarnation number (explained below, "A marker does not outlive its
-order"; 0 means funded under `knos_pay` 2.1).
-`knos.completeness.stored_terms` reads them from the account's bytes
-(`test_the_stored_schedule_of_an_order_funded_under_2_1_is_read_from_its_account` in `tests/test_completeness.py`, on
-an account written by hand in the 2.1 layout: 5.00 with its 2.1 fee of 0.40, where 2.2 would charge 0.05).
+An order's account holds its own schedule: the amount, the fee it was funded with (`fee`, escrowed on top of the amount), the rate
+fixed at funding (`fee_bps`), the deadline, the terms hash, the workflow commit and whether it has the presentation grace.
+
+The build that funded it is read from its incarnation number (explained below, "A marker does not outlive its order"; 0 means funded
+under `knos_pay` 2.1). `knos.completeness.stored_terms` reads them from the account's bytes
+(`test_the_stored_schedule_of_an_order_funded_under_2_1_is_read_from_its_account` in `tests/test_completeness.py`, on an account
+written by hand in the 2.1 layout: 5.00 with its 2.1 fee of 0.40, where 2.2 would charge 0.05).
 
 - **What an upgrade to 2.2 did not change.** No account changed its size or its address. An order funded under 2.1
   is paid, reverted and refunded with the fee it was funded with (`an_order_funded_under_2_1_is_paid_and_reverted_with_the_fee_it_was_funded_with`
@@ -432,10 +440,10 @@ obliged to run a relay:
 | a signing key of GitHub's that is still registered on chain | the verifier takes a token only under one; a key lapses after 30 days without a refresh | the token is refused until anyone refreshes the key |
 | the program as deployed | the instruction still exists and still reads this token | an upgrade can change either, after 8 days in public ([GOVERNANCE.md](GOVERNANCE.md)) |
 
-What is tested is recovery from named failures, in a simulator, with times that are simulated seconds: the six rows
-of [DRILLS.md](DRILLS.md), "When a dependency fails" (GitHub's API down for ten minutes, GitHub's signing key expired
-on chain, the relay killed between a send and its confirmation, the RPC endpoint erroring with stale blockhashes, the
-evidence missing, devnet reset), held to the page by
+What is tested is recovery from named failures, in a simulator, with times that are simulated seconds: the six rows of
+[DRILLS.md](DRILLS.md), "When a dependency fails" (GitHub's API down for ten minutes, GitHub's signing key expired on
+chain, the relay killed between a send and its confirmation, the RPC endpoint erroring with stale blockhashes, the evidence
+missing, devnet reset), held to the page by
 `test_each_dependency_failure_is_drilled_and_says_what_broke_what_is_seen_how_it_recovers_and_how_long_it_took` in
 `tests/test_drills.py`; and the relay's own behaviour when its dependencies fail, in `tests/test_relay_failures.py`:
 `test_a_send_that_fails_for_the_clusters_reasons_is_tried_again_on_fixed_times_and_never_given_up_while_the_token_is_good`,
@@ -443,11 +451,12 @@ evidence missing, devnet reset), held to the page by
 `test_when_github_says_slow_down_nothing_is_asked_until_the_time_it_named_and_no_verdict_is_lost` and
 `test_a_token_past_its_hour_ends_with_the_reason_and_a_refusal_is_final_at_once`.
 
-What those tests do not show: that an outage ends, that somebody runs a relay, or that a token is carried before
-its hour is over. When it is not, the token is spent time and the payment needs a new one (`/knos settle` signs a
-fresh token when GitHub is back); if nobody asks, nothing pays. An outage of GitHub or of the cluster that outlasts an
-order's deadline means the accepted work is not paid by this order at all, unless the order was funded with the
-presentation grace and the token was signed in time:
+What those tests do not show: that an outage ends, that somebody runs a relay, or that a token is carried before its
+hour is over. When it is not, the token is spent time and the payment needs a new one (`/knos settle` signs a fresh
+token when GitHub is back); if nobody asks, nothing pays.
+
+An outage of GitHub or of the cluster that outlasts an order's deadline means the accepted work is not paid by this
+order at all, unless the order was funded with the presentation grace and the token was signed in time:
 
 **A token shown after a deadline it was issued before (the presentation grace).** In `knos_pay` 2.1,
 `PayOrder` compared the deadline with the chain's clock at the moment the token was shown. A token the forge signed
@@ -461,21 +470,28 @@ order can now be funded with the grace (one byte of its options, the funder's ch
 
 Why 7,200 seconds and not a day: it is the longest any token issued by the deadline can live. The program takes no
 token whose expiry is more than an hour after its `iat`, and the verifier refuses every token an hour after its
-expiry. A longer window would delay the refund for nothing, because no token would be accepted in the extra time; a
-shorter one would refuse tokens that are still good. A token GitHub itself signs lives five minutes, so in practice
-it must be shown within 65 minutes of being signed. An outage longer than that still loses the payment: carrying a
-proof across it would need the verifier to accept an older token, and the verifier was not changed for the grace.
+expiry.
 
-What the grace does not cover, and why. It is off unless the funder asks for it, so that the relay and every test
-that sends a refund the second after a deadline keep their meaning for every other order; an order funded under
-`knos_pay` 2.1 never has it. A challenge of a holdback (`Revert`) is still compared with the clock when
-it is shown: a challenge signed in the last minute of a warranty and shown after it is refused. A first-generation bounty
-has no grace. Checked by `a_token_issued_before_the_deadline_pays_after_it_and_no_refund_is_taken_meanwhile` and
+A longer window would delay the refund for nothing, because no token would be accepted in the extra time; a shorter
+one would refuse tokens that are still good. A token GitHub itself signs lives five minutes, so in practice it must
+be shown within 65 minutes of being signed.
+
+An outage longer than that still loses the payment: carrying a proof across it would need the verifier to accept an
+older token, and the verifier was not changed for the grace.
+
+What the grace does not cover, and why. It is off unless the funder asks for it, so that the relay and every test that
+sends a refund the second after a deadline keep their meaning for every other order; an order funded under `knos_pay` 2.1
+never has it.
+
+A challenge of a holdback (`Revert`) is still compared with the clock when it is shown: a challenge signed in the last
+minute of a warranty and shown after it is refused. A first-generation bounty has no grace.
+
+Checked by `a_token_issued_before_the_deadline_pays_after_it_and_no_refund_is_taken_meanwhile` and
 `the_grace_ends_when_no_token_issued_by_the_deadline_can_live_and_the_refund_follows_at_once` in
-[`adversarial.rs`](../../programs-v2/handlers/tests/adversarial.rs) (a second after the deadline; the last second a
-token lives; the end of the window; the second after it; both instructions in one transaction, in both orders) and
-by the unit test of `Order::in_time` in [`order.rs`](../../programs-v2/knos_pay/src/order.rs), which asserts for every
-boundary that a refund and a payment are never both in time.
+[`adversarial.rs`](../../programs-v2/handlers/tests/adversarial.rs) (a second after the deadline; the last second a token
+lives; the end of the window; the second after it; both instructions in one transaction, in both orders) and by the unit
+test of `Order::in_time` in [`order.rs`](../../programs-v2/knos_pay/src/order.rs), which asserts for every boundary that
+a refund and a payment are never both in time.
 
 **What is guaranteed in place of liveness: a refund path always exists.** Invariant 6: after its deadline an unpaid
 order's whole balance goes back where it came from on an instruction that needs no token, no GitHub, no relay of
@@ -499,14 +515,14 @@ Every row above names a test. What those tests leave out, said once more in one 
 ## What an opponent would try, replayed against the built programs
 
 [`programs-v2/handlers/tests/adversarial.rs`](../../programs-v2/handlers/tests/adversarial.rs) replays, in LiteSVM
-against the test builds in `tests/fixtures`, the transactions `scripts/adversarial_vectors.py` records
-(`cargo test --release --test adversarial` in `programs-v2/handlers`; not run by pytest): an order's address funded
-again after a payment and after a refund (invariants 2, 3); the second before, at and after a deadline, the end of a
-hold and the end of a warranty (5, 6); a payment and a refund, a settlement and a refund, a release and a challenge
-in one transaction in both orders and in two (5); one token twice in one transaction, in two, and a meter's token
-shown to `PayOrder` and a payment's to the meter (3, 4); one judge alone under a quorum of 2 and of 3; one account
-and one owner behind two judges; a marker of the order that was at an address before; a token shown after a deadline
-it was issued before; and orders and markers in accounts as `knos_pay` 2.1 wrote them.
+against the test builds in `tests/fixtures`, the transactions `scripts/adversarial_vectors.py` records (`cargo test
+--release --test adversarial` in `programs-v2/handlers`; not run by pytest): an order's address funded again after a
+payment and after a refund (invariants 2, 3); the second before, at and after a deadline, the end of a hold and the
+end of a warranty (5, 6); a payment and a refund, a settlement and a refund, a release and a challenge in one
+transaction in both orders and in two (5); one token twice in one transaction, in two, and a meter's token shown to
+`PayOrder` and a payment's to the meter (3, 4); one judge alone under a quorum of 2 and of 3; one account and one
+owner behind two judges; a marker of the order that was at an address before; a token shown after a deadline it was
+issued before; and orders and markers in accounts as `knos_pay` 2.1 wrote them.
 
 None of its tests is skipped. Two used to be skipped, because the program then failed them; `knos_pay` 2.2 fixes
 both, and they now run with the rest.
@@ -514,9 +530,12 @@ both, and they now run with the rest.
 ### A quorum counts owners of repositories, not repositories
 
 An order with a quorum of 2 or 3 pays when that many distinct judges have passed the same artifact: the order's own
-repository, a neutral run, the judge repository. The finding
-(`finding_one_account_that_starts_both_runs_is_one_judge_not_two`): on a wallet's order, the account that started
-the run in the order's repository could start the neutral run in another repository it owned, and the order paid.
+repository, a neutral run, the judge repository.
+
+The finding (`finding_one_account_that_starts_both_runs_is_one_judge_not_two`): on a wallet's order, the account
+that started the run in the order's repository could start the neutral run in another repository it owned, and the
+order paid.
+
 The rule now, the same for an order funded by a wallet, by a passkey, by a comment on a forge or from a Balance
 (`order_terms::distinct`; each judge's marker records the `repository_owner_id` and the `actor_id` of its run):
 
@@ -547,20 +566,24 @@ funds one through the passkey program and then judges it under a quorum.
 ### A marker does not outlive its order
 
 A quorum marker, a standing order's `done` marker and an assignment are accounts of their own, named by their
-order's address; an address is funded again once the order there was paid or refunded. The finding
-(`finding_a_marker_of_the_order_before_does_not_count_for_one_funded_again_in_the_same_second`): a marker was tied
-to its order by the second of the order's funding, so an order paid and funded again within one second took the
-earlier marker for its own, and one new token then paid it.
+order's address; an address is funded again once the order there was paid or refunded.
 
-Every order now stores its **incarnation**: the slot of its funding plus one. Every marker made for it carries that
-number, and counts only for the order that has it. No marker is written or counted in the same slot (a
-400-millisecond step of the chain) in which its order was funded: the instruction is refused, and the next slot takes
-it. So a marker that carries slot S was written later, while its order existed. The address became free only after
-that, so whatever is funded there next is funded in a slot after S. The same holds for `done` markers and assignments, which before
-`knos_pay` 2.2 were tied to the second (an assignment) or to nothing (a `done` marker outlived its order until someone
-closed it). Markers that `knos_pay` 2.1 wrote are shorter and are told apart by their length: a quorum marker
-of that build names no run and counts for nothing until its judge signs again; its `done` marker counts for an order
-of that build and for no other.
+The finding (`finding_a_marker_of_the_order_before_does_not_count_for_one_funded_again_in_the_same_second`): a
+marker was tied to its order by the second of the order's funding, so an order paid and funded again within one
+second took the earlier marker for its own, and one new token then paid it.
+
+Every order now stores its **incarnation**: the slot of its funding plus one. Every marker made for it carries that number, and
+counts only for the order that has it.
+
+No marker is written or counted in the same slot (a 400-millisecond step of the chain) in which its order was funded: the
+instruction is refused, and the next slot takes it. So a marker that carries slot S was written later, while its order existed.
+
+The address became free only after that, so whatever is funded there next is funded in a slot after S. The same holds for `done`
+markers and assignments, which before `knos_pay` 2.2 were tied to the second (an assignment) or to nothing (a `done` marker
+outlived its order until someone closed it).
+
+Markers that `knos_pay` 2.1 wrote are shorter and are told apart by their length: a quorum marker of that build names no run and
+counts for nothing until its judge signs again; its `done` marker counts for an order of that build and for no other.
 
 Checked by `finding_a_marker_of_the_order_before_does_not_count_for_one_funded_again_in_the_same_second` (the same
 second, another slot; and a funding and a judge in one transaction, refused whole),
@@ -573,7 +596,8 @@ second, another slot; and a funding and a judge in one transaction, refused whol
 
 `an_order_funded_under_2_1_is_paid_and_reverted_with_the_fee_it_was_funded_with` and
 `an_order_funded_under_2_1_is_refunded_a_second_after_its_deadline` in `adversarial.rs` put orders on the chain in
-accounts as 2.1 wrote them (the fee and the rate of 2.1, no incarnation, no grace) and
-pay, revert and refund them with 2.2: each moves the fee it was funded with, and the refund comes the second
-after the deadline. These are accounts written by the test, byte for byte in the earlier layout; no order funded by
-the deployed program was replayed.
+accounts as 2.1 wrote them (the fee and the rate of 2.1, no incarnation, no grace) and pay, revert and refund them
+with 2.2: each moves the fee it was funded with, and the refund comes the second after the deadline.
+
+These are accounts written by the test, byte for byte in the earlier layout; no order funded by the deployed
+program was replayed.

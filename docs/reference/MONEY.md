@@ -35,8 +35,9 @@ cfg.placeholders()                       # every number the founder has not set
 
 The live lines repeat numbers compiled into `knos_pay` (`knos.settle.v2.pay`) and the proposed lines repeat the price
 book (`knos.billing`). The loader **refuses** the file when one of them differs, so the file, the program and the price
-book cannot drift apart: changing a live fee means upgrading the program through the multisig. A decided line must say
-when it was decided, why, and its source, and it can never be marked live.
+book cannot drift apart: changing a live fee means upgrading the program through the multisig.
+
+A decided line must say when it was decided, why, and its source, and it can never be marked live.
 
 | line | rate or price | status | who pays, and where it goes |
 |---|---|---|---|
@@ -64,14 +65,19 @@ Where each decided price comes from (all: founder decision 14 Oct 2026, DECISION
 
 knos_pay's fee is compiled into the deployed program: 0.30% of each release, at least 0.05 (`knos.settle.v2.pay`
 FEE_BPS and FEE_MIN). The loader refuses a live line that says anything else, and no config can change what the program
-takes. So the bounty fee is modelled as two parts of one 5%: the program takes its 0.30% on chain at payout (the live
-`bounty` line, sent to the treasury), and the rest is a `bounty_platform` line marked decided, collected off chain by
-invoice to the funder. The funder pays 5% in all, not 5% on top of 0.30%. The lab order fee works the same way on the
-`payout` line. Taking the whole 5% (or 3%) on chain needs a **program upgrade** of knos_pay through the Squads vault;
-until then `cfg.platform(kind, amount)` says how much of each fee is on chain and how much is off chain. An order on an
-owner's Plan pays a lower on-chain rate, so its off-chain rest is larger; when the 0.05 floor alone exceeds the whole
-fee, the off-chain rest is 0. Nothing collects the off-chain part today: there is no invoicing code, and on devnet all
-of it is test money.
+takes.
+
+So the bounty fee is modelled as two parts of one 5%: the program takes its 0.30% on chain at payout (the live `bounty`
+line, sent to the treasury), and the rest is a `bounty_platform` line marked decided, collected off chain by invoice to
+the funder. The funder pays 5% in all, not 5% on top of 0.30%.
+
+The lab order fee works the same way on the `payout` line. Taking the whole 5% (or 3%) on chain needs a **program
+upgrade** of knos_pay through the Squads vault; until then `cfg.platform(kind, amount)` says how much of each fee is on
+chain and how much is off chain.
+
+An order on an owner's Plan pays a lower on-chain rate, so its off-chain rest is larger; when the 0.05 floor alone
+exceeds the whole fee, the off-chain rest is 0. Nothing collects the off-chain part today: there is no invoicing code,
+and on devnet all of it is test money.
 
 **The treasury** is the program's fee owner, `4G3cznCnwCUPBCZwzKiLupjdgB5pSoCcGWNGuFv4TYFo`, a vault of the Squads
 program. Fees land in token accounts it owns (`pay.fee_accounts(mint)`: the associated account and any seeded
@@ -93,8 +99,9 @@ Every payout is shared among four roles, by fixed basis points (`splits.roles`, 
 
 One knos_pay order pays one to four payees, so the split is the payee list of the judge's pay token
 (`knos.splits.payees`). The program divides the amount: each share rounded down, the last payee the rest. A role that
-took no part leaves its share to the others in proportion. Nobody forwards money after the fact: the split is paid in
-the one transaction that pays the order.
+took no part leaves its share to the others in proportion.
+
+Nobody forwards money after the fact: the split is paid in the one transaction that pays the order.
 
 ## Graduation: the milestone escrow and the pre-order pool
 
@@ -111,8 +118,10 @@ three checks of the referee. For one that did, it plans two kinds of knos_pay wo
 
 Both are **private** orders (`F_PRIVATE`, salted scope): they store no repository and no issue, so a claim never shows
 up as a bounty on a GitHub issue. The salt is `sha256("knos-grad:" + claim id)`, derived from the public claim id on
-purpose, so anyone can find a claim's escrow and pool. No token here pays backers out of revenue: a pre-order buys the
-product, and an escrow funds a milestone or comes back.
+purpose, so anyone can find a claim's escrow and pool.
+
+No token here pays backers out of revenue: a pre-order buys the product, and an escrow funds a milestone or comes
+back.
 
 ### On devnet (13 Oct 2026)
 
@@ -132,7 +141,9 @@ product, and an escrow funds a milestone or comes back.
 
 The first refund of claim B was sent by a relayer the demo does not run, before the demo's own: anyone may refund an
 order past its deadline. The payout of claim A needs a GitHub-signed token from the judge repository; the demo does
-not fake one. The payout path, with the four-way split and the fee, runs against the program's test build in LiteSVM
+not fake one.
+
+The payout path, with the four-way split and the fee, runs against the program's test build in LiteSVM
 (`tests/test_money_graduation.py`), and the audience the judge would sign is in `web/revenue_devnet.json`.
 
 ## For agents: MCP, Hermes and x402
@@ -177,11 +188,12 @@ credit counts are too:
 | Pro | 100 | 110 | 55000 |
 | Team | 200 | 220 | 110000 |
 
-The shape is copied from Nous Research, which sells open-core software (MIT) with hosted subscriptions on credits
-(Portal tiers of $20, $100 and $200) and enterprise deals; it reported about $36M annualized revenue by mid-September
-2026 and raised $90M at a $1.5B valuation (TechCrunch, 7 Oct 2026, citing the Wall Street Journal; unaudited). Knos's
-tier prices match it by founder decision; the bonus and the credit unit are Knos's own. Labs pay 200 to 2,000 USD per verified task (Epoch AI, 12 Jan 2026), which is
-where a task package would sell.
+The shape is copied from Nous Research, which sells open-core software (MIT) with hosted subscriptions on credits (Portal tiers of $20, $100 and $200) and enterprise
+deals; it reported about $36M annualized revenue by mid-September 2026 and raised $90M at a $1.5B valuation (TechCrunch, 7 Oct 2026, citing the Wall Street Journal;
+unaudited).
+
+Knos's tier prices match it by founder decision; the bonus and the credit unit are Knos's own. Labs pay 200 to 2,000 USD per verified task (Epoch AI, 12 Jan 2026),
+which is where a task package would sell.
 
 ## Decisions only the founder can make
 

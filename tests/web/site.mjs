@@ -183,6 +183,10 @@ async function mock(ctx) {
     // the app's list of research products (web/home.js asks it on a reader's first move at the bare address): it answers
     // an empty list here, and the first screen keeps the snapshot the site ships
     if (u.href === "https://knos.onrender.com/api/front") return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: '{"products":[],"crossing_now":[]}' });
+    // the latest real check and the measured numbers (web/brand/hero.js, vectors.js ask the app when they are on screen):
+    // nothing to show here, so the first screen keeps what it ships
+    if (u.href === "https://knos.onrender.com/api/proof") return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: '{"proof":null}' });
+    if (u.href === "https://knos.onrender.com/api/vectors") return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "{}" });
     // devnet's second free RPC (web/netfacts.js asks it once the mocked devnet refuses a call): refused here, as if down
     if (u.host === "devnet.rpcpool.com") return route.abort();
     strangers.push(u.href); return route.abort();
@@ -460,7 +464,7 @@ await reset();
     await page.click("#more-button"); await page.click('#more-list a[href="#records"]');
     await page.waitForSelector("#view-records", { state: "visible" });
     check("  a link of it goes to its page, closes the list, and More is marked as holding the page shown", (await under()).length === 0 && await page.$eval("#more", (e) => e.classList.contains("current")) && (await isShown(page, "records")));
-    await visit(page, "#pricing");
+    await visit(page, "");
     check("  and is not marked on a page of the bar's own", !(await page.$eval("#more", (e) => e.classList.contains("current"))));
     const phone = await (await world({ width: 390 })).newPage();
     await visit(phone, "#check");
@@ -1330,7 +1334,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   // the Console's sample approvals name where each was made: a comment in this project's own playground repository, never an account that is somebody else's
   check("links: the Console's sample is in the project's own playground repository", hrefs.some((h) => /^https:\/\/github\.com\/drexthealpha\/Knos\/issues\/\d+#issuecomment-\d+$/.test(h)) && !(await page.content()).includes("github.com/acme/"));
   const bad = hrefs.filter((h) => !(h.startsWith("#") ? ["check", "fd-in", "check-a-pull-request", "protect", "fund", "claim", "pricing", "records", "network", "build", "rank", "buy", "install", "capabilities", "status", "index", "pilot", "reproduce", "demo", "shadow", "verifier", "playground", "terms", "supplier", "invoice-statement", "story", "keyholder", "sample", "record", "home", "verify", ...MENU.added.map((a) => a.name)].includes(h.slice(1).split("=")[0])
-    : h === TEMPLATE_LINK || h === JUDGE_TEMPLATE_LINK || h === "https://drexthealpha.github.io/Knos/" || /^https:\/\/explorer\.solana\.com\/(tx\/[1-9A-HJ-NP-Za-km-z]{64,90}|address\/[1-9A-HJ-NP-Za-km-z]{32,44})\?cluster=devnet$/.test(h) || /^https:\/\/github\.com\/drexthealpha\/|^https:\/\/faucet\.circle\.com\/$|^(index|stats|operations|agent_weekly|records|statement_sample)\.json$|^(\.\/)?(privacy|faq|wanted)\.html$|^wanted\.html#(projects|buy|fund|contribute|make|teams|agents|signin|research)$|^wanted\.html\?to=\/(with-without|qloo-safe-use|invite|verify)$|^wanted\.html#(back|fund|contribute)=[a-z0-9-]{3,64}$|^wanted\.html#(research|verify)$|^check\/$|^terms\/(?:3\/)?[\w-]+\/\d+\.json$/.test(h) || issuerDocs.includes(h)));
+    : h === TEMPLATE_LINK || h === JUDGE_TEMPLATE_LINK || h === "https://drexthealpha.github.io/Knos/" || /^https:\/\/explorer\.solana\.com\/(tx\/[1-9A-HJ-NP-Za-km-z]{64,90}|address\/[1-9A-HJ-NP-Za-km-z]{32,44})\?cluster=devnet$/.test(h) || /^https:\/\/github\.com\/drexthealpha\/|^https:\/\/faucet\.circle\.com\/$|^(index|stats|operations|agent_weekly|records|statement_sample)\.json$|^(\.\/)?(privacy|faq|wanted)\.html$|^wanted\.html#(projects|buy|fund|contribute|make|teams|agents|signin|research)$|^wanted\.html\?to=\/(with-without|qloo-safe-use|invite|verify|fields|money|companies)$|^wanted\.html#(back|fund|contribute)=[a-z0-9-]{3,64}$|^wanted\.html#(research|verify)$|^check\/$|^terms\/(?:3\/)?[\w-]+\/\d+\.json$/.test(h) || issuerDocs.includes(h)));
   check("links: every link goes to a view, to the site's own address, to the project's own GitHub, to a transaction or an address on devnet's explorer, to Circle's devnet faucet, to a file of the site or to an issuer's own documentation (the verifier's table)", bad.length === 0, bad);
   check("  a link that opens a new tab does not hand over the page", await page.$$eval('a[target="_blank"]', (a) => a.every((x) => /noopener/.test(x.rel))));
   await page.close();

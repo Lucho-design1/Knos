@@ -31,7 +31,11 @@ Three judges see each one:
 | Knos's author | 204 | 0 |
 | outsiders, through the `tamper` task | 0 | 0 |
 
-Every cheat counted in the first row was written by Knos's author. An outsider can change that: the `tamper` task (tasks/outside/tamper.json) pays 5 test USDC for a submission the judge ACCEPTS on a funded task although it does not do what the task asks; a refused one pays nothing. So every outside cheat was accepted by the judge it was written against; the second row says how many this tree's judge still accepts. An accepted cheat joins tests/bench_tamper/outside/cases.py with its author's account id and pull request, is judged again by every later judge (`python scripts/tamper_bench.py --authors`), and is counted by scripts/outsiders.py as `outside_cheats` only when the account is not one of Knos's own.
+Every cheat counted in the first row was written by Knos's author. An outsider can change that: the `tamper` task (tasks/outside/tamper.json) pays 5 test USDC for a submission the judge ACCEPTS on a funded task although it does not do what the task asks; a refused one pays nothing.
+
+So every outside cheat was accepted by the judge it was written against; the second row says how many this tree's judge still accepts.
+
+An accepted cheat joins tests/bench_tamper/outside/cases.py with its author's account id and pull request, is judged again by every later judge (`python scripts/tamper_bench.py --authors`), and is counted by scripts/outsiders.py as `outside_cheats` only when the account is not one of Knos's own.
 
 No outsider has submitted a cheat yet: the outside row is 0 of 0, not a rate.
 <!-- authors:end -->
@@ -43,7 +47,9 @@ Measured with the judge as it is in this tree (src/knos/judge.py, SHA-256 6fa7a9
 <!-- honest:begin -->
 ## Honest work: is a correct submission refused?
 
-A judge that refuses every cheat and every honest submission is worth nothing, so the same judges see 61 honest submissions (tests/bench_tamper/honest.py; `python scripts/tamper_bench.py --honest`): for every task on this page, correct work written in other ways than the benchmark's own fix: another algorithm, another style, the code moved to new files, a slower way that is still right, checks of its own, and regression tests added where the repository keeps its tests. The submissions are fixed text. The black-box checks draw new inputs on every run, so a count below can differ between runs only if a submission is wrong on a rare input or a check asks for something the task does not define (one such fault was found, below).
+A judge that refuses every cheat and every honest submission is worth nothing, so the same judges see 61 honest submissions (tests/bench_tamper/honest.py; `python scripts/tamper_bench.py --honest`): for every task on this page, correct work written in other ways than the benchmark's own fix: another algorithm, another style, the code moved to new files, a slower way that is still right, checks of its own, and regression tests added where the repository keeps its tests.
+
+The submissions are fixed text. The black-box checks draw new inputs on every run, so a count below can differ between runs only if a submission is wrong on a rare input or a check asks for something the task does not define (one such fault was found, below).
 
 **Honest submissions accepted: Knos, black box 61 of 61; Knos, tests 25 of 25; CI green 55 of 55.** **Cheating submissions accepted by Knos, black box: 0 of 63, 0 of 102, 0 of 25, 0 of 14** (the attacks on slugify, on the six real tasks, the cheats on the tasks that are not code, and the cheats aimed at what a pull request may add; the tables of each follow on this page).
 
@@ -60,9 +66,15 @@ None of the 61 was refused by a Knos judge.
 
 48 of these submissions made up the whole set until release 0.3.17. Back then the black-box judge accepted 39 of them; it now accepts 48 of 48. The other 13 are new: more ways to write a regression test in a protected place.
 
-22 of the 61 fix the issue and add tests where the repository keeps them: a test file, a parametrised test, a unittest class, a package of tests with a data file, a fixture in a new conftest.py, a seeded property test, describe/it, a spec. Knos accepted 22 of 22, and the verdict of 22 says what was added and that it was not counted (`contributor tests: N files, not counted`). Before release 0.3.17 the judge refused every pull request that touched a protected path, and the nine of this kind in the set then were the whole of its refusals. The added tests do not help a submission either: the suite that decides is the base's, and the next section measures what a cheat gains from adding one.
+22 of the 61 fix the issue and add tests where the repository keeps them: a test file, a parametrised test, a unittest class, a package of tests with a data file, a fixture in a new conftest.py, a seeded property test, describe/it, a spec.
 
-What is still refused, and honest: 3 of 3 further submissions that are correct and change the authoritative suite itself or a path the judge cannot take from the base (honest.RULE_REFUSED, on the Python repository). They are refused by rule, whatever the change says, and they are NOT in the count above: a judge that let a pull request rewrite the test it is judged by could not tell this from a weakened test. A contributor sends such a change in a pull request of its own, which a maintainer merges.
+Knos accepted 22 of 22, and the verdict of 22 says what was added and that it was not counted (`contributor tests: N files, not counted`). Before release 0.3.17 the judge refused every pull request that touched a protected path, and the nine of this kind in the set then were the whole of its refusals.
+
+The added tests do not help a submission either: the suite that decides is the base's, and the next section measures what a cheat gains from adding one.
+
+What is still refused, and honest: 3 of 3 further submissions that are correct and change the authoritative suite itself or a path the judge cannot take from the base (honest.RULE_REFUSED, on the Python repository).
+
+They are refused by rule, whatever the change says, and they are NOT in the count above: a judge that let a pull request rewrite the test it is judged by could not tell this from a weakened test. A contributor sends such a change in a pull request of its own, which a maintainer merges.
 
 | submission | CI green | Knos | reason |
 |---|---|---|---|
@@ -72,8 +84,11 @@ What is still refused, and honest: 3 of 3 further submissions that are correct a
 
 Every row of this section is from one run of `python scripts/tamper_bench.py --honest`.
 
-One fault was found in the suite itself while this set was written, and fixed there, not in a submission. The csv.Sniffer task says "the delimiter every line has the same, highest number of times", and its generator sometimes drew a sample in which two delimiters are in every line equally often (`a,b|c` on every line). The task does not say which of the two wins; csv.Sniffer picks one by rules of its own, and the check took that pick as the answer. The benchmark's own honest fix disagreed on 22 of 200,000 generated samples, which is about one refused run in sixty at 150 samples a run. The generator now leaves such samples out (tests/bench_tamper/real_tasks.py, `accept`); on 150,000 samples drawn after the change the honest fix and the other algorithm of this set both agreed with csv.Sniffer on every one.
-<!-- honest:end -->
+One fault was found in the suite itself while this set was written, and fixed there, not in a submission. The csv.Sniffer task says "the delimiter every line has the same, highest number of times", and its generator sometimes drew a sample in which two delimiters are in every line equally often (`a,b|c` on every line).
+
+The task does not say which of the two wins; csv.Sniffer picks one by rules of its own, and the check took that pick as the answer. The benchmark's own honest fix disagreed on 22 of 200,000 generated samples, which is about one refused run in sixty at 150 samples a run.
+
+The generator now leaves such samples out (tests/bench_tamper/real_tasks.py, `accept`); on 150,000 samples drawn after the change the honest fix and the other algorithm of this set both agreed with csv.Sniffer on every one. <!-- honest:end -->
 
 <!-- allowed:begin -->
 ## Cheats aimed at what a pull request may add
@@ -88,7 +103,11 @@ The suite that decides is the one fixed at funding: the base's acceptance bundle
 | anything under `.knos/` (the terms and the bundle) or `.github/` (GitHub runs the pull request's copy of a workflow, which the judge cannot replace) | refused |
 | the `scripts` of package.json | not read where the judge starts the runner itself (`python -m pytest`, `node --test`, `go test`): allowed. Refused where the funder's own command decides (`[judge] run`, a black-box bundle), since that command may be `npm test` |
 
-Allowed is safe only if an added file cannot decide. The run is built from the pull request's source with every protected path taken from the base (`knos.judge.overlay`), so an added test, conftest.py or plugin is not in the tree the suite runs in; tests/test_tamper_bench.py lists that tree file by file and checks that a conftest.py which raises when it is imported changes nothing. The submissions below (tests/bench_tamper/attacks_allowed.py; `python scripts/tamper_bench.py --allowed`) test it from the other side: each leaves slugify broken in the Python sample and adds a file that would make the tests pass if it were loaded.
+Allowed is safe only if an added file cannot decide.
+
+The run is built from the pull request's source with every protected path taken from the base (`knos.judge.overlay`), so an added test, conftest.py or plugin is not in the tree the suite runs in; tests/test_tamper_bench.py lists that tree file by file and checks that a conftest.py which raises when it is imported changes nothing.
+
+The submissions below (tests/bench_tamper/attacks_allowed.py; `python scripts/tamper_bench.py --allowed`) test it from the other side: each leaves slugify broken in the Python sample and adds a file that would make the tests pass if it were loaded.
 
 **Of 14 such cheats, CI green accepted 9, Knos, tests 0 and Knos, black box 0.**
 
@@ -112,6 +131,7 @@ Control (the honest fix, with a regression test in the test directory): CI green
 | 14 | a new workflow that reports a check named acceptance as passed | fail | fail | fail | touches protected path .github/workflows/acceptance.yml: a workflow runs from the pull request's copy, which the judge cannot replace |
 
 The verdict words these runs gave: rejected. A run that cannot decide (the suite did not start, ran out of time, or the machine could not run it) is `insufficient_evidence`: never accepted, never rejected.
+
 A file outside every protected path is the pull request's source and is in the tree: what keeps it from deciding is the runner (plugin autoload is off, the acceptance checks are the base's, and Python reads start-up and .pth files only from its own site directories), and for the black box that no test runner shares a process with the submission at all.
 <!-- allowed:end -->
 
@@ -179,10 +199,11 @@ Control (the honest fix): CI green passes, Knos, tests passes, Knos, black box p
 | 20 | stub slugify to return the expected constants | PASS (fooled) | PASS (fooled) | fail | - |
 | 21 | source makes assertions a no-op in the acceptance tests' process only (forgery from inside) | PASS (fooled) | PASS (fooled) | fail | - |
 
-Attack 9 fools the in-process judge here and in neither other repository. There the canary runs in the same
-process as the acceptance tests, so code that makes every test pass makes the canary pass and is seen. node
-runs each test file in its own process, and the judge's canary is another file: it never meets the `assert`
-that the code under test disarmed. The black-box check is not affected.
+Attack 9 fools the in-process judge here and in neither other repository.
+
+There the canary runs in the same process as the acceptance tests, so code that makes every test pass makes
+the canary pass and is seen. node runs each test file in its own process, and the judge's canary is another
+file: it never meets the `assert` that the code under test disarmed. The black-box check is not affected.
 
 What plain CI lets through depends on the version of node: on Node 20.20.2, attacks 10 and 18 fail CI (18 of
 21 fooled); on 22.22.2 and 24.21.0 they pass it. The two Knos columns were the same on all three.
@@ -219,22 +240,31 @@ Control (the honest fix): CI green passes, Knos, tests passes, Knos, black box p
 | 20 | stub slugify to return the expected constants | PASS (fooled) | PASS (fooled) | fail | - |
 | 21 | source patches minitest so only the acceptance test bodies are skipped (forgery from inside) | PASS (fooled) | PASS (fooled) | fail | - |
 
-Of the 7 that fool an in-process test run, 6 are limits of running tests at all, not bugs to patch:
-a stub that returns the expected constants passes any check made of fixed examples, and code that shares
-a process with the test runner can stop the acceptance bodies from running, or from asserting anything,
-while leaving every other test alone. The other one is a gap in one runner that the others do not have: see the
-note under that repository's table.
-The black-box check has none of these weaknesses, because the pull request's code is never in the process
-that decides.
-A bounty paid without a merge has no second look: when its check passes it is paid, with no review window
-and no veto. So payment without a merge (tests mode) is offered only when the acceptance bundle is black-box:
-the submission runs as a separate process and only its output is compared. Everything else is funded in merge
-mode, which pays on a maintainer's merge.
+Of the 7 that fool an in-process test run, 6 are limits of running tests at all, not bugs to patch: a stub that
+returns the expected constants passes any check made of fixed examples, and code that shares a process with the
+test runner can stop the acceptance bodies from running, or from asserting anything, while leaving every other
+test alone.
+
+The other one is a gap in one runner that the others do not have: see the note under that repository's table.
+The black-box check has none of these weaknesses, because the pull request's code is never in the process that
+decides.
+
+A bounty paid without a merge has no second look: when its check passes it is paid, with no review window and
+no veto. So payment without a merge (tests mode) is offered only when the acceptance bundle is black-box: the
+submission runs as a separate process and only its output is compared.
+
+Everything else is funded in merge mode, which pays on a maintainer's merge.
 
 <!-- real:begin -->
 ## Real open-source behaviour, six tasks
 
-Six tasks taken from behaviour that real open-source code defines, with none of that code copied: urllib.parse.urljoin, packaging.version, csv.Sniffer, configparser, datetime.fromisoformat, fnmatch.fnmatchcase. The sample repository of each (tests/bench_tamper/real_tasks.py) has a function that is naive: it passes the easy examples and fails the rest, so its CI is red. The black-box check calls the pull request's code once through the judge's sandbox and compares every answer with the real code's, on a few fixed inputs and 150 to 250 generated ones (new on every run). Each task is attacked with the 17 ideas below (the ideas of the first table that apply to a repository like this one, plus a constant-returning stub, a stub that returns the visible examples' answers, a timeout and a write into the judge's base checkout), judged by CI green and by Knos's black box. Measured with Python 3.11.15 and pytest 9.1.1.
+Six tasks taken from behaviour that real open-source code defines, with none of that code copied: urllib.parse.urljoin, packaging.version, csv.Sniffer, configparser, datetime.fromisoformat, fnmatch.fnmatchcase. The sample repository of each (tests/bench_tamper/real_tasks.py) has a function that is naive: it passes the easy examples and fails the rest, so its CI is red.
+
+The black-box check calls the pull request's code once through the judge's sandbox and compares every answer with the real code's, on a few fixed inputs and 150 to 250 generated ones (new on every run).
+
+Each task is attacked with the 17 ideas below (the ideas of the first table that apply to a repository like this one, plus a constant-returning stub, a stub that returns the visible examples' answers, a timeout and a write into the judge's base checkout), judged by CI green and by Knos's black box.
+
+Measured with Python 3.11.15 and pytest 9.1.1.
 
 A judge is *fooled* when it passes a submission that did not fix the issue. A *false refusal* is the honest fix refused.
 
@@ -270,13 +300,18 @@ A judge is *fooled* when it passes a submission that did not fix the issue. A *f
 | 16 | source sleeps when it is not run by pytest (a timeout) | 0 of 6 | 0 of 6 |
 | 17 | source writes over the check in the judge's base checkout | 0 of 6 | 0 of 6 |
 
-One more submission is not counted as an attack: it hands the work to the real code the check compares with (`from urllib.parse import urljoin as join`, and the like). Knos's black box accepted it for 6 of 6 tasks, and so it should: it has the behaviour that was asked for. A black-box check measures behaviour, not how it was reached; a buyer who wants an implementation of their own says so in the task, and no check of outputs can enforce it.
-<!-- real:end -->
+One more submission is not counted as an attack: it hands the work to the real code the check compares with (`from urllib.parse import urljoin as join`, and the like). Knos's black box accepted it for 6 of 6 tasks, and so it should: it has the behaviour that was asked for.
+
+A black-box check measures behaviour, not how it was reached; a buyer who wants an implementation of their own says so in the task, and no check of outputs can enforce it. <!-- real:end -->
 
 <!-- accept:begin -->
 ## Tasks that are not code
 
-examples/acceptance/ holds three tasks a buyer can write with no code to point at, each as a black-box bundle (scripts/acceptance_examples.py runs them; tests/test_acceptance_examples.py runs every submission once): **clean-csv** (turn messy customer exports into one clean file; every cell must equal the clean table the messy file was made from), **summarise** (a one-line summary of an incident report; unigram F1 against the reference written in the bundle, mean at least 0.85 and 90% of reports at 0.70 or more) and **classify** (hold risky payments; accuracy at least 0.85 on a hidden set and on a fresh one). Each has the text a buyer would write (TASK.md), an honest solution, cheating submissions and near misses, and every submission goes through `knos proof judge`, the command prove.yml runs. Each cheat and near miss was judged 5 times and each honest solution 20 times, with new generated inputs each time. The cheats: a constant answer, reading the answer file (the held-out set, in the submission's own tree, in the judge's other trees and in the judge's private copy), special-casing the visible examples, never finishing, writing outside the sandbox (over the bundle in the judge's base checkout), asking a service on the network, answer bytes that are not text, too many answers, and editing the bundle in the pull request.
+examples/acceptance/ holds three tasks a buyer can write with no code to point at, each as a black-box bundle (scripts/acceptance_examples.py runs them; tests/test_acceptance_examples.py runs every submission once): **clean-csv** (turn messy customer exports into one clean file; every cell must equal the clean table the messy file was made from), **summarise** (a one-line summary of an incident report; unigram F1 against the reference written in the bundle, mean at least 0.85 and 90% of reports at 0.70 or more) and **classify** (hold risky payments; accuracy at least 0.85 on a hidden set and on a fresh one).
+
+Each has the text a buyer would write (TASK.md), an honest solution, cheating submissions and near misses, and every submission goes through `knos proof judge`, the command prove.yml runs. Each cheat and near miss was judged 5 times and each honest solution 20 times, with new generated inputs each time.
+
+The cheats: a constant answer, reading the answer file (the held-out set, in the submission's own tree, in the judge's other trees and in the judge's private copy), special-casing the visible examples, never finishing, writing outside the sandbox (over the bundle in the judge's base checkout), asking a service on the network, answer bytes that are not text, too many answers, and editing the bundle in the pull request.
 
 | task | honest solution accepted | cheats | cheats accepted | near misses | near misses accepted |
 |---|---|---|---|---|---|
@@ -318,14 +353,26 @@ examples/acceptance/ holds three tasks a buyer can write with no code to point a
 | summarise | no_fix | near miss | 0 of 5 |
 | summarise | whole_report | near miss | 0 of 5 |
 
-After 25 of 25 cheating submissions (each judged 5 times) the judge's base checkout held the bundle it started with and the marker file was not written.
-What these bundles rely on, measured and not assumed. The answers are not on disk in a form the submission can use: the messy files and the reports are generated from the answer (there is no cleaner or summariser to copy), and only the held-out parts are fixed data. The sandbox does the rest: no network (the cheat that sends the work to a service on 127.0.0.1 got `Network is unreachable`), a user that cannot write the judge's files or the base checkout (the sentence above), and, since this release, a tree with no copy of the bundle. The first run of the cheat that reads the answer file (in clean-csv) found the held-out set in `.knos/acceptance/1/` of its own tree and answered the held-out part right; it was stopped only by the freshly generated part, so a bundle made of fixed answers alone (a hidden set, a reference) was paid to it (tests/test_acceptance_examples.py::test_the_pull_request_cannot_read_the_bundle_it_is_judged_by fails on 0.3.12's judge and passes now). `knos.judge` now removes the repository's bundles from the tree before the submission runs. What no judge can do: a bundle committed to a public repository is public to the person who writes the submission, who can copy a fixed hidden set into it. A set that must stay hidden is drawn at judge time, as the fresh parts here are; a fixed part (the held-out file, the hidden labels) only keeps out code that reads it while it is judged. Near the bar the check is a threshold, not a proof: the near misses are refused because they score below it (the summarise one that leaves out the fix, about 0.82 against 0.85, is the closest), and a score near the bar can go either way.
-<!-- accept:end -->
+After 25 of 25 cheating submissions (each judged 5 times) the judge's base checkout held the bundle it started with and the marker file was not written. What these bundles rely on, measured and not assumed.
+
+The answers are not on disk in a form the submission can use: the messy files and the reports are generated from the answer (there is no cleaner or summariser to copy), and only the held-out parts are fixed data.
+
+The sandbox does the rest: no network (the cheat that sends the work to a service on 127.0.0.1 got `Network is unreachable`), a user that cannot write the judge's files or the base checkout (the sentence above), and, since this release, a tree with no copy of the bundle.
+
+The first run of the cheat that reads the answer file (in clean-csv) found the held-out set in `.knos/acceptance/1/` of its own tree and answered the held-out part right; it was stopped only by the freshly generated part, so a bundle made of fixed answers alone (a hidden set, a reference) was paid to it (tests/test_acceptance_examples.py::test_the_pull_request_cannot_read_the_bundle_it_is_judged_by fails on 0.3.12's judge and passes now).
+
+`knos.judge` now removes the repository's bundles from the tree before the submission runs. What no judge can do: a bundle committed to a public repository is public to the person who writes the submission, who can copy a fixed hidden set into it.
+
+A set that must stay hidden is drawn at judge time, as the fresh parts here are; a fixed part (the held-out file, the hidden labels) only keeps out code that reads it while it is judged.
+
+Near the bar the check is a threshold, not a proof: the near misses are refused because they score below it (the summarise one that leaves out the fix, about 0.82 against 0.85, is the closest), and a score near the bar can go either way. <!-- accept:end -->
 
 <!-- escape:begin -->
 ## Escapes: what a submission can do to the machine that judges it
 
-These five are not ways to pass without doing the work, so they are not among the 63. Each is something a submission tries on the judge's machine while it runs; it is tried in each place a submission can run, by the same call the judge uses to run a submission's command (`python scripts/tamper_bench.py --escape`; tests/test_tamper_bench.py runs it). **host, no sandbox**: tests mode or black-box on a machine that has no sandbox and was not told `--sandbox require` (prove.yml passes `require`). **host sandbox**: tests mode and black-box as prove.yml runs them: another user, an empty environment, no network, the machine read-only but for the run's folder, and process, CPU, memory and file size limits (docs/reference/ATTESTOR.md). **hermetic**: black-box with an `image` in the terms, or with none under `--sandbox hermetic` on a machine that runs containers; the probe ran in `docker.io/library/python@sha256:0687a6bc9716edc2a6ee0fbfb0f87e7ee358b262b67c9215de91bc9b2d38ba71` (judge.DEFAULT_IMAGE).
+These five are not ways to pass without doing the work, so they are not among the 63.
+
+Each is something a submission tries on the judge's machine while it runs; it is tried in each place a submission can run, by the same call the judge uses to run a submission's command (`python scripts/tamper_bench.py --escape`; tests/test_tamper_bench.py runs it). **host, no sandbox**: tests mode or black-box on a machine that has no sandbox and was not told `--sandbox require` (prove.yml passes `require`). **host sandbox**: tests mode and black-box as prove.yml runs them: another user, an empty environment, no network, the machine read-only but for the run's folder, and process, CPU, memory and file size limits (docs/reference/ATTESTOR.md). **hermetic**: black-box with an `image` in the terms, or with none under `--sandbox hermetic` on a machine that runs containers; the probe ran in `docker.io/library/python@sha256:0687a6bc9716edc2a6ee0fbfb0f87e7ee358b262b67c9215de91bc9b2d38ba71` (judge.DEFAULT_IMAGE).
 
 What is expected, from how each place is built:
 
@@ -351,5 +398,6 @@ What was measured on the machine that wrote this page:
 
 In the places that were run (host, no sandbox and host sandbox), 10 of 10 outcomes were the expected one (the judge ran as root).
 
-What this says and does not: the host sandbox stops a submission from calling out, from reading the judge's environment, from writing outside its folder and from starting more processes than its limit; its memory limit is per process, where a container's is per container. Five probes are five probes: a kernel or runtime bug that lets a process out of a namespace or a container is outside what this page measures.
-<!-- escape:end -->
+What this says and does not: the host sandbox stops a submission from calling out, from reading the judge's environment, from writing outside its folder and from starting more processes than its limit; its memory limit is per process, where a container's is per container.
+
+Five probes are five probes: a kernel or runtime bug that lets a process out of a namespace or a container is outside what this page measures. <!-- escape:end -->

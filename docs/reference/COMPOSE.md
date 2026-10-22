@@ -1,11 +1,12 @@
 # Building on Knos
 
-Knos is three things other software can use without asking anyone: a program that verifies an OIDC token on Solana
-(`knos-oidc`), an escrow that pays on such a token (`knos_pay`), and the public record both leave. Nothing below
-needs a key of Knos's, an account with Knos, or a change to the programs. Everything runs on devnet with test USDC;
-the programs are upgradeable only through a multisig with a public 8-day delay, until an outside review. Work orders,
-the meter and the passkey wallet were added in Knos 0.3.13 (4 Oct 2026): [SECURITY.md](SECURITY.md), section 8, says what is live when,
-and [ASSURANCE.md](ASSURANCE.md) which test holds which rule.
+Knos is three things other software can use without asking anyone: a program that verifies an OIDC token on Solana (`knos-oidc`), an
+escrow that pays on such a token (`knos_pay`), and the public record both leave. Nothing below needs a key of Knos's, an account with
+Knos, or a change to the programs.
+
+Everything runs on devnet with test USDC; the programs are upgradeable only through a multisig with a public 8-day delay, until an
+outside review. Work orders, the meter and the passkey wallet were added in Knos 0.3.13 (4 Oct 2026): [SECURITY.md](SECURITY.md),
+section 8, says what is live when, and [ASSURANCE.md](ASSURANCE.md) which test holds which rule.
 
 **Start with [VERIFIER.md](VERIFIER.md)**: one page on the verifier as a primitive of its own. It verifies RS256
 workload identity tokens (GitHub Actions, GitLab CI, Google Cloud, Microsoft Entra ID, Buildkite, CircleCI, Okta, Auth0,
@@ -34,8 +35,9 @@ does not prove. [`examples/issuers`](../../examples/issuers) has one example per
 Three rules hold for every consumer of the verifier, and the examples show each: give your program its own audience
 prefix, so a token minted for another program is useless to yours; bind the token to one action and record that the
 action was done, because a verified token can be read by anyone until an hour after it expires; and take the key
-account when a revoked key must stop at once. [OIDC.md](OIDC.md) has the reader's API and
-[SECURITY.md](SECURITY.md) what the verifier does and does not promise.
+account when a revoked key must stop at once.
+
+[OIDC.md](OIDC.md) has the reader's API and [SECURITY.md](SECURITY.md) what the verifier does and does not promise.
 
 ## Use it from your program in ten minutes
 
@@ -103,8 +105,11 @@ exists, and not before.
 
 To be listed, open a pull request that adds one row: your program's address, the cluster, one line on what it gates,
 the signature of one transaction in which your program read a token `knos-oidc` verified, and a link to your source
-if it is public. The row is merged when the transaction is on the cluster, your program is in it, and a token
-account owned by `knos-oidc` is among its accounts. Nothing else is asked: no fee, no agreement, no contact first.
+if it is public.
+
+The row is merged when the transaction is on the cluster, your program is in it, and a token account owned by
+`knos-oidc` is among its accounts. Nothing else is asked: no fee, no agreement, no contact first.
+
 The fastest way to a first row is [`examples/reader_template`](../../examples/reader_template): its test shows the
 whole path in a simulator, and its README the four commands to devnet.
 
@@ -120,9 +125,11 @@ commit GitHub's runner built its bytes from.
 
 To be listed, open a pull request that adds one row: your program's address, the cluster, your gate's address, and
 the signature of one transaction in which your multisig executed an upgrade of that program whose bytes your gate had
-recorded. The row is merged when the transaction is on the cluster, the program's upgrade authority is a Squads vault
-whose multisig has a time lock above zero, and the record `["build", program, hash]` exists under your gate for the
-bytes that upgrade deployed. No fee, no agreement, no contact first.
+recorded.
+
+The row is merged when the transaction is on the cluster, the program's upgrade authority is a Squads vault whose
+multisig has a time lock above zero, and the record `["build", program, hash]` exists under your gate for the bytes
+that upgrade deployed. No fee, no agreement, no contact first.
 
 ## Install from a registry
 
@@ -141,8 +148,10 @@ npm install knos-settle
 
 `python scripts/release.py registry-plan` prints what would be published where and checks, with no network, that
 each package packs and that its README has no link that works only inside the repository. It publishes nothing.
-The release run adds `--online` (is each name free, or which versions does the registry hold), then
-`cargo owner --list <crate>` and `npm owner ls knos-settle`. The interface crates stay at 0.3.14
-while the programs that link them do; the JavaScript client moves with each release.
+The release run adds `--online` (is each name free, or which versions does the registry hold), then `cargo owner
+--list <crate>` and `npm owner ls knos-settle`.
+
+The interface crates stay at 0.3.14 while the programs that link them do; the JavaScript client moves with each
+release.
 
 To rebuild the example programs and re-pin their test binaries: `bash scripts/build_programs_v2.sh examples`.

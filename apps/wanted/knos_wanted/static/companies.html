@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knos. Companies</title>
+<meta name="description" content="State your company's need in one sentence: a Ready brief, a private demand check and an opened milestone, paid only on the right proof for the field.">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="preload" href="/static/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/brand/tokens.css">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.co-ask { display: flex; gap: 8px; padding: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--depth-2); }
+.co-ask input { flex: 1; min-width: 0; margin: 0; border: 0; outline: 0; background: transparent; padding: 12px 14px; font: 400 var(--s1)/1.4 var(--text); color: var(--fg); }
+.co-ask button { margin: 0; min-height: 48px; }
+.co-opts { display: flex; gap: 16px; align-items: center; margin: var(--sp-3) 0; }
+.co-opts label { display: inline-flex; gap: 6px; align-items: center; margin: 0; font-weight: 500; }
+.co-out { margin: var(--sp-5) 0; display: grid; gap: var(--sp-3); }
+.co-out section { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4); }
+.co-out h2 { font-size: var(--s2); margin: 0 0 8px; }
+.co-out p { margin: 0 0 6px; }
+.co-solvers { padding-left: 20px; }
+@media (max-width: 560px) { .co-ask { flex-direction: column; } .co-ask button { width: 100%; } }
+</style>
+<script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<!-- k-bar -->
+<header class="bar k-bar" id="k-bar">
+  <a class="brand" href="/#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
+  <nav id="nav" aria-label="Knos">
+    <a href="/#home">Check demand</a>
+    <a href="/companies">Companies</a>
+    <a href="/fields">Fields</a>
+    <a href="/#projects">Projects</a>
+    <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
+    <div class="more" id="more">
+      <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
+      <div class="more-list" id="more-list">
+        <a href="/money">The money</a>
+        <a href="https://drexthealpha.github.io/Knos/#pricing">Pricing</a>
+        <a href="/#verify">How we verify</a>
+        <a href="/#buy">Back a product</a>
+        <a href="/#fund">Fund a milestone</a>
+        <a href="/#contribute">Open work</a>
+        <a href="/#make">Make</a>
+        <a href="/#teams">Teams</a>
+        <a href="/#agents">Agents</a>
+        <a href="/with-without">With and without Qloo</a>
+        <a href="/qloo-safe-use">How Knos uses Qloo safely</a>
+        <a href="/invite">Invite</a>
+        <a href="https://drexthealpha.github.io/Knos/#check-a-pull-request" id="go-check">Check a pull request</a>
+        <a href="https://drexthealpha.github.io/Knos/#demo">Demo</a>
+        <a href="https://drexthealpha.github.io/Knos/#install">Install</a>
+        <a href="https://drexthealpha.github.io/Knos/#records">Records</a>
+        <a href="https://drexthealpha.github.io/Knos/#network">Numbers</a>
+        <a href="https://drexthealpha.github.io/Knos/#judges">Check every claim yourself</a>
+        <a href="https://drexthealpha.github.io/Knos/faq.html">Questions</a>
+      </div>
+    </div>
+  </nav>
+  <div class="tools">
+    <button id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
+    <a id="whoBtn" class="signin" href="/#signin">Sign in</a>
+  </div>
+</header>
+<script src="/static/brand/bar.js" defer></script>
+<!-- /k-bar -->
+<main class="wrap">
+  <h1>State a need. Get a Ready brief.</h1>
+  <!-- k-vectors -->
+<ul class="k-vectors" data-api="" data-not-prose aria-label="Measured">
+  <li data-v="cost"><b>$0</b> per check</li>
+  <li data-v="speed"><b>…</b> to verdict</li>
+  <li data-v="friction"><b>2 steps</b>, no sign-up</li>
+  <li data-v="trust"><b>Escrow</b> on devnet</li>
+  <li data-v="capability"><b>2.08x</b> fewer tokens, <b>70% vs 5%</b> pass</li>
+  <li data-v="access"><b>7 fields</b>, any country, phone</li>
+  <li data-v="status"><b>Ready cards</b></li>
+</ul>
+<script src="/static/brand/vectors.js" defer></script>
+<!-- /k-vectors -->
+  <p id="co-who"><a class="button" id="co-sso" href="/auth/sso?tenant=knos-test&amp;next=/companies">Sign in with company SSO</a></p>
+  <form class="co-ask" id="co-ask" autocomplete="off" hidden>
+    <input id="co-need" aria-label="Your company's need, in one sentence" maxlength="300" placeholder="Your need, in one sentence" enterkeyhint="go">
+    <button id="co-go" type="submit">Get my brief</button>
+  </form>
+  <div class="co-opts" id="co-opts" hidden><label><input type="radio" name="co-open" value="private" checked> Private</label>
+    <label><input type="radio" name="co-open" value="open"> Open to anyone</label></div>
+  <div class="co-out" id="co-out" aria-live="polite"></div>
+  <h2>Proven solvers first</h2>
+  <div id="co-solvers"><p>…</p></div>
+</main>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  let session = null;
+  try { session = JSON.parse(localStorage.getItem("knos.session") || "null"); } catch { session = null; }
+  const m = location.hash.match(/session=([^&]+)/);          // back from the company's SSO
+  if (m) {
+    const tok = decodeURIComponent(m[1]), b = tok.split(".")[0];
+    try { session = { token: tok, ...JSON.parse(atob((b + "===".slice((b.length + 3) % 4)).replace(/-/g, "+").replace(/_/g, "/"))) }; localStorage.setItem("knos.session", JSON.stringify(session)); } catch { session = { token: tok }; }
+    history.replaceState(null, "", location.pathname);
+  }
+  if (session && session.token) {
+    $("co-who").innerHTML = `Signed in: <b>${esc(session.label || session.kind || "your company")}</b>`;
+    $("co-ask").hidden = false; $("co-opts").hidden = false; $("co-need").focus();
+  }
+  $("co-ask").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const need = $("co-need").value.trim(); if (!need) return;
+    const open = document.querySelector('input[name="co-open"]:checked').value === "open";
+    $("co-go").disabled = true; $("co-out").innerHTML = `<p role="status">Writing the brief, checking demand, opening the milestone…</p>`;
+    const t0 = performance.now();
+    try {
+      const r = await fetch("/api/company/need", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.token }, body: JSON.stringify({ need, open }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.message || j.error || "the server answered " + r.status);
+      const ms = (j.brief.milestones || [])[0] || {}, d = j.demand || {}, p = j.project, c = j.ready_card || {};
+      $("co-out").dataset.ms = String(Math.round(performance.now() - t0));
+      $("co-out").innerHTML = `<section data-part="brief"><h2>${j.ready ? "Ready brief" : "Not ready yet"}</h2>
+        <p><b>${esc(ms.name)}</b>: ${esc(ms.target)}</p><p>Proof: <b>${esc(j.proof)}</b>, then a ${esc(j.challenge_hours)} h challenge window.</p>
+        ${j.criteria_hash ? `<p class="mono">criteria ${esc(j.criteria_hash.slice(0, 16))}…</p>` : `<p>${esc((j.missing || []).join("; "))}</p>`}</section>
+        <section data-part="demand"><h2>Demand: ${esc(d.verdict === "OPEN" ? "open" : d.verdict === "REFUSE" ? "not yet" : "cannot decide")}${d.private ? " (private)" : ""}</h2>
+        <p>${esc((d.reasons || [])[0] || "")}</p>${d.hash ? `<p><a href="/trace.html?hash=${esc(d.hash)}">The Qloo calls</a></p>` : ""}</section>
+        <section data-part="milestone"><h2>${p ? "Milestone opened" : "No milestone yet"}</h2>
+        ${p ? `<p><a href="${esc(p.page)}">Your project</a> · ${p.open ? "open to anyone" : "private"} · paid only on proof</p>` : ""}
+        ${c.page ? `<p><a href="${esc(c.page)}">Ready card</a>, attested on devnet</p>` : ""}</section>`;
+    } catch (e) { $("co-out").innerHTML = `<p role="alert">${esc(e.message)}</p>`; } finally { $("co-go").disabled = false; }
+  });
+  fetch("/api/solvers").then((r) => r.json()).then((s) => {
+    $("co-solvers").innerHTML = s.count ? `<ol class="co-solvers">${s.solvers.map((x) => `<li><span class="mono">${esc(x.wallet.slice(0, 8))}…</span> <b>${esc(x.verified_milestones)}</b> verified${x.latest ? ` · <a href="${esc(x.latest)}" rel="noopener">attestation</a>` : ""}</li>`).join("")}</ol>`
+      : `<p><b>0</b> solvers with verified milestones yet.</p>`;
+  }).catch(() => { $("co-solvers").innerHTML = "<p>Not readable right now.</p>"; });
+})();
+</script>
+</body>
+</html>

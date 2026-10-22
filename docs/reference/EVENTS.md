@@ -79,8 +79,10 @@ has neither an arrival nor an acknowledged correction.
 
 One deliverable id, ever. An acceptance takes its id from its deliverable, so the same deliverable accepted again
 in a later month is a repeat, and at another amount a conflict. A second invoice line for it is a `duplicate` in
-its month's statement. `knos events dupes` also names every deliverable with more than one counted invoice line or
-settlement, across months.
+its month's statement.
+
+`knos events dupes` also names every deliverable with more than one counted invoice line or settlement, across
+months.
 
 Keeping the evidence, and checking it with no Knos: [RETENTION.md](RETENTION.md).
 
@@ -102,26 +104,26 @@ reads this audience. It is checked off chain.
 
 ## Each party signs the month, and when a month closes
 
-A token in the log says that one GitHub owner signed a head. It does not say which side of the contract that owner
-is, and nothing stopped one side from adding a line the other never saw. So each party also signs the month itself,
-with an Ed25519 key its Knos Terms 3 document names (`window.period_close`: `buyer_key`, `supplier_key`,
-`silence_days`). The signed text puts one fact a line, as a transparency log's signed note does and as a witness's
-cosignature of a checkpoint does ([C2SP tlog-cosignature](https://github.com/C2SP/C2SP/blob/tlog-cosignature/v1.0.0/tlog-cosignature.md)):
+A token in the log says that one GitHub owner signed a head. It does not say which side of the contract that owner is, and nothing stopped
+one side from adding a line the other never saw. So each party also signs the month itself, with an Ed25519 key its Knos Terms 3 document
+names (`window.period_close`: `buyer_key`, `supplier_key`, `silence_days`).
 
-    knos-period-ack/v1
-    role supplier
-    month 202610
-    last 41                 the last line of the log the party read
-    head <hash of line 41>  it commits to every line before it
-    root <sha256>           over the hashes of the month's lines up to line 41
-    events 12               how many lines of the month that is
-    terms <sha256>          the terms that name the keys
-    day 2026-11-03          the signer's own word: no clock signs it
+The signed text puts one fact a line, as a transparency log's signed note does and as a witness's cosignature of a checkpoint does ([C2SP
+tlog-cosignature](https://github.com/C2SP/C2SP/blob/tlog-cosignature/v1.0.0/tlog-cosignature.md)):
+
+knos-period-ack/v1 role supplier month 202610 last 41                 the last
+line of the log the party read head <hash of line 41>  it commits to every line
+before it root <sha256>           over the hashes of the month's lines up to
+line 41 events 12               how many lines of the month that is terms
+<sha256>          the terms that name the keys day 2026-11-03          the
+signer's own word: no clock signs it
 
 A month is **closed** only when the buyer and the supplier signed the same last line and root, or when one of them
-signed, the terms allow one party to close after `silence_days` without an answer (0: never), and that party signed
-a closure (`knos-period-close/v1`, the same lines plus `acknowledged <day>` and `silence_days N`) dated that many days
-or more after its acknowledgement. After that, three things are **named discrepancies**:
+signed, the terms allow one party to close after `silence_days` without an answer (0: never), and that party signed a
+closure (`knos-period-close/v1`, the same lines plus `acknowledged <day>` and `silence_days N`) dated that many days
+or more after its acknowledgement.
+
+After that, three things are **named discrepancies**:
 
 | Name | What happened |
 | --- | --- |
@@ -160,23 +162,21 @@ figures are from one run on a busy machine; run the script for your own.
 
 Once on the chain's own lines, on 6 Oct 2026: `knos audit export --owner drexthealpha --from 2026-09-01 --to 2026-10-06`
 (the escrow's log lines on devnet, 52 lines, all of them the founder's own test orders and bounties) was taken in with
-`--from settle`: 45 paid lines counted. Taken in again: 0 counted, 45 seen before from this source. `knos events
-verify`: 45 lines check, acknowledged by nobody. `knos events dupes`: none, since one mode wrote every line. None of
-the 52 is the playground's: its one issue was opened while devnet ran a `knos_pay` older than 2.1, so nothing was
-funded there ([PLAYGROUND.md](PLAYGROUND.md)).
+`--from settle`: 45 paid lines counted. Taken in again: 0 counted, 45 seen before from this source.
+
+`knos events verify`: 45 lines check, acknowledged by nobody. `knos events dupes`: none, since one mode wrote every
+line. None of the 52 is the playground's: its one issue was opened while devnet ran a `knos_pay` older than 2.1, so
+nothing was funded there ([PLAYGROUND.md](PLAYGROUND.md)).
 
 ## Commands
 
-    knos events ingest LOG FILE --from record|batch|settle|shadow|import [--month YYYY-MM] [--invoice NAME]
-    knos events verify LOG [--keys JWKS] [--head HASH]        # or a folder written by export
-    knos events ack LOG --as OWNER_ID                         # print the audience to sign
-    knos events ack LOG --token FILE --keys JWKS              # add a signed acknowledgement
-    knos events dupes LOG
-    knos events gaps LOG [--month YYYY-MM] [--last B:S:YYYYMM.N] [--explain B:S:YYYYMM.N --reason WHY]
-    knos events close LOG --month YYYY-MM [--last B:S:YYYYMM.N] [--terms TERMS --ack FILE ...]
-    knos events sign LOG --month YYYY-MM --role buyer|supplier --key KEY --terms TERMS --on DAY [--closing ACK]
-    knos events statement LOG --month YYYY-MM [--supplier S]
-    knos events export LOG --out DIR
+knos events ingest LOG FILE --from record|batch|settle|shadow|import [--month YYYY-MM] [--invoice NAME] knos
+events verify LOG [--keys JWKS] [--head HASH]        # or a folder written by export knos events ack LOG --as
+OWNER_ID                         # print the audience to sign knos events ack LOG --token FILE --keys JWKS #
+add a signed acknowledgement knos events dupes LOG knos events gaps LOG [--month YYYY-MM] [--last B:S:YYYYMM.N]
+[--explain B:S:YYYYMM.N --reason WHY] knos events close LOG --month YYYY-MM [--last B:S:YYYYMM.N] [--terms
+TERMS --ack FILE ...] knos events sign LOG --month YYYY-MM --role buyer|supplier --key KEY --terms TERMS --on
+DAY [--closing ACK] knos events statement LOG --month YYYY-MM [--supplier S] knos events export LOG --out DIR
 
 `export` writes the log, the acknowledgements and their keys, the repeats, what was refused, the index and each
 month's statement, with a manifest of hashes. `knos events verify DIR` reads the log again and rebuilds every
@@ -187,9 +187,11 @@ other file from it; a file that differs is named.
 An evaluation that arrives from a format 2 batch carries, in `evidence`, the batch, its root and the event's hash:
 `batch:<buyer>:<seller>:<yyyymm>.<seq>:<root>:event:<64 hex>`. That hash is the leaf of the batch's tree, computed by
 the one function both modules use (`knos.ledger.event_hash`; `knos.events.event_hash` is the same function, in hex),
-so the log and the batch cannot disagree about what an event is. The bytes it hashes are in
-[METER.md](METER.md#what-a-root-commits-to-two-formats). An evaluation from a format 1 batch has no such hash: that
-root binds the set of evaluation ids, the count, the accepted count and the value; not which evaluation was accepted.
+so the log and the batch cannot disagree about what an event is.
+
+The bytes it hashes are in [METER.md](METER.md#what-a-root-commits-to-two-formats). An evaluation from a format 1
+batch has no such hash: that root binds the set of evaluation ids, the count, the accepted count and the value; not
+which evaluation was accepted.
 
 ## What this proves
 
@@ -234,10 +236,11 @@ unique. Solana holds a minimum balance against every account:
 Source: [Solana, "Reduced rent" (SIMD-0437), updated September 2026](https://solana.com/upgrades/reduced-rent).
 The rate was 6,960 lamports per byte and is being lowered in five steps (6,333, then 5,080, 2,575, 1,322 and
 696; the last three are expected with Agave 4.4). Devnet and mainnet both charged 5,080 on 4 Oct 2026, read from
-the nodes ([METER.md](METER.md), "What an evaluation costs in each mode"). The meter's own marker, the Mark
-account, is 88 bytes (`MARK_LEN` in `programs-v2/knos_meter/src/state.rs`), so a marker is held against
-128 + 88 = 216 bytes. One SOL is 1,000,000,000 lamports. The USD column uses the 121.50 USD per SOL that
-METER.md sources for the same day.
+the nodes ([METER.md](METER.md), "What an evaluation costs in each mode").
+
+The meter's own marker, the Mark account, is 88 bytes (`MARK_LEN` in `programs-v2/knos_meter/src/state.rs`), so
+a marker is held against 128 + 88 = 216 bytes. One SOL is 1,000,000,000 lamports. The USD column uses the 121.50
+USD per SOL that METER.md sources for the same day.
 
 | Lamports per byte | One 88-byte marker | USD | 100,000 events | 1,000,000 events |
 | --- | --- | --- | --- | --- |
@@ -246,11 +249,14 @@ METER.md sources for the same day.
 | 696 (the target of the last step) | 150,336 lamports | 0.0183 | 15.0 SOL (1,827 USD) | 150 SOL (18,266 USD) |
 
 At today's rate the deposit for one marker is about 67 times the 0.002 USD an evaluation the price book proposes (0.1333 / 0.002); the deployed knos_meter charges 0.05 after 10,000 free. A marker with
-no data at all is still held against 128 bytes: 890,880, 650,240 and 89,088 lamports at the three rates. Ask a
-node for its cluster's figure: `getMinimumBalanceForRentExemption` with the size.
+no data at all is still held against 128 bytes: 890,880, 650,240 and 89,088 lamports at the three rates.
+
+Ask a node for its cluster's figure: `getMinimumBalanceForRentExemption` with the size.
 
 The balance is a deposit: it comes back when the account is closed. A closed marker no longer stops a repeat.
-That is the trade the single mode already makes: its Mark is closed after its month (`CloseMark`), so the
-chain refuses a repeat within the month and not after. A marker kept for good is a deposit never returned, plus
-one transaction per event, which is the cost the batch mode exists to avoid. So Knos does not claim on-chain
-uniqueness across batches and single records. It claims this log, and two signatures on its head.
+That is the trade the single mode already makes: its Mark is closed after its month (`CloseMark`), so the chain
+refuses a repeat within the month and not after.
+
+A marker kept for good is a deposit never returned, plus one transaction per event, which is the cost the batch
+mode exists to avoid. So Knos does not claim on-chain uniqueness across batches and single records. It claims
+this log, and two signatures on its head.

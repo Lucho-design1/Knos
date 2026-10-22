@@ -2,6 +2,7 @@
 
 The app (https://knos.onrender.com) runs on Render's free tier, which puts a web service to sleep after 15 minutes
 without a request. A visitor then waits for a cold start, and so does a referee host polling `/api/referee/pending`.
+
 A GitHub cron alone cannot keep it awake: on 18 Oct 2026 the 5-minute timer of `keepalive.yml` had not started a run
 for more than four hours, while the always-on worker's chain kept running. Three pingers now hit `/healthz`, and the
 first one does not depend on GitHub's timer.
@@ -17,10 +18,13 @@ first one does not depend on GitHub's timer.
 `worker.yml` is the relay's chain of runs. Each run relays for about 4.5 minutes, starts its successor 30 seconds
 before it stops (`python -m knos.proof.chain start --after <run>`), and hands over. The chain's runs are
 `workflow_dispatch` runs. The job `healthz` runs in every one of them (`if: github.event_name == 'workflow_dispatch'`):
-`python3 -I src/knos/proof/chain.py healthz`. That is one GET of `/healthz`, tried up to 3 times 20 s apart, because a
-cold start can take most of a minute. The job has no secret, read-only permission, a checkout of `src/knos/proof`
-only, and installs nothing. It does not wait for the relay and the relay does not wait for it. A failed ping shows red
-on the run and stops nothing.
+`python3 -I src/knos/proof/chain.py healthz`.
+
+That is one GET of `/healthz`, tried up to 3 times 20 s apart, because a cold start can take most of a minute. The job
+has no secret, read-only permission, a checkout of `src/knos/proof` only, and installs nothing. It does not wait for
+the relay and the relay does not wait for it.
+
+A failed ping shows red on the run and stops nothing.
 
 ## How the watchdog revives a stopped chain
 
@@ -35,20 +39,22 @@ and it is called from three places:
    a `knos-watch` repository_dispatch, and by hand.
 
 A run counts as alive by its heartbeat, the relay job's `HEARTBEAT` step, which GitHub lists with the time it
-completed. When no run holds the chain with a heartbeat in time, the watchdog cancels a stuck run and starts one. Two
-watchdogs never start two chains: they share one concurrency group, and after a start the watchdog waits until GitHub
-lists the new run. While the chain runs, so does pinger 1.
+completed. When no run holds the chain with a heartbeat in time, the watchdog cancels a stuck run and starts one.
+
+Two watchdogs never start two chains: they share one concurrency group, and after a start the watchdog waits until
+GitHub lists the new run. While the chain runs, so does pinger 1.
 
 By hand: `gh workflow run watchdog.yml -R drexthealpha/Knos`, or start a first chain run with
 `gh workflow run worker.yml -R drexthealpha/Knos`.
 
 ## 2. The PC daemon
 
-The founder's PC runs host 3 of the referee group as a daemon:
-`python -m knos.threshold serve --every 30 --healthz-every 300`. Every 30 s it polls the open signing sessions, and
-every 300 s by its own clock it GETs `/healthz`. It logs one JSON line per ping, for example
-`{"id": 3, "healthz": {"status": 200, "ms": 412}, "at": 1792345678}`, and a ping that fails logs
-`"status": null` with the error's name. The daemon goes on either way.
+The founder's PC runs host 3 of the referee group as a daemon: `python -m knos.threshold serve --every 30
+--healthz-every 300`. Every 30 s it polls the open signing sessions, and every 300 s by its own clock it GETs
+`/healthz`.
+
+It logs one JSON line per ping, for example `{"id": 3, "healthz": {"status": 200, "ms": 412}, "at": 1792345678}`,
+and a ping that fails logs `"status": null` with the error's name. The daemon goes on either way.
 
 ## Limits
 

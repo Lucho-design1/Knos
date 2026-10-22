@@ -478,16 +478,19 @@ What was checked, by capability:
 
 ## The 0.3.14 rehearsal on devnet
 
-On 4 October 2026, before the release, this build ran on devnet under addresses of its own, in test USDC:
-knos_oidc `iosu8ARUNvvruHPCcMWQ5rqsnJewzBxcPXajSpoHqXd` (the verified build of `program.yml`), knos_pay
+On 4 October 2026, before the release, this build ran on devnet under addresses of its own, in test USDC: knos_oidc
+`iosu8ARUNvvruHPCcMWQ5rqsnJewzBxcPXajSpoHqXd` (the verified build of `program.yml`), knos_pay
 `FJJtqcRjQ9ATx37sBTCLUBxBqLUA9aQgSTLAsZynqtnH`, knos_meter `7MzKH2Mm7hUD4g9SdCMmL1MR4SBPBUaZXP4RwiFs8ZGo` and knos_passkey
 `8YwdomJwYQJV7adkqgNyehdZ3tZhpTsp6SFUNfTsKKxk`. The last three are builds of the same sources in which only the address of
-the program they trust is the staging one. The pinned programs were not touched: they ran knos_oidc and knos_pay 2.0 and
-knos_meter and knos_passkey 1.0 until proposals 3 to 6 executed. The tokens were signed by GitHub for a copy of the pinned
-workflows that names the staging addresses. These runs are not at the public program ids, so no capability in the
-table above counts them: each capability they ran stays `tested locally`, and its note says "Rehearsed on a staging
-deployment" with its transaction, until a transaction at a public program id exercises it. Every transaction below is
-on devnet; a signature opens in the explorer.
+the program they trust is the staging one.
+
+The pinned programs were not touched: they ran knos_oidc and knos_pay 2.0 and knos_meter and knos_passkey 1.0 until
+proposals 3 to 6 executed. The tokens were signed by GitHub for a copy of the pinned workflows that names the staging
+addresses.
+
+These runs are not at the public program ids, so no capability in the table above counts them: each capability they ran
+stays `tested locally`, and its note says "Rehearsed on a staging deployment" with its transaction, until a transaction at
+a public program id exercises it. Every transaction below is on devnet; a signature opens in the explorer.
 
 **1. The double payment of the 0.3.13 build, attempted** (issue #5 of a test repository: two `/knos fund 10` comments).
 

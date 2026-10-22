@@ -1,8 +1,10 @@
 # x402 `upto` on Solana: one ceiling, pay for the checks actually run
 
-An agent will not prepay a pack of checks it may never use. The x402 `upto` scheme lets it authorize a maximum once and
-be charged what it used: "transfers up to a maximum amount, with final charges determined at settlement based on actual
-resource consumption"; single settlement, time bound, recipient bound, settled amount at most the maximum
+An agent will not prepay a pack of checks it may never use.
+
+The x402 `upto` scheme lets it authorize a maximum once and be charged what it used: "transfers up to a maximum amount,
+with final charges determined at settlement based on actual resource consumption"; single settlement, time bound,
+recipient bound, settled amount at most the maximum
 ([`specs/schemes/upto/scheme_upto.md`](https://github.com/coinbase/x402/blob/main/specs/schemes/upto/scheme_upto.md),
 read 14 Oct 2026).
 

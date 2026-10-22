@@ -2,8 +2,10 @@
 
 The Knos command, its MCP server (Model Context Protocol: the way coding agents call outside tools) and its Stop
 hook (a check an agent runs before it may finish) are one Python package, [`knos` on
-PyPI](https://pypi.org/project/knos/). This page lists every way to install them, the check a repository can run on
-its pull requests, and the two libraries other projects build on. None of it needs a new account anywhere.
+PyPI](https://pypi.org/project/knos/).
+
+This page lists every way to install them, the check a repository can run on its pull requests, and the two
+libraries other projects build on. None of it needs a new account anywhere.
 
 Two parts of the package go into a coding agent:
 
@@ -30,16 +32,18 @@ Two parts of the package go into a coding agent:
   needs `KNOS_MCP_HTTP_TOKEN`). With
   these it reads public data from GitHub and Solana and your own checkout, and holds no key and no wallet.
 
-  Three tools post, and only for an agent that was given a GitHub token of its own and told it may act
-  (`knos agent init --allow-actions`, [docs/reference/AGENTS.md](AGENTS.md)): `knos_take_work` (comments `/knos take`),
-  `knos_submit_work` (opens the pull request) and `knos_collect` (says what is held or paid, and can bind a wallet).
-  No allowlist on this page names them: a host that runs listed tools without asking still asks before these three.
+Three tools post, and only for an agent that was given a GitHub token of its own and told it may act (`knos agent init
+--allow-actions`, [docs/reference/AGENTS.md](AGENTS.md)): `knos_take_work` (comments `/knos take`), `knos_submit_work`
+(opens the pull request) and `knos_collect` (says what is held or paid, and can bind a wallet).
 
-  Whatever a repository or an account wrote (an issue's title and labels, a check's name, the paths in a bounty's
-  terms) comes back inside a field named `untrusted`, each string cut to 200 characters, and the server's
-  instructions tell the agent that it is data, never an instruction. `KNOS_MCP_REPOS=owner/name,owner/name` limits the
-  server to those repositories: a listing holds only their bounties, and a tool that names another repository
-  refuses it.
+No allowlist on this page names them: a host that runs listed tools without asking still asks before these three.
+
+Whatever a repository or an account wrote (an issue's title and labels, a check's name, the paths in a bounty's terms)
+comes back inside a field named `untrusted`, each string cut to 200 characters, and the server's instructions tell the
+agent that it is data, never an instruction.
+
+`KNOS_MCP_REPOS=owner/name,owner/name` limits the server to those repositories: a listing holds only their bounties,
+and a tool that names another repository refuses it.
 
 | For | Do this | It installs |
 |---|---|---|
@@ -122,12 +126,14 @@ as `uvx knos`, so they work for whoever clones it.
 The MCP server is written with only the tools that read allowed to run unasked (or offered at all, where that is the
 host's only switch); the three that post as the agent's account are asked about each time.
 
-Each field was read from the host's documentation on 5 October 2026, and each route is tested on a temporary folder
-with an end-of-turn event written from that documentation. None was run inside the real host. Where the
-documentation does not state something Knos depends on (Copilot's and VS Code's transcript lines, the fields of
-opencode's `session.idle`, the folder goose and Windsurf start a hook in), the route is marked `unconfirmed`. The
-pages, the dates they show, the exact event and answer for each host, and what Knos's memory of earlier checks (the Sibyl memory engine) adds
-to the answer are in [integrations/hosts/README.md](../../integrations/hosts/README.md):
+Each field was read from the host's documentation on 5 October 2026, and each route is tested on a temporary folder with an end-of-turn event
+written from that documentation. None was run inside the real host.
+
+Where the documentation does not state something Knos depends on (Copilot's and VS Code's transcript lines, the fields of opencode's
+`session.idle`, the folder goose and Windsurf start a hook in), the route is marked `unconfirmed`.
+
+The pages, the dates they show, the exact event and answer for each host, and what Knos's memory of earlier checks (the Sibyl memory engine)
+adds to the answer are in [integrations/hosts/README.md](../../integrations/hosts/README.md):
 
 | Host | Pages read (5 October 2026) |
 |---|---|
@@ -300,10 +306,11 @@ What follows is the work, not the install: someone opens a pull request that say
 the money waits for them (180 days at most).
 
 The file is [`examples/knos-install.yml`](../../examples/knos-install.yml), 21 lines, one of them a comment. It has the triggers of the long
-form, [`examples/knos-workflow.yml`](../../examples/knos-workflow.yml), and calls the same two workflows of
-drexthealpha/Knos (its branch `workflows`) at the same full commit. The program trusts a token because of the workflow that produced it
-(`job_workflow_ref`, `job_workflow_sha`: the called workflow's file and commit), not the file that called it. So a
-short file in your repository is paid exactly as the long one is. Three differences, none hidden:
+form, [`examples/knos-workflow.yml`](../../examples/knos-workflow.yml), and calls the same two workflows of drexthealpha/Knos (its branch
+`workflows`) at the same full commit.
+
+The program trusts a token because of the workflow that produced it (`job_workflow_ref`, `job_workflow_sha`: the called workflow's file and
+commit), not the file that called it. So a short file in your repository is paid exactly as the long one is. Three differences, none hidden:
 
 - One job calls `prove.yml` where the long form has two (settle and review). `prove.yml`'s own conditions pick the job, so the same jobs run.
 - It does not hand on the optional secret `KNOS_RELAY_KEY`: tokens are posted as comments and Knos's public relay
@@ -358,9 +365,11 @@ bounty's money, lets the jobs carry their own statements instead of waiting for 
 
 `knos-check.yml` checks every pull request, forks included, and moves no money. It reads, and it reports through its
 own status (`check / claims`) and the job's summary. A first-time contributor's first run waits for a maintainer's
-approval on the pull request's page. GitHub runs it as the pull request has it, so a pull request can change it for
-its own run: that is why it is advice, and nothing about money depends on it. With the first file alone everything
-about money works; `/knos status` on a pull request then tells its author what the check would have said.
+approval on the pull request's page.
+
+GitHub runs it as the pull request has it, so a pull request can change it for its own run: that is why it is
+advice, and nothing about money depends on it. With the first file alone everything about money works; `/knos
+status` on a pull request then tells its author what the check would have said.
 
 ### A supplier's one line, `knos-supplier.yml`
 
@@ -388,10 +397,11 @@ knos terms show bugfix          # the comment to post, the terms JSON the progra
 
 Each is a file in [`examples/terms/`](../../examples/terms): the comment, one sentence written from its fields, the
 exact terms JSON and its hash. A test reads every comment with the parser that reads real comments and builds its
-terms with the code that fixes a real bounty's, and holds the hash equal to the file's. The JSON is made with sample
-facts a template cannot know (the id of the GitHub App behind each check, your acceptance bundle's hash, your
-policy's hash, your vendor's account id); each file says which. The reply to your own comment shows your
-repository's terms.
+terms with the code that fixes a real bounty's, and holds the hash equal to the file's.
+
+The JSON is made with sample facts a template cannot know (the id of the GitHub App behind each check, your
+acceptance bundle's hash, your policy's hash, your vendor's account id); each file says which. The reply to your own
+comment shows your repository's terms.
 
 ### What a funder with real money would additionally need
 
@@ -408,18 +418,21 @@ On top of the three steps above:
    it, and up to four other GitHub accounts that may spend it by comment. Optional, and worth doing before the first
    comment.
 
-So: three steps on devnet, seven with real money. The fee is paid by the funder on top of the amount: 0.30% of
-the amount, minimum 0.05 (knos_pay 2.2, live on devnet since 9 October 2026). Orders funded before the upgrade keep the rate fixed
-at their funding (knos_pay 2.1: 2.5% of the first 1,000, 1% to 50,000, 0.5% above; minimum 0.40). `knos status`
-says which build runs.
+So: three steps on devnet, seven with real money. The fee is paid by the funder on top of the amount: 0.30% of the amount, minimum
+0.05 (knos_pay 2.2, live on devnet since 9 October 2026).
+
+Orders funded before the upgrade keep the rate fixed at their funding (knos_pay 2.1: 2.5% of the first 1,000, 1% to 50,000, 0.5%
+above; minimum 0.40). `knos status` says which build runs.
 
 ## The GitHub Action
 
 The free check on every pull request of a repository: when a description says its tests pass or CI is green, Knos
 compares that with GitHub's own record of the head commit, and it applies the repository's `CONTRIBUTING.md` rules.
+
 A ticked box of a template's checklist (`- [x] My PR passes all CI/CD checks`) is the author's claim; an unticked
 box, the template's HTML comments and a sentence that hedges or instructs ("tests should pass", "make sure CI is
 green") are not.
+
 It runs none of the pull request's code, and it involves no bounty, no money and no chain.
 
 ```yaml
@@ -444,25 +457,28 @@ It installs nothing in the repository but this file. The check is the job `knos`
 a rule is broken, and its summary says which. A branch ruleset can require it. The two read permissions are all it
 needs, so it also works on pull requests from forks, and it never needs `pull_request_target`.
 
-Keep it in a workflow file of its own and keep the job's name: Knos does not count jobs in its own workflow run
-as evidence, and it recognises its earlier runs on a commit because their name starts with `knos`. A tag can be moved; to
-pin what runs, write the release's full commit sha in place of the tag after `@`.
+Keep it in a workflow file of its own and keep the job's name: Knos does not count jobs in its own workflow run as
+evidence, and it recognises its earlier runs on a commit because their name starts with `knos`.
+
+A tag can be moved; to pin what runs, write the release's full commit sha in place of the tag after `@`.
 
 To also pay for merged work, a repository uses [`examples/knos-workflow.yml`](../../examples/knos-workflow.yml)
 instead.
 
 ## GitLab CI
 
-A GitLab project that runs CI/CD for a GitHub repository (GitLab's "CI/CD for external repositories") runs a
-pipeline for each GitHub pull request, and hands that pipeline the pull request's number as
-`CI_EXTERNAL_PULL_REQUEST_IID`. Set `KNOS_GITHUB_REPOSITORY` to the GitHub `owner/name` in the project's CI/CD
-variables; the number comes with each pipeline, so each pull request is checked as itself. `knos check owner/name#N` reads
-that pull request from GitHub, its description and the checks GitHub recorded at its head commit, and the job fails
-when the description says tests pass or CI is green and a check failed there. It also fails when GitHub cannot be
-read, rather than pass on a pull request it did not see. Add a masked `GH_TOKEN` variable holding a token that can read
-the repository. Without it, GitHub's limit on anonymous reads applies, and a shared runner's address may already have
-used it up. A GitLab merge
-request with no GitHub pull request behind it cannot be checked by this command.
+A GitLab project that runs CI/CD for a GitHub repository (GitLab's "CI/CD for external repositories") runs a pipeline for
+each GitHub pull request, and hands that pipeline the pull request's number as `CI_EXTERNAL_PULL_REQUEST_IID`. Set
+`KNOS_GITHUB_REPOSITORY` to the GitHub `owner/name` in the project's CI/CD variables; the number comes with each pipeline,
+so each pull request is checked as itself.
+
+`knos check owner/name#N` reads that pull request from GitHub, its description and the checks GitHub recorded at its head
+commit, and the job fails when the description says tests pass or CI is green and a check failed there. It also fails when
+GitHub cannot be read, rather than pass on a pull request it did not see.
+
+Add a masked `GH_TOKEN` variable holding a token that can read the repository. Without it, GitHub's limit on anonymous
+reads applies, and a shared runner's address may already have used it up. A GitLab merge request with no GitHub pull
+request behind it cannot be checked by this command.
 
 ```yaml
 # .gitlab-ci.yml
@@ -480,8 +496,10 @@ knos:
 A person paid for merged work can name the wallet once, and every later task pays it. Binding is by hand, in two
 steps: create an empty repository (a personal account's, public, named `knos-claim`) and add the one file of
 [`templates/knos-claim`](../../templates/knos-claim) to it, then open its Actions tab, choose "knos claim", press "Run
-workflow" and paste your address yourself. `knos claim <address>` does both. No link, repository description or
-push carries an address in, because an address in a link could be someone else's.
+workflow" and paste your address yourself.
+
+`knos claim <address>` does both. No link, repository description or push carries an address in, because an address in
+a link could be someone else's.
 
 An organisation binds a wallet the same way, from a repository named `knos-claim` that the organisation owns: a
 member starts the claim workflow by hand. This works with the live `knos_pay` (2.1 and later;
@@ -496,9 +514,11 @@ first: a lost passkey is lost money.
 For the person who did the work. Put [`examples/knos-attest.yml`](../../examples/knos-attest.yml) in a repository you
 own, as `.github/workflows/knos-attest.yml`. It needs no secret and writes nothing. After your pull request is merged
 in a public repository, `knos settle --neutral <pull request URL>` starts it by hand through your `gh` login, or you
-start it from the Actions tab. It reads GitHub's public record of the pull request and the work order on Solana,
-and asks GitHub to sign only what that record supports. The escrow pays on that run when the order allows it, which
-is the default; an order funded with `neutral off` does not. This works with the live `knos_pay` (2.1 and later).
+start it from the Actions tab.
+
+It reads GitHub's public record of the pull request and the work order on Solana, and asks GitHub to sign only what
+that record supports. The escrow pays on that run when the order allows it, which is the default; an order funded
+with `neutral off` does not. This works with the live `knos_pay` (2.1 and later).
 
 ## The JavaScript client
 
@@ -507,11 +527,13 @@ npm install knos-settle
 ```
 
 It installs `knos-settle`, the client for Knos's Solana programs: one file with no dependency, for a browser and for
-Node 20 or newer ([`sdk/settle`](../../sdk/settle)), from [npm](https://www.npmjs.com/package/knos-settle). Since
-version 0.3.21 this repository's release workflow publishes it there using npm's trusted publishing (no stored
-password), with a signed note (provenance statement) naming the workflow run that built it; the newest is 0.3.26,
-of 10 October 2026 (`npm audit signatures` checks it after an install). If the
-registry cannot be reached, the same file is attached to the GitHub release:
+Node 20 or newer ([`sdk/settle`](../../sdk/settle)), from [npm](https://www.npmjs.com/package/knos-settle).
+
+Since version 0.3.21 this repository's release workflow publishes it there using npm's trusted publishing (no stored
+password), with a signed note (provenance statement) naming the workflow run that built it; the newest is 0.3.26, of
+10 October 2026 (`npm audit signatures` checks it after an install).
+
+If the registry cannot be reached, the same file is attached to the GitHub release:
 
 ```bash
 npm install https://github.com/drexthealpha/Knos/releases/download/v0.4.0/knos-settle-0.4.0.tgz

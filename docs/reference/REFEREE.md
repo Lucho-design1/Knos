@@ -22,10 +22,11 @@ Code: `src/knos/referee/` and `src/knos/cheats/`. Tests: `tests/test_referee_*.p
 | re-run | the same judgment again, fresh; the verdicts agree, and a number agrees within the sealed tolerance (`abs`, `rel`) | `rerun_mismatch` |
 
 The hidden bundle is kept outside the repository (a private repository or a secret) and is copied into a temporary copy
-of the base only for the run, so the worker's tree never holds it. What a worker is shown
-(`referee.judge_candidate`) is pass or fail and the rule's name; what the sealed suite printed is withheld. A second
-machine is a `judge_fn` that judges there; the re-run on this machine already uses fresh inputs, because a black-box
-bundle draws its own.
+of the base only for the run, so the worker's tree never holds it. What a worker is shown (`referee.judge_candidate`)
+is pass or fail and the rule's name; what the sealed suite printed is withheld.
+
+A second machine is a `judge_fn` that judges there; the re-run on this machine already uses fresh inputs, because a
+black-box bundle draws its own.
 
 The referee is never weaker than the judge: the judge's own path rule is the first rule of the library, and the judge
 still runs on everything the rules let through.
@@ -39,9 +40,11 @@ test; ids are never reused and rules are never removed.
 
 The first 63 entries are the tamper benchmark's attacks on the slugify sample, 21 in each of Python, JavaScript and
 Ruby ([TAMPER.md](TAMPER.md)). Each names the rule that refuses it, and `tests/test_referee_cheats.py` builds every one
-and checks that rule fires before any code runs. The cases that no text rule could see in principle (a no-op claim,
-constants for the visible examples, forgery from inside the test process) are also judged with the rules switched off,
-and the sealed black-box tests refuse each of them on their own.
+and checks that rule fires before any code runs.
+
+The cases that no text rule could see in principle (a no-op claim, constants for the visible examples, forgery from
+inside the test process) are also judged with the rules switched off, and the sealed black-box tests refuse each of
+them on their own.
 
 The 63 cases by the category of the rule that refuses them:
 
@@ -78,11 +81,15 @@ The outcome rules (TASK-OUTCOMES item 6): `outcome_spec_hash_changed`, `outcome_
 `outcome_salt_changed`, `outcome_control_drift` (beyond the agreed tolerance), `outcome_measurement_code_drift` and
 `outcome_data_tampered` (data that existed at funding edited or removed; new data is not refused).
 
-How the rules read a change. The repository's language (which directories hold its tests) comes from the base
-tree and its `.knos/proof.toml`, never from the files the change adds. A `git diff` is read with git's quoted paths
-(non-ASCII names, spaces) and with files that have no `diff --git` line; a `package.json` edit in a diff counts as a
-test-script change only when an added or removed line names a test script. A rule that crashes, or a diff header that
-cannot be read, is a refusing `rule_error` finding: the library fails closed, never open.
+How the rules read a change. The repository's language (which directories hold its tests) comes from the base tree
+and its `.knos/proof.toml`, never from the files the change adds.
+
+A `git diff` is read with git's quoted paths (non-ASCII names, spaces) and with files that have no `diff --git` line;
+a `package.json` edit in a diff counts as a test-script change only when an added or removed line names a test
+script.
+
+A rule that crashes, or a diff header that cannot be read, is a refusing `rule_error` finding: the library fails
+closed, never open.
 
 Changed in v0.3.31 (task P-cheatfp, internal dogfooding): two rules refused honest work, and both were narrowed.
 Per [SELF.md](SELF.md), `cheats/` is trusted core, so a referee change is the founder's decision: the founder's
@@ -102,11 +109,13 @@ signature on the release is the gate, and this change waits for it. What changed
 - `red_team()` still catches 63 of 63. Without `hardcoded_answers` the count drops to 60, as before.
   `tests/test_referee_cheatfp.py` holds the known-good cases and the known-bad ones that are still refused.
 
-Limits that remain: a test that reaches code only through a hub module (a CLI that imports every command) still
-counts as exercising whatever that hub imports. A write guard that names the whole `.knos/` folder reads, as text, the
-same as the forgery, so it is still refused. Measured on three 0.3.31 dogfooding patches (V31CAP, V31FOLD, V31DOG,
-scanned as diffs against a4ea15cf), these two rules refused 22 files before the change and 12 after:
-hardcoded_answers went from 20 to 11 and references_sealed_bundle from 2 to 1.
+Limits that remain: a test that reaches code only through a hub module (a CLI that imports every command) still counts
+as exercising whatever that hub imports. A write guard that names the whole `.knos/` folder reads, as text, the same
+as the forgery, so it is still refused.
+
+Measured on three 0.3.31 dogfooding patches (V31CAP, V31FOLD, V31DOG, scanned as diffs against a4ea15cf), these two
+rules refused 22 files before the change and 12 after: hardcoded_answers went from 20 to 11 and
+references_sealed_bundle from 2 to 1.
 
 What is not stopped: the rules read text, so a cheat written in a way no rule names can pass them. That is why the
 sealed black-box tests run after them; the benchmark measures how the two walls do together, and the honest
@@ -128,20 +137,26 @@ Fees come from the one fee config (MONEY), passed in.
 ## The verdict
 
 `referee.verdict(works, wanted, makeable, spec_hash=...)` passes only when all three pass, and writes one `verdict`
-entry and one `cheat` entry per cheat caught to Knos Record when the install has it. `referee.reward(check)` gives an
-evolving agent 1 for work that passed, 0 for work that failed, and -1 for work a cheat rule refused, so cheating is
-never better than failing (the referee as a judge for skill evolution and training environments).
+entry and one `cheat` entry per cheat caught to Knos Record when the install has it.
+
+`referee.reward(check)` gives an evolving agent 1 for work that passed, 0 for work that failed, and -1 for work a
+cheat rule refused, so cheating is never better than failing (the referee as a judge for skill evolution and training
+environments).
 
 ## Free maintainer mode
 
-The free Knos check (`action.yml`) gains `maintainer-mode`: `off` (the default), `comment`, `label` or `close`. With it
-on, the check reads the pull request's diff with the cheat library and labels a pull request that edits existing
-tests, touches files outside `scope`, or fails the check; `close` also closes it with one comment naming the rule and
-asking for a new pull request. Knos's own labels whose cause a later push removed are taken off again. The `scope`
-globs reach Knos as written (the shell never expands them). No money, no wallet and no chain are involved, and none of
-the pull request's code runs.
+The free Knos check (`action.yml`) gains `maintainer-mode`: `off` (the default), `comment`, `label` or `close`.
+
+With it on, the check reads the pull request's diff with the cheat library and labels a pull request that edits
+existing tests, touches files outside `scope`, or fails the check; `close` also closes it with one comment naming the
+rule and asking for a new pull request.
+
+Knos's own labels whose cause a later push removed are taken off again. The `scope` globs reach Knos as written (the
+shell never expands them). No money, no wallet and no chain are involved, and none of the pull request's code runs.
 
 Install: add the Knos check workflow from [INSTALL.md](INSTALL.md), give the job `pull-requests: write` and
 `issues: write`, and add `with: maintainer-mode: label` (or `close`) to the `uses: drexthealpha/Knos@...` step; add
-`scope: "src/** docs/**"` to name the paths outside contributors may touch. The decision is made by
-`knos referee maintainer --base DIR --diff FILE --mode MODE`; the action applies it with the job's own token.
+`scope: "src/** docs/**"` to name the paths outside contributors may touch.
+
+The decision is made by `knos referee maintainer --base DIR --diff FILE --mode MODE`; the action applies it with
+the job's own token.

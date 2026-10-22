@@ -2,9 +2,12 @@
 
 A payment in Knos rests on a token a forge signed. This page says exactly what that signature covers, what it leaves
 to a machine nobody signed for, and the five ways of narrowing that gap: what each costs, what it proves, what stays
-trusted, and how mature it is today. Two of the five exist in this repository. Three do not, and the last section
-says in which order Knos intends to take them. For the fifth there is one experiment outside the product: a judge
-for one small task whose run was proved and the proof verified, with the time, memory and size measured here.
+trusted, and how mature it is today. Two of the five exist in this repository.
+
+Three do not, and the last section says in which order Knos intends to take them. For the fifth there is one
+experiment outside the product: a judge for one small task whose run was proved and the proof verified, with the
+time, memory and size measured here.
+
 Outside pages were read on 2026-10-06 unless a line says otherwise (the proved run and its sources: 2026-10-07);
 every figure about another system carries its link.
 
@@ -95,12 +98,15 @@ write the hostile input rather than reuse ours.
 `knos proof judge --sandbox hermetic` (src/knos/judge.py `judge`, `default_image`) runs a black-box check whose terms
 name no image in `DEFAULT_IMAGE` (Python 3.12 on Alpine, pinned by digest) when the machine runs containers: no
 network, a read-only root, the tree read-only, another user, no capabilities, memory, CPU, process and time limits
-(`container_argv`). Terms that name an image always run in that image, or not at all. Everywhere else the host
-sandbox judges, the verdict's `judged_in` says `host sandbox (fallback: <why>)`, and its `assurance` stays
-`black-box`, never `hermetic`. The fallbacks: a machine that is not Linux, an in-process runner (pytest, node:test, go
-test, cargo test, minitest load the pull request's code into the runner, so only a black-box check can put it in a
-container), a tree with another language's manifest (package.json, go.mod, Cargo.toml, ...: the default image holds
-Python only), and no runtime that answers.
+(`container_argv`).
+
+Terms that name an image always run in that image, or not at all. Everywhere else the host sandbox judges, the
+verdict's `judged_in` says `host sandbox (fallback: <why>)`, and its `assurance` stays `black-box`, never `hermetic`.
+
+The fallbacks: a machine that is not Linux, an in-process runner (pytest, node:test, go test, cargo test, minitest
+load the pull request's code into the runner, so only a black-box check can put it in a container), a tree with
+another language's manifest (package.json, go.mod, Cargo.toml, ...: the default image holds Python only), and no
+runtime that answers.
 
 The host sandbox (`Box.wrap`), on Linux with `setpriv`, `unshare`, `prlimit` and root or passwordless sudo:
 
@@ -119,15 +125,17 @@ tests/test_judge_box.py runs a fork bomb, an outside write, a file past the size
 its time limit, and checks each is stopped and nothing outlives the run; the escape table in [TAMPER.md](TAMPER.md)
 measures the same places.
 
-What other runners can enforce. GitHub runs container jobs and service containers on Linux runners only
-([Use Docker service containers](https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers)),
-so on macOS and Windows the judge is never hermetic. On **macOS** without the sandbox the command gets the CPU and file
-size limits (`setrlimit`, which POSIX defines) and a session that is killed whole on the time limit; there is no
-mount or network namespace, so it can write wherever the judge's user can and can call out, and a process count limit
-is not set because RLIMIT_NPROC there counts every process of the judge's own user. On **Windows** the judge sets
-none of these: a job object could limit processes, memory and CPU, and Knos does not create one yet; writes are
-bounded only by the account's file permissions. `--sandbox require`, and `hermetic`, which falls back to it, refuse
-to judge on either.
+What other runners can enforce. GitHub runs container jobs and service containers on Linux runners only ([Use Docker service
+containers](https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers)), so on macOS and
+Windows the judge is never hermetic.
+
+On **macOS** without the sandbox the command gets the CPU and file size limits (`setrlimit`, which POSIX defines) and a session that is
+killed whole on the time limit; there is no mount or network namespace, so it can write wherever the judge's user can and can call out,
+and a process count limit is not set because RLIMIT_NPROC there counts every process of the judge's own user.
+
+On **Windows** the judge sets none of these: a job object could limit processes, memory and CPU, and Knos does not create one yet; writes
+are bounded only by the account's file permissions. `--sandbox require`, and `hermetic`, which falls back to it, refuse to judge on
+either.
 
 ## The ladder
 
@@ -375,8 +383,9 @@ side channel or a physical attack that the vendor's threat model excludes; and t
 
 A zero-knowledge virtual machine runs a program compiled for RISC-V and produces a proof that this program, on some
 input, wrote this output. The program is named by a hash (the image id); the output (the journal) is public; the
-verifier needs neither the machine nor its operator. For a judge that is a fixed program this is gap (1) closed
-with no signer added.
+verifier needs neither the machine nor its operator.
+
+For a judge that is a fixed program this is gap (1) closed with no signer added.
 
 **The two systems with a verifier written for Solana**, as their own pages stood on 2026-10-07:
 
@@ -391,9 +400,10 @@ with no signer added.
 
 Both verifiers sit on Solana's `alt_bn128` syscalls. The library under `sp1-solana` gives its own figure for the
 pairing check alone: "A plain Groth16 verify costs 78,293–108,762 CU", for one to eight public inputs
-([`groth16-solana`](https://github.com/Lightprotocol/groth16-solana), Apache-2.0). Neither verifier repository
-changed in the 30 days before this was read, so Knos builds on neither and recommends neither as maintained:
-building on one means carrying its verifier here.
+([`groth16-solana`](https://github.com/Lightprotocol/groth16-solana), Apache-2.0).
+
+Neither verifier repository changed in the 30 days before this was read, so Knos builds on neither and
+recommends neither as maintained: building on one means carrying its verifier here.
 
 **What existed here.** An experiment, outside the package and
 outside every wheel, now kept out of this repository. Its guest program is a judge for one task of the playground's kind (`count_words`): seven
@@ -415,11 +425,14 @@ of the judge in one segment of 32,768. Image id
 | honest submission, verdict passed | succinct (constant size) | 217 s | 163 s | 1.46 GB | 223,366 bytes | 0.04 s |
 | one wrong output, verdict failed | succinct | 138 s | 161 s | 1.46 GB | 223,366 bytes | 0.03 s |
 
-Each receipt was verified by a second process that holds only the receipt and the image id. The same receipt
-against another image id is refused ("claim digest does not match the expected digest"). The whole toolchain took
-about 1.2 GB of disk: the prover binary from the project's release (Apache-2.0), the two crates' builds, and the
-guest compiled by an ordinary nightly Rust, whose target `riscv32im-risc0-zkvm-elf` is upstream. Building both from nothing took 21
-minutes on this machine. A standard hosted runner has more of everything this run used; it was not run on one.
+Each receipt was verified by a second process that holds only the receipt and the image id. The same receipt against another image
+id is refused ("claim digest does not match the expected digest").
+
+The whole toolchain took about 1.2 GB of disk: the prover binary from the project's release (Apache-2.0), the two crates' builds,
+and the guest compiled by an ordinary nightly Rust, whose target `riscv32im-risc0-zkvm-elf` is upstream. Building both from nothing
+took 21 minutes on this machine.
+
+A standard hosted runner has more of everything this run used; it was not run on one.
 
 **Not measured, and why.** The 256-byte Groth16 form, which is the only one the Solana verifiers take: the step
 that makes it is a further download and a further prover that this machine could not fetch (the project's installer

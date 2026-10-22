@@ -41,6 +41,8 @@ async function open(width, height, app = "off") {
   await ctx.route("**/*", (route) => {
     const u = route.request().url();
     if (u.startsWith(base)) return route.continue();
+    // the proof shown first and the measured numbers come from Knos's own app (web/brand/hero.js, vectors.js): by design
+    if (/^https:\/\/knos\.onrender\.com\/api\/(proof|vectors)$/.test(u)) return route.abort();
     asked.push(u);
     if (app !== "off" && u.startsWith(`${APP}/api/front`)) return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(app === "live" ? LIVE : { products: [], crossing_now: ["sweat-glucose-watch"] }) });
     if (app !== "off" && u.startsWith(`${APP}/healthz`)) return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "{\"ok\":true}" });
@@ -86,7 +88,7 @@ for (const [w, h] of [[375, 812], [390, 844], [320, 640], [1280, 800]]) {
   ok(`${w}px: the first screen says 64 words of prose at most, bar included`, n.length <= 64 && n.length >= 12, [n.length, n.join(" ")]);
   ok(`${w}px: nothing scrolls sideways`, (await sideways(page)) <= 0, await sideways(page));
   ok(`${w}px: no script error`, errors.length === 0, errors);
-  if (w === 375) ok("375px: untouched, the first screen asks no other host at all", asked.length === 0, asked);
+  if (w === 375) ok("375px: untouched, the first screen asks no other host but its app's proof and numbers", asked.length === 0, asked);
   await ctx.close();
 }
 

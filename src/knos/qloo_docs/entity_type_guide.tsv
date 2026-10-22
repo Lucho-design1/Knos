@@ -1,4 +1,4 @@
-# Qloo Entity Type Parameter Guide, read from https://docs.qloo.com/reference/available-parameters-by-entity-type on 21 Oct 2026.
+# Qloo Entity Type Parameter Guide, read from https://docs.qloo.com/reference/available-parameters-by-entity-type on 22 Oct 2026.
 # filter.type section	parameter	Required/Optional
 Artist	filter.type	Required
 Artist	bias.trends	Optional

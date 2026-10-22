@@ -73,13 +73,14 @@ Not verified: nothing is signed; `POST /api/refund` returns the money after the 
 of `config/fees.yaml` (30 bps, floor 0.05), held with the money and taken only at release.
 
 Devnet run, 16 Oct 2026, round 1 under the first rules (test units of the app's own test mint; live Qloo answers): a smart water bottle (Lagos) OPEN,
-target 150, reserve 45; canned oat-milk cold brew (London) REFUSE, audience too thin; a cozy farming video game REFUSE,
-audience too thin and no demographic signal; the same water-bottle idea with no key: CANNOT_DECIDE. The water bottle's
-45-unit pre-order: lock `5mCZbS5MLXD9sjQiXXMpQXGWGELwWeadKzmsVzr1So6n5Df4MjH8F7smwJaNPG9H2xDC8MTHTozDzsf73PdE8Qys`;
-evidence without the claim id refused (HTTP 422); referee PASS + release
+target 150, reserve 45; canned oat-milk cold brew (London) REFUSE, audience too thin; a cozy farming video game REFUSE, audience too thin and no
+demographic signal; the same water-bottle idea with no key: CANNOT_DECIDE.
+
+The water bottle's 45-unit pre-order: lock `5mCZbS5MLXD9sjQiXXMpQXGWGELwWeadKzmsVzr1So6n5Df4MjH8F7smwJaNPG9H2xDC8MTHTozDzsf73PdE8Qys`; evidence
+without the claim id refused (HTTP 422); referee PASS + release
 `4HhTwWcC6tMwtYYzaHNmYByPUDadZUuMQpthfwenw5fjr58jBJyrxw7SUUc89NUddzABSebZJT28Y8p3UwwhkzJm`,
-`5H7WmpNZDWpeBh1PWWqso65WZjognA7JkXXJCSLmLSceAtgbaGfU1sZTBDmY6ZGhFnpUCBL8aT9k6oSTw7Uoski`; the maker's wallet then held
-45 test units. The evidence page in that run was an echo service showing the claim id (a demo, not a product page).
+`5H7WmpNZDWpeBh1PWWqso65WZjognA7JkXXJCSLmLSceAtgbaGfU1sZTBDmY6ZGhFnpUCBL8aT9k6oSTw7Uoski`; the maker's wallet then held 45 test units. The evidence
+page in that run was an echo service showing the claim id (a demo, not a product page).
 
 **Two more Qloo calls, used only where they change the target** (never the verdict):
 - **Named buyer group** (`/v2/audiences`, all ten audience types, cached 7 days): when a word after "for" in the idea names one of
@@ -94,15 +95,17 @@ evidence without the claim id refused (HTTP 422); referee PASS + release
 
 `POST /api/cross {ref | idea, place?, product?}` starts the server-side agent (`apps/wanted/knos_wanted/agent.py`), and
 `GET /api/cross?id=&since=` streams its steps. Each Qloo step carries the call, its input, an output summary and its
-effect. On OPEN the report's `decision.plan` holds what Qloo's evidence SET:
-- **who**: the top age and gender (`urn:demographics`) and the informative segments (`urn:audience`);
-- **where**: the launch cities (`urn:entity:destination`, explainability on);
-- **price tier**: the best premium spending-habit segment (Gourmand Fine Dining, Boutique Hotels, High Fashion, Watch
-  Collecting, Art Collectibles, Angel Start Up Investing, Wine Enthusiast, Real Estate) minus Discount Shoppers, each
-  absent one counted at Qloo's neutral 0.5. Above +0.05 is premium, below -0.05 is budget, otherwise mid. The unit price
-  is 4 / 2 / 1 test units: a scale, not a price recommendation;
-- **escrow target and reserve**: in units and in test units (units x unit price);
-- **unserved audience**: what the idea's side has and the leader's does not.
+effect.
+
+On OPEN the report's `decision.plan` holds what Qloo's evidence SET: - **who**: the top age and gender
+(`urn:demographics`) and the informative segments (`urn:audience`); - **where**: the launch cities
+(`urn:entity:destination`, explainability on); - **price tier**: the best premium spending-habit segment (Gourmand Fine
+Dining, Boutique Hotels, High Fashion, Watch Collecting, Art Collectibles, Angel Start Up Investing, Wine Enthusiast,
+Real Estate) minus Discount Shoppers, each absent one counted at Qloo's neutral 0.5.
+
+Above +0.05 is premium, below -0.05 is budget, otherwise mid. The unit price is 4 / 2 / 1 test units: a scale, not a
+price recommendation; - **escrow target and reserve**: in units and in test units (units x unit price); - **unserved
+audience**: what the idea's side has and the leader's does not.
 
 The tag step is one `/v2/tags` call with `feature.semantic_search=true` on the product phrase.
 `feature.explainability=true` is sent on the destination and recommendation calls, and the explanations are kept in
@@ -113,22 +116,26 @@ the report.
 `POST /api/research {ref}` -> a research card (`apps/wanted/knos_wanted/research.py`): the proven result quoted from the
 abstract with its DOI, OpenAlex `cited_by_count`, year, retraction status, Nobel recognition from
 `apps/wanted/knos_wanted/data/nobel.toml` (rows quote and link nobelprize.org press releases), and the product it enables.
-After the demand check, "why it never crossed" flags the three walls only with evidence: money before proof (>= 5
-years, Nobel or >= 1,000 citations, and no Qloo product for it), slow judges (an OpenAlex field or topic that is
-clinical or regulated), failed attempts (Qloo products like it with popularity < 0.3); otherwise "no evidence".
+
+After the demand check, "why it never crossed" flags the three walls only with evidence: money before proof (>= 5 years,
+Nobel or >= 1,000 citations, and no Qloo product for it), slow judges (an OpenAlex field or topic that is clinical or
+regulated), failed attempts (Qloo products like it with popularity < 0.3); otherwise "no evidence".
 
 ## Sibyl is the agent's memory; the chain holds the money rules
 
 Sibyl is the agent's working memory. Each crossing is remembered (claim `crossing:<hash of the paper id>`: when, the
 product phrase, the decision, the report). The next crossing of the same paper starts from that memory, for example by
-reusing the product phrase the maker settled on. Each decision, lock and release is also written to the Knos Record
-(`company.record_check`, `record_lock`, `record_release`).
+reusing the product phrase the maker settled on.
+
+Each decision, lock and release is also written to the Knos Record (`company.record_check`, `record_lock`,
+`record_release`).
 
 Memory never moves or blocks money. A double release is refused by the on-chain escrow: before any release the server
-reads the order account on devnet (`preorder.chain_gate`). Once knos_pay has paid or refunded an order, the account is
-closed, and the server answers HTTP 409 "refused: the escrow order ... is closed on devnet (already released or
-refunded); knos_pay pays a stage once", with `refused_by: the escrow order on devnet (read from the chain)`. The program
-would refuse it too, because the order account no longer exists.
+reads the order account on devnet (`preorder.chain_gate`).
+
+Once knos_pay has paid or refunded an order, the account is closed, and the server answers HTTP 409 "refused: the escrow
+order ... is closed on devnet (already released or refunded); knos_pay pays a stage once", with `refused_by: the escrow
+order on devnet (read from the chain)`. The program would refuse it too, because the order account no longer exists.
 
 **Pre-orders are reported available only when they work.** At start and every 10 minutes the server builds the
 transaction a 5-unit pre-order sends (test-mint top-up and the stage's PANEL order with its three referee keys, through
@@ -190,8 +197,10 @@ Knos keeps no copy of a buyer's tastes: the session lives in the server's memory
 
 Every call adds one row: the step, the tool, the request as sent (no key, no personal data), why it was asked, the
 status (`ok`, `empty`, `needs_input`, `partial`, `degraded`, `error`), the result count, retries and whether it came
-from the cache. Every confirmation adds a row naming the chosen id. The page shows the trail under the heading
-"aggregate taste, not a prediction about one person"; its sha256 goes into the Knos Record.
+from the cache. Every confirmation adds a row naming the chosen id.
+
+The page shows the trail under the heading "aggregate taste, not a prediction about one person"; its sha256 goes
+into the Knos Record.
 
 ## Record, anchor, fees
 

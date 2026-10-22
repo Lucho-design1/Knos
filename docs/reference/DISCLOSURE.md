@@ -3,15 +3,17 @@
 The hackathon's contest period began at 06:00 Pacific time on 14 Sep 2026 (13:00 UTC) and ends on 12 Oct 2026
 ([official rules](https://colosseum.com/legal/Crypto%20World's%20Fair%20Hackathon%20Rules.pdf), section 5). This
 page says what existed before that moment, what of it is still in the repository, what was built after it, and
-what came from elsewhere. The repository's git history shows all of it, and the commands at the end reproduce
-every count.
+what came from elsewhere.
+
+The repository's git history shows all of it, and the commands at the end reproduce every count.
 
 ## Development completed before the hackathon period
 
-Completed before 13:00 UTC on 14 Sep 2026: Knos 0.1.0 to 0.1.8 and unreleased work on it, a shared local memory for
-coding agents (83 commits, 1 to 14 Sep 2026). That is a different product from the one submitted. Of the lines at
-Knos 0.3.25, 0.1% (412 of 428,405) date from it; the table further down lists them. The verifier, the escrow, the meter, the ledger,
-the judge and the site were written after that moment.
+Completed before 13:00 UTC on 14 Sep 2026: Knos 0.1.0 to 0.1.8 and unreleased work on it, a shared local memory for coding agents
+(83 commits, 1 to 14 Sep 2026). That is a different product from the one submitted. Of the lines at Knos 0.3.25, 0.1% (412 of
+428,405) date from it; the table further down lists them.
+
+The verifier, the escrow, the meter, the ledger, the judge and the site were written after that moment.
 
 ## What existed before the competition and what was built during it
 
@@ -72,6 +74,7 @@ removed in 0.2.0 and 0.3.10. They remain in the git history.
 At commit `095f52ae` (Knos 0.3.25), `git blame` attributes 412 of the 428,405 lines in the 1,564 text files to
 commits made before the hackathon: 0.1% of all lines. The other 427,993 lines were last changed during it.
 `python scripts/disclosure_counts.py --repo <full clone> --commit 095f52ae` prints these counts and the table.
+
 (At Knos 0.3.11, commit `f3dfd3d`, the same count was 423 of 39,778 lines in 158 files.)
 
 | lines | file | what they are |
@@ -143,8 +146,9 @@ In commits: 18 between the start of the hackathon and 29 Sep, and 128 from 30 Se
 
 The story in one line: we measured how often an agent's pull request said "tests pass" while a check had failed
 (17.8% of repositories, on the first such pull request; 9 of 241 merged ones had a failed test, build, lint or type
-check), tried several products around that fact between 29 Sep and 2 Oct 2026, and kept the one
-that fixes it. The commit history shows those turns.
+check), tried several products around that fact between 29 Sep and 2 Oct 2026, and kept the one that fixes it.
+
+The commit history shows those turns.
 
 `git log` and [CHANGELOG.md](../../CHANGELOG.md) are the dated record.
 

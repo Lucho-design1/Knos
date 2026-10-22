@@ -4,19 +4,21 @@ Who has to be trusted for what, what a signed statement covers, and what it does
 names the file or the test that backs it. The authority on what the programs do is the documentation at the top of
 each source file in [`programs-v2`](../../programs-v2).
 
-This page describes the programs live on devnet: `knos-pay` 2.2 and `knos-oidc` 2.2 (live since 9 Oct 2026, upgrades
-of the second deployment at the same addresses), `knos-meter` 1.1 and `knos-passkey` 1.1. `knos status` and
-[web/upgrades.json](../../web/upgrades.json) show the live builds ([section 8](#8-versions-and-what-is-live-when)).
-This page names no time for a proposal. Whether one is still pending, has run or was replaced, and from when it can
-run, is read from the chain by `knos status` and by the site's
-[upgrade record](https://drexthealpha.github.io/Knos/upgrades.json); [`web/upgrades.json`](../../web/upgrades.json) is the
-committed copy, of the time it names.
+This page describes the programs live on devnet: `knos-pay` 2.2 and `knos-oidc` 2.2 (live since 9 Oct 2026, upgrades of
+the second deployment at the same addresses), `knos-meter` 1.1 and `knos-passkey` 1.1. `knos status` and
+[web/upgrades.json](../../web/upgrades.json) show the live builds ([section 8](#8-versions-and-what-is-live-when)). This
+page names no time for a proposal.
+
+Whether one is still pending, has run or was replaced, and from when it can run, is read from the chain by `knos status`
+and by the site's [upgrade record](https://drexthealpha.github.io/Knos/upgrades.json);
+[`web/upgrades.json`](../../web/upgrades.json) is the committed copy, of the time it names.
 
 Knos runs on Solana devnet and the money is test USDC. **Nobody outside Knos has reviewed the security of
 anything here:** not the programs, the workflows, the relay, the clients, the site or these documents. What the
 programs guarantee about money, one sentence each with its test, is in [INVARIANTS.md](INVARIANTS.md); who can
-change the programs is in [GOVERNANCE.md](GOVERNANCE.md). Report a vulnerability privately:
-[SECURITY.md](../../SECURITY.md).
+change the programs is in [GOVERNANCE.md](GOVERNANCE.md).
+
+Report a vulnerability privately: [SECURITY.md](../../SECURITY.md).
 
 ## The short version
 
@@ -354,10 +356,11 @@ The upgrade authority of all four programs is the vault of a Squads multisig
   its program data names one, `HM5y4mz3Bt9JY9mr1hkyhnvqxSH4H2u2451j7Hc2dtvK`, which is taken here to be Squads' own key
   (read from both clusters on 3 Oct 2026). A devnet time lock is only as strong as that.
 
-What the 8 days are good for: a Balance's wallet can withdraw its unspent money at once. Money already in an
-open order leaves early only by a cancellation, which takes up to 7 days and 2 hours: less than the 8 days. So the
-notice protects Balances and open orders. It does not protect an order held for a payee (up to 180 days) or a
-holdback in its warranty (up to 90 days).
+What the 8 days are good for: a Balance's wallet can withdraw its unspent money at once. Money already in an open
+order leaves early only by a cancellation, which takes up to 7 days and 2 hours: less than the 8 days. So the
+notice protects Balances and open orders.
+
+It does not protect an order held for a payee (up to 180 days) or a holdback in its warranty (up to 90 days).
 
 ## 8. Versions, and what is live when
 
@@ -377,11 +380,11 @@ Release builds of every program in `programs-v2` are compiled with `overflow-che
 source does not check explicitly stops the transaction instead of wrapping silently.
 
 The upgrade keeps every 2.0 instruction's bytes and behaviour, except these fixes that take effect for 2.0 bounties
-too: whole-unit limits, the extension list, the Balance's side account, and the single-use rule
-for every token.
-Audiences of the new paths start `knos3:`, so no token of one generation is good for the other. `knos-meter` and
-`knos-passkey` are programs at their own addresses. The meter never calls the escrow, and a passkey wallet's
-withdrawal does not either. A passkey wallet's `Fund` calls the escrow's `FundOrderWallet`.
+too: whole-unit limits, the extension list, the Balance's side account, and the single-use rule for every token.
+Audiences of the new paths start `knos3:`, so no token of one generation is good for the other.
+
+`knos-meter` and `knos-passkey` are programs at their own addresses. The meter never calls the escrow, and a
+passkey wallet's withdrawal does not either. A passkey wallet's `Fund` calls the escrow's `FundOrderWallet`.
 
 Mainnet will be different program ids and Circle's mint. Nothing is deployed there.
 
@@ -426,9 +429,10 @@ Only that wallet takes unspent money back.
 
 What the limits do not do. A Balance with no side account has only the cap per order: the side account is the
 wallet's choice. With none, whoever can change the workflow files on the default branch of any repository of that
-owner can make the owner's next comment fund any issue there. With one, the damage of a compromised repository is
-bounded by the day's limit and the list of repositories. A wallet-funded order needs no Balance and trusts nobody
-but the judge it names.
+owner can make the owner's next comment fund any issue there.
+
+With one, the damage of a compromised repository is bounded by the day's limit and the list of repositories. A
+wallet-funded order needs no Balance and trusts nobody but the judge it names.
 
 **Bounds.** An order holds between 5 and 100,000 whole units on devnet. The upper bound is a devnet number: a
 mainnet build decides its own cap, and none has been decided.
@@ -439,25 +443,31 @@ Circle's USDC (devnet `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`, mainnet
 `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`). The faucet's mint and every other mint count as test
 (`test_the_record_counts_real_money_only_in_circles_usdc`).
 
-Money enters only in an SPL Token mint, or a Token-2022 mint whose every extension is on a list
-(`ALLOWED` in [`token.rs`](../../programs-v2/knos_pay/src/token.rs)): the extensions that change nothing about who
-holds how much or whether a transfer goes through. A transfer hook (even one that names only an authority), a
-transfer fee (even of zero), a permanent delegate, a default account state, Pausable, and every extension the
-program does not know are refused, including ones added to Token-2022 later
-(`test_money_enters_only_in_a_mint_whose_every_extension_is_on_the_list`). Money leaving is never held to these
-rules: what entered can go out. A mint's issuer keeps its freeze authority, and no program can take that away.
-`knos-meter` takes credits only in Circle's USDC.
+Money enters only in an SPL Token mint, or a Token-2022 mint whose every extension is on a list (`ALLOWED` in
+[`token.rs`](../../programs-v2/knos_pay/src/token.rs)): the extensions that change nothing about who holds how
+much or whether a transfer goes through.
+
+A transfer hook (even one that names only an authority), a transfer fee (even of zero), a permanent delegate, a
+default account state, Pausable, and every extension the program does not know are refused, including ones added
+to Token-2022 later (`test_money_enters_only_in_a_mint_whose_every_extension_is_on_the_list`). Money leaving is
+never held to these rules: what entered can go out.
+
+A mint's issuer keeps its freeze authority, and no program can take that away. `knos-meter` takes credits only in
+Circle's USDC.
 
 ## 12. Private repositories: exactly what the chain shows
 
 A private order is driven from one ATTESTOR repository the organisation chose
 ([`examples/knos-attestor.yml`](../../examples/knos-attestor.yml)): its policy file names the private repositories it
 may attest for, its runs (started by hand or by its schedule) read them through a token the organisation gave it,
-check nothing out, and write only comments there. The order is funded from the organisation's Balance, which must
-list the attestor, and is paid on a run in the attestor (judge c). The salt and the terms live in a comment on the
-private issue, where only people with access can read them; if that comment is deleted the order cannot be paid and
-returns at its deadline. A public attestor's policy file names its targets: keep the attestor private if the names
-themselves are secret. For a private order the chain shows:
+check nothing out, and write only comments there.
+
+The order is funded from the organisation's Balance, which must list the attestor, and is paid on a run in the
+attestor (judge c). The salt and the terms live in a comment on the private issue, where only people with access can
+read them; if that comment is deleted the order cannot be paid and returns at its deadline.
+
+A public attestor's policy file names its targets: keep the attestor private if the names themselves are secret. For
+a private order the chain shows:
 
 - the amount, the fee, the mint, the deadline and the options;
 - the Balance it came from, with the GitHub id of the organisation and of the account that commented;
@@ -471,7 +481,9 @@ themselves are secret. For a private order the chain shows:
 It does not show the private repository's name or id, the issue's number, the names of the checks, or the path
 globs. `test_a_balance_funds_a_private_order_from_its_judge_repository_and_nothing_of_the_repository_is_public`
 scans the order's account, both tokens and every log line for them. The salt keeps the scope from being guessed
-from a known repository id. Anyone who knows the organisation's id sees that it paid, how much, and whom.
+from a known repository id.
+
+Anyone who knows the organisation's id sees that it paid, how much, and whom.
 
 Nothing is posted in public only when the repository relays its own tokens, with a Solana key in its secrets
 (`KNOS_RELAY_KEY`). That key pays fees and decides nothing.
@@ -514,18 +526,22 @@ Payment without a merge is offered only when the acceptance bundle is black-box:
 process and only its output is compared ([TAMPER.md](TAMPER.md): of 63 cheating pull requests, plain CI passed 56,
 in-process acceptance tests 7 and the black-box check none).
 
-Everything that runs a pull request's code runs as another user (uid 65534) with an empty environment, and the
-tests run with no network. The repository's own acceptance bundles are removed from the work tree before the
-submission runs ([`src/knos/judge.py`](../../src/knos/judge.py)). That is a separation between users on one machine,
-not a virtual machine. A flaw in the runner's kernel or image that lets one user become another would let a pull
-request write its own verdict. The dependency install does have the network. The hermetic option (section 13)
-fixes the judge's image by digest; it does not turn the user boundary into a machine boundary.
+Everything that runs a pull request's code runs as another user (uid 65534) with an empty environment, and the tests
+run with no network. The repository's own acceptance bundles are removed from the work tree before the submission
+runs ([`src/knos/judge.py`](../../src/knos/judge.py)). That is a separation between users on one machine, not a
+virtual machine.
 
-The host sandbox on Linux also enforces limits: a fork bomb stops at the process limit, the
-submission's view outside its work folder is read-only, CPU time, memory and file size are capped, and the time
-limit kills every process the run started (a PID namespace). The hermetic container is the default judge where the
-runner has one, and the host sandbox is the fallback the verdict names. [ATTESTOR.md](ATTESTOR.md) has the table of
-each limit and what macOS and Windows runners can and cannot enforce; `tests/test_judge_box.py` runs each attack.
+A flaw in the runner's kernel or image that lets one user become another would let a pull request write its own
+verdict. The dependency install does have the network. The hermetic option (section 13) fixes the judge's image by
+digest; it does not turn the user boundary into a machine boundary.
+
+The host sandbox on Linux also enforces limits: a fork bomb stops at the process limit, the submission's view
+outside its work folder is read-only, CPU time, memory and file size are capped, and the time limit kills every
+process the run started (a PID namespace).
+
+The hermetic container is the default judge where the runner has one, and the host sandbox is the fallback the
+verdict names. [ATTESTOR.md](ATTESTOR.md) has the table of each limit and what macOS and Windows runners can and
+cannot enforce; `tests/test_judge_box.py` runs each attack.
 
 ## 15. Tokens: public, bound to one action, used once
 
@@ -601,12 +617,14 @@ short, and the server's own sentences never repeat it ([`src/knos/mcp.py`](../..
 ## 17. The passkey wallet
 
 A payee with no wallet app can be paid at an address derived from a WebAuthn passkey
-([`programs-v2/knos_passkey`](../../programs-v2/knos_passkey)). Money leaves it only on an assertion of that passkey
-that names the mint, the destination, the amount and a number used once. Solana's own secp256r1 instruction checks
-the signature; the program checks what was signed. Nobody signs the transaction but its fee payer, so a relay can
-carry it. No key of Knos's is named in the program. A withdrawal never calls the escrow, so the public relay carries
-one from the moment `knos-passkey` is deployed, whatever the escrow's version, and refuses one only on a
-cluster where the program is not deployed (`test_a_passkey_withdrawal_request_is_simulated_then_sent_at_the_relays_cost`).
+([`programs-v2/knos_passkey`](../../programs-v2/knos_passkey)). Money leaves it only on an assertion of that passkey that
+names the mint, the destination, the amount and a number used once. Solana's own secp256r1 instruction checks the
+signature; the program checks what was signed.
+
+Nobody signs the transaction but its fee payer, so a relay can carry it. No key of Knos's is named in the program. A
+withdrawal never calls the escrow, so the public relay carries one from the moment `knos-passkey` is deployed, whatever
+the escrow's version, and refuses one only on a cluster where the program is not deployed
+(`test_a_passkey_withdrawal_request_is_simulated_then_sent_at_the_relays_cost`).
 
 **Funding with a passkey (1.1).** A funder who has only a passkey can fund an order: `Fund` moves test USDC from
 the passkey wallet into an order of `knos-pay` (a call to `FundOrderWallet`), on an assertion over a challenge that
@@ -676,11 +694,13 @@ one Ledger account per buyer, seller and month, which keeps totals and a running
 
 ## 19. Paid without a merge, challenged, and judged by more than one
 
-Three options of a work order change who has to say yes before money moves. Each is the funder's
-choice at funding: it is in the order's options, which the fund token (or the funding wallet's own signature)
-fixes, and it cannot be changed afterwards. Auto-accept has run at the public program ids
-([CAPABILITIES.md](CAPABILITIES.md)); quorum and challenge are tested in a simulator (`tests/test_order_auto.py`,
-`tests/test_order_quorum.py`), and a challenge was rehearsed on a staging deployment.
+Three options of a work order change who has to say yes before money moves. Each is the funder's choice at
+funding: it is in the order's options, which the fund token (or the funding wallet's own signature) fixes, and it
+cannot be changed afterwards.
+
+Auto-accept has run at the public program ids ([CAPABILITIES.md](CAPABILITIES.md)); quorum and challenge are
+tested in a simulator (`tests/test_order_auto.py`, `tests/test_order_quorum.py`), and a challenge was rehearsed
+on a staging deployment.
 
 **Auto-accept (`/knos fund ... auto`, flag 32).** The first pull request that passes the order's black-box
 acceptance suite is paid, unmerged, to its author. The program takes it only on an order funded in tests mode
@@ -741,8 +761,8 @@ order it was made for. A marker left by an earlier order at the same address cou
 
 Compute, measured in the simulator (it varies by a few thousand units with the addresses involved): PayOrder on an
 auto token about 90,000 units, or about 176,000 when it creates the payee's token account; a challenge 86,000 to
-98,000; PayOrder on an order with a quorum about 120,000 for a judge who is recorded and about 176,000 for the
-one who pays and creates the payee's token account.
+98,000; PayOrder on an order with a quorum about 120,000 for a judge who is recorded and about 176,000 for the one
+who pays and creates the payee's token account.
 
 **What is built end to end, and what has run.** Every step from the funding comment to the payment exists in code
 and is tested against stand-ins for GitHub and the chain; none of it has run on a cluster.
@@ -772,10 +792,12 @@ and is tested against stand-ins for GitHub and the chain; none of it has run on 
 ## 20. A neutral judge that runs the suite again
 
 GitHub signs which workflow ran, at which commit, in which repository, started by whom. It does not sign what that
-workflow read. A neutral run (judge b, section 2) used to reach every verdict by reading: the conclusions of
-the checks at the merged commit, through GitHub's API. A check in the buyer's repository that was wrong, or that
-someone with write access there had made say "success", was repeated by the neutral judge, not caught. And an order
-paid by its acceptance checks (tests mode) took no neutral run at all: only its own repository ran the suite.
+workflow read. A neutral run (judge b, section 2) used to reach every verdict by reading: the conclusions of the
+checks at the merged commit, through GitHub's API.
+
+A check in the buyer's repository that was wrong, or that someone with write access there had made say "success",
+was repeated by the neutral judge, not caught. And an order paid by its acceptance checks (tests mode) took no
+neutral run at all: only its own repository ran the suite.
 
 **What changed, with no change to any program.** The pinned `attest.yml` now has two jobs
 ([`.github/workflows/attest.yml`](../../.github/workflows/attest.yml), `knos attest` in
@@ -869,23 +891,23 @@ quorum; it does not remove it.
 
 ## Where untrusted code runs
 
-The rule: a pull request's code and its tests never run in a job that can ask GitHub for a signed statement
-(`id-token: write`) or that holds a credential that can write to the repository; and what the job that signs takes
-from the job that ran such code is data it checks again, never an instruction. This section is the author's own review, not an outside audit, of
-the workflows a repository installs (`fund.yml`, `prove.yml`, `check.yml` and `attest.yml`, published to
-the `workflows-<sha12>` tags of `drexthealpha/Knos` (`drexthealpha/knos-workflows` before the 0.3.34 branch) by [`scripts/pinned_workflows.py`](../../scripts/pinned_workflows.py)), of the two files that
-call them (`knos.yml`, `knos-check.yml`) and of `hermetic.yml`, job by job, and what this release changed.
-[`tests/test_workflows2.py`](../../tests/test_workflows2.py) holds the shape and
-[`tests/test_verdict_gate.py`](../../tests/test_verdict_gate.py) the hostile cases.
+The rule: a pull request's code and its tests never run in a job that can ask GitHub for a signed statement (`id-token: write`) or that holds a credential that can write to the repository; and what the
+job that signs takes from the job that ran such code is data it checks again, never an instruction.
 
-GitHub's own guidance is the same rule in other words: code from a pull request "is only ever inspected as data and
-never executed" where a privileged token exists, a `workflow_run` workflow "should treat artifacts uploaded by other
-workflows as untrusted data"
+This section is the author's own review, not an outside audit, of the workflows a repository installs (`fund.yml`, `prove.yml`, `check.yml` and `attest.yml`, published to the `workflows-<sha12>` tags of
+`drexthealpha/Knos` (`drexthealpha/knos-workflows` before the 0.3.34 branch) by [`scripts/pinned_workflows.py`](../../scripts/pinned_workflows.py)), of the two files that call them (`knos.yml`,
+`knos-check.yml`) and of `hermetic.yml`, job by job, and what this release changed.
+
+[`tests/test_workflows2.py`](../../tests/test_workflows2.py) holds the shape and [`tests/test_verdict_gate.py`](../../tests/test_verdict_gate.py) the hostile cases.
+
+GitHub's own guidance is the same rule in other words: code from a pull request "is only ever inspected as data and never executed"
+where a privileged token exists, a `workflow_run` workflow "should treat artifacts uploaded by other workflows as untrusted data"
 ([securely using `pull_request_target`](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target)),
-the job token gets "the minimum required permissions", and "pinning an action to a full-length commit SHA is currently
-the only way to use an action as an immutable release"
-([secure use reference](https://docs.github.com/en/actions/reference/security/secure-use)). No workflow of Knos uses
-`pull_request_target`.
+the job token gets "the minimum required permissions", and "pinning an action to a full-length commit SHA is currently the only way
+to use an action as an immutable release" ([secure use
+reference](https://docs.github.com/en/actions/reference/security/secure-use)).
+
+No workflow of Knos uses `pull_request_target`.
 
 **Every job.** "Code" is anything of a repository on the job's disk. Every action is named by a full commit
 ([`scripts/action_pins.json`](../../scripts/action_pins.json)); every job runs on the label `ubuntu-24.04`.

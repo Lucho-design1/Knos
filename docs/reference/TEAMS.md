@@ -57,9 +57,11 @@ trips). Devnet answered `getAgGenesisCert` with a certificate (Alpenglow), and e
 
 Why the payout is LiteSVM: `knos_pay` releases a job only on a GitHub Actions OIDC token from a signed run of the
 prove.yml the job pins. A task judged outside GitHub has no such run, so no `knos` command can release it on a
-verdict. The flow replays the same job (amount, terms, pin) with the test builds and pays it there; the devnet escrows
-can go back to the team after their deadline (1 day): anyone may send the refund (`refund_ix`), as the relay's upkeep
-does. This gap (no release on a verdict without GitHub Actions) is logged as a pain to fix.
+verdict.
+
+The flow replays the same job (amount, terms, pin) with the test builds and pays it there; the devnet escrows can go
+back to the team after their deadline (1 day): anyone may send the refund (`refund_ix`), as the relay's upkeep does.
+This gap (no release on a verdict without GitHub Actions) is logged as a pain to fix.
 
 In the example the hidden tests sit in the repository (`examples/nebius/task/hidden/`) so anyone can re-run it; the
 agent's prompt never includes them. A real team keeps them outside the repository (a private repository or a secret).

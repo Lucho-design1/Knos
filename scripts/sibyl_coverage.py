@@ -1,7 +1,7 @@
-"""SIBYL-COVERAGE.md: every capability of Sibyl Memory's free plan on 21 Oct 2026 -> USED (the file, and where a person
+"""SIBYL-COVERAGE.md: every capability of Sibyl Memory's free plan on 22 Oct 2026 -> USED (the file, and where a person
 meets it on Knos's five interfaces) or N/A (the source's own reason). Pro-only features are N/A on Free, as the source says.
 
-Sources, read 21 Oct 2026: docs.sibyllabs.org/memory/ (install, concepts, cli, integrations, before-accounts, tiers), the
+Sources, read 22 Oct 2026: docs.sibyllabs.org/memory/ (install, concepts, cli, integrations, before-accounts, tiers), the
 installed CLI's own help (`sibyl --help` in Ubuntu-22.04: cli 0.5.0, client 0.9.0, mcp 0.3.0, hermes 0.5.0), the MCP
 server's tools/list (sibyl-memory 1.30.0), and the SDK Knos pins (sibyl-memory-client 0.8.1, the last that runs without an
 account: the server stays account-free until the founder chooses Pro or staking).
@@ -94,6 +94,7 @@ ROWS = [
     na("Skill proposals (list / accept / reject)", "Pro", PRO, f"{D}/tiers"),
     na("Session capsule save", "Pro", "the CLI's own help: 'a session capsule (Pro)'", f"{D}/cli"),
     na("Sovereign", "Pro", "the source: in development, not offered", "https://docs.sibyllabs.org/"),
+    na("Teams (3 to 200 Pro seats on one bill)", "Pro", "the source: paid seats of Pro, not the free plan", f"{D}/teams"),
 ]
 
 
@@ -111,7 +112,7 @@ def problems(rows) -> list[str]:
 def render() -> str:
     used = sum(r["status"] == "USED" for r in ROWS)
     out = ["# Sibyl Memory coverage (free plan)", "",
-           "Every capability of Sibyl Memory's free plan on 21 Oct 2026, one row each: USED (the file, and where a person meets it on",
+           "Every capability of Sibyl Memory's free plan on 22 Oct 2026, one row each: USED (the file, and where a person meets it on",
            "the app, the front door, the hosted /mcp, the API and the `knos` CLI) or N/A with the source's own reason; Pro-only features",
            "are N/A on Free. Written by `scripts/sibyl_coverage.py`; `--check` fails CI when a row's file no longer holds its code.", "",
            f"{len(ROWS)} rows: {used} USED, {len(ROWS) - used} N/A. Installed on the founder's PC: sibyl cli 0.5.0, client 0.9.0, mcp 0.3.0,",

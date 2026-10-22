@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Knos demand check: waking the server</title>
+<title>Knos. Waking the app</title>
 <meta name="description" content="Knos's demand check runs on a free server that sleeps when idle. This page wakes it, then takes you there.">
 <style>
 body { margin: 0; background: var(--bg); color: var(--ink); font: var(--s1)/1.5 var(--text); }
@@ -25,12 +25,15 @@ h1 { font-size: 28px; } a { color: var(--accent); } .muted { color: var(--muted)
   <a class="brand" href="./#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
   <nav id="nav" aria-label="Knos">
     <a href="./#home">Check demand</a>
+    <a href="wanted.html?to=/companies">Companies</a>
+    <a href="wanted.html?to=/fields">Fields</a>
     <a href="wanted.html#projects">Projects</a>
-    <a href="./#pricing">Pricing</a>
     <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
     <div class="more" id="more">
       <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
       <div class="more-list" id="more-list">
+        <a href="wanted.html?to=/money">The money</a>
+        <a href="./#pricing">Pricing</a>
         <a href="./#verify">How we verify</a>
         <a href="wanted.html#buy">Back a product</a>
         <a href="wanted.html#fund">Fund a milestone</a>
@@ -69,7 +72,7 @@ h1 { font-size: 28px; } a { color: var(--accent); } .muted { color: var(--muted)
 <script>
 "use strict";
 const APP = "https://knos.onrender.com";
-const PAGES = ["/", "/with-without", "/qloo-safe-use", "/invite", "/verify", "/trace.html"];
+const PAGES = ["/", "/with-without", "/qloo-safe-use", "/invite", "/verify", "/trace.html", "/fields", "/money", "/companies"];
 const start = Date.now();
 async function ping() {
   try {

@@ -9,8 +9,10 @@ Everything here is tested in the Solana runtime (LiteSVM) with test USDC:
 `python -m pytest -q tests/test_advance_offer.py tests/test_advance.py`.
 
 A supplier with a funded order waits for the judge. An advancer (anyone with money and a view on the supplier) pays
-the supplier now, less a discount, and the order pays the advancer when the work is accepted. The only instruction
-of `knos_pay` this uses is `Assign` (24): a payee names the wallet that receives this order's payment in his place.
+the supplier now, less a discount, and the order pays the advancer when the work is accepted.
+
+The only instruction of `knos_pay` this uses is `Assign` (24): a payee names the wallet that receives this order's
+payment in his place.
 
 ## The four commands
 
@@ -53,11 +55,14 @@ A transaction lands whole or not at all. An advancer who cannot pay gets no assi
 supplier's bound wallet gets no money. After it, the supplier cannot take the assignment back or assign the order a
 second time: only the advancer can pass it on.
 
-Both keys in one command is a rehearsal. Two parties on two machines either pass the transaction between them inside
-one blockhash's life, about 33 s on devnet with 200 ms slots (measured 14 Oct 2026, [DURABLE_NONCES.md](DURABLE_NONCES.md)),
-or sign over a durable nonce: one party signs, writes the transaction to a file, and the other adds its signature and
-sends it whenever it is ready (`python -m knos.platform.nonce cosign` / `send`; a knos_pay funding was sent this way
-on devnet 56.9 s after the first signature). `Assign` itself has not been sent this way yet.
+Both keys in one command is a rehearsal.
+
+Two parties on two machines either pass the transaction between them inside one blockhash's life, about 33 s on devnet with
+200 ms slots (measured 14 Oct 2026, [DURABLE_NONCES.md](DURABLE_NONCES.md)), or sign over a durable nonce: one party signs,
+writes the transaction to a file, and the other adds its signature and sends it whenever it is ready (`python -m
+knos.platform.nonce cosign` / `send`; a knos_pay funding was sent this way on devnet 56.9 s after the first signature).
+
+`Assign` itself has not been sent this way yet.
 
 ## The three ends
 
@@ -138,8 +143,9 @@ What an advancer should check first:
 
 Knos charges nothing for an advance today, and nothing in the program can collect a charge for one. If it ever
 charged, the design is an origination fee on the amount advanced (what the supplier receives at the take), paid by
-the advancer, once, in the same transaction, and never by the supplier. No rate is set. The order's own Acceptance
-fee is unchanged by an advance: the funder paid it at funding.
+the advancer, once, in the same transaction, and never by the supplier. No rate is set.
+
+The order's own Acceptance fee is unchanged by an advance: the funder paid it at funding.
 
 ## What is not built
 

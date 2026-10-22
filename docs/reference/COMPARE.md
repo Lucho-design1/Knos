@@ -1,9 +1,9 @@
 # Knos compared
 
-What each alternative does, read from its own code, pages and chain on 2 Oct 2026; the boards' fees were read
-again on 3 Oct 2026, and MergePay's and Algora's published fees again on 6 Oct 2026. The Knos row is the second deployment (`programs-v2`), at the version [capabilities.json](../capabilities.json) records for each public id. Knos is on
-Solana devnet and its money is test USDC; several of the others move real money today. Where another product is
-ahead, this page says so.
+What each alternative does, read from its own code, pages and chain on 2 Oct 2026; the boards' fees were read again on 3 Oct 2026, and MergePay's and Algora's published fees again on 6 Oct 2026. The Knos row is the second deployment
+(`programs-v2`), at the version [capabilities.json](../capabilities.json) records for each public id.
+
+Knos is on Solana devnet and its money is test USDC; several of the others move real money today. Where another product is ahead, this page says so.
 
 **Knos carries research across the valley of death: each step is paid only on verified proof.** This page compares one use of it, paying AI agents for verified pull requests. Three comparisons follow. The first is with whoever keeps the count today. The second is with
 the platforms and billing companies that already meter agents and move payments. The third, which most of this
@@ -26,11 +26,14 @@ funded before the upgrade keep the rate fixed at their funding: an order funded 
 seconds after the merge. Knos measured a median of 28 seconds from merge to payment, over 56 payments
 on 10 Oct 2026 ([BENCH.md](BENCH.md)), on devnet.
 
-Neither is the comparison that matters. A settlement fee can be copied at zero, and seconds stop mattering once
-an invoice takes days to approve. **The comparison that matters is the count neither side keeps**: who counts the
-accepted outcomes an invoice bills, whether the other side can rebuild that count, and what happens to a line the
-two sides count differently. That is the next table. The count is priced apart from settlement
-([MARKET.md](MARKET.md), section 3): on devnet a settle fee is test money and no revenue.
+Neither is the comparison that matters.
+
+A settlement fee can be copied at zero, and seconds stop mattering once an invoice takes days to approve. **The
+comparison that matters is the count neither side keeps**: who counts the accepted outcomes an invoice bills,
+whether the other side can rebuild that count, and what happens to a line the two sides count differently.
+
+That is the next table. The count is priced apart from settlement ([MARKET.md](MARKET.md), section 3): on devnet
+a settle fee is test money and no revenue.
 
 ## Counting an accepted outcome
 
@@ -54,9 +57,11 @@ on devnet, and has been used by nobody but Knos.
 
 Where they are ahead: everywhere but independence. They have customers, companies that answer for the service,
 real money, and the agents already run there. Metering agents and moving payments is what they sell, so it is not
-what makes Knos different. The one thing a platform cannot be is neutral about the agents it hosts or sells, and a
-billing system cannot be neutral about the seller who is its customer. Whether buyers want that neutrality enough
-to pay for it is not known ([MARKET.md](MARKET.md), section 9).
+what makes Knos different.
+
+The one thing a platform cannot be is neutral about the agents it hosts or sells, and a billing system cannot be
+neutral about the seller who is its customer. Whether buyers want that neutrality enough to pay for it is not
+known ([MARKET.md](MARKET.md), section 9).
 
 ## Paying for a merged pull request
 
@@ -115,13 +120,13 @@ to pay for it is not known ([MARKET.md](MARKET.md), section 9).
   ([MARKET.md](MARKET.md), section 1). `knos-meter` counts from GitHub's signed record, moves no customer money,
   and either side can recompute its statement from the program's logs. No vendor uses it yet.
 
-Both records are small. MergePay's feed shows 4 bounties funded (2.25 USDC) and one award (0.47 USDC, to its own
-author, on its own repository), read 2 Oct 2026. Knos's two deployments had made 15 payments on devnet when their logs were read on 3 Oct 2026 (16:04 UTC, with
-`scripts/network_stats.py`); the site's Numbers page has the count now. Knos's own
-account funded every one of those tasks, in test money. 3 payments have gone to another GitHub account
-(`release.payments_between_unrelated_accounts` in [`bench.json`](../bench.json)); every other one
-went to Knos's own accounts. Tasks funded by anyone other than
-Knos: 0.
+Both records are small. MergePay's feed shows 4 bounties funded (2.25 USDC) and one award (0.47 USDC, to its own author, on its own repository), read 2 Oct
+2026. Knos's two deployments had made 15 payments on devnet when their logs were read on 3 Oct 2026 (16:04 UTC, with `scripts/network_stats.py`); the site's
+Numbers page has the count now.
+
+Knos's own account funded every one of those tasks, in test money. 3 payments have gone to another GitHub account
+(`release.payments_between_unrelated_accounts` in [`bench.json`](../bench.json)); every other one went to Knos's own accounts. Tasks funded by anyone other
+than Knos: 0.
 
 ## Where Knos is behind
 
@@ -165,11 +170,12 @@ They can block a merge:
   Copilot code review can approve a pull request, and that approval counts toward the required number. It is a
   public preview and off by default.
 
-None of them moves money. None makes a payment conditional on a merge, and none lets a stranger count on being
-paid. The request for a bounty on issues has been open since 6 Jul 2021
-([community discussion 4517](https://github.com/orgs/community/discussions/4517)). GitHub Sponsors pays a person
-or an organisation, once or monthly, and is not tied to an issue or a merge
-([GitHub Sponsors](https://docs.github.com/en/sponsors/getting-started-with-github-sponsors/about-github-sponsors)).
+None of them moves money. None makes a payment conditional on a merge, and none lets a stranger count on being paid.
+The request for a bounty on issues has been open since 6 Jul 2021 ([community discussion
+4517](https://github.com/orgs/community/discussions/4517)).
+
+GitHub Sponsors pays a person or an organisation, once or monthly, and is not tied to an issue or a merge ([GitHub
+Sponsors](https://docs.github.com/en/sponsors/getting-started-with-github-sponsors/about-github-sponsors)).
 
 Knos uses these controls; it does not replace them. When a funder names no checks, a job's terms take the default
 branch's required status checks. The free Knos check is one more status a ruleset can require.
@@ -184,9 +190,10 @@ merge does not need to move money.
 
 The escrow matters only when the person doing the work is not someone the buyer already pays: an outside
 contributor, a stranger with an agent, a contractor with no contract. That person asks whether the money exists
-and whether it can be taken back after the work is accepted. The buyer asks what exactly is being bought. The
-escrow answers the first: the money is committed before the work and cannot be vetoed after the merge. The terms
-answer the second: these checks, these paths, this deadline, fixed when the money went in.
+and whether it can be taken back after the work is accepted. The buyer asks what exactly is being bought.
+
+The escrow answers the first: the money is committed before the work and cannot be vetoed after the merge. The
+terms answer the second: these checks, these paths, this deadline, fixed when the money went in.
 
 ## Other programs that verify GitHub's signature on a chain
 

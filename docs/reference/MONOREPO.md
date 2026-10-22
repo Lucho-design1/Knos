@@ -1,9 +1,10 @@
 # One repository: what was folded into Knos, and the cutover that is left
 
 Since 0.3.31 everything Knos ships lives in drexthealpha/Knos. This page says, for each repository that Knos used to
-depend on, whether its content is now a folder of Knos, why it is not yet, and what still points at it. The old
-repositories stay until the founder deletes them: deleting is his action, and some of them are still called by
-commits pinned by sha in other people's repositories and by escrows on devnet.
+depend on, whether its content is now a folder of Knos, why it is not yet, and what still points at it.
+
+The old repositories stay until the founder deletes them: deleting is his action, and some of them are still called
+by commits pinned by sha in other people's repositories and by escrows on devnet.
 
 Three kinds, decided from what reads them:
 
@@ -49,18 +50,21 @@ upgrade through the upgrade multisig and its time lock (below).
 ## knos-workflows: the in-Knos path
 
 What the chain checks. `knos_pay` and `knos_meter` read a token's `job_workflow_ref`, hash its `owner/name`, and
-compare that hash and `job_workflow_sha` with what the order, the job or the credits account stored when it was
-funded (`order_judge.rs`, `pay.rs`, `fund.rs`, `meter.rs`). The repository's name is not a program constant: it
-comes from the caller's `uses:` line when a comment funds, and from `--workflow owner/name@commit` when a wallet funds.
-`programs-v2/program_ids.json` names no knos-workflows commit. So no program upgrade and no Squads-signed config
-change is needed to move it; what changes is the name new callers write.
+compare that hash and `job_workflow_sha` with what the order, the job or the credits account stored when it was funded
+(`order_judge.rs`, `pay.rs`, `fund.rs`, `meter.rs`).
+
+The repository's name is not a program constant: it comes from the caller's `uses:` line when a comment funds, and from
+`--workflow owner/name@commit` when a wallet funds. `programs-v2/program_ids.json` names no knos-workflows commit. So
+no program upgrade and no Squads-signed config change is needed to move it; what changes is the name new callers write.
 
 The new home. GitHub runs a reusable workflow named `{owner}/{repo}/.github/workflows/{file}@{ref}` from any commit
-of that repository, on any branch
-([reusing workflows](https://docs.github.com/en/actions/sharing-automations/reusing-workflows)). The published
-commits of knos-workflows are fetched into Knos as its branch `workflows`, unchanged: the same objects, so the same
-shas and the same trees. A caller then says `drexthealpha/Knos/.github/workflows/prove.yml@96b243f1...`, the order
-pins sha256("drexthealpha/Knos") and that commit, and Knos's own `.github/workflows/prove.yml` on `main` (the source,
+of that repository, on any branch ([reusing
+workflows](https://docs.github.com/en/actions/sharing-automations/reusing-workflows)). The published commits of
+knos-workflows are fetched into Knos as its branch `workflows`, unchanged: the same objects, so the same shas and the
+same trees.
+
+A caller then says `drexthealpha/Knos/.github/workflows/prove.yml@96b243f1...`, the order pins
+sha256("drexthealpha/Knos") and that commit, and Knos's own `.github/workflows/prove.yml` on `main` (the source,
 whose install step still says KNOS_LOCK) is a different commit that pays nothing pinned there. The published files
 are `on: workflow_call` only, so a branch holding them runs nothing by itself.
 
@@ -100,13 +104,16 @@ latest open deadline 2026-10-18 01:54; orders 39 open (b7196a2ad17c 11, 5b26b1cd
 (64b31fae2b00).
 
 A held job waits for its payee to bind a wallet and needs no new workflow run. An open one can be paid only by a run
-of knos-workflows at its pinned commit until its deadline, then it is refunded. On `main` (v0.3.28) also pinned to
-knos-workflows until 5 Dec 2026: every `uses:` line in `examples/*.yml`, `.github/workflows/knos.yml` and
-`knos-check.yml` of Knos, `templates/`, `web/front.js` and `web/install.js`, `sdk/settle/README.md` and its fixtures;
-the 0.3.34 branch names the new home in all of them and publishes version 2 of the terms documents (version 1, which
-orders were funded on, is kept). Still pinned to it everywhere: drexthealpha/knos-e2e's callers, and any outside
-repository that installed Knos (GitHub code search: `"drexthealpha/knos-workflows/.github/workflows"
-path:.github/workflows`, `scripts/network_stats.py` INSTALLED_QUERIES).
+of knos-workflows at its pinned commit until its deadline, then it is refunded.
+
+On `main` (v0.3.28) also pinned to knos-workflows until 5 Dec 2026: every `uses:` line in `examples/*.yml`,
+`.github/workflows/knos.yml` and `knos-check.yml` of Knos, `templates/`, `web/front.js` and `web/install.js`,
+`sdk/settle/README.md` and its fixtures; the 0.3.34 branch names the new home in all of them and publishes version 2
+of the terms documents (version 1, which orders were funded on, is kept).
+
+Still pinned to it everywhere: drexthealpha/knos-e2e's callers, and any outside repository that installed Knos
+(GitHub code search: `"drexthealpha/knos-workflows/.github/workflows" path:.github/workflows`,
+`scripts/network_stats.py` INSTALLED_QUERIES).
 
 ### The cutover
 
@@ -115,25 +122,31 @@ knos-workflows, so no Squads proposal is part of it.
 
 ## The templates
 
-The four folders are written by `python scripts/small_repos.py fold` from the same sources the template
-repositories were built from, and `tests/test_fold_templates.py` holds each folder to them byte for byte. The template
-repositories on GitHub are frozen at 0.3.28's files. They can be deleted once the site of this release is live:
-`knos claim` from 0.3.28 falls back to an empty repository and the same file when the template is gone, and
-`examples/witnessed/witness.py` from 0.3.31 copies `templates/knos-task/` from the checkout it runs in.
+The four folders are written by `python scripts/small_repos.py fold` from the same sources the template repositories
+were built from, and `tests/test_fold_templates.py` holds each folder to them byte for byte. The template repositories
+on GitHub are frozen at 0.3.28's files.
+
+They can be deleted once the site of this release is live: `knos claim` from 0.3.28 falls back to an empty repository
+and the same file when the template is gone, and `examples/witnessed/witness.py` from 0.3.31 copies
+`templates/knos-task/` from the checkout it runs in.
 
 What changed for a person (counted on the page, `web/payee.js` CLICKS): binding a wallet from `#payee` is 10 clicks
 instead of 8, because the claim workflow is added by its own link (GitHub's new-file page, filled in) instead of by
-a template. Nothing else changed: the claim is still a run started by hand, with the address pasted by its owner.
+a template.
+
+Nothing else changed: the claim is still a run started by hand, with the address pasted by its owner.
 
 ## knos-labs
 
 Its 306 files include a second, older `knos` package, a compiled program and workflows that run on `push`. Copied into
 `main` they would be a second package in the product tree; pushed as a branch of Knos as they are, their push
-workflows would run in Knos with Knos's secrets. So it becomes the tag `archive/labs` with one commit that removes
-`.github/workflows` ([CUTOVER-0331.md](CUTOVER-0331.md) section 3). Fetched on 15 Oct 2026: main = ed6136f9e3e1, one
-commit, ten workflows, of which `network.yml` (push, release, schedule), `program.yml` (push) and `tests.yml` (push,
-pull_request, schedule) would start on a push, and `fuzz.yml`, `index.yml`, `worker.yml` on a schedule. Nothing in
-Knos runs or imports it.
+workflows would run in Knos with Knos's secrets.
+
+So it becomes the tag `archive/labs` with one commit that removes `.github/workflows`
+([CUTOVER-0331.md](CUTOVER-0331.md) section 3). Fetched on 15 Oct 2026: main = ed6136f9e3e1, one commit, ten
+workflows, of which `network.yml` (push, release, schedule), `program.yml` (push) and `tests.yml` (push, pull_request,
+schedule) would start on a push, and `fuzz.yml`, `index.yml`, `worker.yml` on a schedule. Nothing in Knos runs or
+imports it.
 
 ## What the 0.3.34 branch did, and what waits (15 Oct 2026)
 
@@ -154,9 +167,12 @@ Knos runs or imports it.
 Its two files, at the commit the second deployment pins last (212f9eb5), are in Knos as
 [`workflows/knos-oidc-rotate/`](../../workflows/knos-oidc-rotate): the same bytes, so the same git tree
 (`a7302cf6...`, held by `tests/test_fold_rotate.py`). They are not active there (they are not in Knos's own
-`.github/workflows/`). The programs name the old repository in compiled constants, so the move is a program upgrade;
+`.github/workflows/`).
+
+The programs name the old repository in compiled constants, so the move is a program upgrade;
 [CUTOVER-0331.md](CUTOVER-0331.md) has the steps, the Squads step included. The code half is done: the 0.3.35 builds
 accept the old home and Knos's (`ROTATE_REF_KNOS`, `CLAIM_REF_KNOS`, exact prefixes, look-alikes refused in
-`tests/test_two_homes_*.py`), and both are in devnet buffers held by the upgrade vault. What waits for the founder:
-the two proposals, their approval and time lock, execution, and only then the rotate and claim callers
-([deploy/upgrade-0335/STEPS.md](../../deploy/upgrade-0335/STEPS.md)).
+`tests/test_two_homes_*.py`), and both are in devnet buffers held by the upgrade vault.
+
+What waits for the founder: the two proposals, their approval and time lock, execution, and only then the rotate and
+claim callers ([deploy/upgrade-0335/STEPS.md](../../deploy/upgrade-0335/STEPS.md)).

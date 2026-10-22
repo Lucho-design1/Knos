@@ -13,11 +13,12 @@ Read this first:
 - **No contract.** There is no named legal entity, no terms of service, no data-processing agreement and no
   service-level agreement.
 
-Where a file is marked with a release number, it was added in that release: 0.3.13 and 0.3.14 on 4 Oct 2026, 0.3.15 and
-0.3.16 on 5 Oct, 0.3.17 on 6 Oct, 0.3.20 and 0.3.21 on 8 Oct. Everything else has been in the repository since 0.3.12
-(3 Oct 2026). [SECURITY.md](SECURITY.md) is the full security model. [FINANCE.md](FINANCE.md) is the page for a controller: one
-deliverable as four linked records, the statement, and the files a finance system imports. [ASSURANCE.md](ASSURANCE.md) lists the invariants
-and the tests that hold them. [REGULATION.md](REGULATION.md) covers law.
+Where a file is marked with a release number, it was added in that release: 0.3.13 and 0.3.14 on 4 Oct 2026, 0.3.15 and 0.3.16 on 5 Oct,
+0.3.17 on 6 Oct, 0.3.20 and 0.3.21 on 8 Oct. Everything else has been in the repository since 0.3.12 (3 Oct 2026).
+[SECURITY.md](SECURITY.md) is the full security model.
+
+[FINANCE.md](FINANCE.md) is the page for a controller: one deliverable as four linked records, the statement, and the files a finance system
+imports. [ASSURANCE.md](ASSURANCE.md) lists the invariants and the tests that hold them. [REGULATION.md](REGULATION.md) covers law.
 
 ## The control list
 
@@ -48,21 +49,28 @@ code can supply.
 | A delay before a program changes: 8 days, by a multisig | Squads, section 2 | |
 
 How `knos budget set` works. Only the wallet that opened the Balance can sign a change. With that wallet's key
-(`--keypair`, or `KNOS_WALLET_KEY`) the command sends it. Without a key, or with `--dry-run`, it sends nothing: it
-prints each setting before and after, and `--dry-run --json` prints the instructions as data, which is what a
-multisig that holds the Balance needs for its own proposal. What is not named stays as it is. A refusal counts
-nothing; lowering a limit does not reset what was spent; the total is counted from the day limits were first set.
+(`--keypair`, or `KNOS_WALLET_KEY`) the command sends it.
+
+Without a key, or with `--dry-run`, it sends nothing: it prints each setting before and after, and `--dry-run
+--json` prints the instructions as data, which is what a multisig that holds the Balance needs for its own
+proposal. What is not named stays as it is.
+
+A refusal counts nothing; lowering a limit does not reset what was spent; the total is counted from the day limits
+were first set.
 
 `SetBalanceX` and the side account arrived in knos_pay 2.1. The public program runs 2.2, which has them
 ([`web/upgrades.json`](../../web/upgrades.json) has the live state). On a cluster whose program is older, the cluster
 refuses the instruction and `knos budget set` says so, and `budget show`, `check` and `who` read a Balance that has
-only its cap and spenders. The tests run the committed build.
+only its cap and spenders.
+
+The tests run the committed build.
 
 What the audit export does not hold: names (it carries GitHub's numeric ids), the commit of the workflows that signed
-(the paying transaction it names carries the token that says it), the accepted commit of a pull request (the
-log prints a commit only on a revert), a Balance's limits when it funded (the acceptance receipt of a work order's
-payment has them; a bounty has no receipt), and the first deployment's bounties (`knos receipts` lists those). It is
-a file. Nothing sends it anywhere, and nothing keeps it.
+(the paying transaction it names carries the token that says it), the accepted commit of a pull request (the log
+prints a commit only on a revert), a Balance's limits when it funded (the acceptance receipt of a work order's
+payment has them; a bounty has no receipt), and the first deployment's bounties (`knos receipts` lists those).
+
+It is a file. Nothing sends it anywhere, and nothing keeps it.
 
 **A design only: written down, not built.**
 
@@ -99,11 +107,10 @@ a file. Nothing sends it anywhere, and nothing keeps it.
 | Knos, outside the two multisigs | nothing on a funded order | | |
 
 What does not exist: single sign-on tried with a real provider (the self-host bundle has single sign-on through any OpenID Connect provider, tested against a stand-in provider only); a private deployment that has run; a support contract; an approval the program enforces (the approval chain of
-0.3.17 is files in the buyer's repository and a command, and a multisig's vault as the funder is the only two-person approval that
-money cannot get past, by the multisig's own rule); an admin console; roles inside the program. Knos has no accounts of its own.
-Identity is GitHub's and a wallet's, so a company's access rules for GitHub are its access rules here. **Every
-member key of the upgrade multisig is the founder's** ([SECURITY.md](SECURITY.md), section 7). No document names
-anyone but the founder as a holder of a guardian key. No outside signer sits on either.
+0.3.17 is files in the buyer's repository and a command, and a multisig's vault as the funder is the only two-person approval that money cannot get past, by the multisig's own rule); an admin console; roles inside the program.
+
+Knos has no accounts of its own. Identity is GitHub's and a wallet's, so a company's access rules for GitHub are its access rules here. **Every member key of the upgrade multisig is the founder's** ([SECURITY.md](SECURITY.md), section 7). No document names anyone but the founder as a holder
+of a guardian key. No outside signer sits on either.
 
 ## 2. Change management
 
@@ -188,8 +195,10 @@ that organisation's own token reading the private repository. Nobody outside can
 
 Off chain: a private repository relays its own tokens with its own key, so nothing is posted as a comment and
 nothing is written to Knos's public relay log ([SECURITY.md](SECURITY.md), section 12). Knos runs no server and
-stores no customer data. What the check learned about a repository's rules is kept as comments in an issue of
-that repository ([SECURITY.md](SECURITY.md), section 16).
+stores no customer data.
+
+What the check learned about a repository's rules is kept as comments in an issue of that repository
+([SECURITY.md](SECURITY.md), section 16).
 
 What does not exist: a way to delete or correct on-chain data; a data-processing agreement; an answer to a request
 for erasure for anything on chain.
@@ -223,10 +232,12 @@ Testing is not a review by someone who did not write the code. There has been no
 ## 9. Procurement files: rate cards, standing offers, envelopes, approvals
 
 (0.3.17) Four kinds of file and one log, all in the buyer's own repository under `.knos/procurement/`. There is no
-server: the files are the record, git is their history, and the command line and the console read them with the same
-code ([`src/knos/controls.py`](../../src/knos/controls.py), [`src/knos/approvals.py`](../../src/knos/approvals.py),
+server: the files are the record, git is their history, and the command line and the console read them with the same code
+([`src/knos/controls.py`](../../src/knos/controls.py), [`src/knos/approvals.py`](../../src/knos/approvals.py),
 [`web/procure.js`](../../web/procure.js); `tests/data/procure_cases.json` holds the two languages to one answer, sentence
-for sentence). Money is test USDC on devnet.
+for sentence).
+
+Money is test USDC on devnet.
 
 The files are a small, fixed part of YAML: `key: value`, nested keys, `- item` lists, `[a, b]` lists, "quoted text",
 whole numbers, `true`, `false`, `null` and `#` comments. Dates are written `2026-10-01`. Amounts are whole units as a
@@ -280,11 +291,14 @@ reopened: same
 ```
 
 `period` is `week`, `month` or `quarter` (7, 30 and 90 days: one order waits at most 90). `retries` is how many
-evaluations one deliverable may take; an accepted deliverable is billed once however many it took. `reopened` is
-`same` (reopened work is the same deliverable and is not billed again) or `new` (it is a new deliverable and needs a
-new approval). The offer commits its cap for every supplier and every period it spans, counted to the nearest whole
-period: 400 a month for one supplier over a quarter is 1,200, and 1,203.60 with the fee of each month's funding
-(0.30%, from knos_pay 2.2, live since 9 Oct 2026; 1,230 under the 0.3.14 fee that 2.1 charged).
+evaluations one deliverable may take; an accepted deliverable is billed once however many it took.
+
+`reopened` is `same` (reopened work is the same deliverable and is not billed again) or `new` (it is a new
+deliverable and needs a new approval).
+
+The offer commits its cap for every supplier and every period it spans, counted to the nearest whole period: 400 a
+month for one supplier over a quarter is 1,200, and 1,203.60 with the fee of each month's funding (0.30%, from
+knos_pay 2.2, live since 9 Oct 2026; 1,230 under the 0.3.14 fee that 2.1 charged).
 
 A budget envelope:
 
@@ -316,14 +330,18 @@ Refused: this is 275.00 over envelope `eng-2026q4`. 2,800.00 of 5,000.00 is left
 ```
 
 Within the limit it prints the comment that funds each supplier for one period, which is the `/knos offer` line the
-workflow already reads, and with `--write` it adds the commitment to the envelope's file. The console shows the same
-before and after while the three fields of an offer are typed, and beside the amount when one task is funded.
+workflow already reads, and with `--write` it adds the commitment to the envelope's file.
 
-For one task, `knos budget envelope FILE --fund 500` prints the same before and after with the fee on top, and
-refuses over the limit the same way. It sends and writes nothing, and asks no chain: it counts the fee of knos_pay 2.2
-(0.30%, at least 0.05) and says beside it what the 0.3.14 fee is (2.5% of the first 1,000, 1% to 50,000, 0.5% above, at least 0.40),
-which the public program charged before 9 Oct 2026. `knos budget show` and `knos budget check` read the chain and use the fee of the build that is live. Orders
-funded before the upgrade keep the rate fixed at their funding.
+The console shows the same before and after while the three fields of an offer are typed, and beside the amount when
+one task is funded.
+
+For one task, `knos budget envelope FILE --fund 500` prints the same before and after with the fee on top, and refuses over the limit the same way.
+
+It sends and writes nothing, and asks no chain: it counts the fee of knos_pay 2.2 (0.30%, at least 0.05) and says beside it what the 0.3.14 fee is (2.5% of the
+first 1,000, 1% to 50,000, 0.5% above, at least 0.40), which the public program charged before 9 Oct 2026.
+
+`knos budget show` and `knos budget check` read the chain and use the fee of the build that is live. Orders funded before the upgrade keep the rate fixed at
+their funding.
 
 The approval policy:
 
@@ -357,7 +375,9 @@ thresholds:
 Up to 1,000 one approver signs; up to 25,000 two; above that, two and finance. An approval is a comment by the named
 account, `/knos approve offer:bug-fix-octocat` (or `... as finance`), and `knos approve record --repo OWNER/NAME
 --comment NUMBER --offer FILE` reads it back through GitHub's API: who wrote it and when are GitHub's answer, never
-the caller's. Authority is judged for the day the comment was written, and a refusal is one sentence:
+the caller's.
+
+Authority is judged for the day the comment was written, and a refusal is one sentence:
 
 | case | what is said |
 |---|---|
@@ -370,10 +390,12 @@ the caller's. Authority is judged for the day the comment was written, and a ref
 `knos approve status --offer FILE` judges every event of the log again and says what the request waits for and who
 could still sign. `tests/test_procurement.py` holds each of these.
 
-An order that is no standing offer is approved the same way, by its issue and its amount: the approver comments
-`/knos approve issue:7`, and `knos approve record --repo OWNER/NAME --comment NUMBER --subject issue:7 --requester LOGIN
---amount 30` adds it to the log. A tip is `tip:<pull request>`. The approval covers that amount on that issue: a
-second order of the same amount there is covered too, and the Balance's limits bound how often.
+An order that is no standing offer is approved the same way, by its issue and its amount: the approver comments `/knos
+approve issue:7`, and `knos approve record --repo OWNER/NAME --comment NUMBER --subject issue:7 --requester LOGIN
+--amount 30` adds it to the log. A tip is `tip:<pull request>`.
+
+The approval covers that amount on that issue: a second order of the same amount there is covered too, and the Balance's
+limits bound how often.
 
 What this is not:
 

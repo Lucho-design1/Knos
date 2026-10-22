@@ -62,13 +62,13 @@ allowance*); this page says it for the people who sign. Devnet only: the money i
 
 ## Allowances loosen, they do not cap
 
-A Squads spending limit lets its keys move up to an amount per day, week, 30 days or once, to listed
-destinations, **without a vote**
+A Squads spending limit lets its keys move up to an amount per day, week, 30 days or once, to listed destinations, **without a vote**
 ([`spending_limit.rs`](https://github.com/Squads-Protocol/v4/blob/main/programs/squads_multisig_program/src/state/spending_limit.rs)).
-A threshold-approved transaction is not limited by it. A destination is the owner of the receiving token
-account, and every knos_pay Balance and order has the same owner, so an allowance cannot be narrowed to one
-Balance. The plan adds an allowance only when the boundary file asks for one, and points it at a supplier's own
-wallet.
+A threshold-approved transaction is not limited by it.
+
+A destination is the owner of the receiving token account, and every knos_pay Balance and order has the same owner, so an allowance
+cannot be narrowed to one Balance. The plan adds an allowance only when the boundary file asks for one, and points it at a supplier's
+own wallet.
 
 ## Outside: a person's own wallet
 
@@ -81,5 +81,7 @@ no policy of an organisation can bind it. The boundary covers money the organisa
 (`python scripts/squads_program.py fetch` first; skipped without it): a requester's vote refused, one vote of two
 executes nothing, the time lock holds, a vault cannot fund past what it holds, an allowance refused over its
 amount, to another destination or by another key, a member cannot change the threshold, and a Balance the vault
-opened changes only by its vote. `tests/test_squads_fund.py` sends the instruction `scripts/squads_fund.mjs`
-prints through the same Squads build. No round on the public cluster has run a vault planned by `knos boundary`.
+opened changes only by its vote.
+
+`tests/test_squads_fund.py` sends the instruction `scripts/squads_fund.mjs` prints through the same Squads build.
+No round on the public cluster has run a vault planned by `knos boundary`.

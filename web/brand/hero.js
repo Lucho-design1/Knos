@@ -55,7 +55,7 @@
     // each label beside its dot, on the side with room; a label that would cover another shows the city's number only
     const boxes = [], hit = (b) => boxes.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
     const dots = pts.map((c, i) => {
-      const x = X(c.lon), y = Y(c.lat), name = `${i + 1}. ${c.name}`, w = name.length * 6.2 + 4;
+      const x = X(c.lon), y = Y(c.lat), name = String(i + 1), w = name.length * 7 + 4;
       let label = null;
       for (const right of [x > W * .62, !(x > W * .62)]) {
         const b = right ? { x0: x - 10 - w, x1: x - 10 } : { x0: x + 10, x1: x + 10 + w };
@@ -66,20 +66,19 @@
       return `<g><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${i === 0 ? 7 : 5}"/><text x="${(x + (label.right ? -10 : 10)).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="${label.right ? "end" : "start"}">${esc(label.text)}</text></g>`;
     }).join("");
     return `<svg class="k-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Launch cities on a map: ${esc(pts.map((c) => c.name).join(", "))}"><g class="k-grid">${grid}</g>${dots}</svg>` +
-      `<p class="k-fine">Latitude and longitude, lines every 10°. Coordinates: ${esc([...new Set(pts.map((c) => c.coords_from || "Qloo"))].join(", "))}.</p>`;
+      (pts.some((c) => c.coords_from === "Wikidata") ? `<p class="k-fine">Coordinates: Wikidata</p>` : "");
   }
 
   const WORD = { OPEN: ["Open for pre-orders", "open"], REFUSE: ["Not yet: pre-orders stay closed", "refuse"], CANNOT_DECIDE: ["Qloo cannot decide this one", "unknown"] };
   const TIERS = ["budget", "mid", "premium", "luxury"];
-  function card(r) {
+  function card(r, label) {
     const d = r.decision || {}, p = d.plan || {}, h = r.hash, [word, cls] = WORD[d.verdict] || [String(d.verdict || "No verdict"), "unknown"];
     const who = r.who || {}, age = (p.who?.age || who.top_age || "").replace(/_/g, " ").replace(" and ", " and "), gender = p.who?.gender || who.top_gender || "";
     const segs = (p.who?.segments || (r.audiences || []).map((a) => a.name)).filter(Boolean).slice(0, 3);
     const cities = (r.cities || []).slice(0, 5), price = r.price || {}, tier = String(price.tier || "").toLowerCase();
-    const reasons = (d.reasons || []).slice(0, 2);
-    return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}">
-  <header class="k-card-head"><p class="k-kick">${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
-    ${reasons.map((x) => `<p class="k-why" data-qloo>${esc(x)}${src(h)}</p>`).join("")}</header>
+    return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}" data-not-prose>
+  <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
+</header>
   <div class="k-parts">
     <section class="k-part" data-part="audience" data-qloo><h3>Who wants it</h3>
       ${age || gender ? `<p class="k-big">${esc([age, gender].filter(Boolean).join(", "))}</p>` : `<p class="k-none">Qloo did not answer who.</p>`}
@@ -88,7 +87,7 @@
       ${cities.length ? map(cities) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${src(h, cities[0]?.src)}</section>
     <section class="k-part" data-part="price" data-qloo><h3>Price tier</h3>
       ${tier ? `<ol class="k-tiers" aria-label="Price tier: ${esc(tier)}">${TIERS.map((t) => `<li${t === tier ? ' aria-current="true"' : ""}>${t}</li>`).join("")}</ol>` : `<p class="k-none">Qloo gave no price signal.</p>`}
-      ${(price.segments_seen || []).length ? `<p class="k-fine">From: ${esc(price.segments_seen.slice(0, 2).join(", "))}</p>` : ""}${src(h, price.src)}</section>
+${src(h, price.src)}</section>
   </div>
   <footer class="k-card-foot"><p class="k-fine">Aggregate taste from Qloo: not causal, not a forecast, not about any one person.</p>
     ${d.verdict === "OPEN" ? `<a class="k-cta" href="${esc(APP)}#buy=${esc(h)}">Open pre-orders for it →</a>` : `<a class="k-cta quiet" href="${esc(APP)}#research">Try it with a launch market →</a>`}</footer>
@@ -104,12 +103,30 @@
     try {
       const r = ref ? await crossing(ref) : await post("/api/check", { idea: v });
       slot.innerHTML = card(r);
+      delete slot.dataset.past;
       slot.dataset.ms = String(Math.round(performance.now() - t0));
       slot.querySelector(".k-verdict")?.focus?.();
     } catch (e) {
       slot.innerHTML = `<p class="k-err" role="alert">${esc(e.message || e)}. Try again, or <a href="${esc(APP)}#research">open the full crossing</a>.</p>`;
     } finally { go.disabled = false; root.removeAttribute("aria-busy"); }
   }
+  // a link that names an idea (?q=, from the fields page) runs its check at once: one press, already pressed
+  const asked = new URLSearchParams(location.search).get("q");
+  if (asked) { q.value = asked.slice(0, 500); ask(q.value); }
+  // proof first: the latest real verdict this server reached, drawn at load and labelled as a past check (T3);
+  // the visitor's own check replaces it
+  const seen = (el, then) => {
+    if (!("IntersectionObserver" in window)) return then();
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); then(); } });
+    io.observe(el);
+  };
+  seen(root, () => get("/api/proof").then((p) => {
+    const r = p && p.proof;
+    if (!r || slot.dataset.ms || slot.querySelector(".k-status")) return;
+    const when = String(r.checked_at || "").replace("T", " ").replace(/:\d\dZ$/, " UTC");
+    slot.innerHTML = card(r, `Real check, ${when}`);
+    slot.dataset.past = "1";
+  }).catch(() => {}));
   form.addEventListener("submit", (ev) => { ev.preventDefault(); ask(q.value); });
   root.addEventListener("click", (ev) => { const b = ev.target.closest("[data-q]"); if (b) { q.value = b.dataset.q; ask(b.dataset.q); } });
 })();

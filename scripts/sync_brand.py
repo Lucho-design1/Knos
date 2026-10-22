@@ -22,7 +22,7 @@ SITE = "https://drexthealpha.github.io/Knos/"
 # the front door names no other host in its pages (tests/test_settle_fixtures.py): its links to the app go through its own
 # wake page, which wakes the free server and forwards (web/wanted.html: the hash, and ?to= one of the app's pages)
 WAKE = "wanted.html"
-COPIES = {WEB / "brand" / n: STATIC / "brand" / n for n in ("tokens.css", "wordmark.svg", "mark.svg", "bar.js", "hero.js")}
+COPIES = {WEB / "brand" / n: STATIC / "brand" / n for n in ("tokens.css", "wordmark.svg", "mark.svg", "bar.js", "hero.js", "vectors.js")}
 COPIES |= {f: STATIC / "fonts" / f.name for f in sorted((WEB / "fonts").iterdir()) if f.suffix in (".woff2", ".txt")}
 # page: (its home, the front door, the app, its tokens link, loads web/brand/bar.js)
 PAGES = {
@@ -33,10 +33,12 @@ PAGES = {
     WEB / "wanted.html": ("./", "./", WAKE, "brand/tokens.css", True),
     STATIC / "index.html": ("", SITE, "", "/static/brand/tokens.css", True),
     **{STATIC / n: ("/", SITE, "/", "/static/brand/tokens.css", True)
-       for n in ("trace.html", "with_without.html", "qloo_safe_use.html", "invite.html", "verify.html")},
+       for n in ("trace.html", "with_without.html", "qloo_safe_use.html", "invite.html", "verify.html", "ready.html",
+                 "fields.html", "money.html", "companies.html")},
 }
 MARK = re.compile(r"<!-- k-bar -->.*?<!-- /k-bar -->", re.S)
 HERO = re.compile(r"<!-- k-hero -->.*?<!-- /k-hero -->", re.S)
+VECTORS = re.compile(r"<!-- k-vectors -->.*?<!-- /k-vectors -->", re.S)
 # the two front doors' first screens: (the app's address for the API, the app's address for its pages, hero.js)
 HEROES = {WEB / "index.html": ("@app", WAKE, "brand/hero.js"), STATIC / "index.html": ("", "/", "/static/brand/hero.js")}
 
@@ -46,6 +48,10 @@ def bar(home: str, site: str, app: str) -> str:
     # a page of the app is at the app's root, a page of the site at the site's: {AP}/{SP} start a page's address
     pages = app + "?to=/" if app.endswith(WAKE) else (app or "/")
     return t.replace("{H}", home).replace("{SP}", site or "./").replace("{S}", site).replace("{AP}", pages).replace("{A}", app)
+
+
+def vectors(api: str, js: str) -> str:
+    return (WEB / "brand" / "vectors.html").read_text(encoding="utf-8").strip().replace("{API}", api).replace("{JS}", js)
 
 
 def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) -> str:
@@ -62,6 +68,7 @@ def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) 
     if path in HEROES:
         api, app_pages, js = HEROES[path]
         t = (WEB / "brand" / "hero.html").read_text(encoding="utf-8").strip().replace("{API}", api).replace("{APP}", app_pages)
+        t = t.replace("<!-- k-vectors -->", vectors(api, js.replace("hero.js", "vectors.js")))
         s = HERO.sub(lambda _: f'<!-- k-hero -->\n{t}\n<script src="{js}" defer></script>\n<!-- /k-hero -->', s, count=1)
     # a page that runs web/brand/bar.js lays the bar out for scripts (and in the reader's theme) before its first paint:
     # set after it, the bar moves under the reader (a layout shift Lighthouse counts)
@@ -76,6 +83,11 @@ def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) 
         if f'fonts/{f}" as="font"' not in s:
             s = s.replace("</head>", f"{pre}\n</head>", 1) if '<link rel="stylesheet"' not in s else \
                 re.sub(r'(<link rel="stylesheet")', lambda m, pre=pre: f"{pre}\n{m.group(1)}", s, count=1)
+    # a main screen's measured numbers (web/brand/vectors.html), between the k-vectors marks
+    if VECTORS.search(s) and path not in HEROES:
+        api = "" if tokens.startswith("/static/") else "@app"
+        js = "/static/brand/vectors.js" if tokens.startswith("/static/") else tokens.replace("tokens.css", "vectors.js")
+        s = VECTORS.sub(lambda _: f"<!-- k-vectors -->\n{vectors(api, js)}\n<!-- /k-vectors -->", s, count=1)
     link = f'<link rel="stylesheet" href="{tokens}">'
     if link not in s:
         s = re.sub(r'(<link rel="stylesheet")', lambda m: f"{link}\n{m.group(1)}", s, count=1) if "<link rel=\"stylesheet\"" in s \

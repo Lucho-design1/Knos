@@ -24,7 +24,9 @@ python -m knos.private run --repo PATH_TO_THE_WORK --attestors examples/private/
 It runs the whole path on one machine and prints each step as it happens: the attestors both parties approved, a
 vault key for each party, the evaluation, the evidence sealed to both, the record that may leave, a signed token,
 the offline check with the evidence the supplier opened, the retention rule as a dry run, and a dispute opened by
-one party and resolved by both. It writes a folder (`--out`, default `knos-private-run`) and nothing in `--repo`.
+one party and resolved by both.
+
+It writes a folder (`--out`, default `knos-private-run`) and nothing in `--repo`.
 
 **No private customer has run it.** What the command simulates, said on its first line: the issuer is an RSA key
 made on the spot, not a forge; both parties are one process; and without `--verdict FILE` (the judge's own verdict,
@@ -32,10 +34,12 @@ from `knos proof judge --evidence`) no suite is run, so the record names no chec
 step is the function the real path uses (`tests/test_private_path.py`, "one command").
 
 To run the real path, Knos would need a private repository of its own. None exists yet, so this stays at the stage
-`tested`. It needs two private repositories (an attestor and a target), a self-hosted Linux runner
-registered to the attestor (the workflow asks for one), the secret `KNOS_READ_TOKEN`, the variables
-`KNOS_VAULT_BUYER` and `KNOS_VAULT_SUPPLIER`, and `terms.json` and `attestors.json` in the attestor, whose entry
-names the issuer `https://token.actions.githubusercontent.com` as run by a `third party`:
+`tested`.
+
+It needs two private repositories (an attestor and a target), a self-hosted Linux runner registered to the
+attestor (the workflow asks for one), the secret `KNOS_READ_TOKEN`, the variables `KNOS_VAULT_BUYER` and
+`KNOS_VAULT_SUPPLIER`, and `terms.json` and `attestors.json` in the attestor, whose entry names the issuer
+`https://token.actions.githubusercontent.com` as run by a `third party`:
 
 ```
 gh workflow run knos-private.yml -R OWNER/ATTESTOR -f repository=OWNER/TARGET -f pull=1 -f issue=1
@@ -59,8 +63,9 @@ holds two files:
 
 No source, diff, file name, check name, repository name or log line is in the record. `knos.private.record` builds
 it from a fixed set of fields and `knos.private.leaks` refuses any other field or any value that is not a verdict
-word or a hash; the signing job checks the shape once more before it asks for the token. A judge that did not reach
-an answer gives `insufficient_evidence`, never a rejection.
+word or a hash; the signing job checks the shape once more before it asks for the token.
+
+A judge that did not reach an answer gives `insufficient_evidence`, never a rejection.
 
 Two things the record does tell an outsider. A commit id confirms a guess to someone who already has the commit.
 And the token names the attestor repository and the account that started the run, as every token does
@@ -80,10 +85,11 @@ not checked.
 
 [`examples/private/attestors.json`](../../examples/private/attestors.json) is the shape. For each attestor it names the
 issuer (the token's `iss`), who runs that issuer (`buyer`, `supplier` or `third party`), the repository's id, the
-workflow file as the issuer signs it, who administers the repository and its runners, and who approved it. An
-attestor counts only when `approved_by` holds both parties. The file's hash is in every record, and the token is
-signed for the record's hash, so a verdict cannot be moved to another list afterwards. The parties put the file's
-SHA-256 in their order or contract; that is the approval.
+workflow file as the issuer signs it, who administers the repository and its runners, and who approved it. An attestor
+counts only when `approved_by` holds both parties.
+
+The file's hash is in every record, and the token is signed for the record's hash, so a verdict cannot be moved to
+another list afterwards. The parties put the file's SHA-256 in their order or contract; that is the approval.
 
 Who runs an issuer and who administers a repository are the parties' own statements. No token carries them.
 

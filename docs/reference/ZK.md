@@ -21,8 +21,10 @@ Status: built and tested; devnet demo status in [Where it runs](#where-it-runs).
 
 The circuit is `zk/score_circuit/src/lib.rs` (arkworks 0.5, Groth16 over BN254). The commitment hash is MiMC-7 (91
 rounds, the circomlib MultiMiMC7 chaining) with round constants from sha256, computed the same way in Rust and in
-Python (`src/knos/zk/mimc.py`). The salts are whole field elements: without one, a set of 64 labels from ten classes
-could still not be guessed, but a small set could; the salt removes that.
+Python (`src/knos/zk/mimc.py`).
+
+The salts are whole field elements: without one, a set of 64 labels from ten classes could still not be guessed, but
+a small set could; the salt removes that.
 
 The fixture (`zk/fixtures/score64`) is **SYNTHETIC**: 64 made-up labels from a fixed seed, a submission that gets 52
 right, a bar of 48.
@@ -121,9 +123,10 @@ verifier above. What happened on the build box (WSL2, 4 vCPU, 4 GB, shared with 
 - RISC Zero was not tried: its Groth16 wrap (`stark2snark`) has the same Docker need.
 
 So the private-input proof is the arkworks Groth16 circuit above: it proves the same kind of statement (a checker
-over private data, only commitments and the verdict public) and verifies with the same on-chain program. A zkVM
-version is a later step on a machine with Docker and more memory; it would feed the same `knos_zk` verifier once its
-proof is wrapped to Groth16 over BN254 (a new verifying key, a new `vk.rs`).
+over private data, only commitments and the verdict public) and verifies with the same on-chain program.
+
+A zkVM version is a later step on a machine with Docker and more memory; it would feed the same `knos_zk` verifier
+once its proof is wrapped to Groth16 over BN254 (a new verifying key, a new `vk.rs`).
 
 ## Private funding (Token-2022 confidential transfers)
 
@@ -131,9 +134,10 @@ proof is wrapped to Groth16 over BN254 (a new verifying key, a new `vk.rs`).
 
 The design: a funder pays into a Token-2022 mint with the confidential-transfer extension and an **auditor ElGamal
 key** held by Knos's compliance role, so amounts are hidden from the public but readable by the auditor; the payout
-side stays the existing public USDC escrow (the non-private fallback, the default). It would sit behind a flag
-(`private_funding: true` in the funding config) and fall back to the public path whenever the flag is off or the
-cluster refuses the proof instructions.
+side stays the existing public USDC escrow (the non-private fallback, the default).
+
+It would sit behind a flag (`private_funding: true` in the funding config) and fall back to the public path
+whenever the flag is off or the cluster refuses the proof instructions.
 
 Why it stops at design: confidential transfers need the ZK ElGamal proof program. On devnet its account
 `ZkE1Gama1Proof11111111111111111111111111111` exists as an executable builtin (read 13 Oct 2026, slot 510690911), but

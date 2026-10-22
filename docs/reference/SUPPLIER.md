@@ -55,15 +55,18 @@ knos preflight --terms terms.json --netted --reserve  # netted work, in a period
 ```
 
 Three things an order's short terms (at most 600 bytes) do not carry are told to preflight, because the order's options carry
-them: whether passing work is paid without a merge (`--auto`), who the arbiter is (`--arbiter`), and whether netted
-work has a reserve (`--netted --reserve`). A Knos Terms 3 document given as `--terms` supplies its deadline, its
-appeal window and its arbiter itself. What preflight was not told it does not assume: an acceptance deadline nobody
-confirmed is printed as lacked.
+them: whether passing work is paid without a merge (`--auto`), who the arbiter is (`--arbiter`), and whether netted work has
+a reserve (`--netted --reserve`).
+
+A Knos Terms 3 document given as `--terms` supplies its deadline, its appeal window and its arbiter itself. What preflight
+was not told it does not assume: an acceptance deadline nobody confirmed is printed as lacked.
 
 What these four do not give you. The appeal is free and recorded, and nothing forces the neutral run or the arbiter
-to answer: with no verdict by the order's deadline the money goes back to the buyer ([DISPUTES.md](DISPUTES.md)).
-A cancelled order's deadline moves to at most 7 days away, and an acceptance inside that notice still pays
-([SECURITY.md](SECURITY.md)). A reserve for netted work is kept by the period's book, not by the program.
+to answer: with no verdict by the order's deadline the money goes back to the buyer ([DISPUTES.md](DISPUTES.md)). A
+cancelled order's deadline moves to at most 7 days away, and an acceptance inside that notice still pays
+([SECURITY.md](SECURITY.md)).
+
+A reserve for netted work is kept by the period's book, not by the program.
 
 ### What it remembers
 
@@ -73,10 +76,11 @@ Preflight recalls what was refused before under the same terms in this repositor
 Remembered: 3 earlier submissions were refused for touching tests/conftest.py: your change touches it too.
 ```
 
-It also remembers each preflight result, and `--by <login>` recalls your own record here (accepted, rejected,
-appealed, overturned). All of it lives in Sibyl Labs' memory engine, a local database (`sibyl-memory-client`), looked up with the engine's own
-search inside one category; there is no side file. With the engine absent, preflight works the same and says
-`Memory is off`. `--no-memory` recalls and remembers nothing.
+It also remembers each preflight result, and `--by <login>` recalls your own record here (accepted, rejected, appealed, overturned). All of it
+lives in Sibyl Labs' memory engine, a local database (`sibyl-memory-client`), looked up with the engine's own search inside one category;
+there is no side file. With the engine absent, preflight works the same and says `Memory is off`.
+
+`--no-memory` recalls and remembers nothing.
 
 ## 2. A refusal, in plain words
 
@@ -274,8 +278,9 @@ nobody's help.
 The supplier page of the site has a view for the person who books the money: paste the funding comment (or the
 order's address) and it reads the order's own account on devnet, with no wallet, and shows four rows: what is funded
 (with the funding transaction), the acceptance window counting down, how to appeal and who decides, and the payment
-date (with a holdback, the part kept back and the day it is released). [FINANCE.md](FINANCE.md), section 6, says what
-each row is read from.
+date (with a holdback, the part kept back and the day it is released).
+
+[FINANCE.md](FINANCE.md), section 6, says what each row is read from.
 
 ## What is not here yet
 

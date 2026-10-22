@@ -33,13 +33,14 @@ everything in one repository.
 
 ## Why it is not one click
 
-The deployed knos_pay (2.2 since 9 October 2026; the rule is unchanged since Knos 0.3.12) takes a Bind token
-only from the pinned claim workflow, in the account's own repository named `knos-claim`, in a run its owner started
-by hand (`workflow_dispatch`, first attempt): `programs-v2/knos_pay/src/pay.rs`, `bind`. A push does not count, not
-even the commit that adds the workflow file. That is deliberate: GitHub's new-repository form can be
-filled in from a link ([query parameters](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)),
-so a push could carry an address the link's author chose, made with the owner's click. The address must be the run's
-input, pasted by its owner. So the claim workflow keeps `workflow_dispatch` as its only trigger.
+The deployed knos_pay (2.2 since 9 October 2026; the rule is unchanged since Knos 0.3.12) takes a Bind token only from the pinned claim workflow,
+in the account's own repository named `knos-claim`, in a run its owner started by hand (`workflow_dispatch`, first attempt):
+`programs-v2/knos_pay/src/pay.rs`, `bind`. A push does not count, not even the commit that adds the workflow file.
+
+That is deliberate: GitHub's new-repository form can be filled in from a link ([query
+parameters](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)), so a push could carry an
+address the link's author chose, made with the owner's click. The address must be the run's input, pasted by its owner. So the claim workflow
+keeps `workflow_dispatch` as its only trigger.
 
 A push workflow that starts the claim workflow with `GITHUB_TOKEN` would run (GitHub lets `GITHUB_TOKEN` create
 `workflow_dispatch` runs: [triggering a workflow](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)),
@@ -48,8 +49,10 @@ but its address would come from the repository, which is the hole above. Knos do
 ## What a program change would need (not made)
 
 Fewer clicks safely needs an address that GitHub shows the owner typed, from somewhere a link cannot fill. A comment
-on an existing issue is one: GitHub fills a new issue's body from a link but not a comment box. A new knos_pay
-instruction could take a bind token from a pinned Knos workflow on `issue_comment` (created, not edited), with
-`actor_id` the commenter, carrying `knos2:bind:<address>` from the comment. The payee would then make a passkey, paste
-`/knos address <address>` as a comment on the pull request and press Comment: 4 clicks, no repository. That is a
-program upgrade (multisig, public 8-day delay) and has not been built.
+on an existing issue is one: GitHub fills a new issue's body from a link but not a comment box.
+
+A new knos_pay instruction could take a bind token from a pinned Knos workflow on `issue_comment` (created, not
+edited), with `actor_id` the commenter, carrying `knos2:bind:<address>` from the comment. The payee would then make a
+passkey, paste `/knos address <address>` as a comment on the pull request and press Comment: 4 clicks, no repository.
+
+That is a program upgrade (multisig, public 8-day delay) and has not been built.

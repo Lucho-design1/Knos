@@ -2,7 +2,9 @@
 
 A milestone's escrow on knos_pay is released by a referee PANEL: the order pins m of n Ed25519 keys and the program
 counts their signatures through Solana's Ed25519 precompile (PAY_ON_PROOF.md). Until now Knos's devnet panel was three
-keys on one server. It is now ONE key that no machine holds: the Zcash Foundation's FROST
+keys on one server.
+
+It is now ONE key that no machine holds: the Zcash Foundation's FROST
 ([frost-ed25519](https://crates.io/crates/frost-ed25519) 3.0.0, RFC 9591 FROST(Ed25519, SHA-512)) splits it into three
 key shares on three hosts, and any two of them produce one standard Ed25519 signature under the group key.
 
@@ -17,11 +19,12 @@ Hosts 1 and 2 complete a release when the PC is offline.
 ## What the deployed program accepts
 
 `order_proof.rs` `panel_of` accepts any panel with `1 <= m <= n <= 10` distinct non-zero keys, and the tally pays at
-`m` distinct panel keys that signed the verdict digest in the transaction. A **1-of-1 panel whose one key is the FROST
-group key** is therefore a valid PANEL order on the knos_pay 0.3.34 test program
-`FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4`, with no program change: one precompile entry (group key, aggregated
-signature) releases it in one transaction. Tested in LiteSVM against `tests/fixtures/knos_pay_v2_0334_test.so`
-(`tests/test_threshold_frost.py`).
+`m` distinct panel keys that signed the verdict digest in the transaction.
+
+A **1-of-1 panel whose one key is the FROST group key** is therefore a valid PANEL order on the knos_pay 0.3.34 test
+program `FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4`, with no program change: one precompile entry (group key,
+aggregated signature) releases it in one transaction. Tested in LiteSVM against
+`tests/fixtures/knos_pay_v2_0334_test.so` (`tests/test_threshold_frost.py`).
 
 The group key (devnet test): `CZ599fmDD6ATkRsbUbdZiAQE7uF9sJrGFmJ6k54ujb4E`, panel `1:CZ599fmD…`, public record
 `config/referee-frost.json`, also in `config/referees.yaml`.
@@ -50,9 +53,10 @@ Nonces live only in the signing process's memory and are used once. One share al
 
 `python -m knos.threshold dkg-local --out DIR` runs FROST's distributed key generation (no dealer) as three separate
 processes. They exchange round-2 packages encrypted to each other (X25519, HKDF-SHA256, ChaCha20-Poly1305) through a
-relay that sees only public packages and ciphertexts. The devnet group was made this way on the founder's PC because
-hosts 1 and 2 run this code only after the next push. Until the Render and GitHub shares are uploaded and deleted
-from the PC, that one machine held all three shares.
+relay that sees only public packages and ciphertexts.
+
+The devnet group was made this way on the founder's PC because hosts 1 and 2 run this code only after the next push.
+Until the Render and GitHub shares are uploaded and deleted from the PC, that one machine held all three shares.
 
 ## The code referee's attestation (GitHub Actions, knos_oidc on chain, Sigstore)
 

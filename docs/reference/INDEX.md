@@ -76,8 +76,9 @@ the changelog above with the number before and after. Opening, resolving or winn
 
 The headline number of one week alone is each agent's **verified acceptance rate**: of the pull requests that claimed
 passing tests, the share whose checks all passed, with a 95% Wilson interval. One week holds few pull requests for
-most agents, which is why the leaderboard above adds the weeks up. The numbers are in
-[`agent_weekly.json`](../agent_weekly.json); the script that makes them is
+most agents, which is why the leaderboard above adds the weeks up.
+
+The numbers are in [`agent_weekly.json`](../agent_weekly.json); the script that makes them is
 [`scripts/agent_pr_index.py`](../../scripts/agent_pr_index.py).
 
 <!-- weekly:begin (written by scripts/agent_pr_index.py weekly; do not edit by hand) -->
@@ -91,7 +92,9 @@ most agents, which is why the leaderboard above adds the weeks up. The numbers a
 | too few to rank | claude-code | 9 of 14 (64.3%; 38.8% to 83.7%) | 59 | 14 | 3 of 12 (25.0%; 8.9% to 53.2%) | 2 of 10 (20.0%; 5.7% to 51.0%) | 0 | not capped: drew 210 of 210 planned, of 1,608,162 the search reported |
 | too few to rank | codex | 2 of 2 (100.0%; 34.2% to 100.0%) | 98 | 2 | 0 of 2 (0.0%; 0.0% to 65.8%) | 0 of 2 (0.0%; 0.0% to 65.8%) | 0 | not capped: drew 136 of 136 planned, of 246 the search reported |
 
-Also paid through Knos, checked against: no list of Knos payments was joined to this sample, so the count is 0 for every agent: every Knos payment so far is test USDC on Solana devnet. It takes a sampled pull request that was also paid through Knos under terms with a black-box check, and that list given to the script (--paid).
+Also paid through Knos, checked against: no list of Knos payments was joined to this sample, so the count is 0 for every agent: every Knos payment so far is test USDC on Solana devnet.
+
+It takes a sampled pull request that was also paid through Knos under terms with a black-box check, and that list given to the script (--paid).
 
 Every week in the file added up (2026-07-03 to 2026-10-04; never ranked: the weeks were not all read the same way). Source: each week says how it was read (`design`, `capped`, `strata`). The newest: week of 2026-09-28, read 2026-10-07, stratified-seeded-v1; read on 2026-10-07 and not whole weeks: the weeks of 2026-09-28 (`full_week` false).
 
@@ -112,15 +115,19 @@ claude-bot (103 claims) and devin (75), have at least 30 claims in the week and 
 few to rank: read each interval, not each share. The week is marked `full_week` false because it is a sample, not
 every pull request of the week.
 
-The same week was read three times before, and each newer reading replaced the one before. On 2026-10-05 a capped
-scan made before this design read it (each agent's newest claimed pull requests, at most 120,
-`newest-first-capped-v0`); it did not record how many passed every check. Later that day a run with this design
-stopped at the first refusal (95 of 930 planned draws). On 2026-10-06 a capped run read 559 of 976 planned draws, 120
-of them claiming passing tests. The week of 21 September keeps that first scan's numbers as published (39 claimed
-pull requests). Its verified acceptance rate is `null`, and `not_derived` says why; a row with no rate has no place.
-The older weeks are the sample read once, on 2026-10-01 (`search-window-sample-v0`, at most 20 hits a search
-window). Its rows are in [`agent_pr_ci.json`](../agent_pr_ci.json), so their rate is worked out; none has 30 claims in a
-week. The scheduled Monday run of [`index.yml`](../../.github/workflows/index.yml) adds each new week.
+The same week was read three times before, and each newer reading replaced the one before. On 2026-10-05 a capped scan
+made before this design read it (each agent's newest claimed pull requests, at most 120, `newest-first-capped-v0`); it
+did not record how many passed every check.
+
+Later that day a run with this design stopped at the first refusal (95 of 930 planned draws). On 2026-10-06 a capped run
+read 559 of 976 planned draws, 120 of them claiming passing tests. The week of 21 September keeps that first scan's
+numbers as published (39 claimed pull requests).
+
+Its verified acceptance rate is `null`, and `not_derived` says why; a row with no rate has no place. The older weeks are
+the sample read once, on 2026-10-01 (`search-window-sample-v0`, at most 20 hits a search window). Its rows are in
+[`agent_pr_ci.json`](../agent_pr_ci.json), so their rate is worked out; none has 30 claims in a week.
+
+The scheduled Monday run of [`index.yml`](../../.github/workflows/index.yml) adds each new week.
 
 ## The sampling design
 
@@ -188,16 +195,19 @@ Name in the file: `stratified-seeded-v1`. The week is the one that ended the Sun
   - **Resume.** `week.json` is the cursor file: every search page and every verdict read so far, and `cursor` (strata
     counted, draw turn, pages, checks read). A second run on the same Monday continues from it.
 
-The first bounded run, on 2026-10-05, did none of the waiting: it stopped at the first refusal, after a few searches,
-with 95 of 930 planned draws. On 2026-10-06 the scanner above read the same week against GitHub, from the release
-machine with a signed-in token. GitHub refused a search for its secondary limit 31 times in those 100 minutes. 23 of those
-refusals had their headers logged. None said how long to wait (`retry-after`), and each showed 25 to 29 of the
-minute's 30 searches still unused (`x-ratelimit-remaining`). So the scanner waited one minute each time and went on.
-The last run ended when the wait no longer fitted, with the time to come back saved in its checkpoint. A search took about 9 seconds
-to answer (99 timed). These searches therefore go at two to three a minute, not the 12 the pacing allows, and a week
-takes several runs, which the checkpoint carries. `gh api -i` was read as GitHub answers it (the status line, the
-headers, then the body), and a 304 to a request with its ETag left the kept answer in place without moving
-`x-ratelimit-remaining`; `tests/test_agent_pr_index.py` holds both to that shape.
+The first bounded run, on 2026-10-05, did none of the waiting: it stopped at the first refusal, after a few searches, with 95 of 930
+planned draws. On 2026-10-06 the scanner above read the same week against GitHub, from the release machine with a signed-in token.
+GitHub refused a search for its secondary limit 31 times in those 100 minutes.
+
+23 of those refusals had their headers logged. None said how long to wait (`retry-after`), and each showed 25 to 29 of the minute's
+30 searches still unused (`x-ratelimit-remaining`). So the scanner waited one minute each time and went on. The last run ended when
+the wait no longer fitted, with the time to come back saved in its checkpoint.
+
+A search took about 9 seconds to answer (99 timed). These searches therefore go at two to three a minute, not the 12 the pacing
+allows, and a week takes several runs, which the checkpoint carries.
+
+`gh api -i` was read as GitHub answers it (the status line, the headers, then the body), and a 304 to a request with its ETag left
+the kept answer in place without moving `x-ratelimit-remaining`; `tests/test_agent_pr_index.py` holds both to that shape.
 
 The GraphQL query was written from GitHub's published schema and was answered by GitHub in that reading: the checks
 of the 120 drawn pull requests that claimed passing tests were read with it, and over REST for the few a query did
@@ -307,10 +317,12 @@ its checks were still running when read. `checks` gives each count.
 `agent_weekly.json`: `name`, `read`, `window`, `latest_week`, `source`, `agents_told_by`, `heuristics`,
 `claim_search`, `definitions`, `designs`, `limits`, `min_claims_to_rank`, `verified_against`, and for each agent
 `weeks` (one object per week) and `all_weeks`. Each has `sampled`, `claimed_passing`, `ci_finished`, `checks`,
-`verified_acceptance_rate`, `failed_a_check`, `merged_despite_failed_check` and `verified`; the rates are
-`{k, n, share, ci95}`. A week also has `read`, `design`, `capped`, `strata`, `full_week`, `rank`, `ranked_by` and
-`not_derived`; a stratified week has `seed` and `per_stratum` too. A `null` means the source did not hold that fact,
-never zero, and `not_derived` gives the reason.
+`verified_acceptance_rate`, `failed_a_check`, `merged_despite_failed_check` and `verified`; the rates are `{k, n,
+share, ci95}`.
+
+A week also has `read`, `design`, `capped`, `strata`, `full_week`, `rank`, `ranked_by` and `not_derived`; a
+stratified week has `seed` and `per_stratum` too. A `null` means the source did not hold that fact, never zero, and
+`not_derived` gives the reason.
 
 Sample last week and add it (needs `gh` signed in; this is what the workflow runs). The first command may be run
 again: it continues from `week.json`.
@@ -327,7 +339,9 @@ Write the committed file again in today's format, offline (it changes nothing wh
 `method`, `limits`, `source` (the hash of the series it was counted from, and the command), `links`, `weeks` (one
 board a week, newest first: `rows` with `agent`, `claimed_passing`, `merged`, `failed_at_merge`, `share`, `ci95`,
 `rank`, `status`, `overlaps_above`, `disputed`, `dispute`), `disputes` and `changelog`. A change that removes or
-renames a field gets a new schema name. `index.atom` has one entry a week with the same rows in words.
+renames a field gets a new schema name.
+
+`index.atom` has one entry a week with the same rows in words.
 
 The site draws the same leaderboard with `renderIndexBoard` in [`web/index_board.js`](../../web/index_board.js): bars with
 interval whiskers, a "Dispute this row" link and a badge for each row.

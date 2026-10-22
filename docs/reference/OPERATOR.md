@@ -116,10 +116,11 @@ python scripts/second_operator.py --fork YOU/Knos --key relay.json
 5 the chain  ok: run <id> of worker.yml is queued in YOU/Knos (expected: a run started by hand, which starts the next)
 ```
 
-It stops at the first step that fails and says what to do. It needs sections 1 to 3 done and the GitHub CLI signed
-in as you. It refuses the founder's repository as `--fork`. It does not check pass condition (3) in the list below: a person reads the
-paying transaction's fee payer on a block explorer. `--simulate` answers every step from canned text, to test the
-script; it is not a drill (`tests/test_second_operator.py`).
+It stops at the first step that fails and says what to do. It needs sections 1 to 3 done and the GitHub CLI signed in as you. It
+refuses the founder's repository as `--fork`. It does not check pass condition (3) in the list below: a person reads the paying
+transaction's fee payer on a block explorer.
+
+`--simulate` answers every step from canned text, to test the script; it is not a drill (`tests/test_second_operator.py`).
 
 - **Who:** someone who is not the founder, on a machine that has never held a file of the founder's.
 - **Starts from:** a clean clone (or `pip install knos`) and this page. No message to the founder.

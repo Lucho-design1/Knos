@@ -4,11 +4,13 @@ Each kind of work needs its own rules for what counts as done (an acceptance mod
 the signed run and the count, not the rules.
 
 An order pays, or the meter counts, when a fixed set of tests (a pinned suite) passes on the delivered thing (an artifact). Nothing in that sentence says "pull
-request". What the artifact is, and what a suite must do to deserve the word "accepted", differs for every kind of
-work, and somebody who knows the work has to write it. This page shows four such models that run in this repository:
-three whose deliverable is a file a suite judges, and [support resolutions](#support-resolutions), judged from a
-ticket's own record on made-up tickets. One of the first three is also signed by an issuer that is not a forge:
-[a Kubernetes cluster](#a-kubernetes-cluster-signs-an-outcome).
+request".
+
+What the artifact is, and what a suite must do to deserve the word "accepted", differs for every kind of work, and somebody who knows the work has to write it.
+
+This page shows four such models that run in this repository: three whose deliverable is a file a suite judges, and [support
+resolutions](#support-resolutions), judged from a ticket's own record on made-up tickets. One of the first three is also signed by an issuer that is not a
+forge: [a Kubernetes cluster](#a-kubernetes-cluster-signs-an-outcome).
 
 A fifth kind pays for a result only data can show (more tickets solved without a person, more trial users who buy),
 measured against a control group chosen by a hash and paid in tiers under a cap: [MEASURED.md](MEASURED.md).
@@ -37,8 +39,10 @@ made once) and one thing Knos does not supply: a record of the outcome that the 
 
 `tests/test_outcomes.py` puts every submission of the first three examples through `knos proof judge`. Each example holds
 the black-box suite and, beside it, a naive check that looks only at what the supplier was shown. The honest submission
-is accepted by both. The cheating submission (copied visible labels; the worked example's answer written down; a
-result pasted into the script) is accepted by the naive check and refused by the black-box suite.
+is accepted by both.
+
+The cheating submission (copied visible labels; the worked example's answer written down; a result pasted into the
+script) is accepted by the naive check and refused by the black-box suite.
 
 ## Funded by a comment, paid by the suite
 
@@ -54,6 +58,7 @@ fund), then comment on that issue:
 
 `checks: none` because the suite is the acceptance: the terms are in tests mode and carry the suite's hash, and the
 reply to the comment says so. 150 is more than the devnet faucet gives per comment (100), so that one needs a Balance.
+
 Each `terms show` prints the terms as bytes and their hash; they are the example's own `terms.json`
 (`tests/test_flow_quorum3.py::test_each_outcome_has_a_template_whose_terms_are_the_examples_own`).
 
@@ -129,9 +134,11 @@ Check the artifact again on your own machine; nothing is sent:
     python scripts/outcome_k8s.py verify --token out/token --jwks out/jwks.json --issuer "$(cat out/issuer)" \
         --verdict out/verdict.json --out out/receipt.json
 
-Then devnet, with a devnet wallet, on the verifier the public id runs (`knos_oidc` 2.2 since 9 October 2026;
-private keys came in 2.1). The token is asked for six hours and the verifier reads one until an hour after it expires, so this follows
-the run the same day. The first command lists the transactions and sends none; `--send` sends them:
+Then devnet, with a devnet wallet, on the verifier the public id runs (`knos_oidc` 2.2 since 9 October 2026; private keys came in
+2.1). The token is asked for six hours and the verifier reads one until an hour after it expires, so this follows the run the same
+day.
+
+The first command lists the transactions and sends none; `--send` sends them:
 
     python scripts/outcome_k8s.py chain --token out/token --jwks out/jwks.json --issuer "$(cat out/issuer)" \
         --receipt out/receipt.json --keypair ~/.config/solana/id.json
@@ -169,9 +176,11 @@ anything on devnet. No transaction carries a cluster's token, and the meter does
 
 What the sources do not settle and the run will: that this version of kind accepts the patch as written, and that
 this cluster's key is RSA. The workflow fails in plain words on either (the key set is printed with each key's type
-and size). The Job's base image is `python:3.12-slim`: the run pulls the tag, builds the Job's image from the digest
-that pull got, and records that digest in `cluster.txt`. The pod runs with extra rights (privileged), because the
-judge's sandbox cuts the submission off from the network (`unshare -n`); the cluster is deleted when the job ends.
+and size).
+
+The Job's base image is `python:3.12-slim`: the run pulls the tag, builds the Job's image from the digest that pull
+got, and records that digest in `cluster.txt`. The pod runs with extra rights (privileged), because the judge's
+sandbox cuts the submission off from the network (`unshare -n`); the cluster is deleted when the job ends.
 
 ## What is the same in every domain
 
@@ -184,22 +193,27 @@ judge's sandbox cuts the submission off from the network (`unshare -n`); the clu
 
       id = sha256(order || artifact digest || policy version || milestone)
 
-  Each example's `evaluations.jsonl` holds two lines in the ledger format of [METER.md](METER.md), one for the honest
-  submission (accepted) and one for the cheating one (rejected). They share the order, the policy (the hash of the
-  terms) and the milestone, and differ in the artifact, so they are two evaluations. Judging the same artifact again
-  under the same policy is the same evaluation and is not counted twice.
+Each example's `evaluations.jsonl` holds two lines in the ledger format of [METER.md](METER.md), one for the honest
+submission (accepted) and one for the cheating one (rejected). They share the order, the policy (the hash of the
+terms) and the milestone, and differ in the artifact, so they are two evaluations.
+
+Judging the same artifact again under the same policy is the same evaluation and is not counted twice.
 
 ## What is different, and stays the buyer's work
 
 The thresholds, the gold set, the invariants, the perturbation: these are the acceptance model, and they are the part
 with judgment in it. Knos does not know that 0.90 is the right accuracy for a labelling job or that a shifted treatment
-arm is the right test of a computed effect. `knos.judge.black_box` checks only that a bundle is built so that the
-submission cannot reach the verdict except through its output. A suite can be black-box and still be a poor model of
-"done"; the fourth column of the table is each example's own list of that.
+arm is the right test of a computed effect.
+
+`knos.judge.black_box` checks only that a bundle is built so that the submission cannot reach the verdict except
+through its output. A suite can be black-box and still be a poor model of "done"; the fourth column of the table is
+each example's own list of that.
 
 One limit of the count is the program's and is not changed here: the meter's artifact field holds 40 characters, the
-size of a commit id. A deliverable that is a file is judged in a commit, and the commit is the artifact. The examples
-are folders, not commits, so their ledger lines carry the first 40 hex characters of a hash of the submission's files.
+size of a commit id. A deliverable that is a file is judged in a commit, and the commit is the artifact.
+
+The examples are folders, not commits, so their ledger lines carry the first 40 hex characters of a hash of the
+submission's files.
 
 ## Support resolutions
 
@@ -236,10 +250,13 @@ count and nothing is billed on it. A resolution that can still be undone is neve
     python scripts/outcome_support.py statement --out out    # the supplier's invoice set against the count
 
 The example holds ten made-up tickets, one of them exported twice, terms at 0.99 a resolution (one vendor's published
-price, used as a sample), and a supplier's invoice of eight lines. What the commands print: 4 accepted, 5 rejected,
-1 not judged yet; a batch of 9 evaluations worth 3.96; and a statement in which 4 lines are agreed (3.96 of 7.92
-billed), 2 are disputed (a reopened ticket, an escalated one), 1 is a duplicate and 1 has insufficient evidence
-(its window is open). `tests/test_outcome_support.py` holds each of those numbers and each rule.
+price, used as a sample), and a supplier's invoice of eight lines.
+
+What the commands print: 4 accepted, 5 rejected, 1 not judged yet; a batch of 9 evaluations worth 3.96; and a
+statement in which 4 lines are agreed (3.96 of 7.92 billed), 2 are disputed (a reopened ticket, an escalated one), 1
+is a duplicate and 1 has insufficient evidence (its window is open).
+
+`tests/test_outcome_support.py` holds each of those numbers and each rule.
 
 **The signed run.** [`outcome-support.yml`](../../.github/workflows/outcome-support.yml) has three jobs. `count` judges
 the tickets and prints the batch's audience, `knosm:claim:<buyer>:<seller>:<yyyymm>:<seq>:<count>:<accepted>:<value>:<root>`,

@@ -1,8 +1,10 @@
 # Pay on proof from any source
 
 Until 0.3.34 every Knos work order was released by a forge: a workflow at a pinned commit, run on GitHub or
-gitlab.com, whose token `knos_oidc` verified on chain. Research does not all live on a forge. This page is what
-knos_pay 0.3.34 adds so that the machine judge pays on proof from any source, and what it does not do yet.
+gitlab.com, whose token `knos_oidc` verified on chain. Research does not all live on a forge.
+
+This page is what knos_pay 0.3.34 adds so that the machine judge pays on proof from any source, and what it
+does not do yet.
 
 **Status.** Built and tested in LiteSVM (test builds). The referee-panel path ran on devnet at a test program id this
 build's agent owns (section 8). The real knos_pay program (`5y7iWJ1V…`) is NOT changed: its upgrade buffer (written, held by the vault) waits for
@@ -71,11 +73,15 @@ Each referee signs the 32-byte verdict digest
     sha256("knos3:verdict" || program id || order || order stamp i64 LE || terms hash || evidence sha256 || verdict)
 
 where `verdict` is the payees text for a PASS and `FAIL` for a FAIL. PayOrder with data (a PASS) and RefundOrder with
-data (a FAIL) read Solana's Ed25519 precompile in the same transaction by instruction introspection: only entries
-whose key, signature and message are in the precompile's own data count. Distinct panel keys are counted; below m
-the signers are recorded in a tally `["vd", order, digest]`; the transaction that brings the m-th pays the payees (PASS)
-or returns everything to the funder (FAIL). After the deadline RefundOrder needs no signature. The stamp changes with
-every funding of an address, so a verdict acts only on the order and the funding it was signed for.
+data (a FAIL) read Solana's Ed25519 precompile in the same transaction by instruction introspection: only entries whose
+key, signature and message are in the precompile's own data count.
+
+Distinct panel keys are counted; below m the signers are recorded in a tally `["vd", order, digest]`; the transaction
+that brings the m-th pays the payees (PASS) or returns everything to the funder (FAIL). After the deadline RefundOrder
+needs no signature.
+
+The stamp changes with every funding of an address, so a verdict acts only on the order and the funding it was signed
+for.
 
 | attempt | answer |
 |---|---|
@@ -91,18 +97,20 @@ One signature per transaction fits the 1,232 bytes of a v0 transaction with a 3-
 transaction were 1,298 bytes in the test (a v1 transaction, 4,096 bytes, takes them).
 
 The off-chain mirror is `knos.platform.verdict`: `message(job, evidence_hash, verdict, amount, recipient, expiry,
-nonce)`, `parse`, `outcome` ("release" for PASS, "refund" for FAIL) and `check(message, sigs, keys, m, now=, used=)`.
-On chain the job is the order's address, the nonce its funding stamp, the expiry its deadline. `check` spends the verdict
-it accepts: (job, nonce) goes into the caller's `used` set (or a process-wide store when none is given), so checking
-the same verdict again is refused as a replay, as knos_pay refuses it on chain (E_REPLAY).
+nonce)`, `parse`, `outcome` ("release" for PASS, "refund" for FAIL) and `check(message, sigs, keys, m, now=, used=)`. On
+chain the job is the order's address, the nonce its funding stamp, the expiry its deadline.
+
+`check` spends the verdict it accepts: (job, nonce) goes into the caller's `used` set (or a process-wide store when none
+is given), so checking the same verdict again is refused as a replay, as knos_pay refuses it on chain (E_REPLAY).
 
 ## 3a. Trust model: who decides the money
 
 Said plainly: **whoever holds the panel keys decides the money.** On chain a referee-panel order pays, or refunds,
 whatever m of its pinned keys sign. The chain does not read the oracle (a referee signs whatever its own reading says)
-and does not know who holds the keys. If the funder holds the keys, the funder can refund a stage that was met; if the
-keys collude with a payee, they can name that payee. In 0.3.34 the payees are named by the verdict, not fixed at
-funding (see "Founder decision" below).
+and does not know who holds the keys.
+
+If the funder holds the keys, the funder can refund a stage that was met; if the keys collude with a payee, they can
+name that payee. In 0.3.34 the payees are named by the verdict, not fixed at funding (see "Founder decision" below).
 
 What Knos's client tools do about it:
 
@@ -131,19 +139,23 @@ on-chain registry.
 
 Fixing the payees when an order is funded, so that a verdict can only release to them, needs a change to knos_pay's
 program: the order would store them, and PayOrder would refuse a verdict naming anyone else. 0.3.34 changes no
-program beyond the buffer already written, so this goes into the NEXT knos_pay upgrade and is not done now. Until
-then, the payee is whoever the m referees name.
+program beyond the buffer already written, so this goes into the NEXT knos_pay upgrade and is not done now.
+
+Until then, the payee is whoever the m referees name.
 
 ## 4. ORCID iDs as payees
 
-Bind (8) takes an ORCID id_token (issuer `https://orcid.org`, RS256, one RSA-2048 key; discovery fetched 14 Oct
-2026) whose `aud` is Knos's own ORCID client id, whose `nonce` is `knos3:bind:<wallet>`, and whose `sub` is a
-well-formed iD with a good check character (ISO 7064 MOD 11-2). It writes `["bind", OR_BASE + the first fifteen
-digits]` (OR_BASE = 10^18: above every GitHub and GitLab id). Proofs and verdicts then name a payee by iD:
-`0000-0002-1825-0097.10000.-`. The token lives 24 hours in ORCID's own example
-([ORCID's OpenID Connect guide](https://github.com/ORCID/ORCID-Source/blob/main/orcid-web/ORCID_AUTH_WITH_OPENID_CONNECT.md)),
-so its marker is kept until it cannot be fresh; a Bind is replaced only by a later sign-in. **Founder step:** register
-Knos's ORCID public API client and pin its id in `orcid.rs` `ORCID_CLIENTS`; a real build binds nothing until then.
+Bind (8) takes an ORCID id_token (issuer `https://orcid.org`, RS256, one RSA-2048 key; discovery fetched 14 Oct 2026) whose
+`aud` is Knos's own ORCID client id, whose `nonce` is `knos3:bind:<wallet>`, and whose `sub` is a well-formed iD with a good
+check character (ISO 7064 MOD 11-2).
+
+It writes `["bind", OR_BASE + the first fifteen digits]` (OR_BASE = 10^18: above every GitHub and GitLab id). Proofs and
+verdicts then name a payee by iD: `0000-0002-1825-0097.10000.-`.
+
+The token lives 24 hours in ORCID's own example ([ORCID's OpenID Connect
+guide](https://github.com/ORCID/ORCID-Source/blob/main/orcid-web/ORCID_AUTH_WITH_OPENID_CONNECT.md)), so its marker is kept
+until it cannot be fresh; a Bind is replaced only by a later sign-in. **Founder step:** register Knos's ORCID public API
+client and pin its id in `orcid.rs` `ORCID_CLIENTS`; a real build binds nothing until then.
 
 ## 5. What a judged order cannot have
 
@@ -177,11 +189,12 @@ Clients: `src/knos/proof/issuers.py`, `src/knos/platform/verdict.py`.
 
 ## 8. Devnet
 
-The sBPF v3 deploy build (executable hash `9ae13fb9ae35262a959a903fae7b742e07a425ab97fc05fcf38b7db1bd1f0c62`, 413,400
-bytes) runs at a TEST program id the build agent owns (the chain records when),
-`FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4` (deploy `3vuk1dtYquZf4jinzXcu7h36MAQs2n4X8k5NKec9U1q14oqSwXUJUFcjCrSNLoG8LXbKgRk3C3F9qayLiiMCSM6w`;
-bytes read back equal to the build). Labelled internal dogfooding: a test mint of the agent's own (6 decimals, no
-value), synthetic evidence, three fresh referee keys, payee named by ORCID's example iD with an address.
+The sBPF v3 deploy build (executable hash `9ae13fb9ae35262a959a903fae7b742e07a425ab97fc05fcf38b7db1bd1f0c62`, 413,400 bytes) runs at a TEST
+program id the build agent owns (the chain records when), `FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4` (deploy
+`3vuk1dtYquZf4jinzXcu7h36MAQs2n4X8k5NKec9U1q14oqSwXUJUFcjCrSNLoG8LXbKgRk3C3F9qayLiiMCSM6w`; bytes read back equal to the build).
+
+Labelled internal dogfooding: a test mint of the agent's own (6 decimals, no value), synthetic evidence, three fresh referee keys, payee named by
+ORCID's example iD with an address.
 
 | step | signature | bytes | knos_pay CU |
 |---|---|---|---|

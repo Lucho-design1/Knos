@@ -4,14 +4,19 @@ Written by `python tests/test_unwraps.py --write` from the programs' source; `te
 writes. Do not edit it by hand: the reasons are in that file.
 
 A panic in a Solana program aborts the instruction and with it the whole transaction. The runtime keeps none of the transaction's account
-changes: no state is written and no token moves. What a panic costs is the transaction fee and an error that names no cause. So the question for
-each place below is whether it can be reached, and the answer wanted is no.
+changes: no state is written and no token moves. What a panic costs is the transaction fee and an error that names no cause.
+
+So the question for each place below is whether it can be reached, and the answer wanted is no.
 
 The four programs' source holds 120 `unwrap()` calls. 49 are in program code, on the 43 lines listed below; the other 71 are in unit tests and proof harnesses
-(`#[cfg(test)]` at the end of each file, and `knos_pay/src/proofs.rs`, which is compiled only for tests and for the Kani model checker), which are in
-no build of a program. No program code holds an `expect(`, an `unreachable!`, a `panic!`, a `todo!` or an `assert!`; two `debug_assert_eq!` are listed.
-`knos_oidc`'s places were read line by line: none can be reached, so none was replaced. For the three other programs (`knos_pay`, `knos_meter`,
-`knos_passkey`) a reason names the guard where it is on the lines just before, and says so where the guard is a caller's.
+(`#[cfg(test)]` at the end of each file, and `knos_pay/src/proofs.rs`, which is compiled only for tests and for the Kani model checker), which are in no build
+of a program.
+
+No program code holds an `expect(`, an `unreachable!`, a `panic!`, a `todo!` or an `assert!`; two `debug_assert_eq!` are listed. `knos_oidc`'s places were
+read line by line: none can be reached, so none was replaced.
+
+For the three other programs (`knos_pay`, `knos_meter`, `knos_passkey`) a reason names the guard where it is on the lines just before, and says so where the
+guard is a caller's.
 
 ## Every written panic in program code
 
@@ -65,12 +70,15 @@ no build of a program. No program code holds an `expect(`, an `unreachable!`, a 
 
 ## Indexing
 
-`d[k]` and `d[a..b]` panic when the index is past the end. They are counted here by file (lines of program code that index a slice, an array or a
-`Vec`; a line can index several times), not explained one by one. What keeps them in range, by kind: an account's data is read at constant offsets
-after its owner and its length were checked (`key_limbs` and `T_JWT + len` in `knos_oidc`; the `*_LEN` checks of the other programs); instruction data
-is measured before it is cut; the claim readers and the base64 decoders (`knos_oidc/src/strict.rs` and `claims.rs`) index inside loops bounded by the slice's length, and
-are run on 1,560,000 random documents and by two fuzz targets ([ASSURANCE.md](ASSURANCE.md)); the RSA limbs (`rsa.rs`) are vectors sized from the key's
-own limb count. An index that is out of range all the same aborts the transaction, as above.
+`d[k]` and `d[a..b]` panic when the index is past the end. They are counted here by file (lines of program code that index a slice, an array or a `Vec`; a line can index
+several times), not explained one by one.
+
+What keeps them in range, by kind: an account's data is read at constant offsets after its owner and its length were checked (`key_limbs` and `T_JWT + len` in
+`knos_oidc`; the `*_LEN` checks of the other programs); instruction data is measured before it is cut; the claim readers and the base64 decoders
+(`knos_oidc/src/strict.rs` and `claims.rs`) index inside loops bounded by the slice's length, and are run on 1,560,000 random documents and by two fuzz targets
+([ASSURANCE.md](ASSURANCE.md)); the RSA limbs (`rsa.rs`) are vectors sized from the key's own limb count.
+
+An index that is out of range all the same aborts the transaction, as above.
 
 The table's middle column counts every written panic in tests and proofs, not only `unwrap()`.
 

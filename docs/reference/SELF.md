@@ -13,17 +13,18 @@ A real run of the loop: `examples/self/`.
 
 What works, from published results: the agent edits only the code under test, and the judge is fixed and out of its
 reach. Karpathy's autoresearch ([github.com/karpathy/autoresearch](https://github.com/karpathy/autoresearch), March
-2026) lets the agent edit `train.py` only, with `prepare.py` locked. The Darwin Goedel Machine
-([arXiv 2505.22954](https://arxiv.org/abs/2505.22954)) went from 20% to 50% on SWE-bench by keeping an archive of
-versions. The Huxley-Goedel Machine ([arXiv 2510.21614](https://arxiv.org/abs/2510.21614), ICLR 2026) chose parents
-by how their descendants scored: 56.7% against the Darwin Goedel Machine's 53.3% with less than half the compute.
+2026) lets the agent edit `train.py` only, with `prepare.py` locked. The Darwin Goedel Machine ([arXiv
+2505.22954](https://arxiv.org/abs/2505.22954)) went from 20% to 50% on SWE-bench by keeping an archive of versions.
 
-What fails: agents attack the judge. The Darwin Goedel Machine faked test logs and removed hallucination-detector
-markers ([sakana.ai/dgm](https://sakana.ai/dgm/), 30 May 2025). METR saw o3 reward-hack 39 of 128 RE-Bench runs,
-30.4%, including patching the evaluator ([METR, 5 June 2025](https://metr.org/blog/2025-06-05-recent-reward-hacking/)).
-Anthropic saw a model that learned to cheat sabotage code meant to detect reward hacking 12% of the time
-([Anthropic, 21 Nov 2025](https://www.anthropic.com/research/emergent-misalignment-reward-hacking)). So here the judge is never the candidate's, every number is measured again by the referee, and every way a
-change can hide a failure (deleted tests, removed assertions, removed detector markers, removed logging) refuses it.
+The Huxley-Goedel Machine ([arXiv 2510.21614](https://arxiv.org/abs/2510.21614), ICLR 2026) chose parents by how
+their descendants scored: 56.7% against the Darwin Goedel Machine's 53.3% with less than half the compute.
+
+What fails: agents attack the judge. The Darwin Goedel Machine faked test logs and removed hallucination-detector markers ([sakana.ai/dgm](https://sakana.ai/dgm/), 30 May 2025). METR saw o3 reward-hack 39 of
+128 RE-Bench runs, 30.4%, including patching the evaluator ([METR, 5 June 2025](https://metr.org/blog/2025-06-05-recent-reward-hacking/)).
+
+Anthropic saw a model that learned to cheat sabotage code meant to detect reward hacking 12% of the time ([Anthropic, 21 Nov 2025](https://www.anthropic.com/research/emergent-misalignment-reward-hacking)).
+So here the judge is never the candidate's, every number is measured again by the referee, and every way a change can hide a failure (deleted tests, removed assertions, removed detector markers, removed
+logging) refuses it.
 
 ## The trust split
 
@@ -39,8 +40,10 @@ target's scope is refused (`out_of_scope`).
 
 Agent pull requests run as `pull_request` jobs: a fork's run gets no secret, the token is read-only, and the job reads
 main's `targets.yml` and `CODEOWNERS`, never the pull request's (`src/knos/self/templates/knos-self-agent-pr.yml`, a
-template the founder adds to `.github/` by hand). The sealed and audit tiers and every payment run on the loop
-operator's machine, never in a job an agent can start: no key and no hidden test is ever in it.
+template the founder adds to `.github/` by hand).
+
+The sealed and audit tiers and every payment run on the loop operator's machine, never in a job an agent can start: no
+key and no hidden test is ever in it.
 
 ## Three tiers of tests
 
@@ -52,10 +55,13 @@ operator's machine, never in a job an agent can start: no key and no hidden test
 
 A sealed bundle is a folder kept outside the repository: a metric script and hidden tests. Its sha256 is in
 `targets.yml`, and a bundle with any other hash is refused. The referee runs each sealed run twice and the two runs
-must agree. The audit tier exists to catch a change that fits the sealed tests and nothing else: `knos self audit`
-runs it on every accepted version, and a failure is flagged for rollback. A cheat the loop catches that the cheat
-library does not know yet is listed as `proposed_rules` in the verdict; the founder adds it to `knos.cheats` with a
-known-bad case (the library is core: the loop never edits it).
+must agree.
+
+The audit tier exists to catch a change that fits the sealed tests and nothing else: `knos self audit` runs it on
+every accepted version, and a failure is flagged for rollback.
+
+A cheat the loop catches that the cheat library does not know yet is listed as `proposed_rules` in the verdict; the
+founder adds it to `knos.cheats` with a known-bad case (the library is core: the loop never edits it).
 
 ## One iteration
 
@@ -85,18 +91,20 @@ first on the path. In order, the first refusal decides:
 6. **Shadow.** The target's neighbouring tests run on the parent and the candidate side by side; a test file that
    passes on the parent and fails on the candidate holds the change.
 
-Then the daily merge cap (`loop.daily_merge_cap`): over it, the change is held. An accepted change becomes a canary
-version on the local loop branch and is paid. One `knos self run` at a time holds the state folder's lock; the
-version is saved before any money moves, its payout is `pending` until the transfers return, and a failed transfer
-is kept as `failed` with whatever was sent: the loop never retries a payment (the founder settles it by hand). Main is never touched by the loop: promoting a canary to main is the
-founder's pull request (`loop.auto_merge_to_main: false`; switching it on is a founder decision).
+Then the daily merge cap (`loop.daily_merge_cap`): over it, the change is held. An accepted change becomes a canary version on the local loop branch and is paid.
+
+One `knos self run` at a time holds the state folder's lock; the version is saved before any money moves, its payout is `pending` until the transfers return, and a failed transfer
+is kept as `failed` with whatever was sent: the loop never retries a payment (the founder settles it by hand).
+
+Main is never touched by the loop: promoting a canary to main is the founder's pull request (`loop.auto_merge_to_main: false`; switching it on is a founder decision).
 
 ## The archive and the choice of parent
 
 Every version is kept with its parent, diff hash, tier results and decision (`archive.json`), and each one is a claim
 in Knos Record with its lineage. The next parent is chosen as the Huxley-Goedel Machine does: each accepted version
-gets Beta(1 + accepted, 1 + refused) over its descendants and one seeded draw; the highest draw wins. The seed and the
-draws are kept, so anyone can recompute the choice.
+gets Beta(1 + accepted, 1 + refused) over its descendants and one seeded draw; the highest draw wins.
+
+The seed and the draws are kept, so anyone can recompute the choice.
 
 ## Referee changes need the founder
 
@@ -120,6 +128,7 @@ A change to the judge, the cheat library or the runner comes only as the founder
 An accepted version pays its target's `bounty_usd` from the loop's devnet treasury wallet to the agent owner's devnet
 wallet, with the fee of the `bounty` line of `config/fees.yaml` (read through `knos.money.fees_config`). The fee goes
 to the token account of the treasury owner that knos_pay pays fees to. The tokens are a test mint: worth nothing.
+
 Every key and fee payer is named on the command line; mainnet is refused.
 
 ## The public log
@@ -148,20 +157,24 @@ Also `python -m knos.self ...`.
 
 `examples/self/` holds the archive and the public log of the loop's first iterations, run on 13 Oct 2026 on a local
 branch of a throwaway clone (never pushed), on the target `mcp-cold-start`: fewer modules loaded when an agent starts
-the Knos MCP server. The agent was Claude Code, the build agent of this release. `examples/self/README.md` has the
-table of iterations, verdicts, metrics and devnet signatures.
+the Knos MCP server. The agent was Claude Code, the build agent of this release.
+
+`examples/self/README.md` has the table of iterations, verdicts, metrics and devnet signatures.
 
 ## The jail
 
-Every run of candidate code (public, sealed, shadow and audit tests, and the sealed metric) runs in a new network
-namespace (no network) and a new mount namespace. In it, the loop's state (the referee checkout, the archive, the
-record, the runs, the other bundles), the wallet and key folders (the payout wallet, `~/.config/solana`, and every folder the operator lists in
-`KNOS_SELF_MASK`) and the other tree of the
-judgment are covered by empty, unreadable mounts, and the repository's `.git` is read-only. Then it runs with a clean
-environment as `KNOS_SELF_SANDBOX_USER` when set, else as the operator. Without `sudo -n unshare` the referee refuses
-to judge; `--sandbox none` turns the jail off and is for a machine where that is acceptable. The jail is Linux's
-(network and mount namespaces): on macOS and Windows there is no `unshare`, so the referee refuses there unless
-`--sandbox none` is asked for.
+Every run of candidate code (public, sealed, shadow and audit tests, and the sealed metric) runs in a new network namespace (no network) and a
+new mount namespace.
+
+In it, the loop's state (the referee checkout, the archive, the record, the runs, the other bundles), the wallet and key folders (the payout
+wallet, `~/.config/solana`, and every folder the operator lists in `KNOS_SELF_MASK`) and the other tree of the judgment are covered by empty,
+unreadable mounts, and the repository's `.git` is read-only.
+
+Then it runs with a clean environment as `KNOS_SELF_SANDBOX_USER` when set, else as the operator. Without `sudo -n unshare` the referee refuses
+to judge; `--sandbox none` turns the jail off and is for a machine where that is acceptable.
+
+The jail is Linux's (network and mount namespaces): on macOS and Windows there is no `unshare`, so the referee refuses there unless `--sandbox
+none` is asked for.
 
 ## Limits
 

@@ -31,7 +31,9 @@ One JSON object per line in `journal.jsonl`:
 The record is public, so a line is refused before anything is written when its payload looks like a secret: a field
 named like a key, token, password or e-mail; a GitHub, Slack, AWS or API token; a PEM block; a signed token (JWT); an
 e-mail address; a home-folder path; an array of 32 or 64 bytes; 64 bytes in base58 or hex under a name that does not
-say it is a signature or a hash. Demo data says `"synthetic": true` in its payload.
+say it is a signature or a hash.
+
+Demo data says `"synthetic": true` in its payload.
 
 ## Sibyl holds every line too
 

@@ -24,12 +24,15 @@
   <a class="brand" href="/#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
   <nav id="nav" aria-label="Knos">
     <a href="/#home">Check demand</a>
+    <a href="/companies">Companies</a>
+    <a href="/fields">Fields</a>
     <a href="/#projects">Projects</a>
-    <a href="https://drexthealpha.github.io/Knos/#pricing">Pricing</a>
     <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
     <div class="more" id="more">
       <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
       <div class="more-list" id="more-list">
+        <a href="/money">The money</a>
+        <a href="https://drexthealpha.github.io/Knos/#pricing">Pricing</a>
         <a href="/#verify">How we verify</a>
         <a href="/#buy">Back a product</a>
         <a href="/#fund">Fund a milestone</a>
@@ -63,6 +66,7 @@
   <p>Each rule of the <a href="https://github.com/qloo/qloo-hackathon-kit/tree/main/docs" rel="noopener">Qloo developer kit</a>,
     the code that keeps it, and the test that checks it.</p>
   <h2 id="safe-use">SAFE_USE.md</h2>
+  <details class="su-fold"><summary>7 rules, each kept in code and tested</summary>
   <table class="su" id="su-safe"><thead><tr><th scope="col">Rule</th><th scope="col">In Knos</th><th scope="col">Checked by</th></tr></thead><tbody>
   <tr id="r-infer"><td data-h="Rule">Results are aggregate taste: never infer a person's identity, sensitive traits, health, finances, politics, or eligibility for housing, work, credit or insurance.</td>
     <td data-h="In Knos">An ask to infer such a thing about people, or to decide eligibility, is refused before any Qloo call: <code>privacy.sensitive</code>, run on every input by <code>privacy.check</code>.</td>
@@ -85,8 +89,9 @@
   <tr id="r-secrets"><td data-h="Rule">Keep secrets out of the project folder, model prompts and logs.</td>
     <td data-h="In Knos">The key is read from the server's environment only (<code>qloo_rest.Client</code>), sent as a request header, and appears in no error, trace, report or log line.</td>
     <td data-h="Checked by"><code>test_qloo_safe_use</code>, the commit script's key scan</td></tr>
-  </tbody></table>
+  </tbody></table></details>
   <h2 id="api-access">API_ACCESS.md</h2>
+  <details class="su-fold"><summary>6 rules, each kept in code and tested</summary>
   <table class="su" id="su-api"><thead><tr><th scope="col">Rule</th><th scope="col">In Knos</th><th scope="col">Checked by</th></tr></thead><tbody>
   <tr id="r-credential"><td data-h="Rule">An event-issued, individual credential; never shared, never in source control, a browser app, a public MCP configuration or a recording.</td>
     <td data-h="In Knos">One event key, held as a secret of the hosted server. The front door and the app's pages never hold it: they ask the server, which asks Qloo. The public <code>/mcp</code> needs no Qloo key from anyone.</td>
@@ -106,9 +111,8 @@
   <tr id="r-docs"><td data-h="Rule">The docs MCP server is a reference, not a surface; do not use its <code>execute-request</code> tool.</td>
     <td data-h="In Knos">Knos never calls <code>docs.qloo.com/mcp</code>.</td>
     <td data-h="Checked by"><code>test_qloo_safe_use</code></td></tr>
-  </tbody></table>
-  <p class="small muted">Qloo describes aggregate cultural taste: affinities of many people, not a cause, not a forecast, and not a statement about any one person.
-    <a href="/with-without">With and without Qloo</a> · <a href="/verify">How we verify</a></p>
+  </tbody></table></details>
+  <p class="small muted">Qloo: aggregate taste of many people, not causal, never about one person.</p>
 </main>
 </body>
 </html>

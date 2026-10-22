@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knos. Money</title>
+<meta name="description" content="Where the money for research is, what stops it, and the share Knos needs for $1B a year at its live fee. Every number links to its source.">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="preload" href="/static/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/brand/tokens.css">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.mx-chart { display: grid; gap: 8px; margin: var(--sp-4) 0; padding: 0; list-style: none; }
+.mx-chart li { display: grid; grid-template-columns: minmax(9em, 14em) 1fr; gap: 10px; align-items: center; margin: 0; }
+.mx-bar { height: 26px; border-radius: 6px; background: var(--accent); min-width: 4px; }
+.mx-chart li.knos .mx-bar { background: var(--ok); }
+.mx-chart .mx-v { font-weight: 700; } .mx-chart a { color: inherit; }
+.mx-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(15em, 1fr)); gap: var(--sp-3); padding: 0; list-style: none; margin: var(--sp-5) 0; }
+.mx-facts li { margin: 0; padding: var(--sp-3) var(--sp-4); border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+.mx-facts b { display: block; font: 700 var(--s3)/1.1 var(--head); }
+.mx-need { font: 600 var(--s2)/1.5 var(--text); }
+@media (max-width: 560px) { .mx-chart li { grid-template-columns: 1fr; gap: 4px; } }
+</style>
+<script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<!-- k-bar -->
+<header class="bar k-bar" id="k-bar">
+  <a class="brand" href="/#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
+  <nav id="nav" aria-label="Knos">
+    <a href="/#home">Check demand</a>
+    <a href="/companies">Companies</a>
+    <a href="/fields">Fields</a>
+    <a href="/#projects">Projects</a>
+    <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
+    <div class="more" id="more">
+      <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
+      <div class="more-list" id="more-list">
+        <a href="/money">The money</a>
+        <a href="https://drexthealpha.github.io/Knos/#pricing">Pricing</a>
+        <a href="/#verify">How we verify</a>
+        <a href="/#buy">Back a product</a>
+        <a href="/#fund">Fund a milestone</a>
+        <a href="/#contribute">Open work</a>
+        <a href="/#make">Make</a>
+        <a href="/#teams">Teams</a>
+        <a href="/#agents">Agents</a>
+        <a href="/with-without">With and without Qloo</a>
+        <a href="/qloo-safe-use">How Knos uses Qloo safely</a>
+        <a href="/invite">Invite</a>
+        <a href="https://drexthealpha.github.io/Knos/#check-a-pull-request" id="go-check">Check a pull request</a>
+        <a href="https://drexthealpha.github.io/Knos/#demo">Demo</a>
+        <a href="https://drexthealpha.github.io/Knos/#install">Install</a>
+        <a href="https://drexthealpha.github.io/Knos/#records">Records</a>
+        <a href="https://drexthealpha.github.io/Knos/#network">Numbers</a>
+        <a href="https://drexthealpha.github.io/Knos/#judges">Check every claim yourself</a>
+        <a href="https://drexthealpha.github.io/Knos/faq.html">Questions</a>
+      </div>
+    </div>
+  </nav>
+  <div class="tools">
+    <button id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
+    <a id="whoBtn" class="signin" href="/#signin">Sign in</a>
+  </div>
+</header>
+<script src="/static/brand/bar.js" defer></script>
+<!-- /k-bar -->
+<main class="wrap">
+  <h1>The money, and the share Knos needs</h1>
+  <p class="mx-need" id="mx-need">…</p>
+  <ul class="mx-chart" id="mx-chart" data-not-prose aria-label="Money for research, each to scale (log)"></ul>
+  <ul class="mx-facts" id="mx-facts" data-not-prose aria-label="Why it does not reach a product"></ul>
+  <!-- k-vectors -->
+<ul class="k-vectors" data-api="" data-not-prose aria-label="Measured">
+  <li data-v="cost"><b>$0</b> per check</li>
+  <li data-v="speed"><b>…</b> to verdict</li>
+  <li data-v="friction"><b>2 steps</b>, no sign-up</li>
+  <li data-v="trust"><b>Escrow</b> on devnet</li>
+  <li data-v="capability"><b>2.08x</b> fewer tokens, <b>70% vs 5%</b> pass</li>
+  <li data-v="access"><b>7 fields</b>, any country, phone</li>
+  <li data-v="status"><b>Ready cards</b></li>
+</ul>
+<script src="/static/brand/vectors.js" defer></script>
+<!-- /k-vectors -->
+  <p class="small muted" id="mx-checked"></p>
+</main>
+<script>
+(async () => {
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const m = await fetch("/api/money").then((r) => r.json());
+  const big = (v) => v >= 1e12 ? `$${(v / 1e12).toFixed(2).replace(/\.?0+$/, "")}T` : `$${Math.round(v / 1e9)}B`;
+  const pct = (x) => x >= 0.1 ? `${(x * 100).toFixed(0)}%` : `${(x * 100).toFixed(1)}%`;
+  const share = (id) => (m.shares.find((s) => s.id === id) || {}).share;
+  document.getElementById("mx-need").innerHTML = m.needed_usd
+    ? `<b>${big(m.needed_usd)}</b> a year on proof pays Knos <b>$1B</b> before costs at its live <b>${m.fee.rate_bps / 100}%</b> fee: <b>${pct(share("world_rd"))}</b> of world R&D, <b>${pct(share("global500"))}</b> of Global 500 revenue.`
+    : "The live fee is not readable right now.";
+  const rows = [...m.pools.map((p) => ({ ...p, v: p.usd || p.eur })), { id: "knos", label: "Knos needs", v: m.needed_usd, shown: big(m.needed_usd || 0), source: "computed from config/fees.yaml", url: "https://github.com/drexthealpha/Knos/blob/main/config/fees.yaml" }];
+  const lo = Math.log10(Math.min(...rows.map((r) => r.v))) - 0.5, hi = Math.log10(Math.max(...rows.map((r) => r.v)));
+  document.getElementById("mx-chart").innerHTML = rows.map((r) => `<li class="${r.id === "knos" ? "knos" : ""}"><span><a href="${esc(r.url)}" rel="noopener">${esc(r.label)}</a> <span class="mx-v">${esc(r.shown)}</span></span>
+    <span class="mx-bar" style="width:${(((Math.log10(r.v) - lo) / (hi - lo)) * 100).toFixed(1)}%" role="img" aria-label="${esc(r.shown)}"></span></li>`).join("");
+  document.getElementById("mx-facts").innerHTML = m.barriers.map((b) => `<li><b>${esc(b.shown)}</b><a href="${esc(b.url)}" rel="noopener">${esc(b.label)}</a></li>`).join("");
+  document.getElementById("mx-checked").textContent = `Re-checked ${m.checked}. Log scale.`;
+})();
+</script>
+</body>
+</html>

@@ -13,22 +13,24 @@ and one file instead, below):
 2. Choose **knos reproduce** and press **Run workflow**.
 3. When **knos reproduction, to send** is green, open its link and press **Create pull request**.
 
-What the button does. The first run installs the released knos, runs `knos reproduce` against public things only and
-has GitHub sign the report (below). The second,
-[`knos-reproduction-send.yml`](../../.github/workflows/knos-reproduction-send.yml), starts by itself when the first ends:
-it puts the signed file on a branch `reproduction-<run id>` of your fork as `reproductions/<owner>-<repo>-<run id>.json`,
-that file and nothing else, and prints a link that opens the pull request to drexthealpha/Knos with its title and text
-filled in. The last press is yours because it has to be: a workflow's token is good for the repository the workflow is
-in and for no other ([GitHub's documentation](https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication)),
-so a run in your fork cannot open a pull request here. The link is GitHub's own form
-([query parameters](https://docs.github.com/en/pull-requests/reference/using-query-parameters-to-create-a-pull-request)).
+What the button does. The first run installs the released knos, runs `knos reproduce` against public things only and has GitHub sign the report (below).
+
+The second, [`knos-reproduction-send.yml`](../../.github/workflows/knos-reproduction-send.yml), starts by itself when the first ends: it puts the signed file
+on a branch `reproduction-<run id>` of your fork as `reproductions/<owner>-<repo>-<run id>.json`, that file and nothing else, and prints a link that opens the
+pull request to drexthealpha/Knos with its title and text filled in.
+
+The last press is yours because it has to be: a workflow's token is good for the repository the workflow is in and for no other ([GitHub's
+documentation](https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication)), so a run in your fork cannot
+open a pull request here. The link is GitHub's own form ([query
+parameters](https://docs.github.com/en/pull-requests/reference/using-query-parameters-to-create-a-pull-request)).
 
 Without a fork: create an empty public repository of your own (the link above) and add one file,
 [`knos-reproduce.yml`](../../examples/knos-reproduce.yml) (the same as in [`templates/knos-task`](../../templates/knos-task)),
-as `.github/workflows/knos-reproduce.yml`: **Add file**, **Create new file**, paste, **Commit changes**. Then
-**Actions**, **knos reproduce**, **Run workflow**. No template repository is involved since 0.3.31. A repository that
-is no fork cannot open a pull request here: download the run's artifact `knos-reproduction` and send the file in it
-("How to send it").
+as `.github/workflows/knos-reproduce.yml`: **Add file**, **Create new file**, paste, **Commit changes**. Then **Actions**,
+**knos reproduce**, **Run workflow**. No template repository is involved since 0.3.31.
+
+A repository that is no fork cannot open a pull request here: download the run's artifact `knos-reproduction` and send the
+file in it ("How to send it").
 
 ## Knos's own run
 
@@ -38,10 +40,12 @@ A run by Knos's own accounts also completes, and is filed under `reproductions/o
 It is not a reproduction and is never counted as one. Every count reads `reproductions/*.json` and no deeper;
 `knos.reproduce.verified(..., ours=True)` accepts in `own/` only a run that is Knos's own and gives it no capability;
 an own run's file directly under `reproductions/` is refused as before. `reproductions/own/` holds 0 files today: the
-release run files the first. A pull request that adds a file under `own/` is checked by `reproductions.yml` like a
-stranger's (`scripts/capabilities.py reproduction --own`): it passes only for a run that is Knos's own, and says it
-counts for nothing. Seen in staging: [an own run](https://github.com/drexthealpha/knos-rc/actions/runs/37628067412),
-filed on its branch by the second workflow, and the check of its pull request green.
+release run files the first.
+
+A pull request that adds a file under `own/` is checked by `reproductions.yml` like a stranger's
+(`scripts/capabilities.py reproduction --own`): it passes only for a run that is Knos's own, and says it counts for
+nothing. Seen in staging: [an own run](https://github.com/drexthealpha/knos-rc/actions/runs/37628067412), filed on
+its branch by the second workflow, and the check of its pull request green.
 
 ## From a terminal
 
@@ -61,12 +65,14 @@ Anyone can check a signed reproduction on their own machine, offline, without tr
 knos reproduce --verify https://github.com/OWNER/REPO/actions/runs/RUN_ID
 ```
 
-Run it in the folder holding the run's file (the artifact `knos-reproduction`, unpacked; or
-`gh run download RUN_ID -R OWNER/REPO -n knos-reproduction` first). It also takes the file itself, the artifact's
-`.zip` or the folder. It runs the same checks as the pull request's automatic check: GitHub's signature, that the token was signed
-for these exact bytes, that the run is not Knos's own, that a check passed and none failed. It prints the repository,
-the commit, the run, the report's sha256, what passed and the run's wall time. Exit 0 means a valid outside
-reproduction; a run of Knos's own is named as such and exits 1.
+Run it in the folder holding the run's file (the artifact `knos-reproduction`, unpacked; or `gh run download RUN_ID -R OWNER/REPO
+-n knos-reproduction` first). It also takes the file itself, the artifact's `.zip` or the folder.
+
+It runs the same checks as the pull request's automatic check: GitHub's signature, that the token was signed for these exact
+bytes, that the run is not Knos's own, that a check passed and none failed. It prints the repository, the commit, the run, the
+report's sha256, what passed and the run's wall time.
+
+Exit 0 means a valid outside reproduction; a run of Knos's own is named as such and exits 1.
 
 GitHub's keys come from `--keys FILE` (save
 [GitHub's key list](https://token.actions.githubusercontent.com/.well-known/jwks) once), else from
@@ -79,10 +85,10 @@ they are counted apart. `--json` for a machine; more files or folders can follow
 
 ## What each check proves
 
-`knos reproduce` runs a fixed list against public things only: Solana devnet at the PUBLIC program ids, GitHub's
-published keys, the public upgrade feed, the public record (`docs/provenance.json`, `docs/capabilities.json`, the
-statement the site publishes and its evidence) and one public pull request. It reads; it sends no transaction. Each check ends `pass`, `fail` or `skipped` (it could not be asked from
-there); only `pass` counts for anything.
+`knos reproduce` runs a fixed list against public things only: Solana devnet at the PUBLIC program ids, GitHub's published keys, the public upgrade feed, the public record
+(`docs/provenance.json`, `docs/capabilities.json`, the statement the site publishes and its evidence) and one public pull request. It reads; it sends no transaction.
+
+Each check ends `pass`, `fail` or `skipped` (it could not be asked from there); only `pass` counts for anything.
 
 | check | what it does | what a pass proves | capabilities |
 |---|---|---|---|
@@ -95,9 +101,10 @@ there); only `pass` counts for anything.
 | `statement` | Fetches the [statement the site publishes](https://drexthealpha.github.io/Knos/statement_sample.json) and makes it again from its evidence (`knos statement verify` does the same). The site's statement names its evidence by sha256 and does not carry it, so the evidence is taken from the same statement as the repository keeps it (`tests/data/statement/sept.json`), which is made again too. | The published statement is what its evidence gives: every line, total and hash. It is a sample: its buyer and supplier are made up. | `statements` |
 | `own_repo` | Only with `--own-repo OWNER/NAME` and `GH_TOKEN`: one funded round in a repository of yours that has Knos installed ([INSTALL.md](INSTALL.md)): an issue funded by comment from the faucet Balance, a pull request, the merge, the payment. It opens and merges a pull request there, so it never runs unasked. | The whole flow works for someone who is not the maintainer, on test USDC. | `fund_by_comment`, `pay_on_merge` |
 
-The payment in `payment` was made by a rehearsal on a separate devnet deployment of the 2.1 build, which
-CAPABILITIES.md names ("The 0.3.14 rehearsal on devnet"); the pinned program ids run what the feed says they run. From an installed wheel `simulator`
-is skipped. To run it: clone the repository, `pip install -e '.[dev]'`, then `python -m knos reproduce --only simulator`.
+The payment in `payment` was made by a rehearsal on a separate devnet deployment of the 2.1 build, which CAPABILITIES.md names ("The 0.3.14 rehearsal
+on devnet"); the pinned program ids run what the feed says they run. From an installed wheel `simulator` is skipped.
+
+To run it: clone the repository, `pip install -e '.[dev]'`, then `python -m knos reproduce --only simulator`.
 
 `--only` takes a check's name or a capability id, `--rpc` another Solana RPC, `--out` where the report goes. The
 report records the knos version, the platform, the Python version and, from a checkout, the commit.
@@ -106,8 +113,10 @@ report records the knos version, the platform, the Python version and, from a ch
 
 A report typed into a pull request proves nothing. So the workflow asks GitHub for a signed statement (an OIDC token)
 whose audience is `knos-repro:<sha256 of report.json>`. GitHub puts into that token the repository, its owner, the
-account that started the run and the run's id, and signs it. The job that asks for the token installs nothing and
-runs no Knos code: it checks the report's sha256 and asks for that one audience.
+account that started the run and the run's id, and signs it.
+
+The job that asks for the token installs nothing and runs no Knos code: it checks the report's sha256 and asks for
+that one audience.
 
 The file in the artifact, `<owner>-<repo>-<run id>.json`, is the report and the token. When it arrives in a pull
 request, [`reproductions.yml`](../../.github/workflows/reproductions.yml) checks, running nothing from the pull request:
@@ -124,8 +133,9 @@ capability is `reproduced` only when it names such a file and a check that suppo
 
 What this does not prove, said plainly: that your account is independent of Knos (only the listed own accounts are
 refused), and that you ran the example unchanged (the token names your workflow file and its commit, which anyone can
-read in your repository). A job definition signed by GitHub as unchanged needs a published reusable workflow; that is
-not built.
+read in your repository).
+
+A job definition signed by GitHub as unchanged needs a published reusable workflow; that is not built.
 
 ## How to send it
 
@@ -156,9 +166,11 @@ What a stranger does, each click or command counted once (GitHub's own steps for
 
 Time to first verified result: the time from the workflow's first step to GitHub's signature. The workflow records it:
 its first step puts the clock into the report (`started`), and the token says when GitHub signed (`iat`), so the time
-is read from signed bytes, never typed. `knos reproduce --verify` and `scripts/reproductions.py` print it.
-**Runs recorded: 0.** Nobody outside has run the workflow, so there is no time to show yet. A report made before
-0.3.25 has no `started`, and its time shows as not recorded.
+is read from signed bytes, never typed.
+
+`knos reproduce --verify` and `scripts/reproductions.py` print it. **Runs recorded: 0.** Nobody outside has run the
+workflow, so there is no time to show yet. A report made before 0.3.25 has no `started`, and its time shows as not
+recorded.
 
 ## How long it takes
 

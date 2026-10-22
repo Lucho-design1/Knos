@@ -165,8 +165,9 @@ file. The panel-judged stages below are released on devnet.
 
 `python -m knos.ideas.devnet_panel --wallets DIR --claim FILE --program ID --mint MINT --out FILE` locks two stages of
 idea C as PANEL orders on the knos_pay 0.3.34 devnet test program `FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4`,
-pinning three fresh devnet referee keys, two of which must agree. Then it reads both oracles live. The payee is a
-wallet of the demo's own; ORCID's public test iD stands in for the researcher's.
+pinning three fresh devnet referee keys, two of which must agree. Then it reads both oracles live.
+
+The payee is a wallet of the demo's own; ORCID's public test iD stands in for the researcher's.
 
 | stage | oracle, read live | lock | referee verdicts | result |
 |---|---|---|---|---|
@@ -178,13 +179,16 @@ program gets the panel path through the upgrade the founder signs (deploy/upgrad
 
 ### Every stage kind, two more fields: materials and biology (15 Oct 2026)
 
-`python -m knos.ideas.devnet_panel --wallets DIR --referees DIR2 --claim FILE --idea B --payee SPEC --program ID
---mint MINT --stages ... --review stage2=pass,stage3=fail --unlisted-panel --out FILE` runs the same code as `knos idea
-commit | sign | release | refund`. It handles every stage kind: automatic oracles are read live, and review stages are
-signed by each referee on a SYNTHETIC review report. The referees' folder is refused when it is the buyer's folder or
-inside it. In this demo one machine plays all three referees, so they are **not independent**, and their keys are off
-Knos's registry (UNLISTED PANEL, labelled). The payee is `orcid:0000-0002-1825-0097@8wGdFZWAwi1N1xicR2yKPqr5K8nDcQHSarCXEEdfVLSd`
-(ORCID's test iD standing in for the researcher). Each result is read back from the chain.
+`python -m knos.ideas.devnet_panel --wallets DIR --referees DIR2 --claim FILE --idea B --payee SPEC --program ID --mint MINT
+--stages ... --review stage2=pass,stage3=fail --unlisted-panel --out FILE` runs the same code as `knos idea commit | sign |
+release | refund`.
+
+It handles every stage kind: automatic oracles are read live, and review stages are signed by each referee on a SYNTHETIC review
+report. The referees' folder is refused when it is the buyer's folder or inside it.
+
+In this demo one machine plays all three referees, so they are **not independent**, and their keys are off Knos's registry
+(UNLISTED PANEL, labelled). The payee is `orcid:0000-0002-1825-0097@8wGdFZWAwi1N1xicR2yKPqr5K8nDcQHSarCXEEdfVLSd` (ORCID's test
+iD standing in for the researcher). Each result is read back from the chain.
 
 Materials, arXiv 1606.00335 (`knos-idea:c895e5d5ff037c0eab91fc4c42ea5445`, Materials Science):
 

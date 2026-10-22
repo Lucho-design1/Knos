@@ -16,8 +16,8 @@ This page is not [GATE.md](GATE.md), which is the upgrade gate for a Solana prog
 ## Why
 
 Maintainers are closing their doors because checking work now costs more than producing it (sources as of 13 Oct 2026):
-curl ended its bug bounty on 31 Jan 2026 after valid reports fell below 5%; Google stopped OSS VRP submissions on
-1 Oct 2026 ("vast majority not valid"); Sovereign Tech paused its bounty (790+ reports, about 80 accepted); tldraw
+curl ended its bug bounty on 31 Jan 2026 after valid reports fell below 5%; Google stopped OSS VRP submissions on 1 Oct
+2026 ("vast majority not valid"); Sovereign Tech paused its bounty (790+ reports, about 80 accepted); tldraw
 auto-closes external pull requests; Ghostty bans drive-by AI pull requests and uses Vouch; GitHub shipped settings to
 disable or cap outside pull requests (13 Feb and 17 Jun 2026).
 
@@ -65,27 +65,31 @@ lines first; a text that would quote one is not posted (`gate.leak_guard`).
 
 The hidden tests run as a user of their own (`knos-sandbox`) in a network namespace with no network, with an
 environment of PATH, HOME and LANG only: no GitHub token and no secret. That user cannot write the runner's files, so
-it cannot reach `$GITHUB_ENV` or the Knos install that computes the verdict. `setup` runs from the base commit before
-the pull request's code is on disk.
+it cannot reach `$GITHUB_ENV` or the Knos install that computes the verdict.
+
+`setup` runs from the base commit before the pull request's code is on disk.
 
 The Action fails closed: when the runner cannot make this sandbox (passwordless sudo and `unshare`), Gate stops with
 exit 2 and runs nothing. The sandbox writes only a fresh folder of its own; the runner reads its report there without
 following links and writes its own files elsewhere. A pass needs exit code 0 AND a report with no failure.
 
-What it does not stop: the pull request's code runs in the same process as the hidden tests, so it can read them while
-they run and can try to fake their result, because the exit code and the report both come from that process. It cannot send them anywhere (no network, no token, no output shown), and
-the cheat library refuses the edits that fake a result (test runner configuration, `conftest.py`, `.pth` files). A
-maintainer who needs more runs the hidden tests in a separate process or machine; that is not built in this version.
+What it does not stop: the pull request's code runs in the same process as the hidden tests, so it can read them while they run and can try to fake their result, because the exit
+code and the report both come from that process.
+
+It cannot send them anywhere (no network, no token, no output shown), and the cheat library refuses the edits that fake a result (test runner configuration, `conftest.py`, `.pth`
+files). A maintainer who needs more runs the hidden tests in a separate process or machine; that is not built in this version.
 
 ## Knos Receipt
 
 Each run writes a receipt (`knos.receipt2`): the repository, pull request and commits; `mode` (hidden, or "public tests
 only", said in words); the seal of the hidden tests; counts; the cheat library and its rules; the runner as the run's
-environment reports it (not signed by GitHub in this receipt); the re-run; the verdict and its rule. It is signed with
-Ed25519. `knos gate receipt verify FILE` checks it with Python's standard library alone (`src/knos/receipt2/ed25519.py`,
-RFC 8032), from the JSON or from the saved receipt page. A valid signature by a key not in
-`src/knos/receipt2/issuers.json` shows only that its holder signed. The one listed key was generated for the v0.3.29
-demo; it is not a founder key and holds no money.
+environment reports it (not signed by GitHub in this receipt); the re-run; the verdict and its rule.
+
+It is signed with Ed25519. `knos gate receipt verify FILE` checks it with Python's standard library alone
+(`src/knos/receipt2/ed25519.py`, RFC 8032), from the JSON or from the saved receipt page. A valid signature by a key not
+in `src/knos/receipt2/issuers.json` shows only that its holder signed.
+
+The one listed key was generated for the v0.3.29 demo; it is not a founder key and holds no money.
 
 An author can get a receipt for their own pull request to a repository without Gate: `knos gate receipt self` runs the
 repository's own public tests and the cheat checks and signs with the author's own key. That receipt says "public
@@ -94,11 +98,15 @@ tests only" and that the author issued it.
 ## Bounties mode
 
 `bounties.enabled: true` adds two things. A pull request that says it closes an issue ("Fixes #12") and fails Gate is
-closed. The escrow is the existing knos_pay one on Solana devnet (`knos fund-wallet OWNER/REPO#N AMOUNT`): the program
-pays the merged pull request whose GitHub-signed run met the terms, and takes its fee for the treasury, a token account
-of Knos's Squads vault. `knos gate bounty quote AMOUNT` reads the fee from `config/fees.yaml` (through
-`knos.money.fees_config`) and `knos gate bounty treasury MINT` names the fee account. Gate signs no payment and holds no
-key. Fiat on-ramps and off-ramps are a founder decision.
+closed.
+
+The escrow is the existing knos_pay one on Solana devnet (`knos fund-wallet OWNER/REPO#N AMOUNT`): the program pays the
+merged pull request whose GitHub-signed run met the terms, and takes its fee for the treasury, a token account of Knos's
+Squads vault.
+
+`knos gate bounty quote AMOUNT` reads the fee from `config/fees.yaml` (through `knos.money.fees_config`) and `knos gate
+bounty treasury MINT` names the fee account. Gate signs no payment and holds no key. Fiat on-ramps and off-ramps are a
+founder decision.
 
 ## The demo, 13 Oct 2026 (synthetic tasks, devnet test tokens)
 
@@ -112,9 +120,10 @@ tests), with the Action alone. Every run used the `nonet,user` sandbox:
 | #4 passes the public test only (claims #1) | refused, `gate.hidden_tests_failed` (1 of 3 hidden passed), closed | [run 38432762375](https://github.com/drexthealpha/knos-v0329-gate/actions/runs/38432762375) |
 | #5 correct fix, then a second commit | passed (3/3 hidden, 1/1 public, re-run agreed), signed receipt; one comment, edited in place | [run 38432780017](https://github.com/drexthealpha/knos-v0329-gate/actions/runs/38432780017) |
 
-The repository is private, so those links open for its owner only; its files (its main, ccf45c30) are in
-Knos as [evidence/knos-v0329-gate](../../evidence/knos-v0329-gate/) (with the demo pull requests' heads in its SOURCE.json). The bounty ran in the public test repository
-`drexthealpha/knos-e2e`, issue [#273](https://github.com/drexthealpha/knos-e2e/issues/273), with a test token minted on
+The repository is private, so those links open for its owner only; its files (its main, ccf45c30) are in Knos as
+[evidence/knos-v0329-gate](../../evidence/knos-v0329-gate/) (with the demo pull requests' heads in its SOURCE.json).
+
+The bounty ran in the public test repository `drexthealpha/knos-e2e`, issue [#273](https://github.com/drexthealpha/knos-e2e/issues/273), with a test token minted on
 devnet (no value), whose terms require the `Knos Gate` check and allow only `gate_slug.py`:
 
 | step | evidence |

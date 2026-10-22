@@ -74,16 +74,19 @@ publishes is not the number `knos.yml` claims), `metric_missing`.
 ## Private first
 
 Every result is written to `<out>/private/` first: the result, the logs, and for anything not reproduced a
-`NOTICE-TO-AUTHORS.md`. Knos sends nothing. Whoever ran the reproduction passes the notice to the authors.
-Only `knos.repro.publish.publish` writes to `<out>/public/`, and it refuses any result that is not `reproduced`, whose
-digest does not check, or that names a cheat. No flag changes this. `tests/test_repro_privacy.py` holds it, including a
-contested result edited to look reproduced.
+`NOTICE-TO-AUTHORS.md`. Knos sends nothing. Whoever ran the reproduction passes the notice to the authors. Only
+`knos.repro.publish.publish` writes to `<out>/public/`, and it refuses any result that is not `reproduced`, whose
+digest does not check, or that names a cheat. No flag changes this.
+
+`tests/test_repro_privacy.py` holds it, including a contested result edited to look reproduced.
 
 ## The badge
 
 The badge is drawn by the same code as the "paid on proof" and "Knos-verified" badges (`knos.badge`). It says how many
 claims held, that a held-out split was used, and the day. It is issued only from a result that checks; there is no other
-way to get one. A reproduction says the stated numbers came back. It does not say the method is sound.
+way to get one. A reproduction says the stated numbers came back.
+
+It does not say the method is sound.
 
 A workflow can have GitHub sign a result: request an OIDC token with the audience `knos-research:<result sha256>`.
 `knos.repro.publish.verify_signed` checks the pair with no network, using the same RS256 check as `knos reproduce --verify`.
@@ -95,9 +98,10 @@ python -m knos.repro.example /tmp/ex && knos reproduce /tmp/ex                  
 python -m knos.repro.example /tmp/bad --tamper && knos reproduce /tmp/bad       # inflated claim: contested, kept private
 ```
 
-On 13 Oct 2026 the same command ran on a read-only checkout of the Knos repository itself (commit 99cc4e3e), with a
-spec kept outside it, claiming that the playground judge's generated inputs catch every wrong solution in `tasks/`
-(72 of 72) and that every reference passes its public examples (24 of 24): reproduced on the re-run and on a held-out seed.
+On 13 Oct 2026 the same command ran on a read-only checkout of the Knos repository itself (commit 99cc4e3e), with a spec
+kept outside it, claiming that the playground judge's generated inputs catch every wrong solution in `tasks/` (72 of 72)
+and that every reference passes its public examples (24 of 24): reproduced on the re-run and on a held-out seed.
+
 The result file, the spec, its two scripts and `run.sh` to make them again are in
 [evidence/repro-0329/](evidence/repro-0329/playground-judge.result.json).
 

@@ -20,11 +20,12 @@ are small programming tasks: one file each, a statement, three examples, 5 test 
    address you bound with one comment (`/knos address <address>`) or to the site's passkey wallet, or held for your
    account until you bind one.
 
-An agent does the same with no browser: `knos task list | show | take | submit`, or the MCP tools `tasks_open`,
-`task_show` and `task_take`. A held payment is listed on the board with the one comment that releases it, and
-`knos task why owner/repo#N` says in one sentence why a merged pull request was not paid. Ten more tasks are not code
-puzzles: reproduce, shadow, fund, install, host a judge, compose, gate, keyholder, tamper and witness. `witness` runs
-one whole payment in a repository of your own: [examples/witnessed](../../examples/witnessed). All of it: [`tasks/README.md`](../../tasks/README.md).
+An agent does the same with no browser: `knos task list | show | take | submit`, or the MCP tools `tasks_open`, `task_show` and `task_take`. A held
+payment is listed on the board with the one comment that releases it, and `knos task why owner/repo#N` says in one sentence why a merged pull request
+was not paid.
+
+Ten more tasks are not code puzzles: reproduce, shadow, fund, install, host a judge, compose, gate, keyholder, tamper and witness. `witness` runs one
+whole payment in a repository of your own: [examples/witnessed](../../examples/witnessed). All of it: [`tasks/README.md`](../../tasks/README.md).
 
 The 24 tasks are [`tasks/`](../../tasks/README.md); [`scripts/task_board.py`](../../scripts/task_board.py) keeps 8 of them
 open and funded, within a daily budget it prints. Each task's reference solution is public, so copying it passes:

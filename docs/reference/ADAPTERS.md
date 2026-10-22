@@ -1,8 +1,9 @@
 # Adapters: other systems' events, and what the chain can check of them
 
-An order is paid when a pinned workflow reports that the work was accepted and GitHub signs that report: GitHub
-signs a statement about one run, and `knos_pay` checks that signature and the claims in it. That is the only thing the program believes. So "any signed event can
-settle an order" needs a precise reading, and this page gives it:
+An order is paid when a pinned workflow reports that the work was accepted and GitHub signs that report: GitHub signs a statement about one run, and `knos_pay`
+checks that signature and the claims in it. That is the only thing the program believes.
+
+So "any signed event can settle an order" needs a precise reading, and this page gives it:
 
 - **Any event can lead to the attest run.** A deployment, a release, a green workflow, an artifact attestation, an
   issue closed in a tracker: each has an adapter in [`examples/adapters/`](../../examples/adapters), a workflow file you copy
@@ -31,8 +32,9 @@ To make the event a condition of payment, name the status when the order is fund
 
 The check names are part of the terms, and the terms are hashed into the order at funding
 ([`src/knos/terms.py`](../../src/knos/terms.py)). A status that did not exist on the default branch when the order was
-funded is recorded as "from any source": Knos says so in its reply to the funding comment. Without the status in the
-terms, an adapter only chooses when the payment is tried.
+funded is recorded as "from any source": Knos says so in its reply to the funding comment.
+
+Without the status in the terms, an adapter only chooses when the payment is tried.
 
 An adapter holds no `id-token` permission, so it cannot ask GitHub for a signed statement, and it names no Knos
 workflow, so it has no commit to keep in step with a release. It writes with two permissions: `statuses: write` and
@@ -57,9 +59,10 @@ workflow, so it has no commit to keep in step with a release. It writes with two
 Linear, Jira and Notion sign their webhooks with a secret both sides share (an HMAC). Linear's is the header
 `Linear-Signature`, "a hex-encoded HMAC-SHA256 signature of the raw body"
 ([Linear](https://linear.app/developers/webhooks)). A program on a public chain cannot check such a signature: it
-would have to hold the secret, and then anyone could read it and forge the tracker. So the adapters believe nothing
-a tracker sends. They ask the tracker's API what state the issue is in now, and act on the answer. No server of
-yours or of Knos receives anything.
+would have to hold the secret, and then anyone could read it and forge the tracker.
+
+So the adapters believe nothing a tracker sends. They ask the tracker's API what state the issue is in now, and act
+on the answer. No server of yours or of Knos receives anything.
 
 What can start each one, as the products work today:
 
@@ -107,7 +110,9 @@ of judge (`Judge::Private`), and it names no event:
 
 What is missing is not in the program. No `/knos fund` word names a judge repository for a public order (only a
 private order gets one, from its attestor), and `knos attest` refuses a private order because its repository is not
-on chain. This needs a command and a release of the workflows, not a program change. It is not built.
+on chain. This needs a command and a release of the workflows, not a program change.
+
+It is not built.
 
 **4. Calling the pinned `prove.yml` directly on the event, in the order's own repository.** The program would take
 the token: the order's own judge (`Judge::Own`) reads no event. The pinned `prove.yml` does not sign on it: its settle job runs on a push to the

@@ -2,8 +2,9 @@
 
 This page is how a release is made: the order of the steps and the command for each. It is ONE commit and ONE push
 to `drexthealpha/Knos`. Everything that can fail is done before that commit. Every command below can be run again
-after a failure: each reads what is already there and does only what is missing. The tools enforce the order: a step
-run too early stops and says which step comes first.
+after a failure: each reads what is already there and does only what is missing.
+
+The tools enforce the order: a step run too early stops and says which step comes first.
 
 `<version>` below is the version being released, such as `0.3.27`.
 
@@ -29,8 +30,10 @@ Four things depend on each other, and only one order satisfies all of them.
 
 So the wheel is built first and once, from the final tree, and nothing inside the wheel names the commit of the
 workflows (`src/knos` never does, and `README.md`, which is the wheel's description, is not a file the stamp
-writes). The wheel built before the stamp and the wheel built after it are the same file:
-`tests/test_release_order.py` builds both and compares them.
+writes).
+
+The wheel built before the stamp and the wheel built after it are the same file: `tests/test_release_order.py`
+builds both and compares them.
 
 The build is reproducible: `SOURCE_DATE_EPOCH` is fixed in `scripts/release.py`, and the build backend and what it
 needs are installed by hash from `requirements/build.txt`.
@@ -121,8 +124,10 @@ wheel. A file on PyPI can never be replaced: if PyPI already has this version wi
 new version.
 
 The wheel goes up before the push because the moment the commit is public, the workflows it pins install
-`knos==<version>` by that hash. If PyPI did not have the file yet, every signing job would fail until it did. It goes
-up before the workflows too, because their cutoff is written from the time PyPI took it ("Why there is an order").
+`knos==<version>` by that hash. If PyPI did not have the file yet, every signing job would fail until it did.
+
+It goes up before the workflows too, because their cutoff is written from the time PyPI took it ("Why there is an
+order").
 
 **Push only once PyPI's index lists the wheel.** PyPI answers from two places: the page of a version shows an
 upload at once, but the index an installer reads (`https://pypi.org/simple/knos/`) is a cached page that can lag by
@@ -152,11 +157,14 @@ Three packages, each published: `knos-oidc-interface` 0.3.14 and `knos-pay-inter
 
 After the first version, `release.yml` publishes them with no stored secret (the jobs `crates-trusted` and
 `npm-trusted`): the registry exchanges the run's GitHub OIDC token for a credential that lives minutes, and npm
-records provenance. But both registries let a trusted publisher be configured only on a package that exists
+records provenance.
+
+But both registries let a trusted publisher be configured only on a package that exists
 ([crates.io](https://blog.rust-lang.org/2025/07/11/crates-io-development-update-2025-07/): "you'll need to publish
 your first release manually"; [npm](https://docs.npmjs.com/trusted-publishers): the setting is on the package's own
-page). So the first version of each is published by hand, once, by the owner, signed in to each registry. That is
-the only step here that needs a person and an account, and it was done on 8 October 2026 for all three.
+page). So the first version of each is published by hand, once, by the owner, signed in to each registry.
+
+That is the only step here that needs a person and an account, and it was done on 8 October 2026 for all three.
 
 Before anything is uploaded, on the release commit (each prints what would be uploaded and uploads nothing):
 
@@ -195,13 +203,15 @@ Then, once, on each registry:
 | crates.io, each crate's Settings, Trusted Publishing, Add (GitHub) | owner `drexthealpha`, repository `Knos`, workflow `release.yml`, no environment |
 | npmjs.com, `knos-settle`, Settings, Trusted Publisher (GitHub Actions) | organization or user `drexthealpha`, repository `Knos`, workflow `release.yml`, no environment |
 
-From then on, `crates-trusted` and `npm-trusted` publish. They need crates.io's
-`rust-lang/crates-io-auth-action` (pinned in `scripts/action_pins.json`) and npm 11.5.1 or later on Node 22.14 or
-later (the job installs Node 24 and stops with a plain message if npm is older). A crate or package that is not on
-its registry yet is skipped with one line that names this section; a version the registry already has is left
-alone. The token jobs (`crates`, `npmjs`) remain as a fallback and do nothing while `CARGO_REGISTRY_TOKEN` and
-`NPM_TOKEN` are unset; leave them unset. A version number, once published, can never be used again on either
-registry: a mistake is fixed by a new version.
+From then on, `crates-trusted` and `npm-trusted` publish. They need crates.io's `rust-lang/crates-io-auth-action`
+(pinned in `scripts/action_pins.json`) and npm 11.5.1 or later on Node 22.14 or later (the job installs Node 24
+and stops with a plain message if npm is older).
+
+A crate or package that is not on its registry yet is skipped with one line that names this section; a version the
+registry already has is left alone. The token jobs (`crates`, `npmjs`) remain as a fallback and do nothing while
+`CARGO_REGISTRY_TOKEN` and `NPM_TOKEN` are unset; leave them unset.
+
+A version number, once published, can never be used again on either registry: a mistake is fixed by a new version.
 
 ### Registries: is this machine signed in, and the commands in order
 
@@ -230,12 +240,13 @@ When a registry says `blocked`, nothing is published there and the release goes 
 `npm login`, no account. Each registry had no version until the first versions went up by hand on
 8 October 2026, from a machine signed in to both.
 
-A package is published at ITS OWN version. `knos-settle` moves with every release, so its version is the tag's.
-The two interface crates are among the crates `scripts/bump_version.py` holds (`PROGRAMS_FROZEN`, at `FROZEN_AT`), so
-during such a release their version is NOT the tag's, on purpose. The publishing jobs ask one rule
-(`python scripts/release.py registry-plan`): the version is the tag's or the held one, anything else is red; a
-package that is not on its registry yet, and a version the registry already has, are green with a notice; only a
-version the registry lacks is published.
+A package is published at ITS OWN version. `knos-settle` moves with every release, so its version is the tag's. The
+two interface crates are among the crates `scripts/bump_version.py` holds (`PROGRAMS_FROZEN`, at `FROZEN_AT`), so
+during such a release their version is NOT the tag's, on purpose.
+
+The publishing jobs ask one rule (`python scripts/release.py registry-plan`): the version is the tag's or the held
+one, anything else is red; a package that is not on its registry yet, and a version the registry already has, are
+green with a notice; only a version the registry lacks is published.
 
 Besides the registries, the crates still install as git dependencies and the client from the release's tarball
 ([INSTALL.md](INSTALL.md)).
@@ -259,15 +270,20 @@ page writes one into a file afterwards:
 
 The public worker (`worker.yml`) is a chain: each run starts the next. The first run on a new release installs that
 release by hash. Its install step waits when PyPI's index does not list the release yet: for that one error, 15, 30,
-60 and 90 seconds, 195 seconds in all, inside a 6-minute step timeout, and then it fails. Any other install error is
-red at once. A run that stays in its install longer than that has written no heartbeat, and the watchdog cancels and
-replaces it ([RELAY.md](RELAY.md)).
+60 and 90 seconds, 195 seconds in all, inside a 6-minute step timeout, and then it fails.
+
+Any other install error is red at once. A run that stays in its install longer than that has written no heartbeat,
+and the watchdog cancels and replaces it ([RELAY.md](RELAY.md)).
 
 The start of the next run is asked again when GitHub answers it with a 5xx or a 429, or does not answer: after 2, 4,
 8, ... seconds, or what `Retry-After` says (`python -m knos.proof.chain start`; up to 3 times in the handover step
-and 6 in the last). A job that is not part of the chain, `watchdog`, starts a chain when no run of one is queued or
-in progress: on the workflow's timer and on every event that starts the workflow (a token announced, a `knos` run
-ended), with no secret. Should two starts be taken, the older run goes on and the other ends at its first step.
+and 6 in the last).
+
+A job that is not part of the chain, `watchdog`, starts a chain when no run of one is queued or in progress: on the
+workflow's timer and on every event that starts the workflow (a token announced, a `knos` run ended), with no
+secret.
+
+Should two starts be taken, the older run goes on and the other ends at its first step.
 
 A run that fails starts no next run, by design. If the chain has stopped and no event or timer has started it:
 
@@ -276,11 +292,12 @@ gh run list --repo drexthealpha/Knos --workflow worker.yml --limit 5     # is an
 gh workflow run worker.yml --repo drexthealpha/Knos --ref main           # start the chain: leave the input `after` empty
 ```
 
-Re-running the failed run restarts nothing: a second attempt of a run relays nothing and starts nothing (its first
-attempt is taken to have started the next run), so "Re-run failed jobs" goes green and the chain stays stopped. The
-watchdog starts a chain when none is alive, but its timer is a scheduled run, and a scheduled run can be delayed
-([GitHub's documentation of `schedule`](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#schedule));
-after a release, look once and start it by hand.
+Re-running the failed run restarts nothing: a second attempt of a run relays nothing and starts nothing (its first attempt is taken to have started the next run), so
+"Re-run failed jobs" goes green and the chain stays stopped.
+
+The watchdog starts a chain when none is alive, but its timer is a scheduled run, and a scheduled run can be delayed ([GitHub's documentation of
+`schedule`](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#schedule)); after a release, look once
+and start it by hand.
 
 Right after the push, start the watchdog once so the chain does not wait for GitHub's timer:
 
@@ -300,8 +317,10 @@ curl -sS https://raw.githubusercontent.com/drexthealpha/Knos/main/README.md | he
 ```
 
 Then the repository's page in a private browser window: the README renders, its first screen is the one of the
-commit, every link on it opens, and the release named `v<version>` is the latest. Fine: all four. Not fine: the hash
-differs (the push did not land, or a cache: wait a minute and run it again) or the page asks to sign in.
+commit, every link on it opens, and the release named `v<version>` is the latest. Fine: all four.
+
+Not fine: the hash differs (the push did not land, or a cache: wait a minute and run it again) or the page asks to
+sign in.
 
 ## After the tag: the first real runs
 

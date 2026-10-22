@@ -25,16 +25,18 @@ repository's administrators can still change what a check name means. It says wh
 
 The smallest useful integration is the same almost everywhere: the platform already waits for "merged"; it adds an
 optional, off-by-default "and this named check passed at the commit". The check can be the repository's own test
-job, or a job that runs `knos-verify`. The platform reads the result from GitHub (a check run on the commit), so it
-takes no dependency on Knos. A platform that also wants to show a payment Knos made can check its receipt with the
-verifier and show the badge.
+job, or a job that runs `knos-verify`.
+
+The platform reads the result from GitHub (a check run on the commit), so it takes no dependency on Knos. A
+platform that also wants to show a payment Knos made can check its receipt with the verifier and show the badge.
 
 ## The platforms
 
 Read on 5 October 2026. "Last commit" is the newest commit on the default branch of an anonymous `git clone` made
-that day. "Outside pull requests" is what the most recent 80 commits show, not a promise about review. A platform
-with no row for source could not be cloned anonymously under the names tried, or publishes no application source
-that was found.
+that day. "Outside pull requests" is what the most recent 80 commits show, not a promise about review.
+
+A platform with no row for source could not be cloned anonymously under the names tried, or publishes no
+application source that was found.
 
 ### Open source and active
 
@@ -65,11 +67,11 @@ that was found.
 <!-- /not-active -->
 ### No public application source found
 
-Opire (its organisation shows one public repository, of guidelines), OnlyDust (the repositories tried could not
-be cloned anonymously), IssueHunt, Boss.dev, BountyHub (a public command-line client,
+Opire (its organisation shows one public repository, of guidelines), OnlyDust (the repositories tried could not be cloned anonymously), IssueHunt, Boss.dev, BountyHub (a public command-line client,
 <!-- not-active -->[bountyhub-org/bh](https://github.com/bountyhub-org/bh)<!-- /not-active -->, with no pull request merged since 2026-01-31, and no platform source), Replit Bounties, Dework (public
-forks last updated in 2022, no application), Layer3 and Wonderverse. For these the action and the badge still work
-from the repository's side, since both need only GitHub.
+forks last updated in 2022, no application), Layer3 and Wonderverse.
+
+For these the action and the badge still work from the repository's side, since both need only GitHub.
 
 ## The 30-day gate
 
@@ -81,14 +83,15 @@ python scripts/upstream_check.py --docs docs/reference/INTEGRATIONS.md docs/refe
 python scripts/upstream_check.py --docs docs/reference/INTEGRATIONS.md docs/reference/X402.md            # exit 0 only if every one merged in 30 days
 ```
 
-It prints, for each repository, the date of its newest merged pull request, and it treats a repository it cannot
-read as a refusal. The table "not active enough to review a pull request" sits between
-`not-active` markers, so the check skips it (`--marked` includes it). "Last commit" is a commit date from an anonymous clone, not a merged pull request.
-The second command was run against GitHub on 7 October 2026: six repositories had merged a pull request in the last
-30 days and two had not, algora-io/algora (last #347, 26 June 2026) and bountyhub-org/bh (last #38, 31 January
-2026). Both are now marked as not active, and nothing is opened on either. A repository the script refuses later
-moves to the marked table the same way, with the date it printed. Every repository on this page is named as
-research, not as a recommendation to use it.
+It prints, for each repository, the date of its newest merged pull request, and it treats a repository it cannot read as a refusal. The table "not
+active enough to review a pull request" sits between `not-active` markers, so the check skips it (`--marked` includes it).
+
+"Last commit" is a commit date from an anonymous clone, not a merged pull request. The second command was run against GitHub on 7 October 2026: six
+repositories had merged a pull request in the last 30 days and two had not, algora-io/algora (last #347, 26 June 2026) and bountyhub-org/bh (last #38,
+31 January 2026).
+
+Both are now marked as not active, and nothing is opened on either. A repository the script refuses later moves to the marked table the same way, with
+the date it printed. Every repository on this page is named as research, not as a recommendation to use it.
 
 ## What is not done
 

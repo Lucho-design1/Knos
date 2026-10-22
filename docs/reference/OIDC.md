@@ -1,10 +1,11 @@
 # knos-oidc: checking OpenID Connect (OIDC) tokens on Solana
 
 A Solana program that verifies an OpenID Connect token (a signed JSON Web Token, or JWT, using the RS256 signature scheme) on chain: from **GitHub Actions**, and
-since 2.1 from **any RS256 issuer** whose key has been admitted (GitLab, a company's own GitHub Enterprise Server,
-another CI system, a cloud's workload identity). Once a token is verified, any other program can read its claims
-and trust them as much as it trusts the issuer and the account the workflow ran in: which repository, which commit,
-which workflow file at which commit, which account started the run, and any audience string the workflow asked for.
+since 2.1 from **any RS256 issuer** whose key has been admitted (GitLab, a company's own GitHub Enterprise Server, another CI system, a cloud's workload
+identity).
+
+Once a token is verified, any other program can read its claims and trust them as much as it trusts the issuer and the account the workflow ran in: which
+repository, which commit, which workflow file at which commit, which account started the run, and any audience string the workflow asked for.
 
 Since 9 October 2026 the version on devnet is 2.2 (upgrade proposal 7;
 [MANIFEST.md](MANIFEST.md)). Version 2.1 added other issuers and private keys.
@@ -143,8 +144,10 @@ compute units of every step.
 
 Those are the instructions. How many transactions carry them is the sender's choice. The relay in this repository
 puts a whole token of up to about 3,700 bytes beside its first `Step`, and the last `Step`, the consumer's
-instruction and `Close` together, so a token is two transactions. It does that only where 4,096-byte transactions
-are accepted and the live `knos_pay` answers; elsewhere it falls back to the smaller ones ([BENCH.md](BENCH.md)).
+instruction and `Close` together, so a token is two transactions.
+
+It does that only where 4,096-byte transactions are accepted and the live `knos_pay` answers; elsewhere it falls
+back to the smaller ones ([BENCH.md](BENCH.md)).
 
 ## The trust root of the second deployment
 
@@ -197,14 +200,13 @@ the rent of the key's account, measured in the simulator with Solana's rent rule
 
 ## GitLab
 
-knos-oidc verifies a gitlab.com ID token as it verifies GitHub's. `knos-pay` 2.1, the build of proposal 4 of the
-upgrade multisig, reads one too ([`programs-v2/knos_pay/src/gl.rs`](../../programs-v2/knos_pay/src/gl.rs)), for two things: funding a work order
-from a Balance, and paying one. It is tested in LiteSVM against tokens shaped as GitLab documents them
-([`tests/test_gitlab_pay.py`](../../tests/test_gitlab_pay.py)); it has not run against a token gitlab.com signed, and
-[`examples/gitlab/.gitlab-ci.yml`](../../examples/gitlab/.gitlab-ci.yml) has not run in a project. Running it there is
-[one command](#the-round-as-one-command). The claims are
-GitLab's own list, read on 4 Oct 2026:
-[OpenID Connect (OIDC) Authentication Using ID Tokens](https://docs.gitlab.com/ci/secrets/id_token_authentication/).
+knos-oidc verifies a gitlab.com ID token as it verifies GitHub's. `knos-pay` 2.1, the build of proposal 4 of the upgrade multisig, reads one too
+([`programs-v2/knos_pay/src/gl.rs`](../../programs-v2/knos_pay/src/gl.rs)), for two things: funding a work order from a Balance, and paying one.
+
+It is tested in LiteSVM against tokens shaped as GitLab documents them ([`tests/test_gitlab_pay.py`](../../tests/test_gitlab_pay.py)); it has
+not run against a token gitlab.com signed, and [`examples/gitlab/.gitlab-ci.yml`](../../examples/gitlab/.gitlab-ci.yml) has not run in a
+project. Running it there is [one command](#the-round-as-one-command). The claims are GitLab's own list, read on 4 Oct 2026: [OpenID Connect
+(OIDC) Authentication Using ID Tokens](https://docs.gitlab.com/ci/secrets/id_token_authentication/).
 
 | what the escrow asks | GitHub's claim | GitLab's claim | how it is read |
 |---|---|---|---|
@@ -259,15 +261,18 @@ merge request from GitLab's API before it lets the token out.
     GITLAB_TOKEN=... KNOS_GITLAB_PROJECT=group/name python scripts/gitlab_round.py run --rpc <devnet rpc> --keys <keys>
     python scripts/gitlab_round.py run --simulate
 
-`run` pushes the example's file to the branch `knos` and protects it, adds the trigger job to the default
-branch when the project has no CI file, opens and merges one merge request whose description names an address, funds
-an order for it from the wallet `<keys>/funder.json`, starts a pipeline on the default branch with the pay audience
-(its trigger job starts the pinned pipeline, which GitLab signs as `pipeline_source` `pipeline`), reads the token the
-pinned job left, holds it to the escrow's rules for nothing, has `knos_oidc` verify it and sends `PayOrder`. Each step
-is kept, so a second run takes up where the first stopped. It exits 3, having sent nothing, and says exactly what is
-missing when there is no token, no project, no usable GitLab key at the public `knos_oidc`, or a pipeline that has
-not finished. `--simulate` runs the same steps in the simulator against a stand-in for gitlab.com written in the
-script, with tokens the test key signs: evidence of nothing on gitlab.com.
+`run` pushes the example's file to the branch `knos` and protects it, adds the trigger job to the default branch when
+the project has no CI file, opens and merges one merge request whose description names an address, funds an order for
+it from the wallet `<keys>/funder.json`, starts a pipeline on the default branch with the pay audience (its trigger
+job starts the pinned pipeline, which GitLab signs as `pipeline_source` `pipeline`), reads the token the pinned job
+left, holds it to the escrow's rules for nothing, has `knos_oidc` verify it and sends `PayOrder`.
+
+Each step is kept, so a second run takes up where the first stopped. It exits 3, having sent nothing, and says exactly
+what is missing when there is no token, no project, no usable GitLab key at the public `knos_oidc`, or a pipeline that
+has not finished.
+
+`--simulate` runs the same steps in the simulator against a stand-in for gitlab.com written in the script, with tokens
+the test key signs: evidence of nothing on gitlab.com.
 
 **Not seen on gitlab.com yet**, and the first real run settles each: that a `trigger:` job naming the pipeline's own
 project gives the downstream pipeline the source `pipeline` (GitLab documents that source "for multi-project

@@ -2,12 +2,15 @@
 
 What to do, surface by surface, when a release of Knos must be taken back. Everything is on Solana devnet with test
 USDC. Every key, account and vote named here is the founder's: there is no other maintainer, and outside key holders
-today are 0 ([KEYHOLDER.md](KEYHOLDER.md)). So "who can run it" is the founder in every row, with the credential the
-row names.
+today are 0 ([KEYHOLDER.md](KEYHOLDER.md)).
+
+So "who can run it" is the founder in every row, with the credential the row names.
 
 Rule one: **never move or delete a published tag, and never try to replace a published file.** PyPI and npm refuse a
-second upload of a version, and the workflows a commit pins install the package by version and hash. Taking a release
-back always means two things: mark the bad version, and publish the previous code as the next version.
+second upload of a version, and the workflows a commit pins install the package by version and hash.
+
+Taking a release back always means two things: mark the bad version, and publish the previous code as the next
+version.
 
 ## The surfaces
 
@@ -26,11 +29,12 @@ back always means two things: mark the bad version, and publish the previous cod
 
 On `https://pypi.org/manage/project/knos/releases/`: **Options** next to the version, **Yank**, and give the reason
 (it is shown on the release page and to installers). A yank is not a deletion: installers ignore a yanked release
-unless it is the only one that matches a `==` or `===` specifier
-([PyPI: yanking](https://docs.pypi.org/project-management/yanking/),
-[the file yanking specification](https://packaging.python.org/en/latest/specifications/file-yanking/)). So
-`pip install knos` falls back to the version before, while every workflow that pins `knos==<version>` by hash keeps
-installing it. That is wanted: a pinned workflow keeps working until its pin moves.
+unless it is the only one that matches a `==` or `===` specifier ([PyPI:
+yanking](https://docs.pypi.org/project-management/yanking/), [the file yanking
+specification](https://packaging.python.org/en/latest/specifications/file-yanking/)).
+
+So `pip install knos` falls back to the version before, while every workflow that pins `knos==<version>` by hash
+keeps installing it. That is wanted: a pinned workflow keeps working until its pin moves.
 
 A file on PyPI can never be replaced ([RELEASE.md](RELEASE.md)), so the fix is the next version:
 
@@ -55,16 +59,20 @@ npm deprecate knos-settle@<version> ""                 # takes the warning back
 
 Only an owner of the package can run it, from a machine signed in to npm (`npm whoami` answers with a name); the
 release workflow publishes without a stored token and cannot deprecate. A deprecated version stays installable and
-warns on install ([npm deprecate](https://docs.npmjs.com/cli/v11/commands/npm-deprecate)). `npm unpublish` is not the
-way back: after 72 hours it needs no dependents, fewer than 300 downloads in the last week and a single owner, and a
-version number once used can never be used again ([npm unpublish policy](https://docs.npmjs.com/policies/unpublish/)).
+warns on install ([npm deprecate](https://docs.npmjs.com/cli/v11/commands/npm-deprecate)).
+
+`npm unpublish` is not the way back: after 72 hours it needs no dependents, fewer than 300 downloads in the last week
+and a single owner, and a version number once used can never be used again ([npm unpublish
+policy](https://docs.npmjs.com/policies/unpublish/)).
 
 ## 3. The git tag, the GitHub release and the site
 
-The tag stays where it is. On the GitHub release of the bad version, untick "Set as the latest release" and say in
-its notes which version replaces it. The fix is the revert and the next release (section 1). Pinned copies of the
-workflows on the `workflows-<sha12>` tags of `drexthealpha/Knos` move only when a new set is built and committed there
-(`python scripts/release.py workflows DIR`, then `stamp SHA`), as [RELEASE.md](RELEASE.md) describes.
+The tag stays where it is. On the GitHub release of the bad version, untick "Set as the latest release" and say in its
+notes which version replaces it. The fix is the revert and the next release (section 1).
+
+Pinned copies of the workflows on the `workflows-<sha12>` tags of `drexthealpha/Knos` move only when a new set is
+built and committed there (`python scripts/release.py workflows DIR`, then `stamp SHA`), as [RELEASE.md](RELEASE.md)
+describes.
 
 The site is built from `main` by `.github/workflows/network.yml` (workflow `pages`) on every push that touches `web/`,
 every 30 minutes, and when `release.yml` starts it. A reverted `web/` on `main` is therefore the only change that
@@ -109,9 +117,11 @@ node scripts/governance.mjs upgrade execute <index> --expect-hash <build hash>  
 ```
 
 `deploy_v2.sh --propose` waits for the build's record at the upgrade gate; a build made on a release tag has one.
-`--ungated` is for an emergency only and says so in the proposal. Orders funded under the later build keep their
-stored terms and fee. **Not drilled:** an upgrade back to an older build of knos_pay; the previous build must read
-every account the later one wrote, and that is to be shown on a local validator before it is proposed.
+`--ungated` is for an emergency only and says so in the proposal.
+
+Orders funded under the later build keep their stored terms and fee. **Not drilled:** an upgrade back to an older
+build of knos_pay; the previous build must read every account the later one wrote, and that is to be shown on a
+local validator before it is proposed.
 
 ## What is not covered
 

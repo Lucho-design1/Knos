@@ -89,7 +89,7 @@ async function board(fresh) {
 const pct = (a, b) => (b ? Math.max(2, Math.min(100, Math.round((100 * a) / b))) : 0);
 function card(p) {
   const where = (p.where || []).join(", ");
-  return `<li class="card hp-card" data-slug="${esc(p.slug)}"><p class="small muted"${where ? " data-qloo" : ""}>${esc([p.paper, where].filter(Boolean).join(" · "))}${where ? (window.KnosDemand ? KnosDemand.src("", p.report) : "") : ""}</p>
+  return `<li class="card hp-card" data-slug="${esc(p.slug)}"><p class="small muted"${where ? " data-qloo" : ""}>${esc([p.tech_name, p.paper, where].filter(Boolean).join(" · "))}${where ? (window.KnosDemand ? KnosDemand.src("", p.report) : "") : ""}</p>
     <h2 class="hp-t">${esc(p.title)}</h2>
     <div class="meter" aria-hidden="true"><span style="width:${pct(p.backed_units, p.reserve_units)}%"></span></div>
     <p class="small"><b>${esc(p.backed_units)}</b> ${t("of")} ${esc(p.reserve_units)} ${t("backed_l")}${p.escrow_units ? ` · <b>${esc(p.escrow_units)}</b> ${t("escrow_l")}` : ""}${p.maker ? "" : ` · ${t("maker_wanted")}`}</p>

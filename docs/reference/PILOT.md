@@ -12,21 +12,24 @@ section says what blocks it.
 
 A Pilot is a paid trial. One buyer and two of its suppliers use Knos for 30 days. Each task goes into one of two
 groups by a fair draw: Knos terms, or the buyer's usual way. We then compare the two groups. The rules for that are
-written below, before any task starts. Nothing has been run yet. New words are explained in
-[WORDS.md](../WORDS.md).
+written below, before any task starts. Nothing has been run yet.
+
+New words are explained in [WORDS.md](../WORDS.md).
 
 ## How it starts: shadow mode
 
 A Pilot starts in shadow mode. For the first period the count runs beside the invoices the buyer already receives
 and changes nothing: no money moves through Knos, nobody's process changes, no supplier is paid differently, and
-the buyer approves its invoices exactly as before. Shadow mode asks the buyer for no trust and no money. It is
-free, with or without a Pilot after it, inside the Meter's free allowance.
+the buyer approves its invoices exactly as before. Shadow mode asks the buyer for no trust and no money.
 
-What shadow mode produces is two numbers side by side for each supplier, the supplier's invoice count and the
-neutral count, and every line where they differ. The first line the two sides have to settle between them is the
-reason to buy the Pilot: the Pilot is the same work for two suppliers over 30 days. It ends with one reconciled
-invoice and the findings as numbers, with someone answerable for them. A shadow count that finds no difference is a result too, and
-the buyer should then not buy the Pilot.
+It is free, with or without a Pilot after it, inside the Meter's free allowance.
+
+What shadow mode produces is two numbers side by side for each supplier, the supplier's invoice count and the neutral count, and
+every line where they differ. The first line the two sides have to settle between them is the reason to buy the Pilot: the Pilot is
+the same work for two suppliers over 30 days.
+
+It ends with one reconciled invoice and the findings as numbers, with someone answerable for them. A shadow count that finds no
+difference is a result too, and the buyer should then not buy the Pilot.
 
 No shadow count has been run with anyone, and none is published.
 
@@ -180,9 +183,10 @@ That makes the test harder to pass, not easier.
 
 `python scripts/pilot_plan.py power --baseline 0.0373 --effect 0.0323` prints how many tasks each group needs. It
 assumes that the usual way pays for 3.7% of tasks with a failed check: the 9 of 241 below. It plans to find a fall to
-0.5% (1 task in 200) with Knos terms. It allows a 1 in 20 chance of a false alarm. It gives an 80% chance to find a
-real fall. The formula is written out in the script. It is the one in Fleiss, Levin and Paik, *Statistical Methods
-for Rates and Proportions*, 3rd edition (Wiley, 2003), chapter 4.
+0.5% (1 task in 200) with Knos terms. It allows a 1 in 20 chance of a false alarm.
+
+It gives an 80% chance to find a real fall. The formula is written out in the script. It is the one in Fleiss, Levin
+and Paik, *Statistical Methods for Rates and Proportions*, 3rd edition (Wiley, 2003), chapter 4.
 
 | The usual way | With Knos terms | Tasks in each group | Tasks in all |
 | --- | --- | --- | --- |
@@ -193,14 +197,17 @@ for Rates and Proportions*, 3rd edition (Wiley, 2003), chapter 4.
 
 The plan is the first line: 311 tasks in each group, 622 in all. One Pilot is one buyer. Unless that buyer has 622
 tasks in its 30 days, the test adds up several Pilots under this same plan, buyer by buyer. With events this rare, this
-way of counting is rough. It sizes the test. It is not the analysis.
+way of counting is rough. It sizes the test.
+
+It is not the analysis.
 
 ### The baseline: what 9 of 241 is, and what it is not
 
-What it is. Of 241 merged agent pull requests that claimed passing tests, 9 had a failed test, build, lint or
-type-check job at the head commit: 3.7% (95% interval 2.0% to 6.9%; [backtest.json](../backtest.json), `reviewed`). A pull
-request is a proposed change to code. Merged means it was accepted into the code. The head commit is the last
-version of the change.
+What it is. Of 241 merged agent pull requests that claimed passing tests, 9 had a failed test, build, lint or type-check
+job at the head commit: 3.7% (95% interval 2.0% to 6.9%; [backtest.json](../backtest.json), `reviewed`). A pull request is
+a proposed change to code. Merged means it was accepted into the code.
+
+The head commit is the last version of the change.
 
 How they were picked ([INDEX_METHOD.md](../INDEX_METHOD.md)):
 
@@ -246,26 +253,32 @@ Meter line uses the proposed 0.002 USD per evaluation after 100,000 free):
 
 Both lines are hurdles to be measured in a Pilot, not claims: neither says a buyer gets the benefit.
 
-For the Pilot alone the same line is 2,500 × 3 = 7,500 USD of benefit found in the 30 days. The benefit is the sum of
-what the four measures above are worth to the buyer: hours no longer spent, lines no longer paid twice or paid for
-work that did not meet its terms, days no longer waited. An hour saved counts only when it lowers what the buyer
-spends or lets it not hire. The findings report three kinds apart and never add one into another: **recoveries**
-(money not paid, or paid back, for lines that were duplicated or did not meet their terms), **avoided labour**
-(hours, as above) and **financing benefit** (days of payment brought forward, valued at the supplier's own cost of
-money). A disputed dollar is not a saved dollar, and a faster payment is not new profit. The price is not the buyer's whole cost either: its own compute, the integration and the
-exceptions its people still handle are beside it ([UNIT_COSTS.md](UNIT_COSTS.md)). `knos bill estimate` prints the price and the benefit to
-demand for any plan and volume. **Knos has not shown this benefit for anyone.** Nobody has measured it, and a Pilot
-that finds less will say how much less, and that the buyer should not buy.
+For the Pilot alone the same line is 2,500 × 3 = 7,500 USD of benefit found in the 30 days. The benefit is the sum of what the four measures above are worth to the buyer: hours
+no longer spent, lines no longer paid twice or paid for work that did not meet its terms, days no longer waited.
+
+An hour saved counts only when it lowers what the buyer spends or lets it not hire.
+
+The findings report three kinds apart and never add one into another: **recoveries** (money not paid, or paid back, for lines that were duplicated or did not meet their terms),
+**avoided labour** (hours, as above) and **financing benefit** (days of payment brought forward, valued at the supplier's own cost of money).
+
+A disputed dollar is not a saved dollar, and a faster payment is not new profit. The price is not the buyer's whole cost either: its own compute, the integration and the
+exceptions its people still handle are beside it ([UNIT_COSTS.md](UNIT_COSTS.md)).
+
+`knos bill estimate` prints the price and the benefit to demand for any plan and volume. **Knos has not shown this benefit for anyone.** Nobody has measured it, and a Pilot that
+finds less will say how much less, and that the buyer should not buy.
 
 ## What it costs
 
-2,500 USD for one buyer and two suppliers, for 30 days, invoiced off chain in ordinary money. The suppliers pay
-nothing, and connecting them costs nothing. No real fee is taken on chain: any release during a Pilot is on devnet in
-test USDC, where the program's fee is test money and zero revenue. Acceptance on the one invoice the Pilot
-reconciles is inside the 2,500 USD. After it the proposed price book applies: 0.30% of accepted value, 0.20% by
-contract on the part of a month's value above 1,000,000 USD and never lower, and outcomes under 20 USD netted into one release per payee
-per period ([MARKET.md](MARKET.md), section 3). Acceptance is charged once whichever rail pays the supplier, and
-what a bank or a network charges for the payment is listed apart from Knos's price.
+2,500 USD for one buyer and two suppliers, for 30 days, invoiced off chain in ordinary money. The suppliers pay nothing, and connecting
+them costs nothing. No real fee is taken on chain: any release during a Pilot is on devnet in test USDC, where the program's fee is test
+money and zero revenue.
+
+Acceptance on the one invoice the Pilot reconciles is inside the 2,500 USD. After it the proposed price book applies: 0.30% of accepted
+value, 0.20% by contract on the part of a month's value above 1,000,000 USD and never lower, and outcomes under 20 USD netted into one
+release per payee per period ([MARKET.md](MARKET.md), section 3).
+
+Acceptance is charged once whichever rail pays the supplier, and what a bank or a network charges for the payment is listed apart from
+Knos's price.
 
 **The 2,500 USD is credited against year one.** A buyer who goes on to an annual contract
 ([MARKET.md](MARKET.md), section 3) pays that year's invoices less the 2,500 USD already paid: on the Team plan,

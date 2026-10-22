@@ -59,10 +59,12 @@ includes ([MARKET.md](MARKET.md)). The faucet and the playground exist only on d
 
 Not decided; this is the shape intended. The first mainnet build carries a low per-order cap as a constant. Raising
 it is a program upgrade like any other: proposed through the multisig, public for 8 days, with the new bytes
-verifiable before the vote. The rule for when a raise may be proposed (how long at the current cap, how much
-settled, no open incident) is published before the first order, so that a raise is the execution of a rule and not
-a judgement made on the day. A funder's own Balance limits (per order, per day, in total) stay available below the
-program's cap.
+verifiable before the vote.
+
+The rule for when a raise may be proposed (how long at the current cap, how much settled, no open incident) is
+published before the first order, so that a raise is the execution of a rule and not a judgement made on the day.
+
+A funder's own Balance limits (per order, per day, in total) stay available below the program's cap.
 
 ## Incident and upgrade policy (draft)
 

@@ -1,4 +1,4 @@
-# Qloo Insights API parameters, read from https://docs.qloo.com/reference/parameters on 21 Oct 2026 (Filters, Signals, Output).
+# Qloo Insights API parameters, read from https://docs.qloo.com/reference/parameters on 22 Oct 2026 (Filters, Signals, Output).
 # name	type	entity types the docs list ("" = the docs list none: audience/tag/heatmap routes or untyped)
 filter.address	string	Place
 filter.audience.types	array of strings	

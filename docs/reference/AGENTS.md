@@ -4,13 +4,15 @@ A coding agent can do paid work through the `knos mcp` server with no person in 
 `auto` option: a black-box order that pays the first pull request whose head passes its pinned black-box checks, with
 no merge. Everything here is on Solana devnet, in test USDC.
 
-The host can be Claude Code, Codex, or any client that speaks the Model Context Protocol over stdio. `knos init`
-registers the server with the first two for the whole machine. `knos init --host <name>` writes it into one project
-for Cursor, Gemini CLI, GitHub Copilot and VS Code, opencode and Roo Code, and with `--global` for Hermes Agent and
-Cline, in every case with only the tools that read allowed to run unasked: the three that post (`knos_take_work`,
-`knos_submit_work`, `knos_collect`) stay behind the host's own question, and behind the switches below. Which hosts
-can also run Knos's check before the agent stops, and hold back a "done" the checks contradict, is in [integrations/hosts/README.md](../../integrations/hosts/README.md). Any
-other client starts `knos mcp` (or `uvx knos mcp`).
+The host can be Claude Code, Codex, or any client that speaks the Model Context Protocol over stdio. `knos init` registers the server with the first two for the whole
+machine.
+
+`knos init --host <name>` writes it into one project for Cursor, Gemini CLI, GitHub Copilot and VS Code, opencode and Roo Code, and with `--global` for Hermes Agent and
+Cline, in every case with only the tools that read allowed to run unasked: the three that post (`knos_take_work`, `knos_submit_work`, `knos_collect`) stay behind the host's
+own question, and behind the switches below.
+
+Which hosts can also run Knos's check before the agent stops, and hold back a "done" the checks contradict, is in
+[integrations/hosts/README.md](../../integrations/hosts/README.md). Any other client starts `knos mcp` (or `uvx knos mcp`).
 
 ## The loop, in six lines
 
@@ -84,10 +86,12 @@ So the narrowest token depends on who owns the repository that funded the work:
 The permission each endpoint needs is listed by GitHub in
 [Permissions required for fine-grained personal access tokens](https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens).
 
-A classic token with the `repo` scope reaches every private repository the account can, so the posting tools refuse
-it. A classic token whose scopes GitHub does not state is refused too. The token `gh auth login` makes carries `repo`:
-give `gh` the narrow token instead (`GH_TOKEN`), or allow the broad one explicitly. With a classic `public_repo` token,
-give the account nothing but the fork and `knos-claim`, so that there is nothing else for the token to reach.
+A classic token with the `repo` scope reaches every private repository the account can, so the posting tools refuse it.
+A classic token whose scopes GitHub does not state is refused too. The token `gh auth login` makes carries `repo`: give
+`gh` the narrow token instead (`GH_TOKEN`), or allow the broad one explicitly.
+
+With a classic `public_repo` token, give the account nothing but the fork and `knos-claim`, so that there is nothing
+else for the token to reach.
 
 ## What a person still does today
 

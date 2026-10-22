@@ -2,8 +2,10 @@
 
 A supplier who thinks a rejection is wrong can contest it, and nobody from Knos is needed for any step. This page says
 what each party can do at each state, which clock runs, where the money is, and what happens when the evaluator the
-terms name never answers. It states what the code does today (`src/knos/appeal.py`, `src/knos/flow.py`, the order
-instructions of `knos_pay`), and where the code does less than the terms say, it says so.
+terms name never answers.
+
+It states what the code does today (`src/knos/appeal.py`, `src/knos/flow.py`, the order instructions of `knos_pay`),
+and where the code does less than the terms say, it says so.
 
 Money on devnet is test USDC. This page describes mechanisms. It is not a contract and not legal advice
 ([LIABILITY.md](LIABILITY.md)).
@@ -12,8 +14,9 @@ Money on devnet is test USDC. This page describes mechanisms. It is not a contra
 
 Knos's fee is a share of the value released against a signed acceptance, and nothing when no value is released.
 So Knos has an interest in more work being accepted: a wrongly accepted order pays its fee account, and a wrongly
-rejected one that runs to its deadline pays it nothing, because the refund returns the amount and the fee. "The
-buyer funds it" does not make that interest go away. What keeps Knos out of the verdict:
+rejected one that runs to its deadline pays it nothing, because the refund returns the amount and the fee.
+
+"The buyer funds it" does not make that interest go away. What keeps Knos out of the verdict:
 
 1. **Knos never evaluates or adjudicates.** A verdict comes from the checks the terms fixed and hashed before the
    work, run by the buyer's own repository, by the neutral judge in a repository whose owner is neither party, or
@@ -37,17 +40,19 @@ each import of the verdict modules, and the fee function's arguments.
 
 What is still not separate: the founder writes the pinned judge workflow and holds every upgrade key. A new judge
 is a new pinned commit, which binds only orders funded under it; a program change waits through a public 8-day
-delay ([GOVERNANCE.md](GOVERNANCE.md)). Knos has no commercial staff to keep apart from adjudication, because one
-person is the whole team; until outside key holders exist, the separation is in the code and in public, not
-between people.
+delay ([GOVERNANCE.md](GOVERNANCE.md)).
+
+Knos has no commercial staff to keep apart from adjudication, because one person is the whole team; until outside
+key holders exist, the separation is in the code and in public, not between people.
 
 ## Before the work: what the terms give the supplier
 
 A dispute is cheaper to avoid than to win. `knos preflight --terms FILE --strict` reads a set of terms before the
 supplier starts and says which of four protections they hold: fixed criteria, an acceptance deadline, an appeal
-against a rejection, and payment funded before the work. It exits 1 when one is lacking, with the sentence a person
-needs ("These terms have no acceptance deadline: the buyer can wait forever"). The table, and how each is enforced,
-is in [SUPPLIER.md](SUPPLIER.md), section 1.
+against a rejection, and payment funded before the work.
+
+It exits 1 when one is lacking, with the sentence a person needs ("These terms have no acceptance deadline: the
+buyer can wait forever"). The table, and how each is enforced, is in [SUPPLIER.md](SUPPLIER.md), section 1.
 
 After the work, `knos receipt explain FILE` reads a receipt in five parts; its last part says what stayed trusted or
 outside the evaluation, and starts with `WEAK` when the acceptance stands on a weak test
@@ -55,13 +60,11 @@ outside the evaluation, and starts with `WEAK` when the acceptance stands on a w
 
 ## The path
 
-    rejected, or insufficient evidence
-        /knos appeal <reason>          the pull request's author comments it on the pull request
-    disputed (open)                    who, when and why are recorded; no money moves
-        the evaluator is started       the one the terms name under `dispute`
-    disputed (re-running)              that evaluator runs the funded checks again, itself
-    accepted                           the checks passed there: the rejection is overturned, and the order can be paid
-    rejected                           they did not pass there: the rejection stands, with the reasons in words
+rejected, or insufficient evidence /knos appeal <reason>          the pull request's author comments it on the pull
+request disputed (open)                    who, when and why are recorded; no money moves the evaluator is started the
+one the terms name under `dispute` disputed (re-running)              that evaluator runs the funded checks again,
+itself accepted                           the checks passed there: the rejection is overturned, and the order can be
+paid rejected                           they did not pass there: the rejection stands, with the reasons in words
 
 Two orders have two evaluators, and the terms say which ([TERMS.md](TERMS.md), the `dispute` field):
 

@@ -15,9 +15,11 @@ proposal that adds a key has executed on chain.
 
 Knos's four programs can be replaced only by the **upgrade multisig**
 `9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK`: 2 of its 3 member keys must approve, and the approved upgrade can
-run 8 days later and not before. A second multisig, the **guardian**
-`EwqWNR3XwE9RMsJQdH7pZJSx4WERXCKLQdBpMnr8jFx5` (2 of 3, no delay), approves or revokes the signing keys the verifier
-accepts and can pause new funding for at most 7 days. A key holder holds one member key.
+run 8 days later and not before.
+
+A second multisig, the **guardian** `EwqWNR3XwE9RMsJQdH7pZJSx4WERXCKLQdBpMnr8jFx5` (2 of 3, no delay), approves or
+revokes the signing keys the verifier accepts and can pause new funding for at most 7 days. A key holder holds one
+member key.
 
 ## What your key can do
 
@@ -122,11 +124,14 @@ So the accurate description today is: **a witness with a vote, not a check.** No
 three as independent approval, a veto or shared control.
 
 One outside key of three is a second person who sees every proposal and can say in public that they did not
-approve it. It does not bind the founder, who would still hold two keys and can approve alone. The founder stops
-being able to approve alone when a second outside key replaces a second founder key, or when the threshold becomes
-3 of 3. `node scripts/governance.mjs replace-member` and `set-threshold` print which of the two states a change
-leads to ("the founder alone can STILL approve" or "can NOT"), and what a threshold of 3 of 3 costs: one lost key
-and nothing can be approved again.
+approve it. It does not bind the founder, who would still hold two keys and can approve alone.
+
+The founder stops being able to approve alone when a second outside key replaces a second founder key, or when the
+threshold becomes 3 of 3.
+
+`node scripts/governance.mjs replace-member` and `set-threshold` print which of the two states a change leads to
+("the founder alone can STILL approve" or "can NOT"), and what a threshold of 3 of 3 costs: one lost key and
+nothing can be approved again.
 
 ## What a key holder is not
 

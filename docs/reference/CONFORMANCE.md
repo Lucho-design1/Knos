@@ -6,11 +6,14 @@ implementation and compares:
 
     python conformance/run.py --impl "<the command that runs your implementation>"
 
-The command is started once. Each case arrives on its standard input as one line of JSON
-(`{"id": ..., "op": ..., "input": {...}}`) and is answered on standard output with one line: `{"id": ..., "output": ...}`,
-or `{"id": ..., "refused": true}` for an input the format does not allow, or `{"id": ..., "unsupported": true}` for an
-operation the implementation does not do. The runner needs Python 3.10 and nothing of Knos's. `--require-all` makes an
-unsupported case a failure; `--format terms` runs one format.
+The command is started once.
+
+Each case arrives on its standard input as one line of JSON (`{"id": ..., "op": ..., "input": {...}}`) and is answered on
+standard output with one line: `{"id": ..., "output": ...}`, or `{"id": ..., "refused": true}` for an input the format
+does not allow, or `{"id": ..., "unsupported": true}` for an operation the implementation does not do.
+
+The runner needs Python 3.10 and nothing of Knos's. `--require-all` makes an unsupported case a failure; `--format terms`
+runs one format.
 
 Kit version 4 has 370 cases. Version 2 added the receipt4 and ids rows, version 3 the ledger2 row, version 4 the receipt5 row; none changed a
 vector of the version before:
@@ -137,10 +140,13 @@ written from this page and from the description in each vector file, for operati
 `receipt.digest`, `ledger.deliverable_id`, `statement.hash`, and the nine of the ids format (`ids.deliverable`,
 `ids.evaluation`, `ids.invoice_line`, `ids.settlement`, `ids.kind_of`, `ids.expect`, `ids.order_scope`, `ids.verdict`,
 `ids.billed_once`), and the four of ledger format 2 (`ledger2.event_bytes`, `ledger2.leaf`, `ledger2.root`,
-`ledger2.check_proof`). They show that the descriptions are enough to write from; they are not a claim about the client.
-The 126 it does not do are four operations. Before receipt version 5 they were three operations and 93 cases, and
-the client passed 237 (244 now). Each is a difference between Knos's own two implementations that a user of the client
-should know:
+`ledger2.check_proof`).
+
+They show that the descriptions are enough to write from; they are not a claim about the client. The 126 it does not do
+are four operations. Before receipt version 5 they were three operations and 93 cases, and the client passed 237 (244
+now).
+
+Each is a difference between Knos's own two implementations that a user of the client should know:
 
 - `receipt.check` (99 cases): the client does not check a receipt's rules.
 - `receipt.verdict` (19 cases): so it does not say a receipt's verdict, or whether it authorises payment.

@@ -1,6 +1,6 @@
 # Qloo coverage: every parameter x filter.type x endpoint
 
-Written by `scripts/qloo_coverage.py` from `src/knos/qloo_docs/` (read from docs.qloo.com on 21 Oct 2026: the Parameter
+Written by `scripts/qloo_coverage.py` from `src/knos/qloo_docs/` (read from docs.qloo.com on 22 Oct 2026: the Parameter
 Reference, the Entity Type Parameter Guide and each endpoint's page) and `src/knos/qloo_families.py` (the one table of
 names every interface reads). CI runs `--check`, so this file cannot drift from the code.
 

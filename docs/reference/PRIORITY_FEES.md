@@ -10,11 +10,12 @@ unless set, so nothing changes for anyone who does not ask.
 | `KNOS_PRIORITY_MAX` | the most it will pay a unit (default 200,000 micro-lamports) |
 | `KNOS_WS=1` | wait for confirmation with one `signatureSubscribe` over the cluster's WebSocket, after one status read, instead of asking `getSignatureStatuses` every 0.4 s; falls back to asking if the WebSocket cannot be used |
 
-Why the limit matters: a priority fee is paid on the compute-unit LIMIT, not on what was used
-([compute budget](https://solana.com/docs/core/fees/compute-budget), read 14 Oct 2026). Knos's default limit is the
-most a transaction may use, 1,400,000 units. On a v1 transaction the two compute budget instructions do nothing;
-`knos.chain.message_v1` already reads their values into the message's own limit and priority fee, so the same
-setting serves both formats.
+Why the limit matters: a priority fee is paid on the compute-unit LIMIT, not on what was used ([compute
+budget](https://solana.com/docs/core/fees/compute-budget), read 14 Oct 2026). Knos's default limit is the most a
+transaction may use, 1,400,000 units.
+
+On a v1 transaction the two compute budget instructions do nothing; `knos.chain.message_v1` already reads their
+values into the message's own limit and priority fee, so the same setting serves both formats.
 
 Why the WebSocket matters: the public devnet endpoint allows 100 requests in 10 seconds per address
 ([clusters](https://solana.com/docs/references/clusters)); polling a slow payout spends that allowance.

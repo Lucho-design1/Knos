@@ -24,19 +24,20 @@ Read from devnet's feature accounts; the AUDIT table in the release notes has th
 
 ## 2. Builds
 
-`bash scripts/build_sbf.sh v3 deploy` builds the four programs with a pinned toolchain (cargo-build-sbf 4.4.0 from
-the Agave 4.4.0-beta.0 release, platform-tools v1.57, `--locked`, file paths remapped so the bytes do not depend on where the checkout is) and
-writes their hashes to [`deploy/upgrade-0329/HASHES-v3.txt`](../../deploy/upgrade-0329/HASHES-v3.txt). The ELF
-header's `e_flags` is the sBPF version; the script refuses a file whose version is not the one asked for.
-**Not the 2.3 toolchain.** An sBPF v3 file built by cargo-build-sbf 2.3.13 with platform-tools v1.48 (the toolchain
-the repository used until now) does not load in Agave 4.4: `solana-test-validator` 4.4.0-beta.0 stops with "ELF
-error: Failed to parse ELF file: invalid file header". The v3 format devnet activated (feature `5cC3fo…`) is a later
-one than the 2.3 toolchain writes. So v3 needs the 4.4 toolchain. The v2 test build of the 2.3 toolchain loads in both
-solders 0.29's LiteSVM and Agave 4.4.
-The Python tests load `tests/fixtures/platform/knos_oidc_v2_test.so`, the test build (`--features testkeys`) for
-sBPF v2, built with the repository's pinned 2.3 toolchain (`cd programs-v2/knos_oidc && cargo build-sbf --arch v2
---features testkeys`): LiteSVM as solders 0.29.0 ships cannot load an sBPF v3 file ("invalid file header"),
-so v3 is measured in `solana-test-validator` 4.4.0-beta.0.
+`bash scripts/build_sbf.sh v3 deploy` builds the four programs with a pinned toolchain (cargo-build-sbf 4.4.0 from the Agave 4.4.0-beta.0
+release, platform-tools v1.57, `--locked`, file paths remapped so the bytes do not depend on where the checkout is) and writes their hashes to
+[`deploy/upgrade-0329/HASHES-v3.txt`](../../deploy/upgrade-0329/HASHES-v3.txt).
+
+The ELF header's `e_flags` is the sBPF version; the script refuses a file whose version is not the one asked for. **Not the 2.3 toolchain.**
+An sBPF v3 file built by cargo-build-sbf 2.3.13 with platform-tools v1.48 (the toolchain the repository used until now) does not load in Agave
+4.4: `solana-test-validator` 4.4.0-beta.0 stops with "ELF error: Failed to parse ELF file: invalid file header".
+
+The v3 format devnet activated (feature `5cC3fo…`) is a later one than the 2.3 toolchain writes. So v3 needs the 4.4 toolchain. The v2 test
+build of the 2.3 toolchain loads in both solders 0.29's LiteSVM and Agave 4.4.
+
+The Python tests load `tests/fixtures/platform/knos_oidc_v2_test.so`, the test build (`--features testkeys`) for sBPF v2, built with the
+repository's pinned 2.3 toolchain (`cd programs-v2/knos_oidc && cargo build-sbf --arch v2 --features testkeys`): LiteSVM as solders 0.29.0
+ships cannot load an sBPF v3 file ("invalid file header"), so v3 is measured in `solana-test-validator` 4.4.0-beta.0.
 
 The verified (docker) build is `solana-verify build "$PWD" --workspace-path "$PWD/programs-v2" --library-name <name>
 --arch v3 --base-image <image>`. This machine has no docker, so that build was not run here: the members compare the
@@ -62,12 +63,15 @@ Agave 4.4 refuses, as evidence.
 
 knos-oidc computes s^65537 mod n (16 squarings and one product) in Montgomery form. The v0 build does it on 32-bit
 limbs (`rsa.rs`): a 2048-bit squaring is 64 x 64 limb products plus the reduction, and the whole verification costs
-more than one transaction's 1,400,000 compute units, so the client sends Step(8), Step(8). The v2 build does the
-same arithmetic on 64-bit limbs (`rsa64.rs`, chosen by `build.rs` for an sBPF v2 target, `modexp.rs`): the PQR
-instructions make each 64 x 64 -> 128-bit product two instructions, and a squaring is 32 x 32 limb products, a quarter
-of the multiplications. One Step(16) then does everything in one transaction. The token account is unchanged, and the
-running power is the same bytes in both arithmetics, so a token stepped halfway under one build finishes under the
-other (an upgrade between two Steps changes nothing; `tests/test_platform_verify.py`).
+more than one transaction's 1,400,000 compute units, so the client sends Step(8), Step(8).
+
+The v2 build does the same arithmetic on 64-bit limbs (`rsa64.rs`, chosen by `build.rs` for an sBPF v2 target,
+`modexp.rs`): the PQR instructions make each 64 x 64 -> 128-bit product two instructions, and a squaring is 32 x 32
+limb products, a quarter of the multiplications. One Step(16) then does everything in one transaction.
+
+The token account is unchanged, and the running power is the same bytes in both arithmetics, so a token stepped
+halfway under one build finishes under the other (an upgrade between two Steps changes nothing;
+`tests/test_platform_verify.py`).
 
 **sBPF v3 (v0.3.30): one transaction too, for a token of up to 5,000 bytes.** The v3 that Agave 4.4 runs (SIMD-0178,
 SIMD-0189, SIMD-0377) has no high-half multiply: a v3 build of platform-tools v1.57 holds `mul64` and no `uhmul64`
@@ -141,12 +145,16 @@ synthetic tokens signed by the tests' seed keys; 14 Oct 2026):
 
 A token the v1 transaction carries whole is about 3,600 bytes at most, so every one-transaction (Write + Step(16))
 verification fits; the margin for other instructions is about 98,000 compute units at the usual size and shrinks with
-the token. `knos.platform.verify.plan(..., "auto", elf, token_bytes)` takes one Step for a v3 build up to
-`V3_ONE_STEP_MAX` = 4,000 bytes and Step(8), Step(8) above (8,192 bytes: 667,386 + 891,286). A 4096-bit key keeps the
-two-step plan on v3 (six Steps, at most 1,031,214 compute units a transaction for a 2,409-byte token and 1,071,940
-for 8,191 bytes): its Step(4) runs out. A forged signature is refused (1,237,747 consumed, error, nothing verified).
-The v3 deploy build of knos_oidc is now `deploy/upgrade-0329/HASHES-v3.txt`'s line (executable hash `d565487f…`):
-the v3 buffer written on 13-14 Oct for the old build no longer matches it.
+the token.
+
+`knos.platform.verify.plan(..., "auto", elf, token_bytes)` takes one Step for a v3 build up to `V3_ONE_STEP_MAX` =
+4,000 bytes and Step(8), Step(8) above (8,192 bytes: 667,386 + 891,286). A 4096-bit key keeps the two-step plan on v3
+(six Steps, at most 1,031,214 compute units a transaction for a 2,409-byte token and 1,071,940 for 8,191 bytes): its
+Step(4) runs out.
+
+A forged signature is refused (1,237,747 consumed, error, nothing verified). The v3 deploy build of knos_oidc is now
+`deploy/upgrade-0329/HASHES-v3.txt`'s line (executable hash `d565487f…`): the v3 buffer written on 13-14 Oct for the
+old build no longer matches it.
 
 So: **before** 761,637 + 826,670 = 1,588,307 compute units in two transactions (LiteSVM, today's v0 test build,
 1,893-byte token; 761,805 + 826,794 in the validator); **after**, with the v2 build, 882,519 in ONE transaction on
@@ -161,8 +169,10 @@ Step(8), which every build takes; `one` sends Step(16); `auto` reads the deploye
 
 `knos.chain` already sends v1 transactions (SIMD-0385) when a message is too big for 1,232 bytes, with the compute
 limit and the priority fee (a lamport total) in the message. New here: `knos.platform.verify.one_transaction_ixs`
-puts the whole token (one Write) and Step(16) in ONE v1 transaction. The chunked Write path stays for a cluster or an
-endpoint that refuses v1 (`chain.v1_refused`), which the relay falls back to.
+puts the whole token (one Write) and Step(16) in ONE v1 transaction.
+
+The chunked Write path stays for a cluster or an endpoint that refuses v1 (`chain.v1_refused`), which the relay falls
+back to.
 
 Measured in LiteSVM (`tests/test_platform_verify.py`): a 1,922-byte token written whole and verified by Step(16) in one
 v1 transaction of 2,322 bytes, 893,664 compute units, under the sBPF v2 build. The same instructions weigh more than
@@ -173,6 +183,7 @@ v1 transaction of 2,322 bytes, 893,664 compute units, under the sBPF v2 build. T
 knos-oidc's VerifyEs256 (instruction 15, `es256.rs`) already verifies ES256 tokens through the secp256r1 precompile
 at top level: it reads the instruction before it from the instructions sysvar and checks that it is the precompile
 over this token's signing input and this key. A legacy transaction leaves 780 bytes for the signing input.
+
 `knos.platform.verify.es256_v1_ixs` sends the same two instructions in a v1 transaction, where the signing input can
 be about 3,400 bytes or more (`tests/test_platform_es256.py`).
 
@@ -202,9 +213,11 @@ transaction does not run.
 
 [`deploy/upgrade-0329/STEPS.md`](../../deploy/upgrade-0329/STEPS.md) is the founder's page: the buffers on devnet (written by
 the PLATFORM wallet and handed to the upgrade vault `CKCrTB…`), how to check their bytes, the Squads proposal commands
-(multisig `9HcsMEo2…`, time lock 691,200 s), and the decision between a v3 and a v2 knos_oidc. Nothing was proposed,
-approved or executed, and no founder key signed anything. SIMD-0500 (`B8JJXC…`, not active on devnet on 13 Oct 2026)
-will refuse v0, v1 and v2 deployments once active; programs already deployed keep running.
+(multisig `9HcsMEo2…`, time lock 691,200 s), and the decision between a v3 and a v2 knos_oidc. Nothing was proposed, approved
+or executed, and no founder key signed anything.
+
+SIMD-0500 (`B8JJXC…`, not active on devnet on 13 Oct 2026) will refuse v0, v1 and v2 deployments once active; programs
+already deployed keep running.
 
 ## 8. What is not done
 

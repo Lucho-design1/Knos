@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knos. Ready to fund</title>
+<meta name="description" content="A brief that passed Knos's Ready check, attested on Solana devnet: its criteria hash, its milestones and the attestation to check.">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="preload" href="/static/fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/brand/tokens.css">
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.rc { max-width: 640px; margin: var(--sp-6) auto; background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--depth-2); padding: var(--sp-5); }
+.rc h1 { font-size: var(--s3); margin: 0 0 var(--sp-3); }
+.rc .rc-badge { display: inline-block; padding: 4px 12px; border-radius: 99px; background: var(--ok); color: var(--paper); font-weight: 700; }
+.rc dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: var(--sp-4) 0; }
+.rc dt { color: var(--muted); } .rc dd { margin: 0; overflow-wrap: anywhere; }
+.rc .rc-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+</style>
+<script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<!-- k-bar -->
+<header class="bar k-bar" id="k-bar">
+  <a class="brand" href="/#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
+  <nav id="nav" aria-label="Knos">
+    <a href="/#home">Check demand</a>
+    <a href="/companies">Companies</a>
+    <a href="/fields">Fields</a>
+    <a href="/#projects">Projects</a>
+    <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
+    <div class="more" id="more">
+      <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
+      <div class="more-list" id="more-list">
+        <a href="/money">The money</a>
+        <a href="https://drexthealpha.github.io/Knos/#pricing">Pricing</a>
+        <a href="/#verify">How we verify</a>
+        <a href="/#buy">Back a product</a>
+        <a href="/#fund">Fund a milestone</a>
+        <a href="/#contribute">Open work</a>
+        <a href="/#make">Make</a>
+        <a href="/#teams">Teams</a>
+        <a href="/#agents">Agents</a>
+        <a href="/with-without">With and without Qloo</a>
+        <a href="/qloo-safe-use">How Knos uses Qloo safely</a>
+        <a href="/invite">Invite</a>
+        <a href="https://drexthealpha.github.io/Knos/#check-a-pull-request" id="go-check">Check a pull request</a>
+        <a href="https://drexthealpha.github.io/Knos/#demo">Demo</a>
+        <a href="https://drexthealpha.github.io/Knos/#install">Install</a>
+        <a href="https://drexthealpha.github.io/Knos/#records">Records</a>
+        <a href="https://drexthealpha.github.io/Knos/#network">Numbers</a>
+        <a href="https://drexthealpha.github.io/Knos/#judges">Check every claim yourself</a>
+        <a href="https://drexthealpha.github.io/Knos/faq.html">Questions</a>
+      </div>
+    </div>
+  </nav>
+  <div class="tools">
+    <button id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
+    <a id="whoBtn" class="signin" href="/#signin">Sign in</a>
+  </div>
+</header>
+<script src="/static/brand/bar.js" defer></script>
+<!-- /k-bar -->
+<main class="wrap">
+  <article class="rc" id="rc" aria-live="polite"><p>Reading the attestation on devnet…</p></article>
+</main>
+<script>
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+(async () => {
+  const h = location.pathname.split("/").pop(), el = document.getElementById("rc");
+  const r = await fetch("/api/ready/card?hash=" + encodeURIComponent(h)).then((x) => x.json()).catch(() => ({}));
+  if (!r.found) { el.innerHTML = `<h1>No Ready card here</h1><p>${esc(r.why || "No brief with this criteria hash was attested.")}</p>`; return; }
+  const c = r.card, oc = r.on_chain || {};
+  el.innerHTML = `<p><span class="rc-badge">Ready to fund</span></p><h1>${esc(c.title || "A brief")}</h1>
+    <dl><dt>Milestones</dt><dd>${esc(oc.milestones)}</dd><dt>Checked</dt><dd>${esc(oc.checked_at)}</dd>
+    <dt>Criteria hash</dt><dd class="mono">${esc(oc.criteria_sha256)}</dd>
+    <dt>Attestation</dt><dd><a href="${esc(c.explorer)}" rel="noopener">${esc(c.attestation)}</a> (Solana devnet)</dd></dl>
+    <div class="rc-acts"><button type="button" id="rc-share">Copy the link</button><a class="button ghost" href="/#projects">Back it on Knos</a></div>`;
+  document.getElementById("rc-share").onclick = async (ev) => { try { await navigator.clipboard.writeText(location.href); ev.target.textContent = "Copied"; } catch { ev.target.textContent = location.href; } };
+})();
+</script>
+</body>
+</html>

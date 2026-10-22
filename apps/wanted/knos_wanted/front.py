@@ -20,12 +20,35 @@ import time
 
 SEEDS = [
     {"slug": "sweat-glucose-watch", "ref": "10.1038/nature16521", "product": "a fitness watch with a sweat glucose sensor",
-     "place": None, "template": "hardware_prototype", "paper": "Nature, 2016"},
+     "place": None, "template": "hardware_prototype", "paper": "Nature, 2016", "tech": "biotech"},
     {"slug": "air-water-bottle", "ref": "10.1126/science.aam8743", "product": "a water bottle that harvests drinking water from desert air",
-     "place": "Phoenix", "template": "hardware_prototype", "paper": "Science, 2017"},
+     "place": "Phoenix", "template": "hardware_prototype", "paper": "Science, 2017", "tech": "materials"},
+    {"slug": "ai-recipe-planner", "ref": None, "idea": "An AI recipe planner for families",
+     "product": None, "place": None, "template": "internal_tool", "paper": None, "tech": "ai"},
     {"slug": "glow-hydration-bottle", "ref": None, "idea": "A smart water bottle that glows to remind you to drink",
-     "product": None, "place": "Lagos", "template": "hardware_prototype", "paper": None},
+     "product": None, "place": "Lagos", "template": "hardware_prototype", "paper": None, "tech": None},
 ]
+# the seven technologies of the fields page (static/fields.json), as a product names them: shown on its card
+TECH = {"ai": "AI", "web3": "Web3", "quantum": "Quantum", "energy": "Energy", "biotech": "Biotech", "materials": "Materials", "pqc": "PQC"}
+TECH_WORDS = {"ai": ("ai", "machine learning", "model", "llm"), "web3": ("crypto", "blockchain", "nft", "dao", "web3", "on chain", "token"),
+              "quantum": ("quantum",), "energy": ("battery", "solar", "grid", "reactor", "energy", "power"),
+              "biotech": ("glucose", "protein", "gene", "crispr", "probiotic", "fermented", "biotech", "drug", "enzyme", "sweat"),
+              "materials": ("material", "graphene", "concrete", "coating", "carbon fiber", "metamaterial", "perovskite", "harvests"),
+              "pqc": ("post-quantum", "post quantum", "lattice")}
+
+
+def tech_of(text: str, slug: str | None = None) -> str | None:
+    """A product's technology: its seed's, else the first of the seven whose words its title uses (pqc before quantum)."""
+    seed = next((s for s in SEEDS if s["slug"] == slug), None)
+    if seed and "tech" in seed:
+        return seed["tech"]
+    t = f" {(text or '').lower()} "
+    for k in ("pqc", "quantum", "web3", "ai", "energy", "biotech", "materials"):
+        if any(re.search(r"\b" + re.escape(w) + r"\b", t) for w in TECH_WORDS[k]):
+            return k
+    return None
+
+
 SEED_OWNER = {"sub": "knos:seed", "kind": "seed", "label": "Knos (seeded at start)"}
 CORS = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, OPTIONS", "Cache-Control": "public, max-age=30"}
 _lock = threading.RLock()
@@ -130,7 +153,9 @@ def product(state, rep: dict, slug: str, project_id: str | None) -> dict:
             project_id = None
     r = rep.get("research") or {}
     title = str(rep.get("idea") or slug).strip()
+    tech = tech_of(title, slug)
     return {"slug": slug, "report": rep["hash"], "title": title[:1].upper() + title[1:], "paper": _paper(rep, None),
+            "tech": tech, "tech_name": TECH.get(tech or ""),
             "paper_title": r.get("title"), "where": (plan.get("where") or [])[:3], "unit_price": plan.get("unit_price"),
             "target_units": d.get("target_units"), "reserve_units": d.get("reserve_units"),
             "backed_units": res["pre_ordered_units"], "escrow_units": escrow_units, "maker": maker, "project": project_id,

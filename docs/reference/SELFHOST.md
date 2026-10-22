@@ -37,8 +37,9 @@ one table per role, and `[sso]` when people sign in.
 
 Every key is named **by file path**. A value that looks like a key itself is refused. So is mainnet, an unknown table
 or setting, and a role without the key it needs. When a container starts, it checks the file again. Then it reads each
-key file and hands it to its role. The key files are mounted read-only from `deploy/secrets/`, which
-`deploy/.gitignore` keeps out of git.
+key file and hands it to its role.
+
+The key files are mounted read-only from `deploy/secrets/`, which `deploy/.gitignore` keeps out of git.
 
 ```
 cp deploy/knos.example.toml deploy/knos.toml          # then edit it
@@ -52,14 +53,17 @@ Without the CLI's own dependencies, `python -m knos.selfhost check|plan` is the 
 ## 3. The image
 
 `python:3.12-slim` by its digest, as Docker Hub listed it on 6 October 2026
-(`sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f`,
-[Docker Hub](https://hub.docker.com/v2/namespaces/library/repositories/python/tags/3.12-slim)). Into it, with
-`--require-hashes --no-deps --only-binary :all:`: `requirements/faucet.txt` (the Solana library `solders` and Sibyl Labs' memory engine) and the
-last line of `requirements/sign.txt`, the released knos wheel and its hash. No source tree is installed. The image
-needs a wheel that has `knos.selfhost` (Knos 0.3.23 or later); the build stops when the locked one does not. The containers run
-as an unprivileged user, with a read-only root file system and every capability dropped. Each service keeps its state
-in its own volume: the record API's lookup counts and the relay's notes. With `[sso]`, the site keeps its audit log
-in `/var/lib/knos`. That folder must be a volume: the site refuses to start when it cannot write there.
+(`sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f`, [Docker
+Hub](https://hub.docker.com/v2/namespaces/library/repositories/python/tags/3.12-slim)). Into it, with `--require-hashes --no-deps --only-binary
+:all:`: `requirements/faucet.txt` (the Solana library `solders` and Sibyl Labs' memory engine) and the last line of `requirements/sign.txt`, the
+released knos wheel and its hash. No source tree is installed.
+
+The image needs a wheel that has `knos.selfhost` (Knos 0.3.23 or later); the build stops when the locked one does not. The containers run as an
+unprivileged user, with a read-only root file system and every capability dropped. Each service keeps its state in its own volume: the record
+API's lookup counts and the relay's notes.
+
+With `[sso]`, the site keeps its audit log in `/var/lib/knos`. That folder must be a volume: the site refuses to start when it cannot write
+there.
 
 ## 4. Sign-in (single sign-on)
 
@@ -124,11 +128,12 @@ counts from the next sign-in. A session lasts `hours` (8 by default).
 
 ### The audit log
 
-Each sign-in, approval and export is one line. A line names the person (their `sub`, email and role), what they did,
-on what, and when. Each line carries the hash (a fingerprint) of the line before it. So a line changed or removed by itself is
-found (`GET /sso/audit`, admins only). Someone who can write the site's volume can still rewrite the whole log, so it
-does not guard against the host's own admin. The log is kept in Knos's own record store (`knos.proof.history`), in the
-site's own volume. A refused request is not written.
+Each sign-in, approval and export is one line. A line names the person (their `sub`, email and role), what they did, on what,
+and when. Each line carries the hash (a fingerprint) of the line before it. So a line changed or removed by itself is found
+(`GET /sso/audit`, admins only).
+
+Someone who can write the site's volume can still rewrite the whole log, so it does not guard against the host's own admin.
+The log is kept in Knos's own record store (`knos.proof.history`), in the site's own volume. A refused request is not written.
 
 ### The config
 

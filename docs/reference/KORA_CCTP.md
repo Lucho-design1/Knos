@@ -6,8 +6,10 @@
 checks a transaction against its operator's policy and signs it as fee payer, so a user holding only USDC, or nothing,
 can still send. Methods used, from its `rpc-api.md` and OpenAPI document (read 14 Oct 2026): `getConfig`,
 `getPayerSigner`, `getBlockhash`, `estimateTransactionFee`, `signTransaction`, `signAndSendTransaction`
-(`transferTransaction` is deprecated as of 2.2.0). Audit status per `audits/AUDIT_STATUS.md`: Runtime Verification,
-audited through commit `8c592591`; later commits unaudited.
+(`transferTransaction` is deprecated as of 2.2.0).
+
+Audit status per `audits/AUDIT_STATUS.md`: Runtime Verification, audited through commit `8c592591`; later commits
+unaudited.
 
 `knos.money.kora`:
 
@@ -27,10 +29,12 @@ not do unasked. The tests use a synthetic node whose answers have the OpenAPI do
 Most institutional USDC sits on EVM chains. CCTP V2 burns it there and mints it on Solana (domain 5; Ethereum 0,
 Arbitrum 3, Base 6; Fast Transfer supported with Solana as source and destination). On Solana, `MessageTransmitterV2`
 is `CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC` and `TokenMessengerMinterV2` is
-`CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe` on mainnet and devnet; "the token account must exist at
-receiveMessage execution". Sources: developers.circle.com `cctp/concepts/supported-chains-and-domains`,
-`cctp/references/solana-programs`, `cctp/references/technical-guide` (message layout) and
-`api-reference/cctp/all/get-messages-v2` (Iris), read 14 Oct 2026. CCTP V1 is deprecated from 31 Oct 2026: V2 only.
+`CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe` on mainnet and devnet; "the token account must exist at receiveMessage
+execution".
+
+Sources: developers.circle.com `cctp/concepts/supported-chains-and-domains`, `cctp/references/solana-programs`,
+`cctp/references/technical-guide` (message layout) and `api-reference/cctp/all/get-messages-v2` (Iris), read 14 Oct
+2026. CCTP V1 is deprecated from 31 Oct 2026: V2 only.
 
 The flow, in `knos.money.cctp`:
 

@@ -1,17 +1,16 @@
 # Solana devnet coverage
 
-Every capability the official Solana sources list on 21 Oct 2026, one row each: USED (the file that uses it and where a person
+Every capability the official Solana sources list on 22 Oct 2026, one row each: USED (the file that uses it and where a person
 meets it on each interface: the app at knos.onrender.com, the front door at drexthealpha.github.io/Knos, the hosted /mcp, the
 API and its OpenAPI document, and the `knos` CLI) or N/A with the source's own reason. Written by `scripts/solana_coverage.py`;
 `--check` fails CI when a row's file no longer holds its code. RPC rows are found in the code, not written by hand.
 
-146 rows: 128 USED, 18 N/A. Devnet on 21 Oct 2026: solana-core 4.4.0-beta.1, feature-set 3993424257,
+145 rows: 128 USED, 17 N/A. Devnet on 22 Oct 2026: solana-core 4.4.0-beta.1, feature-set 3993424257,
 324 of 329 features active.
 
 | Capability | Group | Status | Code | App | Front door | /mcp | API | CLI | Source |
 |---|---|---|---|---|---|---|---|---|---|
 | `getAccountInfo` | RPC HTTP | USED | `apps/wanted/knos_wanted/chainx.py` | — | — | — | `chainx.py` | `bundle.py`; `chain.py`; `mainnet_check.py`; `observe.py`; `receipt.py`; `reproduce.py` | https://solana.com/docs/rpc/http/getaccountinfo |
-| `getAgGenesisCert` | RPC HTTP | USED | `src/knos/nebius/onchain.py` | — | — | — | — | `onchain.py`; `finality.py` | https://solana.com/docs/rpc/http/getaggenesiscert |
 | `getBalance` | RPC HTTP | USED | `web/app.js` | — | the site's wallet | — | `escrow.py` | `devnet.py` | https://solana.com/docs/rpc/http/getbalance |
 | `getBlock` | RPC HTTP | USED | `src/knos/bundle.py` | — | — | — | — | `bundle.py` | https://solana.com/docs/rpc/http/getblock |
 | `getBlockCommitment` | RPC HTTP | USED | `web/netfacts.js` | — | #network: Network facts panel / finality clock | — | — | — | https://solana.com/docs/rpc/http/getblockcommitment |
@@ -131,13 +130,13 @@ API and its OpenAPI document, and the `knos` CLI) or N/A with the source's own r
 | `Name Service (.sol)` | Programs | USED | `apps/wanted/knos_wanted/chainx.py` | a project's .sol name | — | — | `GET /api/sns` | — | https://spl.solana.com/name-service |
 | `Pyth push oracle` | Programs | USED | `apps/wanted/knos_wanted/chainx.py` | a milestone stated in another currency | — | — | `GET /api/price` | — | https://docs.pyth.network |
 | `Squads v4` | Programs | USED | `src/knos/platform/squads.py` | company multisig | — | — | `POST /api/company/multisig` | `knos boundary`: a Squads vault for an organisation's money | https://docs.squads.so |
-| `Solana Attestation Service` | Programs | USED | `src/knos/platform/sas.py` | a wallet's verified milestones | — | — | `GET /api/track` | — | https://attest.solana.com |
+| `Solana Attestation Service` | Programs | USED | `src/knos/platform/sas.py` | a wallet's verified milestones; the shareable Ready card (/ready/<criteria hash>); proven solvers first (/companies) | — | — | `GET /api/track`, `POST /api/ready/card`, `GET /api/solvers` | — | https://attest.solana.com |
 | `Metaplex Token Metadata` | Programs | N/A | — | the source (docs/tokens/extensions): Token-2022's TokenMetadata keeps a badge's metadata on the mint itself, no second program | | | | | https://solana.com/docs/tokens/extensions |
 | `Bubblegum (compressed NFTs)` | Programs | N/A | — | the source: compressed NFTs; the track record is compressed with Account Compression directly and sells no NFT | | | | | https://developers.metaplex.com/bubblegum |
-| `Token Wrap` | Programs | N/A | — | devnet: getAccountInfo on TwRapQCDhWkZRrDaHfZGuHxkZ91gHDRkyuzNqeU5MgR returned null on 21 Oct 2026 (not deployed) | | | | | https://github.com/solana-program/token-wrap |
+| `Token Wrap` | Programs | N/A | — | devnet: getAccountInfo on TwRapQCDhWkZRrDaHfZGuHxkZ91gHDRkyuzNqeU5MgR returned null on 22 Oct 2026 (not deployed) | | | | | https://github.com/solana-program/token-wrap |
 | `Stake Pool / Single-Validator Stake Pool` | Programs | N/A | — | the source: pooled staking; Knos holds no stake | | | | | https://spl.solana.com/stake-pool |
 | `Token Swap` | Programs | N/A | — | the source: an AMM; the founder's guardrail is no speculation, and escrow needs no swap | | | | | https://spl.solana.com/token-swap |
-| `Record` | Programs | N/A | — | the source: arbitrary data accounts; Knos's records are SAS attestations and memos, which explorers already read | | | | | https://github.com/solana-program/record |
+| `Record` | Programs | USED | `apps/wanted/knos_wanted/chainstate.py` | a project, its trace and the pages it links survive a redeploy (read back from devnet) | — | — | `GET /api/project`, `GET /api/trace` | — | https://github.com/solana-program/record |
 | `Solana Pay transaction request` | Payments | USED | `apps/wanted/knos_wanted/blink.py` | project page: 'Or from any wallet: Solana Pay' on every Ready milestone | — | — | `GET`/`POST /api/pay/fund` (OpenAPI) | — | https://solana.com/docs/payments/accept-payments |
 | `Solana Pay transfer request (plain SPL transfer link)` | Payments | N/A | — | the source: a transfer request moves tokens to a wallet; a milestone's money must go through the escrow program, so Knos answers a transaction request instead | | | | | https://solana.com/docs/payments/accept-payments |
 | `Solana Actions / Blinks` | Payments | USED | `apps/wanted/knos_wanted/blink.py` | pre-order from a demand report with any wallet | — | `knos_cross` returns the report the Blink sells | `GET /actions.json`, `GET`/`POST /api/actions/preorder` | — | https://solana.com/docs/tools/actions |

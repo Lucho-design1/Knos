@@ -32,7 +32,7 @@ def test_the_bare_address_opens_on_the_products_with_three_one_tap_actions_each(
     # the first screen is the mission and one box (web/brand/hero.html, scripts/sync_brand.py); the products follow
     mission = "Carry research from every field of science across the valley of death."
     assert f'<h1 id="k-mission" class="k-mission">{mission}</h1>' in home and len(_words(mission)) <= 12
-    assert '<input id="k-q" name="q"' in home and '<h2 id="home-h">Open for backing now</h2>' in home
+    assert '<input id="k-q" name="q"' in home and '<h2 id="home-h">Open for backing</h2>' in home
     cards = re.findall(r'<li class="hp" data-slug="([a-z0-9-]+)">(.*?)</li>', home, re.S)
     assert 1 <= len(cards) <= 3
     for slug, body in cards:
@@ -46,6 +46,7 @@ def test_the_bare_address_opens_on_the_products_with_three_one_tap_actions_each(
     prose = re.sub(r'<ol class="hp-list".*?</ol>', " ", home, flags=re.S)
     prose = re.sub(r'<p class="fine" id="home-when" data-not-prose>.*?</p>', " ", prose, flags=re.S)
     prose = re.sub(r'<details[^>]*data-not-prose>.*?</details>', " ", prose, flags=re.S)       # the IDT benchmark's rows
+    prose = re.sub(r'<ul[^>]*data-not-prose[^>]*>.*?</ul>', " ", prose, flags=re.S)          # the measured numbers (web/brand/vectors.html)
     prose = re.sub(r"<(button)\b[^>]*>.*?</\1>", " ", re.sub(r"<!--.*?-->", " ", prose, flags=re.S), flags=re.S)
     n = len(_words(re.sub(r"<button\b[^>]*>.*?</button>", " ", bar, flags=re.S))) + len(_words(prose))
     assert 12 <= n <= 64, n

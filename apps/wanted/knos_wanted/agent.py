@@ -209,8 +209,11 @@ def run(job: dict, state) -> None:
         if card:
             rep["research"] = {**card, "why_never_crossed": research.why_never_crossed(card, rep)}
         rep["record"] = company.record_check(rep)
+        rep["elapsed_ms"] = round((time.time() - job["started"]) * 1000)      # from the paper asked for to the verdict
         state.keep_check(rep)
         job["report"] = rep["hash"]
+        from . import vectors
+        vectors.note("crossing", rep["elapsed_ms"], rep, state)
         d = rep["decision"]
         plan = d.get("plan") or {}
         if plan:

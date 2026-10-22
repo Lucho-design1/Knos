@@ -133,7 +133,10 @@ def ensure_connection(tenant: str, base_url: str, opener=None) -> dict:
     return {"ensured": True}
 
 
-def sso_start(tenant: str, base_url: str, opener=None) -> str:
+NEXT = ("/", "/companies")          # where a sign-in may land (the app's own pages; anything else lands home)
+
+
+def sso_start(tenant: str, base_url: str, opener=None, next_page: str = "/") -> str:
     cfg = sso_config()
     if not cfg["enabled"]:
         raise SSOError("SAML single sign-on is not configured on this server (KNOS_SSO_URL, KNOS_SSO_CLIENT_SECRET)")
@@ -150,7 +153,7 @@ def sso_start(tenant: str, base_url: str, opener=None) -> str:
         now = time.time()
         for k in [k for k, (t, _) in _pending.items() if now - t > 600]:
             _pending.pop(k)
-        _pending[state] = (now, {"verifier": verifier, "tenant": tenant, "redirect": redirect})
+        _pending[state] = (now, {"verifier": verifier, "tenant": tenant, "redirect": redirect, "next": next_page if next_page in NEXT else "/"})
     q = urllib.parse.urlencode({"response_type": "code", "client_id": f"tenant={tenant}&product={PRODUCT}", "redirect_uri": redirect,
                                 "state": state, "code_challenge": challenge, "code_challenge_method": "S256"})   # plain OAuth 2.0 + userinfo (no id_token: no JWT keys to manage)
     return f"{cfg['jackson']}/api/oauth/authorize?{q}"
@@ -181,6 +184,7 @@ def sso_callback(code: str, state: str, opener=None) -> dict:
         raise SSOError("the identity provider answered for another tenant")
     s = auth.issue(f"sso:{p['tenant']}:{hashlib.sha256(email.encode()).hexdigest()[:24]}", "sso", f"{email} ({p['tenant']})")
     s["tenant"] = p["tenant"]
+    s["next"] = p.get("next") or "/"
     return s
 
 

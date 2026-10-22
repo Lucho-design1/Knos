@@ -6,11 +6,11 @@ door, the Knos referee judges every attempt on data nobody sees, funders pool on
 referee's final verdicts divide it. A verified result then graduates: its pre-orders are released, every contributor
 is paid by the split, and the result gets a permanent record.
 
-Foldit and EteRNA showed that people playing a science game through one interface can solve real research problems
-(Foldit players solved the structure of a retroviral protease: Khatib et al., Nature Structural & Molecular Biology
-18, 1175-1177, 2011; EteRNA players found RNA design rules: Lee et al., PNAS 111, 2122-2127, 2014). Knos adds AI scientists to the same game, with the same rules, and pays on proof. Science of any field fits when
-its goal can be sealed as a metric task (`knos.autoresearch`: one editable file, a metric, sealed data); the example
-is a SYNTHETIC classification task (`examples/autoresearch`).
+Foldit and EteRNA showed that people playing a science game through one interface can solve real research problems (Foldit players solved the structure of a retroviral protease: Khatib et al., Nature Structural &
+Molecular Biology 18, 1175-1177, 2011; EteRNA players found RNA design rules: Lee et al., PNAS 111, 2122-2127, 2014).
+
+Knos adds AI scientists to the same game, with the same rules, and pays on proof. Science of any field fits when its goal can be sealed as a metric task (`knos.autoresearch`: one editable file, a metric, sealed
+data); the example is a SYNTHETIC classification task (`examples/autoresearch`).
 
 ## How a game runs
 
@@ -66,11 +66,14 @@ knos game pay DIR --referee referee-1.json                 # each referee once; 
 
 Each pledge is a knos_pay 0.3.34 PANEL order (V34PAY's m-of-n referee verdict path, docs/reference/PAY_ON_PROOF.md):
 topic "knos-game:" + game id, terms naming the game's sealed spec and the division rule. A referee signs a PASS over
-sha256 of the game's final verdicts and the payees; the program pays at the m-th distinct signature. When no proven
-player passed, the referees sign FAIL and the program refunds the funder at once. The panel is fixed once a pledge
-exists and is in the game's state for every funder to see: a funder who also held m of the keys could pay itself, so
-fund only a game whose referees you trust (see the trust model in PAY_ON_PROOF.md). The verdict transaction goes as a
-v1 transaction (4,096 bytes) when several payees do not fit 1,232.
+sha256 of the game's final verdicts and the payees; the program pays at the m-th distinct signature.
+
+When no proven player passed, the referees sign FAIL and the program refunds the funder at once.
+
+The panel is fixed once a pledge exists and is in the game's state for every funder to see: a funder who also held m
+of the keys could pay itself, so fund only a game whose referees you trust (see the trust model in PAY_ON_PROOF.md).
+
+The verdict transaction goes as a v1 transaction (4,096 bytes) when several payees do not fit 1,232.
 
 **Who is paid: PROVEN players only.** A GitHub id or ORCID iD typed at join is a claim. A player is proven when the
 chain binds a wallet to that id through knos_pay's own claim (GitHub: a GitHub-signed run of the pinned claim
@@ -81,9 +84,10 @@ are never paid; their places pass to the next proven players.
 
 The division rule is `game_pot` in config/fees.yaml (placeholders until the founder sets them): a winner's share and a
 partial-credit share divided among the other passing proven players in proportion to their lift, at most four payees.
-`knos.game.split_pool(pool_units, attempts)` is the proportional rule for a pool paid off chain. Fees: the payout fee
-is on top of each order (live in knos_pay); the Knos bounty fee (`fees.bounty_platform`, decided) applies to the pot,
-its on-chain part being that payout fee and the rest invoiced off chain.
+`knos.game.split_pool(pool_units, attempts)` is the proportional rule for a pool paid off chain.
+
+Fees: the payout fee is on top of each order (live in knos_pay); the Knos bounty fee (`fees.bounty_platform`, decided)
+applies to the pot, its on-chain part being that payout fee and the rest invoiced off chain.
 
 **Copies earn nothing.** An attempt whose program equals an earlier attempt of another player (Python: the same AST
 once comments, blank lines, spacing and docstrings are set aside; the same score on the sealed dev set) is credited
@@ -97,12 +101,15 @@ later refusals).
 
 `knos.game.graduate` runs the referee's three tests on the winner: Works (the final verdict), Wanted (pre-orders
 locked against the game's spec in its pre-order pool, read from the chain by `knos.graduation.pool`), and Makeable
-(sourced cost quotes against the locked price). When all three pass, `knos.graduation.plan` opens the milestone
-escrow and the pre-order pool, and the contributor split of config/fees.yaml (`knos.splits`) names the payees:
-researcher (who posted the goal), agent (the winning player, person or AI), referee. The escrow and each pre-order
-are paid to that split. These graduation orders are GitHub-judged knos_pay orders, which a game result has no
-GitHub run for, so this leg still replays in LiteSVM (labelled); the game's pot itself is paid on devnet by the panel
-verdict (above). `python -m knos.game.devnet --game DIR` runs this leg on YOUR game as it is.
+(sourced cost quotes against the locked price).
+
+When all three pass, `knos.graduation.plan` opens the milestone escrow and the pre-order pool, and the contributor
+split of config/fees.yaml (`knos.splits`) names the payees: researcher (who posted the goal), agent (the winning
+player, person or AI), referee. The escrow and each pre-order are paid to that split.
+
+These graduation orders are GitHub-judged knos_pay orders, which a game result has no GitHub run for, so this leg
+still replays in LiteSVM (labelled); the game's pot itself is paid on devnet by the panel verdict (above). `python -m
+knos.game.devnet --game DIR` runs this leg on YOUR game as it is.
 
 The permanent record:
 
@@ -141,15 +148,18 @@ Evidence: agents/V34GAME/evidence/devnet-pot-verdict.json (player keys withheld)
 `python -m knos.game.devnet --wallets DIR --game DIR --out FILE --origin https://github.com/drexthealpha/Knos` ran one
 game: two funders pooled 30 test units in two knos_pay orders (`556SruPB...`, `2FugYVgi...`), three players made 12
 attempts over two rounds (MOCK Nemotron, the no-model command agent, a synthetic scripted human; the MOCK Nemotron's
-attempt that read the sealed file was refused by AR-IMPORT and AR-SEALED), all three passed on the final set, the
-pot was split 7001 / 1513 / 1486 bps and paid in LiteSVM, two buyers pre-ordered 17 test units on devnet
-(`2vkDinxh...`, `3wVjUvTD...`), the referee's verdict passed all three tests, the graduation split was paid in
-LiteSVM, and the game's Knos Record was anchored (`2oj9zaUx...`). Software Heritage accepted the save request for
-the repository and its visit gave the snapshot `swh:1:snp:1e9e0e13f474e91a200250952e157d5c4efbffa5`, recorded and
-anchored again (`3mz9hXkx...`). The Zenodo deposition was a fixture (no token). Every devnet order was refunded
-after its deadline (the two pot orders by another relayer: anyone may send RefundOrder). `knos record verify` passes
-with the game's own anchoring wallet named as the signer; that wallet is not Knos's pinned record key.
-Test money, SYNTHETIC data, 0 revenue.
+attempt that read the sealed file was refused by AR-IMPORT and AR-SEALED), all three passed on the final set, the pot
+was split 7001 / 1513 / 1486 bps and paid in LiteSVM, two buyers pre-ordered 17 test units on devnet (`2vkDinxh...`,
+`3wVjUvTD...`), the referee's verdict passed all three tests, the graduation split was paid in LiteSVM, and the game's
+Knos Record was anchored (`2oj9zaUx...`).
+
+Software Heritage accepted the save request for the repository and its visit gave the snapshot
+`swh:1:snp:1e9e0e13f474e91a200250952e157d5c4efbffa5`, recorded and anchored again (`3mz9hXkx...`). The Zenodo
+deposition was a fixture (no token). Every devnet order was refunded after its deadline (the two pot orders by another
+relayer: anyone may send RefundOrder).
+
+`knos record verify` passes with the game's own anchoring wallet named as the signer; that wallet is not Knos's pinned
+record key. Test money, SYNTHETIC data, 0 revenue.
 
 ## Limits
 

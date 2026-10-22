@@ -20,11 +20,11 @@ asked again after 10 minutes, so a relay that runs through a migration switches 
 `KNOS_COMMITMENT` still wins when it is set; `KNOS_ALPENGLOW=on|off` lets an operator override the detection.
 
 Sources, read 14 Oct 2026: the method page [solana.com/docs/rpc/http/getaggenesiscert](https://solana.com/docs/rpc/http/getaggenesiscert)
-(no parameters; `null` while the cluster runs TowerBFT; -32601 on a node older than Agave 4.3); Agave
-`rpc/src/rpc.rs` `get_ag_genesis_cert` at commit 722c8f4b, which reads the finalized bank; `@solana/kit`
-`packages/rpc-api/src/getAgGenesisCert.ts`; and [solana.com/upgrades/alpenglow](https://solana.com/upgrades/alpenglow)
-(under Alpenglow `confirmed` and `finalized` are the same state, new code should use `finalized`, and `confirmed`
-will be deprecated and removed; target finality about 150 ms, "an expectation, not a constant").
+(no parameters; `null` while the cluster runs TowerBFT; -32601 on a node older than Agave 4.3); Agave `rpc/src/rpc.rs`
+`get_ag_genesis_cert` at commit 722c8f4b, which reads the finalized bank; `@solana/kit` `packages/rpc-api/src/getAgGenesisCert.ts`; and
+[solana.com/upgrades/alpenglow](https://solana.com/upgrades/alpenglow) (under Alpenglow `confirmed` and `finalized` are the same state,
+new code should use `finalized`, and `confirmed` will be deprecated and removed; target finality about 150 ms, "an expectation, not a
+constant").
 
 **What devnet said** (14 Oct 2026, `api.devnet.solana.com`, solana-core 4.4.0-beta.0): a certificate for block slot
 504,148,999, block id `13f09ed2…de31677`, signed by 13 validators (the bitmap's set bits). Mainnet-beta (4.3.0)
@@ -80,8 +80,10 @@ the public RPC:
 The `confirmed` and `finalized` notifications came at the same moment for every one of the 49, which is the "same
 state" the Alpenglow page describes. The figure includes the trip to the RPC and its notification, not only the
 validators' vote. Knos's own polling wait returned at p50 1,852 ms and p95 3,798 ms (`KNOS_WS=1` waits on the
-WebSocket instead). No payout is in the sample: a payout needs a GitHub OIDC token of a signed workflow run. Of 15
-test jobs, 4 were refunded by this script and 11 by another relayer first.
+WebSocket instead).
+
+No payout is in the sample: a payout needs a GitHub OIDC token of a signed workflow run. Of 15 test jobs, 4 were
+refunded by this script and 11 by another relayer first.
 
 ## Transaction counts and slot streams
 

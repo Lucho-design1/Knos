@@ -42,10 +42,13 @@ within the Balance's limits ([CONTROLS.md](CONTROLS.md)). That is one person. Th
 
 The two-person approval Knos has today is outside Knos: fund the order from a Squads multisig's vault
 ([`scripts/squads_fund.mjs`](../../scripts/squads_fund.mjs)). The vault signs only after the multisig's threshold of
-members approved. `knos audit show` finds the multisig among the accounts of the funding transaction, checks
-that the funding wallet is one of its vaults, and prints the threshold, the members and the members who
-approved the proposal. A threshold of 1 is reported as not a two-person approval. If the proposal's account was
-closed after it ran, who approved is no longer on chain, and the record says that.
+members approved.
+
+`knos audit show` finds the multisig among the accounts of the funding transaction, checks that the funding wallet
+is one of its vaults, and prints the threshold, the members and the members who approved the proposal. A threshold
+of 1 is reported as not a two-person approval.
+
+If the proposal's account was closed after it ran, who approved is no longer on chain, and the record says that.
 
 **The buyer's reference.** The terms an order is paid under are hashed on chain and have no free-text field, so
 a purchase order number is never put there. It goes in a side file of your own:
@@ -75,18 +78,24 @@ Five states of the money, and one correction. A record has exactly one.
 
 `knos audit export --owner <org> --from <day> --to <day>` writes every line of the organisation's work orders
 and of its bounties on issues: payments, released holdbacks, kill fees, refunds, reverts, and what is still open
-or held at the end of the period. Each row carries the hash of the row before, and the file ends with the totals
-and the **head**, the last row's hash.
+or held at the end of the period.
+
+Each row carries the hash of the row before, and the file ends with the totals and the **head**, the last row's
+hash.
 
 The file is a function of the chain and the period. A supplier, an auditor or anyone else runs the same command
 for the same owner and days and gets the same bytes. Two parties compare one hash, the head, and do not need to
-send each other the file. `knos audit verify <file>` finds an edited, removed, added or reordered row. It cannot
-find a file rewritten whole, hashes and all: that is what comparing the head against your own export is for.
+send each other the file.
+
+`knos audit verify <file>` finds an edited, removed, added or reordered row. It cannot find a file rewritten
+whole, hashes and all: that is what comparing the head against your own export is for.
 
 Version 2 of the file (Knos 0.3.16, 5 Oct 2026) lists bounties beside work orders (`record` is `order` or `bounty`) and adds
-`source`, `terms_version`, `paid_each` and `held_until`. Version 1 listed work orders only, so an organisation
-that had only posted bounties got an empty file. A version 2 CSV starts with the line
-`knos.audit-export,version,2`; the JSON has `version`. A version 1 file still verifies.
+`source`, `terms_version`, `paid_each` and `held_until`. Version 1 listed work orders only, so an organisation that had only
+posted bounties got an empty file. A version 2 CSV starts with the line `knos.audit-export,version,2`; the JSON has
+`version`.
+
+A version 1 file still verifies.
 
 ## 4. Files a finance system imports
 
@@ -136,13 +145,12 @@ own export of the same period.
 `knos statement` ([`src/knos/statement.py`](../../src/knos/statement.py)) is the statement an approver attaches to a
 supplier's invoice. It needs no chain and no wallet.
 
-    knos shadow invoice.csv --out sept/                        # the invoice against GitHub's record; keeps evidence.json
-    knos statement make sept/evidence.json --invoice INV-2026-09 --currency USD --prior aug/ap-statement.json
-    knos statement approve sept/ap-statement.json --agreed --by "Dana Reyes" --role "finance controller"
-    knos statement pay sept/ap-statement.json --line inv_... --method bank --ref "BACS 77120" --on 2026-10-02
-    knos statement show sept/ap-statement.json
-    knos statement export sept/ap-statement.json --format quickbooks
-    knos statement verify sept/ap-statement.json
+knos shadow invoice.csv --out sept/                        # the invoice against GitHub's record; keeps evidence.json
+knos statement make sept/evidence.json --invoice INV-2026-09 --currency USD --prior aug/ap-statement.json knos statement
+approve sept/ap-statement.json --agreed --by "Dana Reyes" --role "finance controller" knos statement pay
+sept/ap-statement.json --line inv_... --method bank --ref "BACS 77120" --on 2026-10-02 knos statement show
+sept/ap-statement.json knos statement export sept/ap-statement.json --format quickbooks knos statement verify
+sept/ap-statement.json
 
 `make` also takes a closed month of the meter (the archive of `knos meter export --bundle`, section 5): one line per
 deliverable the supplier's ledger accepted that month.
@@ -206,8 +214,10 @@ receipt of goods and the invoice. `knos statement grn` shows the three legs of o
 
 The mismatches it names: no purchase order on record (a statement alone does not carry the order); no evaluation
 on record; a receipt that nothing ties to the line; a receipt whose verdict is not accepted; an invoice line that
-bills more than the order's price; a line that is disputed, duplicate or without enough evidence. It exits 1 on a
-mismatch. It reads, and approves and moves nothing. `--record` appends the note to the status file.
+bills more than the order's price; a line that is disputed, duplicate or without enough evidence.
+
+It exits 1 on a mismatch. It reads, and approves and moves nothing. `--record` appends the note to the status
+file.
 
 **Assurance level on every line.** Each line says how much was verified, computed and never typed
 ([RECEIPT.md](RECEIPT.md), Version 5): the level of the receipt a recorded note was made from; without one,
@@ -278,7 +288,9 @@ How long it takes. A script did it on the sample statement, from opening the pag
 
 The slow phone is the profile of `tests/web/android.mjs`: a processor 4 times slower and a slow mobile network. A
 script types faster than you, so the last column adds 0.3 s a key (about 40 words a minute) and 1 s a click. No person
-was timed. The test fails if a close takes more than 4 clicks, or more than 30 s on the slow phone.
+was timed.
+
+The test fails if a close takes more than 4 clicks, or more than 30 s on the slow phone.
 
 ## 5. Month-end close in one command
 
@@ -358,11 +370,12 @@ the code, walked on the simulator by [`tests/test_supplier_completes.py`](../../
    refused. Anyone may send the refund, the supplier too; it lands in the funder's account whoever sends it, and a
    refund addressed elsewhere is refused (error 88).
 
-What this does not give the supplier: the deadline is the supplier's clock too, so an appeal opened late can be
-right and still pay nothing; an order funded with `neutral off` can be judged only from its own repository or its named
-judge's; and where no evaluator answers, the default is the refund. [DISPUTES.md](DISPUTES.md) has the clocks, the cancel
-notice of an order and who can do what at each state. This walk with a quiet buyer ran on the simulator only: it
-was not exercised on the public program ids.
+What this does not give the supplier: the deadline is the supplier's clock too, so an appeal opened late can be right and
+still pay nothing; an order funded with `neutral off` can be judged only from its own repository or its named judge's;
+and where no evaluator answers, the default is the refund.
+
+[DISPUTES.md](DISPUTES.md) has the clocks, the cancel notice of an order and who can do what at each state. This walk
+with a quiet buyer ran on the simulator only: it was not exercised on the public program ids.
 
 ## 7. What does not exist
 

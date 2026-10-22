@@ -1,7 +1,7 @@
-"""SOLANA-COVERAGE.md: every Solana devnet capability the official sources list on 21 Oct 2026 -> USED (the file that
+"""SOLANA-COVERAGE.md: every Solana devnet capability the official sources list on 22 Oct 2026 -> USED (the file that
 uses it, and where a person meets it on each of Knos's five interfaces) or N/A (the source's own reason).
 
-Sources, read 21 Oct 2026: solana.com/docs/rpc/http (53 methods) and /docs/rpc/websocket (18), /docs/tokens/extensions
+Sources, read 22 Oct 2026: solana.com/docs/rpc/http (52 methods) and /docs/rpc/websocket (18), /docs/tokens/extensions
 (the Token-2022 ExtensionType list), /docs/core/programs, /docs/payments (Solana Pay, x402, MPP, Pay.sh, PaymentButton),
 /docs/tools/actions, solana.com/upgrades and solana.com/news (Sept-Oct 2026), and devnet itself (getVersion,
 the Feature Gate accounts, getMultipleAccounts on every program id: scripts/devnet_facts in the release notes).
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "reference" / "SOLANA-COVERAGE.md"
 DOCS = "https://solana.com/docs"
 
-HTTP = """getAccountInfo getAgGenesisCert getBalance getBlock getBlockCommitment getBlockHeight getBlockProduction getBlocks
+HTTP = """getAccountInfo getBalance getBlock getBlockCommitment getBlockHeight getBlockProduction getBlocks
 getBlocksWithLimit getBlockTime getClusterNodes getEpochInfo getEpochSchedule getFeeForMessage getFirstAvailableBlock
 getGenesisHash getHealth getHighestSnapshotSlot getIdentity getInflationGovernor getInflationRate getInflationReward
 getLargestAccounts getLatestBlockhash getLeaderSchedule getMaxRetransmitSlot getMaxShredInsertSlot
@@ -124,13 +124,15 @@ ROWS = [
     u("Squads v4", "Programs", "src/knos/platform/squads.py::SQDS4ep65", "https://docs.squads.so", app="company multisig", api="`POST /api/company/multisig`",
       cli="`knos boundary`: a Squads vault for an organisation's money"),
     u("Solana Attestation Service", "Programs", "src/knos/platform/sas.py::22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG", "https://attest.solana.com",
-      app="a wallet's verified milestones", api="`GET /api/track`"),
+      app="a wallet's verified milestones; the shareable Ready card (/ready/<criteria hash>); proven solvers first (/companies)",
+      api="`GET /api/track`, `POST /api/ready/card`, `GET /api/solvers`"),
     na("Metaplex Token Metadata", "Programs", "the source (docs/tokens/extensions): Token-2022's TokenMetadata keeps a badge's metadata on the mint itself, no second program", EXT),
     na("Bubblegum (compressed NFTs)", "Programs", "the source: compressed NFTs; the track record is compressed with Account Compression directly and sells no NFT", "https://developers.metaplex.com/bubblegum"),
-    na("Token Wrap", "Programs", "devnet: getAccountInfo on TwRapQCDhWkZRrDaHfZGuHxkZ91gHDRkyuzNqeU5MgR returned null on 21 Oct 2026 (not deployed)", "https://github.com/solana-program/token-wrap"),
+    na("Token Wrap", "Programs", "devnet: getAccountInfo on TwRapQCDhWkZRrDaHfZGuHxkZ91gHDRkyuzNqeU5MgR returned null on 22 Oct 2026 (not deployed)", "https://github.com/solana-program/token-wrap"),
     na("Stake Pool / Single-Validator Stake Pool", "Programs", "the source: pooled staking; Knos holds no stake", "https://spl.solana.com/stake-pool"),
     na("Token Swap", "Programs", "the source: an AMM; the founder's guardrail is no speculation, and escrow needs no swap", "https://spl.solana.com/token-swap"),
-    na("Record", "Programs", "the source: arbitrary data accounts; Knos's records are SAS attestations and memos, which explorers already read", "https://github.com/solana-program/record"),
+    u("Record", "Programs", "apps/wanted/knos_wanted/chainstate.py::recr1L3PCGKLbckBqMNcJhuuyU1zgo8nBhfLVsJNwr5", "https://github.com/solana-program/record",
+      app="a project, its trace and the pages it links survive a redeploy (read back from devnet)", api="`GET /api/project`, `GET /api/trace`"),
     # ---- payments (docs/payments) and Actions (docs/tools/actions)
     u("Solana Pay transaction request", "Payments", "apps/wanted/knos_wanted/blink.py::PAY_PATH", f"{DOCS}/payments/accept-payments",
       app="project page: 'Or from any wallet: Solana Pay' on every Ready milestone", api="`GET`/`POST /api/pay/fund` (OpenAPI)"),
@@ -220,11 +222,11 @@ def render() -> str:
     rows = rpc_rows() + ROWS
     used = sum(r["status"] == "USED" for r in rows)
     out = ["# Solana devnet coverage", "",
-           "Every capability the official Solana sources list on 21 Oct 2026, one row each: USED (the file that uses it and where a person",
+           "Every capability the official Solana sources list on 22 Oct 2026, one row each: USED (the file that uses it and where a person",
            "meets it on each interface: the app at knos.onrender.com, the front door at drexthealpha.github.io/Knos, the hosted /mcp, the",
            "API and its OpenAPI document, and the `knos` CLI) or N/A with the source's own reason. Written by `scripts/solana_coverage.py`;",
            "`--check` fails CI when a row's file no longer holds its code. RPC rows are found in the code, not written by hand.", "",
-           f"{len(rows)} rows: {used} USED, {len(rows) - used} N/A. Devnet on 21 Oct 2026: solana-core 4.4.0-beta.1, feature-set 3993424257,",
+           f"{len(rows)} rows: {used} USED, {len(rows) - used} N/A. Devnet on 22 Oct 2026: solana-core 4.4.0-beta.1, feature-set 3993424257,",
            "324 of 329 features active.", "",
            "| Capability | Group | Status | Code | App | Front door | /mcp | API | CLI | Source |",
            "|---|---|---|---|---|---|---|---|---|---|"]

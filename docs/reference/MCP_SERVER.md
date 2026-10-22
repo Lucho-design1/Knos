@@ -50,13 +50,16 @@ read 14 Oct 2026; `src/knos/mcp_ext.py`):
 
 The tools that post to GitHub as the person's account (`knos_take_work`, `knos_submit_work`) are off until the
 operator turns them on (`KNOS_AGENT_ACT=1`). When they are on and the client declared that it can ask its user
-(`elicitation`, form mode, in the request's client capabilities), the tool does not post at once. It answers
-`resultType: "input_required"` with one `elicitation/create` request showing the exact method, path and body it would
-send. The client shows it, and calls again with the answer and the `requestState` it was given. Only an `accept`
-with `post: true` sends, and only those bytes: the state is sealed with a key held by the running server, the seal
-names whether a request was shown or approved, and it lapses after 10 minutes. A decline, a cancel, a state the server
-did not seal, or a changed request sends nothing. An unattended agent on an `auto` order sets `KNOS_AGENT_CONFIRM=0`;
-a client that cannot ask is not asked.
+(`elicitation`, form mode, in the request's client capabilities), the tool does not post at once.
+
+It answers `resultType: "input_required"` with one `elicitation/create` request showing the exact method, path and
+body it would send. The client shows it, and calls again with the answer and the `requestState` it was given.
+
+Only an `accept` with `post: true` sends, and only those bytes: the state is sealed with a key held by the running
+server, the seal names whether a request was shown or approved, and it lapses after 10 minutes. A decline, a cancel, a
+state the server did not seal, or a changed request sends nothing.
+
+An unattended agent on an `auto` order sets `KNOS_AGENT_CONFIRM=0`; a client that cannot ask is not asked.
 
 This uses multi-round-trip requests, which are in the 2026-07-28 version only; a session client (2025 versions) is
 served as before.

@@ -68,37 +68,38 @@ at `99cc4e3e`: **24 passed** in 46.42 s (13 Oct 2026). The engine is `sibyl-memo
 dependency in pyproject.toml is `>=0.8.1`); `src/knos/proof/history.py` (1,630 lines) wraps it as `SibylStore`
 (`for_repo` uses Sibyl's shared `~/.sibyl-memory/memory.db`, `local(dir)` uses `<dir>/sibyl.db`).
 
-What the test proves:
-- The Stop hook blocks a false "done" only because of a rule Sibyl learned; the same hook with `NullStore` allows it.
-- What was learned lives only in Sibyl's own database (entities, journal events); deleting it removes the behaviour,
-  a corrupt file raises instead of being papered over, and with the package removed `SibylStore` raises ImportError.
-- Sibyl's free-tier cap is enforced by Sibyl's own gate (`CapExceededError`), not bypassed.
-- The GitHub judge refuses an agent's second pull request because of what Sibyl kept from the first; lessons that
-  travel in the `knos-memory` issue decide nothing until loaded into a Sibyl store.
-- Refusals are COLD journal events, the running count is a HOT state document, rules are WARM entities; owed checks,
-  the per-host answers (every host in tests/_host_events.py) and the funding-reply terms line all change when the
-  store is deleted or edited.
+What the test proves: - The Stop hook blocks a false "done" only because of a rule Sibyl learned; the same hook with
+`NullStore` allows it. - What was learned lives only in Sibyl's own database (entities, journal events); deleting it
+removes the behaviour, a corrupt file raises instead of being papered over, and with the package removed `SibylStore`
+raises ImportError. - Sibyl's free-tier cap is enforced by Sibyl's own gate (`CapExceededError`), not bypassed. - The
+GitHub judge refuses an agent's second pull request because of what Sibyl kept from the first; lessons that travel in
+the `knos-memory` issue decide nothing until loaded into a Sibyl store. - Refusals are COLD journal events, the
+running count is a HOT state document, rules are WARM entities; owed checks, the per-host answers (every host in
+tests/_host_events.py) and the funding-reply terms line all change when the store is deleted or edited.
 
-Gaps (true at `99cc4e3e`):
-- **Memory is optional at run time.** If `sibyl_memory_client` is missing or the store fails to open, the hook falls
-  back to `NullStore` and still runs (`src/knos/proof/hook.py` lines 131-135; also preflight.py, recall.py, proof/cli.py).
-  The test asserts this fallback; it is by design, but it means "load-bearing" is "decisions change with Sibyl",
-  not "Knos refuses to run without Sibyl".
-- **No tamper evidence.** A hand edit of Sibyl's journal changes the outcome and nothing detects it (the test
-  `..._an_edited_journal_changes_the_outcome` asserts exactly this). There is no hash chain, Merkle root or anchor of
-  the journal. Phase 6 (Knos Record) is where this would be closed.
-- The test exercises local SQLite stores with stubbed check runners; it does not touch chain payments. The on-chain
-  programs (knos_pay etc.) do not read Sibyl.
+Gaps (true at `99cc4e3e`): - **Memory is optional at run time.** If `sibyl_memory_client` is missing or the store fails to
+open, the hook falls back to `NullStore` and still runs (`src/knos/proof/hook.py` lines 131-135; also preflight.py,
+recall.py, proof/cli.py).
+
+The test asserts this fallback; it is by design, but it means "load-bearing" is "decisions change with Sibyl", not "Knos
+refuses to run without Sibyl". - **No tamper evidence.** A hand edit of Sibyl's journal changes the outcome and nothing
+detects it (the test `..._an_edited_journal_changes_the_outcome` asserts exactly this). There is no hash chain, Merkle
+root or anchor of the journal.
+
+Phase 6 (Knos Record) is where this would be closed. - The test exercises local SQLite stores with stubbed check runners;
+it does not touch chain payments. The on-chain programs (knos_pay etc.) do not read Sibyl.
 
 ## 3. Feature gates on devnet
 
-How it was read: `getMultipleAccounts` on `https://api.devnet.solana.com` for each feature id, context slot
-510670272 (epoch 1182), 13 Oct 2026 15:27 UTC. A feature account's data is `Option<u64>` (the activation slot); no
-account means the feature is not active. Devnet's epoch schedule is 432000 slots per epoch with no warmup, so epoch =
-slot / 432000. `solana feature status` from solana-cli 2.3.13 cannot be used for the newer ids: it answers
-`Unknown feature` (it only knows its own list), and several ids changed since 2.3.13. To repeat it,
-send `getMultipleAccounts` with the ids below and `{"encoding": "base64"}`: byte 0 is 1 when active, and bytes 1 to 8
-are the activation slot (little-endian).
+How it was read: `getMultipleAccounts` on `https://api.devnet.solana.com` for each feature id, context slot 510670272
+(epoch 1182), 13 Oct 2026 15:27 UTC. A feature account's data is `Option<u64>` (the activation slot); no account
+means the feature is not active. Devnet's epoch schedule is 432000 slots per epoch with no warmup, so epoch = slot /
+432000.
+
+`solana feature status` from solana-cli 2.3.13 cannot be used for the newer ids: it answers `Unknown feature` (it
+only knows its own list), and several ids changed since 2.3.13. To repeat it, send `getMultipleAccounts` with the ids
+below and `{"encoding": "base64"}`: byte 0 is 1 when active, and bytes 1 to 8 are the activation slot
+(little-endian).
 
 Ids are from agave `feature-set/src/lib.rs` at commit `c8db44f13afd63c64c4d98273eda4ae918dde3be` (the last commit
 touching that file on master as of 13 Oct 2026); links below are permalinks to that file.
@@ -122,11 +123,10 @@ SIMD texts: github.com/solana-foundation/solana-improvement-documents, `proposal
 | SBPF v3, older id (solana-cli 2.3.13) | SIMD-0178, 0179, 0189 | `C8XZNs1bfzaiT3YDeXZJ7G5swQWQv7tVzDnCxtHvnSpw` | **inactive** | cli 2.3.13 feature list |
 | SBPF v1 / v2 deployment and execution | SIMD-0166 / 0173, 0174 | `JE86WkYvTrzW8HgNmrHY7dFYpCmSptUpKupbo2AdQ9cG` / `F6UVKh1ujTEFK3en2SyAL3cdVnqko1FVEXWhmdLRu6WP` | **active** since slot 389664000 (epoch 902) / 396576000 (epoch 918) | [agave L1199-L1205](https://github.com/anza-xyz/agave/blob/c8db44f13afd63c64c4d98273eda4ae918dde3be/feature-set/src/lib.rs#L1199) |
 
-What follows for 0.3.29 (from the table only):
-- No big_mod_exp on devnet: the one-transaction RSA verify must be done in the program's own arithmetic.
-- Transactions up to 4096 bytes are available on devnet through Transaction V1 (SIMD-0385), not through a
-  SIMD-0296 feature.
-- SBPF v3 can be deployed on devnet (since epoch 1069). SIMD-0500 is not active yet, so today's v0 binaries can still
-  be upgraded; once it activates they cannot be redeployed as v0.
-- secp256r1, alt_bn128 G2, BLS12-381 and Poseidon (with padding enforcement) are active on devnet.
+What follows for 0.3.29 (from the table only): - No big_mod_exp on devnet: the one-transaction RSA verify must be
+done in the program's own arithmetic. - Transactions up to 4096 bytes are available on devnet through Transaction V1
+(SIMD-0385), not through a SIMD-0296 feature. - SBPF v3 can be deployed on devnet (since epoch 1069).
+
+SIMD-0500 is not active yet, so today's v0 binaries can still be upgraded; once it activates they cannot be
+redeployed as v0. - secp256r1, alt_bn128 G2, BLS12-381 and Poseidon (with padding enforcement) are active on devnet.
 - Mainnet was not queried.

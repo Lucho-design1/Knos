@@ -2,14 +2,17 @@
 
 Knos's fees land in a Squads vault and move only by a vote of its members ([GOVERNANCE.md](GOVERNANCE.md),
 [MONEY.md](MONEY.md)). Running a research market has small recurring costs: a lab's sample fee the referee approved,
-refilling the test-token faucet, topping up the relay's fee payer. A Squads v4 spending limit lets named keys, which
-"don't have to be members of the multisig", move at most an amount of one mint per period (one time, day, week,
-month), only to listed destinations, from one vault (IDL `squads_multisig_program` 2.1.0, `ConfigAction::AddSpendingLimit`,
-`state/spending_limit.rs` in [Squads-Protocol/v4](https://github.com/Squads-Protocol/v4), read 14 Oct 2026).
+refilling the test-token faucet, topping up the relay's fee payer.
+
+A Squads v4 spending limit lets named keys, which "don't have to be members of the multisig", move at most an amount of one
+mint per period (one time, day, week, month), only to listed destinations, from one vault (IDL `squads_multisig_program`
+2.1.0, `ConfigAction::AddSpendingLimit`, `state/spending_limit.rs` in
+[Squads-Protocol/v4](https://github.com/Squads-Protocol/v4), read 14 Oct 2026).
 
 For an autonomous multisig, as both of Knos's are, the limit is a config transaction the members vote on:
 `config_transaction_create` (AddSpendingLimit), `proposal_create`, `proposal_approve` until the threshold,
 `config_transaction_execute` with the new SpendingLimit account, the rent payer and the system program.
+
 `knos.platform.squads` builds each instruction (Anchor discriminator + Borsh), reads multisig and spending-limit
 accounts back, and `plan(...)` returns the unsigned instructions and the steps. No Knos key signs any of it.
 

@@ -140,13 +140,13 @@ def handle_get(h, state, u, qs) -> bool:
             return h._send(200, enterprise.sso_config()) or True
         if p == "/auth/sso":
             try:
-                return h._redirect(enterprise.sso_start(q("tenant"), h._base())) or True
+                return h._redirect(enterprise.sso_start(q("tenant"), h._base(), next_page=q("next", "/"))) or True
             except enterprise.SSOError as why:
                 return h._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120])) or True
         if p == "/auth/sso/callback":
             try:
                 s = enterprise.sso_callback(q("code"), q("state"))
-                return h._redirect("/#session=" + s["token"]) or True
+                return h._redirect(s.get("next", "/") + "#session=" + s["token"]) or True
             except enterprise.SSOError as why:
                 return h._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120])) or True
         if p == "/api/companies":

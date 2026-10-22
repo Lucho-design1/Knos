@@ -1,10 +1,12 @@
 # Netting: pay many small results as one payment
 
 A 0.32 USDC agent call is too small to pay on its own: the minimum fee is 0.05, and it would need transactions of
-its own. The escrow takes no job under 1.00
-and no order under 5.00, so a single 0.32 outcome cannot be paid on chain alone at all. Netting lets small accepted
-outcomes accumulate off chain and pays their sum in one release per supplier per period. **No program changes:** it
-uses knos_meter's batches and knos_pay's orders as they are. Money on devnet is test USDC.
+its own. The escrow takes no job under 1.00 and no order under 5.00, so a single 0.32 outcome cannot be paid on
+chain alone at all.
+
+Netting lets small accepted outcomes accumulate off chain and pays their sum in one release per supplier per
+period. **No program changes:** it uses knos_meter's batches and knos_pay's orders as they are. Money on devnet is
+test USDC.
 
 Code: [`src/knos/netting.py`](../../src/knos/netting.py). Test: [`tests/test_netting.py`](../../tests/test_netting.py).
 
@@ -31,8 +33,10 @@ once. `add` refuses, line by line and by name:
 
 `close` builds the period as a format 2 meter batch: every field of every line is under one 32-byte root
 ([METER.md](METER.md)). A disputed line stays in the batch, marked `disputed`, with a value of nothing, so nobody can
-later say it was never there. If the two books differ, `close` names the lines that differ and closes nothing; the
-two must also name the same reserve. An unsecured net under 5.00 stays open: the escrow takes no order that small.
+later say it was never there.
+
+If the two books differ, `close` names the lines that differ and closes nothing; the two must also name the same
+reserve. An unsecured net under 5.00 stays open: the escrow takes no order that small.
 
 ## Who carries the buyer's credit: reserved or unsecured
 
@@ -53,11 +57,12 @@ for any other month, and its draws name that same terms hash. The statement prin
 | `free` | what the period can still accept | `funded = brought + consumed + free`, at every step |
 | `exposure` | accepted with no locked money behind it | 0.00 for a reserved period |
 
-At close the period is paid by **draws**, not by a new order: one pay token for each whole tranche of
-`brought + consumed`, each paying the supplier one tranche out of the reserve order. `close` prints them. Each draw
-puts the period and its own draw number where a pull request's number normally goes. A standing order pays each
-number only once, so no draw can be paid twice. What is left under one tranche (`undrawn`) is still covered by the lock, and the next period
-bound to the same order draws it first.
+At close the period is paid by **draws**, not by a new order: one pay token for each whole tranche of `brought + consumed`, each paying the
+supplier one tranche out of the reserve order. `close` prints them. Each draw puts the period and its own draw number where a pull request's
+number normally goes.
+
+A standing order pays each number only once, so no draw can be paid twice. What is left under one tranche (`undrawn`) is still covered by
+the lock, and the next period bound to the same order draws it first.
 
 **What is not consumed returns to the buyer by `RefundOrder` (knos_pay instruction 22).** Anyone may send it once the
 order's deadline has passed. It pays everything the order still holds, with the unspent share of the fee, only to

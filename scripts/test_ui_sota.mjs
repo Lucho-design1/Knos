@@ -6,6 +6,9 @@
 //   node scripts/test_ui_sota.mjs card      test_decision_card: open or refuse, who, cities on a map, price tier, each sourced
 //   node scripts/test_ui_sota.mjs layout    test_layout_audit: no word broken mid-word, no floating button over the page,
 //                                           no sideways scroll, at 320, 375, 768 and 1280 on every public page
+//   node scripts/test_ui_sota.mjs legibility  test_legibility: body text >= 16 px, <= 75 characters a line, line height
+//                                           >= 1.5, paragraphs <= 60 words, <= 120 words of prose above the fold, <= 3 secondary
+//                                           text lines a screen, one title and meta pattern (contrast: axe, quality.yml)
 //
 // The pages are scripts/public_pages.json; SITE_URL and APP_URL point the two front doors elsewhere (a local build).
 import { readFileSync } from "node:fs";
@@ -187,10 +190,58 @@ async function layout() {
   console.log(`mid-word breaks: ${words}, floating buttons: ${floats}, pages that scroll sideways: ${sideways}`);
 }
 
-const TESTS = { design, mission, hero, card, layout };
-if (!TESTS[what]) { console.error("usage: node scripts/test_ui_sota.mjs design|mission|hero|card|layout"); process.exit(2); }
+async function legibility() {
+  const titles = [];
+  for (const url of PAGES) {
+    for (const [w, h] of [[375, 812], [1280, 800]]) {
+      const { ctx, page } = await open(url, w, h);
+      const r = await page.evaluate(() => {
+        const out = { small: [], wide: [], tight: [], long: [], fold: 0, secondary: 0, seen2: [], title: document.title, meta: document.querySelector('meta[name="description"]')?.content || "" };
+        const muted = getComputedStyle(document.documentElement).getPropertyValue("--ink-2").trim();
+        // what a reader sees: a closed fold's text is not shown (checkVisibility reads content-visibility too)
+        const shown = (el) => (el.checkVisibility ? el.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true, opacityProperty: true })
+          : el.offsetParent !== null) && !el.closest("details:not([open]) > :not(summary)");
+        const skip = "code, pre, kbd, .mono, button, input, textarea, select, label, summary, nav, header, footer, table, svg, .k-vectors, .k-chip, .k-try, [data-not-prose]";
+        const toRGB = (c) => { const x = document.createElement("i"); x.style.color = c; document.body.append(x); const v = getComputedStyle(x).color; x.remove(); return v; };
+        const mutedRGB = muted ? toRGB(muted) : "";
+        for (const el of document.querySelectorAll("main p, main li, main dd")) {
+          if (!shown(el) || el.closest(skip) || !el.textContent.trim()) continue;
+          const cs = getComputedStyle(el), fs = parseFloat(cs.fontSize), lh = cs.lineHeight === "normal" ? fs * 1.2 : parseFloat(cs.lineHeight);
+          const secondary = fs < 16 || cs.color === mutedRGB;
+          const text = el.textContent.replace(/\s+/g, " ").trim(), words = text.split(" ").length, rect = el.getBoundingClientRect();
+          const lines = Math.max(1, Math.round(rect.height / lh));
+          if (!secondary && fs < 16) out.small.push(text.slice(0, 40));
+          if (lines > 1 && text.length / lines > 75) out.wide.push([Math.round(text.length / lines), text.slice(0, 40)]);
+          if (!secondary && lh / fs < 1.5 - 1e-6) out.tight.push([+(lh / fs).toFixed(2), text.slice(0, 40)]);
+          if (el.tagName === "P" && words > 60) out.long.push([words, text.slice(0, 40)]);
+          if (secondary && rect.top < innerHeight && rect.bottom > 0) { out.secondary += lines; out.seen2.push(text.slice(0, 30)); }
+        }
+        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let n; (n = walk.nextNode());) {
+          const el = n.parentElement;
+          // the words a reader reads: data a reader scans (a grid, a chart, cards, the measured numbers: data-not-prose) apart
+          if (!el || !n.data.trim() || el.closest("script, style, [hidden], [aria-hidden='true'], [data-not-prose]") || !shown(el)) continue;
+          const range = document.createRange(); range.selectNodeContents(n);
+          const b = range.getBoundingClientRect();
+          if (b.width > 0 && b.top < innerHeight && b.bottom > 0) out.fold += n.data.trim().split(/\s+/).length;
+        }
+        return out;
+      });
+      titles.push([url, r.title, r.meta.length]);
+      const bad = r.small.length || r.wide.length || r.tight.length || r.long.length || r.fold > 120 || r.secondary > 3;
+      ok(!bad, `${w}px ${url}: ${r.fold} words above the fold, ${r.secondary} secondary lines`,
+        bad ? { small: r.small.slice(0, 2), wide: r.wide.slice(0, 2), tight: r.tight.slice(0, 2), long: r.long.slice(0, 2), secondary: r.secondary > 3 ? r.seen2.slice(0, 8) : [] } : undefined);
+      await ctx.close();
+    }
+  }
+  const pattern = titles.filter(([, t, m]) => !/^Knos\. [A-Z]/.test(t) || m < 50 || m > 160);
+  ok(!pattern.length, `titles and meta: one pattern ("Knos. Page", a 50-160 character description) on ${titles.length / 2} pages`, pattern.length ? [...new Set(pattern.map((x) => `${x[1]} (${x[2]})`))] : undefined);
+}
+
+const TESTS = { design, mission, hero, card, layout, legibility };
+if (!TESTS[what]) { console.error("usage: node scripts/test_ui_sota.mjs design|mission|hero|card|layout|legibility"); process.exit(2); }
 await TESTS[what]();
 await browser.close();
-const NAME = { design: "test_one_design_system", mission: "test_mission_line", hero: "test_hero_paper", card: "test_decision_card", layout: "test_layout_audit" }[what];
+const NAME = { design: "test_one_design_system", mission: "test_mission_line", hero: "test_hero_paper", card: "test_decision_card", layout: "test_layout_audit", legibility: "test_legibility" }[what];
 console.log(fails ? `FAIL ${NAME} (${fails})` : `PASS ${NAME}`);
 process.exit(fails ? 1 : 0);

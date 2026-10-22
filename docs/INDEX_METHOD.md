@@ -154,9 +154,11 @@ below 6.0% (Wilson, 95%).
 
 A first pass ran on 2026-10-10 with 20 negatives and 5 controls, read without logging in. Result: 0 of 20 flipped. 16
 read as before, 2 could not be decided and 2 pages showed no merge or checks. Read without logging in, the checks tab
-named the checks but showed no results. So 4 of the 5 controls showed "N of M checks passed" but not which one
-failed. That is why the full run must be read logged in. With 16 readable, the flip rate is below 19.4% (Wilson, 95%).
-That bound is too wide to change the lead. It is recorded, not used.
+named the checks but showed no results.
+
+So 4 of the 5 controls showed "N of M checks passed" but not which one failed. That is why the full run must be read
+logged in. With 16 readable, the flip rate is below 19.4% (Wilson, 95%). That bound is too wide to change the lead. It
+is recorded, not used.
 
 ### A comparison group of PRs by people (planned, not run)
 

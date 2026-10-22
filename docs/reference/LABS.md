@@ -86,12 +86,13 @@ What each lab's docs say that shaped its adapter:
   ```
 
 Try any lab on its fixtures with `python -m knos.labs try LAB`, where LAB is adaptyv, b12_selenium, b12_foundry,
-materials_project, pcbway, xometry or pylabrobot.
-- **b12.** Selenium Route Search has quote, submit (with `Idempotency-Key`), status and routes endpoints, priced in
-  credits. The price of a credit is not published, so Knos quotes credits, not USD. The Foundry is ordered by e-mail
-  (founders@b12-labs.com). Compound sourcing with full documented APIs exists at Molport (api.molport.com/openapi.json)
-  and Mcule (doc.mcule.com); either is the next chemistry rail. IBM RXN is not used: its README says the hosted service
-  reaches end of service on 28 Oct 2026.
+materials_project, pcbway, xometry or pylabrobot. - **b12.** Selenium Route Search has quote, submit (with
+`Idempotency-Key`), status and routes endpoints, priced in credits. The price of a credit is not published, so Knos
+quotes credits, not USD.
+
+The Foundry is ordered by e-mail (founders@b12-labs.com). Compound sourcing with full documented APIs exists at Molport
+(api.molport.com/openapi.json) and Mcule (doc.mcule.com); either is the next chemistry rail. IBM RXN is not used: its
+README says the hosted service reaches end of service on 28 Oct 2026.
 
 ## Two verdicts, because labs accept only this
 
@@ -102,19 +103,23 @@ materials_project, pcbway, xometry or pylabrobot.
 
 Control runs are the lab's QC and never count as the researcher's result. Each verdict binds the evidence hash: the
 runs, the QC, the protocol as executed, and every raw file's sha256. Each verdict is signed by **2 of 3** referee keys
-(ed25519) over its order, evidence hash, spec hash, verdict, amount, recipient, mint, expiry and nonce. `verdicts.check`
-refuses m-1 signatures, a key outside the set, the same key twice, an expired verdict, a spent nonce, and a changed
-amount or recipient. A verdict it accepts is **spent**: its (order, nonce) is written to a persistent store
-(`<Knos home>/labs/verdicts-spent.jsonl`, or `KNOS_LAB_VERDICTS_SPENT`), so the same verdict is refused the second time,
-also in another process. It follows the rule of V34PAY's verdict store: a refusal spends nothing, and `record=False`
-is a dry run.
+(ed25519) over its order, evidence hash, spec hash, verdict, amount, recipient, mint, expiry and nonce.
+
+`verdicts.check` refuses m-1 signatures, a key outside the set, the same key twice, an expired verdict, a spent nonce,
+and a changed amount or recipient. A verdict it accepts is **spent**: its (order, nonce) is written to a persistent
+store (`<Knos home>/labs/verdicts-spent.jsonl`, or `KNOS_LAB_VERDICTS_SPENT`), so the same verdict is refused the second
+time, also in another process.
+
+It follows the rule of V34PAY's verdict store: a refusal spends nothing, and `record=False` is a dry run.
 
 The referees' keys never sit in the buyer's folder. `python -m knos.labs.devnet` takes them from `--referees`, and it
 refuses that folder when it is the buyer's `--wallets` folder or inside it, or when the funder's key is one of them.
+
 In the demo all three referee keys are on one machine, so they are not independent re-runners; the output says so.
 Once V34PAY publishes a referee registry, the keys come from it. The devnet run covers every field it lists:
-proteins, electronics, materials, chemistry and robotics. It writes its output after every field, so a field that
-fails never loses the ones that ran.
+proteins, electronics, materials, chemistry and robotics.
+
+It writes its output after every field, so a field that fails never loses the ones that ran.
 
 The fee comes from `config/fees.yaml` (`fees.lab_order`, decided 14 Oct 2026: 300 bps). The decision does not say who
 bears it. The demo charges it to the funder on top of the price.
@@ -122,13 +127,16 @@ bears it. The demo charges it to the funder on top of the price.
 ## The escrow on devnet, and its limits
 
 Each order has two pots: SPL token accounts owned by an **SPL Token multisig of the referee keys (2 of 3)**. No single
-key can move them, the funder's included. A release is a token transfer that two referees co-sign. It sits in one
-transaction with a Memo holding the signed verdict's digest, so the chain ties each release to its verdict.
+key can move them, the funder's included. A release is a token transfer that two referees co-sign.
+
+It sits in one transaction with a Memo holding the signed verdict's digest, so the chain ties each release to its
+verdict.
 
 Limits: the chain does not read the verdict's fields, and it does not refund by itself after a deadline (the referees
 sign the refund). The production path is knos_pay's m-of-n referee-verdict release (TASK-V0334), which checks expiry and
-replay on chain. Once it is deployed, the same verdict messages release a knos_pay order. The fee then follows knos_pay:
-0.30% on chain, with the rest of the 3% invoiced (`cfg.platform("lab_order", amount)`).
+replay on chain. Once it is deployed, the same verdict messages release a knos_pay order.
+
+The fee then follows knos_pay: 0.30% on chain, with the rest of the 3% invoiced (`cfg.platform("lab_order", amount)`).
 
 ### Shown on devnet, 14 Oct 2026 (`web/labs_devnet.json`, `python -m knos.labs.devnet`)
 
@@ -149,40 +157,48 @@ the escrow pays `payTo` directly.
 ## x402 on both chains (`knos.labs.x402pay`)
 
 The lab's 402 names the network. Knos pays `eip155:84532` (Base Sepolia USDC `0x036CbD53842c5426634e7929541eC2318f3dCF7e`)
-or `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` (devnet), and refuses mainnet until it is approved. EVM payloads are
-EIP-3009 `TransferWithAuthorization` signed over EIP-712, in pure Python. Tests hold the code to published vectors: the
-signed example in the x402 spec recovers to its `from` address, and EIP-712's own "Ether Mail" domain separator matches.
-Adaptyv's production rail is Base mainnet (`eip155:8453`). Whether its sandbox runs on Base Sepolia is not documented.
+or `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` (devnet), and refuses mainnet until it is approved. EVM payloads are EIP-3009
+`TransferWithAuthorization` signed over EIP-712, in pure Python.
+
+Tests hold the code to published vectors: the signed example in the x402 spec recovers to its `from` address, and
+EIP-712's own "Ether Mail" domain separator matches. Adaptyv's production rail is Base mainnet (`eip155:8453`). Whether
+its sandbox runs on Base Sepolia is not documented.
 
 ## Private by default
 
 Knos Record gets hashes (spec, evidence, order), timing (ordered, results, turnaround) and the two verdicts. It never
 gets the results, sequences, protocol, buyer, price or the lab's name. The lab appears as `sha256(salt + lab)`, with a
-fresh salt per order that only the buyer keeps, so nobody can count a lab's failures. A lab's name goes in only with its
-consent (`lab_consents`), and results only with the buyer's opt-in (`publish`). Tests check that no private value
-appears in the public line.
+fresh salt per order that only the buyer keeps, so nobody can count a lab's failures.
+
+A lab's name goes in only with its consent (`lab_consents`), and results only with the buyer's opt-in (`publish`). Tests
+check that no private value appears in the public line.
 
 ## Fiat (design only)
 
 Labs and pharma refuse crypto-only settlement. The design: the same two pots, held in fiat by a licensed provider (card
 or invoice in; payout to the lab's bank). The verdict messages are unchanged, and the provider releases on the same
-2-of-3 signed verdict. Adaptyv already settles by Stripe hosted invoice and Stripe SPT. PCBWay bills a partner account
-monthly. **Founder decision:** which provider holds fiat escrow and pays out (for example Stripe Connect, or Airwallex
-through the US entity). Nothing here is built against a provider.
+2-of-3 signed verdict. Adaptyv already settles by Stripe hosted invoice and Stripe SPT.
+
+PCBWay bills a partner account monthly. **Founder decision:** which provider holds fiat escrow and pays out (for
+example Stripe Connect, or Airwallex through the US entity). Nothing here is built against a provider.
 
 ## Leitner re-verification (`src/knos/leitner/`, `config/leitner.yaml`)
 
 Every verified claim, product, lab, agent and sealed test sits in a box. The boxes are 1, 3, 7 and 30 days, or
-**orders** for labs: a new lab is checked on every order, a proven lab rarely. A pass moves the item up one box. Any
-failure drops it to box 1 and **pauses its payouts and graduation** (`can_pay`) until it passes again. Sealed tests
-that nobody fails in 20 runs rotate out. A test that caught a cheat stays hot for 10 more runs.
+**orders** for labs: a new lab is checked on every order, a proven lab rarely. A pass moves the item up one box.
+
+Any failure drops it to box 1 and **pauses its payouts and graduation** (`can_pay`) until it passes again. Sealed
+tests that nobody fails in 20 runs rotate out. A test that caught a cheat stays hot for 10 more runs.
 
 The money dashboard (`web/revenue/`) shows cost per verification before and after on a **SYNTHETIC** history. That
 history has 60 items over 120 days, a seeded 15% that break once, and costs counted in re-runs. Re-checking everything
-daily costs 1 re-run per item-day. Leitner cost 0.0528 and still caught all 5 breakages, but later: 10.6 days unseen on
-average (22 at most), and 53 item-days in which a broken item could still have been paid. That is the trade-off the box
-intervals set. Shorter top boxes buy faster catches with more re-runs. The price of a
-re-run in USD has not been measured, so none is shown.
+daily costs 1 re-run per item-day.
+
+Leitner cost 0.0528 and still caught all 5 breakages, but later: 10.6 days unseen on average (22 at most), and 53
+item-days in which a broken item could still have been paid. That is the trade-off the box intervals set. Shorter top
+boxes buy faster catches with more re-runs.
+
+The price of a re-run in USD has not been measured, so none is shown.
 
 ## What the founder does (Knos cannot: keys, accounts, applications)
 

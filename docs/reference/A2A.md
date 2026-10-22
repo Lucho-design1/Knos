@@ -8,7 +8,9 @@ how one agent finds another and hands it a task. An agent publishes an Agent Car
 
 `python -m knos.a2a serve [--port 8765] [--url PUBLIC_URL] [--allow-verify]` serves both the card and the JSON-RPC
 endpoint (`/a2a/v1`) from one process, on 127.0.0.1 unless told otherwise, so the card never names an endpoint that
-is not running. `python -m knos.a2a card URL` prints the card for an endpoint. The card of a default local run is
+is not running. `python -m knos.a2a card URL` prints the card for an endpoint.
+
+The card of a default local run is
 [`examples/a2a/.well-known/agent-card.json`](../../examples/a2a/.well-known/agent-card.json); a test keeps it equal
 to what the server serves. It also carries `url` and `preferredTransport` where A2A 0.3.0 cards named the endpoint;
 the methods answered are 1.0's.

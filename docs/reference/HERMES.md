@@ -2,9 +2,11 @@
 
 Hermes Agent (Nous Research) can use Knos three ways: as a skill, as an MCP server, and as a plugin. Each gives the
 agent the same habit: run `knos verify` before a pull request, never open one where the repository's AI policy bans
-it, attach the signed receipt, disclose AI use. The Knos referee also serves as the judge for Hermes self-evolution
-(GEPA), and Knos sealed tasks are exported as an Atropos environment. Everything here is devnet or demo: nothing in
-this page moves real money, and the example tasks are synthetic.
+it, attach the signed receipt, disclose AI use.
+
+The Knos referee also serves as the judge for Hermes self-evolution (GEPA), and Knos sealed tasks are exported as
+an Atropos environment. Everything here is devnet or demo: nothing in this page moves real money, and the example
+tasks are synthetic.
 
 ## Sources
 
@@ -79,10 +81,12 @@ id. It binds to 127.0.0.1 unless given another host, refuses an `Origin` that is
 `KNOS_MCP_HTTP_TOKEN` set refuses a request without that bearer token.
 
 The server's two tools for this: `knos_verify` (path, base, tests, runs, agent, out) and `knos_receipt` (file).
+
 `knos_verify` runs the repository's test command on your machine: it is marked not read-only, Knos never puts it on
 an allowlist (so `knos init --host hermes --global` leaves it out of `tools.include`; add it yourself if you want
-it), and over HTTP it is served only when `KNOS_MCP_HTTP_TOKEN` is set. `--http` on an address other than loopback
-refuses to start without that token.
+it), and over HTTP it is served only when `KNOS_MCP_HTTP_TOKEN` is set.
+
+`--http` on an address other than loopback refuses to start without that token.
 
 ## 3. Plugin
 
@@ -109,11 +113,13 @@ plugin is also provided: copy `hermes/plugin/knos/` (plugin.yaml and an `__init_
 
 ## Skills Guard result
 
-Hermes scans every skill from a community source (a tap, a well-known endpoint, a GitHub path) with Skills Guard,
-and blocks `caution` and `dangerous`; plugins get the same engine with plugin rules. Measured once, 13 Oct 2026, with
-the scanners at hermes-agent@8f817911 run from a source checkout in WSL. The `scan_skill` rows are re-checked by
-every test run (below); the two `scan_plugin` rows are not: that scanner also needs `tools/plugin_guard_context.py`,
-which the repository does not vendor, so those counts are a one-time measurement at the version of the code that day.
+Hermes scans every skill from a community source (a tap, a well-known endpoint, a GitHub path) with Skills Guard, and
+blocks `caution` and `dangerous`; plugins get the same engine with plugin rules. Measured once, 13 Oct 2026, with the
+scanners at hermes-agent@8f817911 run from a source checkout in WSL.
+
+The `scan_skill` rows are re-checked by every test run (below); the two `scan_plugin` rows are not: that scanner also
+needs `tools/plugin_guard_context.py`, which the repository does not vendor, so those counts are a one-time
+measurement at the version of the code that day.
 
 | Scanned | Scanner | Verdict | Findings |
 | --- | --- | --- | --- |
@@ -132,9 +138,11 @@ and on a hostile skill as a control, which it must block.
 ## 4. The referee as GEPA's judge
 
 Hermes self-evolution evolves a skill's text with DSPy GEPA, scored by a metric. Its shipped metric is a keyword
-overlap with an LLM judge for the expensive pass: it measures how a response looks, so evolution can climb by
-looking right. `hermes/gepa/knos_judge.py` offers a metric with the same call shape that measures whether the work is
-right, against tests the candidate never saw:
+overlap with an LLM judge for the expensive pass: it measures how a response looks, so evolution can climb by looking
+right.
+
+`hermes/gepa/knos_judge.py` offers a metric with the same call shape that measures whether the work is right, against
+tests the candidate never saw:
 
 ```python
 from hermes.gepa.knos_judge import make_metric
@@ -144,14 +152,20 @@ optimizer = dspy.GEPA(metric=metric, ...)
 
 The candidate's output must hold a unified diff; it is applied to a copy of the task's base and judged by
 `knos.referee.judge_candidate(base, pr, seal)` (the REFEREE API: sealed hidden tests whose hash was committed before
-the work, the locked judge hash, the cheat library, a re-run). A task without a seal, or an install without the
-referee, is not scored (0.0, "unsealed"). `allow_unsealed=True` scores such a task with a labelled fallback (the local
-cheat rules, then the task's check command, which must exit 0 and write a test report with no failure): that fallback
-is NOT tamper-proof, because the candidate's code runs in the same process as the check and can forge a report, so it
-is for the synthetic demo only, never for real evolution. Score 1.0 when the sealed checks pass, else 0.0; a
-cheat (edited tests, CI or fixtures, files out of scope, ...) is never worth more than an honest failure and its
-category is named in the feedback (`dspy.Prediction(score, feedback)` when DSPy is present, for GEPA's reflection).
-`scale="raw"` keeps the referee's own reward (1.0 / 0.0 / -1.0). Hidden test text never appears in feedback.
+the work, the locked judge hash, the cheat library, a re-run).
+
+A task without a seal, or an install without the referee, is not scored (0.0, "unsealed").
+
+`allow_unsealed=True` scores such a task with a labelled fallback (the local cheat rules, then the task's check
+command, which must exit 0 and write a test report with no failure): that fallback is NOT tamper-proof, because the
+candidate's code runs in the same process as the check and can forge a report, so it is for the synthetic demo only,
+never for real evolution.
+
+Score 1.0 when the sealed checks pass, else 0.0; a cheat (edited tests, CI or fixtures, files out of scope, ...) is
+never worth more than an honest failure and its category is named in the feedback (`dspy.Prediction(score, feedback)`
+when DSPy is present, for GEPA's reflection). `scale="raw"` keeps the referee's own reward (1.0 / 0.0 / -1.0).
+
+Hidden test text never appears in feedback.
 
 ## 5. Atropos environment
 
@@ -159,12 +173,15 @@ category is named in the feedback (`dspy.Prediction(score, feedback)` when DSPy 
 `get_next_item` cycles the sealed tasks, `collect_trajectories` asks the policy for `group_size` answers to the
 task's prompt (the prompt only, never the bundle), judges each with the referee, and returns a `ScoredDataGroup` of
 `tokenize_for_trainer` tokens and masks with the referee's reward as each score (1.0 passed, 0.0 failed, -1.0 a
-cheat); `evaluate` reports `eval/knos_pass_rate`. Run it as any Atropos environment:
-`python hermes/atropos/knos_env.py serve` (set `KNOS_ATROPOS_MODEL` and `KNOS_ATROPOS_BASE_URL`). The two tasks in
-`hermes/atropos/tasks/` are synthetic and labelled so, and they carry no seal: `setup` refuses them unless the
-config sets `allow_unsealed` (then they are scored by the forgeable fallback above: a demo of the plumbing, not of
-an ungameable reward). A sealed task is a folder with `task.json` (with the referee's `seal`) and `base/`, the hidden
-bundle at `base/.knos/acceptance/<issue>/` (knos.verify.sealed). Demo only: no reward here is money.
+cheat); `evaluate` reports `eval/knos_pass_rate`.
+
+Run it as any Atropos environment: `python hermes/atropos/knos_env.py serve` (set `KNOS_ATROPOS_MODEL` and
+`KNOS_ATROPOS_BASE_URL`). The two tasks in `hermes/atropos/tasks/` are synthetic and labelled so, and they carry no
+seal: `setup` refuses them unless the config sets `allow_unsealed` (then they are scored by the forgeable fallback
+above: a demo of the plumbing, not of an ungameable reward).
+
+A sealed task is a folder with `task.json` (with the referee's `seal`) and `base/`, the hidden bundle at
+`base/.knos/acceptance/<issue>/` (knos.verify.sealed). Demo only: no reward here is money.
 
 ## Founder decisions
 
@@ -178,8 +195,9 @@ bundle at `base/.knos/acceptance/<issue>/` (knos.verify.sealed). Demo only: no r
 ## A hook that stops a refused write (0.3.31)
 
 `register(ctx)` also adds a `pre_tool_call` hook when Hermes offers `register_hook`
-([hooks](https://hermes-agent.nousresearch.com/docs/user-guide/features/hooks), read 14 Oct 2026). With
-`KNOS_HERMES_GUARD=block` a tool call that would write a workflow (`.github/`), `.knos/`, the test runner's
+([hooks](https://hermes-agent.nousresearch.com/docs/user-guide/features/hooks), read 14 Oct 2026).
+
+With `KNOS_HERMES_GUARD=block` a tool call that would write a workflow (`.github/`), `.knos/`, the test runner's
 configuration, or an existing test file is blocked with the reason, before the agent spends work Knos would refuse to
 pay for; `warn` prints the reason and blocks nothing; unset, the hook does nothing. Tests: `tests/test_hermes_hook.py`.
 
@@ -187,11 +205,15 @@ pay for; `warn` prints the reason and blocks nothing; unset, the hook does nothi
 
 Before the plugin above, Knos reached Hermes as a package of its own: `knos-hermes` 0.1.0 on PyPI, from the repository
 drexthealpha/knos-hermes (2 Sep 2026), a Hermes memory provider (`knos_recall`, `knos_remember`, `knos_claim`,
-`knos_done`) over the local memory of knos 0.1.x. Its code and docs are in Knos as
-[`hermes/knos-hermes/`](../../hermes/knos-hermes/): the files of its last commit (11df3a96) byte for byte, except
-the `[project.urls]` of its `pyproject.toml`, which now name this repository (SOURCE.json says so;
-tests/test_evidence_copies.py holds it). Knos does not build or install it, so there is still one package: it imports
-`knos.memory` and `knos.answer`, which Knos removed in 0.3.10 (2 Oct 2026), and it asks for `knos>=0.1.1`, so next to
-the knos of today it reports itself unavailable to Hermes. What Knos gives Hermes now is the skill, the MCP server and
-the plugin above. PyPI shows the links of the last upload: a final `knos-hermes` upload built from that folder (or
-yanking 0.1.0, as `python scripts/public_face.py --remote` says) is the founder's decision.
+`knos_done`) over the local memory of knos 0.1.x.
+
+Its code and docs are in Knos as [`hermes/knos-hermes/`](../../hermes/knos-hermes/): the files of its last commit
+(11df3a96) byte for byte, except the `[project.urls]` of its `pyproject.toml`, which now name this repository
+(SOURCE.json says so; tests/test_evidence_copies.py holds it).
+
+Knos does not build or install it, so there is still one package: it imports `knos.memory` and `knos.answer`, which
+Knos removed in 0.3.10 (2 Oct 2026), and it asks for `knos>=0.1.1`, so next to the knos of today it reports itself
+unavailable to Hermes. What Knos gives Hermes now is the skill, the MCP server and the plugin above.
+
+PyPI shows the links of the last upload: a final `knos-hermes` upload built from that folder (or yanking 0.1.0, as
+`python scripts/public_face.py --remote` says) is the founder's decision.

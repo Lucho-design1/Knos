@@ -141,10 +141,13 @@ accounts. On devnet the Squads program itself has an upgrade authority, which is
 ## 3. The delay doing its job: a faulty build was replaced before it ran
 
 Knos release 0.3.13 proposed new builds of `knos_oidc` (proposal 1) and `knos_pay` (proposal 2). Both were approved on
-2026-10-04 07:17 UTC and could have run from 2026-10-06 07:17 UTC. During that delay a defect was found in the
-proposed `knos_pay`: a pay token that had paid an order could pay a second order funded later for the same issue
-at the same address ([SECURITY.md](SECURITY.md), section 15). The build never ran, so no order was ever exposed to
-it. Knos release 0.3.14 withdrew both proposals and proposed corrected builds in their place, which started a new 48
+2026-10-04 07:17 UTC and could have run from 2026-10-06 07:17 UTC.
+
+During that delay a defect was found in the proposed `knos_pay`: a pay token that had paid an order could pay a second
+order funded later for the same issue at the same address ([SECURITY.md](SECURITY.md), section 15). The build never
+ran, so no order was ever exposed to it.
+
+Knos release 0.3.14 withdrew both proposals and proposed corrected builds in their place, which started a new 48
 hours.
 
 The defect was found by the founder reading and testing during the delay, which is the use the delay is for. Had
@@ -198,19 +201,22 @@ accounts as devnet holds them (`scripts/governance.test.mjs`, with `tests/fixtur
    node scripts/governance.mjs replace-member <one of the founder's keys> <the new public key>
    ```
 
-   It sends nothing. It prints the members afterwards, the threshold, how many voting keys the founder holds, how
-   many outside key holders there are, and in one line whether the founder alone can still approve. The new key gets
-   the permission to vote and no other (`--permissions` changes that). `add-member <key>` adds without removing;
-   `set-threshold <N>` changes how many must approve; `--on upgrade` or `--on guardian` takes one multisig.
-3. The same command with `--send` creates the proposal (a Squads v4 config transaction carrying `AddMember`,
-   `RemoveMember` and, if asked, `ChangeThreshold`:
-   [Squads documentation](https://docs.squads.so/main/development/typescript/instructions/create-config-transaction))
-   and casts the founder's two votes.
-4. `node scripts/governance.mjs execute upgrade <index>` runs it once the multisig's own time lock (8 days) has passed;
-   `execute guardian <index>` at once. When a change of members or threshold executes, every proposal of that
-   multisig that was not yet approved becomes stale and must be proposed again; one already approved can still run.
-5. `node scripts/governance.mjs show --check` prints the new member list. The holder is added to
-   [`web/keyholders.json`](../../web/keyholders.json), and the count at the top of this page changes.
+It sends nothing. It prints the members afterwards, the threshold, how many voting keys the founder holds, how many
+outside key holders there are, and in one line whether the founder alone can still approve. The new key gets the
+permission to vote and no other (`--permissions` changes that).
+
+`add-member <key>` adds without removing; `set-threshold <N>` changes how many must approve; `--on upgrade` or `--on
+guardian` takes one multisig. 3. The same command with `--send` creates the proposal (a Squads v4 config transaction
+carrying `AddMember`, `RemoveMember` and, if asked, `ChangeThreshold`: [Squads
+documentation](https://docs.squads.so/main/development/typescript/instructions/create-config-transaction)) and casts
+the founder's two votes. 4.
+
+`node scripts/governance.mjs execute upgrade <index>` runs it once the multisig's own time lock (8 days) has passed;
+`execute guardian <index>` at once. When a change of members or threshold executes, every proposal of that multisig
+that was not yet approved becomes stale and must be proposed again; one already approved can still run. 5.
+
+`node scripts/governance.mjs show --check` prints the new member list. The holder is added to
+[`web/keyholders.json`](../../web/keyholders.json), and the count at the top of this page changes.
 
 **What has not been run:** `--send` and the execution of a config transaction have never been sent to a cluster or
 a local validator. What is tested is the plan, its refusals, and the bytes of the instruction the Squads SDK builds
@@ -269,14 +275,17 @@ This is a decision, with its cost stated.
 
 What freezing costs. A frozen program's defects cannot be patched in place. A fault in the verifier would then be
 answered by deploying a new verifier at a new address and upgrading `knos_pay` to read it, 8 days away, with the
-guardian revoking keys in the meantime. The constants in `pins.rs` freeze with the program: the genesis keys, the
-guardian's address, the pinned rotate workflow and the account whose runs admit new keys. So the dependency on one
-GitHub account (section 9) has to be resolved **before** the freeze, not after it.
+guardian revoking keys in the meantime.
+
+The constants in `pins.rs` freeze with the program: the genesis keys, the guardian's address, the pinned rotate
+workflow and the account whose runs admit new keys. So the dependency on one GitHub account (section 9) has to be
+resolved **before** the freeze, not after it.
 
 The order is fixed: the outside review and its fixes first; then the move of the attesting account (section 9);
 then the freeze, proposed through the multisig with its 8 days like any other change. Releases still fix the
-verifier (for example, a correction to how it reads a token's claims). That is why it is not frozen yet: a frozen
-verifier could not take such a fix.
+verifier (for example, a correction to how it reads a token's claims).
+
+That is why it is not frozen yet: a frozen verifier could not take such a fix.
 
 None of this has happened: both programs are upgradeable today.
 
@@ -409,12 +418,15 @@ The steps, in order:
 
 ## Use the gate
 
-The delay, the build record and the check before a vote are not Knos's alone. [GATE.md](GATE.md) has the three
-commands that put another team's program behind the same arrangement on devnet
+The delay, the build record and the check before a vote are not Knos's alone.
+
+[GATE.md](GATE.md) has the three commands that put another team's program behind the same arrangement on devnet
 ([`examples/upgrade_gate/adopt.py`](../../examples/upgrade_gate/adopt.py)): make a gate of your own that takes only
 your build workflow's token, hand the program's upgrade authority to a Squads vault with a time lock, and check every
-pending upgrade against the gate before voting. The same page says what it cannot do. Teams that have done it: 0
-([COMPOSE.md](COMPOSE.md), "Who uses the upgrade gate").
+pending upgrade against the gate before voting.
+
+The same page says what it cannot do. Teams that have done it: 0 ([COMPOSE.md](COMPOSE.md), "Who uses the upgrade
+gate").
 
 ## 10. What is missing, in one list
 

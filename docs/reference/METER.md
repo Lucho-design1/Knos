@@ -25,11 +25,11 @@ flowchart TB
 ```
 *Two lists, kept apart, become one bill when they agree.*
 
-`knos_meter` counts **evaluations**. An evaluation is one judgment of one piece of work. It names a work order, an
-artifact (a commit), the policy it was judged under and a milestone. It carries a verdict (accepted or rejected) and
-the rate the seller bills if it is accepted. The buyer's pinned workflow asks GitHub to sign that judgment; the program checks
-the signature on chain and counts it. Those four fields give the evaluation its id: a fingerprint (sha256) of the four joined end to end (`||` means
-"followed by"):
+`knos_meter` counts **evaluations**. An evaluation is one judgment of one piece of work. It names a work order, an artifact (a commit), the policy
+it was judged under and a milestone. It carries a verdict (accepted or rejected) and the rate the seller bills if it is accepted.
+
+The buyer's pinned workflow asks GitHub to sign that judgment; the program checks the signature on chain and counts it. Those four fields give the
+evaluation its id: a fingerprint (sha256) of the four joined end to end (`||` means "followed by"):
 
     id = sha256(work order, 32 bytes || artifact, its 40 characters || policy, 32 bytes || milestone, u32 little-endian)
 
@@ -37,14 +37,15 @@ the signature on chain and counts it. Those four fields give the evaluation its 
 once. The count is of evaluations, accepted and rejected alike. The value is the sum of the accepted ones' rates,
 in whatever the two parties settle in; the meter adds it up and moves none of it.
 
-Everything here is on Solana devnet with test USDC. `knos_meter` 1.1, with the batch mode, is the version on devnet
-since upgrade proposal 5 (October 2026). It can be upgraded only through a
-multisig with a public 8-day delay, until an outside review. The whole path below
-(ledger file, the workflow's command, the signed audience, the relay, the two accounts, `verify` and `reconcile`
-reading them back) runs in `tests/test_meter_e2e.py` against the program in LiteSVM. Before that upgrade it ran on devnet once,
-on a staging deployment of knos_meter 1.1 during the release rehearsal of Knos 0.3.14, with tokens GitHub signed for a staging copy of the workflows:
-5,000 evaluations in two batches, the seller's claim of 5,003, and a reconcile that named the 3 the buyer left out
-([CAPABILITIES.md](CAPABILITIES.md), "The 0.3.14 rehearsal on devnet").
+Everything here is on Solana devnet with test USDC. `knos_meter` 1.1, with the batch mode, is the version on devnet since upgrade proposal 5 (October
+2026). It can be upgraded only through a multisig with a public 8-day delay, until an outside review.
+
+The whole path below (ledger file, the workflow's command, the signed audience, the relay, the two accounts, `verify` and `reconcile` reading them
+back) runs in `tests/test_meter_e2e.py` against the program in LiteSVM.
+
+Before that upgrade it ran on devnet once, on a staging deployment of knos_meter 1.1 during the release rehearsal of Knos 0.3.14, with tokens GitHub
+signed for a staging copy of the workflows: 5,000 evaluations in two batches, the seller's claim of 5,003, and a reconcile that named the 3 the buyer
+left out ([CAPABILITIES.md](CAPABILITIES.md), "The 0.3.14 rehearsal on devnet").
 
 ## Two modes
 
@@ -109,9 +110,11 @@ UTF-8 bytes. There is no JSON in what is hashed.
     root        = sha256("knos.root.2" 0x00 || number of leaves, u32 big-endian || top of the tree)
 
 The leaves are the events in ascending order of the 32-byte evaluation id, then the corrections in ascending order of
-key. An evaluation given twice is refused. The tree splits at the largest power of two below the number of leaves: a
-last leaf with no sibling is carried up as it is, never hashed with a copy of itself, and a leaf can never be read as
-a node because the two are hashed under different tags.
+key. An evaluation given twice is refused.
+
+The tree splits at the largest power of two below the number of leaves: a last leaf with no sibling is carried up as
+it is, never hashed with a copy of itself, and a leaf can never be read as a node because the two are hashed under
+different tags.
 
 **Telling the formats apart without trusting the writer.** A format 2 header says `"format":2` beside the root; a
 format 1 header says nothing, as before. The statement is checked, not believed: the format and the number of leaves
@@ -130,7 +133,9 @@ batch written at the end of the file:
 
 It has no lines of its own: its events are the lines of the batch it names, which stay where and as they were, with
 their header and their anchored root. It keeps that batch's month, sequence and three numbers, because it is the same
-count. It is not sent to the program as a batch: the program adds every batch to its totals and takes none of zero
+count.
+
+It is not sent to the program as a batch: the program adds every batch to its totals and takes none of zero
 evaluations, so a second anchoring would count the month twice. Until both parties hold the file and reconcile, the
 new root is one party's statement about lines whose ids the chain already anchors.
 
@@ -152,12 +157,16 @@ A line may say its verdict in words, and then it also carries its ids:
 
     {"accepted":0,...,"verdict":"insufficient_evidence","dlv":"dlv_<24 hex>","evl":"evl_<24 hex>","evaluator":"neutral@<40 hex>","run":"36905461215"}
 
-`verdict` is one of `accepted`, `rejected`, `insufficient_evidence`, `disputed`; `accepted` is 1 for the first and 0
-for the other three. `dlv` and `evl` are the deliverable's and the evaluation's ids as every Knos interface writes
-them ([Four ids](#four-ids-on-every-surface)); `inv` (the supplier's invoice line) and `stl` (the settlement, on an
-accepted line only) are there when the writer knows them. Each is checked: an id of one kind in the place of another
-is refused, and so is a `dlv` or an `evl` that is not the one the line's own fields give. A line that does not say
-its verdict in words is written exactly as Knos 0.3.16 and earlier wrote it, and reads as accepted or rejected from its 1 or 0.
+`verdict` is one of `accepted`, `rejected`, `insufficient_evidence`, `disputed`; `accepted` is 1 for the first and 0 for the
+other three. `dlv` and `evl` are the deliverable's and the evaluation's ids as every Knos interface writes them ([Four
+ids](#four-ids-on-every-surface)); `inv` (the supplier's invoice line) and `stl` (the settlement, on an accepted line only) are
+there when the writer knows them.
+
+Each is checked: an id of one kind in the place of another is refused, and so is a `dlv` or an `evl` that is not the one the
+line's own fields give.
+
+A line that does not say its verdict in words is written exactly as Knos 0.3.16 and earlier wrote it, and reads as accepted or
+rejected from its 1 or 0.
 
 Code: [`src/knos/ledger.py`](../../src/knos/ledger.py), standard library only (the two commands that touch GitHub or
 Solana say so). Tests: `tests/test_ledger.py`, `tests/test_ledger_periods.py`.
@@ -204,8 +213,10 @@ the client uses those.
 
 What the program asks of each token. `RecordBatch`: GitHub's signature, a GitHub-hosted runner, the run's first
 attempt, the workflow file `attest.yml` or `prove.yml` of the repository and at the commit the buyer's Credits pin,
-in a repository whose owner is the audience's buyer. The same rule as `Record`. `ClaimBatch`: GitHub's signature, a
-GitHub-hosted runner, a repository whose owner is the audience's seller. No workflow pin.
+in a repository whose owner is the audience's buyer. The same rule as `Record`.
+
+`ClaimBatch`: GitHub's signature, a GitHub-hosted runner, a repository whose owner is the audience's seller. No
+workflow pin.
 
 Not done: reading the ledger from a workflow artifact (the command reads a file in the repository); a batch larger
 than GitHub's API serves as one file (100 MB, about 300,000 evaluations; a batch token carries at most 100,000).
@@ -221,13 +232,16 @@ than GitHub's API serves as one file (100 MB, about 300,000 evaluations; a batch
 | each side's signed token for the close record, and the GitHub keys it names | both | beside the close record; in the month's archive |
 | the month's archive | whoever made one; either can | anywhere: it is checked with no network |
 
-Each party keeps its own ledger. Knos needs no copy and keeps none; every command here runs on a laptop. The cost
-of that: the chain holds totals and roots, not evaluations, so a party that loses its file can still show
-how many it anchored and can no longer show which. Two things reduce that. Each side keeps its own file, so one lost
-file leaves the other. And a closed month goes into one archive ([below](#durable-copies)) that either party can
-hand to the other, to an auditor, or to cold storage, and that says so itself if one byte of it has changed. Nobody
-is made to keep a copy: retention is a term of the contract between the two, not something the program or Knos
-enforces.
+Each party keeps its own ledger. Knos needs no copy and keeps none; every command here runs on a laptop. The cost of
+that: the chain holds totals and roots, not evaluations, so a party that loses its file can still show how many it
+anchored and can no longer show which. Two things reduce that.
+
+Each side keeps its own file, so one lost file leaves the other. And a closed month goes into one archive
+([below](#durable-copies)) that either party can hand to the other, to an auditor, or to cold storage, and that says
+so itself if one byte of it has changed.
+
+Nobody is made to keep a copy: retention is a term of the contract between the two, not something the program or
+Knos enforces.
 
 ## What each party can check alone
 
@@ -255,33 +269,32 @@ Once both are anchored, the chain shows two counts for the same month, 6 and 7, 
 all the chain shows, and it is enough for the seller to know there is something to settle before it has seen the
 buyer's file. The files say what:
 
-    $ knos meter reconcile examples/meter/buyer.jsonl examples/meter/seller.jsonl
-    202610 a84efce01a23db3635166e574a8bb99b1ffcc55491dd67d03f9322f35dbdbac4 only the seller has (missing from the buyer's count): accepted, rate 2000000
-    202610 c9f06a898bc6dae84b02d8fabf6d608fa54706fbe1b356de72362c84019f3648 differs in verdict: buyer rejected at 2000000 in 202610, seller accepted at 2000000 in 202610
-    buyer,424242
-    seller,555000
-    rate,2000
-    free,100000
-    month,count,accepted,value,fee,buyer_only,seller_only,disputed
-    202610,5,4,8000000,0,0,1,1
-    sha256,cfa4bcb4f5095580ad563bcbf6fc4471f3818e95b0c8c18cba41c9394f6cb16f
-    202610 verdicts of what both hold: 4 accepted, 1 rejected, 0 insufficient evidence, 0 disputed; 4 deliverable(s) accepted for the first time (billed once each)
-    The two ledgers differ. The statement counts only what both have and describe alike; settle the lines above between you.
+$ knos meter reconcile examples/meter/buyer.jsonl examples/meter/seller.jsonl 202610 a84efce01a23db3635166e574a8bb99b1ffcc55491dd67d03f9322f35dbdbac4 only the seller has
+(missing from the buyer's count): accepted, rate 2000000 202610 c9f06a898bc6dae84b02d8fabf6d608fa54706fbe1b356de72362c84019f3648 differs in verdict: buyer rejected at
+2000000 in 202610, seller accepted at 2000000 in 202610 buyer,424242 seller,555000 rate,2000 free,100000 month,count,accepted,value,fee,buyer_only,seller_only,disputed
+202610,5,4,8000000,0,0,1,1 sha256,cfa4bcb4f5095580ad563bcbf6fc4471f3818e95b0c8c18cba41c9394f6cb16f 202610 verdicts of what both hold: 4 accepted, 1 rejected, 0
+insufficient evidence, 0 disputed; 4 deliverable(s) accepted for the first time (billed once each) The two ledgers differ.
 
-The statement counts what both sides have and describe alike, and beside it how many each side has alone and how
-many they dispute. It names the two roles, never "mine" and "theirs", and sorts by id, so the buyer and the seller
-get the same bytes and can compare the last line. `fee` is the price book's proposed Meter line: the first 100,000
-evaluations of a month free, then 0.002 USD each (`--rate` takes another, in millionths of a USD), from prepaid credits.
-That is the proposed price. The deployed `knos-meter` program charges 0.05 per evaluation after 10,000 free a month
-(test USDC); changing it waits for a program upgrade. The Meter fee is not the release fee: `knos-pay` takes 0.30%,
-at least 0.05, on top of an order's amount (the funder pays) and out of a job's amount (the payee gets the rest). The
-free allowance is the buyer's for the month across all its sellers; a buyer with several passes what is left with
-`--free`.
+The statement counts only what both have and describe alike; settle the lines above between you.
+
+The statement counts what both sides have and describe alike, and beside it how many each side has alone and how many
+they dispute. It names the two roles, never "mine" and "theirs", and sorts by id, so the buyer and the seller get the
+same bytes and can compare the last line.
+
+`fee` is the price book's proposed Meter line: the first 100,000 evaluations of a month free, then 0.002 USD each
+(`--rate` takes another, in millionths of a USD), from prepaid credits. That is the proposed price. The deployed
+`knos-meter` program charges 0.05 per evaluation after 10,000 free a month (test USDC); changing it waits for a program
+upgrade.
+
+The Meter fee is not the release fee: `knos-pay` takes 0.30%, at least 0.05, on top of an order's amount (the funder
+pays) and out of a job's amount (the payee gets the rest). The free allowance is the buyer's for the month across all
+its sellers; a buyer with several passes what is left with `--free`.
 
 A seller whose event is missing has three things to show: its own line for the evaluation, the proof that the line
-is in a batch it anchored (`knos meter prove`), and the GitHub-signed run that produced the verdict. What happens
-next (the buyer adds the event in a later batch, or disputes it) is between the two; the path is agreed in the
-contract before the work, not decided by the program.
+is in a batch it anchored (`knos meter prove`), and the GitHub-signed run that produced the verdict.
+
+What happens next (the buyer adds the event in a later batch, or disputes it) is between the two; the path is
+agreed in the contract before the work, not decided by the program.
 
 ## What the count proves and what it does not
 
@@ -326,21 +339,28 @@ A statement gives three numbers for a month and never adds them together.
 | **rejected evaluations** | evaluations whose verdict is rejected | the work that was judged and not accepted; billable to the Meter, not an outcome |
 
 The third counts the verdict `rejected` and no other. A month that holds either of the two newer verdicts states them
-on two more lines, `insufficient_evidence_evaluations` and `disputed_evaluations`, and its first line says
-`knos meter statement,2`; a month of accepted and rejected alone is stated as version 1, byte for byte as before.
-The four counts add up to `evaluations`. An evaluation that could not tell is billable to the Meter like any other
-run, and is never an outcome and never the supplier's failure.
+on two more lines, `insufficient_evidence_evaluations` and `disputed_evaluations`, and its first line says `knos
+meter statement,2`; a month of accepted and rejected alone is stated as version 1, byte for byte as before. The four
+counts add up to `evaluations`.
+
+An evaluation that could not tell is billable to the Meter like any other run, and is never an outcome and never the
+supplier's failure.
 
 The first and the second differ whenever work is split. A deliverable carried by ten pull requests is at most ten
 evaluations (ten artifacts were judged) and one accepted outcome: the identity of what was bought is the order and
-the milestone, not the pull request. The same holds across months: a deliverable accepted in October and evaluated
-again in November is no second outcome. `tests/test_ledger_periods.py` holds both cases.
+the milestone, not the pull request.
+
+The same holds across months: a deliverable accepted in October and evaluated again in November is no second
+outcome. `tests/test_ledger_periods.py` holds both cases.
 
 The chain's `value` is the sum of the rates of the accepted *evaluations*, because the program sees evaluations and
-has no notion of a deliverable. For work that was split, that sum is larger than what a per-outcome price comes to,
-so the statement prints both: `value_of_accepted_evaluations` (what the chain adds) and `value_of_accepted_outcomes`
-(one rate per accepted deliverable, that of the evaluation that first accepted it). A vendor's invoice per outcome
-uses the second. Making the chain's `value` count per deliverable would need a program change and is not built.
+has no notion of a deliverable.
+
+For work that was split, that sum is larger than what a per-outcome price comes to, so the statement prints both:
+`value_of_accepted_evaluations` (what the chain adds) and `value_of_accepted_outcomes` (one rate per accepted
+deliverable, that of the evaluation that first accepted it). A vendor's invoice per outcome uses the second.
+
+Making the chain's `value` count per deliverable would need a program change and is not built.
 
     $ knos meter statement seller.jsonl --month 2026-10
     knos meter statement,1
@@ -363,10 +383,14 @@ uses the second. Making the chain's `value` count per deliverable would need a p
 
 The lines down to `sha256` are made only of what both parties hold once a month is agreed, so the buyer and the
 seller compare that one hash. The lines after it are this ledger's own record: what it anchored, and below that one
-line for every repeat and every correction. `anchored_and_not_counted` is how many evaluations the chain's counter
-holds that the statement does not count (repeats and withdrawals). For the buyer, each of those past the free
-allowance was charged 0.05 USD in credits that the program cannot give back; the statement makes the number visible
-and settling it is between the buyer and Knos, off chain. Nobody has had to yet.
+line for every repeat and every correction.
+
+`anchored_and_not_counted` is how many evaluations the chain's counter holds that the statement does not count
+(repeats and withdrawals). For the buyer, each of those past the free allowance was charged 0.05 USD in credits
+that the program cannot give back; the statement makes the number visible and settling it is between the buyer and
+Knos, off chain.
+
+Nobody has had to yet.
 
 ## Four verdicts, and what the chain holds of them
 
@@ -403,18 +427,23 @@ called by one id. Each is a prefix and 24 hex characters, made by `knos.ids` fro
 
 What is not there, said plainly. A ledger line names its evaluator and run only when its writer knew them; without
 them its `evl` is one id per deliverable, artifact and policy, which is not the id a receipt of the same run
-carries. The chain never sees an invoice, so `inv` is on a line only when a party put it there. The audit export is
-made from the program's log lines, which carry neither the commit nor the run: its `evaluation_id` and
-`invoice_line_id` are empty unless the version 4 receipt of the line's transaction is at hand. The 32-byte `id` and
-`deliverable` of a ledger line are still the bytes the program bills by; the four ids are names for people and
-files, and nothing on chain reads them. Vectors: `conformance/vectors/ids.v1.json`.
+carries.
+
+The chain never sees an invoice, so `inv` is on a line only when a party put it there. The audit export is made
+from the program's log lines, which carry neither the commit nor the run: its `evaluation_id` and `invoice_line_id`
+are empty unless the version 4 receipt of the line's transaction is at hand.
+
+The 32-byte `id` and `deliverable` of a ledger line are still the bytes the program bills by; the four ids are
+names for people and files, and nothing on chain reads them. Vectors: `conformance/vectors/ids.v1.json`.
 
 ## One deliverable is billed once
 
 One accepted commercial outcome per deliverable under one order: the first evaluation of the deliverable, in the
 order the ledger counts (month, then batch, then id), whose verdict is accepted after every correction.
-`ledger.billing` is the one function that says which, and `knos meter statement --json` marks that line
-`"billed": true` and every other `false`. `ledger.RULES` holds the table below, and a test holds the two together.
+`ledger.billing` is the one function that says which, and `knos meter statement --json` marks that line `"billed":
+true` and every other `false`.
+
+`ledger.RULES` holds the table below, and a test holds the two together.
 
 | what happened | what it is | what the ledger makes of it | what it adds to the accepted outcomes |
 |---|---|---|---|
@@ -425,11 +454,13 @@ order the ledger counts (month, then batch, then id), whose verdict is accepted 
 | ten pull requests for one milestone | one deliverable, ten artifacts | ten evaluations | one outcome, when the first is accepted |
 
 A retry of the same artifact under the same policy has the 32-byte id the program already bills once, so one batch
-cannot say two things of it: the retry's verdict reaches the ledger as a correction of the first entry. Whether a
-reopening is inside the warranty is a comparison of two times with the window the terms set (`ledger.reopened`); a
-new deliverable after it has the key `<milestone>/reopened/<n>` (`ledger.reopened_key`), and exists only when the
-terms say a reopening after the warranty is new work. The Meter's own fee is per evaluation and is not touched by
-any of this: ten evaluations are ten evaluations.
+cannot say two things of it: the retry's verdict reaches the ledger as a correction of the first entry.
+
+Whether a reopening is inside the warranty is a comparison of two times with the window the terms set
+(`ledger.reopened`); a new deliverable after it has the key `<milestone>/reopened/<n>` (`ledger.reopened_key`),
+and exists only when the terms say a reopening after the warranty is new work.
+
+The Meter's own fee is per evaluation and is not touched by any of this: ten evaluations are ten evaluations.
 
 ## One function decides what counts once
 
@@ -447,7 +478,9 @@ itself. `verify`, `close`, `statement` and the archive all use this one function
 
 `knos meter verify` **fails** a ledger in which an evaluation is counted twice, and names it:
 
-    batch 1 of 202610: evaluation 7c1e... is already in batch 0 of 202610: it is counted twice. If batch 1 is not anchored yet, take the line out and build the batch again; if it is anchored, the chain billed it twice: run `knos meter correct <ledger> 7c1e... --batch 202610.1 --kind duplicate` and anchor the next batch, which carries the correction
+batch 1 of 202610: evaluation 7c1e... is already in batch 0 of 202610: it is counted twice.
+
+If batch 1 is not anchored yet, take the line out and build the batch again; if it is anchored, the chain billed it twice: run `knos meter correct <ledger> 7c1e... --batch 202610.1 --kind duplicate` and anchor the next batch, which carries the correction
 
 The pinned workflow runs the same check before it signs, so a ledger with an uncorrected repeat gets no further
 batch signed. Once the correction is in a batch, `verify` passes and the statement says
@@ -455,7 +488,9 @@ batch signed. Once the correction is in a batch, `verify` passes and the stateme
 
 The list of individually recorded ids comes from a file (`--individual`) or from the chain (`verify --rpc <url>
 --marks`). A mark can be closed from two hours into the month after its own, so for a month that is over, keep the
-list as a file. A buyer and a seller who use one mode for one work order never meet this case.
+list as a file.
+
+A buyer and a seller who use one mode for one work order never meet this case.
 
 ## Corrections
 
@@ -472,22 +507,28 @@ batch. So a correction is a **signed ledger record, not a chain write**:
 
 A verdict correction can set any of the four verdicts. The batch it corrects stays as the chain took it: a batch
 that said accepted still adds one to the anchored `accepted`, whatever the correction says, and a correction to
-`insufficient_evidence` or `disputed` counts as "not accepted" exactly as one to `rejected` does. The statement and
-the close record carry the word.
+`insufficient_evidence` or `disputed` counts as "not accepted" exactly as one to `rejected` does.
+
+The statement and the close record carry the word.
 
 `by` is the GitHub owner id of the party that issues it, the ledger's buyer or its seller. `knos meter correct`
-writes the line to `<ledger>.corrections`; the next `knos meter batch` puts it in that batch. There it is a leaf of
-the batch's Merkle tree with its own prefix, `sha256(0x02 || sha256(line))`, after the evaluations' leaves
-(`0x00`), so no correction can be read as an evaluation and a batch without corrections has exactly the tree it
-had before. The root GitHub signs for that batch therefore **anchors the correction**: `knos meter prove <ledger>
-<sha256 of the line>` gives its inclusion proof. The batch's count, accepted and value are of its evaluations only,
-and the chain's totals stay what they were; the statement nets the correction and shows it, and the close record
-lists every correction of the month with the party that issued it and the ledger that anchored it.
+writes the line to `<ledger>.corrections`; the next `knos meter batch` puts it in that batch.
 
-Because the program is unchanged: a correction rides in a batch that has at least one
-new evaluation, because the program takes no batch of none; a correction is a statement by one party, and it
-changes the month's result for both only when the other party's ledger then says the same (the close decides); and
-a fee already taken for a repeat is not returned by the program.
+There it is a leaf of the batch's Merkle tree with its own prefix, `sha256(0x02 || sha256(line))`, after the
+evaluations' leaves (`0x00`), so no correction can be read as an evaluation and a batch without corrections has
+exactly the tree it had before.
+
+The root GitHub signs for that batch therefore **anchors the correction**: `knos meter prove <ledger> <sha256 of
+the line>` gives its inclusion proof.
+
+The batch's count, accepted and value are of its evaluations only, and the chain's totals stay what they were; the
+statement nets the correction and shows it, and the close record lists every correction of the month with the party
+that issued it and the ledger that anchored it.
+
+Because the program is unchanged: a correction rides in a batch that has at least one new evaluation, because the
+program takes no batch of none; a correction is a statement by one party, and it changes the month's result for
+both only when the other party's ledger then says the same (the close decides); and a fee already taken for a
+repeat is not returned by the program.
 
 ## Closing a month
 
@@ -505,13 +546,13 @@ the same bytes whoever computes it from the two files:
 
 On the two example ledgers:
 
-    $ knos meter close examples/meter/buyer.jsonl examples/meter/seller.jsonl --month 2026-10 --out close.json
-    the buyer's ledger: 6 evaluation(s), 4 accepted outcome(s), 2 rejected evaluation(s); anchored 6 in 2 batch(es), running hash edb2b357...
-    the seller's ledger: 7 evaluation(s), 6 accepted outcome(s), 1 rejected evaluation(s); anchored 7 in 2 batch(es), running hash 1fa7e587...
-    IN DISPUTE a84efce01a23db3635166e574a8bb99b1ffcc55491dd67d03f9322f35dbdbac4: missing from the buyer's ledger
-    IN DISPUTE c9f06a898bc6dae84b02d8fabf6d608fa54706fbe1b356de72362c84019f3648: verdict differs
-    202610 is DISPUTED. Wrote close.json (sha256 cb64c5b0...).
-    A disputed month is not an invoice. Settle the lines above (add the missing evaluation in a later batch, or `knos meter correct`), then close again.
+$ knos meter close examples/meter/buyer.jsonl examples/meter/seller.jsonl --month 2026-10 --out close.json the buyer's ledger: 6 evaluation(s), 4
+accepted outcome(s), 2 rejected evaluation(s); anchored 6 in 2 batch(es), running hash edb2b357... the seller's ledger: 7 evaluation(s), 6 accepted
+outcome(s), 1 rejected evaluation(s); anchored 7 in 2 batch(es), running hash 1fa7e587...
+
+IN DISPUTE a84efce01a23db3635166e574a8bb99b1ffcc55491dd67d03f9322f35dbdbac4: missing from the buyer's ledger IN DISPUTE
+c9f06a898bc6dae84b02d8fabf6d608fa54706fbe1b356de72362c84019f3648: verdict differs 202610 is DISPUTED. Wrote close.json (sha256 cb64c5b0...). A disputed
+month is not an invoice. Settle the lines above (add the missing evaluation in a later batch, or `knos meter correct`), then close again.
 
 **A disputed month never becomes an invoice silently.** `knos meter close` exits 1. `knos meter statement --close
 close.json` prints no totals for it and exits 1; with `--disputed` it prints them under
@@ -531,6 +572,7 @@ The job asks GitHub for a token whose audience is
 
 and keeps it beside the record (`close.json.buyer.jwt`, `close.json.seller.jwt`) with the GitHub keys it names
 (`close.json.jwks.json`). The command refuses to keep a token whose repository owner is not the party named.
+
 `knos meter close --check close.json` verifies both tokens **offline**: the RS256 signature against those keys
 (the verifier the evidence bundle uses, `knos.bundle.rs256`), the issuer, the audience, and that the repository's
 owner id is the record's buyer or seller. It exits 0 only for an agreed month signed by both.
@@ -541,9 +583,11 @@ a close audience, so nothing on chain says a month is closed, agreed or disputed
 program change and is not built. What ties the close to the chain is the pair of running hashes in the record:
 `knos meter verify <ledger> --rpc <url>` shows each is the one its Ledger account holds.
 
-Limits of the signature: a close token is checked after GitHub's own few minutes of validity, so its
-expiry is not held against it; what is checked is that GitHub signed these bytes for that owner at the time `iat`
-names. The check trusts the keys it is given. That they are GitHub's is checked once, with a network, against
+Limits of the signature: a close token is checked after GitHub's own few minutes of validity, so its expiry is not
+held against it; what is checked is that GitHub signed these bytes for that owner at the time `iat` names. The
+check trusts the keys it is given.
+
+That they are GitHub's is checked once, with a network, against
 `https://token.actions.githubusercontent.com/.well-known/jwks` or the `knos_oidc` key accounts; GitHub rotates its
 keys, which is why the keys used are kept. No close has been signed by a real GitHub run yet: the tokens in the
 tests are signed by a test key.
@@ -555,16 +599,21 @@ tests are signed by a test key.
 
 The archive is one tar of a closed month: `MANIFEST.json` (the sha256 of every file), the close record, the ledger
 of the party that made it (and the other's with `--other`), the month's corrections drawn from each ledger, each
-side's signed token as far as there is one, and the GitHub keys those tokens name. It is deterministic (names in
-order, times zero, one mode, no owner), so the buyer and the seller building it from the same files get the same
-bytes and can compare one hash. `export --bundle` writes nothing that would not verify.
+side's signed token as far as there is one, and the GitHub keys those tokens name.
 
-`verify --bundle` needs no network. It checks every file against the manifest and the archive against its one
-form, recomputes every root, total and running hash of each ledger, recomputes the close record from the two
-ledgers (with one ledger: that side's hash and numbers; the other side's are then the record's word, and it says
-so), and checks each token. It names a party that has not signed. A changed byte anywhere fails it; the test
-changes a byte in every file and along the whole archive. What it does not do is ask the chain: comparing the
-running hashes with the Ledger accounts is `verify --rpc`.
+It is deterministic (names in order, times zero, one mode, no owner), so the buyer and the seller building it from
+the same files get the same bytes and can compare one hash. `export --bundle` writes nothing that would not
+verify.
+
+`verify --bundle` needs no network.
+
+It checks every file against the manifest and the archive against its one form, recomputes every root, total and
+running hash of each ledger, recomputes the close record from the two ledgers (with one ledger: that side's hash
+and numbers; the other side's are then the record's word, and it says so), and checks each token.
+
+It names a party that has not signed. A changed byte anywhere fails it; the test changes a byte in every file
+and along the whole archive. What it does not do is ask the chain: comparing the running hashes with the Ledger
+accounts is `verify --rpc`.
 
 ## Design choices
 
@@ -590,13 +639,16 @@ order and a token cannot be replayed. A batch skipped on chain blocks the ones a
 
 ## What an evaluation costs in each mode
 
-Inputs. A transaction costs 5,000 lamports per signature ([Solana docs](https://solana.com/docs/core/fees)). Rent
-is (128 + bytes) × 5,080 lamports on the clusters today: `getMinimumBalanceForRentExemption(88)` returned 1,097,280
+Inputs. A transaction costs 5,000 lamports per signature ([Solana docs](https://solana.com/docs/core/fees)). Rent is
+(128 + bytes) × 5,080 lamports on the clusters today: `getMinimumBalanceForRentExemption(88)` returned 1,097,280
 lamports and `getMinimumBalanceForRentExemption(96)` 1,137,920 from `api.devnet.solana.com`, and 1,137,920 for 96
-bytes from `api.mainnet-beta.solana.com`, on 4 Oct 2026. (The older rule, (128 + bytes) × 6,960, gives 1,503,360 and
-1,559,040; it is what LiteSVM charges in the tests and not what either cluster charges today.) SOL is taken at
-121.50 USD: [CoinGecko](https://www.coingecko.com/en/coins/solana) quoted 121.49 and
+bytes from `api.mainnet-beta.solana.com`, on 4 Oct 2026.
+
+(The older rule, (128 + bytes) × 6,960, gives 1,503,360 and 1,559,040; it is what LiteSVM charges in the tests and
+not what either cluster charges today.) SOL is taken at 121.50 USD:
+[CoinGecko](https://www.coingecko.com/en/coins/solana) quoted 121.49 and
 [Coinbase](https://www.coinbase.com/price/solana) 121.46 on 4 Oct 2026. One lamport is a billionth of a SOL.
+
 Carrying one GitHub-signed token is three transactions of one signature each: two to verify a token signed with an
 RSA-2048 key ([BENCH.md](BENCH.md), "The verifier on chain") and one for the instruction.
 
@@ -615,8 +667,10 @@ with a fee transfer; `ClaimBatch` 57,412 and 50,946. The relay asks for 110,000 
 
 The share of the instruction's own signature is 5,000 ÷ 5,000 = 1 lamport per evaluation; the other two lamports are
 the verification. 5,000 is an example size: a batch may hold up to 100,000, which divides the same 15,000 lamports
-further. The seller's `ClaimBatch` costs its relayer the same three transactions per batch, the rent of the claim
-account once a month (1,137,920 lamports), and no Knos fee.
+further.
+
+The seller's `ClaimBatch` costs its relayer the same three transactions per batch, the rent of the claim account
+once a month (1,137,920 lamports), and no Knos fee.
 
 ## Working capital at 1,000,000 evaluations a month
 

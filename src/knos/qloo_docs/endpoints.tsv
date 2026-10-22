@@ -1,4 +1,4 @@
-# Qloo lookup, analysis and trends endpoints: the query parameters each one's docs.qloo.com page lists, read 21 Oct 2026.
+# Qloo lookup, analysis and trends endpoints: the query parameters each one's docs.qloo.com page lists, read 22 Oct 2026.
 # endpoint	parameter	note
 /search	query	text to search
 /search	types	urn:entity:* incl. search-only legacy types urn:entity:actor, album, author, director, locality

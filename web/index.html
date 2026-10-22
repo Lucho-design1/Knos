@@ -97,12 +97,15 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
   <a class="brand" href="#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
   <nav id="nav" aria-label="Knos">
     <a href="#home">Check demand</a>
+    <a href="wanted.html?to=/companies">Companies</a>
+    <a href="wanted.html?to=/fields">Fields</a>
     <a href="wanted.html#projects">Projects</a>
-    <a href="#pricing">Pricing</a>
     <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
     <div class="more" id="more">
       <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
       <div class="more-list" id="more-list">
+        <a href="wanted.html?to=/money">The money</a>
+        <a href="#pricing">Pricing</a>
         <a href="#verify">How we verify</a>
         <a href="wanted.html#buy">Back a product</a>
         <a href="wanted.html#fund">Fund a milestone</a>
@@ -332,20 +335,33 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
 <!-- k-hero -->
 <div class="k-hero" id="k-hero" data-api="@app" data-app="wanted.html">
   <h1 id="k-mission" class="k-mission">Carry research from every field of science across the valley of death.</h1>
-  <p class="k-lede">Paste a paper or an idea. Qloo shows who would buy it, where, and at what price.</p>
   <form class="k-ask" id="k-ask" autocomplete="off" role="search" aria-label="Check demand">
     <input id="k-q" name="q" type="text" aria-label="A DOI, an arXiv id or an idea" maxlength="500" placeholder="A DOI, an arXiv id or an idea" enterkeyhint="go" spellcheck="false">
     <button id="k-go" type="submit">Check demand</button>
   </form>
-  <p class="k-try"><span>Try</span>
-    <button type="button" class="k-chip" data-q="10.1038/nature16521">sweat glucose sensor</button>
-    <button type="button" class="k-chip" data-q="10.1126/science.aam8743">water from desert air</button>
-    <button type="button" class="k-chip" data-q="a smart water bottle that glows to remind you to drink">a glowing water bottle</button></p>
+  <p class="k-try" aria-label="Examples, one per technology">
+    <button type="button" class="k-chip" data-tech="ai" data-q="an AI tutor for high school math">AI tutor</button>
+    <button type="button" class="k-chip" data-tech="web3" data-q="a crypto wallet for teenagers">Web3 wallet</button>
+    <button type="button" class="k-chip" data-tech="quantum" data-q="a quantum computing course for teenagers">Quantum course</button>
+    <button type="button" class="k-chip" data-tech="energy" data-q="a home battery that charges from the grid at night">Energy battery</button>
+    <button type="button" class="k-chip" data-tech="biotech" data-q="10.1038/nature16521">Biotech sensor</button>
+    <button type="button" class="k-chip" data-tech="materials" data-q="10.1126/science.aam8743">Materials water</button>
+    <button type="button" class="k-chip" data-tech="pqc" data-q="a post-quantum encrypted messaging app">PQC messaging</button></p>
   <div id="k-card" class="k-slot" aria-live="polite"></div>
+<ul class="k-vectors" data-api="@app" data-not-prose aria-label="Measured">
+  <li data-v="cost"><b>$0</b> per check</li>
+  <li data-v="speed"><b>…</b> to verdict</li>
+  <li data-v="friction"><b>2 steps</b>, no sign-up</li>
+  <li data-v="trust"><b>Escrow</b> on devnet</li>
+  <li data-v="capability"><b>2.08x</b> fewer tokens, <b>70% vs 5%</b> pass</li>
+  <li data-v="access"><b>7 fields</b>, any country, phone</li>
+  <li data-v="status"><b>Ready cards</b></li>
+</ul>
+<script src="brand/vectors.js" defer></script>
 </div>
 <script src="brand/hero.js" defer></script>
 <!-- /k-hero -->
-    <h2 id="home-h">Open for backing now</h2>
+    <h2 id="home-h">Open for backing</h2>
     <ol class="hp-list" id="home-products" data-not-prose aria-label="Research products open for backing now">
       <!-- home:products (scripts/front_snapshot.py) -->
       <script type="application/json" id="home-snapshot">{"taken":"2026-10-19","rows":[{"slug":"sweat-glucose-watch","title":"A fitness watch with a sweat glucose sensor","paper":"Nature, 2016","reserve_units":48,"backed_units":0,"maker":false},{"slug":"air-water-bottle","title":"A water bottle that harvests drinking water from desert air","paper":"Science, 2017","reserve_units":54,"backed_units":0,"maker":false},{"slug":"glow-hydration-bottle","title":"A smart water bottle that glows to remind you to drink","paper":null,"reserve_units":55,"backed_units":0,"maker":false}]}</script>

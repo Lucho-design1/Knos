@@ -1,6 +1,7 @@
 """The front door's list (knos_wanted.front, GET /api/front), the app's home view and one-tap actions, the passkey-only
 sign-in, the two-tap receivable sale and the passkey routes of projects. SYNTHETIC fixtures; no network, no chain
 (the chain flows are tests/test_passkey_projects_app.py and tests/test_passkey_money_app.py, in LiteSVM)."""
+import hashlib
 import re
 import time
 
@@ -81,14 +82,14 @@ def test_seeds_cross_on_live_qloo_and_open_a_project_only_when_open(app, monkeyp
 
     def start(state, ref=None, idea=None, place=None, product=None, wait=False):
         slug = next(s["slug"] for s in front.SEEDS if s.get("ref") == ref and s.get("idea") == idea)
-        rep = _report(st, (slug[0] * 64), verdict=reps.get(slug, "OPEN"), idea=product or idea)
+        rep = _report(st, hashlib.sha256(slug.encode()).hexdigest(), verdict=reps.get(slug, "OPEN"), idea=product or idea)
         return _job(rep)
     monkeypatch.setattr(agent, "start", start)
     front.ensure_seeded(st, tries=1, wait_s=0)
     got = front.seeded()
     assert got["sweat-glucose-watch"]["state"] == "open" and got["sweat-glucose-watch"]["project"]
     assert got["air-water-bottle"]["state"] == "not open" and "project" not in got["air-water-bottle"]
-    assert [p["slug"] for p in front.board(st)["products"]][:2] == ["sweat-glucose-watch", "glow-hydration-bottle"]
+    assert [p["slug"] for p in front.board(st)["products"]][:3] == ["sweat-glucose-watch", "ai-recipe-planner", "glow-hydration-bottle"]
     monkeypatch.setenv("KNOS_WANTED_SEED", "0")
     assert not front.seeds_on()
 

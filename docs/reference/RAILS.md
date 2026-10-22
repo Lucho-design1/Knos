@@ -83,11 +83,12 @@ Not checked:
 
 `knos statement status` reads either of two files.
 
-A customer payment status report (`pain.002`, any version: it is read by element name). For each `TxInfAndSts` it
-takes `OrgnlEndToEndId`, `TxSts`, the reason (`StsRsnInf`), the bank's reference (`AcctSvcrRef`) and the day. A report
-that gives one status for the whole batch or file applies it to every transfer of that file. The element names were
-read on 2026-10-07 from Payments Canada's
-[CustomerPaymentStatusReportV10 usage guideline](https://www.payments.ca/sites/default/files/CustomerPaymentStatusReportV10%28pain.002.001.10%29.pdf).
+A customer payment status report (`pain.002`, any version: it is read by element name). For each `TxInfAndSts` it takes `OrgnlEndToEndId`, `TxSts`,
+the reason (`StsRsnInf`), the bank's reference (`AcctSvcrRef`) and the day. A report that gives one status for the whole batch or file applies it to
+every transfer of that file.
+
+The element names were read on 2026-10-07 from Payments Canada's [CustomerPaymentStatusReportV10 usage
+guideline](https://www.payments.ca/sites/default/files/CustomerPaymentStatusReportV10%28pain.002.001.10%29.pdf).
 
 Or a CSV with the header `end_to_end_id,status,reference,date,reason`, for a bank that sends no report: the payer
 types what their bank statement shows.
@@ -99,12 +100,12 @@ types what their bank statement shows.
 | `ACTC`, `ACCP`, `ACSP`, `ACWC`, `ACWP`, `ACFC`, `RCVD`, `PART`, `PATC`, `PDNG`, or `pending` | nothing: the transfer is still with the bank |
 | `timeout`, `no answer`, `unknown`, `error`, or a code not in this table | each line is held as **unknown**: the money may have left. No new instruction file names the line until a later answer says paid or returned |
 
-`ACSC` means settled and `RJCT` means rejected, as Goldman Sachs' developer pages describe them
-([Goldman Sachs Transaction Banking, payment status](https://developer.gs.com/docs/services/transaction-banking/best-practices-iso-paystatus/),
-read 2026-10-07). That page says `ACSP` can be the last status a bank sends when no settlement confirmation arrives.
-So Knos keeps such a transfer pending until the payer records it as paid, with a CSV row, once their statement shows
-it. The other codes follow their names in the ISO 20022 status code list (`ACCC`: settled on the creditor's
-account), which was not read from the standard itself.
+`ACSC` means settled and `RJCT` means rejected, as Goldman Sachs' developer pages describe them ([Goldman Sachs Transaction Banking, payment
+status](https://developer.gs.com/docs/services/transaction-banking/best-practices-iso-paystatus/), read 2026-10-07). That page says `ACSP` can
+be the last status a bank sends when no settlement confirmation arrives.
+
+So Knos keeps such a transfer pending until the payer records it as paid, with a CSV row, once their statement shows it. The other codes follow
+their names in the ISO 20022 status code list (`ACCC`: settled on the creditor's account), which was not read from the standard itself.
 
 Reading the same answer twice changes nothing. A transfer no instruction file of this statement names is said and
 skipped.
@@ -132,11 +133,12 @@ answer. No bank has taken a file Knos wrote.
 
 ## One fee, whichever rail
 
-Acceptance is charged on a deliverable once. `knos.rails.accepted_rows` gives the month's bill one row per agreed
-deliverable that was paid, however many records say so. A deliverable paid by bank transfer is charged the fee as money matched off the blockchain. A
-deliverable the program released says `on_chain`: its fee was taken there and is not charged again. A transfer the
-bank sent back is not paid and not charged. `tests/test_statement_rails.py` checks each case against
-`knos.billing.invoice`. On devnet every fee is test money.
+Acceptance is charged on a deliverable once. `knos.rails.accepted_rows` gives the month's bill one row per agreed deliverable that was paid, however
+many records say so. A deliverable paid by bank transfer is charged the fee as money matched off the blockchain. A deliverable the program released
+says `on_chain`: its fee was taken there and is not charged again.
+
+A transfer the bank sent back is not paid and not charged. `tests/test_statement_rails.py` checks each case against `knos.billing.invoice`. On devnet
+every fee is test money.
 
 ## The files an accounting system takes
 

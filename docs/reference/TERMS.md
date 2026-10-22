@@ -1,9 +1,10 @@
 # Knos Terms 1
 
 Terms a contract can cite by hash. The terms of an order are a short JSON text. Its sha256 is fixed in the order when
-it is funded, and the order pays only on a signed token that carries the same hash. This page says what the fields
-mean, which exact bytes are hashed, and how a published template is named, so that a contract between two companies
-can point at one and both sides can check it.
+it is funded, and the order pays only on a signed token that carries the same hash.
+
+This page says what the fields mean, which exact bytes are hashed, and how a published template is named, so that a
+contract between two companies can point at one and both sides can check it.
 
 Two formats exist: Knos Terms 1 (the short terms every order carries) and Knos Terms 3 (a longer contract
 document). There is no Terms 2.
@@ -68,22 +69,29 @@ Its sha256 is `91c3adb2adc12c66beb852fe809a096d4dd7028c0bc77ec209b6879ca753f2e3`
 
 `terms/index.json` lists every published version: `name`, `version`, `hash`, the one `sentence` that says it in plain
 words, the `comment` that funds it, what it trusts, and `file_sha256`, the sha256 of the version's file as it was
-published. `terms/<name>/<version>.json` holds the version itself: the same fields, `terms` as an object,
-`terms_json` as the exact canonical text, `terms_hash`, the contract sentence under `cite`, and `assumes`.
+published.
+
+`terms/<name>/<version>.json` holds the version itself: the same fields, `terms` as an object, `terms_json` as the
+exact canonical text, `terms_hash`, the contract sentence under `cite`, and `assumes`.
 
 `assumes` matters. The terms of a real order carry facts of the repository it is funded in: which GitHub App produces
 each check, the hash of its own acceptance suite, the hash of its own policy, the vendor's account id. A template was
-made with sample facts, and says which. An order has a template's hash only when its terms are the same bytes. So a
-contract that cites `bugfix` version 1 says: checks named `lint` and `unit`, both GitHub Actions jobs, and only
-`src/` and `tests/` may change. An order funded with other checks has other terms and another hash, and the reply to
-the funding comment shows that hash.
+made with sample facts, and says which.
+
+An order has a template's hash only when its terms are the same bytes. So a contract that cites `bugfix` version 1
+says: checks named `lint` and `unit`, both GitHub Actions jobs, and only `src/` and `tests/` may change.
+
+An order funded with other checks has other terms and another hash, and the reply to the funding comment shows that
+hash.
 
 ## How a version is named
 
 A template has a name (lower-case letters, digits and `-`) and versions 1, 2, 3 and so on. A published version never
 changes. When a template's terms or its comment change, the next number is published beside the old one, and the old
-file stays as it was. `tests/test_terms_registry.py` reads every listed file again and fails when its bytes are not
-the ones the index recorded.
+file stays as it was.
+
+`tests/test_terms_registry.py` reads every listed file again and fails when its bytes are not the ones the index
+recorded.
 
 "Knos Terms 1" is the version of the format, the `v` field. A format that reads these bytes another way would be
 Knos Terms 2, with its own page. None was published under that name. Knos Terms 3, below, does not read these bytes
@@ -167,8 +175,9 @@ list in order. `knos.terms3.digest` computes it. A contract carries:
 
 An order cites it in its own 600 bytes: `knos.terms3.order_terms` writes the deciding checks, the paths and the
 protected paths as Knos Terms 1 fields and adds `"contract": "<hash>"`. The order's terms hash, which the program
-keeps and every pay token must carry, therefore names one version of the document and no other. Change any of the
-ten fields and the order's hash changes.
+keeps and every pay token must carry, therefore names one version of the document and no other.
+
+Change any of the ten fields and the order's hash changes.
 
 Who may change the terms is `policy.may_change`. How is always the same: a published version never changes, a
 change is the next version with its own hash, and an order keeps the version it was funded on.
