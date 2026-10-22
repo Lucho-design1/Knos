@@ -91,7 +91,7 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const m = await fetch("/api/money").then((r) => r.json());
   const big = (v) => v >= 1e12 ? `$${(v / 1e12).toFixed(2).replace(/\.?0+$/, "")}T` : `$${Math.round(v / 1e9)}B`;
-  const pct = (x) => x >= 0.1 ? `${(x * 100).toFixed(0)}%` : `${(x * 100).toFixed(1)}%`;
+  const pct = (x) => x >= 0.1 ? `${(x * 100).toFixed(1)}%` : `${(x * 100).toFixed(2)}%`;
   const share = (id) => (m.shares.find((s) => s.id === id) || {}).share;
   document.getElementById("mx-need").innerHTML = m.needed_usd
     ? `<b>${big(m.needed_usd)}</b> a year on proof pays Knos <b>$1B</b> before costs at its live <b>${m.fee.rate_bps / 100}%</b> fee: <b>${pct(share("world_rd"))}</b> of world R&D, <b>${pct(share("global500"))}</b> of Global 500 revenue.`

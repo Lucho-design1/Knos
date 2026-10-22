@@ -82,7 +82,8 @@
 </ul>
 <script src="/static/brand/vectors.js" defer></script>
 <!-- /k-vectors -->
-  <p id="co-who"><a class="button" id="co-sso" href="/auth/sso?tenant=knos-test&amp;next=/companies">Sign in with company SSO</a></p>
+  <p id="co-who"><a class="button" id="co-sso" href="/auth/sso?tenant=knos-test&amp;next=/companies">Sign in with company SSO</a>
+    <button type="button" class="ghost" id="co-guest">Continue as a guest</button></p>
   <form class="co-ask" id="co-ask" autocomplete="off" hidden>
     <input id="co-need" aria-label="Your company's need, in one sentence" maxlength="300" placeholder="Your need, in one sentence" enterkeyhint="go">
     <button id="co-go" type="submit">Get my brief</button>
@@ -105,10 +106,19 @@
     try { session = { token: tok, ...JSON.parse(atob((b + "===".slice((b.length + 3) % 4)).replace(/-/g, "+").replace(/_/g, "/"))) }; localStorage.setItem("knos.session", JSON.stringify(session)); } catch { session = { token: tok }; }
     history.replaceState(null, "", location.pathname);
   }
-  if (session && session.token) {
+  const signedIn = () => {
     $("co-who").innerHTML = `Signed in: <b>${esc(session.label || session.kind || "your company")}</b>`;
     $("co-ask").hidden = false; $("co-opts").hidden = false; $("co-need").focus();
-  }
+  };
+  if (session && session.token) signedIn();
+  // a guest session: one press, no form (an unverified label; SSO is the company's own sign-in)
+  $("co-guest")?.addEventListener("click", async () => {
+    const r = await fetch("/api/auth/guest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ label: "guest company" }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.token) { $("co-out").innerHTML = `<p role="alert">${esc(j.message || "No session right now")}</p>`; return; }
+    session = j; try { localStorage.setItem("knos.session", JSON.stringify(j)); } catch { /* private mode */ }
+    signedIn();
+  });
   $("co-ask").addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const need = $("co-need").value.trim(); if (!need) return;
