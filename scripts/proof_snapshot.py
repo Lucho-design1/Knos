@@ -46,7 +46,7 @@ def main(argv: list[str]) -> int:
         from knos_wanted import vectors
         with urllib.request.urlopen(urllib.request.Request(app + "/api/vectors", headers={"User-Agent": "knos proof_snapshot"}), timeout=60) as r:
             v = json.loads(r.read())
-        page.write_text(vectors.fill(page.read_text(encoding="utf-8"), v), encoding="utf-8", newline="\n")
+        page.write_text(vectors.fill(page.read_text(encoding="utf-8"), v, app), encoding="utf-8", newline="\n")
         print(f"vectors snapshot: {(v.get('speed') or {}).get('median_s')} s to verdict")
     except (OSError, ValueError, ImportError) as why:
         print(f"vectors snapshot: none ({type(why).__name__}); vectors.js asks when shown")

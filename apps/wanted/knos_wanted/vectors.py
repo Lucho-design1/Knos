@@ -159,9 +159,18 @@ STATUS = '<li data-v="status"><b>Ready cards</b></li>'
 COST = '<li data-v="cost"><b>$0</b> per check</li>'
 
 
-def fill(html: str, v: dict) -> str:
+TRUST = '<li data-v="trust"><b>Escrow</b> on devnet</li>'
+
+
+def fill(html: str, v: dict, base: str = "") -> str:
     """The measured numbers written into a page's vectors (web/brand/vectors.html) before it is sent, so a reader with no
-    script, or one that has not scrolled yet, sees the number and not "…"; vectors.js keeps them current."""
+    script, or one that has not scrolled yet, sees the number and not "…"; vectors.js writes the same words and links.
+    `base`: the app's address for a link to one of its pages ("" on the app itself)."""
+    from html import escape
+    t = (v.get("trust") or {}).get("escrow_program")
+    if t:
+        html = html.replace(TRUST, f'<li data-v="trust"><a href="https://explorer.solana.com/address/{escape(str(t))}?cluster=devnet" '
+                                   'rel="noopener"><b>Escrow</b> on devnet</a></li>')
     s = (v.get("speed") or {}).get("median_s")
     if isinstance(s, (int, float)):
         html = html.replace(SPEED, f'<li data-v="speed"><b>{s:g} s</b> to verdict</li>')
@@ -170,9 +179,12 @@ def fill(html: str, v: dict) -> str:
     if isinstance(per, (int, float)):                # the same words vectors.js writes: nothing moves when it runs
         html = html.replace(COST, f'<li data-v="cost"><b>${per:g}</b> per check' + (f", <b>${brief:g}</b> per brief" if isinstance(brief, (int, float)) else "")
                             + "</li>")
-    n = (v.get("status") or {}).get("ready_cards_attested")
+    st = v.get("status") or {}
+    n = st.get("ready_cards_attested")
     if isinstance(n, int) and not isinstance(n, bool):
-        html = html.replace(STATUS, f'<li data-v="status"><b>{n} Ready card{"" if n == 1 else "s"}</b></li>')
+        word = f'<b>{n} Ready card{"" if n == 1 else "s"}</b>'
+        link = f'<a href="{escape(base + str(st["latest"]))}" title="Attested on Solana devnet">{word}</a>' if st.get("latest") else word
+        html = html.replace(STATUS, f'<li data-v="status">{link}</li>')
     return html
 
 
@@ -181,7 +193,7 @@ _filled: list = [0.0, None]
 
 def filled(html: str) -> str:
     """fill() with this server's numbers, read at most once a minute."""
-    if SPEED not in html and STATUS not in html and COST not in html:
+    if SPEED not in html and STATUS not in html and COST not in html and TRUST not in html:
         return html
     if _filled[1] is None or time.monotonic() - _filled[0] > 60:
         try:
