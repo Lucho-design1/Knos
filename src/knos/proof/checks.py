@@ -62,13 +62,16 @@ def with_python(command: str, exe: str | None = None) -> str:
     return (f'"{exe}"' if os.name == "nt" else shlex.quote(exe)) + command[m.end():]
 
 
-def _run(cmd, cwd: Path, timeout: float = 280, env: dict | None = None) -> tuple[int, str]:
+def _run(cmd, cwd: Path, timeout: float = 280, env: dict | None = None, keep: int | None = 2000) -> tuple[int, str]:
+    """A command's exit code and its output: the last `keep` characters (a report's tail), or all of it (keep=None:
+    output the check parses, such as the JSON of `gh run list`)."""
     try:
         # errors="replace": a command's output in another encoding (a Windows code page, a binary dump) is still a
         # result to report, never a crash of the check that ran it
         got = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, errors="replace", timeout=timeout,
                              shell=isinstance(cmd, str), env=env)
-        return got.returncode, (got.stdout + got.stderr)[-2000:]
+        out = got.stdout + got.stderr
+        return got.returncode, out if keep is None else out[-keep:]
     except subprocess.TimeoutExpired:
         return 124, "timed out"
     except OSError as why:
@@ -169,8 +172,10 @@ def ci(repo: Path, sha: str | None = None, runner=None) -> Result:
     """Every GitHub Actions run for this commit completed and every job in it succeeded (`gh run list` + `gh run view`).
     Runs of the workflows in NOT_CI (the always-on relay) are not CI of the commit and are left out."""
     sha = sha or head(repo)
-    run = runner or (lambda args: _run(["gh", *args], repo, 60))
-    code, out = run(["run", "list", "--commit", sha, "--json", "databaseId,status,conclusion,workflowName"])
+    # the whole answer is parsed (a cut JSON list read as no run at all), and enough of it: the always-on relay runs every
+    # few minutes on the commit main is at, and gh's 20 newest would be its runs alone
+    run = runner or (lambda args: _run(["gh", *args], repo, 60, keep=None))
+    code, out = run(["run", "list", "--commit", sha, "--limit", "200", "--json", "databaseId,status,conclusion,workflowName"])
     if code:
         return Result("ci", False, f"gh could not list runs for {sha[:8]}: {out[-200:]}", {"sha": sha})
     try:
@@ -187,7 +192,7 @@ def ci(repo: Path, sha: str | None = None, runner=None) -> Result:
         if r.get("status") != "completed":
             pending.append(r.get("workflowName"))
             continue
-        code, view = run(["run", "view", str(r["databaseId"]), "--json", "jobs"])
+        code, view = run(["run", "view", str(r["databaseId"]), "--json", "jobs", "--jq", "{jobs: [.jobs[] | {name, conclusion}]}"])
         jobs = (_json(view, "{") or {}).get("jobs", []) if code == 0 else []
         for j in jobs:
             if j.get("conclusion") not in ("success", "skipped", "neutral"):

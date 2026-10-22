@@ -4,6 +4,7 @@ after 3 blocks on unchanged evidence, and Sibyl history is load-bearing: the rep
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -577,3 +578,24 @@ def test_guard_ignores_relay(tmp_path):
     other = {**relay, "workflowName": "lighthouse"}
     got = checks.ci(tmp_path, "a" * 40, runner=lambda a: {("run", "list"): (0, json.dumps([relay, other, done])), ("run", "view"): view}[tuple(a[:2])])
     assert not got.ok and "lighthouse" in got.detail
+
+
+def test_ci_reads_the_whole_run_list_past_the_relays_runs(tmp_path):
+    """The always-on relay's runs on the commit main is at fill gh's first page: the check asks for 200 and parses the
+    whole answer (a list cut at 2,000 characters read as no CI run at all)."""
+    relay = {"databaseId": 9, "status": "completed", "conclusion": "success", "workflowName": "always-on worker"}
+    done = {"databaseId": 1, "status": "completed", "conclusion": "success", "workflowName": "tests"}
+    (tmp_path / ".github" / "workflows").mkdir(parents=True)
+    (tmp_path / ".github" / "workflows" / "worker.yml").write_text("name: always-on worker\n", encoding="utf-8")
+    asked = []
+
+    def gh(a):
+        asked.append(a)
+        if a[:2] == ["run", "list"]:
+            return 0, json.dumps([relay] * 60 + [done])                     # far past 2,000 characters
+        return 0, json.dumps({"jobs": [{"name": "pytest", "conclusion": "success"}]})
+    got = checks.ci(tmp_path, "a" * 40, runner=gh)
+    assert got.ok and got.evidence["runs"] == 1 and got.evidence["ignored"] == 60, got
+    assert "--limit" in asked[0] and "200" in asked[0]
+    code, out = checks._run([sys.executable, "-c", "print('x' * 5000)"], tmp_path, keep=None)
+    assert code == 0 and len(out.strip()) == 5000
