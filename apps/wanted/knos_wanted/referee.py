@@ -32,6 +32,13 @@ import threading
 
 _lock = threading.Lock()
 _coord = None
+_live: set[str] = set()                # sessions this process's host 1 is still signing (its nonces are in memory)
+
+
+def host1_alive(sid: str) -> bool:
+    """Is host 1 still waiting on this session here? Not after a restart or once it gave up: the session cannot complete."""
+    with _lock:
+        return sid in _live
 GITHUB_HOST = ("polls: .github/workflows/referee.yml runs every 5 minutes (GitHub cron, may start late) and proves itself "
                "with its GitHub OIDC token")
 
@@ -191,7 +198,17 @@ def start(rec: dict, url: str, led, kind: str = "preorder") -> dict:
     req = check.request(rec["doc"], "stage1", url)
     digest, ev = check.milestone_digest(req, share["group_key"], led)
     s = c.open(req, digest, meta={"order": rec["order"], "kind": kind, "evidence": {k: ev[k] for k in ("met", "evidence_hash", "oracle")}})
-    threading.Thread(target=participant.sign_session, args=(share, participant.LocalClient(c), s["id"], led), daemon=True).start()
+    from knos.threshold.session import SESSION_LIFE_S
+
+    def host1():
+        try:                                       # as long as the session lives: GitHub may start host 2's cron late
+            participant.sign_session(share, participant.LocalClient(c), s["id"], led, timeout=SESSION_LIFE_S)
+        finally:
+            with _lock:
+                _live.discard(s["id"])
+    with _lock:
+        _live.add(s["id"])
+    threading.Thread(target=host1, daemon=True).start()
     return {"session": s["id"], "digest": s["digest"], "github": GITHUB_HOST, "evidence_hash": ev["evidence_hash"],
             "needs": "2 of 3 referee hosts (this server, GitHub Actions, the founder's PC) sign one FROST signature"}
 

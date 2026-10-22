@@ -1094,7 +1094,7 @@ def _frost_start(pid: str, key: str, a: dict, o: dict, rv: dict, led, base: str 
             st = referee.coordinator().get(open_["id"]).get("state")
         except Exception:  # noqa: BLE001 - an unknown or expired session: open a new one
             st = None
-        if st in ("round1", "round2"):                       # already signing: do not open a second session
+        if st in ("round1", "round2") and referee.host1_alive(open_["id"]):   # already signing: no second session
             return {"order": o["order"], "status": "signing", "session": open_["id"], "evidence": open_.get("evidence")}
     if not referee.enabled():
         raise Refused("this milestone's referee group (FROST) is not configured on this server")

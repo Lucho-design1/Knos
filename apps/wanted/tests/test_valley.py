@@ -285,10 +285,16 @@ def test_a_frost_milestone_waits_for_two_of_three_hosts_then_pays_maker_and_refe
     assert o["claim_id"].encode() in page and json.loads(page)["rule"].startswith("result + independent check")
     assert [b for _, b, _ in C.payees_of(rec["doc"]["payee"])] == [9500, 500]           # maker + referrer, in the signed digest
     assert valley.project(p["id"])["milestones"][0]["status"] != "released"
-    # a retry while the session is open does not open a second one
+    # a retry while the session is open, host 1 still signing it, does not open a second one
     monkeypatch.setattr(referee, "coordinator", lambda: types.SimpleNamespace(get=lambda sid: {"state": "round1"}))
+    monkeypatch.setattr(referee, "host1_alive", lambda sid: True)
     valley.release(p["id"], "reproduce", a["id"], led=money.led)
     assert len(starts) == 1
+    # host 1 gone (a restart, or it waited out the session): the session cannot complete, so a retry opens a new one
+    monkeypatch.setattr(referee, "host1_alive", lambda sid: False)
+    valley.release(p["id"], "reproduce", a["id"], led=money.led)
+    assert len(starts) == 2
+    starts.pop()
     # the second share: the group signature is the verdict; the order is released and the milestone settles
     monkeypatch.setattr(C, "_order", lambda doc, st, led: (None, types.SimpleNamespace(stamp=3)))
     monkeypatch.setattr(check, "verdict_record", lambda *a: {"verdict": "PASS", "group": a[5]})
