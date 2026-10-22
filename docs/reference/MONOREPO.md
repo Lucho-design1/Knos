@@ -16,7 +16,9 @@ Three kinds, decided from what reads them:
   runs the command that does (`knos claim`, `examples/witnessed/witness.py`); the site only links to GitHub's forms.
 
 
-**One branch (16 Oct 2026).** drexthealpha/Knos has one branch, `main`. The branches `workflows`, `oidc-rotate` and `labs` of 15 Oct were replaced by tags that keep the same commits: `workflows-<sha12>` (every published set), `oidc-rotate-<sha12>` and `archive/labs`; every other old branch whose commits were not in `main` is kept as `archive/<name>`. The steps below that name `refs/heads/...` are the record of 15 Oct.
+**One branch (16 Oct 2026).** drexthealpha/Knos has one branch, `main`. The branches `workflows`, `oidc-rotate` and `labs` of 15 Oct were replaced by tags that keep the same commits: `workflows-<sha12>` (every published set), `oidc-rotate-<sha12>` and `archive/labs`; every other old branch whose commits were not in `main` is kept as `archive/<name>`.
+
+The steps below that name `refs/heads/...` are the record of 15 Oct.
 ## The table
 
 | Repository | Kind | Where it is now | Status | Still points at the old repository |

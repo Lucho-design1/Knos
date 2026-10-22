@@ -537,7 +537,9 @@ BindOrg was not exercised: no organisation account exists on the staging deploym
   fee, 2.08, to the funder ([5H6mrHjg...](https://explorer.solana.com/tx/5H6mrHjgLhRxgFNWLa8p1R5BVhgzsU22Yj2b6AGbqzANCiaHLKRN6XuVYziRaTiQaqTL4pFwpfTnnRMS3csi3EL5?cluster=devnet)).
 
 **5. The count.** 5,000 evaluations were anchored in two batches of 2,500 ([4doE2MRi...](https://explorer.solana.com/tx/4doE2MRiw7sjKNmw8LYGkSgm2KNNKh1D4aMDGXRBTCUieU1iNyftSGLsxo2o95kBAMsDkK7CaH3pCjnte6nYAttJ?cluster=devnet), [5NVNK5nH...](https://explorer.solana.com/tx/5NVNK5nHiegrQDffQBuziqqrrDEWyN66zWPKfetb3q8tavoBpsD1LwCh4BirwWPTBewuFFYarNPKQrU7RU1t37XX?cluster=devnet)), and the
-seller wrote its own count of the same month, 5,003, in two claims ([4UYkZzTd...](https://explorer.solana.com/tx/4UYkZzTdEoz1M2FxQSDYX9Nq9ZzEbJ54JBZDGSsfJHVr1NKg9hnfAfvsv24pFDUmYUBLq1sZAZLbJHhGUeuP8b3M?cluster=devnet), [4KThmRd6...](https://explorer.solana.com/tx/4KThmRd6XFohHrkX3cqXdUCoLnfMiwuTkt8WigFpB7any9pJpYeBHP3eVg7jsqhaqJNmQ6dYuLK3zhqZMCKRGQup?cluster=devnet)). `knos meter verify
+seller wrote its own count of the same month, 5,003, in two claims ([4UYkZzTd...](https://explorer.solana.com/tx/4UYkZzTdEoz1M2FxQSDYX9Nq9ZzEbJ54JBZDGSsfJHVr1NKg9hnfAfvsv24pFDUmYUBLq1sZAZLbJHhGUeuP8b3M?cluster=devnet), [4KThmRd6...](https://explorer.solana.com/tx/4KThmRd6XFohHrkX3cqXdUCoLnfMiwuTkt8WigFpB7any9pJpYeBHP3eVg7jsqhaqJNmQ6dYuLK3zhqZMCKRGQup?cluster=devnet)).
+
+`knos meter verify
 --rpc` held each ledger to its account on chain; `knos meter reconcile --rpc` found the two counts 3 evaluations apart and
 named exactly the 3 the buyer's ledger left out.
 
@@ -557,9 +559,13 @@ Service ([5ih9nLza...](https://explorer.solana.com/tx/5ih9nLzaNzieUbLJZpg3w7upm6
 
 **9. The proof on these bytes.** `scripts/drills.py --strict` and `scripts/drill_upgrade.sh`, on a local validator
 holding the verified builds of knos_oidc and knos_pay at their pinned addresses: 14 of 14 rows passed.
-`scripts/rehearse_fork.sh`: 9 of 9 steps passed. The state machine (`KNOS_MACHINE_STEPS=2000`): 3 seeds of 2,001 steps
+`scripts/rehearse_fork.sh`: 9 of 9 steps passed.
+
+The state machine (`KNOS_MACHINE_STEPS=2000`): 3 seeds of 2,001 steps
 each, 0 broken invariants, and on the 0.3.13 build it found the pay token accepted twice. `bash scripts/mutants.sh
-chain`: 22 passed. The hermetic judge ran end to end in a real container on GitHub's runner (Docker 28.0.4, 11 containers
+chain`: 22 passed.
+
+The hermetic judge ran end to end in a real container on GitHub's runner (Docker 28.0.4, 11 containers
 of the image pinned by digest): run 37217535106 of the staging repository, on the commit whose tests passed in run
 37217535009 (1,905 passed on ubuntu-latest with Python 3.12) and whose program workflow passed in run 37217535042.
 

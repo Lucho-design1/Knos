@@ -72,24 +72,12 @@
   <p class="mx-need" id="mx-need">…</p>
   <ul class="mx-chart" id="mx-chart" data-not-prose aria-label="Money for research, each to scale (log)"></ul>
   <ul class="mx-facts" id="mx-facts" data-not-prose aria-label="Why it does not reach a product"></ul>
-  <!-- k-vectors -->
-<ul class="k-vectors" data-api="" data-not-prose aria-label="Measured">
-  <li data-v="cost"><b>$0</b> per check</li>
-  <li data-v="speed"><b>…</b> to verdict</li>
-  <li data-v="friction"><b>2 steps</b>, no sign-up</li>
-  <li data-v="trust"><b>Escrow</b> on devnet</li>
-  <li data-v="capability"><b>2.08x</b> fewer tokens, <b>70% vs 5%</b> pass</li>
-  <li data-v="access"><b>7 fields</b>, any country, phone</li>
-  <li data-v="status"><b>Ready cards</b></li>
-</ul>
-<script src="/static/brand/vectors.js" defer></script>
-<!-- /k-vectors -->
   <p class="small muted" id="mx-checked"></p>
-</main>
+<script type="application/json" id="k-data">null</script>
 <script>
-(async () => {
+(() => {
+  const draw = (m) => {
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  const m = await fetch("/api/money").then((r) => r.json());
   const big = (v) => v >= 1e12 ? `$${(v / 1e12).toFixed(2).replace(/\.?0+$/, "")}T` : `$${Math.round(v / 1e9)}B`;
   const pct = (x) => x >= 0.1 ? `${(x * 100).toFixed(1)}%` : `${(x * 100).toFixed(2)}%`;
   const share = (id) => (m.shares.find((s) => s.id === id) || {}).share;
@@ -102,7 +90,25 @@
     <span class="mx-bar" style="width:${(((Math.log10(r.v) - lo) / (hi - lo)) * 100).toFixed(1)}%" role="img" aria-label="${esc(r.shown)}"></span></li>`).join("");
   document.getElementById("mx-facts").innerHTML = m.barriers.map((b) => `<li><b>${esc(b.shown)}</b><a href="${esc(b.url)}" rel="noopener">${esc(b.label)}</a></li>`).join("");
   document.getElementById("mx-checked").textContent = `Re-checked ${m.checked}. Log scale.`;
+};
+  let pre = null;
+  try { pre = JSON.parse(document.getElementById("k-data")?.textContent || "null"); } catch { pre = null; }
+  if (pre) draw(pre); else fetch("/api/money").then((r) => r.json()).then(draw);
 })();
 </script>
+  <!-- k-vectors -->
+<ul class="k-vectors" data-api="" data-not-prose aria-label="Measured">
+  <li data-v="cost"><b>$0</b> per check</li>
+  <li data-v="speed"><b>…</b> to verdict</li>
+  <li data-v="friction"><b>2 steps</b>, no sign-up</li>
+  <li data-v="trust"><b>Escrow</b> on devnet</li>
+  <li data-v="capability"><b>2.08x</b> fewer tokens, <b>70% vs 5%</b> pass</li>
+  <li data-v="access"><b>7 fields</b>, any country, phone</li>
+  <li data-v="status"><b>Ready cards</b></li>
+</ul>
+<script src="/static/brand/vectors.js" defer></script>
+<!-- /k-vectors -->
+</main>
+
 </body>
 </html>

@@ -74,9 +74,10 @@ guard is a caller's.
 several times), not explained one by one.
 
 What keeps them in range, by kind: an account's data is read at constant offsets after its owner and its length were checked (`key_limbs` and `T_JWT + len` in
-`knos_oidc`; the `*_LEN` checks of the other programs); instruction data is measured before it is cut; the claim readers and the base64 decoders
-(`knos_oidc/src/strict.rs` and `claims.rs`) index inside loops bounded by the slice's length, and are run on 1,560,000 random documents and by two fuzz targets
-([ASSURANCE.md](ASSURANCE.md)); the RSA limbs (`rsa.rs`) are vectors sized from the key's own limb count.
+`knos_oidc`; the `*_LEN` checks of the other programs). Instruction data is measured before it is cut.
+
+The claim readers and the base64 decoders (`knos_oidc/src/strict.rs` and `claims.rs`) index inside loops bounded by the slice's length. They are run on
+1,560,000 random documents and by two fuzz targets ([ASSURANCE.md](ASSURANCE.md)). The RSA limbs (`rsa.rs`) are vectors sized from the key's own limb count.
 
 An index that is out of range all the same aborts the transaction, as above.
 

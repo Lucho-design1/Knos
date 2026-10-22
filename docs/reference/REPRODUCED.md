@@ -2,7 +2,9 @@
 
 **In plain words.** A research repository says what it claims in one file, `knos.yml`. Knos runs the code again on a
 second machine and on a held-out split: a data folder kept sealed from the authors, or data their own generator makes
-from a seed Knos picks at run time (their code, a seed they never saw). If every number comes back within the tolerance the authors set, the
+from a seed Knos picks at run time (their code, a seed they never saw).
+
+If every number comes back within the tolerance the authors set, the
 repository gets a "Reproduced by Knos" badge and a public result page. If a number does not come back, the result goes
 to the authors privately. Knos never publishes it.
 
@@ -99,8 +101,10 @@ python -m knos.repro.example /tmp/bad --tamper && knos reproduce /tmp/bad       
 ```
 
 On 13 Oct 2026 the same command ran on a read-only checkout of the Knos repository itself (commit 99cc4e3e), with a spec
-kept outside it, claiming that the playground judge's generated inputs catch every wrong solution in `tasks/` (72 of 72)
-and that every reference passes its public examples (24 of 24): reproduced on the re-run and on a held-out seed.
+kept outside it.
+
+It claimed that the playground judge's generated inputs catch every wrong solution in `tasks/` (72 of 72) and that every
+reference passes its public examples (24 of 24): reproduced on the re-run and on a held-out seed.
 
 The result file, the spec, its two scripts and `run.sh` to make them again are in
 [evidence/repro-0329/](evidence/repro-0329/playground-judge.result.json).

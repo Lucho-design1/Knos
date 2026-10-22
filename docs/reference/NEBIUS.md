@@ -14,10 +14,11 @@ Track: **Coding and Agentic Engineering**. Code: `src/knos/nebius/`. The flow, t
 
 `python -m knos.nebius flow --out DIR [--wallets DIR]`: a team posts a task (sealed hidden tests; with `--wallets` a
 `knos_pay` escrow on devnet) -> **Nemotron 3 Super on Token Factory writes the code and its tests, the agent runs
-pytest and fixes what fails** (`knos.nebius.agent`) -> the agent pays one check over x402 on devnet -> Tavily
-provenance on the agent's code -> the Knos referee judges that code on the sealed tests (a scripted, labelled
-synthetic cheater is refused on the same task) -> paid (LiteSVM, labelled: `knos_pay` pays only on a GitHub Actions
-OIDC token) -> metered and invoiced (`knos.money.teams`).
+pytest and fixes what fails** (`knos.nebius.agent`).
+
+Then the agent pays one check over x402 on devnet -> Tavily provenance on the agent's code -> the Knos referee judges
+that code on the sealed tests (a scripted, labelled synthetic cheater is refused on the same task) -> paid (LiteSVM,
+labelled: `knos_pay` pays only on a GitHub Actions OIDC token) -> metered and invoiced (`knos.money.teams`).
 
 Devnet signatures, timings, prices and the model: [TEAMS.md](TEAMS.md).
 

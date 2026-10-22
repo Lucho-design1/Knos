@@ -111,17 +111,21 @@ names (`window.period_close`: `buyer_key`, `supplier_key`, `silence_days`).
 The signed text puts one fact a line, as a transparency log's signed note does and as a witness's cosignature of a checkpoint does ([C2SP
 tlog-cosignature](https://github.com/C2SP/C2SP/blob/tlog-cosignature/v1.0.0/tlog-cosignature.md)):
 
-knos-period-ack/v1 role supplier month 202610 last 41                 the last
-line of the log the party read head <hash of line 41>  it commits to every line
-before it root <sha256>           over the hashes of the month's lines up to
-line 41 events 12               how many lines of the month that is terms
-<sha256>          the terms that name the keys day 2026-11-03          the
-signer's own word: no clock signs it
+    knos-period-ack/v1
+    role supplier
+    month 202610
+    last 41                 the last line of the log the party read
+    head <hash of line 41>  it commits to every line before it
+    root <sha256>           over the hashes of the month's lines up to line 41
+    events 12               how many lines of the month that is
+    terms <sha256>          the terms that name the keys
+    day 2026-11-03          the signer's own word: no clock signs it
 
-A month is **closed** only when the buyer and the supplier signed the same last line and root, or when one of them
-signed, the terms allow one party to close after `silence_days` without an answer (0: never), and that party signed a
-closure (`knos-period-close/v1`, the same lines plus `acknowledged <day>` and `silence_days N`) dated that many days
-or more after its acknowledgement.
+A month is **closed** only when the buyer and the supplier signed the same last line and root. It is also closed when
+one of them signed, the terms allow one party to close after `silence_days` without an answer (0: never), and that
+party signed a closure dated that many days or more after its acknowledgement.
+
+That closure is `knos-period-close/v1`: the same lines plus `acknowledged <day>` and `silence_days N`.
 
 After that, three things are **named discrepancies**:
 
@@ -170,13 +174,16 @@ nothing was funded there ([PLAYGROUND.md](PLAYGROUND.md)).
 
 ## Commands
 
-knos events ingest LOG FILE --from record|batch|settle|shadow|import [--month YYYY-MM] [--invoice NAME] knos
-events verify LOG [--keys JWKS] [--head HASH]        # or a folder written by export knos events ack LOG --as
-OWNER_ID                         # print the audience to sign knos events ack LOG --token FILE --keys JWKS #
-add a signed acknowledgement knos events dupes LOG knos events gaps LOG [--month YYYY-MM] [--last B:S:YYYYMM.N]
-[--explain B:S:YYYYMM.N --reason WHY] knos events close LOG --month YYYY-MM [--last B:S:YYYYMM.N] [--terms
-TERMS --ack FILE ...] knos events sign LOG --month YYYY-MM --role buyer|supplier --key KEY --terms TERMS --on
-DAY [--closing ACK] knos events statement LOG --month YYYY-MM [--supplier S] knos events export LOG --out DIR
+    knos events ingest LOG FILE --from record|batch|settle|shadow|import [--month YYYY-MM] [--invoice NAME]
+    knos events verify LOG [--keys JWKS] [--head HASH]        # or a folder written by export
+    knos events ack LOG --as OWNER_ID                         # print the audience to sign
+    knos events ack LOG --token FILE --keys JWKS              # add a signed acknowledgement
+    knos events dupes LOG
+    knos events gaps LOG [--month YYYY-MM] [--last B:S:YYYYMM.N] [--explain B:S:YYYYMM.N --reason WHY]
+    knos events close LOG --month YYYY-MM [--last B:S:YYYYMM.N] [--terms TERMS --ack FILE ...]
+    knos events sign LOG --month YYYY-MM --role buyer|supplier --key KEY --terms TERMS --on DAY [--closing ACK]
+    knos events statement LOG --month YYYY-MM [--supplier S]
+    knos events export LOG --out DIR
 
 `export` writes the log, the acknowledgements and their keys, the repeats, what was refused, the index and each
 month's statement, with a manifest of hashes. `knos events verify DIR` reads the log again and rebuilds every

@@ -12,7 +12,9 @@ How the money moves:
 4. If the deadline passes first, the money and the fee go back to whoever paid.
 
 **Revenue today: 0.** Knos runs on Solana devnet only. Every fee the program takes there is test money, and nothing
-has been sold. Every price below says whether it is **live** (the deployed program charges it on devnet), **proposed**
+has been sold.
+
+Every price below says whether it is **live** (the deployed program charges it on devnet), **proposed**
 (the price book, nobody pays it yet), **decided** (a starting price the founder set on 14 Oct 2026, to revisit once the
 cost per verification is measured; nobody pays it yet) or a **placeholder** (a number only the founder can set).
 
@@ -81,7 +83,9 @@ and on devnet all of it is test money.
 
 **The treasury** is the program's fee owner, `4G3cznCnwCUPBCZwzKiLupjdgB5pSoCcGWNGuFv4TYFo`, a vault of the Squads
 program. Fees land in token accounts it owns (`pay.fee_accounts(mint)`: the associated account and any seeded
-shards). Only a Squads proposal of the vault moves them; nothing in Knos signs for it. Out of each fee the relayer who
+shards). Only a Squads proposal of the vault moves them; nothing in Knos signs for it.
+
+Out of each fee the relayer who
 sends the payment keeps its tip (0.05, or 0.30 on a payee's first payment); the rest is the fee owner's
 (`knos.billing.release_split`).
 

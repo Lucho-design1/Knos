@@ -400,3 +400,61 @@ def test_ready_bad_input():
         r = valley.check_brief(brief)
         assert r["ready"] is False and r["label"] == "Not ready" and any(m.startswith(field.strip()) for m in r["missing"]), (field, r["missing"])
     assert valley.check_brief({"milestones": [good]})["ready"] is True
+
+
+def test_knos_builds_knos_releases_a_milestone_only_on_its_passing_ci_check(money, monkeypatch):
+    from knos import chain
+    from knos.ideas import commit as C
+
+    from knos_wanted import preorder
+    brief = {"milestones": [{"name": "Seven by seven reachable", "target": "49 of 49 cells reachable from the bar, on test_fields_matrix",
+                             "verifier": {"check": "test_fields_matrix"}, "deadline_days": 4}]}
+    with pytest.raises(valley.Refused):
+        valley.operator_open(brief, "Knos builds Knos", "not a repo")
+    p = valley.operator_open(brief, "Knos builds Knos", "drexthealpha/Knos")
+    assert p["repo"] == "drexthealpha/Knos" and p["ready"]["ready"]
+    key = p["milestones"][0]["key"]
+    sent = []
+
+    def call(url, m, params, timeout=20):
+        if m == "sendTransaction":
+            sent.append(params[0])
+            money.led.accounts.update({o: b"order" for o in [x["order"] for x in valley._all("orders")]})
+            return "3" * 88
+        return {"value": {"blockhash": "11111111111111111111111111111111"}}
+    monkeypatch.setattr(chain, "call", call)
+    got = valley.operator_fund(p["id"], key, 5, led=money.led)
+    assert got["status"] == "locked" and sent and got["funder"] == str(money.auth.pubkey())
+    wallet = str(Keypair().pubkey())
+    a = valley.operator_claim(p["id"], key, wallet)
+    sha = "a" * 40
+    run = {"name": "test_fields_matrix", "app": {"slug": "github-actions"}, "status": "completed", "conclusion": "success",
+           "html_url": "https://github.com/drexthealpha/Knos/actions/runs/1/job/2", "id": 2}
+    gh = {"branch": "ahead", "runs": [dict(run, conclusion="failure")]}
+
+    def get(path):
+        if path == "repos/drexthealpha/Knos":
+            return {"default_branch": "main"}
+        if "/compare/" in path:
+            return {"status": gh["branch"]}
+        return {"check_runs": gh["runs"]}
+    with pytest.raises(preorder.NotVerified, match="failure"):
+        valley.ci_release(p["id"], key, sha, get=get, led=money.led)
+    gh["runs"] = [dict(run, app={"slug": "someone-else"})]
+    with pytest.raises(preorder.NotVerified):
+        valley.ci_release(p["id"], key, sha, get=get, led=money.led)
+    gh.update(branch="diverged", runs=[run])
+    with pytest.raises(preorder.NotVerified, match="default branch"):
+        valley.ci_release(p["id"], key, sha, get=get, led=money.led)
+    gh["branch"] = "identical"
+    payees = []
+    monkeypatch.setattr(C, "sign", lambda doc, stage, r, led, passed, review: payees.append(C.payees_of(doc["payee"])) or {"sig": 1})
+    monkeypatch.setattr(C, "release", lambda doc, st, recs, rel, led: {"status": "released", "sent": [{"signature": "s1"}, {"signature": "s2"}]})
+    out = valley.ci_release(p["id"], key, sha, get=get, led=money.led)
+    assert out["milestone"] == "released" and out["ci"]["check_run"] == run["html_url"] and str(payees[0][0][2]) == wallet
+    att = valley.project(p["id"])["milestones"][0]["attempts"][0]
+    assert att["id"] == a["id"] and att["result"]["host"] == "github.com" and att["ci"]["sha"] == sha
+    eid = valley._evidence_id(p["id"], key, a["id"])
+    page = json.loads(valley.project_evidence(eid))
+    assert page["claims"] and page["check_run"] == run["html_url"] and page["sha"] == sha
+    assert valley.ci_release(p["id"], key, sha, get=get, led=money.led)["status"] == "released"

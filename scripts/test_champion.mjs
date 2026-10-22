@@ -12,11 +12,13 @@
 //   node scripts/test_champion.mjs companies  T5 test_companies_mode: one sentence -> Ready brief, private demand check, opened
 //                                             milestone in <= 60 s and <= 3 steps; the right proof for each field
 //
-// KNOS_ADMIN_KEY (read from the environment, never printed) lets the 49 demand checks past the per-address limit.
+// KNOS_ADMIN_KEY (read from the environment, never printed) lets the 49 demand checks past the per-address limit;
+// without it (CI) the run waits the limit out.
 import { chromium } from "playwright";
 
 const SITE = process.env.SITE_URL || "https://drexthealpha.github.io/Knos/", APP = (process.env.APP_URL || "https://knos.onrender.com/").replace(/\/$/, "");
-const what = process.argv[2];
+const what = { test_fields_matrix: "fields", test_value_vectors: "vectors", test_proof_first: "proof", test_money_page: "money",
+               test_companies_mode: "companies" }[process.argv[2]] || process.argv[2];        // a CI job is named after its test
 let fails = 0;
 const ok = (c, msg, extra) => { console.log((c ? "ok   " : "FAIL ") + msg + (extra === undefined ? "" : " " + JSON.stringify(extra))); if (!c) fails += 1; };
 const browser = await chromium.launch();
@@ -48,7 +50,12 @@ async function fields() {
   for (let i = 0; i < checks.length; i += 4) {
     got.push(...await Promise.all(checks.slice(i, i + 4).map(async (c) => {
       const idea = decodeURIComponent(c.href.slice(4).split("#")[0]);
-      const [s, r] = await post("/api/check", { idea });
+      let [s, r] = await post("/api/check", { idea });
+      // without the operator's key (CI) the per-address limit (12 checks in 10 minutes) paces the run: wait it out
+      for (let n = 0; s === 429 && !admin["X-Knos-Admin"] && n < 15; n += 1) {
+        await new Promise((done) => setTimeout(done, 60000));
+        [s, r] = await post("/api/check", { idea });
+      }
       return { cell: `${c.b}x${c.t}`, s, v: (r.decision || {}).verdict };
     })));
   }

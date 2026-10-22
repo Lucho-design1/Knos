@@ -55,10 +55,14 @@ Who is not a customer, today:
 
 **Days to approve, not seconds to pay.** From merge to paid took 28 seconds at the median, over 56 payments on
 devnet (10 Oct 2026). That is not the wait this customer has. It waits for a person to approve the invoice, while two companies
-argue over whose count is right. Days to approve is defined as the days from the day the buyer receives a
+argue over whose count is right.
+
+Days to approve is defined as the days from the day the buyer receives a
 supplier's invoice to the day a person with authority approves it. Knos would read both dates: receipt from the
 buyer's payables system, approval from the record `knos statement approve` writes (who, in which role, on which
-day). Knos has not measured that wait with any buyer, so no figure for it is given; [PILOT.md](PILOT.md) lists it
+day).
+
+Knos has not measured that wait with any buyer, so no figure for it is given; [PILOT.md](PILOT.md) lists it
 among what a pilot would measure.
 
 ## 1. An agent's word costs nothing, so it is not evidence
@@ -151,10 +155,13 @@ revision ([text](https://pacliirms.austlii.edu.au/pits/en/treaty_database/2006/1
 | Article 14(b): the bank has "a maximum of five banking days" to examine. Article 16: a refusal needs a single notice that states "each discrepancy"; a bank that fails to give it "shall be precluded from claiming that the documents do not constitute a complying presentation". | The time to object is fixed and comes first. A maintainer who does not want a pull request to be paid says so before merging (`/knos reject`, with the reason). Merging is acceptance. |
 | A credit has an expiry date. With no complying presentation by then, the bank owes nothing. | With no payment by the deadline, the funder is refunded. The refund needs no token. |
 
-**The strict-compliance rule.** A bank pays only when the documents match the credit. The English courts put it
+**The strict-compliance rule.** A bank pays only when the documents match the credit.
+
+The English courts put it
 this way in 1926: "There is no room for documents which are almost the same, or which will do just as well"
 (Viscount Sumner in Equitable Trust Co of New York v Dawson Partners, quoted in
 [Fortis Bank v Indian Overseas Bank, 2009, paragraph 18](https://caselaw.nationalarchives.gov.uk/ewhc/comm/2009/2303)).
+
 The UCP 600 softens the wording, not the idea: data "need not be identical to, but must not conflict with" the
 credit (Article 14(d)). The rule is harsh on a seller with a typing error, and it is why the instrument works: a
 bank that needs no judgment can promise payment to a stranger.
@@ -167,7 +174,9 @@ No instruction changes what must be true for payment after funding. A funder can
 notice during which a valid pay token still pays.
 
 **What the rule cannot do.** The documents can be in order and the goods bad. Article 5 says so in terms: the bank
-does not deal with the goods. For Knos the checks can pass and the change can still be poor. That is why the
+does not deal with the goods. For Knos the checks can pass and the change can still be poor.
+
+That is why the
 default also asks for a person's merge, and why a funder can keep part of the money back for a warranty period,
 set at funding and public before the work starts.
 
@@ -304,19 +313,25 @@ A payment rail moves money when someone says so. Knos is about who may say so.
 
 **A signature authenticates a statement, not the truth of the world.** GitHub's signature says that GitHub issued
 this token to this workflow, at this commit, in this repository. It does not say that the merged code is good.
-It does not say that the maintainer and the author are independent people. And GitHub does not sign what the
+It does not say that the maintainer and the author are independent people.
+
+And GitHub does not sign what the
 workflow read: which checks passed and who the author is are the workflow's reading of GitHub's record, as
 trustworthy as the repository it ran in.
 
 **Finite tests do not establish that software does everything intended.** A check that passed shows that this
 check passed. Of 63 cheating pull requests in [TAMPER.md](TAMPER.md) (21 ideas in each of three sample
 repositories), plain CI was fooled by 56. METR's maintainers
-would not have merged about half of the patches that passed. That is why the default asks for a person's merge as
+would not have merged about half of the patches that passed.
+
+That is why the default asks for a person's merge as
 well, and why a merge is still only that person's judgment.
 
 **A program that depends on GitHub inherits GitHub's failures.** If GitHub is down, pay tokens wait. If GitHub signs
 something false, or one of its signing keys leaks, the program believes it until the key expires or the guardian
-revokes it. If GitHub changes its tokens or its rules for workflows, Knos has to change too. If GitHub closes an
+revokes it. If GitHub changes its tokens or its rules for workflows, Knos has to change too.
+
+If GitHub closes an
 account, its owner cannot bind a wallet. One thing does not depend on GitHub: a refund at the deadline needs no
 token.
 

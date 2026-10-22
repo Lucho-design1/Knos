@@ -2,7 +2,9 @@
 
 **In plain words.** Research dies between a good design and a real thing. Knos is the layer that says what machine
 and lab work is real and pays for it, so ideas from anyone, in every field, can cross that valley toward the machine
-economy Schmidhuber describes (arXiv 2212.11279, Sec. 20). This page is step 5 of that flow: the best designs go to
+economy Schmidhuber describes (arXiv 2212.11279, Sec. 20).
+
+This page is step 5 of that flow: the best designs go to
 cloud labs and fabs through **one** interface. The lab is paid when it did the work right. The researcher is paid when
 the science held.
 

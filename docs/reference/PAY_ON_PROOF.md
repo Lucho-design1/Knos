@@ -8,7 +8,9 @@ does not do yet.
 
 **Status.** Built and tested in LiteSVM (test builds). The referee-panel path ran on devnet at a test program id this
 build's agent owns (section 8). The real knos_pay program (`5y7iWJ1V…`) is NOT changed: its upgrade buffer (written, held by the vault) waits for
-the founder's Squads vote (section 9). No real Google Confidential Space token and no real ORCID id_token has been
+the founder's Squads vote (section 9).
+
+No real Google Confidential Space token and no real ORCID id_token has been
 verified: those paths are tested with test issuer keys registered for the issuers' real URLs. Synthetic data only.
 
 ## 1. One door, one reader per issuer family
@@ -32,7 +34,9 @@ A private key registered under Google's or ORCID's URL stays PRIVATE: the number
 data, and Bind (8) with an ORCID id_token. One account kind is new: a verdict's tally (80 bytes).
 
 **Compatibility.** GitHub and GitLab tokens pass the same checks in the same order with the same error codes; orders of
-earlier builds have zero in the new judge byte and take the old path. Checked three ways: the Rust replay vectors of
+earlier builds have zero in the new judge byte and take the old path.
+
+Checked three ways: the Rust replay vectors of
 2.2's scenarios (`programs-v2/testdata/*.json`, answers and account bytes) regenerate byte-identical against the
 0.3.34 test build; the existing order, job, quorum, relay, GitLab, Bind and IDL tests pass against it; and the unit
 tests of the program pass unchanged.
@@ -41,7 +45,9 @@ tests of the program pass unchanged.
 
 **This path is not used by Knos and has never run.** It needs a Google Cloud billing account, and Knos has none. The
 code referee Knos uses runs in GitHub Actions instead. Its run's OIDC token is verified on chain by knos_oidc, and its
-verdict carries a Sigstore attestation (REFEREE_FROST.md, "The code referee's attestation"). What follows describes
+verdict carries a Sigstore attestation (REFEREE_FROST.md, "The code referee's attestation").
+
+What follows describes
 the program's code only.
 
 An order funded with judge 1 pins a container image digest. PayOrder pays it on a Confidential Space attestation

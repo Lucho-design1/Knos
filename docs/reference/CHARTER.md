@@ -4,7 +4,9 @@
 
 **In plain words.** This page lists the rights Knos gives you. Each right is one line. Each line says one of two
 things. "Enforced" means a test checks the code on every change; the test is named. "Promise, not yet enforced" means
-no code holds it yet. The page has a fingerprint (a [hash](../WORDS.md#hash)) at the bottom. If one letter changes, the
+no code holds it yet. The page has a fingerprint (a [hash](../WORDS.md#hash)) at the bottom.
+
+If one letter changes, the
 fingerprint changes.
 
 Money here is [test USDC](../WORDS.md#test-usdc) on [devnet](../WORDS.md#devnet). It has no value. This page is not a

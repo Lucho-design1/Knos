@@ -276,9 +276,10 @@ nobody's help.
 ## 5. For your finance lead: when you are paid
 
 The supplier page of the site has a view for the person who books the money: paste the funding comment (or the
-order's address) and it reads the order's own account on devnet, with no wallet, and shows four rows: what is funded
-(with the funding transaction), the acceptance window counting down, how to appeal and who decides, and the payment
-date (with a holdback, the part kept back and the day it is released).
+order's address) and it reads the order's own account on devnet, with no wallet.
+
+It shows four rows: what is funded (with the funding transaction), the acceptance window counting down, how to appeal
+and who decides, and the payment date (with a holdback, the part kept back and the day it is released).
 
 [FINANCE.md](FINANCE.md), section 6, says what each row is read from.
 

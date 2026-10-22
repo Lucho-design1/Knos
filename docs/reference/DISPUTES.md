@@ -60,11 +60,15 @@ outside the evaluation, and starts with `WEAK` when the acceptance stands on a w
 
 ## The path
 
-rejected, or insufficient evidence /knos appeal <reason>          the pull request's author comments it on the pull
-request disputed (open)                    who, when and why are recorded; no money moves the evaluator is started the
-one the terms name under `dispute` disputed (re-running)              that evaluator runs the funded checks again,
-itself accepted                           the checks passed there: the rejection is overturned, and the order can be
-paid rejected                           they did not pass there: the rejection stands, with the reasons in words
+```
+rejected, or insufficient evidence
+    /knos appeal <reason>          the pull request's author comments it on the pull request
+disputed (open)                    who, when and why are recorded; no money moves
+    the evaluator is started       the one the terms name under `dispute`
+disputed (re-running)              that evaluator runs the funded checks again, itself
+accepted                           the checks passed there: the rejection is overturned, and the order can be paid
+rejected                           they did not pass there: the rejection stands, with the reasons in words
+```
 
 Two orders have two evaluators, and the terms say which ([TERMS.md](TERMS.md), the `dispute` field):
 

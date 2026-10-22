@@ -283,7 +283,9 @@ Knos's price.
 **The 2,500 USD is credited against year one.** A buyer who goes on to an annual contract
 ([MARKET.md](MARKET.md), section 3) pays that year's invoices less the 2,500 USD already paid: on the Team plan,
 22,500 USD of Control in its first year. The Pilot commits the buyer to no contract, and a buyer who stops after it owes nothing
-more. No contract exists to credit it against today.
+more.
+
+No contract exists to credit it against today.
 
 ## What it does not include
 

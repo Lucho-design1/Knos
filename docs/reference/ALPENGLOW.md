@@ -2,7 +2,9 @@
 
 **In plain words.** Solana devnet now runs Alpenglow, a new way for validators to agree. A payment there is final
 about a second after Knos sends it, not 13 seconds later. Knos asks each cluster which way it runs and, on Alpenglow,
-waits until a payment is final before it says "paid". On a cluster that has not moved yet, nothing changes.
+waits until a payment is final before it says "paid".
+
+On a cluster that has not moved yet, nothing changes.
 
 ## How Knos tells
 
@@ -21,8 +23,9 @@ asked again after 10 minutes, so a relay that runs through a migration switches 
 
 Sources, read 14 Oct 2026: the method page [solana.com/docs/rpc/http/getaggenesiscert](https://solana.com/docs/rpc/http/getaggenesiscert)
 (no parameters; `null` while the cluster runs TowerBFT; -32601 on a node older than Agave 4.3); Agave `rpc/src/rpc.rs`
-`get_ag_genesis_cert` at commit 722c8f4b, which reads the finalized bank; `@solana/kit` `packages/rpc-api/src/getAgGenesisCert.ts`; and
-[solana.com/upgrades/alpenglow](https://solana.com/upgrades/alpenglow) (under Alpenglow `confirmed` and `finalized` are the same state,
+`get_ag_genesis_cert` at commit 722c8f4b, which reads the finalized bank; `@solana/kit` `packages/rpc-api/src/getAgGenesisCert.ts`.
+
+Also read: [solana.com/upgrades/alpenglow](https://solana.com/upgrades/alpenglow) (under Alpenglow `confirmed` and `finalized` are the same state,
 new code should use `finalized`, and `confirmed` will be deprecated and removed; target finality about 150 ms, "an expectation, not a
 constant").
 

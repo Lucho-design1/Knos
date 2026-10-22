@@ -44,7 +44,9 @@ What four sellers of coding agents have said, or been reported to earn:
 
 **The base: 7,400 million USD a year.** We add the three revenue figures we have: 4,000 + 2,500 + 900. It is
 too low, because Codex and Copilot are left out. It mixes dates from February to August 2026. None of it is
-audited. Almost all of it is paid per seat or per token today, not per passed piece of work.
+audited.
+
+Almost all of it is paid per seat or per token today, not per passed piece of work.
 
 **The share paid per passed piece of work is not measured anywhere we found.** The nearest figure: in a survey of
 enterprise software buyers, 27% said they favour paying by outcome. That is what buyers prefer, not what they pay

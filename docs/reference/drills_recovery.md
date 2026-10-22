@@ -108,7 +108,9 @@ expired key are refused: no funding by comment and no payment.
 days"; refresh from a repository of one's own,
 `test_anyone_refreshes_a_key_from_a_repository_of_his_own_and_nobody_registers_one_that_way`; a token refused while
 its key is expired and accepted again after a refresh,
-`test_a_token_is_refused_while_its_key_is_expired_and_works_again_once_the_key_is_refreshed`. *Not rehearsed:* a
+`test_a_token_is_refused_while_its_key_is_expired_and_works_again_once_the_key_is_refreshed`.
+
+*Not rehearsed:* a
 refresh on devnet by an account other than Knos's; and the state with every key expired, on a cluster.
 
 ### D. Knos's operator is gone, and devnet with it

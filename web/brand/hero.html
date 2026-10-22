@@ -4,14 +4,14 @@
     <input id="k-q" name="q" type="text" aria-label="A DOI, an arXiv id or an idea" maxlength="500" placeholder="A DOI, an arXiv id or an idea" enterkeyhint="go" spellcheck="false">
     <button id="k-go" type="submit">Check demand</button>
   </form>
-  <p class="k-try" aria-label="Examples, one per technology">
-    <button type="button" class="k-chip" data-tech="ai" data-q="an AI tutor for high school math">AI tutor</button>
-    <button type="button" class="k-chip" data-tech="web3" data-q="a crypto wallet for teenagers">Web3 wallet</button>
-    <button type="button" class="k-chip" data-tech="quantum" data-q="a quantum computing course for teenagers">Quantum course</button>
-    <button type="button" class="k-chip" data-tech="energy" data-q="a home battery that charges from the grid at night">Energy battery</button>
-    <button type="button" class="k-chip" data-tech="biotech" data-q="10.1038/nature16521">Biotech sensor</button>
-    <button type="button" class="k-chip" data-tech="materials" data-q="10.1126/science.aam8743">Materials water</button>
-    <button type="button" class="k-chip" data-tech="pqc" data-q="a post-quantum encrypted messaging app">PQC messaging</button></p>
+  <div class="k-try" role="group" aria-label="Examples, one per technology">
+    <button type="button" class="k-chip" data-tech="ai" data-q="an AI recipe planner for families">AI recipes</button>
+    <button type="button" class="k-chip" data-tech="web3" data-q="a crypto podcast for beginners">Crypto podcast</button>
+    <button type="button" class="k-chip" data-tech="quantum" data-q="a quantum physics book for kids">Quantum book</button>
+    <button type="button" class="k-chip" data-tech="energy" data-q="an electric bike for city commuters">E-bike</button>
+    <button type="button" class="k-chip" data-tech="biotech" data-q="a probiotic kombucha brand">Kombucha</button>
+    <button type="button" class="k-chip" data-tech="materials" data-q="a recycled ocean plastic swimwear brand">Ocean swimwear</button>
+    <button type="button" class="k-chip" data-tech="biotech" data-q="10.1038/nature16521">A paper: sweat sensor</button></div>
   <div id="k-card" class="k-slot" aria-live="polite"></div>
   <script type="application/json" id="k-proof">null</script>
 <!-- k-vectors -->

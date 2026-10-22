@@ -325,7 +325,9 @@ title are GitHub's defaults.
 
 **A private repository** runs no Knos file. Instead one repository of the organisation acts as its attestor (the
 repository that vouches for the others): it funds and pays for the others; the site gives a second link, for [`examples/knos-attestor.yml`](../../examples/knos-attestor.yml)
-without its comment lines (with them it does not fit in a link). That is more than three steps: the attestor also
+without its comment lines (with them it does not fit in a link).
+
+That is more than three steps: the attestor also
 needs `.knos/policy.yml` (`private: true`, `attestor:`, `targets:`) and a secret `KNOS_READ_TOKEN`, a fine-grained
 token that reads the repositories it attests for.
 

@@ -31,8 +31,31 @@ def _load() -> None:
     with _lock:
         if not _runs:
             _runs.extend(doc.get("runs") or [])
-        if _proof is None:
+        if _proof is None and public(doc.get("proof") or {}):
             _proof = doc.get("proof")
+
+
+_public: set[str] = set()
+
+
+def _norm(idea) -> str:
+    return " ".join(str(idea or "").lower().split()).rstrip(".")
+
+
+def public(rep: dict) -> bool:
+    """Is this check one anyone can see the site ask for (a hero example, a front-door product, a Fields cell)? Only
+    such a check is shown to the next visitor: what a person typed stays theirs."""
+    if not _public:
+        import re
+
+        from . import front
+        from .fields_data import FIELDS
+        page = (Path(__file__).resolve().parent / "static" / "index.html").read_text(encoding="utf-8")
+        _public.update(_norm(x) for x in re.findall(r'data-q="([^"]+)"', page))
+        _public.update(_norm(s.get("idea")) for s in front.SEEDS if s.get("idea"))
+        _public.update(_norm(c.get("idea")) for c in FIELDS["cells"] if c.get("idea"))
+        _public.discard("")
+    return _norm(rep.get("idea")) in _public or _norm(rep.get("ref")) in _public
 
 
 def _card(rep: dict) -> dict:
@@ -41,18 +64,19 @@ def _card(rep: dict) -> dict:
     return {"hash": rep.get("hash"), "idea": rep.get("idea"), "label": rep.get("label"), "made": rep.get("made"),
             "decision": {"verdict": d.get("verdict"), "reasons": (d.get("reasons") or [])[:2], "plan": d.get("plan")},
             "who": rep.get("who"), "audiences": (rep.get("audiences") or [])[:3], "cities": (rep.get("cities") or [])[:5],
-            "price": rep.get("price"), "calls": len(rep.get("calls") or [])}
+            "price": rep.get("price"), "calls": len(rep.get("calls") or []),
+            "leader": {k: (rep.get("leader") or {}).get(k) for k in ("name", "id")} if isinstance(rep.get("leader"), dict) else None}
 
 
 def note(kind: str, ms: float, rep: dict, state=None) -> None:
-    """One measured run. A real verdict (OPEN or REFUSE, with Qloo's cities) becomes the proof shown first."""
+    """One measured run. A real verdict (OPEN or REFUSE, with Qloo's cities) on a public example becomes the proof shown first."""
     global _proof
     _load()
     calls = rep.get("calls") or []
     verdict = (rep.get("decision") or {}).get("verdict")
     row = {"kind": kind, "ms": round(ms), "calls": len(calls), "cached": bool(calls) and all(c.get("cached") for c in calls),
            "verdict": verdict, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-    real = verdict in ("OPEN", "REFUSE") and rep.get("cities") and not rep.get("without_qloo") and not rep.get("private")
+    real = verdict in ("OPEN", "REFUSE") and rep.get("cities") and not rep.get("without_qloo") and not rep.get("private") and public(rep)
     with _lock:
         _runs.append(row)
         del _runs[:-KEEP]

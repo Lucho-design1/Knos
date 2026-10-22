@@ -130,8 +130,9 @@ measurement at the version of the code that day.
 | `hermes/plugin/knos/` | `scan_plugin` | safe | none |
 | the plugin with its code (hermes_plugin.py, verify/, mcp_http.py, the GEPA judge, the Atropos env) | `scan_plugin` | safe | 7 medium `python_subprocess` (git, the test run, the sealed-task check) and 2 low `hardcoded_ip_port` (the loopback default) |
 
-The repository keeps the skill scanner, unmodified, as `tests/data/hermes_skills_guard.py.txt` (MIT, Nous Research),
-and tests/test_hermes_guard.py runs it offline on every skill, on the plugin folder and on its code (the code with the
+The repository keeps the skill scanner, unmodified, as `tests/data/hermes_skills_guard.py.txt` (MIT, Nous Research).
+
+tests/test_hermes_guard.py runs it offline on every skill, on the plugin folder and on its code (the code with the
 stricter skill rules: the test asserts verdict safe with no high or critical finding, not the plugin counts above),
 and on a hostile skill as a control, which it must block.
 
@@ -157,9 +158,10 @@ the work, the locked judge hash, the cheat library, a re-run).
 A task without a seal, or an install without the referee, is not scored (0.0, "unsealed").
 
 `allow_unsealed=True` scores such a task with a labelled fallback (the local cheat rules, then the task's check
-command, which must exit 0 and write a test report with no failure): that fallback is NOT tamper-proof, because the
-candidate's code runs in the same process as the check and can forge a report, so it is for the synthetic demo only,
-never for real evolution.
+command, which must exit 0 and write a test report with no failure).
+
+That fallback is NOT tamper-proof, because the candidate's code runs in the same process as the check and can forge a
+report, so it is for the synthetic demo only, never for real evolution.
 
 Score 1.0 when the sealed checks pass, else 0.0; a cheat (edited tests, CI or fixtures, files out of scope, ...) is
 never worth more than an honest failure and its category is named in the feedback (`dspy.Prediction(score, feedback)`
@@ -169,11 +171,12 @@ Hidden test text never appears in feedback.
 
 ## 5. Atropos environment
 
-`hermes/atropos/knos_env.py` defines `KnosSealedEnv(BaseEnv)` (`name = "knos_sealed"`) when atroposlib is installed:
-`get_next_item` cycles the sealed tasks, `collect_trajectories` asks the policy for `group_size` answers to the
-task's prompt (the prompt only, never the bundle), judges each with the referee, and returns a `ScoredDataGroup` of
-`tokenize_for_trainer` tokens and masks with the referee's reward as each score (1.0 passed, 0.0 failed, -1.0 a
-cheat); `evaluate` reports `eval/knos_pass_rate`.
+`hermes/atropos/knos_env.py` defines `KnosSealedEnv(BaseEnv)` (`name = "knos_sealed"`) when atroposlib is installed.
+`get_next_item` cycles the sealed tasks, and `evaluate` reports `eval/knos_pass_rate`.
+
+`collect_trajectories` asks the policy for `group_size` answers to the task's prompt (the prompt only, never the
+bundle), judges each with the referee, and returns a `ScoredDataGroup` of `tokenize_for_trainer` tokens and masks with
+the referee's reward as each score (1.0 passed, 0.0 failed, -1.0 a cheat).
 
 Run it as any Atropos environment: `python hermes/atropos/knos_env.py serve` (set `KNOS_ATROPOS_MODEL` and
 `KNOS_ATROPOS_BASE_URL`). The two tasks in `hermes/atropos/tasks/` are synthetic and labelled so, and they carry no

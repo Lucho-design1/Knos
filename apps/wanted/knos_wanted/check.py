@@ -52,9 +52,23 @@ COUNTRIES = {"united states": "US", "usa": "US", "us": "US", "united kingdom": "
 
 def market_country(place: str | None) -> str | None:
     return COUNTRIES.get((place or DEFAULT_PLACE).strip().lower())
+# Qloo's kit (docs/SAFE_USE.md): no inference of sensitive traits. Political and belief segments are never asked for,
+# and a segment named for a religion, an ethnicity, a sexual orientation, health or politics is never shown or sized.
 AUDIENCE_TYPES = ("communities", "global_issues", "hobbies_and_interests", "investing_interests", "leisure", "life_stage",
-                  "lifestyle_preferences_beliefs", "political_preferences", "professional_area", "spending_habits")
+                  "professional_area", "spending_habits")
 AUDIENCE_TYPES = tuple("urn:audience:" + t for t in AUDIENCE_TYPES)
+SENSITIVE_TYPES = ("urn:audience:political_preferences", "urn:audience:lifestyle_preferences_beliefs")
+SENSITIVE_SEGMENT = re.compile(
+    r"\b(aapi|asian|black(?! friday)|african|latin[oax]|latine|hispanic|indigenous|native american|arab|jewish|muslim|christian\w*|catholic|"
+    r"protestant|evangelical|mormon|hindu\w*|buddhis\w*|sikh|religio\w*|faith\w*|church\w*|spiritual\w*|atheis\w*|lgbt\w*|queer|"
+    r"gay|lesbian|bisexual|transgender|politic\w*|conservative\w*|liberal(?! arts)\w*|progressive\w*|democrat\w*|republican\w*|"
+    r"health\w*|disab\w*|chronic|illness\w*|pregnan\w*|immigra\w*)\b", re.I)
+
+
+def safe_segment(a: dict) -> bool:
+    """A segment Knos may show and size: not of a sensitive type, not named for a sensitive trait."""
+    sid, name = str(a.get("id") or a.get("type") or ""), f"{a.get('name') or ''} {a.get('disambiguation') or ''}"
+    return not sid.startswith(SENSITIVE_TYPES) and not SENSITIVE_SEGMENT.search(name)
 NEUTRAL = 0.5          # Qloo's audience affinity when it has no signal: the list comes back flat at exactly 0.5
 
 # The kind of product, from the idea's nouns, in this priority order (a "podcast about video games" is a podcast).
@@ -369,10 +383,12 @@ def _buyer_group(run: _Run, idea: str, every: list[dict]) -> dict | None:
         return None
     kinds, _st = run.get("/v2/audiences/types", {"take": 50}, "Qloo's audience types")
     live = [t.get("type") or t.get("id") for t in (((kinds or {}).get("results") or {}).get("audience_types") or []) if isinstance(t, dict)]
-    types = [t for t in live if isinstance(t, str) and t.startswith("urn:audience:")] or list(AUDIENCE_TYPES)
+    types = [t for t in live if isinstance(t, str) and t.startswith("urn:audience:") and t not in SENSITIVE_TYPES] or list(AUDIENCE_TYPES)
     body, src = run.get("/v2/audiences", {"filter.audience.types": ",".join(types), "take": 300},
                         "the named buyer group: Qloo's audience segments")
     for a in (((body or {}).get("results") or {}).get("audiences") or []):
+        if not safe_segment(a):
+            continue
         name = str(a.get("name") or "")
         seg = {_stem(w) for w in tokens(name) if w not in GROUP_GENERIC}
         if seg and seg & stems:
@@ -404,7 +420,7 @@ def _recommend(run: _Run, kind: str, signal: dict, known: set) -> dict | None:
 def _audience(run: _Run, signal: dict, what: str, take: int = 6) -> tuple[list[dict], int | None]:
     body, src = run.get("/v2/insights", {"filter.type": "urn:audience", "take": take, **signal}, what)
     rows = [{"name": a.get("disambiguation") or a.get("name"), "affinity": (a.get("query") or {}).get("affinity"), "src": src}
-            for a in (((body or {}).get("results") or {}).get("entities") or [])[:take]]
+            for a in (((body or {}).get("results") or {}).get("entities") or [])[:take] if safe_segment(a)]
     return rows, src
 
 

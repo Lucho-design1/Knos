@@ -75,7 +75,9 @@ rows have 5 samples each, so a p95 is one payment.
 | Relay: pickup, submission and confirmation | 2 + 2 + 3 = 7 s | 5 + 5 + 8 = 18 s | the relay's | 0.0007 and 0.0018 |
 
 **[measured]** are the seconds. The USD column is arithmetic at GitHub's list price; no bill was read. The
-public relay runs in a public repository, where a standard runner is free. A relay for private repositories
+public relay runs in a public repository, where a standard runner is free.
+
+A relay for private repositories
 would be paid for, and what it costs is **[budget, not measured]**: 0.0007 USD a token is 35% of the Meter's proposed 0.002
 if every evaluation is relayed by itself, and a 5,000th of that in a batch. (The deployed knos_meter charges 0.05 an
 evaluation after 10,000 free a month.)
@@ -203,9 +205,10 @@ delivered 110,000: the free allowance is the leak, not the chain.
 | The whole budget: 110,000 × 0.00005 + 5 × 0.1393 **[budget, not measured]** | 6.20 | 0.0000563 | no: 69.0% gross |
 
 So the answer has two halves. **The cost that is measured meets it:** batching puts the chain at 0.1393 USD a
-supplier a month whatever the count, and a ledger event is 370 bytes. **The cost that is budgeted does not, at
-this volume:** relay, ingestion and monitoring are budgeted at the rest of 0.00005 an evaluation, and nobody has
-measured them.
+supplier a month whatever the count, and a ledger event is 370 bytes.
+
+**The cost that is budgeted does not, at this volume:** relay, ingestion and monitoring are budgeted at the rest
+of 0.00005 an evaluation, and nobody has measured them.
 
 The shortfall is 6.20 − 1.00 = 5.20 USD a month on a customer who pays 10,753.33.
 
@@ -217,11 +220,15 @@ line is 1,800.00 against 50.70: 97.2% gross.
 
 **The design that fixes it** is the one already in the tree, and one measurement that is not: one anchored batch
 for each supplier a month (`knos meter batch`), compact events, reconciliation each side runs itself
-(`knos meter reconcile`), and no person in the routine path. What is missing is a bill: the cost of relay and
+(`knos meter reconcile`), and no person in the routine path.
+
+What is missing is a bill: the cost of relay and
 ingestion for one evaluation has to be read from a real month before the 0.00005 is anything but a budget.
 
 **The free tier still costs.** An organisation that stays inside the free 100,000 pays nothing and costs at most
-12 × 100,000 × 0.00005 = 60 USD a year, and 1.67 USD a year more for each supplier it counts with. The worked
+12 × 100,000 × 0.00005 = 60 USD a year, and 1.67 USD a year more for each supplier it counts with.
+
+The worked
 customer's five suppliers make it 68.36. **That is acquisition cost**, not gross margin, and it is a ceiling: an
 organisation that runs fewer evaluations costs less.
 
@@ -261,7 +268,9 @@ of 5.
 
 **Who pays the relayer's tip.** The funder, under both builds, and only through the fee: the fee is charged on
 top of the amount, the tip comes out of the fee, and it is never more than the fee. The payee is paid the amount
-in full. Nothing is added for the tip. Under 2.1 the floor of 0.40 covers the tip eight times over; under 2.2 the
+in full. Nothing is added for the tip.
+
+Under 2.1 the floor of 0.40 covers the tip eight times over; under 2.2 the
 floor of 0.05 is the tip, so on a release of 5 the relayer is paid and the fee owner is not.
 
 **Netting is the fix.** Outcomes under 20 USD accumulate and settle as one release per payee per period:
@@ -296,7 +305,9 @@ At 75 USD an hour that is 66 hours a year, five and a half a month. So self-serv
 the budgeted support, and nothing shows that it does. None of the three figures is measured.
 
 **The target is 7,000 USD a year: a gross margin of 93%.** That is 8,000 less than the budget, and 93 hours a year
-at 75 USD an hour where the budget has 200. It is still short of 95%, which needs 5,000. The design that has to
+at 75 USD an hour where the budget has 200. It is still short of 95%, which needs 5,000.
+
+The design that has to
 replace the hours is self-service onboarding, and each part of it exists as a command or a file today:
 
 | what a person does in the budget | what replaces it | where |

@@ -4,7 +4,9 @@
 
 **In plain words.** Every time Knos checks something (a research claim, an experiment, a verdict, a cheat it caught,
 a refusal, a payout or a refund), it writes one line to a public file. Each line carries the fingerprint (hash) of the
-line before it, so changing any old line breaks every line after it. Every so often, one fingerprint for a whole batch
+line before it, so changing any old line breaks every line after it.
+
+Every so often, one fingerprint for a whole batch
 of lines (a Merkle root) is written into a Solana devnet transaction. Anyone can then recompute that fingerprint from
 the file and compare it with the chain: `knos record verify`.
 
@@ -28,10 +30,12 @@ One JSON object per line in `journal.jsonl`:
 | `prev` | the hash of the line before (`0` x 64 for the first) |
 | `hash` | sha256 of the line's canonical JSON (sorted keys, no spaces) without `hash` |
 
-The record is public, so a line is refused before anything is written when its payload looks like a secret: a field
-named like a key, token, password or e-mail; a GitHub, Slack, AWS or API token; a PEM block; a signed token (JWT); an
-e-mail address; a home-folder path; an array of 32 or 64 bytes; 64 bytes in base58 or hex under a name that does not
-say it is a signature or a hash.
+The record is public, so a line is refused before anything is written when its payload looks like a secret. That
+means a field named like a key, token, password or e-mail; a GitHub, Slack, AWS or API token; a PEM block; or a
+signed token (JWT).
+
+It also means an e-mail address; a home-folder path; an array of 32 or 64 bytes; or 64 bytes in base58 or hex under a
+name that does not say it is a signature or a hash.
 
 Demo data says `"synthetic": true` in its payload.
 

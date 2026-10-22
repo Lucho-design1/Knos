@@ -3,7 +3,9 @@
 # The referee: Works, Wanted, Makeable
 
 **In plain words.** The referee answers three questions about a piece of research or code: does it work, does anyone
-want it, and can it be made at a profit. A verdict passes only when all three do. The person or agent doing the work
+want it, and can it be made at a profit. A verdict passes only when all three do.
+
+The person or agent doing the work
 cannot see the tests that judge it, cannot change the judge, and is refused when it tries one of the known cheats.
 Every verdict and every cheat caught can be written to Knos Record ([RECORD.md](RECORD.md)).
 

@@ -80,10 +80,12 @@ All of it goes through `src/knos/proof/history.py` (`SibylStore`), and that clas
 | all tiers | `search` | finding a past refusal by its words |
 | tenants | `MemoryClient.local(..., tenant_id=...)`, `set_tenant` | one tenant per repository for the hook and the judge; one per buyer organisation for exceptions and approvals (`knos.store.buyer_tenant`); one per supplier for what buyers granted it (`knos.store.supplier_tenant`) |
 
-Two things the client does not offer at 0.8.1 and Knos works around in the open: it has no call that lists the
-archive, so `SibylStore.archived` reads the engine's own `archived_entities` table through the client's storage
-handle; and the engine's self-learning and linter need a paid account, so Knos calls `learn()` only when one is
-there and never depends on it.
+The client does not offer two things at 0.8.1, and Knos works around both in the open. It has no call that
+lists the archive, so `SibylStore.archived` reads the engine's own `archived_entities` table through the
+client's storage handle.
+
+And the engine's self-learning and linter need a paid account, so Knos calls `learn()` only when one is there
+and never depends on it.
 
 ## What a buyer sees it do
 

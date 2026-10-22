@@ -76,9 +76,16 @@
     const who = r.who || {}, age = (p.who?.age || who.top_age || "").replace(/_/g, " ").replace(" and ", " and "), gender = p.who?.gender || who.top_gender || "";
     const segs = (p.who?.segments || (r.audiences || []).map((a) => a.name)).filter(Boolean).slice(0, 3);
     const cities = (r.cities || []).slice(0, 5), price = r.price || {}, tier = String(price.tier || "").toLowerCase();
+    // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
+    // visitor can pick another match, or none of them; the verdict's reason is Knos's rule, apart from Qloo's data
+    const lead = r.leader && typeof r.leader === "object" ? r.leader : null, why = (d.reasons || [])[0];
+    const others = (r.matches || []).filter((m) => m && m.name && (!lead || m.id !== lead.id)).slice(0, 3);
+    const read = lead ? `<p class="k-read" data-part="match">Read as <b>${esc(lead.name)}</b>${label ? "" : ` · Not it? ${others.map((m) =>
+      `<button type="button" class="k-chip" data-pick="${esc(m.name)}">${esc(m.name)}</button>`).join(" ")} <button type="button" class="k-chip" data-none="${
+      esc([lead.id, ...others.map((m) => m.id)].filter(Boolean).join(","))}">None of these</button>`}</p>` : "";
     return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}" data-not-prose>
   <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
-</header>
+  ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}</header>
   <div class="k-parts">
     <section class="k-part" data-part="audience" data-qloo><h3>Who wants it</h3>
       ${age || gender ? `<p class="k-big">${esc([age, gender].filter(Boolean).join(", "))}</p>` : `<p class="k-none">Qloo did not answer who.</p>`}
@@ -94,15 +101,16 @@ ${src(h, price.src)}</section>
 </article>`;
   }
 
-  async function ask(v) {
+  async function ask(v, extra = {}) {
     v = v.trim();
     if (!v) { q.focus(); return; }
     go.disabled = true; root.setAttribute("aria-busy", "true");
     const ref = paper(v), t0 = performance.now();
     said(ref ? "Reading the paper…" : "Asking Qloo…");
     try {
-      const r = ref ? await crossing(ref) : await post("/api/check", { idea: v });
+      const r = ref ? await crossing(ref) : await post("/api/check", { idea: v, ...extra });
       slot.innerHTML = card(r);
+      slot.dataset.idea = v;
       delete slot.dataset.past;
       slot.dataset.ms = String(Math.round(performance.now() - t0));
       slot.querySelector(".k-verdict")?.focus?.();
@@ -132,5 +140,10 @@ ${src(h, price.src)}</section>
   if (carried) draw(carried);                                  // in the page: at the first paint
   else seen(root, () => get("/api/proof").then((p) => draw(p && p.proof)).catch(() => {}));
   form.addEventListener("submit", (ev) => { ev.preventDefault(); ask(q.value); });
-  root.addEventListener("click", (ev) => { const b = ev.target.closest("[data-q]"); if (b) { q.value = b.dataset.q; ask(b.dataset.q); } });
+  root.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-q]"), pick = ev.target.closest("[data-pick]"), none = ev.target.closest("[data-none]");
+    if (b) { q.value = b.dataset.q; ask(b.dataset.q); }
+    else if (pick) ask(slot.dataset.idea || q.value, { leader: pick.dataset.pick });
+    else if (none) ask(slot.dataset.idea || q.value, { exclude: none.dataset.none.split(",").filter(Boolean) });
+  });
 })();

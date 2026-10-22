@@ -65,10 +65,12 @@ only its cap and spenders.
 
 The tests run the committed build.
 
-What the audit export does not hold: names (it carries GitHub's numeric ids), the commit of the workflows that signed
-(the paying transaction it names carries the token that says it), the accepted commit of a pull request (the log
-prints a commit only on a revert), a Balance's limits when it funded (the acceptance receipt of a work order's
-payment has them; a bounty has no receipt), and the first deployment's bounties (`knos receipts` lists those).
+What the audit export does not hold: names (it carries GitHub's numeric ids), and the commit of the workflows that
+signed (the paying transaction it names carries the token that says it). Nor does it hold the accepted commit of a
+pull request (the log prints a commit only on a revert).
+
+It also lacks a Balance's limits when it funded (the acceptance receipt of a work order's payment has them; a bounty
+has no receipt), and the first deployment's bounties (`knos receipts` lists those).
 
 It is a file. Nothing sends it anywhere, and nothing keeps it.
 
@@ -106,8 +108,10 @@ It is a file. Nothing sends it anywhere, and nothing keeps it.
 | A relayer | carry a signed token to the chain and pay the fee | decide anything: the program checks the signature and the terms | [`src/knos/settle/v2/relay/`](../../src/knos/settle/v2/relay/__init__.py) |
 | Knos, outside the two multisigs | nothing on a funded order | | |
 
-What does not exist: single sign-on tried with a real provider (the self-host bundle has single sign-on through any OpenID Connect provider, tested against a stand-in provider only); a private deployment that has run; a support contract; an approval the program enforces (the approval chain of
-0.3.17 is files in the buyer's repository and a command, and a multisig's vault as the funder is the only two-person approval that money cannot get past, by the multisig's own rule); an admin console; roles inside the program.
+What does not exist: single sign-on tried with a real provider (the self-host bundle has single sign-on through any OpenID Connect provider, tested against a stand-in provider only). Nor a private deployment that has run, or a support contract.
+
+Nor an approval the program enforces: the approval chain of 0.3.17 is files in the buyer's repository and a command. A multisig's vault as the funder is the only two-person approval that money cannot get past, by the multisig's own rule. Also missing: an admin console, and roles inside the
+program.
 
 Knos has no accounts of its own. Identity is GitHub's and a wallet's, so a company's access rules for GitHub are its access rules here. **Every member key of the upgrade multisig is the founder's** ([SECURITY.md](SECURITY.md), section 7). No document names anyone but the founder as a holder
 of a guardian key. No outside signer sits on either.

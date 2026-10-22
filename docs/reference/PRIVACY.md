@@ -207,9 +207,10 @@ before.
 <!-- /observe:private -->
 
 So a private order still tells an outsider: which organisation paid, which GitHub account was paid and at which
-wallet, how much, the fee, when it was funded and when it was accepted, which attestor repository judged it and who
-started that run, the commit that was accepted (as a hash), and that it came from the same Balance as the
-organisation's other orders.
+wallet, how much, the fee, and when it was funded and when it was accepted.
+
+It also tells which attestor repository judged it and who started that run, the commit that was accepted (as a
+hash), and that it came from the same Balance as the organisation's other orders.
 
 Two orders of similar size to one payee a day apart are a supplier relationship, whatever the repository is called.
 

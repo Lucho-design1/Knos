@@ -1,8 +1,8 @@
 /* Knos's one design system: the logo, type, colour, spacing, the bar and the hero, the same bytes on the front door and
    the app (scripts/sync_brand.py copies it, tests/test_design_system.py holds it). */
-@font-face { font-family: "Bricolage Grotesque"; src: url("../fonts/bricolage-grotesque.woff2") format("woff2"); font-weight: 200 800; font-style: normal; font-display: swap; }
-@font-face { font-family: "Geist"; src: url("../fonts/geist.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
-@font-face { font-family: "JetBrains Mono"; src: url("../fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Bricolage Grotesque"; src: url("../fonts/bricolage-grotesque.woff2") format("woff2"); font-weight: 200 800; font-style: normal; font-display: optional; }
+@font-face { font-family: "Geist"; src: url("../fonts/geist.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: optional; }
+@font-face { font-family: "JetBrains Mono"; src: url("../fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: optional; }
 :root {
   --paper: #07080c; --paper-2: #0f1118; --ink: #e9ebef; --ink-2: #a0a7b8; --line: #222634; --soft: #151822;
   --accent: #93a5ff; --accent-fg: #07080c; --ok: #5fd28f; --bad: #ff8a80; --warn: #e0b354;

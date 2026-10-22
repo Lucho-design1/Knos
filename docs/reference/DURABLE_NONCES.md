@@ -10,7 +10,9 @@ wall-clock time").
 
 **Measured on devnet, 14 Oct 2026** (`python -m knos.platform.blockhash`, raw output kept by the build): the
 `confirmed` block height was 134 to 146 blocks (mean 143) below `lastValidBlockHeight` while it rose 232 blocks in
-54.0 s (4.297 a second; `getRecentPerformanceSamples` gave 236 to 240 ms a slot). A blockhash fetched at `confirmed`
+54.0 s (4.297 a second; `getRecentPerformanceSamples` gave 236 to 240 ms a slot).
+
+A blockhash fetched at `confirmed`
 therefore had **about 33 s** left, not the minute older pages assumed.
 
 That is too short for a funder whose approver signs on another machine, a financier's assignment
@@ -41,7 +43,9 @@ requires).
 then had the funder sign a knos_pay `FundOrderWallet` alone and the relay add its fee-payer signature and send it 56.9 s later, well past any
 blockhash's life:
 [`3LT3NScV…`](https://explorer.solana.com/tx/3LT3NScVpHQLbrh7n1A7y7aFta8ZVm2aUUq3bifEk8pzwd2yYBm6Yy54N5dHjTwcQxq4mcoAULBwR5qM5wvcWibq?cluster=devnet)
-funded order `GNqQRH9mZabN43vynzgFoJFRq7ETpuY8eujQYEGM8uyv`; a second run 59.0 s apart,
+funded order `GNqQRH9mZabN43vynzgFoJFRq7ETpuY8eujQYEGM8uyv`.
+
+A second run 59.0 s apart,
 [`618qYsba…`](https://explorer.solana.com/tx/618qYsba2M4EcAgk8kdVpVokTzVszH2zN4z1BhfqEn5d8NQFKkf3twpjebD1D3PQ8NXX6QzqAtvL3Nn9MrjK6Smg?cluster=devnet),
 then read the nonce back: it had moved on, so those bytes can never land again.
 

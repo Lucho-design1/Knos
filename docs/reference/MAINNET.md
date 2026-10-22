@@ -2,7 +2,9 @@
 
 **Mainnet is not planned for this release, and nothing in this release touches it.** Every program id in
 [`programs-v2/program_ids.json`](../../programs-v2/program_ids.json) is a devnet id, every released binary is a devnet
-build, and all money is test USDC. This page is the list of what must be true first. The gates are conditions, not
+build, and all money is test USDC. This page is the list of what must be true first.
+
+The gates are conditions, not
 dates: none has a day attached, and a gate is passed only when its evidence exists where the last column says.
 
 The count, the statement and the controls do not depend on mainnet: they are software that would be invoiced off
@@ -30,7 +32,9 @@ money and not of ones with known defects. Gates 2 and 4 come before the verifier
 Checked against the source in `programs-v2/` on 2026-10-06.
 
 **The mint: nothing.** `knos_pay` does not fix one mint. Money can be any token on Solana's standard token program (an SPL
-Token mint), or on Token-2022 when every extra feature (extension) of that token is on the allowed list ([SECURITY.md](SECURITY.md), section 11). Circle's mainnet USDC mint
+Token mint), or on Token-2022 when every extra feature (extension) of that token is on the allowed list ([SECURITY.md](SECURITY.md), section 11).
+
+Circle's mainnet USDC mint
 is already a constant beside the devnet one (`USDC_MAINNET`, `USDC_DEVNET` in
 [`knos_pay/src/lib.rs`](../../programs-v2/knos_pay/src/lib.rs)), and the public record already counts a payment as
 real money only in those two (`counted`). `knos_meter` takes credits only in the same two mints (`FEE_MINTS`).
@@ -107,5 +111,7 @@ each line with the evidence it was judged on. It exits 1 while any line fails.
 
 **What it does not check.** Gates 1, 2, 3, 5, 6 and 7 of this page. It does not read who holds the member keys, it
 does not know whether anyone outside reproduced a build, and nothing about law or policy is in it. Passing
-`knos mainnet-check` is necessary and is not the decision to deploy. A line it cannot ask from where it runs is
+`knos mainnet-check` is necessary and is not the decision to deploy.
+
+A line it cannot ask from where it runs is
 shown as SKIP and is not a pass.

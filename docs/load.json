@@ -1364,7 +1364,7 @@
    "wallet": null,
    "scenario": "hot-funder",
    "measures": "every payment is of one funder's orders and writes ONE fee account, all relays at once: the write locks every payment shares",
-   "source": "the operator's release run of 0.3.23 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario; recorded from the run's report, which kept the payments paid, the retries, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
+   "source": "the operator's release run of 0.3.23 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario. Recorded from the run's report, which kept the payments paid, the retries, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
    "fee_accounts": 1,
    "owners": 1
   },
@@ -1401,7 +1401,7 @@
    "wallet": null,
    "scenario": "rpc-faults",
    "measures": "15% of submissions refused by the endpoint and 15% sent with the answer lost, each payment retried up to 3 times; a payment counts as paid only when the chain shows it, and a resend after a lost answer must be refused",
-   "source": "the operator's release run of 0.3.23 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario; recorded from the run's report, which kept the payments paid, the retries, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
+   "source": "the operator's release run of 0.3.23 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario. Recorded from the run's report, which kept the payments paid, the retries, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
    "note": "No payment was made twice."
   },
   {
@@ -1437,7 +1437,7 @@
    "wallet": null,
    "scenario": "priority-fee",
    "measures": "every transaction that has room carries a compute unit price (SetComputeUnitPrice), 10,000 micro-lamports unless --cu-price says otherwise",
-   "source": "the operator's release run of 0.3.23 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario; recorded from the run's report, which kept the payments paid, the retries, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
+   "source": "the operator's release run of 0.3.23 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario. Recorded from the run's report, which kept the payments paid, the retries, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
    "note": "No transaction of this run carried a price: the code of 0.3.23 skipped v1 transactions, so this is a plain run, not a priced one.",
    "rerun": "done by the 0.3.24 release on 9 Oct 2026: the next priority-fee row"
   },
@@ -1474,7 +1474,7 @@
    "wallet": null,
    "scenario": "priority-fee",
    "measures": "every transaction that has room carries a compute unit price (SetComputeUnitPrice), 10,000 micro-lamports unless --cu-price says otherwise",
-   "source": "the operator's release run of 0.3.24 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario; recorded from the run's report, which kept the payments paid, the retries, the duplicates refused, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
+   "source": "the operator's release run of 0.3.24 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario. Recorded from the run's report, which kept the payments paid, the retries, the duplicates refused, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
    "note": "Every PayOrder carried a compute unit price this time (0.3.24 writes it into version-1 messages)."
   },
   {
@@ -1510,7 +1510,7 @@
    "wallet": null,
    "scenario": "burst",
    "measures": "every relay sends all of its payments at once instead of one after another",
-   "source": "the operator's release run of 0.3.23 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario; recorded from the run's report, which kept the payments paid, the retries, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
+   "source": "the operator's release run of 0.3.23 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario. Recorded from the run's report, which kept the payments paid, the retries, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
    "note": "The 27 failures were HTTP 429 (the public endpoint's rate limit) and \"Blockhash not found\"; 0.3.23 sent each payment once.",
    "rerun": "done by the 0.3.24 release on 9 Oct 2026: the next burst row"
   },
@@ -1547,7 +1547,7 @@
    "wallet": null,
    "scenario": "burst",
    "measures": "every relay sends all of its payments at once instead of one after another",
-   "source": "the operator's release run of 0.3.24 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario; recorded from the run's report, which kept the payments paid, the retries, the duplicates refused, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
+   "source": "the operator's release run of 0.3.24 on 9 Oct 2026 with its own wallets, 4 relays, 40 pay tokens a scenario. Recorded from the run's report, which kept the payments paid, the retries, the duplicates refused, p50, p95 and the worst, and the rate; it kept no fee payers, no run seconds and no split of the failures into refused and never completed",
    "note": "The 18 failures were RPC drops, timeouts and HTTP 408: answers lost on the way, which 0.3.24 did not send again.",
    "rerun": "done by the 0.3.25 release on 10 Oct 2026: the next burst row"
   },
@@ -1683,7 +1683,7 @@
     "H77yFhoQG7ZB5DkYCA9QWxQxWikEAopjCYKwjyKbpLLX",
     "3UUCrxqSn8Hc9bWekB7vjDy5jc3YfudXA1E21ZmNAGDv"
    ],
-   "source": "the operator's release run of 0.3.25 on 10 Oct 2026 with its own wallets, 4 relays and 4 fee accounts; the 40 orders were funded from the run's own wallet in a mint made for the run (EdEeUeZxubezcCW3VHDtGKB9mScyF2Pz3MTD4xBycq1T), and their 40 pay tokens were signed in GitHub Actions run 38012410577 of drexthealpha/knos-load; one endpoint, https://api.devnet.solana.com: Solana lists one public devnet endpoint (https://solana.com/docs/references/clusters), so no second endpoint was given; the 40 order ids are in docs/load.json",
+   "source": "the operator's release run of 0.3.25 on 10 Oct 2026 with its own wallets, 4 relays and 4 fee accounts. The 40 orders were funded from the run's own wallet in a mint made for the run (EdEeUeZxubezcCW3VHDtGKB9mScyF2Pz3MTD4xBycq1T), and their 40 pay tokens were signed in GitHub Actions run 38012410577 of drexthealpha/knos-load. One endpoint, https://api.devnet.solana.com: Solana lists one public devnet endpoint (https://solana.com/docs/references/clusters), so no second endpoint was given. The 40 order ids are in docs/load.json",
    "note": "Sent through knos.settle.v2.fanout as this release fixed it before the run: one getSignatureStatuses a poll round for every transaction waiting, bytes sent again every 2 s only while no endpoint had taken them, each wait bounded in seconds as well as in polls. A first run on 10 Oct 2026 with the fan-out as it was before that fix (each transaction's status asked every 0.5 s, its bytes sent again every 2 s) was stopped after 22.8 minutes with 11 of 40 paid, every status request answered HTTP 429; it kept no record, and its 29 unpaid orders went back after their deadline."
   }
  ],

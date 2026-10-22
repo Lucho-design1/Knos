@@ -26,7 +26,9 @@ A **pull request** is a piece of work sent to a code project on GitHub.
 
 **What to look for.** Does the description say the tests pass? The page quotes that sentence. Then it lists
 which checks failed: test, build, lint or type. Then it gives a verdict in one line. You install nothing and sign
-up for nothing. Nothing is sent to Knos: your browser asks GitHub directly. GitHub answers 60 reads an hour per
+up for nothing. Nothing is sent to Knos: your browser asks GitHub directly.
+
+GitHub answers 60 reads an hour per
 address, and one check uses three, so about twenty checks an hour; the page says when you hit that limit.
 
 ## 2. One comment funds a task; passing work is paid

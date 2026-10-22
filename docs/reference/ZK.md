@@ -2,7 +2,9 @@
 
 **In plain words.** A researcher says "my model gets at least 48 of the 64 hidden test cases right". The person who
 holds the hidden test set should not have to publish it, or it stops being hidden. Knos ZK turns that sentence into a
-small proof (256 bytes) that a Solana program checks. The proof shows the score clears the bar. It shows nothing
+small proof (256 bytes) that a Solana program checks.
+
+The proof shows the score clears the bar. It shows nothing
 else: not the test cases, not the answers. A payout can then require "a verified proof for this sealed test set at
 this bar" before it pays.
 

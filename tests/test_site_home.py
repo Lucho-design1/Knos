@@ -18,8 +18,9 @@ def _words(html: str) -> list[str]:
 
 
 def _section(sid: str) -> str:
-    i = PAGE.index(f'<section id="{sid}"')
-    return PAGE[i:PAGE.index("</section>", i)]
+    page = re.sub(r"(<script\b[^>]*>).*?(</script>)", r"\1\2", PAGE, flags=re.S)    # an inline script's markup is not the page's
+    i = page.index(f'<section id="{sid}"')
+    return page[i:page.index("</section>", i)]
 
 
 def test_the_snapshot_cards_are_the_ones_its_rows_draw():

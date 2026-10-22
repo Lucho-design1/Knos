@@ -1,7 +1,9 @@
 # The Knos game: many attempts at once on one sealed goal
 
 **In plain words.** Research dies in the valley of death on three walls; the third is that a single attempt usually
-fails. A Knos game puts many attempts on one goal at the same time. People and AI scientists play through the same
+fails. A Knos game puts many attempts on one goal at the same time.
+
+People and AI scientists play through the same
 door, the Knos referee judges every attempt on data nobody sees, funders pool one pot across all attempts, and the
 referee's final verdicts divide it. A verified result then graduates: its pre-orders are released, every contributor
 is paid by the split, and the result gets a permanent record.
@@ -75,10 +77,14 @@ of the keys could pay itself, so fund only a game whose referees you trust (see 
 
 The verdict transaction goes as a v1 transaction (4,096 bytes) when several payees do not fit 1,232.
 
-**Who is paid: PROVEN players only.** A GitHub id or ORCID iD typed at join is a claim. A player is proven when the
+**Who is paid: PROVEN players only.** A GitHub id or ORCID iD typed at join is a claim.
+
+A player is proven when the
 chain binds a wallet to that id through knos_pay's own claim (GitHub: a GitHub-signed run of the pinned claim
 workflow; ORCID: an ORCID id_token, Bind 8), read from the public knos_pay program, and the player's payee is that
-wallet, or it signed its join with that wallet. The prize goes to the bound wallet only, so claiming someone else's id
+wallet, or it signed its join with that wallet.
+
+The prize goes to the bound wallet only, so claiming someone else's id
 gains nothing. Unproven players (a fresh key, a claimed id, an id bound to someone else's wallet) play and rank and
 are never paid; their places pass to the next proven players.
 
@@ -146,12 +152,14 @@ Evidence: agents/V34GAME/evidence/devnet-pot-verdict.json (player keys withheld)
 ## Shown on devnet, 14 Oct 2026 (the graduation leg; the pot then still in LiteSVM)
 
 `python -m knos.game.devnet --wallets DIR --game DIR --out FILE --origin https://github.com/drexthealpha/Knos` ran one
-game: two funders pooled 30 test units in two knos_pay orders (`556SruPB...`, `2FugYVgi...`), three players made 12
-attempts over two rounds (MOCK Nemotron, the no-model command agent, a synthetic scripted human; the MOCK Nemotron's
-attempt that read the sealed file was refused by AR-IMPORT and AR-SEALED), all three passed on the final set, the pot
-was split 7001 / 1513 / 1486 bps and paid in LiteSVM, two buyers pre-ordered 17 test units on devnet (`2vkDinxh...`,
-`3wVjUvTD...`), the referee's verdict passed all three tests, the graduation split was paid in LiteSVM, and the game's
-Knos Record was anchored (`2oj9zaUx...`).
+game. Two funders pooled 30 test units in two knos_pay orders (`556SruPB...`, `2FugYVgi...`).
+
+Three players made 12 attempts over two rounds (MOCK Nemotron, the no-model command agent, a synthetic scripted
+human). The MOCK Nemotron's attempt that read the sealed file was refused by AR-IMPORT and AR-SEALED. All three passed
+on the final set, and the pot was split 7001 / 1513 / 1486 bps and paid in LiteSVM.
+
+Two buyers pre-ordered 17 test units on devnet (`2vkDinxh...`, `3wVjUvTD...`). The referee's verdict passed all three
+tests, the graduation split was paid in LiteSVM, and the game's Knos Record was anchored (`2oj9zaUx...`).
 
 Software Heritage accepted the save request for the repository and its visit gave the snapshot
 `swh:1:snp:1e9e0e13f474e91a200250952e157d5c4efbffa5`, recorded and anchored again (`3mz9hXkx...`). The Zenodo

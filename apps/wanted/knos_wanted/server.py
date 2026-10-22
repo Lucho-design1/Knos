@@ -110,6 +110,20 @@ SUMMARIES = {"/api/check": "Demand check on Qloo", "/api/company/need": "Compani
              "/api/anchor": "Anchor the record root on devnet", "/api/task/submit": "Submit to a contributor round"}
 
 
+
+DATA_SLOT = '<script type="application/json" id="k-data">null</script>'
+
+
+def money_doc() -> dict:
+    """The money page's numbers (money_data.MONEY), and the share of each pool Knos needs for $1B a year at the live fee."""
+    from .money_data import MONEY
+    f = preorder.fee_line()
+    bps = f.get("rate_bps") or 0
+    need = 1e9 / (bps / 1e4) if bps else None              # $1B a year of fees, before costs, at the live payout fee
+    shares = [{"id": x["id"], "share": need / x["usd"]} for x in MONEY["pools"] if need and x.get("usd")]
+    return {**MONEY, "fee": {"rate_bps": bps, "status": f.get("status"), "source": "config/fees.yaml"},
+            "target_usd": 1e9, "needed_usd": need, "shares": shares, "assumes": "fees taken only on money released on proof; before costs"}
+
 class State:
     def __init__(self, q: Qloo | None = None, rest: Client | None = None):
         self.q = q or Qloo()
@@ -258,6 +272,11 @@ def make_handler(state: State):
                 return self._send(200 if got else 404, got or {"error": "unknown crossing"})
             if u.path in ("/verify", "/verify.html"):
                 return self._send(200, (STATIC / "verify.html").read_bytes(), "text/html; charset=utf-8")
+            if u.path in ("/fields", "/money"):              # drawn from data in the page itself: nothing moves after the first paint
+                from .fields_data import FIELDS
+                data = json.dumps(FIELDS if u.path == "/fields" else money_doc(), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+                page = (STATIC / PAGES[u.path]).read_text(encoding="utf-8").replace(DATA_SLOT, f'<script type="application/json" id="k-data">{data}</script>', 1)
+                return self._send(200, page.encode("utf-8"), "text/html; charset=utf-8")
             if u.path in PAGES:                              # the trace, "With and without Qloo", Qloo safe use, the invite
                 return self._send(200, (STATIC / PAGES[u.path]).read_bytes(), "text/html; charset=utf-8")
             if u.path == "/api/trace":                       # a report's Qloo calls, redacted (knos_wanted.trace)
@@ -272,15 +291,7 @@ def make_handler(state: State):
                 from .fields_data import FIELDS
                 return self._send(200, FIELDS)
             if u.path == "/api/money":                       # the money page: the pools, and the share Knos needs at the live fee
-                f = preorder.fee_line()
-                bps = f.get("rate_bps") or 0
-                from .money_data import MONEY
-                doc = MONEY
-                need = 1e9 / (bps / 1e4) if bps else None              # $1B a year of fees, before costs, at the live payout fee
-                shares = [{"id": x["id"], "share": need / x["usd"]} for x in doc["pools"] if need and x.get("usd")]
-                return self._send(200, {**doc, "fee": {"rate_bps": bps, "status": f.get("status"), "source": "config/fees.yaml"},
-                                        "target_usd": 1e9, "needed_usd": need, "shares": shares,
-                                        "assumes": "fees taken only on money released on proof; before costs"})
+                return self._send(200, money_doc())
             if u.path == "/api/solvers":                     # proven solvers first: verified milestones, read back from devnet
                 from . import companies
                 return self._send(200, companies.solvers())

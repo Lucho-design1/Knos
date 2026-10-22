@@ -66,7 +66,9 @@ git commit                                        # the ONE commit, with no trai
 **PyPI before the workflows.** The wheel is final once it is locked. Run the checks under "The test count" (below)
 before `publish`. A file on PyPI can never be replaced, so a change inside the wheel (`src/knos`, `terms/`,
 `README.pypi.md`) after `publish` is a new version. The cutoff, the workflows, the stamp and the small repositories
-change nothing inside the wheel. The small repositories are pushed only after `publish`: the workflows they call
+change nothing inside the wheel.
+
+The small repositories are pushed only after `publish`: the workflows they call
 install the release from PyPI. `pinned_workflows.py cutoff` refuses until PyPI serves exactly the locked wheel, and
 writes nothing then. Until the cutoff names this release, `release.py workflows`, `pinned_workflows.py check` and
 `release.py verify` refuse and say "Upload the wheel first".
@@ -131,7 +133,9 @@ order").
 
 **Push only once PyPI's index lists the wheel.** PyPI answers from two places: the page of a version shows an
 upload at once, but the index an installer reads (`https://pypi.org/simple/knos/`) is a cached page that can lag by
-minutes. A push made in between makes the first runs on the new commit fail. `publish` asks that index every 20
+minutes. A push made in between makes the first runs on the new commit fail.
+
+`publish` asks that index every 20
 seconds, for 10 minutes at most, and ends with "Do NOT push yet" when the file is still not listed;
 `python scripts/release.py pypi-check --wait 600` asks again.
 

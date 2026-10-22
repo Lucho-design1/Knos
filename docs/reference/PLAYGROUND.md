@@ -33,20 +33,15 @@ that is accepted for money worth nothing. The rest of this page is the starter t
 
 ## What a stranger does with the starter task
 
-**Fund a test task.** [Open the issue](https://github.com/drexthealpha/Knos/issues/new?template=fund-a-test-task.md)
-and press **Submit new issue**. The template's text ends with the line `/knos fund 5 checks: none auto`. The workflow
-reads that line as the issue is opened, GitHub signs that your account wrote it, and 5 test USDC go into an escrow on
-Solana devnet for that issue. Knos answers in a comment.
+**Fund a test task.** [Open the issue](https://github.com/drexthealpha/Knos/issues/new?template=fund-a-test-task.md) and press **Submit new issue**. The template's text ends with the line `/knos fund 5 checks: none auto`. The workflow reads that line as the issue is opened, GitHub signs that your account wrote it, and 5 test USDC go into an escrow on Solana devnet for that issue.
 
-The task is paid without a merge (`auto`). An escrow holds such an order from `knos_pay` 2.1 on, and devnet runs 2.2
+Knos answers in a comment. The task is paid without a merge (`auto`). An escrow holds such an order from `knos_pay` 2.1 on, and devnet runs 2.2
 (`knos status`; the site's `upgrades.json`). Before 2.1 was live the workflow funded nothing and said so in its
 comment: that is what [issue 1 of the old home](https://github.com/drexthealpha/knos-playground/issues/1) got on 2026-10-05.
 
-**Take one.** Pick an [open issue](https://github.com/drexthealpha/Knos/issues), edit
-[`words.py`](https://github.com/drexthealpha/Knos/edit/main/words.py) in the browser so that it prints the
-words of a line in reverse order, and open the pull request with `Closes #<the issue's number>` in its description.
-The checks in `.knos/acceptance/<number>/` run your file as a separate process on 21 recorded lines and compare what it
-prints. When every answer matches, GitHub signs that it did and the escrow pays your account: to the wallet you bound
+**Take one.** Pick an [open issue](https://github.com/drexthealpha/Knos/issues), edit [`words.py`](https://github.com/drexthealpha/Knos/edit/main/words.py) in the browser so that it prints the words of a line in reverse order, and open the pull request with `Closes #<the issue's number>` in its description. The checks in `.knos/acceptance/<number>/` run your file as a separate process on 21 recorded lines and compare what it prints.
+
+When every answer matches, GitHub signs that it did and the escrow pays your account: to the wallet you bound
 (`/knos address <address>`; the site's passkey wallet works), or held for your account for up to 180 days until you bind one.
 Nobody merges, and no maintainer decides whether the work is good.
 

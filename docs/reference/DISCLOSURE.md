@@ -144,9 +144,11 @@ One dependency also carries over: Sibyl's memory client, which the judge and the
 
 In commits: 18 between the start of the hackathon and 29 Sep, and 128 from 30 Sep to Knos 0.3.25.
 
-The story in one line: we measured how often an agent's pull request said "tests pass" while a check had failed
+The story in short: we measured how often an agent's pull request said "tests pass" while a check had failed
 (17.8% of repositories, on the first such pull request; 9 of 241 merged ones had a failed test, build, lint or type
-check), tried several products around that fact between 29 Sep and 2 Oct 2026, and kept the one that fixes it.
+check).
+
+We then tried several products around that fact between 29 Sep and 2 Oct 2026, and kept the one that fixes it.
 
 The commit history shows those turns.
 

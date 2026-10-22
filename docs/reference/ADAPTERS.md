@@ -116,7 +116,9 @@ It is not built.
 
 **4. Calling the pinned `prove.yml` directly on the event, in the order's own repository.** The program would take
 the token: the order's own judge (`Judge::Own`) reads no event. The pinned `prove.yml` does not sign on it: its settle job runs on a push to the
-default branch, `workflow_dispatch`, `schedule` and a comment on a pull request. This needs a new commit of the
+default branch, `workflow_dispatch`, `schedule` and a comment on a pull request.
+
+This needs a new commit of the
 workflows, which only orders funded after it would name. The adapters use `workflow_dispatch` instead, which works
 today.
 

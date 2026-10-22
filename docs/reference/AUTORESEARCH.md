@@ -2,7 +2,9 @@
 
 **In plain words.** You write what you want in plain English and give a starting idea. Agents (any: Claude Code,
 Codex, Hermes, or a built-in deterministic one) change one file and run it for a fixed time. Only the Knos referee
-decides whether a change is kept, by scoring it on data the agent never sees. Before anyone is paid, the best version
+decides whether a change is kept, by scoring it on data the agent never sees.
+
+Before anyone is paid, the best version
 must beat the starting point again on a second hidden set that no experiment ever touched.
 
 The loop is the autoresearch pattern Andrej Karpathy published (an agent edits one file, each run has a fixed time
@@ -72,7 +74,9 @@ A task that lacks one of these is refused with the missing name.
 
 **Limit.** On Linux with user namespaces the sealed file is out of the candidate's reach by any path; v0.3.34 closed
 the hole an outside judge used (the sealed path built from `chr()` codes and opened: now refused by `AR-FILE`, and
-masked at run time; tests/test_game_fix34.py repeats the exact technique). Where namespaces are not available
+masked at run time; tests/test_game_fix34.py repeats the exact technique).
+
+Where namespaces are not available
 (Windows, macOS, a locked-down kernel), `isolation` is "none" and only the static rules stand: set `KNOS_AR_REQUIRE_JAIL=1`
 on any machine that judges strangers' code, and it refuses to run a candidate without the namespace. The namespace
 does not limit memory or processes, and the candidate still runs as the referee's own user inside it.
@@ -124,9 +128,11 @@ That run used a wall-clock budget; since v0.3.34 the budget is CPU time with a w
 longer decides pass or fail (an outside judge's baseline failed on a loaded VM).
 
 The split plan, from a re-run in the merged v0.3.29 tree (same scores; 106.9 s at load average 10.9) with its fee config (the shares were
-placeholders then; the founder decided the same 60/25/10/5 on 14 Oct 2026, config/fees.yaml): bounty 100 test USDC (a demo amount) split
-researcher 66.68, agent 27.77, referee 5.55; the payout fee 0.30 is the funder's, on top, so the funder pays 100.30 on chain (the 5%
-bounty fee decided on 14 Oct 2026 includes that 0.30; its off-chain rest is not part of this plan: see MONEY.md).
+placeholders then; the founder decided the same 60/25/10/5 on 14 Oct 2026, config/fees.yaml).
+
+Bounty 100 test USDC (a demo amount) split researcher 66.68, agent 27.77, referee 5.55. The payout fee 0.30 is the funder's, on top,
+so the funder pays 100.30 on chain (the 5% bounty fee decided on 14 Oct 2026 includes that 0.30; its off-chain rest is not part of this
+plan: see MONEY.md).
 
 No transaction.
 

@@ -85,7 +85,9 @@ Directional demand evidence, not a sales forecast.
 
 **Pull commitments, released in stages.** A buyer commits to buy N units at price P if the result is verified (the
 advance market commitment pattern). The N x P is locked as one private knos_pay order per **stage**, stage k being
-milestone k of the claim in `knos.graduation`'s scope. `knos.ideas.release_schedule` splits N x P into whole units
+milestone k of the claim in `knos.graduation`'s scope.
+
+`knos.ideas.release_schedule` splits N x P into whole units
 that sum exactly to it. The payout fee of `config/fees.yaml` goes on top of each order. Each stage is released when its
 milestone oracle is met and the judge signs, and refunded to the buyer after its deadline otherwise (anyone may send
 `RefundOrder`):
@@ -121,7 +123,9 @@ are; the buyer never holds them.
 
 **`referee_pass` and `lab_qc` need M signed verdicts.** The referee runs `knos idea sign ... --pass|--fail --review
 FILE`: the evidence is the report's sha256 and the result. `knos idea check ... --verdict FILE` accepts a referee or lab
-verdict only when M referees of the commitment's panel signed it. An unsigned `{"passed": true}` file is shown as NOT
+verdict only when M referees of the commitment's panel signed it.
+
+An unsigned `{"passed": true}` file is shown as NOT
 ACCEPTED, and no verdict can be signed or released on it.
 
 **Pre-orders** go in the claim's pre-order pool (scope 0), paid to the makers when the product is delivered.

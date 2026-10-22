@@ -44,9 +44,12 @@ Every period is one of two things, and `open`, `add`, `close` and `statement` ea
 
 **Reserved.** The buyer locks money before the work, as a marketplace escrow does when a client funds a milestone
 before the freelancer starts ([Upwork's description of its own](https://support.upwork.com/hc/en-us/articles/360000990428)).
+
 Here the lock is a standing order of knos_pay as it is today: the order's own token account holds the money, no
 instruction lets the buyer withdraw it, and its terms name the pair, so `open --reserve` refuses an order funded for
-another supplier or for other work. A reserve locked with `period` also names its month: `open --reserve` refuses it
+another supplier or for other work.
+
+A reserve locked with `period` also names its month: `open --reserve` refuses it
 for any other month, and its draws name that same terms hash. The statement prints, for each period:
 
 | printed | meaning | rule |
@@ -67,7 +70,9 @@ the lock, and the next period bound to the same order draws it first.
 **What is not consumed returns to the buyer by `RefundOrder` (knos_pay instruction 22).** Anyone may send it once the
 order's deadline has passed. It pays everything the order still holds, with the unspent share of the fee, only to
 where the money came from: the buyer's Balance, or the wallet that funded it. Before the deadline nothing returns
-it. The buyer's `Cancel` (instruction 21) moves the deadline to 7 days from the notice and no nearer; draws still pay
+it.
+
+The buyer's `Cancel` (instruction 21) moves the deadline to 7 days from the notice and no nearer; draws still pay
 until then. A reserve is locked for at most 90 days, the longest deadline an order takes.
 
 Three limits, because netting uses the programs as they are:
@@ -88,7 +93,9 @@ order is funded, so `open --reserve` takes an order's address and nothing else.
 
 **Unsecured.** No reserve is bound. The supplier delivers first and carries the whole accepted value until the buyer
 funds the release. `--max-exposure` bounds that over the whole book, not one period: a closed period counts until
-the supplier writes it `settled`, so a buyer cannot leave period after period unfunded behind a fresh cap. `add`
+the supplier writes it `settled`, so a buyer cannot leave period after period unfunded behind a fresh cap.
+
+`add`
 refuses the line that would pass the limit and says what is already carried.
 
 ## The one release
@@ -116,7 +123,9 @@ the net. (A reserved period is paid by draws on its standing order, above, and f
 | the fee | 0.30% of the net, at least 0.05, once, taken when the order is funded. | Volume rates: a rebate by contract. |
 
 **In an unsecured period the supplier carries the buyer's credit risk, up to the exposure limit.** Work is delivered
-before the release is funded. A supplier that does not want that risk asks for a reserve. A supplier that wants its
+before the release is funded. A supplier that does not want that risk asks for a reserve.
+
+A supplier that wants its
 money before the draws sells the closed, reserved period to a financier, who then carries the wait
 ([ADVANCE.md](ADVANCE.md)); Knos funds none of it. A dispute after a period closed is a correction in a later batch ([DISPUTES.md](DISPUTES.md)); netting
 itself does not yet carry a correction from one period into the next.

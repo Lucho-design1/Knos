@@ -56,11 +56,13 @@ def test_vectors_measure_and_never_guess(monkeypatch):
     v = vectors.vectors()
     assert v["speed"]["median_s"] is None and v["cost"]["usd_per_ready_brief"] == round(0.3481 / 20, 4)
     assert v["capability"] == {"idt_ratio": 2.08, "ready_pass": 0.7, "vague_pass": 0.05, "tasks": 20}
-    rep = {"hash": "a" * 64, "idea": "x", "decision": {"verdict": "OPEN"}, "cities": [{"name": "Honolulu"}], "calls": [{"cached": False}] * 4}
+    rep = {"hash": "a" * 64, "idea": "An AI recipe planner for families", "decision": {"verdict": "OPEN"}, "cities": [{"name": "Honolulu"}],
+           "calls": [{"cached": False}] * 4}
     vectors.note("check", 4200, rep)
+    vectors.note("check", 4200, {**rep, "hash": "c" * 64, "idea": "my own secret product"})     # what a person typed stays theirs
     vectors.note("check", 6200, {**rep, "hash": "b" * 64, "decision": {"verdict": "CANNOT_DECIDE"}, "cities": []})
     v = vectors.vectors()
-    assert v["speed"]["median_s"] == 5.2 and v["speed"]["checks"] == 2 and v["cost"]["qloo_calls_per_check"] == 4
+    assert v["speed"]["median_s"] == 4.2 and v["speed"]["checks"] == 3 and v["cost"]["qloo_calls_per_check"] == 4
     assert vectors.proof()["proof"]["hash"] == "a" * 64                    # a decided verdict with cities, never a CANNOT_DECIDE
 
 

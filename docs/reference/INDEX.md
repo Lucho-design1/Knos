@@ -63,13 +63,17 @@ No number has changed after a dispute yet.
 <!-- board:end -->
 
 **The rule, in full.** Knos never charges an agent vendor for its rating, and a vendor cannot pay to change it. No
-vendor can pay to be listed, to be left out, to see a week early or to have a row read again. The method, the script
+vendor can pay to be listed, to be left out, to see a week early or to have a row read again.
+
+The method, the script
 and every count are public, so a rating can be worked again by anyone.
 
 **What a dispute is.** An issue opened with the "Dispute a row" form: the agent, the pull requests that were counted
 wrongly, and the evidence. It is listed in [`index_disputes.json`](../index_disputes.json) with its link and its state
 (`open`, `resolved` or `rejected`), and while it is open its row carries a mark on this page, on the site and in the
-feeds. When a dispute is resolved, what was found is written beside it; if a number changed, the change is listed in
+feeds.
+
+When a dispute is resolved, what was found is written beside it; if a number changed, the change is listed in
 the changelog above with the number before and after. Opening, resolving or winning a dispute costs nothing.
 
 ## The newest week alone
@@ -108,9 +112,13 @@ Every week in the file added up (2026-07-03 to 2026-10-04; never ranked: the wee
 <!-- weekly:end -->
 
 **What is published today.** The table above is the newest week in `agent_weekly.json`: the week of 28 September
-2026, read on 2026-10-07 with the design below (`stratified-seeded-v1`). That reading was not capped: every planned
+2026, read on 2026-10-07 with the design below (`stratified-seeded-v1`).
+
+That reading was not capped: every planned
 draw was made, 976 in all (30 for each agent on each day, fewer only on a day that held fewer: 210 for each of four
-agents and 136 for codex). 539 pull requests were sampled, and 217 of them claimed passing tests. Two agents,
+agents and 136 for codex). 539 pull requests were sampled, and 217 of them claimed passing tests.
+
+Two agents,
 claude-bot (103 claims) and devin (75), have at least 30 claims in the week and so a place. The other three are too
 few to rank: read each interval, not each share. The week is marked `full_week` false because it is a sample, not
 every pull request of the week.
@@ -213,17 +221,25 @@ The GraphQL query was written from GitHub's published schema and was answered by
 of the 120 drawn pull requests that claimed passing tests were read with it, and over REST for the few a query did
 not settle. The REST path is the one the earlier scans used.
 
-**Why the earlier weekly scan could not finish.** It read every hit of the week, with no cap. Each claimed pull
+**Why the earlier weekly scan could not finish.** It read every hit of the week, with no cap.
+
+Each claimed pull
 request cost three to four REST requests (the combined status, the check runs, the check suites when there were
 neither, then the pull request for its merge state) against the token's 1,000 an hour: about 250 to 330 pull requests
-an hour. When the hour's budget was spent it slept until the hour came back, and a refused search slept up to 90
+an hour.
+
+When the hour's budget was spent it slept until the hour came back, and a refused search slept up to 90
 seconds, up to six times. It also waited behind another Knos job that runs every six hours and spends the same hourly budget. And a
-week not read whole was refused, so the hours it did spend published nothing. On 5 October 2026 it ran for five hours
+week not read whole was refused, so the hours it did spend published nothing.
+
+On 5 October 2026 it ran for five hours
 on GitHub: one agent's search did not finish, most of the week's checks were not read, and no week was added.
 
 **Safety.** The job that reads has a read-only token (`permissions: contents: read`). It sends GET requests to
 GitHub's search and read-only GraphQL queries (no mutation), and GET requests for statuses, check runs and pull
-requests on the REST path. It never clones, downloads or runs a file of a sampled repository. A second job, which
+requests on the REST path. It never clones, downloads or runs a file of a sampled repository.
+
+A second job, which
 asks GitHub's API nothing, adds the week to `agent_weekly.json`, writes the leaderboard and its feeds, and opens the
 pull request. Nothing pushes to the
 default branch.
@@ -286,7 +302,9 @@ matches the agent's app account.
 failed check.
 
 **It does not mean:** that the claim was false, that the tests failed, that the code is wrong, or that one agent
-writes better code than another. A failed check is not proof that the claim was false: it may be a deploy preview or
+writes better code than another.
+
+A failed check is not proof that the claim was false: it may be a deploy preview or
 a label gate (the JSON gives the narrower count, `test_or_build`, beside it), it may be flaky, and it may have been
 failing before the pull request.
 

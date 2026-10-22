@@ -37,62 +37,96 @@ file and keeps no copy. Nobody outside Knos has run the kit: the two implementat
 
 **Receipt** (`receipt.digest`, `receipt.check`, from version 4 `receipt.verdict`: the verdict of a valid receipt and whether it
 authorises payment, and for version 5 `receipt.assurance`: the level, one word). [RECEIPT.md](RECEIPT.md) and the five JSON Schemas beside the vectors
-say what a receipt is. The digest is sha256 of the receipt as JSON with its keys sorted, no white space, in UTF-8 with
+say what a receipt is.
+
+The digest is sha256 of the receipt as JSON with its keys sorted, no white space, in UTF-8 with
 nothing outside ASCII escaped. `receipt.check` answers `true` for a valid receipt and refuses an invalid one; some rules
 are beyond what a schema can say (shares that add up, hashes that must agree), and the invalid vectors cover those.
 
 **Terms** (`terms.hash`, `terms.canonical`). The terms are a JSON object with exactly `accept`, `checks`, `deny`,
-`mode`, `paths`, `reserve` and `v` (which is 1), and optionally `image`, `policy`, `vendor`. Their canonical bytes are
+`mode`, `paths`, `reserve` and `v` (which is 1), and optionally `image`, `policy`, `vendor`.
+
+Their canonical bytes are
 that object as JSON with keys sorted, no white space, and every character outside printable ASCII written as a
-`\uXXXX` escape in lower-case hex (a character outside the basic plane as its two surrogates); at most 600 bytes. In
+`\uXXXX` escape in lower-case hex (a character outside the basic plane as its two surrogates); at most 600 bytes.
+
+In
 canonical form `deny` and `paths` are in ascending order with no glob twice, and `checks` are ordered by name and then
 by app, none twice. The terms hash is sha256 of those bytes, in lower-case hex: it is what the fund and pay audiences
-carry and what the program stores. `terms.hash` takes terms that are already canonical; `terms.canonical` takes any
+carry and what the program stores.
+
+`terms.hash` takes terms that are already canonical; `terms.canonical` takes any
 object, puts it in canonical form or refuses it. Whole numbers are exact: `vendor` may be above 2^53, which a language
 whose only number is a double cannot hold without care.
 
 **Ledger** (`ledger.eval_id`, `ledger.deliverable_id`, `ledger.batch_root`, `ledger.batch_root_any`,
 `ledger.check_proof`, `ledger.chain_hash`). An evaluation's id is sha256(work order, 32 bytes || artifact, its 40
 characters as text || policy, 32 bytes || milestone as u32 little-endian). A deliverable's id is sha256(work order ||
-milestone as u32 little-endian). A batch's root is the Merkle tree of RFC 6962, section 2.1, over the ids in ascending
+milestone as u32 little-endian).
+
+A batch's root is the Merkle tree of RFC 6962, section 2.1, over the ids in ascending
 order, each once: a leaf is sha256(0x00 || id), a node sha256(0x01 || left || right), the split at the largest power of
-two below the number of leaves, and no leaves give sha256 of nothing. A batch's corrections follow the ids as leaves
+two below the number of leaves, and no leaves give sha256 of nothing.
+
+A batch's corrections follow the ids as leaves
 sha256(0x02 || key), in ascending order of key. `ledger.batch_root` takes ids already in order;
 `ledger.batch_root_any` takes them in any order, with repeats and with corrections. `ledger.check_proof` checks an
-inclusion path against a root. A ledger's running hash after a batch is sha256(hash before || root || seq || count ||
+inclusion path against a root.
+
+A ledger's running hash after a batch is sha256(hash before || root || seq || count ||
 accepted || value), the four numbers as u64 little-endian, starting from 32 zero bytes.
 
 **Ledger, format 2** (`ledger2.event_bytes`, `ledger2.leaf`, `ledger2.root`, `ledger2.check_proof`). Format 1's root
 binds the set of evaluation ids, the count, the accepted count and the value; not which evaluation was accepted.
-Format 2's leaf is the hash of the whole event. An event is eighteen texts, in this order: `deliverable_id`,
+Format 2's leaf is the hash of the whole event.
+
+An event is eighteen texts, in this order: `deliverable_id`,
 `evaluation_id`, `invoice_line_id`, `settlement_id`, `verdict`, `amount`, `currency`, `buyer`, `seller`, `order`,
 `milestone`, `policy`, `artifact`, `evidence`, `evaluator`, `run`, `month`, `seq`. A whole number is written in decimal
-with no leading zero, the month as six digits, a field the line does not state as the empty text. Its bytes are
+with no leading zero, the month as six digits, a field the line does not state as the empty text.
+
+Its bytes are
 `knos.event`, a zero byte, the byte 0x02 (the format), the byte 0x12 (the number of fields), then each text as its
-length in bytes (u32 big-endian) and its UTF-8 bytes. An event whose verdict is not one of the four words, whose
+length in bytes (u32 big-endian) and its UTF-8 bytes.
+
+An event whose verdict is not one of the four words, whose
 numbers are written another way, or whose deliverable or evaluation id is not the id of its own order, milestone,
-artifact, policy, evaluator and run is refused. A leaf is sha256(`knos.leaf.2` 0x00 || bytes), a node
+artifact, policy, evaluator and run is refused.
+
+A leaf is sha256(`knos.leaf.2` 0x00 || bytes), a node
 sha256(`knos.node.2` 0x00 || left || right), a correction's leaf sha256(`knos.fix.2` 0x00 || key), and the root
-sha256(`knos.root.2` 0x00 || the number of leaves as u32 big-endian || the top of the tree). The leaves are the events
+sha256(`knos.root.2` 0x00 || the number of leaves as u32 big-endian || the top of the tree).
+
+The leaves are the events
 in ascending order of their evaluation id (`ledger.eval_id`), then the corrections' keys in ascending order; an
-evaluation given twice is refused. The tree splits at the largest power of two below the number of leaves, so a last
-leaf with no sibling is carried up as it is and is never hashed with a copy of itself. The format and the number of
+evaluation given twice is refused.
+
+The tree splits at the largest power of two below the number of leaves, so a last
+leaf with no sibling is carried up as it is and is never hashed with a copy of itself.
+
+The format and the number of
 leaves are inside the root, and every tag differs from format 1's one-byte prefixes, so a root or a proof of one format
 never checks as the other; the vectors include both directions and the pair that swaps which of two equal-priced
-evaluations was accepted. The root goes in the same place of the same audience: the program reads it as 32 bytes.
+evaluations was accepted.
+
+The root goes in the same place of the same audience: the program reads it as 32 bytes.
 
 **Audiences** (`audience.knos2_fund`, `audience.knos2_pay`, `audience.knos2_bind`, `audience.knos3_fund`,
 `audience.knos3_pay`, `audience.knos3_rule`, `audience.knos3_bind`, `audience.knos3_take`, `audience.knos3_cancel`,
 `audience.knos3_revert`, `audience.knos3_auto`, `audience.knosm_eval`, `audience.knosm_batch`,
 `audience.knos_oidc_key`, `audience.gate`, `audience.parse_knosm_batch`). A program acts on a signed token only when
-the token's audience is, character for character, the text the instruction's own facts give. Each vector is those
+the token's audience is, character for character, the text the instruction's own facts give.
+
+Each vector is those
 facts and that text: parts joined by colons, addresses as base58, hashes as lower-case hex, numbers in decimal with no
 leading zero, an absent wallet as a hyphen. `audience.parse_knosm_batch` reads a batch audience back and refuses what
 `knos_meter` refuses (a leading zero, a root in capitals, a number of 2^64, a part too many).
 
 **Statement** (`statement.text`, `statement.hash`). A statement is lines of `name,value`, the first
 `knos meter statement,1`. The hash both parties compare is sha256 of the bytes above the first line that starts
-`sha256,`; the lines below it are one side's own record and are not hashed. `statement.hash` answers the hash it
+`sha256,`; the lines below it are one side's own record and are not hashed.
+
+`statement.hash` answers the hash it
 computes, the hash the statement states, and whether they agree; `statement.text` writes the statement of one month of
 a ledger file.
 
@@ -136,8 +170,10 @@ It is narrow on purpose.
 | JavaScript (`conformance/impl/knos_js.mjs`, the client in `sdk/settle`) | 244 | 126 | 0 |
 
 Of the JavaScript client's 244, 101 are answered by functions `sdk/settle` exports and 143 by a few lines in the adapter
-written from this page and from the description in each vector file, for operations the client has no function for:
-`receipt.digest`, `ledger.deliverable_id`, `statement.hash`, and the nine of the ids format (`ids.deliverable`,
+written from this page and from the description in each vector file.
+
+The adapter covers operations the client has no function for: `receipt.digest`, `ledger.deliverable_id`,
+`statement.hash`, and the nine of the ids format (`ids.deliverable`,
 `ids.evaluation`, `ids.invoice_line`, `ids.settlement`, `ids.kind_of`, `ids.expect`, `ids.order_scope`, `ids.verdict`,
 `ids.billed_once`), and the four of ledger format 2 (`ledger2.event_bytes`, `ledger2.leaf`, `ledger2.root`,
 `ledger2.check_proof`).

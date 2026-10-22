@@ -21,16 +21,19 @@ self-managed GitLab has signed a token for it, and the record it produces does n
 python -m knos.private run --repo PATH_TO_THE_WORK --attestors examples/private/attestors.json
 ```
 
-It runs the whole path on one machine and prints each step as it happens: the attestors both parties approved, a
-vault key for each party, the evaluation, the evidence sealed to both, the record that may leave, a signed token,
-the offline check with the evidence the supplier opened, the retention rule as a dry run, and a dispute opened by
-one party and resolved by both.
+It runs the whole path on one machine and prints each step as it happens. First the attestors both parties
+approved, a vault key for each party, the evaluation, the evidence sealed to both, and the record that may leave.
+
+Then a signed token, the offline check with the evidence the supplier opened, the retention rule as a dry run,
+and a dispute opened by one party and resolved by both.
 
 It writes a folder (`--out`, default `knos-private-run`) and nothing in `--repo`.
 
 **No private customer has run it.** What the command simulates, said on its first line: the issuer is an RSA key
 made on the spot, not a forge; both parties are one process; and without `--verdict FILE` (the judge's own verdict,
-from `knos proof judge --evidence`) no suite is run, so the record names no checks and no assurance. Every other
+from `knos proof judge --evidence`) no suite is run, so the record names no checks and no assurance.
+
+Every other
 step is the function the real path uses (`tests/test_private_path.py`, "one command").
 
 To run the real path, Knos would need a private repository of its own. None exists yet, so this stays at the stage

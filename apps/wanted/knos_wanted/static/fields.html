@@ -83,6 +83,28 @@
   <h1>49 fields, one check each</h1>
   <ul class="fx-key" aria-label="Key"><li><span class="st live" title="Works now: run its demand check">Live</span></li><li><span class="st next" title="Not real at scale yet">Next</span></li><li><span class="st unlock" title="The framework's own pair">Unlock</span></li></ul>
   <table class="fx" id="fx" data-not-prose aria-label="Seven bottlenecks by seven technologies"><thead></thead><tbody></tbody></table>
+  <details class="fx-unlocks"><summary>The framework's 12 unlocks</summary><ol id="fx-unlocks"></ol></details>
+<script type="application/json" id="k-data">null</script>
+<script>
+(() => {
+  const draw = (d) => {
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const at = (b, t) => d.cells.find((c) => c.b === b && c.t === t);
+  const link = (c) => c.feature || `/?q=${encodeURIComponent(c.idea)}#home`;
+  document.querySelector("#fx thead").innerHTML = `<tr><th scope="col"><span class="k-sr">Bottleneck</span></th>${d.technologies.map((t) => `<th scope="col">${esc(t.name)}</th>`).join("")}</tr>`;
+  document.querySelector("#fx tbody").innerHTML = d.bottlenecks.map((b) => `<tr><th scope="row" title="${esc(b.full)}">${esc(b.name)}</th>${d.technologies.map((t) => {
+    const c = at(b.id, t.id);
+    return `<td><a class="fc${c.unlock ? " unlock" : ""}" aria-label="${esc(`${b.name} by ${t.name}: ${c.title}, ${c.status === "live" ? "live" : "next"}${c.unlock ? ", the framework's unlock" : ""}`)}" href="${esc(link(c))}" data-b="${esc(b.id)}" data-t="${esc(t.id)}" data-status="${esc(c.status)}" title="${esc(c.unlock || c.idea)}">
+      <span class="tn">${esc(t.name)}</span>${esc(c.title)}<br><span class="st ${esc(c.status)}" aria-hidden="true"></span></a></td>`;
+  }).join("")}</tr>`).join("");
+  document.getElementById("fx-unlocks").innerHTML = d.cells.filter((c) => c.unlock).map((c) =>
+    `<li><b>${esc(d.bottlenecks.find((b) => b.id === c.b).name)} by ${esc(d.technologies.find((t) => t.id === c.t).name)}</b> (${c.status === "live" ? "live" : "next"}${c.next_part ? `; ${esc(c.next_part)}: next` : ""}${c.live_part ? `; ${esc(c.live_part)}: live` : ""}): ${esc(c.unlock)}</li>`).join("");
+};
+  let pre = null;
+  try { pre = JSON.parse(document.getElementById("k-data")?.textContent || "null"); } catch { pre = null; }
+  if (pre) draw(pre); else fetch("/api/fields").then((r) => r.json()).then(draw);
+})();
+</script>
   <!-- k-vectors -->
 <ul class="k-vectors" data-api="" data-not-prose aria-label="Measured">
   <li data-v="cost"><b>$0</b> per check</li>
@@ -95,23 +117,7 @@
 </ul>
 <script src="/static/brand/vectors.js" defer></script>
 <!-- /k-vectors -->
-  <details class="fx-unlocks"><summary>The framework's 12 unlocks</summary><ol id="fx-unlocks"></ol></details>
 </main>
-<script>
-(async () => {
-  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  const d = await fetch("/api/fields").then((r) => r.json());
-  const at = (b, t) => d.cells.find((c) => c.b === b && c.t === t);
-  const link = (c) => c.feature || `/?q=${encodeURIComponent(c.idea)}#home`;
-  document.querySelector("#fx thead").innerHTML = `<tr><th scope="col"><span class="k-sr">Bottleneck</span></th>${d.technologies.map((t) => `<th scope="col">${esc(t.name)}</th>`).join("")}</tr>`;
-  document.querySelector("#fx tbody").innerHTML = d.bottlenecks.map((b) => `<tr><th scope="row" title="${esc(b.full)}">${esc(b.name)}</th>${d.technologies.map((t) => {
-    const c = at(b.id, t.id);
-    return `<td><a class="fc${c.unlock ? " unlock" : ""}" aria-label="${esc(`${b.name} by ${t.name}: ${c.title}, ${c.status === "live" ? "live" : "next"}${c.unlock ? ", the framework's unlock" : ""}`)}" href="${esc(link(c))}" data-b="${esc(b.id)}" data-t="${esc(t.id)}" data-status="${esc(c.status)}" title="${esc(c.unlock || c.idea)}">
-      <span class="tn">${esc(t.name)}</span>${esc(c.title)}<br><span class="st ${esc(c.status)}" aria-hidden="true"></span></a></td>`;
-  }).join("")}</tr>`).join("");
-  document.getElementById("fx-unlocks").innerHTML = d.cells.filter((c) => c.unlock).map((c) =>
-    `<li><b>${esc(d.bottlenecks.find((b) => b.id === c.b).name)} by ${esc(d.technologies.find((t) => t.id === c.t).name)}</b> (${c.status === "live" ? "live" : "next"}${c.next_part ? `; ${esc(c.next_part)}: next` : ""}${c.live_part ? `; ${esc(c.live_part)}: live` : ""}): ${esc(c.unlock)}</li>`).join("");
-})();
-</script>
+
 </body>
 </html>

@@ -6,19 +6,27 @@ What each alternative does, read from its own code, pages and chain on 2 Oct 202
 Knos is on Solana devnet and its money is test USDC; several of the others move real money today. Where another product is ahead, this page says so.
 
 **Knos carries research across the valley of death: each step is paid only on verified proof.** This page compares one use of it, paying AI agents for verified pull requests. Three comparisons follow. The first is with whoever keeps the count today. The second is with
-the platforms and billing companies that already meter agents and move payments. The third, which most of this
+the platforms and billing companies that already meter agents and move payments.
+
+The third, which most of this
 page is about, is with the other ways to pay for a merged pull request. No count of capabilities is given here:
 [CAPABILITIES.md](CAPABILITIES.md) has each one and its stage.
 
 ## On fee and on speed, Knos is not the best
 
 **Knos is not the cheapest way to settle.** [MergePay](https://mergepay.fun) publishes "No platform fee": the
-funder sets a relayer fee, 0.03 USD by default (its site, read 6 Oct 2026). Knos's fee from knos_pay 2.2 is 0.30%
+funder sets a relayer fee, 0.03 USD by default (its site, read 6 Oct 2026).
+
+Knos's fee from knos_pay 2.2 is 0.30%
 of the amount with a minimum of 0.05, so a 100 USDC order pays 0.30 and a 5 USDC order pays 0.05 where MergePay's
 funder pays 0.03: MergePay is cheaper at every size, ten times cheaper at 100, and its fee does not grow with the
-order (5,000 pays 15.00 on Knos). Against a board that takes a percentage Knos is lower at every size it takes
+order (5,000 pays 15.00 on Knos).
+
+Against a board that takes a percentage Knos is lower at every size it takes
 ([Algora](https://algora.io/pricing) publishes a "9% service fee", read 6 Oct 2026): the minimum makes a 5 USDC
-order pay 1.00%, and from 16.67 up the fee is 0.30%. knos_pay 2.2 runs at the public program ids today. Orders
+order pay 1.00%, and from 16.67 up the fee is 0.30%. knos_pay 2.2 runs at the public program ids today.
+
+Orders
 funded before the upgrade keep the rate fixed at their funding: an order funded under 2.1 keeps the fee stored then
 (2.1 charged 2.5% of the first 1,000, 1% to 50,000 and 0.5% above, at least 0.40). `knos status` says which build runs.
 

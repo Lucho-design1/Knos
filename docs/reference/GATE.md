@@ -44,8 +44,8 @@ Adopters today: 0 ([COMPOSE.md](COMPOSE.md), "Who uses the upgrade gate"). Knos'
 ## Three commands
 
 Before them, once: a Squads v4 multisig whose time lock is your delay. The time lock is a number of seconds on the multisig account (`timeLock` of
-`multisigCreateV2` in the Squads SDK; `SetTimeLock` in a config transaction: [Squads documentation](https://docs.squads.so/main/development/cli/commands)). Knos
-uses 691,200 s, 8 days (since 11 Oct 2026; 172,800 s, 48 hours, before).
+`multisigCreateV2` in the Squads SDK; `SetTimeLock` in a config transaction: [Squads documentation](https://docs.squads.so/main/development/cli/commands)).
+Knos uses 691,200 s, 8 days (since 11 Oct 2026; 172,800 s, 48 hours, before).
 
 You also need the Knos repository checked out and installed (`pip install .`), and the Solana command line.
 
@@ -56,8 +56,8 @@ python examples/upgrade_gate/adopt.py init --repo-id 123456789 --workflow OWNER/
 ```
 
 `--repo-id` is `gh api repos/OWNER/REPO --jq .id`; `--gate-id` is `solana address -k gate.json` of a key you made. Then
-build and deploy it with your own key, as any program: `cd my_gate && cargo build-sbf && solana program deploy -u devnet
---program-id gate.json target/deploy/upgrade_gate.so`.
+build and deploy it with your own key, as any program:
+`cd my_gate && cargo build-sbf && solana program deploy -u devnet --program-id gate.json target/deploy/upgrade_gate.so`.
 
 Open the link it printed and propose the file as a pull request (or copy `my_gate/.github/workflows/knos-gate.yml` by
 hand; set `PROGRAM` and `MANIFEST` in it to your program). After each build on `main` or a tag it asks GitHub to sign

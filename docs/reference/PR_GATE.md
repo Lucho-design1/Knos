@@ -17,9 +17,10 @@ This page is not [GATE.md](GATE.md), which is the upgrade gate for a Solana prog
 
 Maintainers are closing their doors because checking work now costs more than producing it (sources as of 13 Oct 2026):
 curl ended its bug bounty on 31 Jan 2026 after valid reports fell below 5%; Google stopped OSS VRP submissions on 1 Oct
-2026 ("vast majority not valid"); Sovereign Tech paused its bounty (790+ reports, about 80 accepted); tldraw
-auto-closes external pull requests; Ghostty bans drive-by AI pull requests and uses Vouch; GitHub shipped settings to
-disable or cap outside pull requests (13 Feb and 17 Jun 2026).
+2026 ("vast majority not valid"); Sovereign Tech paused its bounty (790+ reports, about 80 accepted).
+
+Others: tldraw auto-closes external pull requests; Ghostty bans drive-by AI pull requests and
+uses Vouch; GitHub shipped settings to disable or cap outside pull requests (13 Feb and 17 Jun 2026).
 
 Every filter shipped so far judges WHO sent the work (Vouch, collaborator-only, pull request caps). None checks whether
 the work is CORRECT against tests the sender could not see. Gate does that, and works beside those filters: a passing

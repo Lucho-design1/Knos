@@ -20,7 +20,9 @@ All four read the escrow's own log lines on Solana ([`src/knos/audit.py`](../../
 **With no command line.** The approver's screen of the site ([CONSOLE.md](CONSOLE.md#the-approvers-screen),
 [`web/approver.js`](../../web/approver.js)) opens the same statement and status files in a browser: one row per invoice
 line from supplier to payment status, one queue of exceptions, the approval `knos statement approve` records, and
-these exports as downloads. It adds one check the statement does not make, as advice only: a line that takes the
+these exports as downloads.
+
+It adds one check the statement does not make, as advice only: a line that takes the
 agreed sum past the purchase order limit the invoice file states is held out of the approval.
 
 ## 1. The four linked records
@@ -104,9 +106,11 @@ One line is one accepted deliverable for one supplier. Nothing accepted, no line
 and options give the same bytes.
 
 Every line carries a bill number (`KNOS-` and 11 hex digits of a hash of the deliverable and the supplier: 16
-characters), the UTC day of acceptance, the supplier as `gh:<GitHub id>`, the amount with two to six decimal
-places (never rounded), and a memo with the settlement status, the statement's head and the receipt link (the
-paying transaction, from which `knos receipt` rebuilds the acceptance receipt).
+characters), the UTC day of acceptance, and the supplier as `gh:<GitHub id>`.
+
+It also carries the amount with two to six decimal places (never rounded), and a memo with the settlement
+status, the statement's head and the receipt link (the paying transaction, from which `knos receipt` rebuilds
+the acceptance receipt).
 
 | format | what the product documents | what could not be confirmed there |
 |---|---|---|
@@ -145,18 +149,21 @@ own export of the same period.
 `knos statement` ([`src/knos/statement.py`](../../src/knos/statement.py)) is the statement an approver attaches to a
 supplier's invoice. It needs no chain and no wallet.
 
-knos shadow invoice.csv --out sept/                        # the invoice against GitHub's record; keeps evidence.json
-knos statement make sept/evidence.json --invoice INV-2026-09 --currency USD --prior aug/ap-statement.json knos statement
-approve sept/ap-statement.json --agreed --by "Dana Reyes" --role "finance controller" knos statement pay
-sept/ap-statement.json --line inv_... --method bank --ref "BACS 77120" --on 2026-10-02 knos statement show
-sept/ap-statement.json knos statement export sept/ap-statement.json --format quickbooks knos statement verify
-sept/ap-statement.json
+    knos shadow invoice.csv --out sept/                        # the invoice against GitHub's record; keeps evidence.json
+    knos statement make sept/evidence.json --invoice INV-2026-09 --currency USD --prior aug/ap-statement.json
+    knos statement approve sept/ap-statement.json --agreed --by "Dana Reyes" --role "finance controller"
+    knos statement pay sept/ap-statement.json --line inv_... --method bank --ref "BACS 77120" --on 2026-10-02
+    knos statement show sept/ap-statement.json
+    knos statement export sept/ap-statement.json --format quickbooks
+    knos statement verify sept/ap-statement.json
 
 `make` also takes a closed month of the meter (the archive of `knos meter export --bundle`, section 5): one line per
 deliverable the supplier's ledger accepted that month.
 
 **Three forms, one content.** `ap-statement.json` is the statement. `ap-statement.csv` and `ap-statement.pdf` are
-written from the same cells, in the same words, and both carry the JSON's SHA-256. The PDF is written by
+written from the same cells, in the same words, and both carry the JSON's SHA-256.
+
+The PDF is written by
 [`src/knos/pdf.py`](../../src/knos/pdf.py) with no dependency: built-in Helvetica, ruled tables, as many pages as needed,
 the statement's own day as its creation date, so the same statement gives the same bytes. A character outside
 Windows-1252 prints as `?` in the PDF; the JSON and the CSV carry it.
@@ -173,12 +180,16 @@ the invoice line, and a settlement once one is recorded), its amount, where its 
 
 **Already billed.** `--prior` takes earlier statements. A deliverable one of them agreed is a duplicate here, and the
 new statement keeps that statement's hash and the line that billed it. A line that was disputed earlier and is
-billed again is not a duplicate. In a shadow run the deliverable is the issue a pull request closes, or the pull
+billed again is not a duplicate.
+
+In a shadow run the deliverable is the issue a pull request closes, or the pull
 request when it closes none, so a second pull request for the same issue is caught and a second invoice for
 unrelated work in the same repository is not.
 
 **Approval.** `approve --agreed` records who authorised payment of the lines whose policy is met (policy satisfied is the first of four steps; parties accepted, payment authorised and settled are recorded apart), in which role and on which day. The other
-lines stay open: no command here approves an exception. The role is written as stated; Knos has no accounts to check
+lines stay open: no command here approves an exception.
+
+The role is written as stated; Knos has no accounts to check
 it against (`knos budget who` shows who may spend a Balance on chain, which is a different authority).
 
 **Payment status when paid outside Knos.** `pay` appends a settlement record with its own id, the method, the
@@ -192,10 +203,14 @@ CSV and the PDF are written again and carry both hashes.
 what is disputed, credited, paid and owed. A shadow run reads no order, so "authorised" says it is not known there.
 
 **Made again years later.** The statement holds its own SHA-256, the SHA-256 of every piece of evidence, and the
-evidence itself (or, with `--reference`, the hash of a file kept beside it). `verify` makes the statement again from
+evidence itself (or, with `--reference`, the hash of a file kept beside it).
+
+`verify` makes the statement again from
 that evidence and prints `same`, or the first line that differs, for example
 `differs: line 2: state is 'agreed' in the statement and 'disputed' from the evidence`. It asks no network and no
-chain. For a closed month it checks GitHub's signatures on the close record with the keys in the archive. For a
+chain. For a closed month it checks GitHub's signatures on the close record with the keys in the archive.
+
+For a
 shadow run there is no signature to check: GitHub does not sign its API's answers, so the evidence is what was read
 on the day, and the statement says "not signed".
 
@@ -221,16 +236,21 @@ file.
 
 **Assurance level on every line.** Each line says how much was verified, computed and never typed
 ([RECEIPT.md](RECEIPT.md), Version 5): the level of the receipt a recorded note was made from; without one,
-`reported` for a line an evaluation stands behind, and `not evaluated` for a line with none. The statement's own
+`reported` for a line an evaluation stands behind, and `not evaluated` for a line with none.
+
+The statement's own
 JSON does not change, so a statement made before this still verifies.
 
 **Exports.** `export --format quickbooks|netsuite` writes one bill per agreed line, in the columns of the table
 above, with the line's state, its payment status and its ids in the memo. A disputed or duplicate line, or one
 without enough evidence, is never a bill. `--format generic` lists every line with its state.
+
 Every export carries the three things a three-way match keys on. The generic file and the statement's CSV have a
 column for each: `po_reference` (empty until a note is recorded), `grn_reference` and `assurance`. QuickBooks' and
 NetSuite's import templates have no such columns, so there the same three are in the memo
-(`PO ... | GRN ... | assurance ...`). Each remains a file export, not an integration.
+(`PO ... | GRN ... | assurance ...`).
+
+Each remains a file export, not an integration.
 
 **For your accounting system.** `export --to xero|quickbooks|netsuite|csv` writes the bill-import file that system
 documents ([`src/knos/erp.py`](../../src/knos/erp.py)), and a held sheet beside it:

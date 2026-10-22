@@ -78,10 +78,11 @@ no policy of an organisation can bind it. The boundary covers money the organisa
 ## What the tests show
 
 `tests/test_boundary.py` runs the deployed Squads v4 build in the simulator beside the test build of knos_pay
-(`python scripts/squads_program.py fetch` first; skipped without it): a requester's vote refused, one vote of two
-executes nothing, the time lock holds, a vault cannot fund past what it holds, an allowance refused over its
-amount, to another destination or by another key, a member cannot change the threshold, and a Balance the vault
-opened changes only by its vote.
+(`python scripts/squads_program.py fetch` first; skipped without it).
+
+What it checks: a requester's vote refused, one vote of two executes nothing, the time lock holds, a vault cannot
+fund past what it holds, an allowance refused over its amount, to another destination or by another key, a member
+cannot change the threshold, and a Balance the vault opened changes only by its vote.
 
 `tests/test_squads_fund.py` sends the instruction `scripts/squads_fund.mjs` prints through the same Squads build.
 No round on the public cluster has run a vault planned by `knos boundary`.

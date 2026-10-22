@@ -37,6 +37,7 @@ PAGES = {
                  "fields.html", "money.html", "companies.html")},
 }
 MARK = re.compile(r"<!-- k-bar -->.*?<!-- /k-bar -->", re.S)
+PROOF_SLOT = '<script type="application/json" id="k-proof">null</script>'
 HERO = re.compile(r"<!-- k-hero -->.*?<!-- /k-hero -->", re.S)
 VECTORS = re.compile(r"<!-- k-vectors -->.*?<!-- /k-vectors -->", re.S)
 # the two front doors' first screens: (the app's address for the API, the app's address for its pages, hero.js)
@@ -69,7 +70,11 @@ def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) 
         api, app_pages, js = HEROES[path]
         t = (WEB / "brand" / "hero.html").read_text(encoding="utf-8").strip().replace("{API}", api).replace("{APP}", app_pages)
         t = t.replace("<!-- k-vectors -->", vectors(api, js.replace("hero.js", "vectors.js")))
-        s = HERO.sub(lambda _: f'<!-- k-hero -->\n{t}\n<script src="{js}" defer></script>\n<!-- /k-hero -->', s, count=1)
+        # hero.js runs in place, right after the proof slot: the past result is drawn before anything below it is laid
+        # out (run deferred, the card arrived after the first paint and moved the page under the reader: CLS)
+        code = (WEB / "brand" / "hero.js").read_text(encoding="utf-8").strip()
+        t = t.replace(PROOF_SLOT, f'{PROOF_SLOT}\n<script data-src="{js}">\n{code}\n</script>', 1)
+        s = HERO.sub(lambda _: f'<!-- k-hero -->\n{t}\n<!-- /k-hero -->', s, count=1)
     # a page that runs web/brand/bar.js lays the bar out for scripts (and in the reader's theme) before its first paint:
     # set after it, the bar moves under the reader (a layout shift Lighthouse counts)
     EARLY = ('<script>document.documentElement.classList.add("js");'

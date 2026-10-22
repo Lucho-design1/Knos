@@ -8,8 +8,9 @@ The host can be Claude Code, Codex, or any client that speaks the Model Context 
 machine.
 
 `knos init --host <name>` writes it into one project for Cursor, Gemini CLI, GitHub Copilot and VS Code, opencode and Roo Code, and with `--global` for Hermes Agent and
-Cline, in every case with only the tools that read allowed to run unasked: the three that post (`knos_take_work`, `knos_submit_work`, `knos_collect`) stay behind the host's
-own question, and behind the switches below.
+Cline. In every case only the tools that read are allowed to run unasked.
+
+The three that post (`knos_take_work`, `knos_submit_work`, `knos_collect`) stay behind the host's own question, and behind the switches below.
 
 Which hosts can also run Knos's check before the agent stops, and hold back a "done" the checks contradict, is in
 [integrations/hosts/README.md](../../integrations/hosts/README.md). Any other client starts `knos mcp` (or `uvx knos mcp`).

@@ -64,6 +64,12 @@ ROUTES = [
     ("POST", "/api/project/claim", True, "A maker attempts a milestone and binds its payee wallet (passkey=true: paid to your passkey wallet)", {"project": "string", "milestone": "string", "wallet": "string", "passkey": "boolean"}),
     ("POST", "/api/project/post", True, "Post a result (the maker) or an independent check (someone else, another site)",
      {"project": "string", "milestone": "string", "attempt": "string", "url": "string", "role": "string"}),
+    ("POST", "/api/project/operator", False, "The operator (X-Knos-Admin): open a project bound to a GitHub repository from a Ready brief, "
+     "fund a milestone from the app's devnet test wallet, or claim it for CI",
+     {"action": "string", "brief": "object", "title": "string", "repo": "string", "project": "string", "milestone": "string",
+      "units": "integer", "wallet": "string"}),
+    ("POST", "/api/project/ci", False, "Release a milestone whose check passed in CI: GitHub's record of the commit decides it",
+     {"project": "string", "milestone": "string", "sha": "string"}),
     ("POST", "/api/project/sweep", True, "Run the deadline sweeper now (it also runs every minute)", {}),
     ("POST", "/api/referral", True, "A referral link; the referrer's share is a knos_pay payee on release (passkey=true: paid to your passkey wallet)", {"target": "string", "wallet": "string", "passkey": "boolean"}),
     ("GET", "/r/{code}", False, "Follow a referral link", {}),
@@ -214,6 +220,10 @@ def handle_post(h, state, path: str) -> bool:
             if not admin and not user:
                 return h._send(401, {"error": "sign in as the project's buyer, or send the operator's X-Knos-Admin key"}) or True
             return h._send(200, valley.unlist(str(b.get("project", "")), user, admin, str(b.get("why") or ""))) or True
+        if path == "/api/project/operator":
+            if not _admin(h.headers.get("X-Knos-Admin")):
+                return h._send(403, {"error": "the operator's X-Knos-Admin key opens, funds and claims these projects"}) or True
+            return h._send(200, _operator(b)) or True
         if path == "/api/project" and isinstance(b.get("report"), str):
             # the project's Grounding (Qloo) line reads its report from disk (valley.grounding); a crossing recalled from
             # memory was kept only in this server's memory, so it is written there now
@@ -265,6 +275,17 @@ def _passkey(path: str, b: dict, user: dict, h) -> dict:
 
 
 PASSKEY_PATHS = ("/api/project/fund", "/api/project/amc", "/api/project/claim", "/api/referral", "/api/company/multisig")
+
+
+def _operator(b: dict) -> dict:
+    act, pid, key = str(b.get("action", "")), str(b.get("project", "")), str(b.get("milestone", ""))
+    if act == "open":
+        return valley.operator_open(b.get("brief") if isinstance(b.get("brief"), dict) else {}, str(b.get("title", "")), str(b.get("repo", "")))
+    if act == "fund":
+        return valley.operator_fund(pid, key, b.get("units", 5))
+    if act == "claim":
+        return valley.operator_claim(pid, key, str(b.get("wallet", "")))
+    raise ValueError("action: open, fund or claim")
 
 
 def _post(path: str, b: dict, user: dict, h) -> dict:
@@ -326,6 +347,8 @@ def _post(path: str, b: dict, user: dict, h) -> dict:
     if path == "/api/project/post":
         return valley.post(str(b.get("project", "")), str(b.get("milestone", "")), str(b.get("attempt", "")), user,
                            str(b.get("url", "")), str(b.get("role", "")))
+    if path == "/api/project/ci":
+        return valley.ci_release(str(b.get("project", "")), str(b.get("milestone", "")), str(b.get("sha", "")), base=h._base())
     if path == "/api/project/sweep":
         return valley.sweep()
     if path == "/api/referral":

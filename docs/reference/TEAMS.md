@@ -4,7 +4,9 @@
 
 **In plain words.** A team that runs coding agents posts work, its agents do it, and Knos's referee decides on sealed
 tests whether the work counts. The team pays for each pull request the referee verified; an agent can pay for a single
-check itself; a bounty is held in escrow and paid on the verdict. Everything is counted per team and per agent, and the
+check itself; a bounty is held in escrow and paid on the verdict.
+
+Everything is counted per team and per agent, and the
 invoice bills only what the chain confirms. Devnet only today: every payment is test money, and Knos's revenue is 0.
 
 Code: `src/knos/money/teams.py` (metering, invoices, dashboard), `src/knos/money/business.py` (prices, model, the 1B

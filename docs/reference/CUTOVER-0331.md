@@ -9,7 +9,9 @@ What the 0.3.34 branch (ONE-KNOS, 15 Oct 2026) did and what still waits is said 
 link to is deleted before 6 Dec 2026.
 
 
-**One branch (16 Oct 2026).** drexthealpha/Knos has one branch, `main`. The branches `workflows`, `oidc-rotate` and `labs` of 15 Oct were replaced by tags that keep the same commits: `workflows-<sha12>` (every published set), `oidc-rotate-<sha12>` and `archive/labs`; every other old branch whose commits were not in `main` is kept as `archive/<name>`. The steps below that name `refs/heads/...` are the record of 15 Oct.
+**One branch (16 Oct 2026).** drexthealpha/Knos has one branch, `main`. The branches `workflows`, `oidc-rotate` and `labs` of 15 Oct were replaced by tags that keep the same commits: `workflows-<sha12>` (every published set), `oidc-rotate-<sha12>` and `archive/labs`; every other old branch whose commits were not in `main` is kept as `archive/<name>`.
+
+The steps below that name `refs/heads/...` are the record of 15 Oct.
 ## What still points at the old repositories
 
 Read from devnet on 14 Oct 2026 (`getProgramAccounts` on the public knos_pay and knos_meter, every account of a job's,
@@ -209,17 +211,20 @@ Waits: the commit that removes `.github/workflows` and the push of `labs` (the r
 
 Done on the 0.3.34 branch (15 Oct 2026; the founder decided yes on 14 Oct): every constant and page above names
 drexthealpha/Knos, and so do `scripts/pages_data.py`, `scripts/exercise_public.py`, `scripts/task_board.py`,
-`examples/witnessed/witness.py`, the console's sample and the docs; `python scripts/small_repos.py fold` writes the
-playground's files into Knos (the issue template `fund-a-test-task.md`, `words.py`, `check.py`, `tasks/<task>.py` and
-their public examples, the starter checks under `.knos/acceptance/1..200/`); the faucet is the `faucet` job of Knos's
-own `worker.yml`.
+`examples/witnessed/witness.py`, the console's sample and the docs.
+
+`python scripts/small_repos.py fold` writes the playground's files into Knos (the issue template
+`fund-a-test-task.md`, `words.py`, `check.py`, `tasks/<task>.py` and their public examples, the starter checks under
+`.knos/acceptance/1..200/`). The faucet is the `faucet` job of Knos's own `worker.yml`.
 
 `FAUCET_ISSUE` and `FAUCET_WHERE` list the faucet issue by its label, so no number is written.
 
 Waits: the founder opens one issue in drexthealpha/Knos titled "Faucet: test USDC for your first task", labels it
 `faucet` and pins it, and adds the secrets `KNOS_FAUCET_KEY` and `KNOS_RELAY_KEY` to Knos ([FAUCET.md](FAUCET.md)),
-when the branch reaches `main` (after 5 Dec 2026). knos-playground's 35 open orders free themselves by 2026-11-13
-15:48 UTC; it can be deleted from 6 Dec 2026. - knos-rc is the staging copy of Knos itself.
+when the branch reaches `main` (after 5 Dec 2026).
+
+knos-playground's 35 open orders free themselves by 2026-11-13 15:48 UTC; it can be deleted from 6 Dec 2026. - knos-rc
+is the staging copy of Knos itself.
 
 Since 0.3.34 `.github/workflows/hermetic.yml` runs in Knos too, and docs/kani.json, docs/capabilities.json,
 docs/facts.json, the fuzz count in docs/bench.json, OUTCOMES.md, RELAY.md and VERIFIER.md cite runs of Knos

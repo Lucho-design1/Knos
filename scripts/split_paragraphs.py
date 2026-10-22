@@ -2,23 +2,29 @@
 paragraphs of 60 words at most. No word changes: lists, tables, headings, code, HTML and quotes are left as they are.
 
     python scripts/split_paragraphs.py [--check] [files...]     (default: README.md, docs/*.md, docs/reference/*.md)
+    python scripts/split_paragraphs.py --check --strict           every prose paragraph of every one of them, the
+                                                                  generated documents too, is 60 words at most
 """
 from __future__ import annotations
 
 import re
 import sys
-import textwrap
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX = 60
-SKIP = ("|", "#", "<", "-", "*", ">", "![", "    ", "\t", "[[")
+SKIP = ("|", "#", "<", "- ", "* ", "+ ", ">", "![", "    ", "\t", "[[")      # a bold lead-in (**Word.**) is prose
 # documents whose figures must stay in the paragraph that carries their sample, ids and date (scripts/rate_claims.py)
 KEEP_WHOLE = ("docs/reference/LOAD.md", "docs/reference/BENCH.md",
               # written whole by their generators (each has its own --check): changed there, never here
               "docs/reference/MANIFEST.md", "docs/reference/SOLANA-COVERAGE.md", "docs/reference/SIBYL-COVERAGE.md",
               "docs/reference/QLOO-COVERAGE.md")
 SENT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\[(`\"'0-9])")
+
+
+def _skip(body: str) -> bool:
+    """Not prose: a list, table, heading, quote, HTML, or an indented code block (its own indent, before any strip)."""
+    return body.startswith(("    ", "\t")) or body.lstrip().startswith(SKIP)
 
 
 def words(text: str) -> int:
@@ -28,17 +34,17 @@ def words(text: str) -> int:
 def split(para: str) -> list[str]:
     if words(para) <= MAX:
         return [para]
-    flat = " ".join(line.strip() for line in para.splitlines())
-    sentences, out, cur = SENT.split(flat), [], []
-    for s in sentences:
-        if cur and words(" ".join(cur + [s])) > MAX:
-            out.append(" ".join(cur))
-            cur = []
-        cur.append(s)
-    if cur:
-        out.append(" ".join(cur))
-    wrap = max(len(line) for line in para.splitlines())
-    return ["\n".join(textwrap.wrap(c, width=max(80, wrap), break_long_words=False, break_on_hyphens=False)) for c in out]
+    # cut only where a sentence ends: every other line break stays where it was (a phrase a test or a reader looks for
+    # keeps its lines), and the cut's own whitespace becomes the blank line
+    cuts = [m.span() for m in SENT.finditer(para)]
+    out, start, last = [], 0, None
+    for a, b in cuts + [(len(para), len(para))]:
+        if last is not None and words(para[start:a]) > MAX:
+            out.append(para[start:last[0]].strip())
+            start = last[1]
+        last = (a, b)
+    out.append(para[start:].strip())
+    return [c for c in out if c]
 
 
 def fix(text: str) -> str:
@@ -48,7 +54,7 @@ def fix(text: str) -> str:
         for j in range(0, len(paras), 2):
             p = paras[j]
             body = p.strip("\n")
-            if not body.strip() or body.lstrip().startswith(SKIP) or re.match(r"\s*\d+\.\s", body):
+            if not body.strip() or _skip(body) or re.match(r"\s*\d+\.\s", body):
                 continue
             new = "\n\n".join(split(body))
             if new != body:
@@ -57,8 +63,30 @@ def fix(text: str) -> str:
     return "".join(parts)
 
 
+def long_paragraphs(text: str) -> list[tuple[int, int]]:
+    """(line, words) of each prose paragraph over MAX words: what no sentence split can fix is rewritten by hand."""
+    out, line = [], 1
+    for i, part in enumerate(re.split(r"(```.*?```)", text, flags=re.S)):
+        if i % 2:
+            line += part.count("\n")
+            continue
+        for chunk in re.split(r"(\n\s*\n)", part):
+            body = chunk.strip("\n")
+            if body.strip() and not _skip(body) and not re.match(r"\s*\d+\.\s", body) and words(body) > MAX:
+                out.append((line + len(chunk) - len(chunk.lstrip("\n")), words(body)))
+            line += chunk.count("\n")
+    return out
+
+
 def main(argv: list[str]) -> int:
     check = "--check" in argv
+    if "--strict" in argv:
+        files = [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md")), *sorted((ROOT / "docs" / "reference").glob("*.md"))]
+        bad = [(f.relative_to(ROOT).as_posix(), n, w) for f in files for n, w in long_paragraphs(f.read_text(encoding="utf-8"))]
+        for f, n, w in bad:
+            print(f"{f}:{n}: {w} words")
+        print(f"paragraphs over {MAX} words: {len(bad)} in {len({b[0] for b in bad})} files of {len(files)}")
+        return 1 if bad else 0
     files = [Path(a) for a in argv if not a.startswith("--")] or [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md")),
                                                                      *sorted((ROOT / "docs" / "reference").glob("*.md"))]
     off = []

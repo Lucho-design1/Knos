@@ -1415,3 +1415,133 @@ def collect_amc(pid: str, key: str, maker_wallet: str, led=None) -> list[dict]:
         _save("amc", a["id"], a)
         out.append({"amc": a["id"], "status": a["status"], "signature": a["signatures"].get("collect")})
     return out
+
+
+# Knos builds Knos: a project bound to a GitHub repository, whose machine-verified milestones release when their check
+# passes in CI. The operator opens it, funds each milestone with the app's devnet test wallet (test units it mints itself)
+# and claims each for the maker's wallet; anyone may then ask for a release at a commit, and only GitHub's own record
+# of that commit decides it.
+OPERATOR = {"sub": "knos-operator", "label": "Knos (operator)"}
+CI_MAKER = {"sub": "knos-ci-maker", "label": "Knos builds Knos"}
+CI_APP = "github-actions"
+_REPO = re.compile(r"[A-Za-z0-9_.-]{1,39}/[A-Za-z0-9_.-]{1,100}")
+
+
+def operator_open(brief: dict, title: str, repo: str) -> dict:
+    """A project from a Ready brief, bound to `repo` (owner/name on GitHub)."""
+    if not isinstance(repo, str) or not _REPO.fullmatch(repo):
+        raise Refused("repo: owner/name on GitHub")
+    if not _ready().check(brief)["ready"]:
+        raise Refused("the brief is not Ready: POST /api/ready says what is missing")
+    out = create_project(OPERATOR, "custom", title, brief=brief)
+    with _lock:
+        p = project(out["id"])
+        p["repo"] = repo
+        p["release_rule"] = f"each milestone releases when its check passes on {repo}'s default branch (GitHub Actions)"
+        _save("projects", p["id"], p)
+    return public_project(project(out["id"]))
+
+
+def operator_fund(pid: str, key: str, units: int = 5, led=None, wait_s: float = 60) -> dict:
+    """Fund one milestone from the app's devnet test wallet: it is the funder and the test mint's authority, so the
+    server signs the whole funding, sends it and confirms the lock (refunded to that wallet after the deadline)."""
+    from knos import chain
+    led = _ledger(led)
+    got = fund_tx(pid, key, units, str(escrow.demo_key().pubkey()), led=led)
+    sig = chain.call(led.url, "sendTransaction", [got["transaction"], {"encoding": "base64", "preflightCommitment": "confirmed"}])
+    end = time.monotonic() + wait_s
+    while True:
+        try:
+            return {**confirm(got["order"], sig, led=led), "signature": sig}
+        except Refused:
+            if time.monotonic() >= end:
+                raise
+            time.sleep(2)
+
+
+def operator_claim(pid: str, key: str, wallet: str) -> dict:
+    """The CI attempt on one milestone, paid at `wallet` when its check passes."""
+    a = claim(pid, key, CI_MAKER, wallet)
+    with _lock:
+        p = project(pid)
+        _milestone(p, key)["ci_attempt"] = a["id"]
+        _save("projects", pid, p)
+    return a
+
+
+def _on_branch(repo: str, sha: str, get) -> str | None:
+    """The default branch when `sha` is on it (GitHub's compare of the commit with the branch), else None."""
+    branch = (get(f"repos/{repo}") or {}).get("default_branch") or "main"
+    cmp = get(f"repos/{repo}/compare/{sha}...{branch}") or {}
+    return branch if cmp.get("status") in ("ahead", "identical") else None
+
+
+def ci_release(pid: str, key: str, sha: str, get=None, led=None, base: str | None = None) -> dict:
+    """Release a milestone whose machine check passed in CI: `sha` is on the bound repository's default branch and a
+    GitHub Actions check run there, named exactly the milestone's verifier check, completed with success. The check run
+    is the result; this server's re-reading of GitHub's record, published with the order's claim ids, is the check the
+    referee hosts fetch before they sign."""
+    from urllib.parse import urlparse
+
+    from knos import judge, terms
+
+    from . import preorder, tasks
+    get = get or judge.github
+    p = project(pid)
+    m = _milestone(p, key)
+    repo, v = p.get("repo"), m.get("verifier") or {}
+    if not repo:
+        raise Refused("this project is not bound to a GitHub repository")
+    if v.get("kind") != "machine" or not v.get("check"):
+        raise Refused("this milestone is not verified by a machine check")
+    if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise Refused("sha: the commit's full 40-character id")
+    a = next((x for x in m["attempts"] if x["id"] == m.get("ci_attempt")), None)
+    if a is None:
+        raise Refused("no CI attempt is claimed on this milestone")
+    if m["status"] == "released":
+        return {"milestone": key, "status": "released", "ci": a.get("ci")}
+    if a["status"] == "checked":                       # verified before and the release did not finish: send it again
+        return release(pid, key, a["id"], led=led, base=base)
+    if a["status"] != "working":
+        raise Refused(f"the CI attempt is {a['status']}")
+    try:
+        branch = _on_branch(repo, sha, get)
+        runs = terms.pages(f"repos/{repo}/commits/{sha}/check-runs", get, "check_runs")
+    except OSError as why:
+        raise escrow.EscrowUnavailable(f"GitHub could not be read now: {str(why)[:120]}") from None
+    if runs is None:
+        raise escrow.EscrowUnavailable("GitHub could not be read now: try again in a minute")
+    if branch is None:
+        raise preorder.NotVerified(f"{sha[:12]} is not on {repo}'s default branch")
+    run = next((r for r in runs if r.get("name") == v["check"] and (r.get("app") or {}).get("slug") == CI_APP
+                and r.get("status") == "completed" and r.get("conclusion") == "success"), None)
+    if run is None:
+        seen = [f"{r.get('conclusion') or r.get('status')}" for r in runs if r.get("name") == v["check"]]
+        raise preorder.NotVerified(f"no successful {v['check']} check run at {sha[:12]} in {repo}" + (f" (seen: {', '.join(seen)})" if seen else ""))
+    ids = _claim_ids(p, m)
+    if not ids:
+        raise Refused("this milestone has no locked funding yet: nothing to release")
+    ci = {"repo": repo, "branch": branch, "sha": sha, "check": v["check"], "check_run": run.get("html_url"), "run_id": run.get("id"),
+          "conclusion": run["conclusion"], "completed_at": run.get("completed_at")}
+    eid = _evidence_id(pid, key, a["id"])
+    page = {"kind": "knos-ci-verified-milestone", "project": pid, "milestone": key, "target": m.get("target"), "claims": ids, **ci}
+    f = _dir("evidence") / f"{eid}.public.json"
+    f.write_text(json.dumps(page, sort_keys=True, indent=1), encoding="utf-8")
+    body, url = f.read_bytes(), f"{tasks.public_base(base)}/api/project/evidence?id={eid}"
+    raw = json.dumps(run, sort_keys=True).encode()
+    with _lock:
+        p = project(pid)
+        m = _milestone(p, key)
+        a = next(x for x in m["attempts"] if x["id"] == a["id"])
+        if a["status"] != "working":
+            raise Refused(f"the CI attempt is {a['status']}")
+        a["result"] = {"url": ci["check_run"], "host": "github.com", "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
+                       "by": "GitHub Actions", "at": _now()}
+        a["check"] = {"url": url, "host": (urlparse(url).hostname or "").lower(), "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body),
+                      "by": "Knos, re-reading GitHub's record of the commit", "at": _now()}
+        a["ci"], a["status"] = ci, "checked"
+        m["history"].append({"at": _now(), "what": f"{v['check']} passed in CI at {sha[:12]}: releasing attempt {a['id']}", "check_run": ci["check_run"]})
+        _save("projects", pid, p)
+    _journal("experiment", {"project": pid, "milestone": key, "what": "CI-verified", "attempt": a["id"], **ci}, tenant_of(p))
+    return {**release(pid, key, a["id"], led=led, base=base), "ci": ci}

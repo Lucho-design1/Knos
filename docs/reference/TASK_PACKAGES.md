@@ -2,7 +2,9 @@
 
 **In plain words.** When a maintainer merges a pull request that fixes an issue and adds tests, that pair is a good
 task: a real problem, a real fix, and tests that tell right from wrong. `knos taskpack export` packs it. The tests are
-sealed, so a solver cannot see them. Knos checks that the tests fail before the fix and pass after it. Anyone holding
+sealed, so a solver cannot see them.
+
+Knos checks that the tests fail before the fix and pass after it. Anyone holding
 the package can then grade a new attempt, and attempts that edit the tests or wander outside the fix's files are refused.
 
 Only the maintainer opts a task in. Selling task packages is a founder decision; nothing here offers or sells one.
