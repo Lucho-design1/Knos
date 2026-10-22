@@ -138,15 +138,19 @@ def render() -> str:
     out += ["", "## Indexing", "",
             "`d[k]` and `d[a..b]` panic when the index is past the end. They are counted here by file (lines of program code that index a slice, an array or a",
             "`Vec`; a line can index several times), not explained one by one. What keeps them in range, by kind: an account's data is read at constant offsets",
-            "after its owner and its length were checked (`key_limbs` and `T_JWT + len` in `knos_oidc`; the `*_LEN` checks of the other programs); instruction data",
-            "is measured before it is cut; the claim readers and the base64 decoders (`knos_oidc/src/strict.rs` and `claims.rs`) index inside loops bounded by the slice's length, and",
-            "are run on 1,560,000 random documents and by two fuzz targets ([ASSURANCE.md](ASSURANCE.md)); the RSA limbs (`rsa.rs`) are vectors sized from the key's",
+            "after its owner and its length were checked (`key_limbs` and `T_JWT + len` in `knos_oidc`; the `*_LEN` checks of the other programs). Instruction data",
+            "is measured before it is cut. The claim readers and the base64 decoders (`knos_oidc/src/strict.rs` and `claims.rs`) index inside loops bounded by the slice's length, and",
+            "are run on 1,560,000 random documents and by two fuzz targets ([ASSURANCE.md](ASSURANCE.md)). The RSA limbs (`rsa.rs`) are vectors sized from the key's",
             "own limb count. An index that is out of range all the same aborts the transaction, as above.", "",
             "The table's middle column counts every written panic in tests and proofs, not only `unwrap()`.", "",
             "| File | Written panics in program code | In tests and proofs | Lines of program code that index |", "| --- | ---: | ---: | ---: |"]
     out += [f"| `{rel.removeprefix('programs-v2/')}` | {a} | {b} | {c} |" for rel, a, b, c in table]
     out.append(f"| all | {sum(a for _, a, _, _ in table)} | {sum(b for _, _, b, _ in table)} | {sum(c for _, _, _, c in table)} |")
-    return "\n".join(out) + "\n"
+    import importlib.util                       # paragraphs of at most 60 words, cut where a sentence ends (the docs' rule)
+    spec = importlib.util.spec_from_file_location("split_paragraphs", ROOT / "scripts" / "split_paragraphs.py")
+    sp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sp)
+    return sp.fix("\n".join(out) + "\n")
 
 
 def test_every_written_panic_in_program_code_has_a_reason_and_every_reason_a_place():

@@ -64,15 +64,22 @@ Each `terms show` prints the terms as bytes and their hash; they are the example
 
 **What was run.** One test, for data labelling, from the comment to the payment:
 `tests/test_flow_quorum3.py::test_a_labelled_dataset_is_funded_by_a_comment_and_only_the_honest_file_is_paid`.
-The comment funds a work order whose terms are byte for byte the example's; the cheating `labels.csv` (the 40 visible
-answers copied) passes the naive check and is refused by the suite, so nothing is signed and nothing is paid; the
-honest file passes, the job after the judge signs for its commit, and the order pays 40 test USDC in full. The test
+
+The comment funds a work order whose terms are byte for byte the example's. The cheating `labels.csv` (the 40 visible
+answers copied) passes the naive check and is refused by the suite, so nothing is signed and nothing is paid.
+
+The
+honest file passes, the job after the judge signs for its commit, and the order pays 40 test USDC in full.
+
+The test
 then names what the meter would count: one deliverable, `sha256(order || milestone)`, and two evaluations under one
 policy version (the hash of the terms), one rejected and one accepted, with the audience the meter's token carries.
 
 **What was not run.** GitHub and the relay in that test are stand-ins (`tests/_flow.py`), and the program is the
 real `knos_pay` build in a simulator (LiteSVM), funded there with the same terms bytes and paid on a token with the
-same fields. The pull requests are stand-ins too: the judge ran on the example's folders, not on commits. All of it ran in tests:
+same fields. The pull requests are stand-ins too: the judge ran on the example's folders, not on commits.
+
+All of it ran in tests:
 never on devnet, and never by a customer. The transformation and research examples have a template and a verdict
 test (`tests/test_outcomes.py`) and no flow test of their own. No evaluation of these was sent to the meter.
 
@@ -110,13 +117,21 @@ versions of kind and Kubernetes and the image's id) and `SHA256SUMS`.
 
 **What the meter does with it.** Not what it does with a forge's token, and the difference is the program's.
 `knos_meter` Record takes a token of GitHub's from a pinned workflow and refuses a token verified under a private
-key (error 122). A cluster nobody outside can reach can only be a private key: the wallet that registers it says
+key (error 122).
+
+A cluster nobody outside can reach can only be a private key: the wallet that registers it says
 whose it is. And a service-account token's `aud` is a list, which the reader on chain does not read, so no program
-there can require the audience; the offline check does. So on chain there is a VERIFIED token account that names the
+there can require the audience; the offline check does.
+
+So on chain there is a VERIFIED token account that names the
 cluster's URL by its hash and the registering wallet, and the evaluation is counted as a line of the seller's
-ledger, the seller's own claim ([METER.md](METER.md), `ClaimBatch`). A count of cluster-signed evaluations that the
+ledger, the seller's own claim ([METER.md](METER.md), `ClaimBatch`).
+
+A count of cluster-signed evaluations that the
 buyer's credits pay for needs a change to the meter: an attested key for the issuer, and an audience read from a
-one-element list. Knos has not built that. And with the example's sample buyer and seller the batch stays a
+one-element list. Knos has not built that.
+
+And with the example's sample buyer and seller the batch stays a
 ledger file: a ClaimBatch on chain needs a seller id that owns the repository the claim's workflow runs in, and
 nothing here does that for this outcome.
 
@@ -153,14 +168,23 @@ Solana but devnet or a localnet.
 
 **What was run here.** `tests/test_outcome_k8s.py`: a token with the claims of a projected service-account token
 (`aud` a list, a nested `kubernetes.io`), signed by a fixed test key, passes the offline rule and gets the receipt
-above; sixteen wrong ones are refused (ES256, another key, a broken signature, a 1024-bit key, an elliptic-curve
+above.
+
+Sixteen wrong ones are refused: ES256, another key, a broken signature, a 1024-bit key, an elliptic-curve
 key set, a key id the set lacks, another issuer, an `exp` too far ahead or not a number, an expired token, another audience, two audiences,
-another service account, a claim written twice, a payload that is not strict JSON); and the test build of the
-verifier verifies the same token under a private key through the instructions `chain` builds, and refuses another
-key's signature with the program's own error. **What ran:** [run 38701801687](https://github.com/drexthealpha/Knos/actions/runs/38701801687) of drexthealpha/Knos (branch knos-0.3.34, commit 511fb84b; first in the staging copy drexthealpha/knos-rc, run 37483745385) started a kind cluster, ran the
-Job in it and had the cluster issue the token by the TokenRequest API; `scripts/outcome_k8s.py verify` verified that
-token offline against the cluster's own key set (`https://kind.knos-outcome.invalid`, RS256). **What was not run:**
-anything on devnet. No transaction carries a cluster's token, and the meter does not count it on chain.
+another service account, a claim written twice, and a payload that is not strict JSON.
+
+The test build of the
+verifier verifies the same token under a private key through the instructions `chain` builds. It refuses another
+key's signature with the program's own error.
+
+**What ran:** [run 38701801687](https://github.com/drexthealpha/Knos/actions/runs/38701801687) of drexthealpha/Knos (branch knos-0.3.34, commit 511fb84b; first in the staging copy drexthealpha/knos-rc, run 37483745385). It started a kind cluster, ran the
+Job in it and had the cluster issue the token by the TokenRequest API. `scripts/outcome_k8s.py verify` verified that
+token offline against the cluster's own key set (`https://kind.knos-outcome.invalid`, RS256).
+
+**What was not run:** anything on devnet.
+
+No transaction carries a cluster's token, and the meter does not count it on chain.
 
 **What was looked up, and where** (read 2026-10-06):
 
@@ -221,10 +245,13 @@ Vendors of support agents bill per resolution, and each counts its own. This is 
 the definition is in terms both sides hold, the count is the meter's, and the run that made it is signed by
 somebody else. It runs here on made-up tickets ([`examples/outcomes/support-resolution`](../../examples/outcomes/support-resolution/)).
 
-**The definition, and where it comes from.** Two vendors publish how they count. Intercom counts a resolution when
+**The definition, and where it comes from.** Two vendors publish how they count.
+
+Intercom counts a resolution when
 the customer confirms the answer helped, or "exits the conversation without requesting further assistance"; does not
 count one when the customer asks for a person; takes it back when the customer returns to the conversation; and bills
 a conversation at most once ([Intercom, "Fin AI Agent resolutions"](https://www.intercom.com/help/en/articles/8205718-fin-ai-agent-resolutions)).
+
 Zendesk counts an automated resolution "when a customer's issue is successfully resolved without live-agent
 intervention", evaluates only conversations that were not escalated, waits for a period of inactivity (72 hours for
 email and web forms) and counts per conversation
@@ -262,7 +289,9 @@ is a duplicate and 1 has insufficient evidence (its window is open).
 the tickets and prints the batch's audience, `knosm:claim:<buyer>:<seller>:<yyyymm>:<seq>:<count>:<accepted>:<value>:<root>`,
 with the repository's owner as the seller. `sign` asks GitHub to sign that audience and runs nothing from the
 repository. `receipt` makes the count again, holds the token to it with the on-chain verifier's rule, and writes the
-receipt and the statement. That audience is the one `knos_meter`'s ClaimBatch reads for a seller's own count.
+receipt and the statement.
+
+That audience is the one `knos_meter`'s ClaimBatch reads for a seller's own count.
 **The workflow has not run, and the token has not been carried to Solana**: the test signs a GitHub-shaped token with
 a test key.
 

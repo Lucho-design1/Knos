@@ -2,9 +2,13 @@
 
 **In plain words.** Every Knos program ever built was built for the oldest program format, sBPF v0 (no commit ever
 targeted another; the AUDIT page has the history). This release builds the four programs for sBPF v3, which devnet runs
-today and which future upgrades will require. A build for sBPF v2 also checks a GitHub token's RSA signature in ONE
+today and which future upgrades will require.
+
+A build for sBPF v2 also checks a GitHub token's RSA signature in ONE
 transaction instead of two (measured on devnet: 882,519 compute units); today's v3 cannot, for lack of a 128-bit
-multiply, so it keeps two. The new builds are written to devnet and handed to the
+multiply, so it keeps two.
+
+The new builds are written to devnet and handed to the
 upgrade multisig; they replace the live programs only when the founder's Squads proposal passes its 8-day time lock.
 Nothing on this page has replaced a live program yet.
 
@@ -28,9 +32,10 @@ Read from devnet's feature accounts; the AUDIT table in the release notes has th
 release, platform-tools v1.57, `--locked`, file paths remapped so the bytes do not depend on where the checkout is) and writes their hashes to
 [`deploy/upgrade-0329/HASHES-v3.txt`](../../deploy/upgrade-0329/HASHES-v3.txt).
 
-The ELF header's `e_flags` is the sBPF version; the script refuses a file whose version is not the one asked for. **Not the 2.3 toolchain.**
-An sBPF v3 file built by cargo-build-sbf 2.3.13 with platform-tools v1.48 (the toolchain the repository used until now) does not load in Agave
-4.4: `solana-test-validator` 4.4.0-beta.0 stops with "ELF error: Failed to parse ELF file: invalid file header".
+The ELF header's `e_flags` is the sBPF version; the script refuses a file whose version is not the one asked for.
+
+**Not the 2.3 toolchain.** An sBPF v3 file built by cargo-build-sbf 2.3.13 with platform-tools v1.48 (the toolchain the repository used until
+now) does not load in Agave 4.4: `solana-test-validator` 4.4.0-beta.0 stops with "ELF error: Failed to parse ELF file: invalid file header".
 
 The v3 format devnet activated (feature `5cC3fo…`) is a later one than the 2.3 toolchain writes. So v3 needs the 4.4 toolchain. The v2 test
 build of the 2.3 toolchain loads in both solders 0.29's LiteSVM and Agave 4.4.
@@ -74,14 +79,22 @@ halfway under one build finishes under the other (an upgrade between two Steps c
 `tests/test_platform_verify.py`).
 
 **sBPF v3 (v0.3.30): one transaction too, for a token of up to 5,000 bytes.** The v3 that Agave 4.4 runs (SIMD-0178,
-SIMD-0189, SIMD-0377) has no high-half multiply: a v3 build of platform-tools v1.57 holds `mul64` and no `uhmul64`
-(`llvm-objdump -d`), where the v2 build holds 21 `uhmul64`, and LLVM compiles a u128 product for v3 into a call to
-compiler-rt's `__multi3`. The first v3 build with 64-bit limbs (v0.3.29) did exactly that and was slower than 32-bit
+SIMD-0189, SIMD-0377) has no high-half multiply. A v3 build of platform-tools v1.57 holds `mul64` and no `uhmul64`
+(`llvm-objdump -d`), where the v2 build holds 21 `uhmul64`.
+
+LLVM compiles a u128 product for v3 into a call to
+compiler-rt's `__multi3`.
+
+The first v3 build with 64-bit limbs (v0.3.29) did exactly that and was slower than 32-bit
 limbs (table below). v0.3.30 keeps the same 64-bit-limb Montgomery code (same rows, same reductions, same token
 bytes) and only changes how each t + a b + c is formed on v3 (`rsa64.rs`, module `h`; `build.rs` sets `knos_mulhi32`
-for an sBPF v3 target): four inline 32 x 32 -> 64-bit `mul64`s on halves that are loaded and stored as 32-bit words
-(`ldxw`/`stxw`, one instruction each, instead of shifts), summed in an order in which no u64 can overflow, so there
-are no carry tests (the bounds are written beside the code). The v3 deploy build holds 90 `mul64`, no `uhmul64` and
+for an sBPF v3 target).
+
+It uses four inline 32 x 32 -> 64-bit `mul64`s on halves that are loaded and stored as 32-bit words
+(`ldxw`/`stxw`, one instruction each, instead of shifts). They are summed in an order in which no u64 can overflow, so there
+are no carry tests (the bounds are written beside the code).
+
+The v3 deploy build holds 90 `mul64`, no `uhmul64` and
 no `__multi3` call. The v0 and v2 builds are byte for byte what they were (same sha256 as the knos-0.3.29 source, built
 with the same toolchain), and a native test checks the v3 arithmetic against the u128 one limb for limb.
 

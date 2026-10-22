@@ -45,16 +45,22 @@ all (a claim nothing can confirm), 104 pending, 7 awaiting approval, 112 other (
 
 **False "tests pass" / "CI is green" claims, by agent** (of claimants with a finished verdict): Copilot
 955 of 3,274 (29%), Claude Code 102 of 300 (34%), Devin 36 of 110 (33%), Cursor 21 of 33 (64%), OpenAI Codex
-5 of 17 (29%), Google Jules 0 of 2 (0%). The last four rest on small numbers: read the intervals in the JSON.
+5 of 17 (29%), Google Jules 0 of 2 (0%).
 
-**Static cheat rules** (each out of the pull requests with a file list): a test file deleted 3,912 of 69,654 (5.6%);
-a skip, xfail or `.only` marker added 1,696 of 69,654 (2.4%); an existing test file lost more assertions than it
-gained 1,393 of 69,654 (2.0%); a CI file gained a way to pass whatever happens 681 of 69,654 (1.0%); a CI file lost a
+The last four rest on small numbers: read the intervals in the JSON.
+
+**Static cheat rules** (each out of the pull requests with a file list). A test file deleted 3,912 of 69,654 (5.6%).
+A skip, xfail or `.only` marker added 1,696 of 69,654 (2.4%). An existing test file lost more assertions than it
+gained 1,393 of 69,654 (2.0%).
+
+A CI file gained a way to pass whatever happens 681 of 69,654 (1.0%). A CI file lost a
 step that runs the tests 228 of 69,654 (0.3%).
 
 **Issue-linked pull requests** (links from v3): 4,905 pull requests link one of 4,577 issues; 2,375 of 4,905 (48%)
 were merged, and 774 of 4,585 (17%) with a file list fail a measured check. On 104 issues one agent pull request was
-merged and another was not; on 64 of them the merged fix changed tests. Those tests could judge the 117 unmerged
+merged and another was not; on 64 of them the merged fix changed tests.
+
+Those tests could judge the 117 unmerged
 attempts as hidden tests: that is the size of the executed benchmark this data allows (see Limitations).
 
 ## Method

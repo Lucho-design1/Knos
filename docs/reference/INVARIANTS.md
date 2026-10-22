@@ -14,16 +14,27 @@ every test file and test name on this page exists, and [`invariants.json`](../in
 
 **The machine.** `test_a_random_machine_of_orders_tokens_and_replays_keeps_every_invariant` in
 `tests/test_invariants_machine.py` checks invariants 1, 2, 3, 5, 8 and 9 together. From a fixed list of random seeds it takes
-one random action per step. The actions: funding (from a wallet, from a Balance, or by a second comment on an issue
+one random action per step.
+
+The actions: funding (from a wallet, from a Balance, or by a second comment on an issue
 that has or had an order), top-up, reservation, cancellation, payment, settlement, release, revert, refund, closing a
-marker, moving the clock, and re-sending any token it ever signed (unchanged, or rebuilt against the current
-accounts after a new order is funded at the same address). After every step it checks that each order gave out no more than it
-took in and exactly that once closed, that no token was accepted twice, that all test USDC together is unchanged,
-that a refunded order paid nobody and a paid one returned nothing, that the Balance's counters equal what was funded
-from it within its limits, and that every fee is the schedule's. A failure prints its seed and step.
+marker and moving the clock.
+
+The last is re-sending any token it ever signed (unchanged, or rebuilt against the current
+accounts after a new order is funded at the same address).
+
+After every step it checks that each order gave out no more than it
+took in and exactly that once closed, that no token was accepted twice, and that all test USDC together is unchanged.
+
+It also checks that a refunded order paid nobody and a paid one returned nothing, that the Balance's counters equal what was funded
+from it within its limits, and that every fee is the schedule's.
+
+A failure prints its seed and step.
 `test_the_machine_finds_the_double_payment_of_the_0_3_13_build_within_its_default_budget` runs the same machine on
 the faulty `knos_pay` build proposed in Knos release 0.3.13 (never deployed; [GOVERNANCE.md](GOVERNANCE.md), section
-3) and fails unless it finds a pay token that paid twice. The machine has no standing
+3) and fails unless it finds a pay token that paid twice.
+
+The machine has no standing
 orders, no kill fee, no assigned payment, one relayer and one mint; the tests named under each invariant cover those.
 
 ## What "exactly once" means here
@@ -271,20 +282,25 @@ devnet, pays 300.00.
 So the statement over every amount an order may hold is **verified**, in parts by rate.
 
 The one harness over every u64 amount and every rate from 10 to 30 at once,
-`an_orders_fee_is_between_its_floor_and_the_one_rate_for_every_amount` in `proofs.rs`, is verified too: it states that
-the fee is at least 0.05 and at most the larger of 0.05 and `bps_of(amount, 30)`, the program's own 0.30% rounded down;
-that amount plus fee fits a u64 for every amount the program takes; and that a job's fee is never more than its amount.
+`an_orders_fee_is_between_its_floor_and_the_one_rate_for_every_amount` in `proofs.rs`, is verified too.
+
+It states that the fee is at least 0.05 and at most the larger of 0.05 and `bps_of(amount, 30)`, the program's own
+0.30% rounded down; that amount plus fee fits a u64 for every amount the program takes; and that a job's fee is never
+more than its amount.
 
 It does not finish in 180 seconds, so `program.yml` runs it in a job of its own (`kani-fee-bounds`, 350 minutes), which
 verified it with Kani 0.68.0 (CBMC 6.11.0) and Kani's default solver, CaDiCaL, not cvc5: run 37575047633 in 8,296 seconds
 and the nightly run 37608154723 in 8,360 seconds, at commits whose `knos_pay` source is this tree's (the top of
 [`kani.json`](../kani.json)).
 
-That `bps_of(amount, 30)` is itself at most 0.30% of the amount is the result above that rests on cvc5's translation. -
+That `bps_of(amount, 30)` is itself at most 0.30% of the amount is the result above that rests on cvc5's translation.
+
 **The meter:** the fee of a month is the count beyond the free allowance times the rate, taken from prepaid Credits, and
 a batch that Credits cannot pay is refused whole
 (`test_the_first_ten_thousand_evaluations_of_a_month_are_free_and_credits_never_go_below_zero` in
-`tests/test_meter_chain.py`; `tests/test_meter_batch.py`). - **A top-up:**
+`tests/test_meter_chain.py`; `tests/test_meter_batch.py`).
+
+**A top-up:**
 `test_a_top_up_pays_the_difference_between_the_two_schedule_values_at_every_size` (across the floor, and to the most an
 order holds) and `test_a_top_up_of_a_balances_order_keeps_the_plans_rate` in `tests/test_invariants_gaps.py`.
 
@@ -388,7 +404,9 @@ under two ids without a return between them, and no line booked from a transacti
 **What is remembered.** How an exception was resolved (corrected, accepted or refused) is kept in the buyer's memory
 through `knos.proof.history` (Sibyl, the memory library Knos uses: it keeps one entry per supplier and terms, and one journal event per
 resolution), and is
-recalled when the same source appears again under the same terms. With no memory nothing is kept or recalled
+recalled when the same source appears again under the same terms.
+
+With no memory nothing is kept or recalled
 (`test_a_resolution_is_remembered_and_recalled_when_the_same_source_comes_back_and_no_memory_recalls_nothing` in
 `tests/test_completeness.py`).
 
@@ -423,7 +441,9 @@ written by hand in the 2.1 layout: 5.00 with its 2.1 fee of 0.40, where 2.2 woul
 
 **Safety: a payment happens at most once.** Nothing above depends on anything being up. If GitHub, every relay and
 the cluster's RPC endpoints all fail in the middle of a payment, the worst outcome is that it has not happened yet;
-it has never happened twice. This is what invariants 1 to 5 and 7 state and what their tests check: the machine in
+it has never happened twice.
+
+This is what invariants 1 to 5 and 7 state and what their tests check: the machine in
 `tests/test_invariants_machine.py`, and, for the moment a relay dies between sending and hearing back,
 `test_a_relay_killed_after_the_chain_took_the_token_sends_it_again_and_nobody_is_paid_twice` in
 `tests/test_relay_failures.py`.
@@ -440,12 +460,15 @@ obliged to run a relay:
 | a signing key of GitHub's that is still registered on chain | the verifier takes a token only under one; a key lapses after 30 days without a refresh | the token is refused until anyone refreshes the key |
 | the program as deployed | the instruction still exists and still reads this token | an upgrade can change either, after 8 days in public ([GOVERNANCE.md](GOVERNANCE.md)) |
 
-What is tested is recovery from named failures, in a simulator, with times that are simulated seconds: the six rows of
-[DRILLS.md](DRILLS.md), "When a dependency fails" (GitHub's API down for ten minutes, GitHub's signing key expired on
-chain, the relay killed between a send and its confirmation, the RPC endpoint erroring with stale blockhashes, the evidence
-missing, devnet reset), held to the page by
+What is tested is recovery from named failures, in a simulator, with times that are simulated seconds.
+
+The six rows of [DRILLS.md](DRILLS.md), "When a dependency fails" (GitHub's API down for ten minutes, GitHub's signing
+key expired on chain, the relay killed between a send and its confirmation, the RPC endpoint erroring with stale
+blockhashes, the evidence missing, devnet reset), are held to the page by
 `test_each_dependency_failure_is_drilled_and_says_what_broke_what_is_seen_how_it_recovers_and_how_long_it_took` in
-`tests/test_drills.py`; and the relay's own behaviour when its dependencies fail, in `tests/test_relay_failures.py`:
+`tests/test_drills.py`.
+
+The relay's own behaviour when its dependencies fail is tested in `tests/test_relay_failures.py`:
 `test_a_send_that_fails_for_the_clusters_reasons_is_tried_again_on_fixed_times_and_never_given_up_while_the_token_is_good`,
 `test_a_token_posted_in_a_gap_between_two_runs_is_carried_once_by_the_first_pass_of_the_next`,
 `test_when_github_says_slow_down_nothing_is_asked_until_the_time_it_named_and_no_verdict_is_lost` and
@@ -460,7 +483,9 @@ order at all, unless the order was funded with the presentation grace and the to
 
 **A token shown after a deadline it was issued before (the presentation grace).** In `knos_pay` 2.1,
 `PayOrder` compared the deadline with the chain's clock at the moment the token was shown. A token the forge signed
-before the deadline was refused when a relay that was down, or a congested cluster, showed it a second after. An
+before the deadline was refused when a relay that was down, or a congested cluster, showed it a second after.
+
+An
 order can now be funded with the grace (one byte of its options, the funder's choice, fixed at funding):
 
 - a pay token whose `iat` is at or before the deadline is accepted until `deadline + 7200` seconds;
@@ -496,10 +521,14 @@ a refund and a payment are never both in time.
 **What is guaranteed in place of liveness: a refund path always exists.** Invariant 6: after its deadline an unpaid
 order's whole balance goes back where it came from on an instruction that needs no token, no GitHub, no relay of
 Knos's and no signature of the funder's, sent by anyone
-(`test_an_order_goes_back_to_its_funder_after_the_deadline_and_not_before` in `tests/test_order_chain.py`). The path
+(`test_an_order_goes_back_to_its_funder_after_the_deadline_and_not_before` in `tests/test_order_chain.py`).
+
+The path
 exists; it is not instant and not unconditional. It needs the cluster to be producing blocks and one reachable RPC
 endpoint, and invariant 6 lists what can still stop it (the mint's issuer freezing the account, an upgrade that
-removed the instruction). So the money of a payment that never happens is not lost and not stuck behind Knos; the
+removed the instruction).
+
+So the money of a payment that never happens is not lost and not stuck behind Knos; the
 payee, whose work was accepted, is the one who bears a liveness failure.
 
 ## Not yet tested, in one list
@@ -516,13 +545,20 @@ Every row above names a test. What those tests leave out, said once more in one 
 
 [`programs-v2/handlers/tests/adversarial.rs`](../../programs-v2/handlers/tests/adversarial.rs) replays, in LiteSVM
 against the test builds in `tests/fixtures`, the transactions `scripts/adversarial_vectors.py` records (`cargo test
---release --test adversarial` in `programs-v2/handlers`; not run by pytest): an order's address funded again after a
-payment and after a refund (invariants 2, 3); the second before, at and after a deadline, the end of a hold and the
-end of a warranty (5, 6); a payment and a refund, a settlement and a refund, a release and a challenge in one
-transaction in both orders and in two (5); one token twice in one transaction, in two, and a meter's token shown to
-`PayOrder` and a payment's to the meter (3, 4); one judge alone under a quorum of 2 and of 3; one account and one
-owner behind two judges; a marker of the order that was at an address before; a token shown after a deadline it was
-issued before; and orders and markers in accounts as `knos_pay` 2.1 wrote them.
+--release --test adversarial` in `programs-v2/handlers`; not run by pytest).
+
+Funding and deadline cases: an order's address funded again after a payment and after a refund (invariants 2, 3);
+the second before, at and after a deadline, the end of a hold and the end of a warranty (5, 6).
+
+Paired moves: a payment and a refund, a settlement and a refund, a release and a challenge in one transaction in both
+orders and in two (5).
+
+Token and judge cases: one token twice in one transaction, in two, and a meter's token shown to `PayOrder` and a
+payment's to the meter (3, 4); one judge alone under a quorum of 2 and of 3; one account and one owner behind two
+judges.
+
+Stale state cases: a marker of the order that was at an address before; a token shown after a deadline it was issued
+before; and orders and markers in accounts as `knos_pay` 2.1 wrote them.
 
 None of its tests is skipped. Two used to be skipped, because the program then failed them; `knos_pay` 2.2 fixes
 both, and they now run with the rest.
@@ -546,10 +582,14 @@ The rule now, the same for an order funded by a wallet, by a passkey, by a comme
    artifact; before that its token is recorded and nothing is paid.
 
 **What this enforces:** that the judges counted are different forge accounts and different owners of repositories,
-as the forge signed them. **What it cannot:** that two accounts are two people. One person with two accounts, an
+as the forge signed them. **What it cannot:** that two accounts are two people.
+
+One person with two accounts, an
 owner and a friend, or two parties who agreed, are two judges here; a forge signs account ids and nothing about who
 is behind them. The receipt's `same_controller` field ([RECEIPT.md](RECEIPT.md)) is still what a buyer reads for
-that. Two costs of the rule: a judge repository that belongs to the owner of the order's repository no longer
+that.
+
+Two costs of the rule: a judge repository that belongs to the owner of the order's repository no longer
 counts as a second judge, and on a wallet's order a neutral run and a judge repository cannot pay without the
 order's own repository.
 

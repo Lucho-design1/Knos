@@ -41,9 +41,13 @@ their prices. A bounty on one issue is the smallest example of it: one buyer, on
 **The buyer is the person accountable for approving a supplier's invoice**: an engineering leader or a finance
 owner at a company that buys software work per outcome from an agent vendor or an agency. The question that person
 has to answer is whether the invoice can be approved, explained afterwards, and shown to follow the company's own
-rules. Their questions, line by line: what did we buy, from whom, at what price; which evidence establishes
+rules.
+
+Their questions, line by line: what did we buy, from whom, at what price; which evidence establishes
 acceptance; was this deliverable billed before; did the approver have authority; what happens on a revert or a
-dispute; can finance reproduce the statement next quarter; and who answers when the service fails. To the last
+dispute; can finance reproduce the statement next quarter; and who answers when the service fails.
+
+To the last
 one the answer today is: nobody but the founder.
 
 Three words are used the same way everywhere. A **deliverable** is the commercially meaningful thing bought: an
@@ -109,8 +113,9 @@ Those are the counts after a second reading of each page ([index_review.json](..
 had recorded 16 and 30 (12.4%); 11 of the 30 were excluded on the second reading.
 
 The pull requests and each one's checks are in [agent_pr_ci.json](../agent_pr_ci.json) (303 with finished CI, read on 1 Oct 2026); both counts are in
-[backtest.json](../backtest.json), `reviewed.overall` and `sample.merged.overall`, and [BENCH.md](BENCH.md), "Merged anyway", prints the recorded ones. **That is a count
-of failed checks, not of money.** A failed check is not always a failed test, a defect or a false claim; no buyer's invoices have been read; and nothing here says what
+[backtest.json](../backtest.json), `reviewed.overall` and `sample.merged.overall`, and [BENCH.md](BENCH.md), "Merged anyway", prints the recorded ones.
+
+**That is a count of failed checks, not of money.** A failed check is not always a failed test, a defect or a false claim; no buyer's invoices have been read; and nothing here says what
 share of anyone's spend was paid for work that did not meet its terms.
 
 It is not a promise that any buyer saves anything.
@@ -190,7 +195,9 @@ that neither buys nor sells the advertising became a business of its own:
 
 **This is an analogue, not proof.** Those are two companies in another industry. They show that buyers have paid
 a third party to count what a seller bills. They show too what the business keeps: the larger of them turned 23% of its revenue into free cash flow, with
-a sales force and a product organisation. They do not show that buyers of agent work will pay, and no figure here
+a sales force and a product organisation.
+
+They do not show that buyers of agent work will pay, and no figure here
 is a size for Knos's market.
 
 ### The competition, stated plainly
@@ -216,7 +223,9 @@ that side's vendor.
 
 **Generic agent metering will face price pressure.** A cloud lists an evaluation at 0.0015 USD and a policy
 decision at 0.000025; a billing company includes a hundred million metered events a month in its percentage; a
-payment on merge is sold with no platform fee. The Meter's proposed 0.002 USD is a third more than the cloud's price for
+payment on merge is sold with no platform fee.
+
+The Meter's proposed 0.002 USD is a third more than the cloud's price for
 one evaluation and will not hold as a price for counting alone. Knos does not plan on it holding.
 
 What Knos sells beyond each, one line each:
@@ -254,7 +263,9 @@ Every price in this table is proposed. The Meter line is not what the program on
 **The Meter on chain today differs from the price book.** The deployed `knos-meter` program on devnet charges
 0.05 per evaluation after the first 10,000 of a month per owner (0.02 at the least under a Plan), in test USDC
 (`programs-v2/knos_meter/src/lib.rs`, `FEE` and `FREE_PER_MONTH`). The price book proposes 100,000 free, then 0.002
-USD (proposed, not charged anywhere). Changing the program waits for an upgrade; until then the off-chain statement (`knos meter`) uses the price
+USD (proposed, not charged anywhere).
+
+Changing the program waits for an upgrade; until then the off-chain statement (`knos meter`) uses the price
 book's numbers and the program uses its own.
 
 **Who bears the Acceptance fee on chain.** On an order the funder pays it on top of the amount; on a job it comes out
@@ -342,7 +353,9 @@ a Record lookup or the volume rates.
 
 **Why Acceptance is a price on value.** A flat price per evaluation cannot grow with the value it accepts: an
 evaluation that accepts a 12 USD change and one that accepts a 40,000 USD milestone both would cost 0.002 USD at the
-Meter's proposed price. Acceptance is charged on the dollar, once, when a signed acceptance releases or reconciles it: 0.04 USD
+Meter's proposed price.
+
+Acceptance is charged on the dollar, once, when a signed acceptance releases or reconciles it: 0.04 USD
 would be the rate on the first and the floor makes it 0.05; the second pays 120 USD.
 
 **What the program takes at release, shown before funding.** One rate and a floor, for jobs and orders alike:
@@ -464,9 +477,12 @@ administering, and none of those costs is known, so none is printed.
 **The gross-margin budget.** At the proposed 0.002 per evaluation, a gross margin of 90% **[assumption: a target]** leaves
 0.0002 USD per evaluation to deliver it, and 95% leaves 0.0001. The monthly batch is the default delivery: one
 anchored batch for each buyer and supplier, 0.14 USD a month whatever the count, so the chain's cost per
-evaluation tends to zero. The budget for the rest is 0.00005 USD an evaluation, and it is not measured: storing
+evaluation tends to zero.
+
+The budget for the rest is 0.00005 USD an evaluation, and it is not measured: storing
 and serving the ledgers, running a relay, and monitoring. The proposed free 100,000 a month cost the same to deliver, at
 most about 60 USD a year for each organisation at that budget: that is acquisition cost, and it is said as one.
+
 Running the customer's tests is not in it: they run in the customer's own CI, on the customer's bill.
 [UNIT_COSTS.md](UNIT_COSTS.md) has every unit, what is measured and what is a budget, and the ceilings.
 
@@ -524,9 +540,10 @@ The Acceptance line, the one that grows with value, is built from the bottom:
 **customers × eligible purchased work per customer × adopted share × realised fee.**
 
 "Eligible" means all of: the outcome can be defined before the work, the evidence can be reached, both
-counterparties accept the process, and the value is large enough to carry what it costs to deliver
-([UNIT_COSTS.md](UNIT_COSTS.md): at the cost target of 0.02 USD per reconciled deliverable, a deliverable of
-133.34 USD or more keeps a gross margin of 95%; smaller outcomes are netted).
+counterparties accept the process, and the value is large enough to carry what it costs to deliver.
+
+Cost target, from [UNIT_COSTS.md](UNIT_COSTS.md): at 0.02 USD per reconciled deliverable, a deliverable of 133.34 USD
+or more keeps a gross margin of 95%; smaller outcomes are netted.
 
 | input | what it is | value today | label and source |
 |---|---|---|---|
@@ -541,7 +558,9 @@ No input is measured, so this page multiplies no count of customers.
 
 **Context, not the market.** Menlo Ventures, an investor, estimated enterprise spend on generative AI at 37
 billion USD in 2025, 4.0 billion of it on coding ([Menlo Ventures, 9 Dec 2025](https://menlovc.com/perspective/2025-the-state-of-generative-ai-in-the-enterprise/),
-read again 8 Oct 2026). That is spend on the tools and models, mostly by the seat and the token, not purchased
+read again 8 Oct 2026).
+
+That is spend on the tools and models, mostly by the seat and the token, not purchased
 work accepted per outcome: none of it is eligible work until a buyer pays a supplier per outcome for it.
 
 ### Market size
@@ -585,7 +604,9 @@ suppliers that customer connects, the lines are the same.
 
 **A second customer on the Business plan** *(an example at the same proposed prices; no such customer exists)*: 1,000,000 evaluations a
 month and 120 million USD a year of accepted value in twelve even months, reconciled off chain. Each month's 10
-million crosses the first million, so 9 million of it pays 0.20% by contract. Record lookups are budgeted at zero.
+million crosses the first million, so 9 million of it pays 0.20% by contract.
+
+Record lookups are budgeted at zero.
 
 | line | arithmetic | USD a year |
 |---|---|---|
@@ -614,15 +635,23 @@ direct cost at today's budgets):
 
 **Defending the rate matters more than shaving verification time.** Each basis point given up costs the second
 customer's account 12,000 USD a year; its whole direct cost is 16,208.36. A faster check lowers a cost that is
-already small. What would defend the rate is a buyer's own measured benefit, in three kinds kept apart:
+already small.
+
+What would defend the rate is a buyer's own measured benefit, in three kinds kept apart:
 **recoveries** (money not paid for duplicated lines or work that missed its terms), **avoided labour** (hours that
 lower what the buyer spends) and **financing benefit** (days of payment brought forward, worth something to the
-supplier). **None of the three is measured.** The [Pilot](PILOT.md) is where each would be.
+supplier).
 
-**The first customer to look for** is the one for whom that hurdle could be true. It meets the four conditions
+**None of the three is measured.** The [Pilot](PILOT.md) is where each would be.
+
+**The first customer to look for** is the one for whom that hurdle could be true.
+
+It meets the four conditions
 of section 5, and three more that make the first sale short: the work is code in repositories a forge already
 signs for; the person who approves the suppliers' invoices does it by hand today; and it can start in shadow
-mode, with no change to how anyone is paid. Nobody matching that has been asked.
+mode, with no change to how anyone is paid.
+
+Nobody matching that has been asked.
 
 ### What a buyer must get back
 
@@ -665,7 +694,9 @@ platform fee ([COMPARE.md](COMPARE.md)).
 
 **What a zero-fee fork can copy:** all of the code; the verifier, which is free for any program to read; the
 public settlement fee, since the program tips whoever relays and anyone can relay at no loss; and the public
-payment history, which anyone can read from the chain. Settlement alone will be priced toward zero, which is why
+payment history, which anyone can read from the chain.
+
+Settlement alone will be priced toward zero, which is why
 the fee is on a signed acceptance and not on moving the money.
 
 ### Why a fork at zero fee does not take it

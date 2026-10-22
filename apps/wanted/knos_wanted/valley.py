@@ -1469,6 +1469,23 @@ def operator_claim(pid: str, key: str, wallet: str) -> dict:
     return a
 
 
+_gh: dict[str, tuple[float, object]] = {}
+GH_CACHE_S = 300.0
+
+
+def _cached(get):
+    """GitHub's answers kept for GH_CACHE_S: one CI run asks for ten milestones at one commit (and the app's address
+    shares GitHub's 60 unauthenticated requests an hour)."""
+    def got(path: str):
+        hit = _gh.get(path)
+        if hit and time.monotonic() - hit[0] < GH_CACHE_S:
+            return hit[1]
+        value = get(path)
+        _gh[path] = (time.monotonic(), value)
+        return value
+    return got
+
+
 def _on_branch(repo: str, sha: str, get) -> str | None:
     """The default branch when `sha` is on it (GitHub's compare of the commit with the branch), else None."""
     branch = (get(f"repos/{repo}") or {}).get("default_branch") or "main"
@@ -1486,7 +1503,7 @@ def ci_release(pid: str, key: str, sha: str, get=None, led=None, base: str | Non
     from knos import judge, terms
 
     from . import preorder, tasks
-    get = get or judge.github
+    get = get or _cached(judge.github)
     p = project(pid)
     m = _milestone(p, key)
     repo, v = p.get("repo"), m.get("verifier") or {}

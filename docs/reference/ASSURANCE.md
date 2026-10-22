@@ -172,9 +172,10 @@ The end-to-end test in the last row below ran in a real container on GitHub's ru
 A signed token says which workflow ran. It does not say what the workflow read.
 
 For an order paid by its black-box acceptance suite, the neutral judge (`attest.yml`, started by hand in the
-attester's own repository) therefore does not read the buyer repository's result for the suite: its first job
-fetches the two commits and runs the suite again, and only the second job, which runs none of that code, can ask
-GitHub for the token ([SECURITY.md, section 20](SECURITY.md#20-a-neutral-judge-that-runs-the-suite-again)).
+attester's own repository) therefore does not read the buyer repository's result for the suite.
+
+Its first job fetches the two commits and runs the suite again. Only the second job, which runs none of that code,
+can ask GitHub for the token ([SECURITY.md, section 20](SECURITY.md#20-a-neutral-judge-that-runs-the-suite-again)).
 
 No program changed for this.
 
@@ -248,15 +249,21 @@ the existing ones answer four questions, and which test holds each.
 
 **How a policy is versioned.** Its version is the sha256 of its canonical bytes. The order keeps that hash, every pay
 token carries it, and the meter records it as `policy` in each evaluation's id. Change a threshold, a gold label, a
-check or a path and the hash is another one. There are no version numbers to forget to bump.
+check or a path and the hash is another one.
+
+There are no version numbers to forget to bump.
 `knos terms diff <a> <b>` (each a template's name or a file that holds terms) prints one plain sentence for each
 difference between two versions, for whoever has to approve the change.
 
 **Who may change it.** Before funding: whoever can write to the repository's default branch, since the suite and the
-policy file are read from there, and whoever funds, since the comment names the checks. After funding: nobody. The
+policy file are read from there, and whoever funds, since the comment names the checks. After funding: nobody.
+
+The
 order holds the hash; a payment under other terms is refused by the program; a pull request that edits `.knos/**` or
 `.github/**` is out of scope by the terms' own `deny`. A buyer who wants other terms lets the order run out or
-cancels it with seven days' notice, and funds a new one. A supplier who thinks the suite is wrong does not get it
+cancels it with seven days' notice, and funds a new one.
+
+A supplier who thinks the suite is wrong does not get it
 edited under an open order: that is the next question.
 
 **How a supplier appeals.** Three routes, each fixed when the order was funded:
@@ -274,9 +281,13 @@ What an appeal cannot do: change the suite. A suite that is wrong is wrong for e
 ruling pays against it.
 
 **A defect found after acceptance.** If the order has a warranty (`warranty N`, with `holdback N` percent), that
-share of the payment stays in the order for N days. A revert token from one of the order's judges inside that time
+share of the payment stays in the order for N days.
+
+A revert token from one of the order's judges inside that time
 sends it back to the funder; after it, the share is released to the payee and no challenge is heard. With no
-holdback, a payment is final when it is made, and the reply to the funding comment says so. The meter has no
+holdback, a payment is final when it is made, and the reply to the funding comment says so.
+
+The meter has no
 reversal either: an accepted evaluation stays accepted, and a later defect is a correction line in the ledger
 ([METER.md](METER.md)), not a changed count.
 
@@ -302,9 +313,17 @@ The tests above load builds made for testing. Three scripts go further, and each
 
 No row is a transaction on devnet. The simulator is LiteSVM in the version the tests use; a difference between it and a validator would not show here.
 
-**`scripts/drill_upgrade.sh`** runs the upgrade path against a validator on the machine that runs it, with the real Squads program: a no-op upgrade is proposed and approved, its execution is refused before 48 hours by the Squads program itself (`TimeLockNotReleased`), the validator's clock is moved, the upgrade is executed, and a second proposal is cancelled and can never run (`InvalidProposalStatus`). With `--from-devnet` it needs no key: it copies the deployed bytes of both programs, the Squads program and both multisig accounts from devnet into a validator of its own, and replaces each member's key in the two multisig accounts with a key made for the drill. Threshold and time lock are devnet's. Since 11 Oct 2026 devnet's time lock is 8 days and the drill still moves the clock 48 hours, so `--from-devnet` stops at its first check until the drill is changed. What that leaves out is the members' real keys, by design. Against `scripts/deploy_v2.sh --localnet --keep` it uses the key folder's member keys instead.
+**`scripts/drill_upgrade.sh`** runs the upgrade path against a validator on the machine that runs it, with the real Squads program: a no-op upgrade is proposed and approved, its execution is refused before 48 hours by the Squads program itself (`TimeLockNotReleased`), the validator's clock is moved, the upgrade is executed, and a second proposal is cancelled and can never run (`InvalidProposalStatus`).
 
-**`scripts/replay_tokens.py`** keeps real tokens and verifies them again. `--capture OWNER/REPO` reads a public repository's token comments into a JSON Lines file, each token with the issuer's key set of that day, and keeps only tokens a key of that set signed. `--corpus FILE` loads the verifier's deployed bytes into LiteSVM, sets the clock to each token's `iat`, has the token written and stepped by the relay code the public worker runs, and prints how many verified, by repository and by key. `tests/test_replay_tokens.py` does both with tokens the test key signed. The file of real tokens is made by the release run; none is committed here, and no real token has been replayed by these tests.
+With `--from-devnet` it needs no key: it copies the deployed bytes of both programs, the Squads program and both multisig accounts from devnet into a validator of its own, and replaces each member's key in the two multisig accounts with a key made for the drill. Threshold and time lock are devnet's.
+
+Since 11 Oct 2026 devnet's time lock is 8 days and the drill still moves the clock 48 hours, so `--from-devnet` stops at its first check until the drill is changed. What that leaves out is the members' real keys, by design. Against `scripts/deploy_v2.sh --localnet --keep` it uses the key folder's member keys instead.
+
+**`scripts/replay_tokens.py`** keeps real tokens and verifies them again. `--capture OWNER/REPO` reads a public repository's token comments into a JSON Lines file, each token with the issuer's key set of that day, and keeps only tokens a key of that set signed.
+
+`--corpus FILE` loads the verifier's deployed bytes into LiteSVM, sets the clock to each token's `iat`, has the token written and stepped by the relay code the public worker runs, and prints how many verified, by repository and by key. `tests/test_replay_tokens.py` does both with tokens the test key signed.
+
+The file of real tokens is made by the release run; none is committed here, and no real token has been replayed by these tests.
 
 ## What was read as an attacker
 
@@ -407,11 +426,14 @@ Tests named in this part are in `tests/test_pay2_chain.py` unless a Rust file is
 
 Account substitution - A forged job, another user's bind, record or pair, another mint, its vault, the other token program, a wrong `auth`, a wrong `rent_to` in Pay: every account is re-derived from the job's own fields or the token's payee, and a job is read only at the address its fields derive.
 
-`test_pay2_chain.py::test_a_job_is_not_paid_with` (38 cases). - The same in FundBalance (baltok, mint, vault, auth, token program, pause, job, a non-Balance as the Balance): `test_pay2_chain.py::test_a_comment_does_not_fund_with`; in FundWallet: `test_pay2_chain.py::test_a_wallet_does_not_fund_with`. - Refund to a thief, to another Balance, to the
-wallet that opened the Balance, with a wrong vault, auth, rent account, mint or token program: a Balance's job goes only to that Balance's token account, a wallet's job only to a token account of that wallet.
+`test_pay2_chain.py::test_a_job_is_not_paid_with` (38 cases). - The same in FundBalance (baltok, mint, vault, auth, token program, pause, job, a non-Balance as the Balance): `test_pay2_chain.py::test_a_comment_does_not_fund_with`; in FundWallet: `test_pay2_chain.py::test_a_wallet_does_not_fund_with`.
+
+Refund to a thief, to another Balance, to the wallet that opened the Balance, with a wrong vault, auth, rent account, mint or token program: a Balance's job goes only to that Balance's token account, a wallet's job only to a token account of that wallet.
 
 `test_pay2_chain.py::test_with_no_proof_by_the_deadline_the_money_goes_back_where_it_came_from`. - Withdraw or SetBalance by anyone but the wallet that opened the Balance, or to a token account that wallet does not own: `test_pay2_chain.py::test_unspent_money_goes_back_only_to_the_wallet_that_opened_the_balance`,
-`test_pay2_chain.py::test_only_the_wallet_that_opened_a_balance_changes_its_cap_and_spenders`. - One kind of account read as another (a Balance as a job, a key account as a token): lengths differ, each is read at its own PDA, and a verifier key account never has the VERIFIED stage byte.
+`test_pay2_chain.py::test_only_the_wallet_that_opened_a_balance_changes_its_cap_and_spenders`.
+
+One kind of account read as another (a Balance as a job, a key account as a token): lengths differ, each is read at its own PDA, and a verifier key account never has the VERIFIED stage byte.
 
 `state.rs::layouts_do_not_overlap_and_fill_their_lengths`, case "a token account of the verifier's in place of the key" of `test_a_job_is_not_paid_with`. - A token program that is neither SPL Token nor Token-2022, or not the mint's owner: `mint_of` runs before every CPI to it. `token.rs::a_mint_is_a_mint_of_the_token_program_passed`,
 `test_pay2_chain.py::test_a_mint_is_a_mint_of_the_token_program_passed_and_harmless_extensions_are_accepted`. - A missing signature (relayer, authority, guardian): cases in `test_a_proof_pays_nothing_after_the_deadline_and_no_job_twice`, `test_an_issue_has_one_job_per_balance_and_a_relayer_must_sign`,
@@ -420,14 +442,18 @@ wallet that opened the Balance, with a wrong vault, auth, rent account, mint or 
 Replay of a signed token - A fund token twice, or out of order: `iat` must be later than the Balance's last. `test_pay2_chain.py::test_a_fund_token_works_once`. - A fund token against another Balance (so another mint or another wallet's money): the audience names one Balance by address.
 
 `test_pay2_chain.py::test_a_fund_token_spends_only_the_balance_it_names`, `gh.rs::a_fund_audience_names_one_balance_as_solana_prints_it`. - A comment in a repository another account owns, or by someone who is not the owner or a listed spender:
-`test_pay2_chain.py::test_a_comment_in_another_owners_repository_cannot_spend_a_balance`, `test_pay2_chain.py::test_only_the_owner_and_the_listed_spenders_spend_a_balance`. - A pay token against another repository, another issue, other terms, the other mode, another workflow repository or commit: cases
+`test_pay2_chain.py::test_a_comment_in_another_owners_repository_cannot_spend_a_balance`, `test_pay2_chain.py::test_only_the_owner_and_the_listed_spenders_spend_a_balance`.
+
+A pay token against another repository, another issue, other terms, the other mode, another workflow repository or commit: cases
 of `test_a_job_is_not_paid_with`. - A pay token against a job funded after it was issued (a job re-created at the same address after a payment or refund included): `not_before`.
 
 Case "a token issued before the funding" of `test_a_job_is_not_paid_with`. - One pay token paying several jobs on the same issue: it does, when they pin the same workflow and terms. This is the documented design, and each job pays the payee the proof names.
 
 `test_pay2_chain.py::test_one_proof_pays_every_job_on_the_issue_that_pins_the_same_workflow_and_terms`. - A first-deployment token (`knos:` audience) or one kind of audience used as another: every parser requires `knos2` and its own word, with an exact number of fields.
 
-Cases "a first-deployment audience", "a pay audience", "a bind audience", "a first-deployment claim audience" of the three refusal tests. - A bind token twice or an older one after a newer: `test_pay2_chain.py::test_a_wallet_is_not_bound_with` (case "an older token than the bind's"),
+Cases "a first-deployment audience", "a pay audience", "a bind audience", "a first-deployment claim audience" of the three refusal tests.
+
+A bind token twice or an older one after a newer: `test_pay2_chain.py::test_a_wallet_is_not_bound_with` (case "an older token than the bind's"),
 `test_pay2_chain.py::test_nobody_binds_a_wallet_for_someone_else`. - A GitLab token, an unverified token, a verified token's bytes in an account the verifier does not own: cases of `test_a_job_is_not_paid_with`.
 
 Time bounds and the verifier's key - `iat` more than 300 seconds ahead, `exp` more than an hour after `iat`, a token more than an hour past expiry: cases "a token from the future", "a token that claims to live for hours", "an expired token" of `test_a_job_is_not_paid_with`.
@@ -457,7 +483,9 @@ changes owner, and a close authority cannot move tokens. By reading; no test.
 
 Rent and closing - Rent of a job sent to the relayer of the payment or refund instead of whoever paid it: `rent_to` must be the job's.
 
-Case "the rent sent to someone else" of `test_a_job_is_not_paid_with`; the lamports are asserted in `test_with_no_proof_by_the_deadline_the_money_goes_back_where_it_came_from`. - A funding relayer (anyone: a fund token is public) who later turns the account the rent goes back to into a program, so that the job could never close: in the runtime the tests run, a program account can be credited, and the job is paid and refunded.
+Case "the rent sent to someone else" of `test_a_job_is_not_paid_with`; the lamports are asserted in `test_with_no_proof_by_the_deadline_the_money_goes_back_where_it_came_from`.
+
+A funding relayer (anyone: a fund token is public) who later turns the account the rent goes back to into a program, so that the job could never close: in the runtime the tests run, a program account can be credited, and the job is paid and refunded.
 
 `test_pay2_chain.py::test_a_job_is_paid_and_refunded_whatever_the_account_its_rent_goes_to_has_become` (added). Older runtimes refused to credit an executable account; that rule (SIMD-0162) is no longer among the pending activations of any cluster in Agave's feature gate tracker (read 3 Oct 2026).
 
@@ -479,8 +507,9 @@ Bind
 Faucet
 - Test USDC minted for a token that names a Balance of real money, or on a real-money build: `test_pay2_chain.py::test_the_faucet_mints_nothing_for_a_token_that_names_another_balance`, `test_pay2_chain.py::test_the_faucet_exists_once_and_the_real_money_build_has_none`.
 
-By design, and not money (noted so nobody is surprised) - A relayer who lands a later fund token of a Balance first makes the earlier one useless; the comment has to be made again. lib.rs says so. - A funder can raise a payee's
-public record by paying that payee's id to a second wallet of the funder's own; it costs the fee.
+By design, and not money (noted so nobody is surprised) - A relayer who lands a later fund token of a Balance first makes the earlier one useless; the comment has to be made again. lib.rs says so.
+
+A funder can raise a payee's public record by paying that payee's id to a second wallet of the funder's own; it costs the fee.
 
 The record's self-payment rule sees only the funding wallet, the Balance's owner and the commenter. - `default = ["devnet"]` in Cargo.toml: a real-money build needs `--no-default-features`. A devnet build on a real cluster would
 only add the faucet's own test mint.
@@ -502,15 +531,25 @@ Tests that need a toolchain skip and say so: the Go and Rust judge tests, the No
 
 The Rust tests, with the Wycheproof vectors: `cd programs-v2 && cargo test --release`.
 
-**The instruction handlers, from Rust.** Besides the Python chain tests, a Rust crate drives the handlers of all four programs end to end (`cd programs-v2/handlers && cargo test`; the crate is outside the programs' workspace, because `cargo build-sbf` cannot read every manifest in `litesvm`'s dependency tree): `tests/knos_<program>.rs` loads the test binaries from `tests/fixtures` into the `litesvm` crate (0.7.1; signature checking on) and sends them the signed transactions of `programs-v2/testdata/*.json`, asserting each answer (accepted, or the instruction and the custom error that refused it), token balances and account fields. 16 tests; they ran in 6 to 20 seconds here once compiled, and the first compilation took 11 minutes on two shared cores. The program workflow runs them after it builds the binaries.
+**The instruction handlers, from Rust.** Besides the Python chain tests, a Rust crate drives the handlers of all four programs end to end (`cd programs-v2/handlers && cargo test`). The crate is outside the programs' workspace, because `cargo build-sbf` cannot read every manifest in `litesvm`'s dependency tree.
+
+`tests/knos_<program>.rs` loads the test binaries from `tests/fixtures` into the `litesvm` crate (0.7.1; signature checking on). It sends them the signed transactions of `programs-v2/testdata/*.json` and asserts each answer (accepted, or the instruction and the custom error that refused it), token balances and account fields.
+
+16 tests; they ran in 6 to 20 seconds here once compiled, and the first compilation took 11 minutes on two shared cores. The program workflow runs them after it builds the binaries.
 
 The transactions are not built in Rust: `scripts/rust_test_vectors.py` writes them from the Python harnesses with wallets from a counter and tokens signed by the seed test key, so two runs write the same bytes (`--check` compares), and it must be run again when an instruction's accounts or data change.
 
 So this is a second virtual machine version and a second set of assertions over the same instruction builders, not a second client.
 
-Asserted from Rust: `knos_oidc` Write, Step (a token verified in two transactions; one bit of the signature flipped, error 70), RegisterKey, KeyParams; `knos_pay` FundOrderWallet, FundOrderBalance, PayOrder (paid once; the same token again, error 101 because the order is gone; the same address funded again and the old token shown, error 91 from its marker), RefundOrder (error 83 before the deadline, whole after it), Cancel (errors 80 and 83), and the fee at 100, 1,000, 1,001, 50,000 and 50,001 against `order_fee`; `knos_meter` OpenCredits, Record, RecordBatch (the same seq again, error 125), ClaimBatch, WithdrawCredits; `knos_passkey` Open and Withdraw (another passkey's signature: the precompile's error 2, and the program's 114; a replay, 119).
+Asserted from Rust, for `knos_oidc`: Write, Step (a token verified in two transactions; one bit of the signature flipped, error 70), RegisterKey, KeyParams.
 
-Every other instruction has no Rust handler test and is tested from Python only: `knos_oidc` Close, Refresh, Approve, Revoke, RegisterIssuerKey and RegisterPrivateKey; `knos_pay` OpenBalance (it runs in every scenario's setup, asserted only as accepted), SetBalance, Withdraw, the job instructions (FundBalance, FundWallet, Pay, Settle, Refund), Bind, Pause, the faucet, Version, SetPlan, Release, Revert, Reserve, TopUp, Assign, BindOrg, SettleOrder, CloseMarker; `knos_meter` SetPlan, CloseMark, Version; `knos_passkey` Fund.
+For `knos_pay`: FundOrderWallet, FundOrderBalance, PayOrder (paid once; the same token again, error 101 because the order is gone; the same address funded again and the old token shown, error 91 from its marker), RefundOrder (error 83 before the deadline, whole after it), Cancel (errors 80 and 83), and the fee at 100, 1,000, 1,001, 50,000 and 50,001 against `order_fee`.
+
+For `knos_meter`: OpenCredits, Record, RecordBatch (the same seq again, error 125), ClaimBatch, WithdrawCredits. For `knos_passkey`: Open and Withdraw (another passkey's signature: the precompile's error 2, and the program's 114; a replay, 119).
+
+Every other instruction has no Rust handler test and is tested from Python only: `knos_oidc` Close, Refresh, Approve, Revoke, RegisterIssuerKey and RegisterPrivateKey.
+
+The same holds for `knos_pay` OpenBalance (it runs in every scenario's setup, asserted only as accepted), SetBalance, Withdraw, the job instructions (FundBalance, FundWallet, Pay, Settle, Refund), Bind, Pause, the faucet, Version, SetPlan, Release, Revert, Reserve, TopUp, Assign, BindOrg, SettleOrder, CloseMarker; `knos_meter` SetPlan, CloseMark, Version; `knos_passkey` Fund.
 
 The drills on the deployed bytes, the upgrade drill and the replay. The first and the third read devnet and send nothing; the second starts a validator on this machine and needs the Solana command line tools, Node 20 and `npm ci --prefix scripts`.
 
@@ -590,7 +629,9 @@ That `bps_of(amount, 30)` is itself at most 0.30% of the amount is a separate ha
 
 Two properties did not come back from the solver and are NOT model-checked: that payees' shares never exceed the payment, and that the fee given out grows with what was paid.
 
-Those two are covered by randomised tests in the same file and by the random walks only. - **What nothing proves.** There is no formal proof of the RSA arithmetic: `rsa.rs` is Montgomery multiplication written by hand, and what stands behind it is tests (Wycheproof's vectors, the differential runs, the fuzz target), which show agreement on the inputs tried and nothing about the rest.
+Those two are covered by randomised tests in the same file and by the random walks only.
+
+**What nothing proves.** There is no formal proof of the RSA arithmetic: `rsa.rs` is Montgomery multiplication written by hand, and what stands behind it is tests (Wycheproof's vectors, the differential runs, the fuzz target), which show agreement on the inputs tried and nothing about the rest.
 
 No model checker has been run on `knos_oidc`. And no outside reviewer has read the verifier, or anything else here. - **A replay corpus of real tokens.** `scripts/replay_tokens.py` captures real GitHub tokens with the key set of their day and verifies them again on the deployed bytes. The release run makes the file.
 
@@ -629,12 +670,36 @@ These are the places where a mistake costs money. They are not a scope for an au
 
 It was added in Knos 0.3.13 (4 Oct 2026), it is the rule the seller's own settlement rests on, and nobody outside has read it. Then `order_pay.rs` and `order_terms.rs`, where an order's money leaves. Then the five below, which are older.
 
-**1. The RSA arithmetic.** `programs-v2/knos_oidc/src/rsa.rs`, called from `Step` in `lib.rs`. It is Montgomery multiplication written by hand on 32-bit limbs, split over several transactions, followed by a byte-for-byte check of the PKCS#1 v1.5 encoding. The Wycheproof vectors run through `verify_native`, the one-call form of the same arithmetic. The stepwise on-chain path is checked by the 120 OpenSSL verdicts and the forgery list, and since Knos 0.3.13 (4 Oct 2026) by the same 517 vectors carried over to tokens (`tests/test_wycheproof_chain.py`): that run uses the two test moduli, not the vectors' own. Since Knos 0.3.15 (5 Oct 2026) a differential test puts forged tokens of every classic kind to the built program and to a reference, and a second fuzz target compares the arithmetic with big integers under moduli the fuzzer chooses (both above). None of this is a proof. Only 2048- and 4096-bit keys and exponent 65537 are handled. A mistake that accepts one forged signature lets anyone make a token of their own look verified. They could then pay every open bounty to a wallet of their choice, and fund bounties from any balance within its cap per bounty.
+**1. The RSA arithmetic.** `programs-v2/knos_oidc/src/rsa.rs`, called from `Step` in `lib.rs`. It is Montgomery multiplication written by hand on 32-bit limbs, split over several transactions, followed by a byte-for-byte check of the PKCS#1 v1.5 encoding. The Wycheproof vectors run through `verify_native`, the one-call form of the same arithmetic.
 
-**2. The claim parser.** `programs-v2/knos_oidc/src/strict.rs` (what the verifier reads a token with since 2.2), `programs-v2/knos_oidc/src/claims.rs` (what a consumer reads a verified one with), and its use in `programs-v2/knos_pay/src/gh.rs`. It decodes base64url, splits the token and finds named claims in flat JSON without a JSON library. The `aud` claim is text a workflow chooses, so it is text the attacker may write inside the signed JSON. Since Knos 0.3.13 (4 Oct 2026) the file has unit tests of its own, a randomised comparison with `serde_json` under `cargo test`, and a cargo-fuzz target that a nightly job runs for five minutes (above). A mistake lets a token signed for one repository or workflow be read as another's, which moves money that is not the signer's. The first deployment's copy of this file is older and is not fuzzed.
+The stepwise on-chain path is checked by the 120 OpenSSL verdicts and the forgery list, and since Knos 0.3.13 (4 Oct 2026) by the same 517 vectors carried over to tokens (`tests/test_wycheproof_chain.py`): that run uses the two test moduli, not the vectors' own.
 
-**3. Token-2022 extension screening.** `extensions_ok` and `ALLOWED` in `programs-v2/knos_pay/src/token.rs`. When money enters, the extension list is walked as (type, length, value), and the mint is refused unless every type is on the list of ten. A list that does not parse is refused. The tests make mints with Token-2022 instructions in LiteSVM, in the version it bundles, and try every type from 1 to 64 that is not on the list. A mistake lets money into a mint whose behaviour blocks or taxes payouts. Each order has its own token account, so other orders are not touched.
+Since Knos 0.3.15 (5 Oct 2026) a differential test puts forged tokens of every classic kind to the built program and to a reference, and a second fuzz target compares the arithmetic with big integers under moduli the fuzzer chooses (both above). None of this is a proof. Only 2048- and 4096-bit keys and exponent 65537 are handled.
 
-**4. The off-chain decision of who is paid.** `payee`, `payout_address` and `rejected` in `src/knos/who.py`; `evidence` and `accepted` in `src/knos/terms.py`; `src/knos/closing.py`; and `settle` in `src/knos/flow.py`, the command that decides and then asks GitHub for the token. The program checks that the bounty's own repository ran its pinned workflow, and then pays the payee that workflow named. It cannot check who earned the money, or whether the checks passed. The tests use fakes of GitHub's API, so what GitHub really answers (edit stamps, lists of closed issues, collaborator permissions, check-run listings) is what the author assumed it answers. A mistake pays the wrong person, or pays for work whose checks did not pass. The payment is final at once, with no veto. It is limited to that funder's own bounties. That a funder's repository can lie is a known limit ([SECURITY.md](SECURITY.md)), not a finding.
+A mistake that accepts one forged signature lets anyone make a token of their own look verified. They could then pay every open bounty to a wallet of their choice, and fund bounties from any balance within its cap per bounty.
 
-**5. The key registration attestation.** `attested` in `programs-v2/knos_oidc/src/lib.rs` and the constants in `programs-v2/knos_oidc/src/pins.rs`. The program checks which file ran, at which commit, in which of the pinned account's two repositories, on which event and on which kind of runner, and that `aud` names the key's hash. The workflow it names, `drexthealpha/knos-oidc-rotate` at commit `6ddf031b64febecfcd510763ecee37637a8047fa`, is not in this repository, which holds only the calling file `.github/workflows/keys.yml`. What that workflow asks GitHub to sign is its own reading of the issuers' key sets, so a reviewer has to read it at that commit. The same repository holds `claim.yml`, which `Bind` trusts at the commit in `CLAIM_SHA` of `programs-v2/knos_pay/src/lib.rs`. The tests sign these claims themselves, with a seed key and a harness account. They cannot run the pinned workflow or the real account, because only GitHub can sign for those. A Rust test checks that the harness values exist only under `testkeys`. A mistake admits a key that GitHub does not publish. Whoever holds it can sign any token. The one-day delay and the guardian's approval are then all that stand between that key and every bounty. `python scripts/oidc_pins.py` prints the hashes of the keys the issuers publish right now, to compare with the four `GENESIS` constants in `pins.rs`. Its `--check` flag reads the first deployment's `pins.rs`, not this one.
+**2. The claim parser.** `programs-v2/knos_oidc/src/strict.rs` (what the verifier reads a token with since 2.2), `programs-v2/knos_oidc/src/claims.rs` (what a consumer reads a verified one with), and its use in `programs-v2/knos_pay/src/gh.rs`. It decodes base64url, splits the token and finds named claims in flat JSON without a JSON library.
+
+The `aud` claim is text a workflow chooses, so it is text the attacker may write inside the signed JSON. Since Knos 0.3.13 (4 Oct 2026) the file has unit tests of its own, a randomised comparison with `serde_json` under `cargo test`, and a cargo-fuzz target that a nightly job runs for five minutes (above).
+
+A mistake lets a token signed for one repository or workflow be read as another's, which moves money that is not the signer's. The first deployment's copy of this file is older and is not fuzzed.
+
+**3. Token-2022 extension screening.** `extensions_ok` and `ALLOWED` in `programs-v2/knos_pay/src/token.rs`. When money enters, the extension list is walked as (type, length, value), and the mint is refused unless every type is on the list of ten. A list that does not parse is refused.
+
+The tests make mints with Token-2022 instructions in LiteSVM, in the version it bundles, and try every type from 1 to 64 that is not on the list. A mistake lets money into a mint whose behaviour blocks or taxes payouts. Each order has its own token account, so other orders are not touched.
+
+**4. The off-chain decision of who is paid.** `payee`, `payout_address` and `rejected` in `src/knos/who.py`; `evidence` and `accepted` in `src/knos/terms.py`; `src/knos/closing.py`; and `settle` in `src/knos/flow.py`, the command that decides and then asks GitHub for the token. The program checks that the bounty's own repository ran its pinned workflow, and then pays the payee that workflow named.
+
+It cannot check who earned the money, or whether the checks passed. The tests use fakes of GitHub's API, so what GitHub really answers (edit stamps, lists of closed issues, collaborator permissions, check-run listings) is what the author assumed it answers. A mistake pays the wrong person, or pays for work whose checks did not pass.
+
+The payment is final at once, with no veto. It is limited to that funder's own bounties. That a funder's repository can lie is a known limit ([SECURITY.md](SECURITY.md)), not a finding.
+
+**5. The key registration attestation.** `attested` in `programs-v2/knos_oidc/src/lib.rs` and the constants in `programs-v2/knos_oidc/src/pins.rs`. The program checks which file ran, at which commit, in which of the pinned account's two repositories, on which event and on which kind of runner, and that `aud` names the key's hash.
+
+The workflow it names, `drexthealpha/knos-oidc-rotate` at commit `6ddf031b64febecfcd510763ecee37637a8047fa`, is not in this repository, which holds only the calling file `.github/workflows/keys.yml`. What that workflow asks GitHub to sign is its own reading of the issuers' key sets, so a reviewer has to read it at that commit.
+
+The same repository holds `claim.yml`, which `Bind` trusts at the commit in `CLAIM_SHA` of `programs-v2/knos_pay/src/lib.rs`. The tests sign these claims themselves, with a seed key and a harness account. They cannot run the pinned workflow or the real account, because only GitHub can sign for those. A Rust test checks that the harness values exist only under `testkeys`.
+
+A mistake admits a key that GitHub does not publish. Whoever holds it can sign any token. The one-day delay and the guardian's approval are then all that stand between that key and every bounty. `python scripts/oidc_pins.py` prints the hashes of the keys the issuers publish right now, to compare with the four `GENESIS` constants in `pins.rs`.
+
+Its `--check` flag reads the first deployment's `pins.rs`, not this one.

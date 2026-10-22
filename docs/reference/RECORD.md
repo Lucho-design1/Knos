@@ -44,8 +44,11 @@ recalled.
 `orders.sample`, `orders.period` and `orders.category` stand beside the counts.
 
 **`public`: from public pull requests, not from Knos orders.** For an agent the Agent PR Index measures
-([INDEX.md](INDEX.md)), its row of the newest week: the merged pull requests that claimed passing tests (`sample`),
+([INDEX.md](INDEX.md)), it gives that agent's row of the newest week.
+
+The row holds the merged pull requests that claimed passing tests (`sample`),
 how many had a failed check, the share, the range the true rate is 95% likely to fall in (a Wilson interval), the weeks read, and the link that disputes the row.
+
 `scripts/agent_pr_index.py board` writes these files for every agent of the index, from the index alone; its
 `--check` fails when one is behind.
 
@@ -106,10 +109,11 @@ Name the workflow by a full commit sha instead of the tag when a moved tag must 
 ## 4. The receipt to send with an invoice
 
 `knos record receipt <file> [--invoice INV-7] [--out path]` reads one acceptance receipt ([RECEIPT.md](RECEIPT.md),
-version 2 or later) and writes one A4 page and its JSON (`knos.invoice-receipt/1`): what was agreed (the order, the
-terms' hash, the amount), what was delivered (the repository, the pull request, the commit), what was accepted (the
-verdict, the checks, when, what was paid), by which evaluator (its kind and version, the issuer that signed for it,
-its independence), and the evidence hashes.
+version 2 or later) and writes one A4 page and its JSON (`knos.invoice-receipt/1`).
+
+Both carry what was agreed (the order, the terms' hash, the amount), what was delivered (the repository, the pull
+request, the commit), what was accepted (the verdict, the checks, when, what was paid), by which evaluator (its kind
+and version, the issuer that signed for it, its independence), and the evidence hashes.
 
 A receipt that does not check gets no page. The page names the one command that checks the receipt file with no
 network:

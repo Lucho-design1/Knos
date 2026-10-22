@@ -4,7 +4,9 @@
 
 **In plain words.** Before 0.3.29 changes the programs, this page records three facts as they stood on 13 Oct 2026:
 which sBPF version every Knos program binary is, whether the memory engine is still Sibyl and what its test proves,
-and which Solana features devnet has switched on. Every value below was read by a command named beside it; nothing
+and which Solana features devnet has switched on.
+
+Every value below was read by a command named beside it; nothing
 here is estimated. It was read from commit `99cc4e3e` (v0.3.28) and from devnet; no transaction was sent.
 
 ## 1. sBPF version of every program binary
@@ -35,10 +37,14 @@ Deployed binaries were read with `solana program dump -u devnet <program id>` (r
 **Build commands and toolchain (as committed).**
 - `scripts/build_programs_v2.sh` and `scripts/build_programs.sh` run `cargo build-sbf [--features testkeys]` with no
   `--arch` flag. `cargo-build-sbf --help` (2.3.13) says `--arch <arch> ... [default: v0] [possible values: v0, v1, v2, v3]`.
-  So every build is v0 because the flag was never given.
+
+So every build is v0 because the flag was never given.
 - The deployed binaries are `solana-verify build ... --base-image solanafoundation/solana-verifiable-build:2.3.11`
   (`.github/workflows/program.yml`, `VERIFY_IMAGE`; pinned in commit `c2ee8458c`, 2 Oct 2026, "pin
-  solana-verifiable-build 2.3.11 (rustc 1.84)"). Also no `--arch`.
+  solana-verifiable-build 2.3.11 (rustc 1.84)").
+
+Also no `--arch`.
+
 - CI installs agave `SOLANA_VERSION: v2.3.13`, unchanged since program.yml was added in `4b8cd65a6` (1 Oct 2026).
 - Crates: `solana-program = "=2.2.1"`, `rust-version = "1.84"` in all four `programs-v2/*/Cargo.toml`; no Anchor.
 - The build machine used for this audit (13 Oct): solana-cli 2.3.13, cargo-build-sbf 2.3.13, platform-tools v1.48.
@@ -46,17 +52,22 @@ Deployed binaries were read with `solana program dump -u devnet <program id>` (r
   output is the same v0 (e_flags 0x0 in the committed fixtures).
 
 **The downgrade the founder remembers: not found.** Searched, with no match:
+
 - every commit message on every branch and tag of drexthealpha/Knos (236 commits locally, plus all 17 remote heads
   fetched): `git log --all -i -E --grep='sbpf|sbf.?v[0-9]|--arch|v3 target|downgrad'`;
 - every diff: `git log --all -S` for `sbpfv3`, `sbpfv2`, `sbpf-v3`, `sbpf-v2`, `--arch`, `v3.sbf`, `sbpfv`, `SBPF`,
-  `arch=v3`, `sbpf_version`, `enable_sbpf`, `e_flags`, and `-G 'sbpf|--arch'`. The one `-G` hit, `6eb81dd15`, only adds
+  `arch=v3`, `sbpf_version`, `enable_sbpf`, `e_flags`, and `-G 'sbpf|--arch'`.
+
+The one `-G` hit, `6eb81dd15`, only adds
   the `solana-sbpf` crate to a Cargo.lock (a LiteSVM dependency of the test crate), not a build target;
 - GitHub code and commit search `sbpf user:drexthealpha` and `"--arch" build-sbf user:drexthealpha`: 0 results;
 - the maintainer's local working copies and build folders (keys and build output excluded): no `sbpfv<n>`,
   `sbpf-v<n>`, `--arch v<n>` or `SBPFv<n>` text.
 
 **Plainly: every Knos binary was built as sBPF v0, and no commit ever targeted sBPF v3** (nor v1 or v2). Every
-binary that was committed or is live on devnet is v0. A v3 build made outside this repository, or a devnet deployment overwritten
+binary that was committed or is live on devnet is v0.
+
+A v3 build made outside this repository, or a devnet deployment overwritten
 before the current one, cannot be ruled out from here (`solana program dump` returns only the current program data).
 Note: devnet activated SBPFv3 deployment only at slot 461808000 (epoch 1069, section 3), so a v3 program could not
 have been deployed to devnet before that slot.
@@ -68,14 +79,17 @@ at `99cc4e3e`: **24 passed** in 46.42 s (13 Oct 2026). The engine is `sibyl-memo
 dependency in pyproject.toml is `>=0.8.1`); `src/knos/proof/history.py` (1,630 lines) wraps it as `SibylStore`
 (`for_repo` uses Sibyl's shared `~/.sibyl-memory/memory.db`, `local(dir)` uses `<dir>/sibyl.db`).
 
-What the test proves: - The Stop hook blocks a false "done" only because of a rule Sibyl learned; the same hook with
-`NullStore` allows it. - What was learned lives only in Sibyl's own database (entities, journal events); deleting it
-removes the behaviour, a corrupt file raises instead of being papered over, and with the package removed `SibylStore`
-raises ImportError. - Sibyl's free-tier cap is enforced by Sibyl's own gate (`CapExceededError`), not bypassed. - The
-GitHub judge refuses an agent's second pull request because of what Sibyl kept from the first; lessons that travel in
-the `knos-memory` issue decide nothing until loaded into a Sibyl store. - Refusals are COLD journal events, the
-running count is a HOT state document, rules are WARM entities; owed checks, the per-host answers (every host in
-tests/_host_events.py) and the funding-reply terms line all change when the store is deleted or edited.
+What the test proves:
+
+- The Stop hook blocks a false "done" only because of a rule Sibyl learned; the same hook with `NullStore` allows it.
+- What was learned lives only in Sibyl's own database (entities, journal events); deleting it removes the behaviour,
+  a corrupt file raises instead of being papered over, and with the package removed `SibylStore` raises ImportError.
+- Sibyl's free-tier cap is enforced by Sibyl's own gate (`CapExceededError`), not bypassed.
+- The GitHub judge refuses an agent's second pull request because of what Sibyl kept from the first; lessons that
+  travel in the `knos-memory` issue decide nothing until loaded into a Sibyl store.
+- Refusals are COLD journal events, the running count is a HOT state document, rules are WARM entities; owed checks,
+  the per-host answers (every host in tests/_host_events.py) and the funding-reply terms line all change when the
+  store is deleted or edited.
 
 Gaps (true at `99cc4e3e`): - **Memory is optional at run time.** If `sibyl_memory_client` is missing or the store fails to
 open, the hook falls back to `NullStore` and still runs (`src/knos/proof/hook.py` lines 131-135; also preflight.py,

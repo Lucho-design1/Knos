@@ -2,10 +2,14 @@
 
 **Outside key holders today: 0.** One person, the founder, holds all three member keys of both multisigs
 (accounts that act only when 2 of their 3 keys agree; [GOVERNANCE.md](GOVERNANCE.md)). This page is for the first person who is not the founder: what a key is for, what
-it can never do, and the three steps to ask for one. Everything is on Solana devnet, in test money.
+it can never do, and the three steps to ask for one.
+
+Everything is on Solana devnet, in test money.
 
 **In short: a first outside key holder holds 1 key of 3 and cannot act alone, and the founder keeps 2, which
-are enough to approve any upgrade without that key.** The key holder can vote, refuse to vote and check every build
+are enough to approve any upgrade without that key.**
+
+The key holder can vote, refuse to vote and check every build
 in public; stopping the founder from approving alone takes a second outside key, or requiring all 3 of 3 keys.
 
 The count is the list `outside` in [`web/keyholders.json`](../../web/keyholders.json). It changes only after the
@@ -74,7 +78,9 @@ The second command prints the public key, an address of 32 to 44 letters and dig
 **In a browser, on the site's "Hold a key" page** (`web/keyholder.js`). The page makes a Solana-type key (Ed25519)
 using the browser's built-in cryptography (WebCrypto), shows the public key, and saves the private key as `knos-member.json`, the same file format
 `solana-keygen` writes. It sends the key nowhere and stores nothing; once the file is saved the page forgets the
-private half. This needs Chrome or Edge 137, Firefox 129, Safari 17, or later
+private half.
+
+This needs Chrome or Edge 137, Firefox 129, Safari 17, or later
 ([caniuse: SubtleCrypto generateKey, Ed25519](https://caniuse.com/mdn-api_subtlecrypto_generatekey_ed25519)); an older
 browser is told so and shown the commands above.
 

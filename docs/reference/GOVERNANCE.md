@@ -28,15 +28,22 @@ are in [`web/upgrades.json`](../../web/upgrades.json). [SECURITY.md](SECURITY.md
 the security model; [INVARIANTS.md](INVARIANTS.md) is what the programs guarantee while they are unchanged.
 
 **The short version.** One person can change every program, 8 days after saying so in public. Both multisigs
-(accounts that act only when enough keys agree) need 2 of the same 3 member keys, and all three are the founder's. So the 8-day delay gives **notice**. It does not give
+(accounts that act only when enough keys agree) need 2 of the same 3 member keys, and all three are the founder's. So the 8-day delay gives **notice**.
+
+It does not give
 independent oversight: nobody else has to agree, and nobody else can refuse.
 
 **Leaving before an upgrade is possible for open orders, not for everything.** A Balance can be withdrawn at once.
+
 An open order can be cancelled and refunded before an upgrade approved from now on can run: cancelling gives the
 seller 7 days of notice, and a program change now waits 8 days in public (Squads time lock 691,200 s, in force since
-11 Oct 2026). An order held for a payee and a holdback in its warranty still cannot be left in time.
+11 Oct 2026).
+
+An order held for a payee and a holdback in its warranty still cannot be left in time.
 `knos exit --before-upgrade` lists every holding of yours with its way out and the hours it misses by (section 2).
-Until 11 Oct 2026 the wait was 48 hours, shorter than the notice. Two member keys created and approved the
+Until 11 Oct 2026 the wait was 48 hours, shorter than the notice.
+
+Two member keys created and approved the
 configuration transaction that changed it (proposal 9) on 9 October 2026, after upgrade proposals 7 and 8 had run;
 it has been in force since 11 Oct 2026.
 
@@ -97,43 +104,61 @@ accounts. On devnet the Squads program itself has an upgrade authority, which is
   | an order held for a payee who has bound no wallet | `RefundOrder` after the 180-day hold | **no** |
   | a holdback in its warranty (up to 90 days) | `Release` to the seller when it ends; back to the funder only by a judge's revert token | **no** |
 
-  **Where an order cannot be left, and why.** The notice protects the seller who is working on the order: a funder
-  who could take the money back at once could cancel after the work was done. Until 11 Oct 2026 the timetable had two
+**Where an order cannot be left, and why.** The notice protects the seller who is working on the order: a funder
+  who could take the money back at once could cancel after the work was done.
+
+Until 11 Oct 2026 the timetable had two
   promises that disagreed, and the seller's won: an upgrade could execute while a funder's order was still in its
   notice. The 8-day time lock ends that for open orders; held orders and holdbacks are still slower than it.
-  For comparison, L2BEAT's framework for rollups asks that users have at least 7 days to exit before an unwanted
+
+For comparison, L2BEAT's framework for rollups asks that users have at least 7 days to exit before an unwanted
   upgrade, and 30 days at its highest stage
   ([L2BEAT, "Introducing Stages"](https://medium.com/l2beat/introducing-stages-a-framework-to-evaluate-rollups-maturity-d290bb22befe)).
+
 - **The change that closed the gap for open orders, with no program change.** Set the upgrade multisig's time lock
   above the notice plus the presentation grace: an order cancelled when an upgrade is approved is refunded 7 days,
-  2 hours and 1 second later, so the lock must be at least 612,002 s. It is 8 days (691,200 s); about 22 hours
+  2 hours and 1 second later, so the lock must be at least 612,002 s.
+
+It is 8 days (691,200 s); about 22 hours
   above the minimum are for sending the `Cancel`, which for a Balance's order is a comment and a workflow run.
-  [`scripts/timelock_plan.py`](../../scripts/timelock_plan.py) reads the multisig and prints the Squads configuration
+
+[`scripts/timelock_plan.py`](../../scripts/timelock_plan.py) reads the multisig and prints the Squads configuration
   transaction: `config_transaction_create` with one action, `SetTimeLock { new_time_lock: 691200 }`, then a
-  proposal, 2 approvals, and `config_transaction_execute`, which itself waited out the 48 hours then in force. It refuses
+  proposal, 2 approvals, and `config_transaction_execute`, which itself waited out the 48 hours then in force.
+
+It refuses
   while any proposal of the multisig is a draft, active, or approved and not executed, because the change makes
   every earlier proposal stale: one not yet approved can no longer be approved, and an approved upgrade waits the
   new time lock from its approval. So it was sent only after proposals 7 and 8 had executed.
-  Facts from the Squads v4 source: `time_lock` is the seconds between approval and execution; at most 3 × 30 days;
+
+Facts from the Squads v4 source: `time_lock` is the seconds between approval and execution; at most 3 × 30 days;
   `SetTimeLock` calls `invalidate_prior_transactions`
   ([state/multisig.rs](https://github.com/Squads-Protocol/v4/blob/main/programs/squads_multisig_program/src/state/multisig.rs),
   [config_transaction_execute.rs](https://github.com/Squads-Protocol/v4/blob/main/programs/squads_multisig_program/src/instructions/config_transaction_execute.rs),
   [vault_transaction_execute.rs](https://github.com/Squads-Protocol/v4/blob/main/programs/squads_multisig_program/src/instructions/vault_transaction_execute.rs),
   [Squads documentation](https://docs.squads.so/main/development/typescript/instructions/create-config-transaction)).
   Now that it is in force, `knos exit --before-upgrade` says that every open order can be cancelled and refunded
-  before any upgrade approved from now on can execute. It does not cover held orders (180 days) or holdbacks in
+  before any upgrade approved from now on can execute.
+
+It does not cover held orders (180 days) or holdbacks in
   warranty (up to 90 days). The cost: every fix waits 8 days, the one in section 3 included.
   **State: in force since 11 Oct 2026.** A program change now waits 8 days in public (Squads time lock 691,200 s,
-  in force since 11 Oct 2026). The change is proposal 9 of the upgrade multisig. On 9 October 2026,
+  in force since 11 Oct 2026).
+
+The change is proposal 9 of the upgrade multisig. On 9 October 2026,
   `python scripts/timelock_plan.py --rpc` found no other proposal open, and
   `node scripts/governance.mjs set-time-lock --send` sent it (one action, `SetTimeLock { new_time_lock: 691200 }`).
   It was created in
   [`42yHfmYN...`](https://explorer.solana.com/tx/42yHfmYN8pF3zxow7a4SsVWW5voEpZ5BBbnSnyx6EQXSWQYifdVUySbEPuUDpLYErr24SpEa34eExcRy5ztSECfa?cluster=devnet) and approved by two of the three member keys in
-  [`MSTGH4Q9...`](https://explorer.solana.com/tx/MSTGH4Q99fy6xNWVJ8hTCjs7mJzuVD7rGNF1Ymy6JeuB3cDMThTGnsxKBBKPvv5Q741DEfKLJrecrtBibv45uyQ?cluster=devnet). The Squads program executes a configuration transaction only once the
+  [`MSTGH4Q9...`](https://explorer.solana.com/tx/MSTGH4Q99fy6xNWVJ8hTCjs7mJzuVD7rGNF1Ymy6JeuB3cDMThTGnsxKBBKPvv5Q741DEfKLJrecrtBibv45uyQ?cluster=devnet).
+
+The Squads program executes a configuration transaction only once the
   time lock then in force (48 hours) has run from its approval. On 11 Oct 2026 a member executed it with
   `node scripts/governance.mjs execute upgrade 9`, in
   [`2gYPofAZDfwXi6pK2tAWkRdEDfqVcceAmf3PsmW6x4jkHafNCresgEQDS3zJg2dXZRKi1NnNMWcW6ct3eFPFV1m9`](https://explorer.solana.com/tx/2gYPofAZDfwXi6pK2tAWkRdEDfqVcceAmf3PsmW6x4jkHafNCresgEQDS3zJg2dXZRKi1NnNMWcW6ct3eFPFV1m9?cluster=devnet), and the multisig reads back
-  691200 s. Every proposal made before it is stale; an upgrade approved from now on waits 8 days.
+  691200 s.
+
+Every proposal made before it is stale; an upgrade approved from now on waits 8 days.
 - **They are not oversight.** The same person proposes, approves and executes.
 - **Nothing is sent to anyone.** No comment is posted on repositories with open orders, and no email exists. The
   notice reaches someone who looks, or who subscribed to the feed.
@@ -224,7 +249,9 @@ from it.
 
 **One outside key of three does not stop the founder,** who still holds two: the command prints "the founder alone
 can STILL approve an upgrade". The step that really limits the founder is the next one: two
-outside keys of three, or requiring all 3 of 3 keys (where losing one key ends upgrades for good). Which of the two is decided with the first key holder.
+outside keys of three, or requiring all 3 of 3 keys (where losing one key ends upgrades for good).
+
+Which of the two is decided with the first key holder.
 
 ## 6. Who deploys and who approves: what one key can do
 
@@ -258,7 +285,9 @@ Three kinds of key are involved in an upgrade. The addresses are the ones devnet
 
 **The present setup does not separate these duties.** One key folder (`.knos-keys`) on one machine holds the deploy
 fee payer and all three member keys, so whoever has that machine has every power above. Splitting them between two
-of the founder's own machines would separate nothing that matters. The separation is a second person's key
+of the founder's own machines would separate nothing that matters.
+
+The separation is a second person's key
 (section 5); Squads v4 gives each member its own permissions (initiate, vote, execute), so a key that deploys and
 proposes can be given no vote.
 
@@ -307,7 +336,9 @@ keys that fix the multisigs' addresses. Every command reads the chain first and 
 
 **What is not written anywhere:** how the founder stores the three member keys, whether copies exist, what happens to
 them if the founder cannot act, and a rotation schedule. There is no hardware security module and no key ceremony.
-This page cannot supply those: they are the founder's to write. If the founder's keys are lost, no program can be
+This page cannot supply those: they are the founder's to write.
+
+If the founder's keys are lost, no program can be
 upgraded, no new signing key can be approved, and no key can be revoked; payments under the keys that are still
 alive, refunds and withdrawals go on.
 
@@ -372,7 +403,9 @@ The step-by-step version for a funder, with what each step shows, is in [DRILLS.
 accepted but not yet paid when the account was suspended is not paid: the seller's remedy is outside the program.
 
 **The plan: a second owner for the workflows.** Not done: the organisation does not exist, no repository has
-moved, and its first step needs a second person. Move the workflows and the relay to
+moved, and its first step needs a second person.
+
+Move the workflows and the relay to
 an organisation account with two owners, the founder and one other person, each signing in with their own second
 factor, so that losing or suspending either account leaves the other able to keep the workflows published.
 

@@ -11,21 +11,36 @@ Since 9 October 2026 the version on devnet is 2.2 (upgrade proposal 7;
 [MANIFEST.md](MANIFEST.md)). Version 2.1 added other issuers and private keys.
 
 **2.2** changes one thing: the token's header and payload must be valid JSON in every byte. 2.1 read only the
-claims it needed and stepped over every other value by its brackets and quotes. So it accepted a payload the issuer
+claims it needed and stepped over every other value by its brackets and quotes.
+
+So it accepted a payload the issuer
 really signed that is not strict JSON in a value nobody reads (`tru`, a number with a
 leading zero, brackets that do not match, a control character, bytes that are not UTF-8, `NaN`, a comment: 13
-shapes in [the differential test](../../tests/test_oidc_differential.py)). That is not a forgery, since only the
-issuer's key can sign one, but two readers of one verified token could disagree about it. 2.2 checks every value
+shapes in [the differential test](../../tests/test_oidc_differential.py)).
+
+That is not a forgery, since only the
+issuer's key can sign one, but two readers of one verified token could disagree about it.
+
+2.2 checks every value
 against RFC 8259 as it passes it, refuses a name that appears twice in the top-level object (error 62), and takes at
-most 64 levels of nesting and 128 top-level members (error 61). Nothing else changes: the same instructions, the
+most 64 levels of nesting and 128 top-level members (error 61).
+
+Nothing else changes: the same instructions, the
 same accounts, the same token account layout, the same error codes, so a program that reads a verified token reads
 it as before. It costs no more compute than 2.1 ([ASSURANCE.md](ASSURANCE.md), "The claim reader: strict since 2.2").
+
 The strict reader is [`strict.rs`](../../programs-v2/knos_oidc/src/strict.rs), and only the verifier's own instructions
-call it: Step reads the header and the payload with it before it marks the token account VERIFIED. The reader a
+call it: Step reads the header and the payload with it before it marks the token account VERIFIED.
+
+The reader a
 consumer compiles in, [`claims.rs`](../../programs-v2/knos_oidc/src/claims.rs), is 2.1's source unchanged and still
 passes over the values it is not asked for; `knos_pay` links it, and a change to it would change `knos_pay`'s bytes,
-which 2.2 does not do. It does not need the strictness: the verifier refuses a payload that is not strict JSON
-at verification, so no such payload ever reaches the account `knos_pay` reads. For the same reason the `knos_oidc`
+which 2.2 does not do.
+
+It does not need the strictness: the verifier refuses a payload that is not strict JSON
+at verification, so no such payload ever reaches the account `knos_pay` reads.
+
+For the same reason the `knos_oidc`
 crate's version stays 0.3.14 (a crate's version is in the bytes of what depends on it); the program is 2.2 by its
 `VERSION` constant and its `security.txt`.
 Which build is live is also in [`web/upgrades.json`](../../web/upgrades.json). A 2.2 build says so in its bytes: its
@@ -223,16 +238,24 @@ project. Running it there is [one command](#the-round-as-one-command). The claim
 
 **Ids cannot meet.** A GitLab id is read into a range of its own, and the escrow refuses a GitHub token (and a
 token under a private key) whose repository, owner or actor id is 800000000000000000 or more. GitHub's ids are
-around ten digits today. The ranges are decimal so that an audience, which carries ids as at most 18 digits, can
-name a GitLab payee: user 4242 is payee `900000000000004242`. GitLab numbers users and namespaces apart (a user's
+around ten digits today.
+
+The ranges are decimal so that an audience, which carries ids as at most 18 digits, can
+name a GitLab payee: user 4242 is payee `900000000000004242`.
+
+GitLab numbers users and namespaces apart (a user's
 own namespace has another number than the user), so they get two ranges, and no GitLab token passes a rule that
 asks whether the actor owns the repository.
 
 **The pin.** `ci_config_ref_uri` and `ci_config_sha` are null when the CI file is kept in another project; such a
 token is refused. When it is in the project, `ci_config_sha` is the commit the pipeline ran on: GitLab signs no
-commit for a file kept apart from the code, as GitHub's `job_workflow_sha` is. So the pinned file lives on a
+commit for a file kept apart from the code, as GitHub's `job_workflow_sha` is.
+
+So the pinned file lives on a
 protected branch that does not move (the example calls it `knos`). The order stores the URI's hash and that
-commit, and pays only on a token of exactly that file, branch and commit. The default branch's own pipeline after
+commit, and pays only on a token of exactly that file, branch and commit.
+
+The default branch's own pipeline after
 a merge has another commit and is refused; it starts the pinned one (`trigger:`, which GitLab signs as
 `pipeline_source` `pipeline`:
 [downstream pipelines](https://docs.gitlab.com/ci/pipelines/downstream_pipelines/)), and the pinned job reads the
@@ -261,11 +284,13 @@ merge request from GitLab's API before it lets the token out.
     GITLAB_TOKEN=... KNOS_GITLAB_PROJECT=group/name python scripts/gitlab_round.py run --rpc <devnet rpc> --keys <keys>
     python scripts/gitlab_round.py run --simulate
 
-`run` pushes the example's file to the branch `knos` and protects it, adds the trigger job to the default branch when
-the project has no CI file, opens and merges one merge request whose description names an address, funds an order for
-it from the wallet `<keys>/funder.json`, starts a pipeline on the default branch with the pay audience (its trigger
-job starts the pinned pipeline, which GitLab signs as `pipeline_source` `pipeline`), reads the token the pinned job
-left, holds it to the escrow's rules for nothing, has `knos_oidc` verify it and sends `PayOrder`.
+`run` pushes the example's file to the branch `knos` and protects it, and adds the trigger job to the default branch
+when the project has no CI file. It opens and merges one merge request whose description names an address, and funds
+an order for it from the wallet `<keys>/funder.json`.
+
+It starts a pipeline on the default branch with the pay audience (its trigger job starts the pinned pipeline, which
+GitLab signs as `pipeline_source` `pipeline`). It reads the token the pinned job left, holds it to the escrow's rules
+for nothing, has `knos_oidc` verify it and sends `PayOrder`.
 
 Each step is kept, so a second run takes up where the first stopped. It exits 3, having sent nothing, and says exactly
 what is missing when there is no token, no project, no usable GitLab key at the public `knos_oidc`, or a pipeline that
@@ -274,25 +299,37 @@ has not finished.
 `--simulate` runs the same steps in the simulator against a stand-in for gitlab.com written in the script, with tokens
 the test key signs: evidence of nothing on gitlab.com.
 
-**Not seen on gitlab.com yet**, and the first real run settles each: that a `trigger:` job naming the pipeline's own
+**Not seen on gitlab.com yet**, and the first real run settles each. First, that a `trigger:` job naming the pipeline's own
 project gives the downstream pipeline the source `pipeline` (GitLab documents that source "for multi-project
-pipelines": [`CI_PIPELINE_SOURCE`](https://docs.gitlab.com/ci/jobs/job_rules/)); that a token for a pay audience of
+pipelines": [`CI_PIPELINE_SOURCE`](https://docs.gitlab.com/ci/jobs/job_rules/)).
+
+Second, that a token for a pay audience of
 about 240 characters fits the verifier's 8,192 bytes for the user who runs it (`groups_direct` lists up to 200
-groups); that GitLab's keys are usable at the public id on the day. The command checks the second and third before a
+groups). Third, that GitLab's keys are usable at the public id on the day.
+
+The command checks the second and third before a
 fee is spent and names the claim that is off for the first.
 
 **What a GitLab project cannot do yet.** Bind a wallet (the pay token must carry the payee's address; with none
-the order is held and goes back to its funder when the hold ends); reserve, cancel or revert an order, or fund a
-2.0 job (a GitLab token with any other audience is refused); use the devnet faucet (send test USDC to the Balance,
-or fund from a wallet); pin a file on a self-managed GitLab (gitlab.com only); use a runner of its own. The always-on
+the order is held and goes back to its funder when the hold ends). Reserve, cancel or revert an order, or fund a
+2.0 job (a GitLab token with any other audience is refused).
+
+Use the devnet faucet (send test USDC to the Balance,
+or fund from a wallet). Pin a file on a self-managed GitLab (gitlab.com only). Use a runner of its own.
+
+The always-on
 relay refuses a GitLab token for the escrow, there is no `knos` command and no page: the token is carried by
 `scripts/gitlab_round.py`, or with the client in `src/knos/settle/v2`. The example's paying job does not check the
-order's terms on Solana; it says so where it would. The carrier does check the order's project, pin and terms before
+order's terms on Solana; it says so where it would.
+
+The carrier does check the order's project, pin and terms before
 it sends, which is the carrier's word and not the judge's.
 
 **No longer on that list** (no program change was needed): a command that carries the token; funding without a
 person starting a pipeline in a browser (a wallet-funded order); and the example's check that the default branch is
-protected, which asked an endpoint that needs a token the job does not have and now reads the branch itself
+protected.
+
+That check asked an endpoint that needs a token the job does not have, and now reads the branch itself
 ([`GET /projects/:id/repository/branches/:branch`](https://docs.gitlab.com/api/branches/), open for a public project).
 
 ## Limits

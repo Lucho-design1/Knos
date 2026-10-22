@@ -51,10 +51,12 @@ What holds:
 
 ## A run that relays its own token
 
-A token waits for the public worker in two places: until a pass of the worker reads the repository's comments (a pass
-every 3 seconds for a repository it knows, a search every 30 seconds for one it does not: `--every` of `knos relay`,
-`SEARCH_EVERY` in `src/knos/proof/ghrelay.py`), and then until the job that posted it finds the worker's verdict in the
-worker's log (`ghrelay.wait_for`, asked every 3 seconds).
+A token waits for the public worker in two places. First, until a pass of the worker reads the repository's comments: a
+pass every 3 seconds for a repository it knows, a search every 30 seconds for one it does not (`--every` of `knos
+relay`, `SEARCH_EVERY` in `src/knos/proof/ghrelay.py`).
+
+Then, until the job that posted it finds the worker's verdict in the worker's log (`ghrelay.wait_for`, asked every 3
+seconds).
 
 A run that holds a fee key skips both. Nothing is posted for a relay and nothing is polled: the run sends the token
 itself and has the result when the transaction confirms.
@@ -145,23 +147,33 @@ what the event names and ends. It keeps no notes, saves no cache and starts no r
 
 **Recorded before it is read.** The event run's first write is one line in the relay log (`knos-inbox 1
 <runner> {"repo": ..., "n": [...], "t": ...}`), before it reads a comment or sends a transaction. The sweep reads the
-log's comments on every pass anyway, and reads the repository an inbox line names from then on. An event run that
+log's comments on every pass anyway, and reads the repository an inbox line names from then on.
+
+An event run that
 dies after that line loses nothing: the sweep's polling is the backstop, not the transport. Only lines the log
 repository's own workflow account wrote count.
 
 **Workers partitioned by order.** A token that names an order has that order as its lane (below); any other token's
 lane is the owner of the repository it was signed for. `relayq.part_of(lane, n)` (sha256, modulo n) gives a lane one part, the same in
-every process. The event run's workers each take one part, so an order's tokens always go to the same worker. A runner
+every process.
+
+The event run's workers each take one part, so an order's tokens always go to the same worker. A runner
 can take one part only (`KNOS_RELAY_PARTITION=i/n`), so runners that share no file never take the same order; the
 sweep takes every part and is the backstop for a part whose runner is gone. Tested in `tests/test_relayq.py`.
 
 **PayOrder capacity, end to end.** `scripts/load_pay.py` carries M payments with N relays, each with a fee payer of
-its own, each payment to the relay of its part: the token written, verified, then PayOrder. In the simulator it
+its own, each payment to the relay of its part: the token written, verified, then PayOrder.
+
+In the simulator it
 checks every order paid once, each relay paid only its part and with its own key, and counts transactions and compute
 units per payment; it gives no rate. On devnet it takes pay tokens GitHub signed (the release run collects them) and
-records attempts, paid, refused, never completed, p50/p95/p99 seconds and payments a second. Run once on devnet at
+records attempts, paid, refused, never completed, p50/p95/p99 seconds and payments a second.
+
+Run once on devnet at
 the public program ids (8 Oct 2026, [LOAD.md](LOAD.md)): 40 of 40 paid in 412.74 s, 0.097 a second, through ONE
-relay, because all 40 tokens came from one owner and a lane was then the owner. Run again the same day with 4 relays
+relay, because all 40 tokens came from one owner and a lane was then the owner.
+
+Run again the same day with 4 relays
 and 4 fee accounts: 40 of 40 paid in 211.27 s, 0.189 a second (p50 11.45 s, p95 22.61 s, worst 34.9 s; relays paid
 16, 8, 5 and 11; fee accounts took 14, 9, 9 and 8). Both rates are measured.
 
@@ -228,13 +240,16 @@ and 4 fee accounts: 40 of 40 paid in 211.27 s, 0.189 a second (p50 11.45 s, p95 
 under `workflows:` by its name alone, and offers nothing that names a repository; it says nothing about other
 repositories at all
 ([workflow_run](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run)).
+
 The worker listens for the workflow named `knos` and is started by runs of that workflow in its own repository
 only. (An earlier text of this page gave "only for workflows of the same repository" as a sentence of GitHub's page.
 The page has no such sentence; the reading above is what it does say.)
 
 **What this means: only the worker's own repository can fire either trigger.** A `repository_dispatch` needs write
 access to the worker repository's contents, which a job in a stranger's repository does not have (its
-`GITHUB_TOKEN` is for its own repository); and `workflow_run` comes only from runs in the worker's repository. So
+`GITHUB_TOKEN` is for its own repository); and `workflow_run` comes only from runs in the worker's repository.
+
+So
 for every other repository the public worker serves, no event starts a run: their tokens are found by the sweep,
 on its 3-second pass and its 30-second search, exactly as before. The event helps the worker's own repository, an
 operator who holds such a token, and anyone who runs the worker in a repository of their own.
@@ -267,17 +282,27 @@ run alike. An entry is `queued`, `leased`, `done` or `dead`:
 
 **The file's format is the one earlier versions wrote.** In the file the four states are spelled as the journal always spelled
 them: `waiting` (queued), `sending` (leased), `confirmed` (done), `refused` or `expired` (dead: refused by the
-program or the relay, or given up). So notes written by this release are read by the one before it, the status
+program or the relay, or given up).
+
+So notes written by this release are read by the one before it, the status
 comment's `state=` says what it said, and notes written by an older relay are read as the four states. An entry
-now also holds its lane, its token and where it was posted. An open entry of older notes has no token: it is taken
+now also holds its lane, its token and where it was posted.
+
+An open entry of older notes has no token: it is taken
 up again when its comment is read, as before.
 
 **The sweep on the queue.** One pass of `ghrelay.once`: read the comments; queue each new token (it is in the notes
 before anything is sent); carry what the queue holds with 4 workers, each entry at most once in a pass; write the
-verdicts. An entry to be tried again waits for a later pass, on the times it always had (the next pass twice, then
-10, 20, ... 60 s apart, for as long as the chain would take the token). In the sweep an entry that waits does not
+verdicts.
+
+An entry to be tried again waits for a later pass, on the times it always had (the next pass twice, then
+10, 20, ... 60 s apart, for as long as the chain would take the token).
+
+In the sweep an entry that waits does not
 hold its lane: only an entry in flight does, so a token retried for an hour does not keep its owner's later tokens
-waiting. A pass that is killed leaves its leases in the notes; the same run's next pass ends them and sends again,
+waiting.
+
+A pass that is killed leaves its leases in the notes; the same run's next pass ends them and sends again,
 and another run takes them when the lease is over (180 s).
 
 `verify`, `withdraw` and a passkey's funding line are on the queue too, in the sweep only. They fit the same
@@ -288,9 +313,13 @@ A token that names no owner (`repository_owner_id`) cannot be shown to share no 
 sweep all such tokens leave one at a time. GitHub's tokens always name one.
 
 **An event run and the sweep: notes that merge.** The two once did not share a notes
-file, so both could carry one token (the chain refuses the second: harmless, and a wasted fee), and sharing one
+file, so both could carry one token (the chain refuses the second: harmless, and a wasted fee).
+
+Sharing one
 journal naively would have let an event run carry the sweep's waiting tokens on its own count of 12 tries and mark
-them dead. Neither can happen now where the two share a folder, because nothing is shared that one run
+them dead.
+
+Neither can happen now where the two share a folder, because nothing is shared that one run
 could overwrite:
 
 - **A journal each.** A run's queue is its own file: the sweep's `ghrelay.json`, an event run's
@@ -345,10 +374,12 @@ labelled `knos-relay`. `relayq.LogStore` keeps the notes there as well as in the
   carried by this run: <runner> has it on chain (relay log comment <id>)`, or holds it, or had it refused. Until this
   was seen live in staging an event run that found the sweep's token printed only "0 tokens carried".
 
-`tests/test_relayq.py` runs all six orders of two runners' two writes and two reads over one token, each with the
-clocks equal and 50 s apart either way (sent once in each); a runner that dies holding a lease (the other takes the
-token when the lease is over, and it is sent once); GitHub failing (local notes, said once); a stranger's line
-(ignored); and an event run and a sweep on two disks that see each other only through the log.
+`tests/test_relayq.py` runs all six orders of two runners' two writes and two reads over one token. Each runs with
+the clocks equal and 50 s apart either way (sent once in each).
+
+It also runs a runner that dies holding a lease (the other takes the token when the lease is over, and it is sent
+once); GitHub failing (local notes, said once); a stranger's line (ignored); and an event run and a sweep on two
+disks that see each other only through the log.
 
 What this does not close: GitHub may list a comment a moment after it took it; a run that reads in that moment does
 not see the other's line and both send. The chain then takes the token once, as before.
@@ -393,31 +424,45 @@ minutes) with the timer disabled, and an event run and the sweep leave `knos-not
 
 **A repeat is harmless, and the queue relies on it.** A worker that is killed leaves a lease behind. When it
 expires the entry is sent again, whether or not the first worker had sent: the program takes a token once, and the
-second send is answered "already" and moves nothing. The queue never tries to find out. Tested three ways: on the
+second send is answered "already" and moves nothing. The queue never tries to find out.
+
+Tested three ways. First, on the
 queue with a stand-in chain that keeps that one rule (`tests/test_relayq.py`: a worker killed after its send, the
-token sent twice and taken once), on the programs as built in LiteSVM (`tests/test_relay_failures.py`: a relay
-killed between its send and the confirmation pays once), and for 1,000 orders with every tenth token sent twice
+token sent twice and taken once). Second, on the programs as built in LiteSVM (`tests/test_relay_failures.py`: a relay
+killed between its send and the confirmation pays once).
+
+Third, for 1,000 orders with every tenth token sent twice
 ([LOAD.md](LOAD.md), section 1).
 
 **Workers and lanes.** `relayq.work` keeps 4 entries in flight (`--workers`, `KNOS_RELAY_WORKERS`). Two tokens of
-one lane are never in flight together and leave in the order they came. The lane is the account that owns the
+one lane are never in flight together and leave in the order they came.
+
+The lane is the account that owns the
 repository the token was signed for (`relay.lane`: `repository_owner_id`), which is wider than any account two
 tokens can both write (a funder's Balance, an order, a job). So a slow confirmation holds its own owner's tokens
 and nobody else's.
 
 **Fee payers.** The public worker runs **one** fee payer today (`KNOS_RELAY_KEY`), and all 4 workers pay from it:
 every transaction of the relay then writes one fee account, which is what [LOAD.md](LOAD.md), section 3, counts
-per block. `KNOS_RELAY_KEYS` names more keys (base58 keys separated by spaces or commas, or a JSON list). With N
+per block. `KNOS_RELAY_KEYS` names more keys (base58 keys separated by spaces or commas, or a JSON list).
+
+With N
 keys a lane always pays from the same one (sha256 of the lane, modulo N: the same in every run, so a token tried
-again finds the account its first try verified it in), an owner's tokens still leave in order, and a key signs
-for one token at a time, so two tokens in flight never pay from one fee account. Each further key takes back the
+again finds the account its first try verified it in).
+
+An owner's tokens still leave in order, and a key signs
+for one token at a time, so two tokens in flight never pay from one fee account.
+
+Each further key takes back the
 rent of what it paid for. `tests/test_relay_speed.py` shows it on a stand-in chain that refuses a second send from
 a payer with one in flight: one payer and two owners, one send refused and sent again; two payers, none refused.
 No run on a cluster has used more than one payer.
 
 **A full queue says so.** The queue holds 500 open entries (`LIMIT`). The next one is refused with the count and a
 time: "the relay's queue is full: 500 tokens are waiting and it holds 500, because Solana or GitHub is answering
-slowly. This token was not taken and nothing is lost: it is still in its comment. Try again in N seconds." N is the
+slowly. This token was not taken and nothing is lost: it is still in its comment.
+
+Try again in N seconds." N is the
 entries waiting, times what one took lately, over the workers (at least 5). The refusal loses nothing, because the
 token stays in its comment and the sweep reads it.
 
@@ -432,7 +477,9 @@ every pass carries what is queued and reads nothing, and says "comments are read
 secondary limit carries `retry-after`
 ([rate limits for the REST API](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api):
 1,000 requests an hour for a workflow's token in one repository). `relayq.Quota` reads them from every answer of an
-event run. It asks nothing until the time GitHub names (a minute after a 429 that names none), and stops reading
+event run.
+
+It asks nothing until the time GitHub names (a minute after a 429 that names none), and stops reading
 when 50 requests are left of the hour, so that the verdicts of tokens already carried can still be written.
 
 What is not done:

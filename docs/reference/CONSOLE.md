@@ -69,6 +69,7 @@ It reads the files you drop, choose or paste and asks nobody anything: no GitHub
 **What it reads.** A statement (`knos statement make`, or the one the first screen made from your invoice), its status
 file if there is one, the invoice (CSV; the columns `po_number` and `po_amount`, when it has them, name each line's
 purchase order and its limit), and receipts' five parts. "Try the sample" opens the first screen's made-up invoice.
+
 An invoice with no statement is shown with no line's policy met: the page does not check an invoice itself.
 
 The approver's question is one: can I approve this amount, against this purchase order, under our policy, and defend
@@ -77,6 +78,7 @@ it six months later? Each row answers it for one line.
 **One row per line, read left to right:** Supplier, Authorisation (the purchase order, the policy version, the order's
 limit and, once approved, who approved), Agreed deliverable, Acceptance evidence, Authorised amount, Exception, Payment
 status. Amounts are shown with thousands separators (1,500.00); the files keep the plain form. Every cell is a control: it opens what stands behind it under its row.
+
 The evidence cell of a line with a receipt reads the receipt in its five parts (Identity, Execution, Acceptance,
 Consequence, Assurance); the shape the page reads is written at the top of the module.
 
@@ -92,30 +94,42 @@ Consequence, Assurance); the shape the page reads is written at the top of the m
 | over your approval limit | this page: a line whose policy is met, above the limit the approver typed (optional) | nothing. It is advice, like the purchase order |
 
 **The policy.** `knos.approval-policy` version 1 (`POLICY` in the module): a line is ordinary when the statement says
-its policy is met, those lines stay within their purchase order, and the line is within the approver's limit. Ordinary
+its policy is met, those lines stay within their purchase order, and the line is within the approver's limit.
+
+Ordinary
 lines resolve themselves into one action, **Approve N ordinary lines**; every other line is an exception, read on its
 own, in the words above. The version changes whenever a rule does, so a record is always read against its own rules.
 
 The approver has two actions. **Approve N ordinary lines** asks for a name and a role (a limit and a reason are optional) and records what
-`knos statement approve` records (a status file beside the statement; a line held as over its purchase order is left out, and the command line
-reads that status as its own: `tests/test_site_approver.py`). **Message the supplier** opens a message that is already written: the line, the
-reason, what settles it.
+`knos statement approve` records: a status file beside the statement.
+
+A line held as over its purchase order is left out, and the command line reads that status as its own (`tests/test_site_approver.py`).
+**Message the supplier** opens a message that is already written: the line, the reason, what settles it.
 
 Nothing is sent by the page.
 
 **The approval record.** Approving also makes `statement-<invoice>.approval.json` (kind `knos-approval-record`,
-version 1): the statement's sha256, the policy with its version and the approver's limit (and the policy's sha256),
-who, in which role, the day and the moment, why, and a snapshot of every line approved: its amount, state,
-evaluations, evidence sha256, purchase order and limit, and the sha256 of its receipt's five parts. The snapshot has
-its own sha256 and the record has one over everything. Six months later, drop the record back on the page with its
+version 1). It holds the statement's sha256, the policy with its version and the approver's limit (and the policy's sha256),
+who, in which role, the day and the moment, and why.
+
+It also holds a snapshot of every line approved: its amount, state,
+evaluations, evidence sha256, purchase order and limit, and the sha256 of its receipt's five parts.
+
+The snapshot has
+its own sha256 and the record has one over everything.
+
+Six months later, drop the record back on the page with its
 statement (and the same invoice file and receipts): the page works every line out again and says "This approval still
 matches its evidence", or names the lines that changed and what changed (amount, purchase order, receipt, evidence).
+
 A record dropped alone is checked against itself; an edited record is caught. What the record proves is what the
 page saw: it is not signed by anyone, and it does not prove the approver is who the name says.
 
 **Files.** The approval record, the statement with its approval (CSV), the audit export (every line with its ids), the
 status file, the statement file, and the QuickBooks and NetSuite files: the existing exports, each one press, each a file export
-and not an integration. When the build carries `web/rails.js`, an approved statement also offers a payment
+and not an integration.
+
+When the build carries `web/rails.js`, an approved statement also offers a payment
 instruction file; no bank has taken one.
 
 **Keyboard.** Tab reaches every control; the arrow keys, Home and End move between cells; Enter opens a cell; Escape
@@ -124,6 +138,7 @@ shuts it and leaves the focus where it was.
 **How long a first comparison takes.** `node tests/web/approver.mjs page --write` opens the screen in headless
 Chromium, drops an invoice and its statement, reads the result, opens one exception and approves, and writes each
 step's time to [`web/approver_time.json`](../../web/approver_time.json). The screen states that total and nothing else.
+
 It is a script's time on the build machine, under five minutes (the test fails above that), with no command line. It is not a study: no
 person was timed, and no approver outside this repository has used the screen.
 

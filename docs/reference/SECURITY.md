@@ -76,28 +76,41 @@ GitHub's signature covers the asking. The reading happened on the runner.
 
 **Why the runner matters.** In August 2026 a researcher showed that an organisation on a paid plan can create a
 GitHub-hosted "larger runner" with an image of its own, give it the name of a standard runner label, and have it
-serve jobs pinned to that label. The token still says `github-hosted`
+serve jobs pinned to that label.
+
+The token still says `github-hosted`
 ([research note](https://github.com/amiller/github-zktls/blob/master/tasks/substitution-demo/research-note.md),
 runs of 21–24 Aug 2026; [GitHub community discussion 205732](https://github.com/orgs/community/discussions/205732)).
 So pinning a workflow file and its commit fixes the code that was asked to run. It does not fix the machine, when
-the repository belongs to such an organisation. A personal account cannot have larger runners
+the repository belongs to such an organisation.
+
+A personal account cannot have larger runners
 ([GitHub's documentation](https://docs.github.com/en/actions/reference/runners/github-hosted-runners): they are for
 organisations and enterprises on paid plans), so a `github-hosted` run in a repository a person owns is on GitHub's
 own image. [ATTESTOR.md](ATTESTOR.md) states this gap exactly and the five ways of narrowing it, of which two
-exist here. Two rules of the programs rest on that: the neutral judge (section 2, b) and Refresh by anyone
+exist here.
+
+Two rules of the programs rest on that: the neutral judge (section 2, b) and Refresh by anyone
 ([section 5](#5-signing-keys-any-issuer-refresh-by-anyone-private-keys)). If GitHub changes this, both rules
 become unsafe and need an upgrade.
 
 **GitLab.** The verifier checks gitlab.com's signature, and the escrow reads GitLab's
-claims too, so a GitLab project can fund an order and be paid on a merge to a protected branch. The claims it
+claims too, so a GitLab project can fund an order and be paid on a merge to a protected branch.
+
+The claims it
 reads are GitLab's own names for the same facts
-([GitLab's documentation of the ID token](https://docs.gitlab.com/ci/secrets/id_token_authentication/)):
-`project_id` and `namespace_id` (the project and its owner, as numbers), `user_id` (who started the pipeline),
+([GitLab's documentation of the ID token](https://docs.gitlab.com/ci/secrets/id_token_authentication/)).
+
+They are `project_id` and `namespace_id` (the project and its owner, as numbers), `user_id` (who started the pipeline),
 `pipeline_source` (how), `ref` and `ref_protected` (the branch, and whether it is protected), `ci_config_ref_uri`
 and `ci_config_sha` (which pipeline definition ran, fixed by commit, as `job_workflow_ref` and `job_workflow_sha`
-are for GitHub) and `sha`. Scopes and ids are namespaced by issuer, so a GitLab project id can never be taken for a
+are for GitHub) and `sha`.
+
+Scopes and ids are namespaced by issuer, so a GitLab project id can never be taken for a
 GitHub repository id. What is trusted is the same in kind: gitlab.com signs which pipeline ran, not what it read,
-and a project's maintainers control its runners. The rule about personal accounts and runner images above is a
+and a project's maintainers control its runners.
+
+The rule about personal accounts and runner images above is a
 rule of GitHub's; nothing equivalent was established for GitLab, so the neutral judge and Refresh by anyone remain
 GitHub-only. The source of [`knos_pay`](../../programs-v2/knos_pay/src) says exactly which claims each instruction
 requires.
@@ -123,7 +136,9 @@ Tests: `test_a_seller_pays_himself_after_the_buyers_repository_deleted_its_workf
 [`tests/test_order_judges.py`](../../tests/test_order_judges.py).
 
 **Why judge b exists.** If only the buyer's repository could ask for the pay token, a buyer who removed the workflow
-before merging would take the work and pay nothing. With judge b, after a merge in a public
+before merging would take the work and pay nothing.
+
+With judge b, after a merge in a public
 repository the seller asks himself: `knos settle --neutral <pull request URL>` starts the pinned `attest.yml` in a
 repository of his own, and the program pays on that run. Deleting the workflow, or the repository's Actions, no
 longer withholds the payment.
@@ -145,11 +160,15 @@ longer withholds the payment.
   funding (at most 20% of the amount) goes to that seller before the refund.
 
 **What a buyer cannot do:** change the terms after funding, take the money out before the deadline or the end of a
-notice, stop a payment once its token exists, or take one back. Money held back for a warranty returns to the
+notice, stop a payment once its token exists, or take one back.
+
+Money held back for a warranty returns to the
 funder only on a token that names a revert inside the warranty (`Revert` in
 [`order_terms.rs`](../../programs-v2/knos_pay/src/order_terms.rs)): from the order's own repository (judge a), from a
 neutral run by hand that read the public record (judge b), or from the order's judge repository (judge c); never from
-the arbiter. When the token is the buyer's own repository's, the holdback is money the seller trusts that repository
+the arbiter.
+
+When the token is the buyer's own repository's, the holdback is money the seller trusts that repository
 with. The share is fixed at funding, at most 50%, for at
 most 90 days.
 
@@ -174,19 +193,25 @@ An order's terms are a small JSON document ([`src/knos/terms.py`](../../src/knos
 - `reserve`: how many days a `/knos take` reservation lasts.
 
 **They cannot be edited.** The funding instruction carries the JSON, stores its sha256 in the order and logs the
-JSON (`knos3:terms`). A pay token must carry the same hash or the program refuses it. The options of an order are
+JSON (`knos3:terms`). A pay token must carry the same hash or the program refuses it.
+
+The options of an order are
 fixed in the same instruction: neutral or not, a holdback and its warranty, a kill fee, an arbiter, a judge
 repository, a standing rate (`opts` in [`order.rs`](../../programs-v2/knos_pay/src/order.rs)). `TopUp` adds money and
 changes nothing else.
 
 **Where the checks come from**, decided once at funding: the names the funder wrote; else the checks the
 repository's `.knos/policy.yml` names; else the default branch's required status checks; else every check that ran
-to an end on the default branch's latest commit. Knos's own jobs are never among them. A repository with no checks
+to an end on the default branch's latest commit. Knos's own jobs are never among them.
+
+A repository with no checks
 gets none, and the reply says so: "your merge alone is the acceptance".
 
 **The six states of evidence.** When the pay token is asked for, each required check is in exactly one state at the
 pull request's last commit (`evidence` in `terms.py`): `passed`, `failed`, `skipped`, `pending`, `absent`
-(a check of the same name from another app is not it) or `unreadable`. Only `passed` for every required check, with
+(a check of the same name from another app is not it) or `unreadable`.
+
+Only `passed` for every required check, with
 every changed file in scope, is acceptance. Anything else pays nothing, and the comment names the check and its
 state. What a pull request's description says never changes what is required
 ([`tests/test_terms.py`](../../tests/test_terms.py)).
@@ -194,7 +219,9 @@ state. What a pull request's description says never changes what is required
 **The policy file.** `.knos/policy.yml` on the default branch says who may fund, the cap per order, a monthly
 budget, the payees and vendors allowed, default checks, standing offers, and warranty defaults
 ([`src/knos/policy.py`](../../src/knos/policy.py)). The workflow reads it at funding and at payout and refuses with
-the line of the rule. A policy that cannot be read is a refusal, never a permissive policy
+the line of the rule.
+
+A policy that cannot be read is a refusal, never a permissive policy
 (`test_a_refusal_never_becomes_a_permissive_policy`). It is enforced by the workflow, not by the chain: it binds the
 order's own repository (judge a) and the neutral run, which use the same code, and it does not bind a repository
 that pins other workflows.
@@ -219,15 +246,21 @@ Decided in [`src/knos/who.py`](../../src/knos/who.py), from facts GitHub authent
 **Prose never decides.** A line in the description or in a commit pays nobody. An edited comment never counts.
 
 **Where it is paid.** The pinned workflow asks for the wallet bound to the payee's GitHub account; else the address
-in the payee's own newest, unedited `/knos address` comment; else none. The program pays, in this order: the wallet
+in the payee's own newest, unedited `/knos address` comment; else none.
+
+The program pays, in this order: the wallet
 the payee assigned this order's payment to (`Assign`, signed by the payee's bound wallet); else the address the
 token carries; else the bound wallet. So the address in a token comes before a binding: the judge is trusted with
-it, like everything else in the token. A relayer cannot leave an assignment or a binding out: the instruction
+it, like everything else in the token.
+
+A relayer cannot leave an assignment or a binding out: the instruction
 requires the accounts where they would be.
 
 **Binding a wallet is by hand.** A person: a repository named `knos-claim` in their own account, the pinned claim
 workflow, started by hand. An organisation: the same in a repository the organisation owns, started by a member
-(`BindOrg`). GitHub's claims do not say whether an owner is a person or an organisation, so `BindOrg` never
+(`BindOrg`).
+
+GitHub's claims do not say whether an owner is a person or an organisation, so `BindOrg` never
 replaces a binding a person made himself (`test_a_collaborator_cannot_rebind_a_person_who_bound_his_own_wallet`).
 
 **A held payment.** One payee with no address and no bound wallet: the order is held for that payee for 180 days.
@@ -236,19 +269,33 @@ days it goes back to the funder.
 
 **The fee.** 0.30% of the amount, at least 0.05 of a whole unit of the mint, no maximum; one rate, no tiers, jobs
 and orders alike. On an order the funder pays it on top of the amount. On a job it comes out of the amount and is
-never more than it. That is the rule of
+never more than it.
+
+That is the rule of
 knos_pay 2.2, the build in this tree. The public program has run it since 9 Oct 2026, when the upgrade to knos_pay
-2.2 executed ([`web/upgrades.json`](../../web/upgrades.json)). Before that it was the older fee: 2.5% of the first 1,000 whole units, 1% to 50,000, and 0.5% above; at
-least 0.40; no maximum (a job: 2.5%, at least 0.05). Which rule is charged is the program's own answer to its Version instruction (2 from knos_pay 2.2
+2.2 executed ([`web/upgrades.json`](../../web/upgrades.json)).
+
+Before that it was the older fee: 2.5% of the first 1,000 whole units, 1% to 50,000, and 0.5% above; at
+least 0.40; no maximum (a job: 2.5%, at least 0.05).
+
+Which rule is charged is the program's own answer to its Version instruction (2 from knos_pay 2.2
 on): `knos status` says which build runs, and the site, the client ([`fees.py`](../../src/knos/fees.py)) and the SDK
 (`v2.feeRule`) show the fee of the build that is live. Orders funded before the upgrade keep the rate fixed at their
-funding. The fee is one pure function in
-[`lib.rs`](../../programs-v2/knos_pay/src/lib.rs), tested at its edges. It waits in the order's account. At the payment,
-the payees receive their full shares; the relayer that paid for the transaction receives a tip out of the fee (0.05,
-or 0.30 when the transaction created a payee's token account); the rest goes to `FEE_OWNER`, an address of Knos's
-that has one other power: it can lower the rate of the orders funded from one repository owner's Balances, under a
+funding.
+
+The fee is one pure function in
+[`lib.rs`](../../programs-v2/knos_pay/src/lib.rs), tested at its edges. It waits in the order's account.
+
+At the payment,
+the payees receive their full shares. The relayer that paid for the transaction receives a tip out of the fee (0.05,
+or 0.30 when the transaction created a payee's token account).
+
+The rest goes to `FEE_OWNER`, an address of Knos's
+that has one other power. It can lower the rate of the orders funded from one repository owner's Balances, under a
 contract (`SetPlan`, until an expiry: a rate between 0.10% and 0.30% from knos_pay 2.2 on; before it, the first
-tier's rate, between 0.5% and 2.5%). A refund returns amount and fee.
+tier's rate, between 0.5% and 2.5%).
+
+A refund returns amount and fee.
 
 ## 5. Signing keys: any issuer, refresh by anyone, private keys
 
@@ -259,14 +306,18 @@ tier's rate, between 0.5% and 2.5%). A refund returns amount and fee.
 register one of those four, and no other key, without an attestation.
 
 **A new key of GitHub's or GitLab's needs GitHub's own signature.** A run of the pinned rotate workflow reads the
-issuer's published keys and asks GitHub for a token whose `aud` names the new key's hash. The program accepts it
+issuer's published keys and asks GitHub for a token whose `aud` names the new key's hash.
+
+The program accepts it
 only from the pinned workflow at a pinned commit, on a GitHub-hosted runner, started by the schedule or by hand, in
 one of two repositories of one personal account (GitHub id 142920951, drexthealpha), and only while the key that
 verified that token is itself usable (`test_an_attestation_counts_only_while_the_key_that_verified_it_is_usable`).
 
 **Any other RS256 issuer** comes in the same way (`RegisterIssuerKey`): the same run fetched
 `<issuer>/.well-known/openid-configuration` and its key set over TLS and named the issuer's URL and the key. The
-program stores the URL with the issuer's first key, and `Step` requires a token's `iss` to be that URL. Who is
+program stores the URL with the issuer's first key, and `Step` requires a token's `iss` to be that URL.
+
+Who is
 trusted for such a key: GitHub's signature, the name resolution and the certificate of the issuer's site at the
 moment of that fetch, the one account whose run counts, and the guardian. A program that reads tokens chooses which
 issuers it accepts. `knos-pay` accepts GitHub's and gitlab.com's; `knos-meter` accepts GitHub's only.
@@ -281,7 +332,9 @@ no key.
 **Refresh by anyone.** For `Refresh`, and never for registering a key, the attestation may come from anyone: the same
 pinned workflow, started by hand in a repository owned by the person who started it
 (`test_anyone_refreshes_a_key_from_a_repository_of_his_own_and_nobody_registers_one_that_way`). So the keys an
-issuer still publishes stay alive without Knos's account or its schedule. A new key still needs the pinned account
+issuer still publishes stay alive without Knos's account or its schedule.
+
+A new key still needs the pinned account
 and the guardian.
 
 **Revocation is for ever.** The guardian can revoke any key. No instruction clears the mark. Every instruction of
@@ -291,7 +344,9 @@ revoked or expired.
 **Private keys, and their one consumer.** Any wallet can register a key with no attestation (`RegisterPrivateKey`),
 for an issuer no public runner can reach, such as a company's own GitHub Enterprise Server. Nobody vouches for such
 a key: it says what its registrant says. The key account and every token it verifies are marked private, with the
-registrant's address. Such a token attests nothing in the verifier, `knos-meter` counts nothing under it, and the
+registrant's address.
+
+Such a token attests nothing in the verifier, `knos-meter` counts nothing under it, and the
 interface crate's `read` refuses it. One instruction accepts it: `PayOrder`, for a private order funded from a
 Balance that the same wallet opened. The token is then the word of the wallet whose money it pays out
 (`test_a_private_order_of_a_balance_is_paid_under_the_key_its_authority_registered`,
@@ -421,10 +476,13 @@ says exactly what a sender needs):
 
 ## 11. A Balance, mints and extensions
 
-**A Balance and its limits.** A Balance is money a wallet set aside for the orders of one GitHub owner. Its wallet
+**A Balance and its limits.** A Balance is money a wallet set aside for the orders of one GitHub owner.
+
+Its wallet
 sets, and only its wallet changes: a cap per order; up to four GitHub accounts that may spend it by comment; and, in a
 side account (`SetBalanceX`), a limit per day, a limit in total, up to eight repositories that alone may spend it, and
 the one commit of the pinned workflows that may spend it (`test_a_balance_with_a_side_account_enforces_all_of_it`).
+
 Only that wallet takes unspent money back.
 
 What the limits do not do. A Balance with no side account has only the cap per order: the side account is the
@@ -550,7 +608,9 @@ chain. What it can do is fixed by its claims and its `aud`, and it does it once.
 
 **One rule for every token `knos_pay` takes.** Each instruction that takes a signed token creates the marker account
 `["used", sha256(the token's signature)]` once it has decided to accept the token and before it changes anything
-else, and refuses the token with error 91 when that marker already exists. The marker is named by the token alone,
+else, and refuses the token with error 91 when that marker already exists.
+
+The marker is named by the token alone,
 not by the order, the job or the wallet the token is about. So the same token is never accepted twice, by the same
 instruction or by another one, whatever the other accounts hold by then.
 
@@ -575,12 +635,18 @@ order funded again at an address does not inherit the tokens of the order that w
 
 **The double-payment defect found before launch.** In a build proposed and never run, `PayOrder` made no marker, and an order funded from
 a Balance took its `not_before` from the fund token's issue time. An order's address is the same for every funding
-of one issue from one Balance under one number. So with two fund comments on one issue, relaying the second fund
+of one issue from one Balance under one number.
+
+So with two fund comments on one issue, relaying the second fund
 token after the first order was paid re-created the order at the same address, and the pay token that had paid the
-first order paid the second too: a payee received 200 on a 100 order, and the Balance lost 205. `Revert`, `Reserve`
+first order paid the second too: a payee received 200 on a 100 order, and the Balance lost 205.
+
+`Revert`, `Reserve`
 and `Cancel` took their tokens without a marker in the same way. This was found before that build went live on any
 cluster, only test USDC was ever involved, and that build is not the one proposed for upgrade. It is fixed here by
-the two rules above. `tests/test_double_pay.py` reproduces the
+the two rules above.
+
+`tests/test_double_pay.py` reproduces the
 sequence and requires the second payment to be refused, the payee to hold 100 and the Balance to be down 100 and
 one fee; it also sends every token-taking instruction's accepted token a second time, with the accounts as they are
 and with the accounts made again, and requires that no token account anywhere changes.
@@ -602,12 +668,16 @@ anyway; from then `CloseMarker` closes it and returns the rent to whoever paid i
 **What it remembers.** The check keeps what it learned (a rule this repository's history made required) as comments
 in an issue labelled `knos-memory`. Only comments that GitHub Actions itself wrote there, and that nobody edited,
 are read ([`src/knos/proof/memory.py`](../../src/knos/proof/memory.py)). A run with a read-only token, such as the
-check on a pull request from a fork, writes nothing. Closing the issue makes Knos forget. A payment depends on the
+check on a pull request from a fork, writes nothing.
+
+Closing the issue makes Knos forget. A payment depends on the
 order's terms alone.
 
 **The Stop hook.** `knos init` adds a Stop hook to coding agents on a machine. When the agent's last message claims
 that tests pass, CI is green, a release or a bare "done", Knos runs that check itself and blocks the stop if it
-fails. It is a local aid: a person can remove it, and an agent run without hooks does not have it. What it learns
+fails.
+
+It is a local aid: a person can remove it, and an agent run without hooks does not have it. What it learns
 stays in Sibyl's store on your machine ([`src/knos/store.py`](../../src/knos/store.py)).
 
 **The MCP tools** hold no key and send nothing. The ones that act return the exact comment or transaction for a
@@ -628,10 +698,13 @@ the escrow's version, and refuses one only on a cluster where the program is not
 
 **Funding with a passkey (1.1).** A funder who has only a passkey can fund an order: `Fund` moves test USDC from
 the passkey wallet into an order of `knos-pay` (a call to `FundOrderWallet`), on an assertion over a challenge that
-binds the hash of the order's terms, the amount and a slot after which the assertion is no longer accepted. A
+binds the hash of the order's terms, the amount and a slot after which the assertion is no longer accepted.
+
+A
 relayer pays the transaction fee, so the funder needs no SOL and no wallet app. What the funder cannot see is the
 same as for a withdrawal: the authenticator shows the site, not the terms or the amount, so the page is trusted to
 have hashed what it showed. The order refunds to the passkey wallet.
+
 On devnet the site shows and withdraws Circle's USDC and the faucet's test USDC, which a bounty funded by comment pays.
 
 What is trusted:
@@ -676,7 +749,9 @@ somebody prepaid ([`programs-v2/knos_meter`](../../programs-v2/knos_meter)).
   never go below zero, and only the wallet that opened them withdraws them.
 - A token under a private key, a revoked key or an expired key counts nothing.
 
-**Batch mode (1.1).** A single evaluation writes one account, whose rent is more than the evaluation's price. A
+**Batch mode (1.1).** A single evaluation writes one account, whose rent is more than the evaluation's price.
+
+A
 batch writes none per evaluation: `RecordBatch` takes one signed token that carries the buyer, the seller, the
 month, a sequence number, the count, how many were accepted, their value and a 32-byte Merkle root, and adds them to
 one Ledger account per buyer, seller and month, which keeps totals and a running hash of every batch.
@@ -705,7 +780,9 @@ on a staging deployment.
 **Auto-accept (`/knos fund ... auto`, flag 32).** The first pull request that passes the order's black-box
 acceptance suite is paid, unmerged, to its author. The program takes it only on an order funded in tests mode
 (mode 1), which is the mode the pinned workflow gives only to a black-box bundle; funding an `auto` order in
-merge mode is refused. The token's audience is `knos3:auto:<order>:<head sha>:<terms hash>:1:<pr>:<payee>`, from
+merge mode is refused.
+
+The token's audience is `knos3:auto:<order>:<head sha>:<terms hash>:1:<pr>:<payee>`, from
 the pinned `prove.yml` run in the order's own repository.
 
 - What the buyer trusts: the pinned suite at the pinned commit. That is the workflow file at the commit the order
@@ -724,12 +801,18 @@ the pinned `prove.yml` run in the order's own repository.
 
 **Challenge (Revert, instruction 19).** While an order is in its warranty, its holdback and the fee on it are
 still in the order. For an order that allows a neutral run, anyone can challenge the payment: he starts the pinned
-`attest.yml` by hand (kind `revert`) in a repository of his own. It reads GitHub's record of the order's repository
+`attest.yml` by hand (kind `revert`) in a repository of his own.
+
+It reads GitHub's record of the order's repository
 and signs `knos3:revert:<order>:<head sha>` only when a commit on the default branch after the merge reverts the paid
 pull request's merge commit (its message says `This reverts commit <merge sha>`, as `git revert` and GitHub's Revert
-button write it). It does not run the acceptance checks on the head again, and it signs nothing for a pull request
+button write it).
+
+It does not run the acceptance checks on the head again, and it signs nothing for a pull request
 that was not merged, so an `auto` payment, which is made unmerged, cannot be challenged by a neutral run today: only
-the program would take such a token. Revert then returns everything the order still holds to its funder. After the
+the program would take such a token. Revert then returns everything the order still holds to its funder.
+
+After the
 warranty the same token is refused and Release pays the holdback. Rehearsed on devnet on staging programs: a `quorum 2` order with a 20% holdback, its merge reverted, a neutral run by an account that was not its
 funder, and Revert returned the holdback and its fee.
 
@@ -746,7 +829,9 @@ funder, and Revert returned the holdback and its fee.
 **Quorum (`/knos fund ... quorum 2` or `quorum 3`, the two high bits of the flags).** PayOrder pays only when
 that many distinct judges have each passed the same artifact: the same head commit, terms, mode, pull request and
 payees. The judges are a. the order's own repository's run, b. a neutral run, c. the judge repository the order
-names. Each judge before the last leaves a marker `["q", order, kind]`; the last one pays. Two tokens of the same
+names.
+
+Each judge before the last leaves a marker `["q", order, kind]`; the last one pays. Two tokens of the same
 kind count once. A marker's rent goes back to whoever paid it (CloseMarker) once its order is no longer the open
 order it was made for. A marker left by an earlier order at the same address counts for nothing.
 
@@ -761,8 +846,10 @@ order it was made for. A marker left by an earlier order at the same address cou
 
 Compute, measured in the simulator (it varies by a few thousand units with the addresses involved): PayOrder on an
 auto token about 90,000 units, or about 176,000 when it creates the payee's token account; a challenge 86,000 to
-98,000; PayOrder on an order with a quorum about 120,000 for a judge who is recorded and about 176,000 for the one
-who pays and creates the payee's token account.
+98,000.
+
+PayOrder on an order with a quorum: about 120,000 for a judge who is recorded and about 176,000 for the one who pays
+and creates the payee's token account.
 
 **What is built end to end, and what has run.** Every step from the funding comment to the payment exists in code
 and is tested against stand-ins for GitHub and the chain; none of it has run on a cluster.
@@ -822,9 +909,13 @@ neutral run at all: only its own repository ran the suite.
 
 **What the verdict records.** `reexecuted` (true or false), `passed`, `assurance` (`black-box` or `hermetic`),
 `image` (`ref` and the `digest` the runtime reported), `artifact` (a hash of each of the two trees, the ones
-`knos judge rerun` compares), `order`, `repository`, `pull`, `issue`, `head`, `base`, `accept`, `reasons`,
-`sentence`, and `environment`: the repository and run it happened in, the runner's operating system, architecture
-and image version, and the `knos` version. It is kept as the run's artifact `knos-verdict-<attempt>` (`verdict.json`), it is
+`knos judge rerun` compares), `order`, `repository`, `pull`, `issue`, `head`, `base`, `accept`, `reasons` and
+`sentence`.
+
+It also records `environment`: the repository and run it happened in, the runner's operating system, architecture
+and image version, and the `knos` version.
+
+It is kept as the run's artifact `knos-verdict-<attempt>` (`verdict.json`), it is
 the job output `verdict`, and it is posted as a comment that starts `knos-verdict: ` beside the token on the "knos
 tokens" issue. GitHub's signature covers none of it: the token says which workflow ran and where, and the verdict
 is that workflow's own account of how it decided.
@@ -832,7 +923,9 @@ is that workflow's own account of how it decided.
 **An order paid on the merge is not re-executed.** Its terms name checks that are the repository's own (its CI),
 and nothing outside that repository can run them. The neutral run keeps reading their conclusions, and its verdict
 says `reexecuted: false` with the sentence "this judge read the buyer repository's check results; it did not run
-them". The same holds for any other check that the terms of a tests-mode order name beside the suite: the suite is
+them".
+
+The same holds for any other check that the terms of a tests-mode order name beside the suite: the suite is
 run again, those are read.
 
 **What the second environment adds.**
@@ -869,23 +962,35 @@ run again, those are read.
 
 **What the run costs and what it risks for the attester.** The first job runs code from a pull request in the
 attester's repository. It has what the judge job of `prove.yml` has and no more: a token that reads, no secret, the
-sandbox's separate user with no network. Limit 16 applies to it as it does there: the sandbox is a user boundary,
-not a machine boundary. A submission that escaped it could write the verdict the next job reads; that job then
+sandbox's separate user with no network.
+
+Limit 16 applies to it as it does there: the sandbox is a user boundary,
+not a machine boundary.
+
+A submission that escaped it could write the verdict the next job reads; that job then
 still checks the order, the merge, the scope, the payee and the bundle hash itself, but it would take the suite's
 "passed" from the forged text. This is the trust judge a already places in its own judge job.
 
 **What is not done.** It has run once on devnet: a neutral `attest.yml` run in drexthealpha/knos-attest judged an
 order again and it was paid ([RECEIPT.md](RECEIPT.md), "Version 5"); the run's owner and the payee were one account,
-and the manifest keeps `neutral_reexecution` at `tested`. Otherwise it is tested against stand-ins for GitHub and
+and the manifest keeps `neutral_reexecution` at `tested`.
+
+Otherwise it is tested against stand-ins for GitHub and
 the chain, the program's side in a simulator, and the real judge once on a sample tree
 ([`tests/test_attest_rerun.py`](../../tests/test_attest_rerun.py)); the workflow file is checked by actionlint and by
 [`tests/test_workflows2.py`](../../tests/test_workflows2.py), and its fetch and sandbox steps have not been run on a
-runner. Whether the work-order instructions are live on the public program ids is in `web/upgrades.json`. The
+runner.
+
+Whether the work-order instructions are live on the public program ids is in `web/upgrades.json`. The
 pinned workflows repository must publish this `attest.yml` before any order can pin it: it is republished at
 release, and an order funded earlier is held to the older file at the commit it recorded, which does not
-re-execute. A neutral run is still started by hand. The program does not know whether a neutral token came from a
+re-execute.
+
+A neutral run is still started by hand. The program does not know whether a neutral token came from a
 run that re-executed: it accepts a token from the pinned file at the pinned commit, and what that file does is fixed
-by that commit. An `auto` payment made before the merge is not re-executed by a neutral run, which judges merged
+by that commit.
+
+An `auto` payment made before the merge is not re-executed by a neutral run, which judges merged
 pull requests only. This section narrows limit 15 below ("tests mode has no second look") for orders that ask for a
 quorum; it does not remove it.
 
@@ -902,8 +1007,9 @@ This section is the author's own review, not an outside audit, of the workflows 
 
 GitHub's own guidance is the same rule in other words: code from a pull request "is only ever inspected as data and never executed"
 where a privileged token exists, a `workflow_run` workflow "should treat artifacts uploaded by other workflows as untrusted data"
-([securely using `pull_request_target`](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target)),
-the job token gets "the minimum required permissions", and "pinning an action to a full-length commit SHA is currently the only way
+([securely using `pull_request_target`](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target)).
+
+The job token gets "the minimum required permissions", and "pinning an action to a full-length commit SHA is currently the only way
 to use an action as an immutable release" ([secure use
 reference](https://docs.github.com/en/actions/reference/security/secure-use)).
 
@@ -963,7 +1069,9 @@ No workflow of Knos uses `pull_request_target`.
 **The fix in `prove.yml`.** After the suite passed, `judge` writes one line of JSON, its only output: `v`, `kind`,
 `passed`, `repository_id`, `run`, `attempt`, `workflow_sha`, `pull`, `issue`, `head`, `base`, `accept` (the hash of
 the acceptance checks it ran), `changed` and `changed_count` (a hash and a count of the paths it was told the pull
-request changed), `runner` and `image`. Every value is a boolean, a bounded whole number or a string of a closed
+request changed), `runner` and `image`.
+
+Every value is a boolean, a bounded whole number or a string of a closed
 shape (a commit id, a sha256, one word of a list); none is free text. In `attest`, the step before the command
 ([`src/knos/verdict_gate.py`](../../src/knos/verdict_gate.py)) runs no pull request code, asks GitHub for no token, and:
 
@@ -986,12 +1094,16 @@ oversized file in its place, and an artifact with a second file in it are each a
 
 **What a judge machine that was taken over can still do.** Say "passed" for the one pull request, at the one
 commit, against the one bundle its run was started for, when the suite did not pass. Nothing else: not another pull
-request, order, commit or payee, and not a path the rule refuses. That one bit is the judge machine's word, and no
+request, order, commit or payee, and not a path the rule refuses.
+
+That one bit is the judge machine's word, and no
 workflow shape removes it; a second judge that runs the suite itself does (section 20, and a quorum, section 19).
 
 **For a repository that installed an earlier commit of the workflows.** Nothing changes until it names the new
 commit: the old files, and the release they install, stay as they were. At the new commit the inputs, secrets,
-outputs, job names and permissions are the same. What differs: `judge` has an output; `attest` has one more step
+outputs, job names and permissions are the same.
+
+What differs: `judge` has an output; `attest` has one more step
 and can refuse for the reasons above; the artifact of `attest.yml` is named `knos-verdict-<attempt>`.
 
 ## Two findings from the adversarial tests, fixed in knos_pay 2.2

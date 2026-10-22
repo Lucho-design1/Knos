@@ -150,18 +150,26 @@ evaluator, and the table says so.
 
 **Declared control relationships.** Each entry of `evaluator_observed.evaluators` names the evaluator's repository
 owner (`owner_id`) and actor (`actor_id`), as in version 3. `same_controller` is true when two evaluators share an
-id. Two accounts run by one person share none, so the terms can declare them: `assurance.declared_related` is a
+id.
+
+Two accounts run by one person share none, so the terms can declare them: `assurance.declared_related` is a
 list of groups of account ids that are one party, each group and the list in rising order, overlapping groups
 merged (`knos.receipt.related`). `knos.receipt.independence_of(evaluators, declared)` then answers for both: a
-shared id, or a declared group. Two evaluators are never `agreed` if their owners match or the terms declare them
+shared id, or a declared group.
+
+Two evaluators are never `agreed` if their owners match or the terms declare them
 related, and an evaluator declared one party with a payee is not outside the supplier's control. A relationship
 nobody declared cannot be found by any receipt; that is the trust the `agreed` row names.
 
 **Older receipts.** Versions 1 to 4 still check, with the digests they always had. `assurance_of` reads the level
 of any version: an older receipt is `reported` unless its evidence shows more (a version 3 or 4 receipt whose
-evaluator entry carries a re-execution reads as `rerun`). `as4` gives a reader of version 4 the version 4 receipt a
+evaluator entry carries a re-execution reads as `rerun`).
+
+`as4` gives a reader of version 4 the version 4 receipt a
 version 5 one holds. A mirror's copy, made from the chain alone, does not carry the runs' own words and reads
-`reported` (`chain_only`). A disputed version 5 receipt contests the version 5 form of the receipt it contests; a
+`reported` (`chain_only`).
+
+A disputed version 5 receipt contests the version 5 form of the receipt it contests; a
 dispute does not move the level, which is of the evidence.
 
 Version 5 is what is written since 0.3.19: `knos bundle make`, `knos receipt mirror`, the relay's attestation of a payment and the receipt `knos attest` leaves for a run that paid
@@ -218,13 +226,17 @@ every one `passed`.
 **`evidence_source`** is `{kind, reference, signed_by}`. `issuer_token`: a token the issuer signed and `knos_oidc`
 verified; `reference` is its sha256 and `signed_by` its issuer. `run_record`: the run's own record, signed by
 nobody; `reference` is the record's sha256 or null, `signed_by` is null, `issuer_authenticated` and
-`commercial_authorisation` are null and no controller of the evaluator is recorded. A run's own record can say
+`commercial_authorisation` are null and no controller of the evaluator is recorded.
+
+A run's own record can say
 rejected or insufficient evidence. It can never say accepted: an accepted receipt records the token and the payment.
 
 **`limitations`** is a list of plain sentences: what this evidence does not show. The first ones follow from the
 evidence source, the verdict, the mode, whether the evaluator's entry says how it reached its verdict, and whether
 money moved (`knos.receipt.limitations_of`), and a receipt that leaves one out is not valid. Up to eight of the
-writer's own may follow. For a signed, accepted receipt of a merge-mode order they begin:
+writer's own may follow.
+
+For a signed, accepted receipt of a merge-mode order they begin:
 
 - The issuer signs which workflow ran, in which repository and run, not what it read, ran or concluded.
 - The verdict is the pinned workflow's under the policy named here. It does not show that the policy asked for the right thing.
@@ -233,10 +245,13 @@ writer's own may follow. For a signed, accepted receipt of a merge-mode order th
 - This receipt does not record whether the evaluator ran the acceptance suite itself or read another run's record.
 
 **`ids`** names four things by ids of their own, so that a milestone carried by ten pull requests is never
-confused with one of them (docs/reference/METER.md, [Four ids on every surface](METER.md#four-ids-on-every-surface)):
-`deliverable` (the order and the milestone), `evaluation` (that deliverable, the commit, the terms' hash, the
+confused with one of them (docs/reference/METER.md, [Four ids on every surface](METER.md#four-ids-on-every-surface)).
+
+They are `deliverable` (the order and the milestone), `evaluation` (that deliverable, the commit, the terms' hash, the
 evaluator as `<judge>@<workflow commit>` and the run the issuer signed for), `invoice_line` (the supplier's line,
-or null) and `settlement` (the paying transaction, or null when nothing was paid). `check` computes the first, the
+or null) and `settlement` (the paying transaction, or null when nothing was paid).
+
+`check` computes the first, the
 second and the fourth again from the receipt's own fields, and refuses an id of one kind in the place of another.
 
 **`disputed`** is null unless the verdict is `disputed`. Then it says who contested, when, why, and the receipt
@@ -538,9 +553,11 @@ The rules of version 1 hold for version 2 (they are checked by the same code), a
 
 A receipt is built from chain facts only (`knos.bundle.gather`), for a public order paid by a judge's pay token.
 
-What is not built here: a receipt for a private order (its terms and repository are not public), for a payment an arbiter's ruling made (a ruling names no commit), for a
-holdback released after its warranty (it has no token of its own), and for an AUTO order's payment of an open pull request (no receipt version covers that kind of
-payment yet).
+What is not built here: a receipt for a private order (its terms and repository are not public), and one for a payment an arbiter's ruling made (a ruling names no
+commit).
+
+Also not built: a receipt for a holdback released after its warranty (it has no token of its own), and for an AUTO order's payment of an open pull request (no receipt
+version covers that kind of payment yet).
 
 `knos receipt verify` reads, of the escrow's newest transactions, only the ones a receipt is built from: the order's own, its Balance's opening and side account, and its
 owner's plan. A version 1 receipt still checks, and `knos.receipt.upgrade` writes it as version 2.
@@ -588,16 +605,19 @@ Every other file is the same.
 
 `knos bundle verify <tar>` uses no network.
 
-It checks every file against the manifest; GitHub's signature on the token (RS256) against the included key; that the key is
-the one at the key account the receipt names (the address is derived from the key); the claims, the order, the commit, the
-terms hash and the payees against the token; `terms.json` against the terms hash; and then derives the verdict again from the
-terms and the checks.
+It checks every file against the manifest, and GitHub's signature on the token (RS256) against the included key. It checks
+that the key is the one at the key account the receipt names (the address is derived from the key).
+
+It checks the claims, the order, the commit, the terms hash and the payees against the token, and `terms.json` against the
+terms hash. Then it derives the verdict again from the terms and the checks.
 
 It prints the five parts.
 
 **The offline limit.** Offline, the paid wallet is not checked against the chain. No signed token carries the wallet
 each payee was paid at or the amounts (the token names accounts and shares), so a bundle whose receipt names another
-wallet, with its manifest rebuilt, still passes `knos bundle verify <tar>` with no option. The command says so
+wallet, with its manifest rebuilt, still passes `knos bundle verify <tar>` with no option.
+
+The command says so
 itself, in a line that starts `limit:`. Two options close it, each as far as it goes:
 
 ```
@@ -799,11 +819,13 @@ A valid receipt also holds these (all are in `knos.receipt.check`, and each has 
 5. The payment is not earlier than the token's `iat`.
 6. No field is missing and none is unknown.
 
-Version 4 adds (each has a vector in `vectors.v4.json`): an accepted receipt records the issuer's token and the
-payment, with every named check passed; a rejected or insufficient receipt records no payment; `ids` are the ones
-the receipt's own fields give, each of its own kind; `evidence_source` names the token when there is one and
-nothing signed when there is none; `limitations` begins with the sentences the evidence leaves; and a disputed
-receipt contests exactly the receipt its `contests.sha256` names, after any payment it records.
+Version 4 adds the following, each with a vector in `vectors.v4.json`. An accepted receipt records the issuer's
+token and the payment, with every named check passed. A rejected or insufficient receipt records no payment.
+`ids` are the ones the receipt's own fields give, each of its own kind.
+
+`evidence_source` names the token when there is one and nothing signed when there is none. `limitations` begins
+with the sentences the evidence leaves. A disputed receipt contests exactly the receipt its `contests.sha256`
+names, after any payment it records.
 
 ## The digest
 
@@ -877,15 +899,18 @@ nothing when they do. Then `KNOS_SAS_KEYPAIR` is set where receipts are issued. 
 
 What was confirmed on 3 October 2026, and how: the program's address is the `declare_id!` in
 [`program/src/lib.rs`](https://github.com/solana-foundation/solana-attestation-service/blob/master/program/src/lib.rs)
-of the service's repository, and `getAccountInfo` on the public RPC of devnet and of mainnet returns an executable
-program at that address on both; `sas-lib` 1.0.10 is the version the npm registry serves, and the function names,
-their inputs and the layout codes were read in its published files.
+of the service's repository. `getAccountInfo` on the public RPC of devnet and of mainnet returns an executable program
+at that address on both.
+
+`sas-lib` 1.0.10 is the version the npm registry serves, and the function names, their inputs and the layout codes
+were read in its published files.
 
 The script's dry run builds all three instructions with that library and its digest equals the Python one (the test
 checks both).
 
-What was **not** confirmed: no attestation was sent to devnet from here (it needs a funded devnet key), so the credential and the schema do not exist on devnet until the release step above is run, and the
-instructions have not been accepted by the deployed program; `expiry` is sent as 0 on the assumption that 0 means "does not expire"; and the attestation is the word of the credential's authority, not of a
-program.
+What was **not** confirmed: no attestation was sent to devnet from here (it needs a funded devnet key). So the credential and the schema do not exist on devnet until the release step above is run, and the
+instructions have not been accepted by the deployed program.
+
+`expiry` is sent as 0 on the assumption that 0 means "does not expire". The attestation is the word of the credential's authority, not of a program.
 
 Having the escrow itself attest by CPI (a program address among the credential's signers) is described by the service and is not built here.

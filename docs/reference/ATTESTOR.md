@@ -21,7 +21,9 @@ on which attempt (`run_attempt`), on what kind of runner (`runner_environment`),
 **Not signed by anyone.** What that workflow read and what it computed. The text a payment acts on is the token's
 `aud`, for example `knos3:pay:<order>:<head commit>:<terms hash>:<mode>:<pull request>:<payees>`. The workflow chose
 that text after it asked the forge's API which pull request was merged and how its checks ended, or after it ran the
-acceptance suite itself. GitHub signs that this run asked for that audience. It does not sign that the API said so,
+acceptance suite itself.
+
+GitHub signs that this run asked for that audience. It does not sign that the API said so,
 that the suite passed, or that the machine ran the pinned file's commands the way the file wrote them.
 
 So three things are taken on trust between the pinned file and the signed audience:
@@ -32,14 +34,20 @@ So three things are taken on trust between the pinned file and the signed audien
 
 **The repository's own example of (1).** In August 2026 a researcher showed that an organisation on a paid plan can
 create a GitHub-hosted larger runner with an image of its own, give it the name of a standard label, and have it
-serve jobs pinned to that label. A shell function in the image rewrote a source file before the compiler saw it and
+serve jobs pinned to that label.
+
+A shell function in the image rewrote a source file before the compiler saw it and
 restored it afterwards; the build's attestation verified, with `--deny-self-hosted-runners`, against a commit the
-binary was not built from. Every signed field of the honest run and the altered run was the same, including
+binary was not built from.
+
+Every signed field of the honest run and the altered run was the same, including
 `runner_environment: github-hosted`
 ([research note](https://github.com/amiller/github-zktls/blob/master/tasks/substitution-demo/research-note.md), runs
 of 21 to 24 August 2026; [community discussion 205732](https://github.com/orgs/community/discussions/205732), opened
 24 August 2026, with no answer from GitHub's staff when read). The one fact that tells the two runs apart,
-`runner_group_id` in the jobs API, is not in the token. Custom images are for organisations and enterprises on the
+`runner_group_id` in the jobs API, is not in the token.
+
+Custom images are for organisations and enterprises on the
 Team and Enterprise Cloud plans
 ([GitHub's documentation](https://docs.github.com/en/actions/how-tos/manage-runners/larger-runners/use-custom-images)),
 which is why the neutral judge accepts only a run in a repository a personal account owns. That rule is GitHub's
@@ -130,8 +138,10 @@ containers](https://docs.github.com/en/actions/tutorials/use-containerized-servi
 Windows the judge is never hermetic.
 
 On **macOS** without the sandbox the command gets the CPU and file size limits (`setrlimit`, which POSIX defines) and a session that is
-killed whole on the time limit; there is no mount or network namespace, so it can write wherever the judge's user can and can call out,
-and a process count limit is not set because RLIMIT_NPROC there counts every process of the judge's own user.
+killed whole on the time limit.
+
+There is no mount or network namespace, so it can write wherever the judge's user can and can call out. A process count limit is not
+set because RLIMIT_NPROC there counts every process of the judge's own user.
 
 On **Windows** the judge sets none of these: a job object could limit processes, memory and CPU, and Knos does not create one yet; writes
 are bounded only by the account's file permissions. `--sandbox require`, and `hermetic`, which falls back to it, refuse to judge on
@@ -155,13 +165,16 @@ same head commit, terms, mode, pull request and payees ([SECURITY.md](SECURITY.m
 **What the chain enforces.** The judges are of different kinds (the order's own repository, a neutral run, a judge
 repository), each from the pinned workflow at the pinned commit on a first attempt. A neutral run counts only when
 it is outside the order's repository and was not started by the account that funded the order or owns its Balance.
+
 Two tokens of one kind count once.
 
 **What only the receipt records.** Whether the judges share a controller. One forge account that can start the run
 in the order's repository and the run in the neutral repository satisfied a quorum of 2 under knos_pay 2.1; the
 receipt then says
 `same_controller: true` and `knos receipt` prints `SAME CONTROLLER.` ([RECEIPT.md](RECEIPT.md)). Before knos_pay
-2.2 the chain did not refuse it. This is the first of the two findings in [SECURITY.md](SECURITY.md); knos_pay 2.2, live at the
+2.2 the chain did not refuse it.
+
+This is the first of the two findings in [SECURITY.md](SECURITY.md); knos_pay 2.2, live at the
 public ids since 9 Oct 2026, fixes it: judges are counted by repository owner, and the neutral judge must differ
 from both sides in owner and in who started the run.
 
@@ -182,13 +195,17 @@ person.
 **What exists.** [`attest.yml`](../../.github/workflows/attest.yml) has a `rerun` job with a read-only token and no
 signing permission. For an order paid by its acceptance checks it fetches the two commits by their ids, checks that
 the acceptance bundle hashes to the `accept` of the funded terms, and runs the suite itself, in the sandbox or in a
-container named by digest. The `attest` job asks for the token only when that verdict passed
+container named by digest.
+
+The `attest` job asks for the token only when that verdict passed
 ([SECURITY.md](SECURITY.md), section 20).
 
 **Cost.** One more run of the suite, in the neutral party's minutes.
 
 **What it proves.** That the suite passed on a second machine the buyer does not configure, from inputs named by
-hash: a commit id is a hash of its content, and the bundle is checked against the terms. So rung b removes most of
+hash: a commit id is a hash of its content, and the bundle is checked against the terms.
+
+So rung b removes most of
 gap (2) for a tests-mode order: the judge no longer believes an API's "success", it believes a hash it recomputed.
 
 **What it does not.** An order paid on its merge is not re-executed: its checks are the repository's own, and the
@@ -201,7 +218,9 @@ workflow's own account of how it decided.
 
 **Who hosts it.** A receipt's level is computed from account ids (`knos.receipt.assurance_of`). It reads `rerun`
 only when the judge that ran the suite is owned and started by an account that is not a payee, and `agreed` only
-when two such judges have different owners. One account that funds, delivers and evaluates reads `reported`
+when two such judges have different owners.
+
+One account that funds, delivers and evaluates reads `reported`
 however often it runs the suite: that is every receipt so far. So the judge has to be hosted by someone else, and
 [`examples/host_a_judge`](../../examples/host_a_judge/README.md) makes that one link and one button:
 
@@ -227,7 +246,9 @@ on receipts. No outside account has done it: outside hosts today, 0.
 
 **Enforced by shape, and not.** The `rerun` job cannot sign and the `attest` job runs none of the code; the verdict
 between them is held to one reading (small, plain characters, each key once, only a verdict's fields) before
-`knos attest` holds it to the order, the pull request, the two commits and the bundle. Not enforced: that `rerun`'s
+`knos attest` holds it to the order, the pull request, the two commits and the bundle.
+
+Not enforced: that `rerun`'s
 "passed" is true. A pull request that escaped the sandbox there could write it; it could not make it name another
 order, and the same escape would have to work in every judge of a quorum.
 
@@ -235,10 +256,13 @@ order, and the same escape would have to work in every judge of a quorum.
 
 **What it is.** A signed statement that an artifact (the `knos` wheel, a judge's container image) was built by a
 named workflow at a named commit. GitHub's artifact attestations are Sigstore bundles: a short-lived certificate
-whose identity GitHub's OIDC issuer sets, over an in-toto statement with a SLSA provenance predicate. Public
+whose identity GitHub's OIDC issuer sets, over an in-toto statement with a SLSA provenance predicate.
+
+Public
 repositories use the Sigstore public instance and its transparency log; private ones use GitHub's own instance,
 which has no transparency log. Alone they reach SLSA v1 Build Level 2; built through a reusable workflow, Level 3
 ([GitHub: artifact attestations](https://docs.github.com/en/actions/concepts/security/artifact-attestations)).
+
 GitHub's own sentence about them: "artifact attestations are *not* a guarantee that an artifact is secure."
 Read again on 2026-10-07: an attestation carries the workflow, the repository, the commit, the event that started
 the run and the token's claims. It is the cheapest step on this page, and it says which workflow emitted a file,
@@ -253,7 +277,9 @@ attestation that any Sigstore tool can check
 **What a verifier could check on chain.** Less than it seems. A Sigstore bundle is an X.509 chain and an inclusion
 proof; the practical form on chain is a digest. An order's terms can already name the judge's image by its sha256
 digest (the hermetic judge, [SECURITY.md](SECURITY.md), section 13), and the order already records the workflows'
-commit. What provenance would add is a second fact beside that digest, checked by the judge and written in the
+commit.
+
+What provenance would add is a second fact beside that digest, checked by the judge and written in the
 verdict: "this digest was built by this workflow at this commit".
 
 **Pinned digests and pinned actions.** Every action in every workflow here is named by a full commit
@@ -261,6 +287,7 @@ verdict: "this digest was built by this workflow at this commit".
 GitHub can enforce the first for a whole organisation since 15 August 2025: "any workflow that attempts to use an
 action that isn't pinned will fail"
 ([GitHub changelog](https://github.blog/changelog/2025-08-15-github-actions-policy-now-supports-blocking-and-sha-pinning-actions/)).
+
 Its 2026 security roadmap (26 March 2026) adds workflow dependency locking and a native egress firewall, in preview
 within months of that date; when read it said nothing about signing the runner or its image
 ([GitHub blog](https://github.blog/news-insights/product-news/whats-coming-to-our-github-actions-2026-security-roadmap/)).
@@ -295,15 +322,21 @@ date, so nothing is stated about them here.
 **Does GitHub's API work with them?** In principle. GitHub disabled TLS 1.0 and 1.1 in February 2018 for "all HTTPS
 connections, including web, API, and git connections to https://github.com and https://api.github.com"
 ([GitHub blog](https://github.blog/news-insights/product-news/crypto-removal-notice/)), so a TLS 1.2 client is
-accepted, which is what TLSNotary needs. We did not test which versions and cipher suites `api.github.com`
-negotiates today, and we have not produced a TLSNotary or Reclaim proof of a GitHub API response. Two practical
+accepted, which is what TLSNotary needs.
+
+We did not test which versions and cipher suites `api.github.com`
+negotiates today, and we have not produced a TLSNotary or Reclaim proof of a GitHub API response.
+
+Two practical
 limits are documented by the projects themselves: servers that block data-centre addresses hurt the proxy designs,
 and the computation in the multi-party design is bound by bandwidth (for a 1 KB request and a 100 KB response the
 prover uploads about 39 MB, [TLSNotary FAQ](https://tlsnotary.org/docs/faq)).
 
 **Does any of it verify on Solana today?** Not the transcript. TLSNotary's own answer: "At the moment the most
 practical way to verify data on-chain is to prove the data directly to an off-chain application-specific
-verifier." What reaches a chain in the deployed systems is an attestor's signature over a claim. Reclaim documents
+verifier." What reaches a chain in the deployed systems is an attestor's signature over a claim.
+
+Reclaim documents
 a Solana program for that (`8rYXFrtST4ePpMWcEqhazFyRG2DtCUqgtFmKT7FdjRyp`, in a starter that uses devnet,
 [Reclaim's Solana page](https://docs.reclaimprotocol.org/onchain/solana/front-end)). A secp256k1 signature is cheap
 for a Solana program to check. It is also the same kind of fact Knos has now: a named signer said so. The signer
@@ -341,9 +374,12 @@ Hardware measures what was loaded and signs the measurement with a key the chip 
 
 **GitHub's position.** We found none. GitHub documents no attested or confidential hosted runner, its 2026 roadmap
 does not mention one, and the discussion that reports the larger-runner finding had no staff answer when read.
+
 Read again on 2026-10-07: the page that lists the hosted runners names no enclave, no confidential machine and no
 attestation of the runner; the standard Linux runner for a public repository has 4 CPUs and 16 GB of memory
-([GitHub-hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)). An
+([GitHub-hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)).
+
+An
 attested judge today would be a self-hosted runner inside an enclave, and `knos_pay` refuses self-hosted runners,
 rightly: without the attestation a self-hosted runner is the operator's word.
 
@@ -408,7 +444,9 @@ recommends neither as maintained: building on one means carrying its verifier he
 **What existed here.** An experiment, outside the package and
 outside every wheel, now kept out of this repository. Its guest program is a judge for one task of the playground's kind (`count_words`): seven
 fixed cases, each an input and the output a correct function returns. The input is the submission: the outputs a
-supplier's function gave, one line a case. The guest hashes the submission, compares it with the cases byte for
+supplier's function gave, one line a case.
+
+The guest hashes the submission, compares it with the cases byte for
 byte, and commits 70 bytes: a version, the SHA-256 of the submission, the SHA-256 of the checks, the verdict, and
 how many cases passed of how many. The same rule in plain Python
 gives the same 70 bytes, and a test holds the two together.
@@ -416,7 +454,9 @@ gives the same 70 bytes, and a test holds the two together.
 **Measured on 2026-10-07**: RISC Zero 3.0.6, its
 `r0vm` prover, 2 CPUs of a shared virtual machine with 8 GB of memory, no GPU. The machine was busy with other
 work, so the wall-clock seconds are an upper figure and the CPU seconds the steadier one. The run is 6,941 cycles
-of the judge in one segment of 32,768. Image id
+of the judge in one segment of 32,768.
+
+Image id
 `e95d5440dce55f43c566b0ee20f8fc08b2fd6c1cf7f5d1722c31ea54b4325617`.
 
 | Run | Receipt | Prove, wall clock | Prove, CPU | Prover's peak memory | Receipt size | Verify |
@@ -434,10 +474,14 @@ took 21 minutes on this machine.
 
 A standard hosted runner has more of everything this run used; it was not run on one.
 
-**Not measured, and why.** The 256-byte Groth16 form, which is the only one the Solana verifiers take: the step
+**Not measured, and why.** The 256-byte Groth16 form was not measured; it is the only one the Solana verifiers take. The step
 that makes it is a further download and a further prover that this machine could not fetch (the project's installer
-does not accept the certificate of the proxy this machine reaches the network through), and its memory is not
-stated in the page we read. So this page gives no time for it and no compute units. Knos has deployed no on-chain
+does not accept the certificate of the proxy this machine reaches the network through).
+
+Its memory is not
+stated in the page we read.
+
+So this page gives no time for it and no compute units. Knos has deployed no on-chain
 verifier for these proofs, on any cluster.
 
 **What a verified receipt proves.** These checks (by hash, and by the image id that names the program holding
@@ -521,7 +565,9 @@ GitHub's rules for the default branch (GET /repos/{owner}/{repo}/rules/branches/
 **On a personal repository, PARTLY is the most GitHub allows.** Only an organisation or enterprise ruleset on GitHub
 Enterprise Cloud can require a workflow ([GitHub's list of rules, Enterprise Cloud edition](https://docs.github.com/en/enterprise-cloud@latest/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#require-workflows-to-pass-before-merging),
 read 2026-10-10; the [Free, Pro and Team edition](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)
-has no such rule). On a personal repository GitHub refuses the rule with HTTP 422 "Invalid rule 'workflows'". That
+has no such rule). On a personal repository GitHub refuses the rule with HTTP 422 "Invalid rule 'workflows'".
+
+That
 happened on `drexthealpha/knos-witness` on 10 October 2026: its ruleset now requires the check `check / claims`, and
 `knos protect --check-strip drexthealpha/knos-witness` reads PARTLY there.
 

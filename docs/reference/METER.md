@@ -2,7 +2,7 @@
 
 # The meter: what is counted, and who can check it
 
-**In plain words.** The [meter](../WORDS.md#meter) counts each time a buyer's tests judge a piece of work. The buyer and the seller each keep their own list, and each puts its totals on [Solana](../WORDS.md#solana) (a public record neither side can change). When the two lists agree they make one bill, and when they do not, a command names each item that differs.
+**In plain words.** The [meter](../WORDS.md#meter) counts each time a buyer's tests judge a piece of work. Buyer and seller each keep a list and put its totals on [Solana](../WORDS.md#solana), a public record neither side can change. When the lists agree they make one bill; when not, a command names each item that differs.
 
 ```mermaid
 flowchart TB
@@ -51,12 +51,16 @@ left out ([CAPABILITIES.md](CAPABILITIES.md), "The 0.3.14 rehearsal on devnet").
 
 **Individual.** One token per evaluation (`Record`). The program writes a marker account of 88 bytes for the id, so
 a second token for the same evaluation changes nothing. Every evaluation is on chain by itself; nothing else is
-needed to check the count. The marker's rent is locked until two hours into the next month and is more than the
+needed to check the count.
+
+The marker's rent is locked until two hours into the next month and is more than the
 price of the evaluation (the arithmetic is [below](#what-an-evaluation-costs-in-each-mode)).
 
 **Batched.** One token per batch (`RecordBatch`). The token carries the buyer, the seller, the month, a sequence
 number, the count, how many were accepted, their value and a 32-byte Merkle root (one fingerprint that commits to every evaluation in the batch). The program writes no account per
-evaluation. It adds the numbers to one Ledger account for (buyer, seller, month) and adds the root to a running
+evaluation.
+
+It adds the numbers to one Ledger account for (buyer, seller, month) and adds the root to a running
 hash (a fingerprint of every batch so far, in order):
 
     chain = sha256(chain || root || seq || count || accepted || value)        numbers as u64 little-endian; chain starts as 32 zero bytes
@@ -76,7 +80,9 @@ A batch holds 1 to 100,000 evaluations, no more accepted than counted, for the c
 
 **The Ledger account** is 96 bytes: the month, the buyer, the seller, `next_seq`, the evaluations, how many were
 accepted, their value, the fees the batches cost, and the running hash. There is one per buyer, seller and month for
-the buyer's count (seeds `"l"`, buyer, seller, month) and one for the seller's claim (`"lc"`, the same). The relayer
+the buyer's count (seeds `"l"`, buyer, seller, month) and one for the seller's claim (`"lc"`, the same).
+
+The relayer
 of the first batch pays its rent, once; the program has no instruction that closes it, so the account stays and the
 rent is not returned. It is the record: the totals and the running hash of a month stay readable.
 
@@ -92,14 +98,20 @@ commitment formats. A new batch is format 2; a format 1 batch stays readable and
 
 **Why format 2 exists.** Take two evaluations at one price and swap which of them was accepted. The count, the
 accepted count and the value do not move, and neither does a format 1 root, so the same signed audience stands for
-both. A format 1 batch therefore cannot show which deliverable was accepted. Under format 2 the two roots differ
+both. A format 1 batch therefore cannot show which deliverable was accepted.
+
+Under format 2 the two roots differ
 ([`tests/test_ledger_format2.py`](../../tests/test_ledger_format2.py), and the swap pair in the conformance vectors).
 
-**The event, byte for byte.** Eighteen texts in this order: `deliverable_id`, `evaluation_id`, `invoice_line_id`,
+**The event, byte for byte.** It is eighteen texts in this order: `deliverable_id`, `evaluation_id`, `invoice_line_id`,
 `settlement_id` (the four ids of [`src/knos/ids.py`](../../src/knos/ids.py)), `verdict` (one of the four words), `amount`
-(the line's rate), `currency`, `buyer`, `seller`, `order`, `milestone`, `policy` (the hash of the policy or terms it
-was judged under), `artifact` (the commit), `evidence` (sha256 of the issuer-signed token or receipt, as hex),
-`evaluator`, `run`, `month` (six digits) and `seq` (the batch it is counted in). A whole number is decimal with no
+(the line's rate), `currency`, `buyer`, `seller`, `order`, `milestone` and `policy` (the hash of the policy or terms it
+was judged under).
+
+Then come `artifact` (the commit), `evidence` (sha256 of the issuer-signed token or receipt, as hex),
+`evaluator`, `run`, `month` (six digits) and `seq` (the batch it is counted in).
+
+A whole number is decimal with no
 leading zero; a field the line does not state is the empty text, and its emptiness is hashed. The bytes are
 `knos.event`, a zero byte, the byte 0x02, the byte 0x12, then each text as its length in bytes (u32 big-endian) and its
 UTF-8 bytes. There is no JSON in what is hashed.
@@ -117,9 +129,13 @@ it is, never hashed with a copy of itself, and a leaf can never be read as a nod
 different tags.
 
 **Telling the formats apart without trusting the writer.** A format 2 header says `"format":2` beside the root; a
-format 1 header says nothing, as before. The statement is checked, not believed: the format and the number of leaves
+format 1 header says nothing, as before.
+
+The statement is checked, not believed: the format and the number of leaves
 are inside the root, and no tag is shared, so `knos meter verify` recomputes the root in the stated format and a
-header that names the wrong one fails, with the format the lines do hash to. A format 1 root or proof never checks as
+header that names the wrong one fails, with the format the lines do hash to.
+
+A format 1 root or proof never checks as
 format 2, and the reverse.
 
 **Proofs.** `knos meter prove` gives a proof in the batch's format. A format 2 proof carries the event, so
@@ -269,13 +285,20 @@ Once both are anchored, the chain shows two counts for the same month, 6 and 7, 
 all the chain shows, and it is enough for the seller to know there is something to settle before it has seen the
 buyer's file. The files say what:
 
-$ knos meter reconcile examples/meter/buyer.jsonl examples/meter/seller.jsonl 202610 a84efce01a23db3635166e574a8bb99b1ffcc55491dd67d03f9322f35dbdbac4 only the seller has
-(missing from the buyer's count): accepted, rate 2000000 202610 c9f06a898bc6dae84b02d8fabf6d608fa54706fbe1b356de72362c84019f3648 differs in verdict: buyer rejected at
-2000000 in 202610, seller accepted at 2000000 in 202610 buyer,424242 seller,555000 rate,2000 free,100000 month,count,accepted,value,fee,buyer_only,seller_only,disputed
-202610,5,4,8000000,0,0,1,1 sha256,cfa4bcb4f5095580ad563bcbf6fc4471f3818e95b0c8c18cba41c9394f6cb16f 202610 verdicts of what both hold: 4 accepted, 1 rejected, 0
-insufficient evidence, 0 disputed; 4 deliverable(s) accepted for the first time (billed once each) The two ledgers differ.
-
-The statement counts only what both have and describe alike; settle the lines above between you.
+```
+    $ knos meter reconcile examples/meter/buyer.jsonl examples/meter/seller.jsonl
+    202610 a84efce01a23db3635166e574a8bb99b1ffcc55491dd67d03f9322f35dbdbac4 only the seller has (missing from the buyer's count): accepted, rate 2000000
+    202610 c9f06a898bc6dae84b02d8fabf6d608fa54706fbe1b356de72362c84019f3648 differs in verdict: buyer rejected at 2000000 in 202610, seller accepted at 2000000 in 202610
+    buyer,424242
+    seller,555000
+    rate,2000
+    free,100000
+    month,count,accepted,value,fee,buyer_only,seller_only,disputed
+    202610,5,4,8000000,0,0,1,1
+    sha256,cfa4bcb4f5095580ad563bcbf6fc4471f3818e95b0c8c18cba41c9394f6cb16f
+    202610 verdicts of what both hold: 4 accepted, 1 rejected, 0 insufficient evidence, 0 disputed; 4 deliverable(s) accepted for the first time (billed once each)
+    The two ledgers differ. The statement counts only what both have and describe alike; settle the lines above between you.
+```
 
 The statement counts what both sides have and describe alike, and beside it how many each side has alone and how many
 they dispute. It names the two roles, never "mine" and "theirs", and sorts by id, so the buyer and the seller get the
@@ -300,7 +323,9 @@ agreed in the contract before the work, not decided by the program.
 
 **What an anchored batch proves.** That a workflow file at a pinned commit, in a repository GitHub says is owned by
 the buyer (`RecordBatch`) or by the seller (`ClaimBatch`), stated these totals over this root, once, and that
-nothing after it changed the statement: the running hash of the month covers every batch in order. With the ledger
+nothing after it changed the statement: the running hash of the month covers every batch in order.
+
+With the ledger
 file, that each evaluation under the root is exactly the line the party holds (`verify`, `prove`).
 
 **What it does not prove.**
@@ -400,11 +425,17 @@ A verdict is one of four words ([`src/knos/ids.py`](../../src/knos/ids.py)): `ac
 
 **The on-chain batch format is unchanged; this needs no program change.** A batch token still carries a count, how
 many were accepted, their value and a root; the single mode's token still carries accepted 1 or 0. So the chain
-knows two things about a verdict: accepted, or not. `insufficient_evidence` and `disputed` live in the off-chain
+knows two things about a verdict: accepted, or not.
+
+`insufficient_evidence` and `disputed` live in the off-chain
 ledger line and in corrections, and **in the anchored totals they count as "not accepted"**, together with
-`rejected`: for every batch, count - accepted = rejected + insufficient evidence + disputed. A format 1 root is over
+`rejected`: for every batch, count - accepted = rejected + insufficient evidence + disputed.
+
+A format 1 root is over
 the evaluations' ids, so a line that says `insufficient_evidence` and the same line written as accepted 0 give the
-same root and the same token; a format 2 root is over the whole line, verdict included, so they do not. What tells
+same root and the same token; a format 2 root is over the whole line, verdict included, so they do not.
+
+What tells
 the three apart in a format 1 batch is the ledger file each party holds: `knos meter reconcile`
 reports a line the buyer holds as insufficient evidence and the seller as rejected as a difference in verdict, and
 a month with such a line closes `disputed` until the two files say the same.
@@ -478,9 +509,9 @@ itself. `verify`, `close`, `statement` and the archive all use this one function
 
 `knos meter verify` **fails** a ledger in which an evaluation is counted twice, and names it:
 
-batch 1 of 202610: evaluation 7c1e... is already in batch 0 of 202610: it is counted twice.
-
-If batch 1 is not anchored yet, take the line out and build the batch again; if it is anchored, the chain billed it twice: run `knos meter correct <ledger> 7c1e... --batch 202610.1 --kind duplicate` and anchor the next batch, which carries the correction
+```
+    batch 1 of 202610: evaluation 7c1e... is already in batch 0 of 202610: it is counted twice. If batch 1 is not anchored yet, take the line out and build the batch again; if it is anchored, the chain billed it twice: run `knos meter correct <ledger> 7c1e... --batch 202610.1 --kind duplicate` and anchor the next batch, which carries the correction
+```
 
 The pinned workflow runs the same check before it signs, so a ledger with an uncorrected repeat gets no further
 batch signed. Once the correction is in a batch, `verify` passes and the statement says
@@ -526,9 +557,10 @@ statement nets the correction and shows it, and the close record lists every cor
 that issued it and the ledger that anchored it.
 
 Because the program is unchanged: a correction rides in a batch that has at least one new evaluation, because the
-program takes no batch of none; a correction is a statement by one party, and it changes the month's result for
-both only when the other party's ledger then says the same (the close decides); and a fee already taken for a
-repeat is not returned by the program.
+program takes no batch of none. A correction is a statement by one party, and it changes the month's result for
+both only when the other party's ledger then says the same (the close decides).
+
+A fee already taken for a repeat is not returned by the program.
 
 ## Closing a month
 
@@ -546,18 +578,22 @@ the same bytes whoever computes it from the two files:
 
 On the two example ledgers:
 
-$ knos meter close examples/meter/buyer.jsonl examples/meter/seller.jsonl --month 2026-10 --out close.json the buyer's ledger: 6 evaluation(s), 4
-accepted outcome(s), 2 rejected evaluation(s); anchored 6 in 2 batch(es), running hash edb2b357... the seller's ledger: 7 evaluation(s), 6 accepted
-outcome(s), 1 rejected evaluation(s); anchored 7 in 2 batch(es), running hash 1fa7e587...
-
-IN DISPUTE a84efce01a23db3635166e574a8bb99b1ffcc55491dd67d03f9322f35dbdbac4: missing from the buyer's ledger IN DISPUTE
-c9f06a898bc6dae84b02d8fabf6d608fa54706fbe1b356de72362c84019f3648: verdict differs 202610 is DISPUTED. Wrote close.json (sha256 cb64c5b0...). A disputed
-month is not an invoice. Settle the lines above (add the missing evaluation in a later batch, or `knos meter correct`), then close again.
+```
+    $ knos meter close examples/meter/buyer.jsonl examples/meter/seller.jsonl --month 2026-10 --out close.json
+    the buyer's ledger: 6 evaluation(s), 4 accepted outcome(s), 2 rejected evaluation(s); anchored 6 in 2 batch(es), running hash edb2b357...
+    the seller's ledger: 7 evaluation(s), 6 accepted outcome(s), 1 rejected evaluation(s); anchored 7 in 2 batch(es), running hash 1fa7e587...
+    IN DISPUTE a84efce01a23db3635166e574a8bb99b1ffcc55491dd67d03f9322f35dbdbac4: missing from the buyer's ledger
+    IN DISPUTE c9f06a898bc6dae84b02d8fabf6d608fa54706fbe1b356de72362c84019f3648: verdict differs
+    202610 is DISPUTED. Wrote close.json (sha256 cb64c5b0...).
+    A disputed month is not an invoice. Settle the lines above (add the missing evaluation in a later batch, or `knos meter correct`), then close again.
+```
 
 **A disputed month never becomes an invoice silently.** `knos meter close` exits 1. `knos meter statement --close
 close.json` prints no totals for it and exits 1; with `--disputed` it prints them under
 `note,DISPUTED: this is not an invoice`, with one `disputed,<id>,<why>` line for every line in dispute. A statement
-made without a close record says `state,open`. The way out of a dispute is in the files: the buyer adds the missing
+made without a close record says `state,open`.
+
+The way out of a dispute is in the files: the buyer adds the missing
 evaluation in a later batch, or one side anchors a correction, and the month is closed again. Which side gives way
 is for the contract between them; nothing here decides it.
 
@@ -579,7 +615,9 @@ owner id is the record's buyer or seller. It exits 0 only for an agreed month si
 
 **The chain holds the batches, not the close.** Period close and corrections are off chain and signed by each
 side's GitHub run. `knos_oidc` can verify any GitHub token on chain, but `knos_meter` has no instruction that reads
-a close audience, so nothing on chain says a month is closed, agreed or disputed. An on-chain close would need a
+a close audience, so nothing on chain says a month is closed, agreed or disputed.
+
+An on-chain close would need a
 program change and is not built. What ties the close to the chain is the pair of running hashes in the record:
 `knos meter verify <ledger> --rpc <url>` shows each is the one its Ledger account holds.
 
@@ -619,14 +657,20 @@ accounts is `verify --rpc`.
 
 **The free allowance is counted in the month of the chain's clock.** A batch may be for this month or the last one
 (a batch for September can arrive on 2 October). The 10,000 free evaluations and the plan's count are the buyer's
-for the month in which the batch is *recorded*, as `Record` counts a single evaluation. So a September batch
-recorded in October uses October's allowance, and the Ledger account it is added to is September's. The fee of a
+for the month in which the batch is *recorded*, as `Record` counts a single evaluation.
+
+So a September batch
+recorded in October uses October's allowance, and the Ledger account it is added to is September's.
+
+The fee of a
 batch is `count` past what is left of the allowance, times the rate, taken from the buyer's credits; a batch the
 credits cannot pay is refused whole and the same token can be sent again while it is good.
 
 **`ClaimBatch` needs no workflow pin.** A claim is the seller's statement about its own work. It costs nothing,
 moves nothing and is written to an account of its own, so there is nothing a pinned workflow would protect: the
-program asks only that GitHub signed it for a run in a repository the seller owns. The example workflow still calls
+program asks only that GitHub signed it for a run in a repository the seller owns.
+
+The example workflow still calls
 the published `attest.yml`, because that command checks the file before it signs; a seller may use any workflow.
 What follows: a claim is exactly as good as the seller's care for its own repository.
 
