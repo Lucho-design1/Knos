@@ -548,7 +548,8 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         tail = kind.split(":")[-1]
         rows11 = [{"name": t.get("name"), "family": t.get("subtype"), "src": s11,
                    "on_kind": tail in str(t.get("subtype") or "") or bool({_norm(x) for x in tokens(t.get("name"))} & set(words))}
-                  for t in (((body or {}).get("results") or {}).get("tags") or [])[:8]]
+                  for t in (((body or {}).get("results") or {}).get("tags") or [])[:8]
+                  if safe_segment({"name": t.get("name"), "type": t.get("subtype")})]        # no identity-like tag (SAFE_USE)
         ev["persona"] = [r for r in rows11 if r["on_kind"]] or rows11[:2]     # cross-domain noise stays out of the headline
         ev["persona_all"] = rows11
 
