@@ -120,13 +120,16 @@ ${src(h, price.src)}</section>
     const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); then(); } });
     io.observe(el);
   };
-  seen(root, () => get("/api/proof").then((p) => {
-    const r = p && p.proof;
+  const draw = (r) => {
     if (!r || slot.dataset.ms || slot.querySelector(".k-status")) return;
     const when = String(r.checked_at || "").replace("T", " ").replace(/:\d\dZ$/, " UTC");
     slot.innerHTML = card(r, `Real check, ${when}`);
     slot.dataset.past = "1";
-  }).catch(() => {}));
+  };
+  let carried = null;
+  try { carried = JSON.parse(document.getElementById("k-proof")?.textContent || "null"); } catch { carried = null; }
+  if (carried) draw(carried);                                  // in the page: at the first paint
+  else seen(root, () => get("/api/proof").then((p) => draw(p && p.proof)).catch(() => {}));
   form.addEventListener("submit", (ev) => { ev.preventDefault(); ask(q.value); });
   root.addEventListener("click", (ev) => { const b = ev.target.closest("[data-q]"); if (b) { q.value = b.dataset.q; ask(b.dataset.q); } });
 })();

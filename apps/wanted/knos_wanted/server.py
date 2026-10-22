@@ -371,7 +371,14 @@ def make_handler(state: State):
                 except auth.AuthError as why:
                     return self._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120]))
             if u.path in ("/", "/index.html"):
-                return self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
+                from . import vectors
+                page = (STATIC / "index.html").read_text(encoding="utf-8")
+                pr = vectors.proof().get("proof")
+                if pr:                                        # the proof shown first, in the page itself (T3: at the first paint)
+                    data = json.dumps(pr, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+                    page = page.replace('<script type="application/json" id="k-proof">null</script>',
+                                        f'<script type="application/json" id="k-proof">{data}</script>', 1)
+                return self._send(200, page.encode("utf-8"), "text/html; charset=utf-8")
             if u.path in ("/sw.js", "/manifest.webmanifest"):        # the PWA: its worker's scope is the whole app
                 ctype = "text/javascript; charset=utf-8" if u.path == "/sw.js" else "application/manifest+json"
                 return self._send(200, (STATIC / u.path[1:]).read_bytes(), ctype, {"Cache-Control": "no-cache"})
