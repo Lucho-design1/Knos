@@ -125,6 +125,7 @@ ${src(h, price.src)}</section>
     const when = String(r.checked_at || "").replace("T", " ").replace(/:\d\dZ$/, " UTC");
     slot.innerHTML = card(r, `Real check, ${when}`);
     slot.dataset.past = "1";
+    try { performance.mark("knos-proof-shown"); } catch { /* old browsers */ }   // when the past result was drawn
   };
   let carried = null;
   try { carried = JSON.parse(document.getElementById("k-proof")?.textContent || "null"); } catch { carried = null; }

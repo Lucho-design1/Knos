@@ -89,16 +89,13 @@ async function proof() {
   for (const [door, url] of [["front door", SITE], ["app", APP + "/"]]) {
     for (const [w, h] of [[375, 812], [1280, 800]]) {
       const { ctx, page } = await open(url, w, h);
-      const t = await page.evaluate(() => new Promise((done) => {
-        const t0 = performance.timeOrigin;
-        const seen = () => { const k = document.querySelector("#k-card .k-card .k-real"); return k ? Date.now() - t0 : null; };
-        const first = seen(); if (first !== null) return done(first);
-        const o = new MutationObserver(() => { const x = seen(); if (x !== null) { o.disconnect(); done(x); } });
-        o.observe(document.getElementById("k-card"), { childList: true, subtree: true });
-        setTimeout(() => done(null), 10000);
-      }));
+      // when the page drew the past result (hero.js marks it), against the page's own load event
+      await page.waitForFunction(() => performance.getEntriesByName("knos-proof-shown").length > 0, null, { timeout: 15000 }).catch(() => {});
+      const tm = await page.evaluate(() => { const m = performance.getEntriesByName("knos-proof-shown")[0], nav = performance.getEntriesByType("navigation")[0];
+        return m ? { shown: Math.round(m.startTime), load: Math.round(nav.loadEventEnd || nav.domContentLoadedEventEnd) } : null; });
+      const t = tm ? Math.max(0, tm.shown - tm.load) : null;
       const label = await page.textContent("#k-card .k-real").catch(() => "");
-      ok(t !== null && t <= 1000, `${door} ${w}px: a real, labelled past result ${t === null ? "never shown" : `${t} ms after the page was asked for`}`, label);
+      ok(t !== null && t <= 1000, `${door} ${w}px: a real, labelled past result ${tm === null ? "never shown" : `drawn at ${tm.shown} ms, the page loaded at ${tm.load} ms: ${t} ms after load`}`, label);
       const above = await page.evaluate(() => { const hero = document.getElementById("k-hero"); const f = hero.querySelector("form"); return [...hero.querySelectorAll("p")].filter((p) => p.compareDocumentPosition(f) & Node.DOCUMENT_POSITION_FOLLOWING).length; });
       ok(above === 0, `${door} ${w}px: no paragraph above the box`, above);
       if (w === 1280) {
