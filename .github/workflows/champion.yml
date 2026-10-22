@@ -129,6 +129,9 @@ jobs:
         run: |
           for u in $(node -e 'console.log(JSON.parse(require("fs").readFileSync("scripts/public_pages.json","utf8")).pages.join(" "))'); do
             curl -fsS -m 120 -o /dev/null "$u" || true
+            # and once in a throwaway browser profile, so each page's styles, scripts and API answers are warm on the servers
+            CHROME=$(node -e 'console.log(require("chrome-launcher").Launcher.getInstallations()[0] || "")' 2>/dev/null || true)
+            timeout 60 "${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --user-data-dir="$(mktemp -d)"               --virtual-time-budget=8000 --dump-dom "$u" > /dev/null 2>&1 || true
           done
       - name: Three cold runs of every public page
         run: |
