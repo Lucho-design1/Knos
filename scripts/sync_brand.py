@@ -81,13 +81,9 @@ def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) 
              'try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>')
     if script and EARLY not in s:
         s = s.replace("</head>", f"{EARLY}\n</head>", 1)
-    # the two fonts of the first paint are asked for with the page, as the front door does (no swap after it)
-    fonts = tokens.replace("brand/tokens.css", "fonts/")
-    for f in ("geist.woff2", "bricolage-grotesque.woff2"):
-        pre = f'<link rel="preload" href="{fonts}{f}" as="font" type="font/woff2" crossorigin>'
-        if f'fonts/{f}" as="font"' not in s:
-            s = s.replace("</head>", f"{pre}\n</head>", 1) if '<link rel="stylesheet"' not in s else \
-                re.sub(r'(<link rel="stylesheet")', lambda m, pre=pre: f"{pre}\n{m.group(1)}", s, count=1)
+    # the fonts are not asked for with the page: they are display: optional (no swap after the first paint), and asked
+    # for at once they took the first paint's bandwidth on a slow phone (a later largest paint)
+    s = re.sub(r'<link rel="preload" href="[^"]*fonts/[a-z-]+\.woff2" as="font" type="font/woff2" crossorigin>\n', "", s)
     # a main screen's measured numbers (web/brand/vectors.html), between the k-vectors marks
     if VECTORS.search(s) and path not in HEROES:
         api = "" if tokens.startswith("/static/") else "@app"
