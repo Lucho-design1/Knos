@@ -4,49 +4,108 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knos. With and without Qloo</title>
-<meta name="description" content="Twenty ideas from ten fields, each run through Knos's demand check with Qloo and with the Qloo key unset: what Qloo changes, row by row, each with its trace.">
+<meta name="description" content="Twenty ideas from ten fields, each answered from open signals only and with Qloo added: what Qloo changes, idea by idea, each with its sources and trace.">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/brand/tokens.css">
 <link rel="stylesheet" href="/static/style.css">
 <style>
-.ww{width:100%;border-collapse:collapse;font-size:.9rem}
-.ww th,.ww td{text-align:left;vertical-align:top;padding:6px 8px;border-bottom:1px solid var(--line, #ddd);overflow-wrap:anywhere}
-.ww .chg{font-weight:600}
-.ww-wrap{overflow-x:auto}
-@media (max-width:640px){.ww thead{display:none}.ww tr{display:block;border-bottom:1px solid var(--line, #ddd);padding:8px 0}
-  .ww td{display:block;border:0;padding:2px 0}.ww td::before{content:attr(data-h) ": ";font-weight:600}}
+.ww-sum { font-size: var(--s2); margin: var(--sp-3) 0; }
+.ww-list { list-style: none; padding: 0; margin: var(--sp-5) 0; display: grid; gap: var(--sp-4); }
+.ww-row { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); }
+.ww-row h2 { font-size: var(--s2); margin: 4px 0 var(--sp-3); }
+.ww-field { display: inline-block; padding: 2px 10px; border-radius: 99px; background: var(--soft); color: var(--muted); font-size: var(--s-1); }
+.ww-sides { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+.ww-side h3 { margin: 0 0 6px; font: 600 var(--s-1)/1.3 var(--text); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ww-side p, .ww-side ul { margin: 0 0 4px; font-size: var(--s0); }
+.ww-side ul { padding-left: 18px; }
+.ww-v { font-weight: 700; }
+.ww-v.OPEN { color: var(--ok); } .ww-v.REFUSE { color: var(--bad); } .ww-v.CANNOT_DECIDE { color: var(--warn); }
+.ww-chg { margin: var(--sp-3) 0 0; font-size: var(--s0); }
+@media (max-width: 640px) { .ww-sides { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap"><div class="bar">
-  <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>Knos</a>
-  <a href="/" class="small">← app</a>
-</div></div></header>
+<!-- k-bar -->
+<header class="bar k-bar" id="k-bar">
+  <a class="brand" href="/#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
+  <nav id="nav" aria-label="Knos">
+    <a href="/#home">Check demand</a>
+    <a href="/#projects">Projects</a>
+    <a href="https://drexthealpha.github.io/Knos/#pricing">Pricing</a>
+    <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
+    <div class="more" id="more">
+      <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
+      <div class="more-list" id="more-list">
+        <a href="/#verify">How we verify</a>
+        <a href="/#buy">Back a product</a>
+        <a href="/#fund">Fund a milestone</a>
+        <a href="/#contribute">Open work</a>
+        <a href="/#make">Make</a>
+        <a href="/#teams">Teams</a>
+        <a href="/#agents">Agents</a>
+        <a href="/with-without">With and without Qloo</a>
+        <a href="/qloo-safe-use">How Knos uses Qloo safely</a>
+        <a href="/invite">Invite</a>
+        <a href="https://drexthealpha.github.io/Knos/#check-a-pull-request" id="go-check">Check a pull request</a>
+        <a href="https://drexthealpha.github.io/Knos/#demo">Demo</a>
+        <a href="https://drexthealpha.github.io/Knos/#install">Install</a>
+        <a href="https://drexthealpha.github.io/Knos/#records">Records</a>
+        <a href="https://drexthealpha.github.io/Knos/#network">Numbers</a>
+        <a href="https://drexthealpha.github.io/Knos/#judges">Check every claim yourself</a>
+        <a href="https://drexthealpha.github.io/Knos/faq.html">Questions</a>
+      </div>
+    </div>
+  </nav>
+  <div class="tools">
+    <button id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
+    <a id="whoBtn" class="signin" href="/#signin">Sign in</a>
+  </div>
+</header>
+<script src="/static/brand/bar.js" defer></script>
+<!-- /k-bar -->
 <main class="wrap">
   <h1>With and without Qloo</h1>
-  <p>The same demand check, twice per idea: once with Qloo, once with the Qloo key unset.</p>
-  <p id="ww-sum" class="small"></p>
-  <p class="small muted">Qloo describes aggregate taste: not causal, not about a person. A row counts as changed when Qloo changes the verdict,
-    the audience, the launch cities or the price tier. Shown as measured, whatever it shows.</p>
-  <div class="ww-wrap"><table class="ww" id="ww"><thead><tr><th scope="col">Field</th><th scope="col">Idea</th><th scope="col">With Qloo</th>
-    <th scope="col">Key unset</th><th scope="col">Changed</th><th scope="col">Traces</th></tr></thead><tbody></tbody></table></div>
-  <p class="small muted" id="ww-rule"></p>
+  <p>Twenty ideas from ten fields, each answered twice: from open signals only, then with Qloo added.</p>
+  <p id="ww-sum" class="ww-sum"></p>
+  <p class="small muted">Open signals: Wikimedia pageviews, GDELT news, Hacker News, OpenAlex, World Bank and Wikidata, all keyless, each named as
+    its own source. Qloo describes aggregate taste: not causal, not about a person. Shown as measured, whatever it shows.</p>
+  <ol class="ww-list" id="ww" aria-label="Ideas, open signals and Qloo"></ol>
+  <details class="small"><summary>The rules</summary><ul id="ww-rules"></ul><p id="ww-rule"></p></details>
   <p class="small"><a href="/qloo-safe-use">How Knos uses Qloo safely</a> · <a href="/">Check your own idea</a></p>
 </main>
 <script>
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const side = (x) => [x.verdict, x.audience, (x.cities || []).join(", "), x.tier].filter(Boolean).map(esc).join(" · ") || "none";
+const WORD = { OPEN: "Open for pre-orders", REFUSE: "Not yet", CANNOT_DECIDE: "Cannot decide" };
+const word = (v) => `<span class="ww-v ${esc(v)}">${esc(WORD[v] || v || "No verdict")}</span>`;
+const n = (x) => Number(x).toLocaleString("en-US");
+const said = (g) => !g.answered ? `${esc(g.source)}: no answer`
+  : g.views_per_day != null ? `Wikipedia, ${esc(g.article.replace(/_/g, " "))}: ${n(g.views_per_day)} views a day`
+  : g.articles_3_months != null ? `GDELT: ${n(g.articles_3_months)} news articles in 3 months`
+  : g.stories_2_years != null ? `Hacker News: ${n(g.stories_2_years)} stories in 2 years`
+  : g.works_since_2023 != null ? `OpenAlex: ${n(g.works_since_2023)} works since 2023`
+  : g.gdp_per_person_usd != null ? `World Bank: ${n(g.gdp_per_person_usd)} US dollars of GDP per person`
+  : g.label ? `Wikidata: ${esc(g.label)}` : esc(g.source);
+const sig = (g) => `<li>${g.link ? `<a href="${esc(g.link)}" rel="noopener">${said(g)}</a>` : said(g)}${g.counts ? " (counts)" : ""}</li>`;
 (async () => {
   const r = await fetch("/api/qloo-diff");
-  const d = await r.json();
-  if (!r.ok) { document.getElementById("ww-sum").textContent = d.error || "Not published yet."; return; }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d.rows) { document.getElementById("ww-sum").textContent = d.error || "Not published yet."; return; }
   const s = d.summary || {};
-  document.getElementById("ww-sum").innerHTML = `<b>${esc(s.changed)} of ${esc(s.rows)}</b> ideas changed with Qloo (verdict ${esc(s.verdict)}, audience ${esc(s.audience)}, cities ${esc(s.cities)}, price tier ${esc(s.tier)}). Run ${esc(d.made)}.`;
+  document.getElementById("ww-sum").innerHTML = `<b>${esc(s.changed)} of ${esc(s.rows)}</b> ideas changed with Qloo added: the verdict in ${esc(s.verdict)}, the audience in ${esc(s.audience)}, the cities in ${esc(s.cities)}, the price tier in ${esc(s.tier)}. Run ${esc(d.made)}.`;
   document.getElementById("ww-rule").textContent = d.rule || "";
-  document.querySelector("#ww tbody").innerHTML = d.rows.map((x) => `<tr data-qloo>
-    <td data-h="Field">${esc(x.field)}</td><td data-h="Idea">${esc(x.idea)}</td>
-    <td data-h="With Qloo">${side(x.with)}</td><td data-h="Key unset">${side(x.without)}</td>
-    <td data-h="Changed" class="chg">${esc((x.changed || []).join(", ") || "nothing")}</td>
-    <td data-h="Traces"><a data-trace href="/trace.html?hash=${esc(x.with.hash)}">with Qloo</a> · <a href="/trace.html?hash=${esc(x.without.hash)}">key unset</a></td></tr>`).join("");
+  document.getElementById("ww-rules").innerHTML = Object.entries(d.rules || {}).map(([k, v]) => `<li><b>${esc(k.replace(/_/g, " "))}</b>: ${esc(v)}</li>`).join("");
+  const open = (x) => x.open || x.without || {};
+  document.getElementById("ww").innerHTML = d.rows.map((x) => `<li class="ww-row">
+    <span class="ww-field">${esc(x.field)}</span><h2>${esc(x.idea)}</h2>
+    <div class="ww-sides">
+      <section class="ww-side"><h3>Open signals only</h3><p>${word(open(x).verdict)}${open(x).tier ? ` · price tier ${esc(open(x).tier)}` : ""}</p>
+        <p class="muted">No audience, no cities: no open source says who or where.</p><ul>${(open(x).signals || []).map(sig).join("")}</ul></section>
+      <section class="ww-side" data-qloo><h3>With Qloo added</h3><p>${word(x.with.verdict)}</p>
+        <p>${esc(x.with.audience || "no audience")} · ${esc((x.with.cities || []).join(", ") || "no cities")} · ${esc(x.with.tier ? "price tier " + x.with.tier : "no price tier")}</p>
+        <p><a data-trace href="/trace.html?hash=${esc(x.with.hash)}">The Qloo calls: request, result and limit</a></p></section>
+    </div>
+    <p class="ww-chg"><b>Changed:</b> ${esc((x.changed || []).map((c) => c === "tier" ? "price tier" : c).join(", ") || "nothing")}</p></li>`).join("");
 })();
 </script>
 </body>

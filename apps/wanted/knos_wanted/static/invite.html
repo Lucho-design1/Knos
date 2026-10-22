@@ -8,13 +8,49 @@
 <meta property="og:title" content="Knos. Cross your research into a product">
 <meta property="og:description" content="Bring a paper or an idea: a demand check on Qloo, a Ready brief, pre-orders paid only on verified proof.">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/brand/tokens.css">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header class="top"><div class="wrap"><div class="bar">
-  <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>Knos</a>
-  <a href="/" class="small">← app</a>
-</div></div></header>
+<!-- k-bar -->
+<header class="bar k-bar" id="k-bar">
+  <a class="brand" href="/#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
+  <nav id="nav" aria-label="Knos">
+    <a href="/#home">Check demand</a>
+    <a href="/#projects">Projects</a>
+    <a href="https://drexthealpha.github.io/Knos/#pricing">Pricing</a>
+    <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
+    <div class="more" id="more">
+      <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
+      <div class="more-list" id="more-list">
+        <a href="/#verify">How we verify</a>
+        <a href="/#buy">Back a product</a>
+        <a href="/#fund">Fund a milestone</a>
+        <a href="/#contribute">Open work</a>
+        <a href="/#make">Make</a>
+        <a href="/#teams">Teams</a>
+        <a href="/#agents">Agents</a>
+        <a href="/with-without">With and without Qloo</a>
+        <a href="/qloo-safe-use">How Knos uses Qloo safely</a>
+        <a href="/invite">Invite</a>
+        <a href="https://drexthealpha.github.io/Knos/#check-a-pull-request" id="go-check">Check a pull request</a>
+        <a href="https://drexthealpha.github.io/Knos/#demo">Demo</a>
+        <a href="https://drexthealpha.github.io/Knos/#install">Install</a>
+        <a href="https://drexthealpha.github.io/Knos/#records">Records</a>
+        <a href="https://drexthealpha.github.io/Knos/#network">Numbers</a>
+        <a href="https://drexthealpha.github.io/Knos/#judges">Check every claim yourself</a>
+        <a href="https://drexthealpha.github.io/Knos/faq.html">Questions</a>
+      </div>
+    </div>
+  </nav>
+  <div class="tools">
+    <button id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
+    <a id="whoBtn" class="signin" href="/#signin">Sign in</a>
+  </div>
+</header>
+<script src="/static/brand/bar.js" defer></script>
+<!-- /k-bar -->
 <main class="wrap">
   <h1>Cross your research into a product</h1>
   <p>Bring a paper or an idea. Knos asks Qloo who wants it, where and at what price, then opens pre-orders paid only on proof.</p>

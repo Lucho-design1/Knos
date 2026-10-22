@@ -93,7 +93,7 @@ let chromium;
 try { ({ chromium } = (await import("playwright")).default); } catch { console.log("SKIP the playwright package is not installed"); process.exit(process.exitCode || 0); }
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".json": "application/json", ".woff2": "font/woff2" };
 const HARNESS = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>verifier</title>
-<link rel="stylesheet" href="app.css"></head><body><main><section id="verifier"></section></main>
+<link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main><section id="verifier"></section></main>
 <script type="module">import { renderVerifier } from "./verifier.js"; import { renderVerified } from "./badge.js"; renderVerifier(document.getElementById("verifier"), { now: () => ${NOW}, badge: renderVerified }); window.ready = true;</script></body></html>`;
 const server = createServer((req, res) => {
   const path = decodeURIComponent(new URL(req.url, "http://x").pathname);

@@ -185,7 +185,9 @@ def test_each_page_to_index_has_its_own_address_heading_links_and_date(rel):
     assert 50 <= len(description) <= 155, description
     assert [h for r, h in p.links if r == "canonical"] == [PAGES[rel]] == p.meta["og:url"]
     assert p.h1 == 1 and p.meta["author"] == ["drexthealpha"] and "robots" not in p.meta          # nothing keeps a crawler out
-    inside = {urljoin(PAGES[rel], h) for h in p.hrefs if urljoin(PAGES[rel], h).startswith(SITE)} - {SITE}     # the bar's and the foot's home link apart
+    # the page's own links: the bar (web/brand/bar.html) is the same on every page of Knos, and the home link apart
+    own = page(rel).hrefs if "<!-- k-bar -->" not in text else Page(re.sub(r"<!-- k-bar -->.*?<!-- /k-bar -->", "", text, flags=re.S)).hrefs
+    inside = {urljoin(PAGES[rel], h) for h in own if urljoin(PAGES[rel], h).startswith(SITE)} - {SITE}
     assert 3 <= len(inside) <= 5, sorted(inside)
     for url in inside:                                                                      # each leads to a file of the site
         assert (WEB / built_file(urlparse(url)._replace(fragment="").geturl())).is_file(), url

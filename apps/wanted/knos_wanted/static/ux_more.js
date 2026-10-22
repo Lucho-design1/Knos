@@ -360,16 +360,8 @@
       Knos.badgeCount(n);
     } catch (e) { /* none */ }
   }
-  function fab() {
-    let f = $("ux-act");
-    const v = location.hash.slice(1).split("=")[0] || "home";
-    // list pages only: on one project's page (#projects=id) its own buttons are the actions
-    const act = location.hash.includes("=") ? null : { home: ["Write a brief", "#projects"], projects: ["New brief", "#projects"], buy: ["Back a product", "#buy"], fund: ["Fund a milestone", "#fund"] }[v];
-    if (!act) { if (f) f.hidden = true; return; }
-    if (!f) { f = document.createElement("a"); f.id = "ux-act"; f.className = "button ux-act"; document.body.appendChild(f); }
-    f.hidden = false; f.textContent = act[0]; f.href = act[1];
-    f.onclick = () => setTimeout(() => { const n = $("bSay") || $("bName"); if (n) n.focus(); }, 80);
-  }
+  // each view's own buttons are its actions: nothing floats over the page (scripts/test_layout_audit.mjs)
+  function fab() { const f = $("ux-act"); if (f) f.remove(); }
   addEventListener("hashchange", fab);
 
   // ---- help beside the page, and a person when help is not enough -----------------------------------------------------

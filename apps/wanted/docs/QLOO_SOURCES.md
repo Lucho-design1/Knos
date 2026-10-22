@@ -10,7 +10,6 @@ Read 14 Oct 2026. Nothing here is Qloo response data.
 | `qloo mcp` is a local stdio server with no hosted URL; start it from a backend with the official MCP SDK and `env: process.env` so `QLOO_API_KEY` reaches it; the chain find_tags/describe -> confirm -> recommend/rank/where_popular; six statuses ok/empty/needs_input/partial/degraded/error; retry only when `error.retryable` | kit `starter/mcp-client/README.md` and `backend.mjs`; SDK pin `@modelcontextprotocol/sdk` 1.30.1 in `starter/mcp-client/package.json` |
 | Key only on the server, never in a repository, browser bundle, public MCP config or recording; smallest request; cache only what is needed; bounded retries; no bulk scraping | kit `docs/API_ACCESS.md` |
 | No personal data to Qloo (names, e-mails, device ids, account ids, location histories); results are aggregate affinities, not evidence about a person; ask for clarification when an entity or tag choice changes the result | kit `docs/SAFE_USE.md` |
-| The six submission items | kit `docs/SUBMISSION.md` |
 | `QLOO_BASE_URL` and `QLOO_TRUSTED_BASE_URL` set to the same URL to trust a gateway for one invocation; `qloo setup --status --json`; `qloo mcp` advertises `qloo_capabilities` plus nine workflows and with no credential fails calls with `QLOO_AUTH` | `@qloo/qloo-harness` 0.1.26 `README.md` (npm package, installed 14 Oct 2026) |
 
 ## The tools, as `qloo mcp` lists them (harness 0.1.26, `tools/list` without a key, 14 Oct 2026)

@@ -52,7 +52,7 @@ let chromium;
 try { ({ chromium } = (await import("playwright")).default); } catch (e) { console.log(`SKIP the playwright package is not installed (${e.code || e.message})`); process.exit(failed ? 1 : 0); }
 const TYPES = { ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".html": "text/html", ".woff2": "font/woff2", ".svg": "image/svg+xml" };
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Check</title>
-<link rel="stylesheet" href="/app.css"></head><body><main id="page"><section id="share"></section></main>
+<link rel="stylesheet" href="/brand/tokens.css"><link rel="stylesheet" href="/app.css"></head><body><main id="page"><section id="share"></section></main>
 <script type="module">import { renderShare } from "/share.js";
 window.show = (verdict) => renderShare(document.getElementById("share"), { verdict, now: ${NOW} });
 window.ready = true;</script></body></html>`;

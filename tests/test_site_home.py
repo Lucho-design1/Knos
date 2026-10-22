@@ -29,7 +29,10 @@ def test_the_snapshot_cards_are_the_ones_its_rows_draw():
 
 def test_the_bare_address_opens_on_the_products_with_three_one_tap_actions_each():
     home = _section("view-home")
-    assert '<h1 id="home-h">Back research that becomes real products</h1>' in home and 3 <= len(_words("Back research that becomes real products")) <= 6
+    # the first screen is the mission and one box (web/brand/hero.html, scripts/sync_brand.py); the products follow
+    mission = "Carry research from every field of science across the valley of death."
+    assert f'<h1 id="k-mission" class="k-mission">{mission}</h1>' in home and len(_words(mission)) <= 12
+    assert '<input id="k-q" name="q"' in home and '<h2 id="home-h">Open for backing now</h2>' in home
     cards = re.findall(r'<li class="hp" data-slug="([a-z0-9-]+)">(.*?)</li>', home, re.S)
     assert 1 <= len(cards) <= 3
     for slug, body in cards:
@@ -38,18 +41,18 @@ def test_the_bare_address_opens_on_the_products_with_three_one_tap_actions_each(
         title = re.search(r'<h3 class="hp-t">(.*?)</h3>', body)[1]
         assert len(_words(title)) <= 12
     # the cards are a live view's rows (data-not-prose); the prose of the first screen, the bar with it, stays in its budget
-    bar = PAGE[PAGE.index('<header class="bar">'):PAGE.index("</header>")]
+    bar = PAGE[PAGE.index('<header class="bar k-bar"'):PAGE.index("</header>")]
     bar = re.sub(r'<div class="more-list".*?</div>', "", bar, flags=re.S)
     prose = re.sub(r'<ol class="hp-list".*?</ol>', " ", home, flags=re.S)
     prose = re.sub(r'<p class="fine" id="home-when" data-not-prose>.*?</p>', " ", prose, flags=re.S)
     prose = re.sub(r'<details[^>]*data-not-prose>.*?</details>', " ", prose, flags=re.S)       # the IDT benchmark's rows
     prose = re.sub(r"<(button)\b[^>]*>.*?</\1>", " ", re.sub(r"<!--.*?-->", " ", prose, flags=re.S), flags=re.S)
     n = len(_words(re.sub(r"<button\b[^>]*>.*?</button>", " ", bar, flags=re.S))) + len(_words(prose))
-    assert 12 <= n <= 56, n
+    assert 12 <= n <= 64, n
     assert 'data-not-prose aria-label="Research products open for backing now"' in home
-    # one link to what is technical, one to the check of agent work, one to the researcher's own crossing
-    assert '<a href="#verify">How we verify</a>' in home and '<a href="#check" id="home-check">Check a claim</a>' in home
-    assert '<a id="home-research" href="wanted.html#research" data-app="#research">Cross your own paper</a>' in home
+    # what is technical and the check of agent work are one press away, under "More" (web/brand/bar.html)
+    bar_all = PAGE[PAGE.index('<header class="bar k-bar"'):PAGE.index("</header>")]
+    assert '<a href="#verify">How we verify</a>' in bar_all and '<a href="#check-a-pull-request" id="go-check">Check a pull request</a>' in bar_all
 
 
 def test_the_page_decides_its_first_view_before_the_first_paint_and_the_router_knows_it():

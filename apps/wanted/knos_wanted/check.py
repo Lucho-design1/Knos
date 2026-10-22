@@ -26,6 +26,7 @@ import json
 import math
 import re
 import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from .qloo_rest import LIVE_LABEL, Client, QlooError
 
@@ -535,8 +536,21 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
                 continue                       # the launch cities stay inside the chosen market
             why = ((r.get("query") or {}).get("explainability") or {}).get("signal.interests.entities") or []
             if len(ev["cities"]) < 5:
+                at = r.get("location") or {}
+                lat, lon = at.get("lat", at.get("latitude")), at.get("lon", at.get("longitude"))
+                ok = isinstance(lat, (int, float)) and isinstance(lon, (int, float))
                 ev["cities"].append({"name": r.get("name"), "country": geo.get("country_code"), "affinity": (r.get("query") or {}).get("affinity"),
+                                     "lat": lat if ok else None, "lon": lon if ok else None, "coords_from": "Qloo" if ok else None,
                                      "because": [x.get("entity_id") for x in why][:3], "src": s10})
+
+        # a launch city Qloo named without coordinates is put on the map from Wikidata, while the other parts are still
+        # being asked; the card names the source (an open signal: it decides nothing)
+        from . import open_signals
+        missing = [c for c in ev["cities"] if c.get("lat") is None]
+        with ThreadPoolExecutor(max_workers=5) as ex:
+            for c, got in zip(missing, ex.map(lambda c: open_signals.coords(c["name"], c.get("country")), missing)):
+                if got:
+                    c.update(lat=got[0], lon=got[1], coords_from="Wikidata")
 
     def ladder():
         if len(ev["matches"]) < 2:
@@ -558,7 +572,6 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         if lead:
             ev["versus"] = _versus(run, near, lead, signal, ev["audiences"])
     # the independent parts, at once (each its own Qloo calls; the call list is numbered as each answer lands)
-    from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=7) as ex:
         for f in [ex.submit(x) for x in (places, persona, cities, ladder, recommended, trend, versus)]:
             f.result()

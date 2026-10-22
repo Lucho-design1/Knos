@@ -19,6 +19,8 @@ const root = process.argv[2];
 // the menu of this build (tests/web/overflow.mjs menuOf): a page added by name (web/views.js ADDED) has a link, and one
 // added to the bar takes its words from Docs, Install and Check
 const MENU = menuOf(root || ".");
+// the page shown, as web/front.js marks it once drawn (data-ready): most pages have no link of their own in the bar
+const isShown = (p, name) => p.waitForFunction((n) => document.documentElement.dataset.ready === n, name, { timeout: 8000 }).then(() => true, () => false);
 const here = dirname(fileURLToPath(import.meta.url));
 const recorded = (name) => JSON.parse(readFileSync(join(here, "recorded", `${name}.json`), "utf8"));
 const check = (name, cond, detail) => { if (!cond) { console.error("FAIL", name, detail === undefined ? "" : detail); process.exitCode = 1; } else console.log("ok  ", name); };
@@ -424,15 +426,15 @@ await reset();
       }
       await ctx.close();
     }
-    check("  Status, Leaderboard, Pilot and Reproduce are offered, hold nothing until one is opened, and none is shown on the first screen", (await page.$$eval("#status, #index, #pilot, #reproduce", (s) => s.map((x) => `${x.id}:${x.className}:${x.childElementCount}:${getComputedStyle(x).display}`))).join() === "status:mount:0:none,index:mount:0:none,pilot:mount:0:none,reproduce:mount:0:none"
-      && (await page.$$eval('nav a[data-mount="status"], nav a[data-mount="index"], nav a[data-mount="pilot"], nav a[data-mount="reproduce"]', (a) => a.length === 4 && a.every((x) => !x.hidden))));
+    check("  Status, Leaderboard, Pilot and Reproduce are offered by their address, hold nothing until one is opened, and none is shown on the first screen", (await page.$$eval("#status, #index, #pilot, #reproduce", (s) => s.map((x) => `${x.id}:${x.className}:${x.childElementCount}:${getComputedStyle(x).display}`))).join() === "status:mount:0:none,index:mount:0:none,pilot:mount:0:none,reproduce:mount:0:none"
+      && (await page.$$eval('nav a[data-mount]', (a) => a.length)) === 0);
     const asked = await page.evaluate(() => performance.getEntriesByType("resource").map((e) => new URL(e.name).pathname.split("/").pop()).filter((f) => f.endsWith(".js")));
     check("  the first screen asks for the front door's code and no other page's: not the files that read Solana, not the console's", ["front.js", "front_door.js", "motion.js"].every((f) => asked.includes(f))
       && !["app.js", "settle.js", "buyer.js", "console.js", "mounts.js", "pricing.js", "records.js", "statements.js", "palette.js"].some((f) => asked.includes(f)), asked);
     check("  and the Status page has asked GitHub for nothing: it reads when it is opened", hub.asked.length === 0, hub.asked);
   }
   check("only the front view is shown", await page.isVisible("#view-check") && await page.isHidden("#view-protect") && await page.isHidden("#view-network"));
-  check("the views are in the menu", (await page.$$eval("nav a:not([data-mount])", (a) => a.map((x) => x.getAttribute("href")))).sort().join() === ["#check", "#demo", "#pricing", DOCS, "#records", "#check-a-pull-request", "#fund", "#claim", "#protect", "#network", "#build"].sort().join());
+  check("the views are in the menu: the bar every page of Knos shows", (await page.$$eval("#nav a", (a) => a.map((x) => x.textContent.trim()))).join() === [...MENU.bar, ...MENU.under].join());
   // the bar: five links at most a first visitor needs, the rest one press away under "More"
   {
     const bar = () => page.$$eval("#nav a", (l) => l.filter((a) => a.offsetParent !== null && !a.closest("#more-list")).map((a) => a.textContent));
@@ -440,7 +442,7 @@ await reset();
     check("the bar: six words of links and More, on one line, and nothing of More shown until it is pressed", (await bar()).join() === MENU.bar.join() && (await bar()).join(" ").split(" ").length <= 6 && (await page.$$eval("#nav > a", (l) => l.filter((a) => !a.hidden).length)) === MENU.bar.length && (await under()).length === 0 && (await page.getAttribute("#more-button", "aria-expanded")) === "false"
       && await page.$$eval("#nav > a, #more-button", (l) => new Set(l.filter((a) => a.offsetParent !== null).map((a) => Math.round(a.getBoundingClientRect().top / 8))).size === 1), await bar());
     await page.click("#more-button");
-    check("  More opens the others, inside the window", (await under()).join() === [...MENU.first, "Fund,Get paid,Check a pull request,Invoice from a file,Records,Statement,Protect,For suppliers,Terms,Leaderboard,Supplier records,Playground,Story,Status,Numbers,Pilot,Verifier,Build,Capabilities,Reproduce,Hold a key", ...MENU.last].join() && (await page.getAttribute("#more-button", "aria-expanded")) === "true"
+    check("  More opens the others, inside the window", (await under()).join() === MENU.under.join() && (await page.getAttribute("#more-button", "aria-expanded")) === "true"
       && await page.$eval("#more-list", (e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= document.documentElement.clientWidth; }) && (await overflow(page)) <= 1, await under());
     await page.keyboard.press("Escape");
     check("  Escape closes it and gives the button the focus back", (await under()).length === 0 && await page.evaluate(() => document.activeElement.id === "more-button"));
@@ -457,20 +459,20 @@ await reset();
     }
     await page.click("#more-button"); await page.click('#more-list a[href="#records"]');
     await page.waitForSelector("#view-records", { state: "visible" });
-    check("  a link of it goes to its page, closes the list, and More is marked as holding the page shown", (await under()).length === 0 && await page.$eval("#more", (e) => e.classList.contains("current")) && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#records");
+    check("  a link of it goes to its page, closes the list, and More is marked as holding the page shown", (await under()).length === 0 && await page.$eval("#more", (e) => e.classList.contains("current")) && (await isShown(page, "records")));
     await visit(page, "#pricing");
     check("  and is not marked on a page of the bar's own", !(await page.$eval("#more", (e) => e.classList.contains("current"))));
     const phone = await (await world({ width: 390 })).newPage();
     await visit(phone, "#check");
     await phone.click("#menu");
     const shown = () => phone.$$eval("#nav a", (l) => l.filter((a) => a.offsetParent !== null).length);
-    check("  a phone: Menu opens the bar's links and More, and never fifteen at once", (await shown()) === 6 + MENU.added.filter((a) => a.bar).length && await phone.isVisible("#more-button") && (await overflow(phone)) <= 1, await shown());
+    check("  a phone: Menu opens the bar's links and More, and never fifteen at once", (await shown()) === MENU.bar.length && await phone.isVisible("#more-button") && (await overflow(phone)) <= 1, await shown());
     await phone.click("#more-button");
-    check("  and More, inside it, opens the rest", (await shown()) === 27 + MENU.added.length && (await overflow(phone)) <= 1, await shown());
+    check("  and More, inside it, opens the rest", (await shown()) === MENU.bar.length + MENU.under.length && (await overflow(phone)) <= 1, await shown());
     await phone.close();
     const bare = await (await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1100, height: 900 } })).newPage();
     await bare.goto(base);
-    check("  without scripts: the links of the views are all in the bar, More's too, and its button is not shown", (await bare.$$eval("#nav a", (l) => l.filter((a) => a.offsetParent !== null).map((a) => a.getAttribute("href")))).join() === `#check,#demo,#pricing,${DOCS},#fund,#claim,#check-a-pull-request,#records,#protect,#network,#build` && await bare.isHidden("#more-button"));
+    check("  without scripts: the links of the views are all in the bar, More's too, and its button is not shown", (await bare.$$eval("#nav a", (l) => l.filter((a) => a.offsetParent !== null).map((a) => a.textContent.trim()))).join() === [...MENU.bar, ...MENU.under].join() && await bare.isHidden("#more-button"));
     await bare.context().close();
     await visit(page);
   }
@@ -492,7 +494,7 @@ await reset();
   await page.mouse.move(3, 3); await page.waitForSelector("#demo .kd-go");                  // the round is mounted (web/demo.js); a build without it leaves the mount empty, as here
   await page.evaluate(() => { document.getElementById("demo").innerHTML = ""; });
   await page.waitForSelector("#demo", { state: "hidden" });
-  await page.click('#nav > a[href="#demo"]');
+  await page.click("#more-button"); await page.click('#more-list a[href="#demo"]');          // Demo is under More
   check("  Demo, while the demo's mount is empty, puts the cursor in the box that checks a pull request", await page.evaluate(() => document.activeElement.id === "fd-in") && await page.isHidden("#demo"));
   await page.evaluate(() => { document.activeElement.blur(); document.getElementById("demo").innerHTML = "<p>Filled</p>"; });
   await page.waitForSelector("#demo", { state: "visible" });
@@ -500,7 +502,7 @@ await reset();
   check("  the demo's mount, once filled, is shown under the front door, How it works and the one transaction, and Demo goes to it", await page.isVisible("#view-check") && await page.$eval("#demo", (d) => d.parentElement.id === "view-check"
     && d.previousElementSibling.id === "one-transaction" && d.previousElementSibling.previousElementSibling.classList.contains("sides")
     && d.parentElement.querySelector(".hero ~ #how-it-works ~ .how ~ .sides ~ #one-transaction ~ #demo") === d));
-  await page.click('#nav > a[href="#demo"]');
+  await page.click("#more-button"); await page.click('#more-list a[href="#demo"]');          // Demo is under More
   check("    and the cursor stays out of the box", await page.evaluate(() => document.activeElement.id !== "fd-in" && location.hash === "#demo"));
   await page.evaluate(() => { document.getElementById("demo").replaceChildren(); });
   await visit(page);
@@ -512,9 +514,10 @@ await reset();
   // last under More, and Install goes first under More when an added page takes its words
   const added = (bar) => MENU.added.filter((a) => a.bar === bar).map((a) => `#${a.name}`), inst = MENU.first.includes("Install");
   const mounts = ["#buy", ...(inst ? [] : ["#install"]), ...added(true), ...(inst ? ["#install"] : []), "#shadow", "#invoice-statement", "#supplier", "#terms", "#index", "#record", "#playground", "#story", "#status", "#pilot", "#verifier", "#capabilities", "#reproduce", "#keyholder", ...added(false)];
-  const found = await page.$$eval("nav a[data-mount]", (a) => a.map((x) => x.getAttribute("href")));
-  check("the pages other modules fill are there, and an empty one is not in the menu", found.join() === mounts.join()
-    && await page.$$eval("nav a[data-mount]", (a) => a.every((x) => !x.hidden)), { found, mounts });
+  // each is a section of the page, opened by its address and the search (web/palette.js): the bar is the same on every page
+  const found = await page.$$eval("main section.mount", (s) => s.map((x) => `#${x.id}`));
+  check("the pages other modules fill are there, each its own section, and none adds a link to the bar", mounts.every((m) => found.includes(m))
+    && (await page.$$eval("nav a[data-mount]", (a) => a.length)) === 0, { found, mounts });
   // every row of the leaderboard links to that supplier's public record (web/supplier_record.js, mounted at #record=<slug>;
   // the build copies docs/records/*.json to records/), and "Supplier records" under More opens the list of them
   await visit(page, "#index"); await page.waitForSelector("#index .index-board tbody tr a.ib-record");
@@ -538,15 +541,14 @@ await reset();
     if (!had) check(`  #${id} while empty shows the first screen`, await page.isVisible("#view-check") && await page.isHidden(`#${id}`));
     await page.evaluate((i) => { if (!document.getElementById(i).childElementCount) document.getElementById(i).innerHTML = "<h2>Filled</h2>"; }, id);
     await page.waitForSelector(`#${id}`, { state: "visible" });
-    check(`  #${id} once filled is shown alone, with its link in the menu`, await page.isHidden("#view-check") && !(await page.$eval(`nav a[href="#${id}"]`, (a) => a.hidden)) && (await page.getAttribute("nav a[aria-current=page]", "href")) === `#${id}`
-      && (await page.$eval("#more", (e) => e.classList.contains("current"))) === !["buy", "install"].includes(id));
+    check(`  #${id} once filled is shown alone`, await page.isHidden("#view-check") && (await page.evaluate(() => document.body.dataset.page)) === id);
   }
   // what fills them in this build: Install is in the page, Capabilities is the manifest the build copied, Buy is web/buyer.js when there is one
   await visit(page, "");
-  await settled(); await page.click('#nav > a[href="#install"]');
+  await settled(); await page.click("#more-button"); await page.click('#more-list a[href="#install"]');
   await page.waitForSelector("#install-repo", { state: "visible" });
-  check("install: Install, in the bar, lands on the Install page, shown alone, with the box to write a repository in", await page.isVisible("#install") && await page.isHidden("#view-check") && (await page.evaluate(() => document.body.dataset.page)) === "install"
-    && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#install" && (await text(page, "#install h2")) === "Install with one pull request");
+  check("install: Install, under More, lands on the Install page, shown alone, with the box to write a repository in", await page.isVisible("#install") && await page.isHidden("#view-check") && (await page.evaluate(() => document.body.dataset.page)) === "install"
+    && (await isShown(page, "install")) && (await text(page, "#install h2")) === "Install with one pull request");
   await page.fill("#install-repo", "octo/widgets");
   check("  a repository gives the link that opens GitHub's editor there, and the five terms templates are under it", (await page.getAttribute("#install-open", "href")).startsWith("https://github.com/octo/widgets/new/main?filename=.github%2Fworkflows%2Fknos.yml&value=")
     && (await page.$$eval("#install-terms .card", (c) => c.length)) === 5);
@@ -559,7 +561,7 @@ await reset();
   const capRows = () => page.$$eval("#capabilities table.capabilities tr[data-stage]", (tr) => tr.map((r) => [r.dataset.stage, r.children[0].textContent, r.children[1].textContent]));
   check("capabilities: one row per capability of the manifest, each at its stage, shown alone with its link in the menu", JSON.stringify(await capRows()) === JSON.stringify(manifest.capabilities.map((c) => [c.stage || "none", c.what,
     { none: "not built", implemented: "implemented", tested: "tested locally", deployed: "deployed on devnet", exercised: "exercised on devnet", reproduced: "reproduced by someone else" }[c.stage || "none"]]))
-    && await page.isHidden("#view-check") && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#capabilities", JSON.stringify((await capRows()).length));
+    && await page.isHidden("#view-check") && (await isShown(page, "capabilities")), JSON.stringify((await capRows()).length));
   await page.selectOption("#capabilities .capabilities-stage", "deployed");
   check("  the filter shows one stage: exactly it, not at least it", JSON.stringify((await capRows()).map((r) => r[1])) === JSON.stringify(manifest.capabilities.filter((c) => c.stage === "deployed").map((c) => c.what)));
   const built014 = ["meter_batch", "meter_seller_claim", "passkey_funder", "gitlab_pay", "single_use_tokens", "fee_tiers", "hermetic_judge", "evidence_bundle", "receipt_mirror", "audit_export", "install_by_pull_request", "terms_templates",
@@ -600,15 +602,15 @@ await reset();
   check("  the page's own hook renders it: its four parts, its steps (three under Offers), its templates and its one sentence, shown alone with its link in the menu",
     (await page.$$eval("#buy [role=tab]", (t) => t.map((x) => x.textContent))).join() === "Offers,Budgets,Approvals,Invoice" && !!(await page.$("#buy-part-invoice #buy-step-4"))
     && (await Promise.all([1, 2, 3].map((n) => page.isVisible(`#buy-step-${n}`)))).every(Boolean) && (await page.$$eval("#buy-template option", (o) => o.map((x) => x.value))).join() === "bugfix,feature-blackbox,milestone,private-attested"
-    && (await text(page, "#buy-sentence")).length > 20 && await page.isVisible('nav a[href="#buy"]') && await page.isHidden("#view-check")
-    && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#buy" && !(await page.$("#buy > h2:only-child")),
+    && (await text(page, "#buy-sentence")).length > 20 && await page.isHidden("#view-check")
+    && (await isShown(page, "buy")) && !(await page.$("#buy > h2:only-child")),
     await page.evaluate(() => document.getElementById("buy").innerHTML.slice(0, 200)));
   await visit(page, "#pricing");
-  check("  and leaving one shows the view asked for", await page.isVisible("#view-pricing") && await page.isHidden("#buy") && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#pricing");
+  check("  and leaving one shows the view asked for", await page.isVisible("#view-pricing") && await page.isHidden("#buy") && (await isShown(page, "pricing")));
   for (const [hash, view] of [["protect", "protect"], ["fund", "fund"], ["claim", "claim"], ["pricing", "pricing"], ["records", "records"], ["u=alice", "records"], ["r=octo/widgets", "records"], ["rank=earners", "records"], ["network", "network"], ["build", "build"], ["bounty", "fund"], ["money", "fund"], ["numbers", "network"], ["nothing", "check"]]) {
     await visit(page, `#${hash}`);
     const shown = await page.$$eval(".view", (v) => v.filter((x) => !x.hidden).map((x) => x.id));
-    check(`#${hash} shows the ${view} view alone`, shown.join() === `view-${view}` && (await page.getAttribute("nav a[aria-current=page]", "href")) === `#${view}`, shown);
+    check(`#${hash} shows the ${view} view alone`, shown.join() === `view-${view}` && (await isShown(page, view)), shown);
   }
 
   // ONE BOX: the first screen's box takes a pull request (its check, #check=…), a repository (its record in the Agent PR
@@ -1328,7 +1330,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   // the Console's sample approvals name where each was made: a comment in this project's own playground repository, never an account that is somebody else's
   check("links: the Console's sample is in the project's own playground repository", hrefs.some((h) => /^https:\/\/github\.com\/drexthealpha\/Knos\/issues\/\d+#issuecomment-\d+$/.test(h)) && !(await page.content()).includes("github.com/acme/"));
   const bad = hrefs.filter((h) => !(h.startsWith("#") ? ["check", "fd-in", "check-a-pull-request", "protect", "fund", "claim", "pricing", "records", "network", "build", "rank", "buy", "install", "capabilities", "status", "index", "pilot", "reproduce", "demo", "shadow", "verifier", "playground", "terms", "supplier", "invoice-statement", "story", "keyholder", "sample", "record", "home", "verify", ...MENU.added.map((a) => a.name)].includes(h.slice(1).split("=")[0])
-    : h === TEMPLATE_LINK || h === JUDGE_TEMPLATE_LINK || h === "https://drexthealpha.github.io/Knos/" || /^https:\/\/explorer\.solana\.com\/(tx\/[1-9A-HJ-NP-Za-km-z]{64,90}|address\/[1-9A-HJ-NP-Za-km-z]{32,44})\?cluster=devnet$/.test(h) || /^https:\/\/github\.com\/drexthealpha\/|^https:\/\/faucet\.circle\.com\/$|^(index|stats|operations|agent_weekly|records|statement_sample)\.json$|^(privacy|faq|wanted)\.html$|^wanted\.html#(back|fund|contribute)=[a-z0-9-]{3,64}$|^wanted\.html#(research|verify)$|^check\/$|^terms\/(?:3\/)?[\w-]+\/\d+\.json$/.test(h) || issuerDocs.includes(h)));
+    : h === TEMPLATE_LINK || h === JUDGE_TEMPLATE_LINK || h === "https://drexthealpha.github.io/Knos/" || /^https:\/\/explorer\.solana\.com\/(tx\/[1-9A-HJ-NP-Za-km-z]{64,90}|address\/[1-9A-HJ-NP-Za-km-z]{32,44})\?cluster=devnet$/.test(h) || /^https:\/\/github\.com\/drexthealpha\/|^https:\/\/faucet\.circle\.com\/$|^(index|stats|operations|agent_weekly|records|statement_sample)\.json$|^(\.\/)?(privacy|faq|wanted)\.html$|^wanted\.html#(projects|buy|fund|contribute|make|teams|agents|signin|research)$|^wanted\.html\?to=\/(with-without|qloo-safe-use|invite|verify)$|^wanted\.html#(back|fund|contribute)=[a-z0-9-]{3,64}$|^wanted\.html#(research|verify)$|^check\/$|^terms\/(?:3\/)?[\w-]+\/\d+\.json$/.test(h) || issuerDocs.includes(h)));
   check("links: every link goes to a view, to the site's own address, to the project's own GitHub, to a transaction or an address on devnet's explorer, to Circle's devnet faucet, to a file of the site or to an issuer's own documentation (the verifier's table)", bad.length === 0, bad);
   check("  a link that opens a new tab does not hand over the page", await page.$$eval('a[target="_blank"]', (a) => a.every((x) => /noopener/.test(x.rel))));
   await page.close();
@@ -1876,7 +1878,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await page.waitForFunction(() => document.getElementById("rec-copy").textContent === "Copied");
   check("  Copy puts exactly that line on the clipboard", (await page.evaluate(() => navigator.clipboard.readText())) === alice.badge.readme);
   check("  it links to the same record as a page to share and to the account on GitHub", (await page.getAttribute('#rec-card a[href="u/alice.html"]', "href")) === "u/alice.html" && (await page.getAttribute('#rec-card a[href="https://github.com/alice"]', "rel")).includes("noopener"));
-  check("  the lookup box holds the login", (await page.inputValue("#rec-q")) === "alice" && await page.isVisible("#view-records") && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#records");
+  check("  the lookup box holds the login", (await page.inputValue("#rec-q")) === "alice" && await page.isVisible("#view-records") && (await isShown(page, "records")));
 
   // an account that funds: the reliability in words, the merged but unpaid
   await open("#u=funder-one");
@@ -2467,7 +2469,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
       && (await page.textContent("#any-terms")).includes("\\u00e9") && weird.includes("test (ubuntu, 3.12) (any source)"), weird);
     await visit(page, "#anyissue=octo/widgets%237");
     check("  #anyissue is the Fund view, the box filled and nothing read (it is not the escrow lookup)", (await page.$$eval(".view", (v) => v.filter((x) => !x.hidden).map((x) => x.id))).join() === "view-fund" && (await page.inputValue("#any-issue")) === "octo/widgets#7"
-      && (await page.inputValue("#st-issue")) === "" && called("getProgramAccounts").length === 0 && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#fund");
+      && (await page.inputValue("#st-issue")) === "" && called("getProgramAccounts").length === 0 && (await isShown(page, "fund")));
     await page.close();
   }
 
@@ -2753,7 +2755,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await visit(page, "#status");
   await page.waitForSelector("#relay-facts dt");
   await page.waitForFunction(() => !document.getElementById("live-head").textContent.includes("Reading"));
-  check("status: opened, it is shown alone under its heading, with its link marked in the bar", (await text(page, "#status > h2")) === "Is the payment service running?" && await page.isVisible("#status") && await page.isHidden("#view-check") && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#status");
+  check("status: opened, it is shown alone under its heading", (await text(page, "#status > h2")) === "Is the payment service running?" && await page.isVisible("#status") && await page.isHidden("#view-check") && (await isShown(page, "status")));
   check("  the relay: ran in the last 10 minutes, nothing waiting, the day's carried, refused and retried, from the log's own lines", /^The relay ran \d+ s ago\. Nothing is waiting\. In 24 hours: 1 carried, 1 refused, 1 retry\.$/.test((await text(page, "#relay-head")).trim())
     && await page.$eval("#relay-head", (e) => e.classList.contains("ok")) && (await page.$$eval("#relay-facts dt", (l) => l.map((x) => x.textContent))).join("|") === "Ran in the last 10 minutes|Last round|Tokens waiting|Carried in 24 hours|Refused in 24 hours|Retries in 24 hours|Merge to paid, measured"
     && (await text(page, "#relay-facts")).includes("it took 14 s and looked at 3 tokens") && (await text(page, "#relay-facts")).includes("None (as of ") && (await page.getAttribute("#relay-note a", "href")) === "https://github.com/drexthealpha/Knos/issues/41", await text(page, "#relay-status"));
@@ -2787,7 +2789,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await visit(page, "#index");
   await page.waitForSelector("#ib-table tbody tr");
   check("index: one row per agent of the file for its latest week, under the page's heading, shown alone", (await text(page, "#index > h2")) === "Agent PR Index" && (await page.$$eval("#ib-table tbody tr", (r) => r.length)) === Object.keys(weekly.agents).length
-    && (await text(page, "#ib-title")) === `Agent PR Index, week of ${weekly.latest_week}` && await page.isHidden("#view-check") && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#index" && hub.asked.length === 0);
+    && (await text(page, "#ib-title")) === `Agent PR Index, week of ${weekly.latest_week}` && await page.isHidden("#view-check") && (await isShown(page, "index")) && hub.asked.length === 0);
   check("  it says when the sample was read, what it cannot see, and that nothing was verified through Knos", (await text(page, "#index-source")).startsWith(`Read ${weekly.read}.`) && (await page.$$eval("#index-limits li", (l) => l.length)) === weekly.limits.length
     && (await text(page, "#ib-verified")).includes("Verified: 0 this week."), await text(page, "#index-source"));
   const weeks = await page.$$eval("#ib-week option", (o) => o.map((x) => x.value));
@@ -2823,7 +2825,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("  three lines: the one command of docs/reference/REPRODUCE.md, the fork and run, how to send the result", (await page.$$eval("#repro-lines > li > strong:first-child", (l) => l.map((x) => x.textContent))).join("|") === "The one command.|Fork and run, signed by GitHub.|Send the result."
     && (await text(page, "#repro-command")).trim() === lib.REPRODUCE_COMMAND && reproDoc.includes(`\n${lib.REPRODUCE_COMMAND}\n`) && (await text(page, "#repro-lines")).includes("reproductions/<owner>-<repo>-<run id>.json")
     && (await page.getAttribute('#repro-lines a[href*="knos-reproduce.yml"]', "href")) === "https://github.com/drexthealpha/Knos/blob/main/examples/knos-reproduce.yml" && existsSync(join(here, "..", "..", "examples", "knos-reproduce.yml")));
-  check("  shown alone, with More marked as holding it", await page.isHidden("#view-check") && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#reproduce" && await page.$eval("#more", (e) => e.classList.contains("current")) && (await overflow(page)) <= 1);
+  check("  shown alone", await page.isHidden("#view-check") && (await isShown(page, "reproduce")) && (await overflow(page)) <= 1);
   served.extra["/reproductions.json"] = { type: "application/json", body: JSON.stringify({ files: ["octo-widgets-123.json", "../evil", "<img src=x onerror=alert(1)>.json"] }) };
   await visit(page, "#reproduce");
   await page.waitForSelector("#repro-files");
@@ -2863,11 +2865,12 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await page.click("#demo .kd-go");
   check("  one press agrees the terms and funds the recorded order, and links its transaction", (await text(page, "#demo .kd-say")) === `Agreed and funded: ${demo.fund.amount} test USDC held.` && (await text(page, "#demo .kd-scene [data-fee-rule]")) === `fee ${demo.fund.fee}, the fee the program charged then (before the upgrade)` && (await page.getAttribute("#demo .kd-scene a", "href")) === `https://explorer.solana.com/tx/${demo.fund.tx}?cluster=devnet`);
   check("  the front door is above the round once it is mounted", await page.isVisible("#front-door [data-fd=run]") && (await overflow(page)) <= 1);
-  for (const from of ['#nav > a[href="#demo"]', "#hero-cue"]) {
+  for (const from of ['#more-list a[href="#demo"]', "#hero-cue"]) {
     await page.evaluate(() => { document.activeElement.blur(); scrollTo(0, 0); });
+    if (from !== "#hero-cue") await page.click("#more-button");
     await page.click(from);
     const there = await page.waitForFunction(() => { const top = document.getElementById("demo").getBoundingClientRect().top; return document.activeElement?.classList.contains("kd-go") && top >= 0 && top < innerHeight / 3; }, null, { timeout: 5000 }).then(() => true, () => false);
-    check(`  ${from === "#hero-cue" ? "the cue at the foot of the hero" : "Demo in the bar"} brings the round under the bar and puts the focus on its first action`, there && await page.evaluate(() => location.hash === "#demo"),
+    check(`  ${from === "#hero-cue" ? "the cue at the foot of the hero" : "Demo, under More,"} brings the round under the bar and puts the focus on its first action`, there && await page.evaluate(() => location.hash === "#demo"),
       await page.evaluate(() => [document.activeElement?.className, document.getElementById("demo").getBoundingClientRect().top]));
   }
   check("  the cue is an arrow with a name, no word of the forty, and stays inside the hero", (await text(page, "#hero-cue")).trim() === "" && (await page.getAttribute("#hero-cue", "aria-label")) === "The demo, below" && await page.evaluate(() => { scrollTo(0, 0); const c = document.getElementById("hero-cue").getBoundingClientRect(), h = document.querySelector(".hero").getBoundingClientRect(), b = document.querySelector(".hero .actions").getBoundingClientRect(); return c.bottom <= h.bottom + 1 && c.top >= b.bottom; }));
@@ -2876,7 +2879,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   // Check an invoice: one line, read from the mocked GitHub; the statement, its one number and its hash
   await visit(page, "#shadow");
   await page.waitForSelector("#shadow textarea");
-  check("shadow: shown alone, with its link marked in the bar", await page.isVisible("#shadow") && await page.isHidden("#view-check") && (await page.getAttribute("nav a[aria-current=page]", "href")) === "#shadow");
+  check("shadow: shown alone", await page.isVisible("#shadow") && await page.isHidden("#view-check") && (await isShown(page, "shadow")));
   const before = githubReads;
   await page.fill("#shadow textarea", "pr,amount,supplier\nhttps://github.com/octo/widgets/pull/12,120.00,acme\nhttps://github.com/octo/nothing/pull/3,80.00,acme\n");
   await page.click('#shadow [data-sh="run"]');

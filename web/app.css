@@ -4,55 +4,8 @@
    Colour: paper and ink, one accent; dark follows the reader's system unless the button in the bar says otherwise.
    Width: nothing may make the page scroll sideways (tests/web/overflow.mjs): long words break, tables and blocks of
    code scroll inside their own box. */
-@font-face { font-family: "Bricolage Grotesque"; src: url("fonts/bricolage-grotesque.woff2") format("woff2"); font-weight: 200 800; font-style: normal; font-display: swap; }
-@font-face { font-family: "Geist"; src: url("fonts/geist.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
-@font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
 
-/* THE DESIGN CONTRACT (0.3.16). Every module uses these names and nothing else:
-   --ink --ink-2 --paper --paper-2 --line --accent --ok --bad --radius --depth-1 --depth-2 --depth-3 --ease --dur-1 --dur-2 --dur-3
-   .k-card (data-tilt) .k-btn (.quiet) .k-kicker .k-num .k-step[data-state] .k-stage .k-reveal .k-table
-   and, from 0.3.17 (the block further down says what each is): .k-skeleton .k-toast .k-enter .k-out .k-sr .k-pal .k-cq
-   Dark is the first palette: the paper is the black of a raven's back, the one accent is the blue of its sheen. The
-   light one follows the reader's system (or the button in the bar). The names of 0.3.15 (--bg --fg --muted --card
-   --soft) stay as other names for the same colours, so a module written before the contract has the new look. */
-:root {
-  --paper: #07080c; --paper-2: #0f1118; --ink: #e9ebef; --ink-2: #a0a7b8; --line: #222634; --soft: #151822;
-  --accent: #93a5ff; --accent-fg: #07080c; --ok: #5fd28f; --bad: #ff8a80; --warn: #e0b354;
-  --light: rgb(255 255 255 / .06);
-  --depth-1: inset 0 1px 0 var(--light), 0 1px 2px rgb(0 0 0 / .5);
-  --depth-2: inset 0 1px 0 var(--light), 0 2px 4px rgb(0 0 0 / .4), 0 12px 28px -8px rgb(0 0 0 / .6);
-  --depth-3: inset 0 1px 0 var(--light), 0 4px 8px rgb(0 0 0 / .4), 0 32px 64px -16px rgb(0 0 0 / .8);
-  --radius: 14px; --ease: cubic-bezier(.2, .8, .2, 1); --dur-1: 120ms; --dur-2: 240ms; --dur-3: 480ms;
-  --bg: var(--paper); --fg: var(--ink); --muted: var(--ink-2); --card: var(--paper-2);
-  --head: "Bricolage Grotesque", "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --text: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --code: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  /* the scale: 13 14 16 20 28 40, and a first-screen heading that grows with the window */
-  --s-1: 13px; --s0: 14px; --s1: 16px; --s2: 20px; --s3: 28px; --s4: 40px;
-  --gap: 24px;
-  /* the spacing scale: 4 8 12 16 24 40. A new rule takes its gaps and paddings from it */
-  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 40px;
-  color-scheme: dark;
-}
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --paper: #f4f4f0; --paper-2: #ffffff; --ink: #15171c; --ink-2: #555b68; --line: #dcdcd4; --soft: #eaeae4;
-    --accent: #2b3bb5; --accent-fg: #ffffff; --ok: #17703f; --bad: #b3261e; --warn: #8a6100; --light: rgb(255 255 255 / .9);
-    --depth-1: 0 1px 2px rgb(17 19 26 / .06);
-    --depth-2: 0 1px 2px rgb(17 19 26 / .06), 0 12px 28px -10px rgb(17 19 26 / .16);
-    --depth-3: 0 2px 4px rgb(17 19 26 / .06), 0 32px 64px -20px rgb(17 19 26 / .28);
-    color-scheme: light;
-  }
-}
-:root[data-theme="light"] {
-  --paper: #f4f4f0; --paper-2: #ffffff; --ink: #15171c; --ink-2: #555b68; --line: #dcdcd4; --soft: #eaeae4;
-  --accent: #2b3bb5; --accent-fg: #ffffff; --ok: #17703f; --bad: #b3261e; --warn: #8a6100; --light: rgb(255 255 255 / .9);
-  --depth-1: 0 1px 2px rgb(17 19 26 / .06);
-  --depth-2: 0 1px 2px rgb(17 19 26 / .06), 0 12px 28px -10px rgb(17 19 26 / .16);
-  --depth-3: 0 2px 4px rgb(17 19 26 / .06), 0 32px 64px -20px rgb(17 19 26 / .28);
-  color-scheme: light;
-}
-
+/* The tokens (colour, type, spacing, the bar) are web/brand/tokens.css, loaded before this file on every page. */
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--fg);
@@ -63,55 +16,6 @@ a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 img, video, svg { max-width: 100%; }
 strong, b { font-weight: 600; }
-
-/* ---- the bar ---------------------------------------------------------------------------------------------------- */
-.bar { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; padding: 12px max(16px, calc((100% - 1080px) / 2)); border-bottom: 1px solid var(--line); }
-.brand { display: flex; gap: 10px; align-items: center; font: 650 20px/1 var(--head); letter-spacing: -.01em; text-decoration: none; color: var(--fg); }
-/* The wordmark (brand/wordmark.svg, a raven whose body and tail are the K) is drawn as a mask over the text colour, so
-   one file serves light and dark and the button in the bar. Where a browser has no masks, the name stays as text.
-   A window too narrow for the wordmark beside the buttons gets the mark alone (brand/mark.svg). */
-.brand .wordmark { display: none; }
-@supports ((mask-image: url("brand/mark.svg")) or (-webkit-mask-image: url("brand/mark.svg"))) {
-  .brand .wordmark { display: block; height: 38px; aspect-ratio: 3440 / 1268; margin: -4px 0 -4px -3px; background: currentColor;
-    -webkit-mask: url("brand/wordmark.svg") center / contain no-repeat; mask: url("brand/wordmark.svg") center / contain no-repeat;
-    print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  .brand .name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  @media (max-width: 339px) {
-    .brand .wordmark { aspect-ratio: 1856 / 1756; margin-left: 0; -webkit-mask-image: url("brand/mark.svg"); mask-image: url("brand/mark.svg"); }
-  }
-}
-nav { display: flex; gap: 2px; flex-wrap: wrap; flex: 1; min-width: 0; }
-nav a { padding: 6px 10px; border-radius: 8px; text-decoration: none; color: var(--muted); font-size: var(--s0); font-weight: 500; white-space: nowrap; }
-nav a:hover { color: var(--fg); background: var(--soft); }
-nav a[aria-current="page"] { color: var(--fg); background: var(--soft); }
-nav a[hidden] { display: none; }
-/* "More": the links a first visitor does not need, one press away. Without scripts, and on a phone (where the whole
-   menu is behind one button), its links are plain links of the menu and the button is not shown. */
-.more, .more-list { display: contents; }
-.more-button { display: none; }
-.js .more { display: block; position: relative; }
-.js .more-button { display: block; font: 500 var(--s0)/1.6 var(--text); min-height: 0; padding: 6px 10px; border: 0; border-radius: 8px; background: none; color: var(--muted); }
-.js .more-button::after { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 0 3px 7px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
-.js .more-button:hover, .js .more.open .more-button, .js .more.current .more-button { color: var(--fg); background: var(--soft); filter: none; }
-.js .more-list { display: none; position: absolute; z-index: 5; top: calc(100% + 6px); right: 0; min-width: 11.5em; padding: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-  box-shadow: 0 8px 24px rgb(0 0 0 / .12); }
-.js .more.open .more-list { display: grid; gap: 2px; }
-.js .more-list a { padding: 8px 10px; }
-.tools { display: flex; gap: 8px; margin-left: auto; }
-#menu { display: none; }
-@media (max-width: 860px) {
-  .bar { gap: 8px 12px; }
-  .brand { margin-right: auto; }
-  .tools { order: 2; margin-left: 0; }
-  nav { order: 3; flex: 0 0 100%; }
-  /* with scripts, a phone folds the menu behind one button; without them it stays open and wraps */
-  .js #menu { display: inline-block; }
-  .js nav { display: none; }
-  .js .bar.open nav { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; padding-top: 4px; }
-  .js .bar.open nav a { padding: 10px; white-space: normal; }
-  .js .more, .js .more-list, .js .more.open .more-list { display: contents; }
-  .js .more-button { display: none; }
-}
 
 /* ---- the page ---------------------------------------------------------------------------------------------------- */
 main { flex: 1; width: 100%; max-width: 1112px; margin: 0 auto; padding: 32px 16px 72px; min-width: 0; }
@@ -338,28 +242,6 @@ main { padding: 0 16px 96px; }
 .view > details + h2, .view > .card + h2 { margin-top: 64px; }
 .view, .mount { padding-top: 48px; }
 .view > h2 + .lede { margin-bottom: 32px; }
-
-/* the bar: stays at the top, the page passes under it */
-.bar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--paper) 92%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); view-transition-name: bar; }
-.brand .wordmark { height: 32px; margin: -2px 0 -2px -3px; }
-nav { gap: 4px; }
-nav a, .js .more-button { transition: color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease); }
-nav a[aria-current="page"] { background: var(--soft); box-shadow: var(--depth-1); }
-.js .more-list { background: var(--paper-2); border-radius: var(--radius); box-shadow: var(--depth-3); }
-.js .more.open .more-list { grid-template-columns: 1fr 1fr; min-width: 20em; }
-@supports (transition-behavior: allow-discrete) {
-  .js .more-list { transition: opacity var(--dur-1) var(--ease), translate var(--dur-1) var(--ease), display var(--dur-1) allow-discrete; opacity: 0; translate: 0 -4px; }
-  .js .more.open .more-list { opacity: 1; translate: 0 0; }
-  @starting-style { .js .more.open .more-list { opacity: 0; translate: 0 -4px; } }
-}
-@media (max-width: 860px) {
-  /* a phone: Menu opens the five; More, inside it, opens the rest */
-  .js .bar.open nav { grid-template-columns: 1fr; }
-  .js .more { display: block; position: static; }
-  .js .more-button { display: block; width: 100%; text-align: left; padding: 10px; }
-  .js .more-list, .js .more.open .more-list { position: static; min-width: 0; border: 0; box-shadow: none; background: none; padding: 0 0 0 10px; }
-  .js .more-list { display: none; } .js .more.open .more-list { display: grid; grid-template-columns: 1fr 1fr; }
-}
 
 /* .k-card: a raised surface. [data-tilt]: it leans to the pointer (web/motion.js) and a light follows */
 .k-card, .card, .stat, .how > li { background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--depth-1); }
@@ -593,7 +475,6 @@ dialog.k-pal[open] { transition: opacity var(--dur-1) var(--ease), translate var
 /* a reader who asked for more contrast: full ink for the quiet text, firmer lines, a solid bar */
 @media (prefers-contrast: more) {
   :root { --ink-2: var(--ink); --line: color-mix(in srgb, var(--ink) 55%, var(--paper)); }
-  .bar { background: var(--paper); -webkit-backdrop-filter: none; backdrop-filter: none; }
   :focus-visible { outline-width: 3px; }
 }
 @media (forced-colors: active) { .k-pal li[aria-selected="true"] { outline: 2px solid Highlight; } .k-toast { border: 1px solid CanvasText; } }

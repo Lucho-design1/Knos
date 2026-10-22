@@ -35,12 +35,14 @@ export const addedPages = (root) => { try { return [...readFileSync(join(root, "
 // The menu this build shows at a laptop's width (web/front.js fitBar): the bar is six words; a page added to the bar
 // takes its words from Docs, then Install, then Check, which go under More, first there, in the bar's own order.
 export function menuOf(root) {
+  // the bar is one template for every page of Knos (web/brand/bar.html, written by scripts/sync_brand.py): its top links,
+  // then the links under More. A page a module adds (web/views.js ADDED) is opened by its address and the search: no link.
   let text = ""; try { text = readFileSync(join(root, "views.js"), "utf8"); } catch { /* a build without the list */ }
   const added = [...text.matchAll(/^\s+([\w-]+): \{ file: "[^"]+", draw: "\w+", nav: "([^"]+)"(, bar: true)?/gm)].map((m) => ({ name: m[1], nav: m[2], bar: !!m[3] }));
-  const bar = ["Check", "Demo", "Console", "Install", ...added.filter((a) => a.bar).map((a) => a.nav), "Pricing", "Docs"], first = [];
-  const words = () => bar.join(" ").split(" ").length;
-  if (added.some((a) => a.bar)) for (const y of ["Docs", "Install", "Check"]) { if (words() <= 6) break; bar.splice(bar.indexOf(y), 1); first.unshift(y); }
-  return { added, bar, first, last: added.filter((a) => !a.bar).map((a) => a.nav) };
+  let tpl = ""; try { tpl = readFileSync(join(root, "brand", "bar.html"), "utf8"); } catch { /* none */ }
+  const words = (html) => [...html.matchAll(/<a [^>]*>([^<]+)<\/a>/g)].map((m) => m[1].trim());
+  const nav = tpl.slice(tpl.indexOf("<nav"), tpl.indexOf("</nav>")), more = nav.indexOf('<div class="more"');
+  return { added, bar: words(more < 0 ? nav : nav.slice(0, more)), under: words(more < 0 ? "" : nav.slice(more)), first: [], last: [] };
 }
 export const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
 // With no browser a run says SKIP and exits 0, except where a browser is owed: in CI (the web job installs Playwright and

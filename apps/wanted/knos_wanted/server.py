@@ -62,8 +62,8 @@ LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish"
           "live": (120, 600)}   # (calls, seconds) per client; "live": presence and draft autosave, apart from "product"
 GLOBAL_DEMO = (60, 3600)
 FRONT_ORIGINS = ("https://drexthealpha.github.io",)               # the front door, allowed to read the demand check
-DEMAND_CORS = ("/api/check", "/api/demand/fields")                                           # demo pre-orders, all clients
-ROUTES = {"/api/trace/keep": "product", "/api/qloo-diff": "product", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
+DEMAND_CORS = ("/api/check", "/api/demand/fields", "/api/cross", "/api/report")                                           # demo pre-orders, all clients
+ROUTES = {"/api/trace/keep": "product", "/api/qloo-diff": "product", "/api/open-signals": "check", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
           "/api/check": "check", "/api/research": "check", "/api/cross": "check", "/api/factor": "lock",
@@ -98,7 +98,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/trace": "A demand r
               "/api/referee/group": "The FROST referee group (public)", "/api/referee/pending": "Open referee signing sessions",
               "/api/referee/session": "One referee signing session", "/api/prize/evidence": "A demo prize's public evidence (the round's verdict)",
               "/api/project/evidence": "A project attempt's public review (both pages and the claim ids)"}
-SUMMARIES = {"/api/check": "Demand check on Qloo", "/api/research": "Research card from a paper id", "/api/cross": "Start a crossing",
+SUMMARIES = {"/api/check": "Demand check on Qloo", "/api/open-signals": "Demand from open signals only (no Qloo, keyless)", "/api/research": "Research card from a paper id", "/api/cross": "Start a crossing",
              "/api/preorder": "Pre-order on proof", "/api/milestone": "Post milestone evidence; 2 of 3 referees release",
              "/api/refund": "Refund past the deadline", "/api/fund": "Fund a milestone", "/api/factor": "Receivable financing offer",
              "/api/anchor": "Anchor the record root on devnet", "/api/task/submit": "Submit to a contributor round"}
@@ -430,7 +430,7 @@ def make_handler(state: State):
             kind = ROUTES.get(u.path)
             if kind is None:
                 return self._send(404, {"error": "not found"})
-            # the operator's own measured runs (scripts/qloo_decision_diff.py) carry its key and skip the per-address limits
+            # the operator's own measured runs (scripts/qloo_vs_open_signals.py) carry its key and skip the per-address limits
             if not product_routes._admin(self.headers.get("X-Knos-Admin")) and not state.allow(self._client(), kind):
                 return self._send(429, {"error": "too many requests from this address; try again in a few minutes"})
             try:
@@ -440,7 +440,7 @@ def make_handler(state: State):
                     return self._send(401, {"error": "sign in first (passkey, Google or a guest label)"})
                 if u.path == "/api/milestone" and not state.allow("commitment:" + str(body.get("commitment", ""))[:64], "milestone_one"):
                     return self._send(429, {"error": "this commitment had 10 evidence posts in the last hour; try again later"})
-                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research", "/api/cross", "/api/trace/keep", "/api/qloo-diff") + SIGNED_IN:
+                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research", "/api/cross", "/api/trace/keep", "/api/qloo-diff", "/api/open-signals") + SIGNED_IN:
                     return self._send(200, self.route_v2(u.path, body))
                 return self._send(200, self.route(u.path, body))
             except (auth.AuthError, wallets.NeedPasskey) as why:
@@ -563,6 +563,14 @@ def make_handler(state: State):
                 rep["record"] = company.record_check(rep)          # the decision in the agent's memory (Sibyl)
                 state.keep_check(rep)
                 return rep
+            if path == "/api/open-signals":                 # the no-Qloo baseline: keyless public sources, each named
+                from . import open_signals
+                idea = _text(body.get("idea"), 500) or ""
+                privacy.check({"idea": idea})
+                if len(idea.split()) < 2:
+                    raise ValueError("idea: a few words saying what the product is")
+                cc = (_text(body.get("country"), 2) or "US").upper()
+                return open_signals.baseline(idea, cc if cc.isalpha() else "US")
             if path == "/api/trace/keep":                   # keep a report's trace on devnet: something links to it
                 from . import trace as _trace
                 return _trace.keep(state, str(body.get("hash") or ""))
@@ -572,7 +580,8 @@ def make_handler(state: State):
                 rows = body.get("rows")
                 if not isinstance(rows, list) or not 1 <= len(rows) <= 60:
                     raise ValueError("rows: 1 to 60")
-                doc = {"v": 1, "made": body.get("made"), "summary": body.get("summary"), "rows": rows, "rule": body.get("rule")}
+                doc = {"v": 2 if body.get("baseline") else 1, "made": body.get("made"), "summary": body.get("summary"), "rows": rows,
+                       "rule": body.get("rule"), "baseline": body.get("baseline"), "rules": body.get("rules")}
                 valley._save("pages", "qloo_diff", doc)
                 return {"published": len(rows), "page": "/with-without"}
             if path == "/api/research":

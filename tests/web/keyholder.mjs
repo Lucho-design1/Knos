@@ -62,7 +62,7 @@ try { browser = await chromium.launch(); } catch (e) { skip(`no Chromium to star
 
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
 const html = (ctx) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Hold a key</title>
-<link rel="stylesheet" href="app.css"></head><body><main id="keyholder"></main>
+<link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main id="keyholder"></main>
 <script type="module">import { renderKeyholder } from "./keyholder.js"; await renderKeyholder(document.getElementById("keyholder"), ${ctx}); document.body.dataset.ready = "1";</script></body></html>`;
 const NO_ED = `{ subtle: { generateKey: async () => { throw new DOMException("Unrecognized name.", "NotSupportedError"); } } }`;
 const server = createServer((req, res) => {

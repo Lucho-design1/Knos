@@ -55,7 +55,7 @@ async function page() {
   const { chromiumOrSkip, measure, TYPES } = await import("./overflow.mjs");
   const browser = await chromiumOrSkip();
   const HOLDER = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Record</title>
-    <link rel="stylesheet" href="app.css"></head><body><main><div id="strip"></div><div id="record"></div></main>
+    <link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main><div id="strip"></div><div id="record"></div></main>
     <script type="module">import { renderSupplierRecord } from "./supplier_record.js"; import { renderBoardStrip } from "./index_board.js";
       const feed = await (await fetch("agent_index.json")).json(); renderBoardStrip(document.getElementById("strip"), { feed });
       // the page's own clock, not the test's: when the record's file had arrived, when it was drawn, and whether the place said it was

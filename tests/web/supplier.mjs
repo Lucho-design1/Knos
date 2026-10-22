@@ -108,7 +108,7 @@ async function page() {
   try { browser = await chromium.launch(); } catch (e) { skip(`no Chromium to start: ${String(e.message).split("\n")[0]}`); }
   const root = join(here, "../../web"), repo = join(here, "../.."), TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
   const HOLDER = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>For suppliers</title>
-    <link rel="stylesheet" href="app.css"></head><body><main><div id="supplier"></div></main>
+    <link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main><div id="supplier"></div></main>
     <script type="module">import { renderSupplier } from "./supplier.js"; const got = renderSupplier(document.getElementById("supplier")); await got.loaded; window.drawn = true;</script></body></html>`;
   const server = createServer((req, res) => {
     const path = decodeURIComponent(new URL(req.url, "http://x").pathname), file = path.startsWith("/terms/") ? join(repo, path) : join(root, path);     // the build copies terms/ beside the site

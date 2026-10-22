@@ -1,0 +1,196 @@
+// Knos's interface, live, in headless Chromium:
+//
+//   node scripts/test_ui_sota.mjs design    test_one_design_system: one logo, type, colour, spacing and bar everywhere
+//   node scripts/test_ui_sota.mjs mission   test_mission_line: one plain line above the fold, the valley of death, every field
+//   node scripts/test_ui_sota.mjs hero      test_hero_paper: one box on both front doors, a paper or idea to Qloo's verdict
+//   node scripts/test_ui_sota.mjs card      test_decision_card: open or refuse, who, cities on a map, price tier, each sourced
+//   node scripts/test_ui_sota.mjs layout    test_layout_audit: no word broken mid-word, no floating button over the page,
+//                                           no sideways scroll, at 320, 375, 768 and 1280 on every public page
+//
+// The pages are scripts/public_pages.json; SITE_URL and APP_URL point the two front doors elsewhere (a local build).
+import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { chromium } from "playwright";
+
+const SITE = process.env.SITE_URL || "https://drexthealpha.github.io/Knos/", APP = process.env.APP_URL || "https://knos.onrender.com/";
+const DOORS = { "front door": SITE, app: APP };
+const PAGES = JSON.parse(readFileSync(new URL("./public_pages.json", import.meta.url), "utf8")).pages
+  .map((u) => u.replace("https://drexthealpha.github.io/Knos/", SITE).replace("https://knos.onrender.com/", APP));
+const what = process.argv[2];
+let fails = 0;
+const ok = (c, msg, extra) => { console.log((c ? "ok   " : "FAIL ") + msg + (extra === undefined ? "" : " " + JSON.stringify(extra))); if (!c) fails += 1; };
+const browser = await chromium.launch();
+// the wake page forwards to the app once it answers: measured as itself, the app's address is not asked
+const open = async (url, w, h, scheme = "light") => {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, colorScheme: scheme });
+  const page = await ctx.newPage();
+  if (/wanted\.html/.test(url)) await page.route(/onrender\.com/, (r) => r.abort());
+  await page.goto(url, { waitUntil: "load", timeout: 120000 });
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(1200);
+  return { ctx, page };
+};
+const sha = (b) => createHash("sha256").update(b).digest("hex").slice(0, 16);
+
+async function design() {
+  const files = {};
+  for (const f of ["brand/tokens.css", "brand/wordmark.svg", "brand/mark.svg", "fonts/geist.woff2", "fonts/bricolage-grotesque.woff2"]) {
+    const a = await fetch(SITE + f).then((r) => r.arrayBuffer()), b = await fetch(APP + "static/" + f).then((r) => r.arrayBuffer());
+    files[f] = [sha(Buffer.from(a)), sha(Buffer.from(b))];
+    ok(files[f][0] === files[f][1] && a.byteLength > 0, `${f}: the front door and the app serve the same bytes`, files[f]);
+  }
+  const seen = {};
+  for (const scheme of ["light", "dark"]) {
+    for (const url of PAGES) {
+      const { ctx, page } = await open(url, 1280, 800, scheme);
+      const got = await page.evaluate(() => {
+        const css = getComputedStyle(document.documentElement), v = (n) => css.getPropertyValue(n).trim();
+        const bar = document.getElementById("k-bar"), mark = bar?.querySelector(".wordmark");
+        const first = (f) => f.split(",")[0].replace(/["']/g, "").trim();
+        const links = [...document.styleSheets].map((s) => s.href || "").filter(Boolean);
+        return {
+          tokens: ["--paper", "--paper-2", "--ink", "--ink-2", "--line", "--accent", "--ok", "--bad", "--head", "--text", "--code", "--s0", "--s1", "--s2", "--sp-2", "--sp-4", "--sp-5", "--radius"].map((n) => `${n}:${v(n)}`).join(";"),
+          body: first(getComputedStyle(document.body).fontFamily), bg: getComputedStyle(document.body).backgroundColor,
+          heading: first(getComputedStyle(document.querySelector("h1, h2") || document.body).fontFamily),
+          logo: mark ? getComputedStyle(mark).maskImage || getComputedStyle(mark).webkitMaskImage : "",
+          square: document.querySelectorAll(".mark").length,
+          nav: bar ? [...bar.querySelectorAll("nav a, nav button, .tools a, .tools button")].map((a) => a.textContent.trim()).join("|") : "",
+          barStyle: bar ? ["height", "backgroundColor", "fontFamily", "borderBottomColor"].map((k) => getComputedStyle(bar)[k]).join(";") : "",
+          tokensFirst: links.length > 0 && /brand\/tokens\.css$/.test(links[0]),
+        };
+      });
+      got.logo = /wordmark\.svg/.test(got.logo) ? "wordmark.svg" : got.logo;
+      ok(got.square === 0 && got.logo === "wordmark.svg", `${scheme} ${url}: the logo is the crow wordmark, no green square`, { logo: got.logo, square: got.square });
+      ok(got.tokensFirst, `${scheme} ${url}: the token file is the first stylesheet`);
+      for (const k of ["tokens", "body", "bg", "heading", "nav", "barStyle"]) (seen[`${scheme}:${k}`] ||= new Map()).set(url, got[k]);
+      await ctx.close();
+    }
+  }
+  let diffs = 0;
+  for (const [k, m] of Object.entries(seen)) {
+    const values = [...new Set(m.values())];
+    diffs += values.length - 1;
+    ok(values.length === 1, `${k}: one value on ${m.size} pages`, values.length === 1 ? values[0].slice(0, 120)
+      : values.map((x) => [x, [...m.entries()].filter(([, y]) => y === x).map(([u]) => u)]));
+  }
+  console.log(`differences: ${diffs}`);
+}
+
+async function mission() {
+  for (const [door, url] of Object.entries(DOORS)) {
+    for (const [w, h] of [[375, 812], [1280, 800]]) {
+      const { ctx, page } = await open(url, w, h);
+      const m = await page.evaluate(() => {
+        const e = document.getElementById("k-mission"), r = e?.getBoundingClientRect();
+        return e && { text: e.textContent.trim(), top: r.top, bottom: r.bottom, shown: r.height > 0 && getComputedStyle(e).visibility !== "hidden", lines: document.querySelectorAll("#k-mission").length };
+      });
+      ok(!!m && m.lines === 1 && m.shown && m.bottom <= h && /valley of death/i.test(m.text) && /every field of science/i.test(m.text),
+        `${door} ${w}x${h}: the mission line is above the fold: "${m?.text}"`, m && { bottom: Math.round(m.bottom) });
+      await ctx.close();
+    }
+  }
+}
+
+// five live runs on each front door, each a different paper or idea; the time is from the press to the drawn verdict
+const RUNS = (process.env.HERO_INPUTS || ["10.1038/nature16521", "10.1126/science.aam8743", "10.1080/15402002.2017.1300587",
+  "a smart water bottle that glows to remind you to drink", "a running shoe with a carbon plate"].join("\n")).split("\n");
+async function hero() {
+  for (const [door, url] of Object.entries(DOORS)) {
+    const times = [];
+    for (const [i, q] of RUNS.entries()) {
+      const [w, h] = i % 2 ? [375, 812] : [1280, 800];
+      const { ctx, page } = await open(url, w, h);
+      const boxes = await page.evaluate(() => document.querySelectorAll("#k-hero form").length + ":" + document.querySelectorAll("#k-hero input").length);
+      if (i === 0) ok(boxes === "1:1", `${door}: the hero is one box`, boxes);
+      await page.fill("#k-q", q);
+      const t0 = Date.now();
+      await page.click("#k-go");
+      await page.waitForSelector("#k-card .k-card, #k-card .k-err", { timeout: 120000 }).catch(() => {});
+      const s = (Date.now() - t0) / 1000, v = await page.getAttribute("#k-card .k-card", "data-verdict").catch(() => null);
+      ok(v === "OPEN" || v === "REFUSE", `${door} ${w}px "${q}": Qloo's verdict ${v} in ${s.toFixed(1)} s`);
+      times.push(s);
+      await ctx.close();
+    }
+    const med = [...times].sort((a, b) => a - b)[Math.floor(times.length / 2)];
+    ok(med <= 10, `${door}: median ${med.toFixed(1)} s over ${times.length} live runs (at most 10 s)`, times.map((t) => +t.toFixed(1)));
+  }
+}
+
+async function card() {
+  for (const [door, url] of Object.entries(DOORS)) {
+    for (const [w, h] of [[375, 812], [1280, 800]]) {
+      const { ctx, page } = await open(url, w, h);
+      await page.fill("#k-q", "a smart water bottle that glows to remind you to drink");
+      await page.click("#k-go");
+      await page.waitForSelector("#k-card .k-card", { timeout: 120000 }).catch(() => {});
+      const c = await page.evaluate(() => {
+        const part = (p) => document.querySelector(`#k-card [data-part="${p}"]`);
+        const src = (e) => e && [...e.querySelectorAll("a.k-src")].map((a) => a.href).filter((x) => /\/trace\.html\?hash=[0-9a-f]{64}/.test(x));
+        const v = part("verdict"), a = part("audience"), m = part("cities"), p = part("price");
+        return {
+          verdict: v && v.textContent.replace("source", "").trim(), verdictSrc: src(v)?.length,
+          audience: a && a.querySelector(".k-big")?.textContent.trim(), audienceSrc: src(a)?.length,
+          dots: m ? m.querySelectorAll("svg.k-map circle").length : 0, cities: m ? m.querySelectorAll(".k-cities li").length : 0, mapSrc: src(m)?.length,
+          tier: p && p.querySelector(".k-tiers li[aria-current]")?.textContent.trim(), priceSrc: src(p)?.length,
+          first: src(v)?.[0], inside: (() => { const r = document.querySelector("#k-card .k-card")?.getBoundingClientRect(); return r && r.left >= 0 && r.right <= innerWidth; })(),
+        };
+      });
+      ok(!!c.verdict && c.verdictSrc > 0, `${door} ${w}x${h}: open or refuse, with its trace link`, c.verdict);
+      ok(!!c.audience && c.audienceSrc > 0, `${door} ${w}x${h}: the audience, with its trace link`, c.audience);
+      ok(c.dots > 0 && c.dots <= c.cities && c.mapSrc > 0, `${door} ${w}x${h}: the cities on a map (${c.dots} of ${c.cities}), with its trace link`);
+      ok(!!c.tier && c.priceSrc > 0, `${door} ${w}x${h}: the price tier drawn, with its trace link`, c.tier);
+      ok(c.inside, `${door} ${w}x${h}: the card fits the window`);
+      if (c.first) { const r = await fetch(c.first); ok(r.status === 200, `${door} ${w}x${h}: its trace link answers 200`, c.first.split("?")[0]); }
+      await ctx.close();
+    }
+  }
+}
+
+async function layout() {
+  let words = 0, floats = 0, sideways = 0;
+  for (const url of PAGES) {
+    for (const w of [320, 375, 768, 1280]) {
+      const { ctx, page } = await open(url, w, 800);
+      await page.evaluate(() => document.querySelectorAll("details").forEach((d) => { d.open = true; }));
+      await page.waitForTimeout(200);
+      const r = await page.evaluate(() => {
+        const out = { broken: [], floating: [], sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+        // a word of letters (a name, a field, a verdict) laid on two lines is broken mid-word; codes, hashes and addresses may wrap
+        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let n; (n = walk.nextNode());) {
+          const el = n.parentElement;
+          if (!el || el.closest("code, pre, kbd, .mono, script, style, svg, [hidden], [aria-hidden='true']") || !el.offsetParent) continue;
+          for (const m of n.data.matchAll(/\S+/g)) {
+            // a whole token that is a word: letters, a capital only first, punctuation after (an address or a hash is not)
+            const w = m[0].match(/^[("'“]?([A-Za-z][a-z]{2,})[)"'”,.;:!?]*$/);
+            if (!w) continue;
+            const range = document.createRange(); range.setStart(n, m.index); range.setEnd(n, m.index + m[0].length);
+            const tops = new Set([...range.getClientRects()].filter((x) => x.width > 0).map((x) => Math.round(x.top)));
+            if (tops.size > 1) out.broken.push(w[1]);
+          }
+        }
+        // anything a reader presses that stays fixed over the page while it scrolls
+        for (const el of document.querySelectorAll("body *")) {
+          const s = getComputedStyle(el);
+          if (s.position !== "fixed" && s.position !== "sticky" || el.closest("#k-bar")) continue;      // the bar is the page's header
+          const b = el.getBoundingClientRect();
+          if (s.display === "none" || s.visibility === "hidden" || b.width < 2 || b.height < 2 || b.bottom <= 0 || b.top >= innerHeight) continue;
+          if (el.matches("a, button, [role=button]") || el.querySelector("a, button, [role=button]")) out.floating.push(String(el.id || el.className || el.tagName).slice(0, 40));
+        }
+        return out;
+      });
+      words += r.broken.length; floats += r.floating.length; sideways += r.sideways > 0 ? 1 : 0;
+      ok(!r.broken.length && !r.floating.length && r.sideways <= 0, `${w}px ${url}`, r.broken.length || r.floating.length || r.sideways > 0 ? { broken: r.broken.slice(0, 6), floating: r.floating.slice(0, 4), sideways: r.sideways } : undefined);
+      await ctx.close();
+    }
+  }
+  console.log(`mid-word breaks: ${words}, floating buttons: ${floats}, pages that scroll sideways: ${sideways}`);
+}
+
+const TESTS = { design, mission, hero, card, layout };
+if (!TESTS[what]) { console.error("usage: node scripts/test_ui_sota.mjs design|mission|hero|card|layout"); process.exit(2); }
+await TESTS[what]();
+await browser.close();
+const NAME = { design: "test_one_design_system", mission: "test_mission_line", hero: "test_hero_paper", card: "test_decision_card", layout: "test_layout_audit" }[what];
+console.log(fails ? `FAIL ${NAME} (${fails})` : `PASS ${NAME}`);
+process.exit(fails ? 1 : 0);

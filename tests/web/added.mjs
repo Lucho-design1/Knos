@@ -72,26 +72,24 @@ page.on("pageerror", (e) => errors.push(e.message));
 const ready = (n) => page.waitForFunction((name) => document.documentElement.dataset.ready === name, n);
 
 await page.goto(base, { waitUntil: "load" }); await page.waitForSelector("#theme:not([hidden])");
-// What the menu must be for the whole list (the same rule as web/front.js fitBar, written again in overflow.mjs menuOf):
-// read from a folder that holds the whole views.js.
+// The menu is the bar every page of Knos shows (web/brand/bar.html): a page added by name gets its section and is opened
+// by its address and the search (web/palette.js), never by a link of its own in the bar.
 const MENU = menuOf(web), barWords = (l) => l.join(" ").split(" ").filter(Boolean).length;
 const menu = () => page.evaluate(() => { const nav = document.getElementById("nav"), vis = (e) => !e.hidden && e.checkVisibility();
   const tops = [...nav.querySelectorAll(":scope > a, :scope > .more")].filter(vis).map((e) => e.offsetTop), tools = document.querySelector(".tools").getBoundingClientRect(), more = document.getElementById("more").getBoundingClientRect();
   return { bar: [...nav.querySelectorAll(":scope > a")].filter(vis).map((e) => e.textContent), under: [...document.querySelectorAll("#more-list > a")].filter((e) => !e.hidden).map((e) => e.textContent),
     one: Math.max(...tops) - Math.min(...tops) < 8 && more.right <= tools.left, sections: [...document.querySelectorAll("main > section.mount")].map((x) => x.id), links: [...nav.querySelectorAll("a[data-mount]")].map((a) => a.dataset.mount) }; });
 const at1280 = await menu();
-check("menu: each page has one link with its words and a section of its own", LIST.every((a) => at1280.links.filter((n) => n === a.name).length === 1 && at1280.sections.includes(a.name) && [...at1280.bar, ...at1280.under].includes(a.nav)), at1280);
-check("menu: the bar is six words on one line: a page added to it stands before Pricing, and Docs, Install and Check make room, first under More", at1280.bar.join() === MENU.bar.join() && barWords(at1280.bar) <= 6 && at1280.one
-  && at1280.under.slice(0, MENU.first.length).join() === MENU.first.join() && LIST.filter((a) => a.bar).every((a) => at1280.bar.includes(a.nav)), [at1280.bar, at1280.under.slice(0, 4)]);
-check("menu: a page not of the bar is the last under More, and no link of the menu is lost", at1280.under.slice(-MENU.last.length).join() === MENU.last.join() && ["Check", "Demo", "Console", "Install", "Pricing", "Docs"].every((w) => [...at1280.bar, ...at1280.under].includes(w)), at1280.under);
+check("menu: each added page has a section of its own and no link of its own in the bar", LIST.every((a) => at1280.sections.includes(a.name)) && at1280.links.length === 0, at1280);
+check("menu: the bar is the one bar of every Knos page, six words at most on one line", at1280.bar.join() === MENU.bar.join() && at1280.under.join() === MENU.under.join() && barWords(at1280.bar) <= 6 && at1280.one, [at1280.bar, at1280.under]);
 {
   const tried = [];
   for (const width of [1100, 1000, 940, 900, 870]) { await page.setViewportSize({ width, height: 800 }); await page.waitForTimeout(60); tried.push([width, await menu()]); }
-  check("menu: from 870 to 1100 the bar is still one line of six words at most, and no link is lost", tried.every(([, m]) => m.one && barWords(m.bar) <= 6 && LIST.every((a) => [...m.bar, ...m.under].includes(a.nav))), tried.map(([w, m]) => [w, m.one, m.bar]));
+  check("menu: from 870 to 1100 the bar is still one line of six words at most, and no link is lost", tried.every(([, m]) => m.one && barWords(m.bar) <= 6 && m.bar.join() === MENU.bar.join() && m.under.join() === MENU.under.join()), tried.map(([w, m]) => [w, m.one, m.bar]));
   await page.setViewportSize({ width: 390, height: 800 }); await page.waitForTimeout(60);
   await page.click("#menu");
   const phone = await page.evaluate(() => [...document.querySelectorAll("#nav > a")].filter((e) => !e.hidden && e.checkVisibility()).map((e) => e.textContent));
-  check("menu: on a phone nothing has moved: the menu lists the bar's own six and the pages added to it, in place", phone.join() === ["Check", "Demo", "Console", "Install", ...LIST.filter((a) => a.bar).map((a) => a.nav), "Pricing", "Docs"].join(), phone);
+  check("menu: on a phone the menu lists the bar's own links, in place", phone.join() === MENU.bar.join(), phone);
   await page.click("#menu");
   await page.setViewportSize({ width: 1280, height: 800 }); await page.waitForTimeout(60);
   const back = await menu();
@@ -101,14 +99,13 @@ check("menu: a page not of the bar is the last under More, and no link of the me
 // the press shows the section at once, with grey bars until the module (held back here until the page is looked at) has drawn
 const one = LIST[0];
 let release; held = new Promise((r) => { release = r; });
-if (!(await page.isVisible(`#nav a[data-mount="${one.name}"]`))) await page.click("#more-button");       // a page not of the bar: under More
-await page.click(`#nav a[data-mount="${one.name}"]`);
+await page.evaluate((n) => { location.hash = `#${n}`; }, one.name);                    // opened by its address
 const pending = await page.evaluate((n) => { const el = document.getElementById(n); return { shown: el.checkVisibility(), bars: !!el.querySelector(".k-skeleton"), busy: el.getAttribute("aria-busy"), hash: location.hash, first: document.body.dataset.page === n }; }, one.name);
 check("mount: the press shows the page's section at once, with grey bars, before its module has arrived", pending.shown && pending.bars && pending.busy === "true" && pending.hash === `#${one.name}` && pending.first, pending);
 held = null; release();
 await ready(one.name);
-const drawn = await page.evaluate((n) => { const el = document.getElementById(n); return { title: el.querySelector("h2")?.textContent, bars: !!el.querySelector(".k-skeleton"), busy: el.hasAttribute("aria-busy"), current: document.querySelector(`#nav a[data-mount="${n}"]`).getAttribute("aria-current") }; }, one.name);
-check("mount: then the module's own drawing, the bars gone and the link marked as the page shown", !!drawn.title && !drawn.bars && !drawn.busy && drawn.current === "page", drawn);
+const drawn = await page.evaluate((n) => { const el = document.getElementById(n); return { title: el.querySelector("h2")?.textContent, bars: !!el.querySelector(".k-skeleton"), busy: el.hasAttribute("aria-busy"), current: document.body.dataset.page === n ? "page" : null }; }, one.name);
+check("mount: then the module's own drawing, the bars gone and the page marked as shown", !!drawn.title && !drawn.bars && !drawn.busy && drawn.current === "page", drawn);
 if (!real(one)) {
   await page.evaluate(() => { location.hash = "#pricing"; }); await ready("pricing");
   await page.evaluate((n) => { location.hash = `#${n}`; }, one.name); await ready(one.name);

@@ -76,13 +76,14 @@ for (const [w, h] of [[375, 812], [390, 844], [320, 640], [1280, 800]]) {
   await page.waitForFunction(() => document.documentElement.dataset.ready !== undefined, null, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(400);
   const got = await cards(page);
-  ok(`${w}px: the bare address opens on the research products, the check of agent work hidden`, await page.isVisible("#view-home") && !(await page.isVisible("#view-check")) && (await page.textContent("#home-h")).trim() === "Back research that becomes real products");
+  ok(`${w}px: the bare address opens on the research products, the check of agent work hidden`, await page.isVisible("#view-home") && !(await page.isVisible("#view-check")) && (await page.textContent("#k-mission")).trim() === "Carry research from every field of science across the valley of death." && (await page.isVisible("#k-q")));
   ok(`${w}px: the snapshot's ${snap.rows.length} products are drawn before any host answers`, got.length === snap.rows.length && got.every((c, i) => c.slug === snap.rows[i].slug && c.visible), got);
   ok(`${w}px: each has its three one-tap actions, each a link to the app at that action through the wake page`, got.every((c) => c.acts.map((a) => a[0]).join() === "Back it,Fund a milestone,Contribute"
     && c.acts.every(([, app, href]) => /^#(back|fund|contribute)=[a-z0-9-]+$/.test(app) && href === `wanted.html${app}`)), got.map((c) => c.acts));
-  if (h >= 800 && w < 700) ok(`${w}px: the first product's actions are above the fold`, got[0].bottom <= h, got.map((c) => c.bottom));
+  const box = await page.evaluate(() => document.getElementById("k-ask").getBoundingClientRect().bottom);
+  ok(`${w}px: the one box is above the fold`, box <= h, box);
   const n = await words(page);
-  ok(`${w}px: the first screen says 56 words of prose at most, bar included`, n.length <= 56 && n.length >= 12, [n.length, n.join(" ")]);
+  ok(`${w}px: the first screen says 64 words of prose at most, bar included`, n.length <= 64 && n.length >= 12, [n.length, n.join(" ")]);
   ok(`${w}px: nothing scrolls sideways`, (await sideways(page)) <= 0, await sideways(page));
   ok(`${w}px: no script error`, errors.length === 0, errors);
   if (w === 375) ok("375px: untouched, the first screen asks no other host at all", asked.length === 0, asked);
@@ -124,10 +125,11 @@ for (const [w, h] of [[375, 812], [390, 844], [320, 640], [1280, 800]]) {
   await ctx.close();
 }
 
-// 3. verify, and the check of agent work, one press away
+// 3. verify (in the bar's menu, the same on every page), and the check of agent work, one press away
 {
   const { ctx, page } = await open(375, 812, "off");
-  await page.click('#view-home a[href="#verify"]');
+  await page.click("#menu"); await page.click("#more-button");       // a phone: the bar's menu, How we verify under More
+  await page.click('#nav a[href="#verify"]');
   await page.waitForFunction(() => document.documentElement.dataset.ready === "verify", null, { timeout: 10000 }).catch(() => {});
   const v = await page.evaluate(() => ({ shown: document.getElementById("view-verify").checkVisibility(), home: document.getElementById("view-home").checkVisibility(),
     h1: document.getElementById("verify-h").textContent, items: [...document.querySelectorAll(".verify-list li h2")].map((e) => e.textContent),

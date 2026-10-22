@@ -108,7 +108,7 @@ async function page() {
   const { chromiumOrSkip, measure, TYPES } = await import("./overflow.mjs");
   const browser = await chromiumOrSkip();
   const HOLDER = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Front door</title>
-    <link rel="stylesheet" href="app.css"></head><body><main><form id="front-door"></form></main>
+    <link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main><form id="front-door"></form></main>
     <script type="module">import { renderFrontDoor } from "./front_door.js"; window.door = renderFrontDoor(document.getElementById("front-door"), { now: new Date("2026-10-06T12:00:00Z"), proposeEnv: { now: Date.parse("2026-10-06T12:00:00Z") / 1000 } }); window.drawn = true;</script></body></html>`;
   const built = process.argv[3];
   if (!built || !existsSync(join(built, "index.html"))) { console.error("usage: node tests/web/front_door.mjs page <site dir>"); process.exit(2); }

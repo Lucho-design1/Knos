@@ -64,7 +64,7 @@ try { browser = await chromium.launch(); } catch (e) { skip(`no Chromium to star
 
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
 const HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Terms</title>
-<link rel="stylesheet" href="app.css"></head><body><main id="terms"></main>
+<link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main id="terms"></main>
 <script type="module">import { renderTerms } from "./terms.js";
 const fixture = await (await fetch("fixture.json")).json(); window.asked = [];
 const get = async (path) => { window.asked.push(path); return fixture.api[path] ?? null; };

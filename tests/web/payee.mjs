@@ -37,7 +37,7 @@ try { browser = await chromium.launch(); } catch (e) { skip(`no Chromium to star
 
 const TYPES = { ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".woff2": "font/woff2", ".svg": "image/svg+xml" };
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Payee</title><link rel="stylesheet" href="/app.css"></head><body><main id="page" class="view"></main>
+<title>Payee</title><link rel="stylesheet" href="/brand/tokens.css"><link rel="stylesheet" href="/app.css"></head><body><main id="page" class="view"></main>
 <script type="module">import { renderPayee } from "/payee.js";
 window.view = renderPayee(document.getElementById("page"), { arg: location.hash.split("=")[1] || "" }); window.ready = true;</script></body></html>`;
 const server = createServer((req, res) => {

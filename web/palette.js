@@ -4,10 +4,11 @@
 // It is a modal <dialog>: the page behind is inert, Escape closes it, and the focus goes back to where it was.
 // Roles are those of a combobox with a list (WAI-ARIA Authoring Practices): the field is role=combobox with
 // aria-controls, aria-expanded and aria-activedescendant; the list is role=listbox; a row is role=option with
-// aria-selected. The focus never leaves the field. The pages are read from the bar, so a page the bar does not offer
-// is not offered here. The documents are docs_index.json ([{ "title", "file" }], which scripts/docs_index.py writes
+// aria-selected. The focus never leaves the field. The pages are the bar's links and the pages a module adds
+// (web/views.js ADDED). The documents are docs_index.json ([{ "title", "file" }], which scripts/docs_index.py writes
 // into the build); with no such file the palette has every command and no documents.
 import { morph, toast } from "./motion.js";
+import { ADDED } from "./views.js";
 
 export const INSTALL = "pipx install knos";
 const DOCS = "https://github.com/drexthealpha/Knos/blob/main/docs/";
@@ -40,6 +41,8 @@ export function commands() {
     const to = a.getAttribute("href");
     if (!a.hidden) add(a.textContent.trim(), "Go to", () => (to.startsWith("#") ? go(to) : location.assign(a.href)));
   }
+  // the pages a module adds (web/views.js ADDED), which the bar, the same on every page of Knos, does not list
+  for (const [name, a] of Object.entries(ADDED)) if (document.getElementById(name)) add(a.nav, "Go to", () => go(`#${name}`));
   for (const d of docs || []) add(d.title, "Docs", () => { window.open(DOCS + d.file, "_blank", "noopener"); }, d.file);
   return out;
 }

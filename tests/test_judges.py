@@ -151,12 +151,12 @@ def test_the_check_fails_when_the_page_and_the_file_part(tmp_path):
     assert any("witnessed transaction" in line for line in j.problems(tmp_path))
 
 
-def test_the_seven_factors_are_colosseums_and_traction_says_the_zeros():
+def test_the_seven_more_claims_and_traction_says_the_zeros():
     j = _judges()
     data = json.loads(read("docs/judges.json"))
     factors = {r["thing"]: r for r in data["rows"][6:]}
     assert list(factors) == j.FACTORS
-    assert "https://colosseum.com/hackathon" in read("docs/JUDGES.md")
+    assert "## Thirteen claims, each with its evidence" in read("docs/JUDGES.md")      # claims for a buyer, not a contest's criteria
     traction = factors["Traction"]["sentence"]
     for zero in ("Outside funders 0", "outside repositories 0", "interviews 0", "revenue 0"):
         assert zero in traction, zero

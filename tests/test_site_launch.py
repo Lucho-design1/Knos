@@ -87,7 +87,7 @@ def test_the_card_is_a_1200_by_630_png_of_the_site_drawn_from_the_brand() -> Non
 
 
 def test_the_browser_bar_takes_the_page_colour_in_dark_and_light() -> None:
-    css = (WEB / "app.css").read_text(encoding="utf-8")
+    css = (WEB / "brand" / "tokens.css").read_text(encoding="utf-8")                        # the one design system's palette
     dark = re.search(r":root \{\s*--paper: (#[0-9a-f]{6})", css)
     light = re.search(r':root\[data-theme="light"\] \{\s*--paper: (#[0-9a-f]{6})', css)
     assert dark and light

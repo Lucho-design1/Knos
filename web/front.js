@@ -557,9 +557,9 @@ function initAdded() {
   const main = document.querySelector("main"), nav = $("nav"), list = $("more-list");
   for (const [name, a] of Object.entries(ADDED)) {
     if (!$(name) && main) { const s = document.createElement("section"); Object.assign(s, { id: name, className: "mount", hidden: true }); s.setAttribute("aria-label", a.nav); main.append(s); }
-    if (!nav || nav.querySelector(`a[data-mount="${name}"]`)) continue;
-    const l = document.createElement("a"); Object.assign(l, { textContent: a.nav, hidden: true }); l.setAttribute("href", `#${name}`); l.dataset.mount = name;
-    if (a.bar) nav.insertBefore(l, nav.querySelector('a[href="#pricing"]')); else (list || nav).append(l);
+    // the bar is the same on every page of Knos (web/brand/bar.html): an added page is opened by its address and from
+    // the search (web/palette.js), and adds no link to the bar; one the bar already names is shown when it is filled
+    if (!nav || !list) continue;
   }
   addEventListener("resize", fitBar);          // and after every route, which is what shows a link (route)
 }

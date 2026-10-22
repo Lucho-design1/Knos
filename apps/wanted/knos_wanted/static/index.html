@@ -6,6 +6,7 @@
 <title>Knos — back research that works</title>
 <meta name="description" content="Research products open for backing now. Pre-order, fund a milestone or contribute with a passkey; money waits in escrow on Solana devnet and is paid only on proof.">
 <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/brand/tokens.css">
 <link rel="stylesheet" href="/static/style.css">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#1f2a44">
@@ -13,29 +14,45 @@
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Skip to the app</a>
-<header class="top">
-  <div class="wrap">
-    <div class="bar">
-      <a class="brand" href="#home"><span class="mark" aria-hidden="true"></span>Knos</a>
-      <span id="modeBadge" class="badge">…</span>
-      <label class="small muted" for="lang" hidden data-i18n="lang_l">Language</label>
-      <select id="lang" class="lang" aria-label="Language"></select>
-      <button id="ux-help-btn" class="quiet ux-help-btn" type="button" aria-label="Help for this page" aria-controls="ux-help">?</button>
-      <button id="whoBtn" class="quiet" type="button" aria-controls="signin" data-i18n="sign_in">Sign in</button>
+<!-- k-bar -->
+<header class="bar k-bar" id="k-bar">
+  <a class="brand" href="#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
+  <nav id="nav" aria-label="Knos">
+    <a href="#home">Check demand</a>
+    <a href="#projects">Projects</a>
+    <a href="https://drexthealpha.github.io/Knos/#pricing">Pricing</a>
+    <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
+    <div class="more" id="more">
+      <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
+      <div class="more-list" id="more-list">
+        <a href="#verify">How we verify</a>
+        <a href="#buy">Back a product</a>
+        <a href="#fund">Fund a milestone</a>
+        <a href="#contribute">Open work</a>
+        <a href="#make">Make</a>
+        <a href="#teams">Teams</a>
+        <a href="#agents">Agents</a>
+        <a href="/with-without">With and without Qloo</a>
+        <a href="/qloo-safe-use">How Knos uses Qloo safely</a>
+        <a href="/invite">Invite</a>
+        <a href="https://drexthealpha.github.io/Knos/#check-a-pull-request" id="go-check">Check a pull request</a>
+        <a href="https://drexthealpha.github.io/Knos/#demo">Demo</a>
+        <a href="https://drexthealpha.github.io/Knos/#install">Install</a>
+        <a href="https://drexthealpha.github.io/Knos/#records">Records</a>
+        <a href="https://drexthealpha.github.io/Knos/#network">Numbers</a>
+        <a href="https://drexthealpha.github.io/Knos/#judges">Check every claim yourself</a>
+        <a href="https://drexthealpha.github.io/Knos/faq.html">Questions</a>
+      </div>
     </div>
-    <nav class="roles" aria-label="Roles">
-      <a href="#home" data-view="home" data-i18n="nav_home">Home</a>
-      <a href="#buy" data-view="buy" data-i18n="nav_back">Back</a>
-      <a href="#fund" data-view="fund" data-i18n="nav_fund">Fund</a>
-      <a href="#contribute" data-view="contribute" data-i18n="nav_contribute">Contribute</a>
-      <a href="#make" data-view="make" data-i18n="nav_make">Make</a>
-      <a href="#research" data-view="research" data-i18n="nav_research">Research</a>
-      <a href="#projects" data-view="projects" data-i18n="nav_projects">Projects</a>
-      <a href="#teams" data-view="teams" data-i18n="nav_teams">Teams</a>
-      <a href="#agents" data-view="agents" data-i18n="nav_agents">Agents</a>
-    </nav>
+  </nav>
+  <div class="tools">
+    <button id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
+    <a id="whoBtn" class="signin" href="#signin">Sign in</a>
   </div>
 </header>
+<script src="/static/brand/bar.js" defer></script>
+<!-- /k-bar -->
 
 <main id="main" class="wrap">
   <section id="signin" class="card" hidden aria-labelledby="signinH">
@@ -61,9 +78,24 @@
   <p id="slow" class="note row" role="status" hidden><span class="spin" aria-hidden="true"></span><span id="slowText"></span></p>
 
   <!-- HOME: the research products open for backing now, each with its three one-tap actions -->
-  <section id="v-home" class="view" aria-labelledby="homeH">
-    <h1 id="homeH" data-i18n="home_t">Back research that works</h1>
-    <p class="lead" data-i18n="home_p">Pay only when a milestone is proven. Your passkey is your wallet.</p>
+  <section id="v-home" class="view" aria-labelledby="k-mission">
+<!-- k-hero -->
+<div class="k-hero" id="k-hero" role="region" data-api="" data-app="/" aria-labelledby="k-mission">
+  <h1 id="k-mission" class="k-mission">Carry research from every field of science across the valley of death.</h1>
+  <p class="k-lede">Paste a paper or an idea. Qloo shows who would buy it, where, and at what price.</p>
+  <form class="k-ask" id="k-ask" autocomplete="off" role="search" aria-label="Check demand">
+    <input id="k-q" name="q" type="text" aria-label="A DOI, an arXiv id or an idea" maxlength="500" placeholder="A DOI, an arXiv id or an idea" enterkeyhint="go" spellcheck="false">
+    <button id="k-go" type="submit">Check demand</button>
+  </form>
+  <p class="k-try"><span>Try</span>
+    <button type="button" class="k-chip" data-q="10.1038/nature16521">sweat glucose sensor</button>
+    <button type="button" class="k-chip" data-q="10.1126/science.aam8743">water from desert air</button>
+    <button type="button" class="k-chip" data-q="a smart water bottle that glows to remind you to drink">a glowing water bottle</button></p>
+  <div id="k-card" class="k-slot" aria-live="polite"></div>
+</div>
+<script src="/static/brand/hero.js" defer></script>
+<!-- /k-hero -->
+    <h2 id="homeH">Open for backing now</h2>
     <ul id="homeList" class="plist hp" aria-busy="true" aria-live="polite">
       <li class="card hp-card sk" aria-hidden="true"></li><li class="card hp-card sk" aria-hidden="true"></li><li class="card hp-card sk" aria-hidden="true"></li>
     </ul>
@@ -214,6 +246,12 @@
 </main>
 
 <footer class="wrap muted small">
+  <div id="footTools" class="row">
+    <span id="modeBadge" class="badge">…</span>
+    <label class="small muted" for="lang" data-i18n="lang_l">Language</label>
+    <select id="lang" class="lang" aria-label="Language"></select>
+    <button id="ux-help-btn" class="quiet ux-help-btn" type="button" aria-label="Help for this page" aria-controls="ux-help">?</button>
+  </div>
   <p data-i18n="footer">Qloo taste data is read on the server only. Escrow on Solana devnet with test units: no real money. MIT licensed.</p>
   <p><a href="/verify" data-i18n="verify_link">How we verify</a> · <a href="https://github.com/drexthealpha/Knos" rel="noopener">GitHub</a></p>
 </footer>

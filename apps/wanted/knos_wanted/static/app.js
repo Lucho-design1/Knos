@@ -61,6 +61,7 @@ function show() {
   const one = h.match(/^#(back|fund|contribute)=([a-z0-9-]{3,64})$/);       // a one-tap action from the front door
   if (one && one[1] === "back") return goBack(one[2]);
   if (h === "#verify") return location.replace("/verify");          // the front door's link to How we verify (through the wake page)
+  if (h === "#signin") { history.replaceState(null, "", "#home"); $("signin").hidden = false; $("pkName").focus(); return show(); }   // the bar's Sign in, from another page
   let view = m ? "buy" : (h.slice(1).split("=")[0] || "home");
   if (!VIEWS.includes(view)) view = "home";
   for (const v of VIEWS) $("v-" + v).hidden = v !== view;
@@ -480,7 +481,7 @@ async function boot() {
   } catch (e) { err(e); }
   show();
 }
-$("whoBtn").onclick = () => { const sh = $("signin"); sh.hidden = !sh.hidden; if (!sh.hidden) $("pkName").focus(); };
+$("whoBtn").onclick = (ev) => { ev.preventDefault(); const sh = $("signin"); sh.hidden = !sh.hidden; if (!sh.hidden) $("pkName").focus(); };
 $("signinClose").onclick = () => { $("signin").hidden = true; $("whoBtn").focus(); };
 document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && !$("signin").hidden) { $("signin").hidden = true; $("whoBtn").focus(); } });
 $("outBtn").onclick = () => setSession(null);

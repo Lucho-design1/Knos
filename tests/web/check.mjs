@@ -48,7 +48,7 @@ for (const rec of Object.values(CASES)) {
 const RESET = 1_791_000_000;    // a fixed time for the refusal's x-ratelimit-reset
 
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Check</title><link rel="stylesheet" href="/app.css"></head><body><main><section id="check"></section></main>
+<title>Check</title><link rel="stylesheet" href="/brand/tokens.css"><link rel="stylesheet" href="/app.css"></head><body><main><section id="check"></section></main>
 <script type="module">import { renderCheck } from "/check.js";
 const m = /^#check=(.+)$/.exec(location.hash);
 renderCheck(document.getElementById("check"), { arg: m ? decodeURIComponent(m[1]) : "" }); window.ready = true;</script></body></html>`;

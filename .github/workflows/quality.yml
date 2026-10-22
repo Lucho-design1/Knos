@@ -1,0 +1,57 @@
+# test_quality_bar, against the LIVE pages (scripts/public_pages.json: the front door on GitHub Pages and the app on
+# Render), on a hosted runner: axe-core on each page at 375 and 1280 px in light and dark (0 violations), then three cold
+# Lighthouse runs of each page with the mobile preset of lighthouse.yml (accessibility 100 and performance at least 95
+# in every run). The wake page (wanted.html) is measured as itself: its forward to the app is blocked, as lighthouse.yml does.
+name: quality
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency: {group: quality, cancel-in-progress: false}
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "22"
+      - name: axe-core and a browser
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.0 axe-core@4.10.2
+          npx playwright install --with-deps chromium
+      - name: axe on every public page
+        run: node scripts/test_quality_bar.mjs axe
+      - name: The preset, pointed at the live pages
+        run: |
+          node -e '
+          const fs = require("fs"), pages = JSON.parse(fs.readFileSync("scripts/public_pages.json", "utf8")).pages;
+          for (const [name, urls, block] of [["site", pages.filter((u) => u.includes("github.io")), ["https://knos.onrender.com/*"]],
+                                             ["app", pages.filter((u) => u.includes("onrender.com")), []]]) {
+            const c = require("./apps/wanted/lighthouserc.js");
+            const out = JSON.parse(JSON.stringify(c));
+            out.ci.collect.url = urls; out.ci.collect.numberOfRuns = 3; out.ci.collect.settings.blockedUrlPatterns = block;
+            delete out.ci.assert; delete out.ci.upload;
+            fs.writeFileSync(`lhci-${name}.json`, JSON.stringify(out, null, 1));
+          }'
+      # Chrome is opened once on a blank page first (a fresh runner's first launch reads the browser from a cold disk);
+      # every measured run is still a fresh profile with an empty cache.
+      - name: Open Chrome once (no page)
+        run: |
+          npx --yes @lhci/cli@0.14.0 healthcheck --fatal || true
+          CHROME=$(node -e 'console.log(require("chrome-launcher").Launcher.getInstallations()[0] || "")' 2>/dev/null || true)
+          "${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --dump-dom about:blank > /dev/null 2>&1 || true
+      - name: Cold runs, the front door
+        run: npx --yes @lhci/cli@0.14.0 collect --config=lhci-site.json
+      - name: Cold runs, the app
+        run: |
+          curl -fsS -m 120 -o /dev/null https://knos.onrender.com/healthz
+          npx --yes @lhci/cli@0.14.0 collect --config=lhci-app.json --additive
+      - name: Accessibility 100 and performance at least 95, every run
+        run: node scripts/test_quality_bar.mjs lighthouse .lighthouseci
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: quality
+          path: .lighthouseci/

@@ -34,7 +34,7 @@ const words = (s) => s.trim().split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml",
   ".woff2": "font/woff2", ".png": "image/png" };
 const PAGE = (offline, bank = false) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>demo</title><link rel="stylesheet" href="app.css"></head><body><main><div id="demo" hidden></div></main>
+<title>demo</title><link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main><div id="demo" hidden></div></main>
 <script type="module">import { renderDemo } from "./demo.js";
 window.__demo = await renderDemo(document.getElementById("demo"), ${offline ? "{ online: () => false }" : bank ? "{ pain001: (st, payer) => `<Document><Nm>${payer.name}</Nm>${st.lines.filter((l) => l.state === 'agreed').map((l) => `<Amt>${l.amount}</Amt>`).join('')}</Document>` }" : "{}"}); window.__mounted = true;</script></body></html>`;
 let withMotion = true;

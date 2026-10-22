@@ -1,6 +1,6 @@
 <img src="../web/brand/mark.svg" height="40" alt="Knos">
 
-# Check every claim yourself (for judges and buyers)
+# Check every claim yourself (for buyers and backers)
 
 **In plain words.** Backers pay for passing work. Devnet, [test money](WORDS.md#test-usdc), no customers yet. Links show it.
 
@@ -35,7 +35,7 @@ flowchart TB
 ```
 *Open the links in order.*
 
-## Six criteria from the rules, seven from [Colosseum](https://colosseum.com/hackathon)
+## Thirteen claims, each with its evidence
 
 | judged | in one sentence | evidence |
 |---|---|---|

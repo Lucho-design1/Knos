@@ -15,7 +15,7 @@ let failed = 0;
 const ok = (what, cond, detail) => { if (!cond) failed++; console.log(`${cond ? "ok  " : "FAIL"} ${what}${cond || detail === undefined ? "" : `: ${JSON.stringify(detail)}`}`); };
 const TYPES = { ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".html": "text/html", ".woff2": "font/woff2", ".svg": "image/svg+xml" };
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Statement</title>
-<link rel="stylesheet" href="/app.css"></head><body><main id="page"></main>
+<link rel="stylesheet" href="/brand/tokens.css"><link rel="stylesheet" href="/app.css"></head><body><main id="page"></main>
 <script type="module">import { renderStatements } from "/statements.js";
 const file = async (path) => (await fetch("/" + path)).json();
 window.openStatement = renderStatements(document.getElementById("page"), { file, now: new Date("2026-10-05T12:00:00Z") });

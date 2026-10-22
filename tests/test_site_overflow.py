@@ -70,12 +70,12 @@ def test_the_first_screen_says_forty_words_at_most() -> None:
     the figure's line and the one control (the front door: a box, its button, a sample). The demo's mount is empty in
     the file; its words are its module's."""
     page = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
-    bar = page[page.index('<header class="bar">'):page.index("</header>")]
+    bar = page[page.index('<header class="bar k-bar"'):page.index("</header>")]
     bar = re.sub(r'<div class="more-list".*?</div>', "", bar, flags=re.S)                 # what More holds is one press away
     # the first screen ends where "How it works" begins (since 0.3.22 it stands under the hero, before the demo's mount)
     hero = page[page.index('<div class="hero'):min(page.index('<section id="demo"'), page.index('<h2 id="how-it-works">'))]
     assert f'<h1 id="check">{OUTCOME}</h1>' in hero
-    assert len(re.findall(r"<a\b", bar[bar.index("<nav"):bar.index('<div class="more"')])) == 6      # six links in the bar: Check, Demo, Console, Install, Pricing, Docs
+    assert len(re.findall(r"<a\b", bar[bar.index("<nav"):bar.index('<div class="more"')])) == 4      # the one bar of Knos: Check demand, Projects, Pricing, Docs
     fact = re.search(r'<p class="hero-fact"[^>]*>(.*?)</p>', hero, re.S)
     assert fact and len(_words(fact[1])) <= 18 and re.sub(r"<[^>]+>", "", fact[1]) == "Of 241 merged agent “tests pass” pull requests: 9 failed a test, build, lint or type check."
     merged = json.loads((ROOT / "docs" / "backtest.json").read_text(encoding="utf-8"))["reviewed"]["overall"]

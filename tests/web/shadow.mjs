@@ -82,7 +82,7 @@ async function page() {
 
   const root = join(here, "../../web"), TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
   const HOLDER = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Shadow mode</title>
-    <link rel="stylesheet" href="app.css"></head><body><main><div id="shadow"></div></main>
+    <link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main><div id="shadow"></div></main>
     <script type="module">import { renderShadow } from "./shadow.js"; renderShadow(document.getElementById("shadow")); window.drawn = true;</script></body></html>`;
   const server = createServer((req, res) => {
     const path = decodeURIComponent(new URL(req.url, "http://x").pathname), file = join(root, path);

@@ -6,35 +6,76 @@
 <title>Knos demand check: waking the server</title>
 <meta name="description" content="Knos's demand check runs on a free server that sleeps when idle. This page wakes it, then takes you there.">
 <style>
-:root { --bg: #f7f7f4; --ink: #17181a; --muted: #5d6168; --accent: #2d5bd7; }
-@media (prefers-color-scheme: dark) { :root { --bg: #111214; --ink: #ecedee; --muted: #a3a8b0; --accent: #7aa2ff; } }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: var(--s1)/1.5 var(--text); }
 main { max-width: 560px; margin: 0 auto; padding: 48px 16px; }
-h1 { font-size: 26px; } a { color: var(--accent); } .muted { color: var(--muted); }
-.bar { height: 6px; background: rgba(127,127,127,.25); border-radius: 3px; overflow: hidden; margin: 20px 0; }
-.bar i { display: block; height: 100%; width: 30%; background: var(--accent); animation: slide 1.4s ease-in-out infinite; }
+h1 { font-size: 28px; } a { color: var(--accent); } .muted { color: var(--muted); }
+.wake { height: 6px; background: rgba(127,127,127,.25); border-radius: 3px; overflow: hidden; margin: 20px 0; }
+.wake i { display: block; height: 100%; width: 30%; background: var(--accent); animation: slide 1.4s ease-in-out infinite; }
 @keyframes slide { 0% { margin-left: -30%; } 100% { margin-left: 100%; } }
-@media (prefers-reduced-motion: reduce) { .bar i { animation: none; width: 100%; opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .wake i { animation: none; width: 100%; opacity: .5; } }
 </style>
+<link rel="stylesheet" href="brand/tokens.css">
 </head>
 <body>
+<!-- k-bar -->
+<header class="bar k-bar" id="k-bar">
+  <a class="brand" href="./#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
+  <nav id="nav" aria-label="Knos">
+    <a href="./#home">Check demand</a>
+    <a href="wanted.html#projects">Projects</a>
+    <a href="./#pricing">Pricing</a>
+    <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
+    <div class="more" id="more">
+      <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
+      <div class="more-list" id="more-list">
+        <a href="./#verify">How we verify</a>
+        <a href="wanted.html#buy">Back a product</a>
+        <a href="wanted.html#fund">Fund a milestone</a>
+        <a href="wanted.html#contribute">Open work</a>
+        <a href="wanted.html#make">Make</a>
+        <a href="wanted.html#teams">Teams</a>
+        <a href="wanted.html#agents">Agents</a>
+        <a href="wanted.html?to=/with-without">With and without Qloo</a>
+        <a href="wanted.html?to=/qloo-safe-use">How Knos uses Qloo safely</a>
+        <a href="wanted.html?to=/invite">Invite</a>
+        <a href="./#check-a-pull-request" id="go-check">Check a pull request</a>
+        <a href="./#demo">Demo</a>
+        <a href="./#install">Install</a>
+        <a href="./#records">Records</a>
+        <a href="./#network">Numbers</a>
+        <a href="./#judges">Check every claim yourself</a>
+        <a href="./faq.html">Questions</a>
+      </div>
+    </div>
+  </nav>
+  <div class="tools">
+    <button id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
+    <a id="whoBtn" class="signin" href="wanted.html#signin">Sign in</a>
+  </div>
+</header>
+<script src="brand/bar.js" defer></script>
+<!-- /k-bar -->
 <main>
   <h1>Knos demand check</h1>
   <p>Is it wanted? Qloo's taste data answers, code decides, and buyers pay the maker only on proof.</p>
-  <div class="bar" aria-hidden="true"><i></i></div>
+  <div class="wake" aria-hidden="true"><i></i></div>
   <p id="state" role="status">Waking the server. A free instance sleeps when nobody uses it; the first visit can take up to a minute.</p>
   <p class="muted">Not moving? Open <a id="direct" href="https://knos.onrender.com/">the app directly</a>.</p>
 </main>
 <script>
 "use strict";
 const APP = "https://knos.onrender.com";
+const PAGES = ["/", "/with-without", "/qloo-safe-use", "/invite", "/verify", "/trace.html"];
 const start = Date.now();
 async function ping() {
   try {
     // no-cors: the answer is opaque, but it only arrives once the server is awake (a network error rejects)
     await fetch(APP + "/healthz?t=" + Date.now(), { mode: "no-cors", cache: "no-store" });
     document.getElementById("state").textContent = "Awake. Taking you to the app...";
-    location.replace(APP + "/" + location.hash);
+    // ?to= one of the app's own pages (the bar's links to them come through here), else its home; the hash goes along
+    const to = new URLSearchParams(location.search).get("to") || "/";
+    location.replace(APP + (PAGES.includes(to) ? to : "/") + location.hash);
   } catch (e) {
     const s = Math.round((Date.now() - start) / 1000);
     document.getElementById("state").textContent = "Still waking the server (" + s + " s). Free instances take up to a minute.";

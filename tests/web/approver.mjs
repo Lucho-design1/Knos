@@ -134,7 +134,7 @@ async function page() {
   const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
   // ?rails gives the page a payment module that says what it was handed; ?norails says there is none; neither: web/rails.js is asked for
   const HOLDER = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Approve</title>
-    <link rel="stylesheet" href="app.css"></head><body><main><section id="approve"></section></main>
+    <link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main><section id="approve"></section></main>
     <script type="module">import { renderApprover } from "./approver.js"; const q = new URLSearchParams(location.search);
       const rails = q.has("rails") ? { pain001: (st, payer, status) => "<pain>" + [st.sha256, payer.name, payer.iban, payer.bic, status.events[0].lines.length].join("|") + "</pain>" } : q.has("norails") ? null : undefined;
       window.ap = renderApprover(document.getElementById("approve"), { now: new Date("2026-10-07T12:00:00Z"), ...(rails === undefined ? {} : { rails }) }); await window.ap.loaded; window.drawn = true;</script></body></html>`;

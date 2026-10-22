@@ -27,12 +27,12 @@ try { browser = await chromium.launch(); } catch (e) { skip(`no Chromium to star
 
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
 const HOLDER = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pricing</title>
-  <link rel="stylesheet" href="app.css"></head><body><main><div class="k-card" id="bill"></div></main>
+  <link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main><div class="k-card" id="bill"></div></main>
   <script type="module">import { renderPricing } from "./pricing.js"; renderPricing(document.getElementById("bill")); window.drawn = true;</script></body></html>`;
 // the whole view (initPricing) with the program answering Version `v`: the book, the two tables of what the program
 // takes and the sentence under the book, as index.html holds them
 const LIVE = (v) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pricing</title>
-  <link rel="stylesheet" href="app.css"></head><body><main id="view-pricing"><div class="k-card" id="bill"></div>
+  <link rel="stylesheet" href="brand/tokens.css"><link rel="stylesheet" href="app.css"></head><body><main id="view-pricing"><div class="k-card" id="bill"></div>
   <div class="k-card"><div class="table-wrap"><table id="price-book"><thead><tr><th>Line</th><th>Unit</th><th>Price</th><th>Who pays</th><th>Where it is enforced</th></tr></thead><tbody></tbody></table></div>
   <p id="price-rule"></p><p class="fine" id="price-honest"><span id="price-honest-now"></span>The program enforces the Acceptance line at release.</p>
   <p id="fee-how"></p><div class="table-wrap"><table id="fee-worked"><thead><tr><th>Amount</th><th>How</th><th>Fee</th></tr></thead><tbody></tbody></table></div>

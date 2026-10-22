@@ -8,7 +8,7 @@ The page is typed by hand and is the source. It opens with the mark (an <img> li
 three sentences; after them, its rules: the one sentence, then the winning claim, then the one number; at most 350
 words outside the table, counting what a reader reads: the summary and every caption count, while a ```mermaid block
 (a diagram's source, which GitHub draws as a picture) and HTML markup such as the mark do not; thirteen rows (the six
-criteria in the rules, then the seven factors Colosseum's hackathon page lists), each one sentence and one link; a definition of days to approve that gives no figure; five
+claims, then seven more), each one sentence and one link; a definition of days to approve that gives no figure; five
 lines under "What is not real yet". The shape of the file, which the site's "Check every claim yourself" page (web/judges.js) reads
 as it is (scripts/build_site.sh copies it into the build):
 

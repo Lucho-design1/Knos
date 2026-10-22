@@ -1,4 +1,4 @@
-# M7's uptime log for the judging period (2 to 16 November 2026), written by GitHub, not by hand: once a day this job
+# The uptime log of the hosted app, written by GitHub, not by hand: once a day this job
 # runs scripts/uptime_log.py over the window so far and puts the table in the run's summary. Nothing is committed; the
 # log is the list of these runs, each read from GitHub's own record of the keep-warm pings (keepalive.yml, worker.yml).
 name: uptime

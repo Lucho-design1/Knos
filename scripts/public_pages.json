@@ -1,0 +1,16 @@
+{
+ "about": "Every public page of Knos: the front door (GitHub Pages) and the app (Render). scripts/test_ui_sota.mjs (layout) and .github/workflows/quality.yml (axe and Lighthouse) read this list.",
+ "pages": [
+  "https://drexthealpha.github.io/Knos/",
+  "https://drexthealpha.github.io/Knos/faq.html",
+  "https://drexthealpha.github.io/Knos/privacy.html",
+  "https://drexthealpha.github.io/Knos/404.html",
+  "https://drexthealpha.github.io/Knos/wanted.html",
+  "https://knos.onrender.com/",
+  "https://knos.onrender.com/with-without",
+  "https://knos.onrender.com/qloo-safe-use",
+  "https://knos.onrender.com/invite",
+  "https://knos.onrender.com/verify",
+  "https://knos.onrender.com/trace.html"
+ ]
+}

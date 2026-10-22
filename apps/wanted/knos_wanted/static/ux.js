@@ -82,9 +82,10 @@
     for (const [m] of MODES) s.querySelector("#mode-" + m).onclick = () => setMode(m, !root.classList.contains(m));
     s.querySelector("#ux-close").onclick = () => { s.hidden = true; };
     const fab = document.createElement("button");
-    fab.type = "button"; fab.id = "ux-fab"; fab.className = "ux-fab"; fab.textContent = "Aa"; fab.setAttribute("aria-label", "Display: simpler, contrast, type, motion");
+    // in the footer, never floating over the page (scripts/test_layout_audit.mjs: no button covers a card)
+    fab.type = "button"; fab.id = "ux-fab"; fab.className = "quiet"; fab.textContent = "Display"; fab.setAttribute("aria-label", "Display: simpler, contrast, type, motion");
     fab.onclick = () => { s.hidden = !s.hidden; };
-    document.body.appendChild(fab);
+    (document.getElementById("footTools") || document.querySelector("footer") || document.body).appendChild(fab);
   }
   let taps = [];
   document.addEventListener("pointerdown", (e) => {

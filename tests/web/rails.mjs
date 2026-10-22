@@ -44,7 +44,7 @@ if (!process.argv.includes("--no-browser")) {
   if (browser) {
     const TYPES = { ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".woff2": "font/woff2", ".svg": "image/svg+xml" };
     const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pay by bank</title>
-<link rel="stylesheet" href="/app.css"></head><body><main id="page"></main>
+<link rel="stylesheet" href="/brand/tokens.css"><link rel="stylesheet" href="/app.css"></head><body><main id="page"></main>
 <script type="module">import { renderRails } from "/rails.js";
 const v = (await (await fetch("/golden/vectors.json")).json())[0];
 window.view = renderRails(document.getElementById("page"), { today: v.payer.on });

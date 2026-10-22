@@ -91,7 +91,7 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   const page = await open(ctx);
   // every page the bar can offer is offered: the mounts other modules fill are filled, as they are on the site
   await page.evaluate(() => { for (const id of ["shadow", "buy", "demo"]) { const m = document.getElementById(id); if (!m.childElementCount) m.innerHTML = "<p>Filled by its module</p>"; } });
-  await page.waitForFunction(() => !document.querySelector('nav a[data-mount="shadow"]').hidden);
+  await page.waitForTimeout(100);                                                     // the bar is the same on every page: no link waits for a filled page
   await settle(page);
   const words = await firstScreen(page);
   check(`words: the first screen says 56 words at most at ${width} by ${height}`, words.length <= 56 && words.length >= 20, [words.length, words.join(" ")]);
