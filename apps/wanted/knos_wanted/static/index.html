@@ -13,6 +13,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#1f2a44">
 <script>document.documentElement.dataset.view = (location.hash.slice(1).split("=")[0] || "home").replace(/[^a-z]/g, "");</script>
+<script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Skip to the app</a>

@@ -17,6 +17,7 @@
 <!-- Each line is checked against the code by tests/test_site_launch.py: cookies (none), hosts (GitHub, devnet),
      sessionStorage (web/cache.js), localStorage (the theme in web/front.js, a passkey in web/claim.js, buyer.js, payee.js). -->
 <style>.legal h2 { margin-top: 40px; } .legal ul { padding-left: 1.2em; } .legal li { margin: 6px 0; }</style>
+<script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body>
 <!-- k-bar -->

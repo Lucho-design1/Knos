@@ -63,6 +63,12 @@ def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) 
         api, app_pages, js = HEROES[path]
         t = (WEB / "brand" / "hero.html").read_text(encoding="utf-8").strip().replace("{API}", api).replace("{APP}", app_pages)
         s = HERO.sub(lambda _: f'<!-- k-hero -->\n{t}\n<script src="{js}" defer></script>\n<!-- /k-hero -->', s, count=1)
+    # a page that runs web/brand/bar.js lays the bar out for scripts (and in the reader's theme) before its first paint:
+    # set after it, the bar moves under the reader (a layout shift Lighthouse counts)
+    EARLY = ('<script>document.documentElement.classList.add("js");'
+             'try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>')
+    if script and EARLY not in s:
+        s = s.replace("</head>", f"{EARLY}\n</head>", 1)
     # the two fonts of the first paint are asked for with the page, as the front door does (no swap after it)
     fonts = tokens.replace("brand/tokens.css", "fonts/")
     for f in ("geist.woff2", "bricolage-grotesque.woff2"):

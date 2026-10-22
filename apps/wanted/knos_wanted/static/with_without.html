@@ -11,8 +11,10 @@
 <link rel="stylesheet" href="/static/brand/tokens.css">
 <link rel="stylesheet" href="/static/style.css">
 <style>
-.ww-sum { font-size: var(--s2); margin: var(--sp-3) 0; }
-.ww-list { list-style: none; padding: 0; margin: var(--sp-5) 0; display: grid; gap: var(--sp-4); }
+.ww-sum { font-size: var(--s2); margin: var(--sp-3) 0; min-height: 3.2em; }
+.ww-list { list-style: none; padding: 0; margin: var(--sp-5) 0; display: grid; gap: var(--sp-4); min-height: 150vh; }   /* the rows arrive after the page: the room is kept, nothing below moves */
+.ww-list:not(:empty) { min-height: 0; }
+.ww-side li a, .ww-row a, details > summary { display: inline-block; min-height: 24px; padding: 2px 0; }
 .ww-row { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); }
 .ww-row h2 { font-size: var(--s2); margin: 4px 0 var(--sp-3); }
 .ww-field { display: inline-block; padding: 2px 10px; border-radius: 99px; background: var(--soft); color: var(--muted); font-size: var(--s-1); }
@@ -25,6 +27,7 @@
 .ww-chg { margin: var(--sp-3) 0 0; font-size: var(--s0); }
 @media (max-width: 640px) { .ww-sides { grid-template-columns: 1fr; } }
 </style>
+<script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body>
 <!-- k-bar -->
