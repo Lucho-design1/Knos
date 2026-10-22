@@ -116,7 +116,7 @@ _INLINE: dict = {}
 
 
 def inline_css(page: str) -> str:
-    """The home page's two stylesheets written into it: each was a render-blocking request to this server (100 to 250 ms
+    """A page's two stylesheets written into it: each was a render-blocking request to this server (100 to 250 ms
     of server time on the free instance before the first paint). Their relative addresses are made absolute."""
     if "css" not in _INLINE:
         tokens = (STATIC / "brand" / "tokens.css").read_text(encoding="utf-8")
@@ -286,16 +286,16 @@ def make_handler(state: State):
                 got = agent.poll((qs.get("id") or [""])[0], int((qs.get("since") or ["0"])[0] or 0))
                 return self._send(200 if got else 404, got or {"error": "unknown crossing"})
             if u.path in ("/verify", "/verify.html"):
-                return self._send(200, (STATIC / "verify.html").read_bytes(), "text/html; charset=utf-8")
+                return self._send(200, inline_css((STATIC / "verify.html").read_text(encoding="utf-8")).encode("utf-8"), "text/html; charset=utf-8")
             if u.path in ("/fields", "/money"):              # drawn from data in the page itself: nothing moves after the first paint
                 from .fields_data import FIELDS
                 from . import vectors
                 data = json.dumps(FIELDS if u.path == "/fields" else money_doc(), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
                 page = (STATIC / PAGES[u.path]).read_text(encoding="utf-8").replace(DATA_SLOT, f'<script type="application/json" id="k-data">{data}</script>', 1)
-                return self._send(200, vectors.filled(page).encode("utf-8"), "text/html; charset=utf-8")
+                return self._send(200, inline_css(vectors.filled(page)).encode("utf-8"), "text/html; charset=utf-8")
             if u.path in PAGES:                              # the trace, "With and without Qloo", Qloo safe use, the invite
                 from . import vectors
-                return self._send(200, vectors.filled((STATIC / PAGES[u.path]).read_text(encoding="utf-8")).encode("utf-8"),
+                return self._send(200, inline_css(vectors.filled((STATIC / PAGES[u.path]).read_text(encoding="utf-8"))).encode("utf-8"),
                                   "text/html; charset=utf-8")
             if u.path == "/api/trace":                       # a report's Qloo calls, redacted (knos_wanted.trace)
                 from . import trace as _trace
