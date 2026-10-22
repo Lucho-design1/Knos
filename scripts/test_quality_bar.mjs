@@ -4,6 +4,8 @@
 //                                                    1280, light and dark: 0 violations
 //   node scripts/test_quality_bar.mjs lighthouse <dir>   the cold Lighthouse runs .lighthouseci/ holds: every public page
 //                                                    measured 3 times, accessibility 100 and performance at least 95 in each
+//   node scripts/test_quality_bar.mjs vitals <dir>       test_vitals, from the same runs: LCP <= 1.5 s, CLS <= 0.05 and
+//                                                    TBT <= 100 ms in each of the 3 cold runs of every public page
 import { readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 
@@ -48,8 +50,20 @@ if (process.argv[2] === "axe") {
     }
     ok(mine.length >= 3 && s.every(([a, p]) => a === 100 && p >= 95), `lighthouse ${url}: ${mine.length} cold runs, accessibility/performance`, s.map(([a, p]) => `${a}/${p}`));
   }
+} else if (process.argv[2] === "vitals") {
+  const dir = process.argv[3] || ".lighthouseci";
+  const runs = readdirSync(dir).filter((f) => /^lhr-.*\.json$/.test(f)).map((f) => JSON.parse(readFileSync(`${dir}/${f}`, "utf8")));
+  for (const url of PAGES) {
+    const mine = runs.filter((r) => r.requestedUrl === url);
+    const v = mine.map((r) => ({ lcp: Math.round(r.audits["largest-contentful-paint"].numericValue), cls: +r.audits["cumulative-layout-shift"].numericValue.toFixed(3),
+                                 tbt: Math.round(r.audits["total-blocking-time"].numericValue) }));
+    ok(mine.length >= 3 && v.every((x) => x.lcp <= 1500 && x.cls <= 0.05 && x.tbt <= 100), `vitals ${url}: ${mine.length} cold runs, LCP ms / CLS / TBT ms`,
+       v.map((x) => `${x.lcp}/${x.cls}/${x.tbt}`));
+  }
+  console.log(fails ? `FAIL test_vitals (${fails})` : "PASS test_vitals");
+  process.exit(fails ? 1 : 0);
 } else {
-  console.error("usage: node scripts/test_quality_bar.mjs axe | lighthouse <.lighthouseci>");
+  console.error("usage: node scripts/test_quality_bar.mjs axe | lighthouse <.lighthouseci> | vitals <.lighthouseci>");
   process.exit(2);
 }
 console.log(fails ? `FAIL test_quality_bar (${fails})` : "PASS test_quality_bar");
