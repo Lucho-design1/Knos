@@ -112,6 +112,21 @@ SUMMARIES = {"/api/check": "Demand check on Qloo", "/api/company/need": "Compani
 
 
 DATA_SLOT = '<script type="application/json" id="k-data">null</script>'
+_INLINE: dict = {}
+
+
+def inline_css(page: str) -> str:
+    """The home page's two stylesheets written into it: each was a render-blocking request to this server (100 to 250 ms
+    of server time on the free instance before the first paint). Their relative addresses are made absolute."""
+    if "css" not in _INLINE:
+        tokens = (STATIC / "brand" / "tokens.css").read_text(encoding="utf-8")
+        tokens = tokens.replace('url("../fonts/', 'url("/static/fonts/').replace('url("mark.svg")', 'url("/static/brand/mark.svg")') \
+            .replace('url("wordmark.svg")', 'url("/static/brand/wordmark.svg")')
+        _INLINE["css"] = {'<link rel="stylesheet" href="/static/brand/tokens.css">': f"<style>{tokens}</style>",
+                          '<link rel="stylesheet" href="/static/style.css">': f"<style>{(STATIC / 'style.css').read_text(encoding='utf-8')}</style>"}
+    for link, style in _INLINE["css"].items():
+        page = page.replace(link, style, 1)
+    return page
 
 
 def money_doc() -> dict:
@@ -392,7 +407,7 @@ def make_handler(state: State):
                     data = json.dumps(pr, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
                     page = page.replace('<script type="application/json" id="k-proof">null</script>',
                                         f'<script type="application/json" id="k-proof">{data}</script>', 1)
-                return self._send(200, vectors.filled(page).encode("utf-8"), "text/html; charset=utf-8")
+                return self._send(200, inline_css(vectors.filled(page)).encode("utf-8"), "text/html; charset=utf-8")
             if u.path in ("/sw.js", "/manifest.webmanifest"):        # the PWA: its worker's scope is the whole app
                 ctype = "text/javascript; charset=utf-8" if u.path == "/sw.js" else "application/manifest+json"
                 return self._send(200, (STATIC / u.path[1:]).read_bytes(), ctype, {"Cache-Control": "no-cache"})
