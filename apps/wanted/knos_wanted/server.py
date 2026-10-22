@@ -57,7 +57,7 @@ def client_key(xff: str, peer: str) -> str:
 MAX_BODY = 16_384
 SESSION_S = 30 * 60
 LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish": (10, 600), "demo": (4, 600),
-          "faucet": (2, 3600), "tx": (20, 600), "check": (12, 600), "lock": (6, 600), "auth": (30, 600),
+          "faucet": (2, 3600), "tx": (20, 600), "check": (30, 600), "lock": (6, 600), "auth": (30, 600),
           "milestone": (30, 600), "milestone_one": (10, 3600), "referee": (120, 600), "product": (60, 600),
           "live": (120, 600)}   # (calls, seconds) per client; "live": presence and draft autosave, apart from "product"
 GLOBAL_DEMO = (60, 3600)
@@ -274,11 +274,14 @@ def make_handler(state: State):
                 return self._send(200, (STATIC / "verify.html").read_bytes(), "text/html; charset=utf-8")
             if u.path in ("/fields", "/money"):              # drawn from data in the page itself: nothing moves after the first paint
                 from .fields_data import FIELDS
+                from . import vectors
                 data = json.dumps(FIELDS if u.path == "/fields" else money_doc(), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
                 page = (STATIC / PAGES[u.path]).read_text(encoding="utf-8").replace(DATA_SLOT, f'<script type="application/json" id="k-data">{data}</script>', 1)
-                return self._send(200, page.encode("utf-8"), "text/html; charset=utf-8")
+                return self._send(200, vectors.filled(page).encode("utf-8"), "text/html; charset=utf-8")
             if u.path in PAGES:                              # the trace, "With and without Qloo", Qloo safe use, the invite
-                return self._send(200, (STATIC / PAGES[u.path]).read_bytes(), "text/html; charset=utf-8")
+                from . import vectors
+                return self._send(200, vectors.filled((STATIC / PAGES[u.path]).read_text(encoding="utf-8")).encode("utf-8"),
+                                  "text/html; charset=utf-8")
             if u.path == "/api/trace":                       # a report's Qloo calls, redacted (knos_wanted.trace)
                 from . import trace as _trace
                 t = _trace.load(state, (qs.get("hash") or [""])[0])
@@ -389,7 +392,7 @@ def make_handler(state: State):
                     data = json.dumps(pr, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
                     page = page.replace('<script type="application/json" id="k-proof">null</script>',
                                         f'<script type="application/json" id="k-proof">{data}</script>', 1)
-                return self._send(200, page.encode("utf-8"), "text/html; charset=utf-8")
+                return self._send(200, vectors.filled(page).encode("utf-8"), "text/html; charset=utf-8")
             if u.path in ("/sw.js", "/manifest.webmanifest"):        # the PWA: its worker's scope is the whole app
                 ctype = "text/javascript; charset=utf-8" if u.path == "/sw.js" else "application/manifest+json"
                 return self._send(200, (STATIC / u.path[1:]).read_bytes(), ctype, {"Cache-Control": "no-cache"})
@@ -604,7 +607,7 @@ def make_handler(state: State):
                 opts = {k: body[k] for k in qloo_families.FIELDS if k in body and k != "exclude"}   # the families' fields, by name
                 if ex:
                     opts["exclude"] = ",".join(ex)
-                privacy.check({k: v for k, v in opts.items() if isinstance(v, str)})
+                privacy.check({k: v for k, v in opts.items() if isinstance(v, str) and k != "exclude"})   # exclude: Qloo ids, checked above
                 without = body.get("without_qloo") is True        # the same check with the key unset (the comparison)
                 t0 = time.perf_counter()
                 rep = check.demand_check(idea, _text(body.get("place")), _text(body.get("leader"), 80),

@@ -502,7 +502,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
           "filter.external.exists": "tripadvisor", **hotel, **ents_only,
           # the idea's taste tags, any of them (union), so a place matches on one: broadened away when they empty it
           **({"filter.tags": ",".join(t["id"] for t in ev["tags"][:3]), "operator.filter.tags": "union"} if ev["tags"] else {})}
-    q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, "output.heatmap.boundary": "city", **ents_only}
+    q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **ents_only}     # the hackathon API refuses output.heatmap.boundary (400)
     q11 = {"filter.type": "urn:tag", "diversify.by": "subtype", "diversify.take": "2", "take": 8, **signal}
     q6_broad = {k: v for k, v in q6.items() if not k.startswith(run.NARROWING)}            # its broadened retry, ready too
     # every question that needs only the matched products, at once: the first verdict waits on the slowest of them,

@@ -50,17 +50,15 @@ def _norm(idea) -> str:
 
 
 def public(rep: dict) -> bool:
-    """Is this check one anyone can see the site ask for (a hero example, a front-door product, a Fields cell)? Only
-    such a check is shown to the next visitor: what a person typed stays theirs."""
+    """Is this check one the site itself offers (a hero example or a front-door product: each chosen because Qloo answers
+    it in full)? Only such a check is shown to the next visitor: what a person typed stays theirs."""
     if not _public:
         import re
 
         from . import front
-        from .fields_data import FIELDS
         page = (Path(__file__).resolve().parent / "static" / "index.html").read_text(encoding="utf-8")
         _public.update(_norm(x) for x in re.findall(r'data-q="([^"]+)"', page))
         _public.update(_norm(s.get("idea")) for s in front.SEEDS if s.get("idea"))
-        _public.update(_norm(c.get("idea")) for c in FIELDS["cells"] if c.get("idea"))
         _public.discard("")
     return _norm(rep.get("idea")) in _public or _norm(rep.get("ref")) in _public
 
@@ -154,3 +152,34 @@ def proof() -> dict:
     with _lock:
         p = dict(_proof) if _proof else None
     return {"proof": p, "label": "A real check this server ran" if p else "No real check yet"}
+
+
+SPEED = '<li data-v="speed"><b>…</b> to verdict</li>'
+STATUS = '<li data-v="status"><b>Ready cards</b></li>'
+
+
+def fill(html: str, v: dict) -> str:
+    """The measured numbers written into a page's vectors (web/brand/vectors.html) before it is sent, so a reader with no
+    script, or one that has not scrolled yet, sees the number and not "…"; vectors.js keeps them current."""
+    s = (v.get("speed") or {}).get("median_s")
+    if isinstance(s, (int, float)):
+        html = html.replace(SPEED, f'<li data-v="speed"><b>{s:g} s</b> to verdict</li>')
+    n = (v.get("status") or {}).get("ready_cards_attested")
+    if isinstance(n, int) and not isinstance(n, bool):
+        html = html.replace(STATUS, f'<li data-v="status"><b>{n} Ready card{"" if n == 1 else "s"}</b></li>')
+    return html
+
+
+_filled: list = [0.0, None]
+
+
+def filled(html: str) -> str:
+    """fill() with this server's numbers, read at most once a minute."""
+    if SPEED not in html and STATUS not in html:
+        return html
+    if _filled[1] is None or time.monotonic() - _filled[0] > 60:
+        try:
+            _filled[:] = [time.monotonic(), vectors()]
+        except Exception:  # noqa: BLE001 - the page goes out as it shipped; vectors.js asks again
+            return html
+    return fill(html, _filled[1])

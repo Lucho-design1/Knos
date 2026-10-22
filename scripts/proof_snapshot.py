@@ -41,6 +41,15 @@ def main(argv: list[str]) -> int:
     data = json.dumps(p, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     page.write_text(html.replace(SLOT, f'<script type="application/json" id="k-proof">{data}</script>', 1), encoding="utf-8", newline="\n")
     print(f"proof snapshot: {p.get('idea')!r}, checked {p.get('checked_at')}")
+    try:                                             # and the measured numbers of the page's vectors (/api/vectors)
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "apps" / "wanted"))
+        from knos_wanted import vectors
+        with urllib.request.urlopen(urllib.request.Request(app + "/api/vectors", headers={"User-Agent": "knos proof_snapshot"}), timeout=60) as r:
+            v = json.loads(r.read())
+        page.write_text(vectors.fill(page.read_text(encoding="utf-8"), v), encoding="utf-8", newline="\n")
+        print(f"vectors snapshot: {(v.get('speed') or {}).get('median_s')} s to verdict")
+    except (OSError, ValueError, ImportError) as why:
+        print(f"vectors snapshot: none ({type(why).__name__}); vectors.js asks when shown")
     return 0
 
 

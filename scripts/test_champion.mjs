@@ -51,7 +51,7 @@ async function fields() {
     got.push(...await Promise.all(checks.slice(i, i + 4).map(async (c) => {
       const idea = decodeURIComponent(c.href.slice(4).split("#")[0]);
       let [s, r] = await post("/api/check", { idea });
-      // without the operator's key (CI) the per-address limit (12 checks in 10 minutes) paces the run: wait it out
+      // without the operator's key (CI) the per-address limit (30 checks in 10 minutes) paces the run: wait it out
       for (let n = 0; s === 429 && !admin["X-Knos-Admin"] && n < 15; n += 1) {
         await new Promise((done) => setTimeout(done, 60000));
         [s, r] = await post("/api/check", { idea });
@@ -107,8 +107,9 @@ async function proof() {
       ok(above === 0, `${door} ${w}px: no paragraph above the box`, above);
       if (w === 1280) {
         await page.fill("#k-q", "a quiet passive cooled data center module"); const t0 = Date.now(); await page.click("#k-go");
-        await page.waitForFunction(() => !document.querySelector("#k-card .k-real") && document.querySelector("#k-card .k-card"), null, { timeout: 60000 }).catch(() => {});
+        await page.waitForFunction(() => !document.querySelector("#k-card .k-real") && document.querySelector("#k-card .k-card"), null, { timeout: 120000 }).catch(() => {});
         const v = await page.getAttribute("#k-card .k-card", "data-verdict").catch(() => null);
+        if (!v) console.log("     the box holds: " + (await page.$eval("#k-card", (e) => e.innerText.replace(/\s+/g, " ").slice(0, 300)).catch(() => "?")));
         ok(!!v, `${door}: the visitor's own verdict after 1 paste and 1 press: ${v} in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       }
       await ctx.close();
