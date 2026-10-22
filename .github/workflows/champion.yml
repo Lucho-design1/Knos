@@ -98,6 +98,9 @@ jobs:
       - name: Every doc
         run: python scripts/split_paragraphs.py --check --strict
   test_vitals:
+    # measured alone: the other jobs' checks load the app and would be counted in its pages' times
+    needs: [test_value_vectors, test_proof_first, test_money_page, test_companies_mode, test_legibility, test_fields_matrix]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:

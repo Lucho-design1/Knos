@@ -87,7 +87,8 @@ async function ping() {
     else document.getElementById("state").textContent = "The server did not answer in 3 minutes. Try the direct link below.";
   }
 }
-ping();
+// after the page is drawn: asked before it, the app's address (a new connection) stood in the first paint's way
+if (document.readyState === "complete") ping(); else addEventListener("load", () => setTimeout(ping, 0), { once: true });
 </script>
 </body>
 </html>
