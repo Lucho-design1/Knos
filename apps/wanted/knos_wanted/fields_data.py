@@ -92,6 +92,7 @@ FIELDS = {
    "t": "quantum",
    "title": "Quantum chemistry",
    "idea": "a quantum chemistry simulation service for early drug startups",
+   "feature": "/companies",
    "status": "live"
   },
   {
@@ -106,6 +107,7 @@ FIELDS = {
    "t": "biotech",
    "title": "Patient fund",
    "idea": "a crowdfunded rare disease research fund for patients",
+   "feature": "/companies",
    "status": "live"
   },
   {
@@ -360,6 +362,7 @@ FIELDS = {
    "t": "biotech",
    "title": "Cognitive healthspan",
    "idea": "a supplement that extends cognitive healthspan",
+   "feature": "/companies",
    "status": "next",
    "unlock": "Biotech extends cognitive healthspan."
   },

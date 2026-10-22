@@ -299,6 +299,13 @@ def _results(body) -> list:
     return r if isinstance(r, list) else []
 
 
+# Words that name a product's form, not what it is: a match that shares only these with the idea is not that product
+# ("a vegan ramen subscription box" is not an outdoor-gear subscription box).
+FORM_WORDS = {_norm(w) for w in ("box", "boxes", "kit", "kits", "subscription", "subscriptions", "app", "apps", "brand", "brands",
+                                  "service", "services", "set", "sets", "pack", "packs", "club", "clubs", "shop", "shops", "store",
+                                  "stores", "company", "product", "products", "line", "delivery", "platform", "online", "series")}
+
+
 def _ent(r: dict, src: int, words: list[str]) -> dict:
     p = r.get("properties") or {}
     geo = p.get("geocode") or {}
@@ -311,7 +318,8 @@ def _ent(r: dict, src: int, words: list[str]) -> dict:
     return {"name": r.get("name"), "id": r.get("entity_id"), "type": (r.get("types") or [None])[0], "popularity": r.get("popularity"),
             "about": (p.get("short_description") or p.get("description") or "")[:240], "located": str(where)[:120],
             "address": str(p.get("address") or "")[:160], "matched_words": hits, "name_words": name_hits,
-            "relevant": len(name_hits) >= 2 or (len(name_hits) >= 1 and len(hits) >= 2) or len(hits) >= 3, "src": src}
+            "relevant": bool(set(hits) - FORM_WORDS) and (len(name_hits) >= 2 or (len(name_hits) >= 1 and len(hits) >= 2) or len(hits) >= 3),
+            "src": src}
 
 
 def _dedupe(ms: list[dict]) -> list[dict]:

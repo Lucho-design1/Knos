@@ -107,6 +107,8 @@
   const signedIn = () => {
     $("co-who").innerHTML = `Signed in: <b>${esc(session.label || session.kind || "your company")}</b>`;
     $("co-ask").hidden = false; $("co-opts").hidden = false; $("co-need").focus();
+    const who = $("whoBtn");                                  // the bar says the same as the page
+    if (who) { who.textContent = String(session.label || "Signed in").slice(0, 24); who.title = "Signed in"; }
   };
   if (session && session.token) signedIn();
   // a guest session: one press, no form (an unverified label; SSO is the company's own sign-in)
