@@ -269,7 +269,8 @@ def warm_lines(st: dict | None, rl: dict | None) -> list[str]:
     if st and st.get("n"):
         out += ["", f"One process that stays up (`python -m knos.decide --stream`, a token a line), n {st['n']}, each line's own time from the line in hand to its "
                 f"provisional receipt: p50 {ms(st['p50'])}, p95 {ms(st['p95'])}, slowest {ms(st['max'])} (the first line also runs each rule for the first "
-                f"time). The process loaded the rules once, in {st['loaded']:.0f} ms, before the first line. Every line said: {'; '.join(st['decisions'])} "
+                f"time).", "",
+                f"The process loaded the rules once, in {st['loaded']:.0f} ms, before the first line. Every line said: {'; '.join(st['decisions'])} "
                 "(the simulator's clock again). The target for this path is "
                 f"under {TARGETS['warm']:.0f} ms at p95, and it is " + ("met here." if st["p95"] < TARGETS["warm"] else "NOT met here.")]
     if rl is not None:
@@ -304,16 +305,18 @@ def split_lines(trips: dict, c: dict) -> list[str]:
     count = lambda calls: ", ".join(f"{calls.count(k)} {k}" for k in dict.fromkeys(calls))  # noqa: E731
     return ["", f"Requests to an RPC endpoint for one fund token, counted through an endpoint that only counts (`round_trips()`): before the split, the "
             f"relay's whole precheck made {trips['before']['n']} calls of the ledger ({count(trips['before']['calls'])}), each at least one request, one after another, and fetched the issuer's key list "
-            f"besides; the chain check makes {trips['after']['n']} ({count(trips['after']['calls'])}: one getMultipleAccounts), with a timeout of 2 s, and the "
+            f"besides.", "",
+            f"The chain check makes {trips['after']['n']} ({count(trips['after']['calls'])}: one getMultipleAccounts), with a timeout of 2 s, and the "
             "offline half makes none.", "",
             f"The whole offline command in a new process each time (`python -m knos.decide --token-file ... --no-chain`: interpreter start, imports, decision, "
             f"receipt written), n {c['n']}: p50 {ms(c['p50'])}, p95 {ms(c['p95'])}, slowest {ms(c['max'])}; of that, inside the command p50 {ms(c['inside']['p50'])}, "
-            f"p95 {ms(c['inside']['p95'])}. Every run said: {'; '.join(c['decisions'])} (the simulator's clock is not this machine's, so its token is past its "
-            "time for the command; the signature and the key lookup are the same work). "
-            + (f"The command says the two parts of that apart: loading the rules (the relay's module and the Solana types, paid once a process) p50 "
-               f"{ms(c['loaded']['p50'])}, p95 {ms(c['loaded']['p95'])}; the decision itself p50 {c['offline']['p50']:.1f} ms, p95 {c['offline']['p95']:.1f} ms. "
-               if c.get("loaded") else "")
-            + f"The {TARGETS['warm']:.0f} ms target is for the decision once the rules are loaded and the evidence is in hand; a new process for every token "
+            f"p95 {ms(c['inside']['p95'])}.", "",
+            f"Every run said: {'; '.join(c['decisions'])} (the simulator's clock is not this machine's, so its token is past its "
+            "time for the command; the signature and the key lookup are the same work).", "",
+            *([f"The command says the two parts of that apart: loading the rules (the relay's module and the Solana types, paid once a process) p50 "
+               f"{ms(c['loaded']['p50'])}, p95 {ms(c['loaded']['p95'])}; the decision itself p50 {c['offline']['p50']:.1f} ms, p95 {c['offline']['p95']:.1f} ms.", ""]
+              if c.get("loaded") else []),
+            f"The {TARGETS['warm']:.0f} ms target is for the decision once the rules are loaded and the evidence is in hand; a new process for every token "
             + ("does not meet it here." if c["inside"]["p95"] > TARGETS["warm"] else "meets it here inside the command, and not with the interpreter's own start counted."
                if c["p95"] > TARGETS["warm"] else "meets it here."),
             *imports_lines(c.get("imports"))]
@@ -327,7 +330,8 @@ def imports_lines(i: dict | None) -> list[str]:
     t, k = i["token"], i["checks"]
     return ["", "What `python -m knos.decide` imports, by `python -X importtime` (the median of 5 new processes, each module's own time summed): deciding on a token offline, "
             f"{t['modules']} modules in {t['ms']:.0f} ms, typer {yes(t['typer'])}, the relay's rules {yes(t['relay'])} (they are the rules it decides by); "
-            f"the free check, {k['modules']} modules in {k['ms']:.0f} ms, typer {yes(k['typer'])}, the relay's rules {yes(k['relay'])}. Before Knos 0.3.19 the same "
+            f"the free check, {k['modules']} modules in {k['ms']:.0f} ms, typer {yes(k['typer'])}, the relay's rules {yes(k['relay'])}.", "",
+            "Before Knos 0.3.19 the same "
             "command loaded typer for every answer: on this machine, idle, 151 modules in 94 ms for the free check and 268 in 165 ms for a token."]
 
 

@@ -53,6 +53,7 @@ def test_vectors_measure_and_never_guess(monkeypatch):
     monkeypatch.setattr("knos_wanted.valley._save", lambda kind, key, obj, chain=True: saved.__setitem__(key, obj))
     monkeypatch.setattr(vectors, "_runs", [])
     monkeypatch.setattr(vectors, "_proof", None)
+    monkeypatch.setattr(vectors, "_loaded", [False])
     v = vectors.vectors()
     assert v["speed"]["median_s"] is None and v["cost"]["usd_per_ready_brief"] == round(0.3481 / 20, 4)
     assert v["capability"] == {"idt_ratio": 2.08, "ready_pass": 0.7, "vague_pass": 0.05, "tasks": 20}

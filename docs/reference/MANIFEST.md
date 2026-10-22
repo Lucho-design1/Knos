@@ -52,6 +52,7 @@ None: web/upgrades.json lists no pending proposal.
 
 One row for each capability: where it is in the source, the test that covers it, the build it is deployed in with
 the hash last read at that public id, a transaction that exercised it, and a reproduction by someone outside.
+
 From `docs/capabilities.json` and `docs/provenance.json`. A stage is the highest that has evidence; deployed and
 exercised count only at the public program ids. A cell with nothing behind it says none. The note of each
 capability is in [CAPABILITIES.md](CAPABILITIES.md).

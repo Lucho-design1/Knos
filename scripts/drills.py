@@ -1318,9 +1318,11 @@ def dependency_section(rows: list[Outage]) -> str:
     builds = [f"`{name}` `{mc.elf_hash((fixtures / f'{name}_v2_test.so').read_bytes())}`" for name in PROGRAMS if (fixtures / f"{name}_v2_test.so").is_file()]
     lines = [HEADING, "",
              "These rows are of another kind than the ones above. Each breaks one thing Knos depends on and follows a payment through it. "
-             "They need a token signed for every step, and nothing but GitHub can sign one the deployed programs take, so they run the "
+             "They need a token signed for every step, and nothing but GitHub can sign one the deployed programs take.", "",
+             "So they run the "
              "programs' test builds (" + ("; ".join(builds) or "tests/fixtures") + ": the same source built with a key this repository holds) "
-             "in LiteSVM, with the relay's own code and the fakes of GitHub and of the RPC endpoint that the tests use. Seconds are the "
+             "in LiteSVM, with the relay's own code and the fakes of GitHub and of the RPC endpoint that the tests use.", "",
+             "Seconds are the "
              "simulator's: the drill moves the clock, and the relay makes a pass every " + f"{EVERY} s as the public worker does. No cluster and "
              "no GitHub is touched, and none of these failures has been rehearsed on devnet.", "",
              f"{sum(r.result == 'pass' for r in rows)} of {len(rows)} rows passed, {sum(r.result.startswith('FAIL') for r in rows)} failed, "

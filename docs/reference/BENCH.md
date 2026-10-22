@@ -36,16 +36,22 @@ its source differ.
 <!-- /bench:market-tests -->
 
 Method: `scripts/agent_pr_ci.py` (the claim patterns and the CI verdict) and `scripts/agent_pr_index.py` (the scan and
-the index). A pull request counts only if its description claims tests or CI pass and its CI had finished at the head
-commit. Pull requests on repositories owned by the author, or by the person who assigned the agent, are left out: a
-person's own repository is not a market observation. The agent's own session check runs are not counted as CI. A
-failed check is a check run that concluded `failure`, `timed_out` or `startup_failure`, or a commit status of
-`failure` or `error`. Whether a failed check is a test or a build is decided from its name (`TESTISH_RE` and
-`ANCILLARY_RE` in `scripts/agent_pr_ci.py`), on the failed check names each record lists (at most ten). `index.json`
-publishes both counts under names that say which is which, `any_check_failed` and `test_or_build_check_failed`, with
+the index). A pull request counts only if its description claims tests or CI pass and its CI had finished at the head commit.
+
+Pull requests on repositories owned by the author, or by the person who assigned the agent, are left out: a
+person's own repository is not a market observation. The agent's own session check runs are not counted as CI.
+
+A failed check is a check run that concluded `failure`, `timed_out` or `startup_failure`, or a commit status of
+`failure` or `error`.
+
+Whether a failed check is a test or a build is decided from its name (`TESTISH_RE` and
+`ANCILLARY_RE` in `scripts/agent_pr_ci.py`), on the failed check names each record lists (at most ten).
+
+`index.json` publishes both counts under names that say which is which, `any_check_failed` and `test_or_build_check_failed`, with
 their definitions in the file. The published list has a Merkle root; `python scripts/agent_pr_index.py check --out
-index.json` recomputes it, and `python scripts/bench_docs.py --from index.json` recounts the tables above from the
-list. The first, smaller sample (303 pull requests, 55 with a failed check, 18.2%, collected 1 Oct 2026) is kept in
+index.json` recomputes it, and `python scripts/bench_docs.py --from index.json` recounts the tables above from the list.
+
+The first, smaller sample (303 pull requests, 55 with a failed check, 18.2%, collected 1 Oct 2026) is kept in
 `docs/agent_pr_ci.json`.
 
 What this does not show: that the agents lied. A description can be written before CI finishes. It shows that the
@@ -84,7 +90,9 @@ What this cannot show:
 
 `python scripts/backtest_paid.py` (with a GitHub token) writes `docs/backtest_paid.json`: of the merged pull requests that were paid a bounty on Algora or Opire (labels and commands: [Algora](https://remotion.dev/bounties), [Opire](https://github.com/abdulmajeedsualihu/Autokey/issues/1)), how many had a failed check at the commit that was merged.
 
-Read 2026-10-04: 48 closed bounty issues created 2026-01-08 – 2026-10-04, 41 merged pull requests linked from them, 17 of them paid by the platform's own account of it (24 had no such comment and are left out). **At the head commit, 4 of 15 (26.7%) had a failed check** (95% Wilson interval 10.9%–51.9%). At the commit the merge made: 5 of 16 (31.2%, 14.2%–55.6%). At either: 7 of 15 (46.7%, 24.8%–69.9%).
+Read 2026-10-04: 48 closed bounty issues created 2026-01-08 – 2026-10-04, 41 merged pull requests linked from them, 17 of them paid by the platform's own account of it (24 had no such comment and are left out).
+
+**At the head commit, 4 of 15 (26.7%) had a failed check** (95% Wilson interval 10.9%–51.9%). At the commit the merge made: 5 of 16 (31.2%, 14.2%–55.6%). At either: 7 of 15 (46.7%, 24.8%–69.9%).
 
 | platform | issues | merged pull requests | paid | classified at the head | failed at the head |
 |---|---|---|---|---|---|
@@ -103,7 +111,9 @@ What this cannot show:
 ## The verifier on chain (knos-oidc)
 
 Both deployments verify a token the same way: the token is written into an account, then its RSA signature is
-checked in steps, each step in a transaction of its own (two do not fit in one). An RSA-2048 key (all four of
+checked in steps, each step in a transaction of its own (two do not fit in one).
+
+An RSA-2048 key (all four of
 GitHub's) takes two steps of 8 squarings. An RSA-4096 key (one of GitLab's three) takes six, of 2, 3, 3, 3, 4 and 1
 squarings: the last step also hashes the token, decodes it and reads its claims, work that grows with the token, so
 it gets one squaring (`step_plan` in [`src/knos/settle/oidc.py`](../../src/knos/settle/oidc.py)).
@@ -124,14 +134,18 @@ build differs from the build that is deployed in the keys and pins it trusts, no
 | 8,191 bytes, the longest under RSA-4096 | RSA-4096 | 6 | 951,036 to 1,235,926 |
 | 8,189 bytes, the costliest claims we could build | RSA-4096 | 6 | 949,843 to 1,285,266 |
 
-The limit is 1,400,000 compute units per transaction; the costliest step here leaves 114,734. Each figure is for a token account whose address the program finds at its first try, and is the lowest of 9 runs of the tests. Every further try costs 1,500 more in each step: about half of all tokens need none, a quarter need one. Measured on 3 Oct 2026 with the committed test builds in `tests/fixtures` (`knos_oidc_v2_test.so`, `knos_pay_v2_test.so`), made by cargo build-sbf 3.0.0 (platform-tools v1.51).
+The limit is 1,400,000 compute units per transaction; the costliest step here leaves 114,734. Each figure is for a token account whose address the program finds at its first try, and is the lowest of 9 runs of the tests.
+
+Every further try costs 1,500 more in each step: about half of all tokens need none, a quarter need one. Measured on 3 Oct 2026 with the committed test builds in `tests/fixtures` (`knos_oidc_v2_test.so`, `knos_pay_v2_test.so`), made by cargo build-sbf 3.0.0 (platform-tools v1.51).
 
 The key instructions are small next to a verification: Refresh 21,022, Approve 773, Revoke 767.
 <!-- /bench:verify2 -->
 
 The compiler matters. The committed test builds were made with cargo build-sbf 3.0.0. CI
 (`.github/workflows/program.yml`) builds the programs again with agave 2.3.13 before it runs the same tests, and
-prints its own figures in every run. The binaries that are deployed are a third build, the reproducible one
+prints its own figures in every run.
+
+The binaries that are deployed are a third build, the reproducible one
 (`solana-verify`, image 2.3.11). Another compiler spends another number of compute units, so the figures above are
 not the deployed build's. What holds for every build is what the tests assert: each step of each token here
 verifies, which it cannot do above the limit.
@@ -151,14 +165,20 @@ verifies, which it cannot do above the limit.
 | 8,189 bytes, the costliest claims we could build | RSA-4096 | 6 | 960,222 to 1,350,931 |
 | another program reads a verified token (`examples/oidc_gate`) | | part of its own | 21,632 |
 
-The limit is 1,400,000 compute units per transaction; the costliest step here leaves 49,069. Each figure is for a token account whose address the program finds at its first try, and is the lowest of 8 runs of the tests. Every further try costs 1,500 more in each step: about half of all tokens need none, a quarter need one. Measured on 3 Oct 2026 with the committed test build in `tests/fixtures` (`knos_oidc_test.so`).
+The limit is 1,400,000 compute units per transaction; the costliest step here leaves 49,069. Each figure is for a token account whose address the program finds at its first try, and is the lowest of 8 runs of the tests.
+
+Every further try costs 1,500 more in each step: about half of all tokens need none, a quarter need one. Measured on 3 Oct 2026 with the committed test build in `tests/fixtures` (`knos_oidc_test.so`).
 <!-- /bench:verify1 -->
 
-**A correction to Knos 0.3.11 (2 Oct 2026).** That release's client sent the six RSA-4096 steps as 2, 3, 3, 3, 3 and 2 squarings. With
-two squarings the last step ran out of compute units once a GitLab token passed about 5,000 bytes: in the test it
-fits at 4,499 bytes, where the last step takes 1,374,044, and fails at 5,499. 0.3.11's table had one RSA-4096 row,
+**A correction to Knos 0.3.11 (2 Oct 2026).** That release's client sent the six RSA-4096 steps as 2, 3, 3, 3, 3 and 2 squarings.
+
+With two squarings the last step ran out of compute units once a GitLab token passed about 5,000 bytes: in the test it fits at 4,499 bytes, where the last step takes 1,374,044, and fails at 5,499.
+
+0.3.11's table had one RSA-4096 row,
 for a short token, while its limits said tokens up to 8,192 bytes are accepted; under RSA-4096 the client of that
-release could not verify the long ones. The plan is the client's choice, not the program's, so the first deployment
+release could not verify the long ones.
+
+The plan is the client's choice, not the program's, so the first deployment
 is unchanged and every size verifies with the plan above
 (`test_the_4096_bit_plan_fits_a_token_of_any_size_and_the_old_plan_ran_out`).
 
@@ -182,7 +202,9 @@ deployment's cannot be changed.
 
 What each of these can show. The vectors show that the arithmetic and the padding check agree with a published set
 of hard cases. The differential test shows agreement with another implementation on random inputs. The forgery list
-shows that the cases someone thought of are refused. None of them shows the absence of a fault nobody thought of.
+shows that the cases someone thought of are refused.
+
+None of them shows the absence of a fault nobody thought of.
 This is testing, not an outside review. There has been none; `knos mainnet-check` fails on that line on purpose.
 
 ## The escrow (knos-pay)
@@ -199,15 +221,20 @@ This is testing, not an outside review. There has been none; `knos mainnet-check
 | Pay, a Token-2022 mint with the stablecoins' extensions, first payment from this funder | 75,098 | 79,855 | 94,858 |
 | Pay with no wallet known (the bounty is held) | 34,010 | 34,010 | 41,510 |
 
-Compute units of knos-pay, the token program's share included, over 320 payments of each kind: the test file run 20 times, each run on a fresh chain with 16 payments of each kind (3 Oct 2026). A payment to a wallet took 62,138 to 94,858. The spread is not noise: Pay derives the addresses it pays through (the payee's binding and record, the funder's marker, the vault and its authority), and each costs 1,500 for every try after the first.
+Compute units of knos-pay, the token program's share included, over 320 payments of each kind: the test file run 20 times, each run on a fresh chain with 16 payments of each kind (3 Oct 2026).
+
+A payment to a wallet took 62,138 to 94,858. The spread is not noise: Pay derives the addresses it pays through (the payee's binding and record, the funder's marker, the vault and its authority), and each costs 1,500 for every try after the first.
 
 The other instructions, highest seen in those 20 runs: FundBalance 93,329; FaucetOpen 50,545; FaucetOpen and FundBalance in one transaction 141,002; FundWallet 61,568; Settle 42,490; Settle with a Token-2022 mint 61,270; Refund 22,288; Bind 49,737; Withdraw 22,792; Withdraw with a Token-2022 mint 27,722; OpenBalance 32,646; OpenBalance with a Token-2022 mint 45,524; SetBalance 2,495; Pause 10,748; InitFaucet 18,136.
 <!-- /bench:pay2 -->
 
 **Random walk** (`KNOS_FUZZ_N=2500 KNOS_FUZZ_SEED=<seed> pytest -q -s tests/test_pay2_chain.py -k random_walk`; 600
-steps in the default suite; four walks of 2,500 in `program.yml` on every change and nightly, each from a seed of its
-own): random funding from balances and from wallets, pay tokens, wrong pay tokens, settles, binds, refunds, withdrawals,
-top-ups and clock jumps, in an SPL Token mint and a Token-2022 mint. After every step, for each mint, the vault holds
+steps in the default suite; four walks of 2,500 in `program.yml` on every change and nightly, each from a seed of its own).
+
+The steps: random funding from balances and from wallets, pay tokens, wrong pay tokens, settles, binds, refunds, withdrawals,
+top-ups and clock jumps, in an SPL Token mint and a Token-2022 mint.
+
+After every step, for each mint, the vault holds
 exactly the amounts of the open and held jobs. At the end every job that is left is refunded with no token, and both
 vaults are empty: funded = paid + fees + refunded. A failure prints its seed and step.
 
@@ -260,7 +287,9 @@ there is no claim. A person who gives no address binds a wallet once, with a thi
 **Two transactions per token.** Measured in LiteSVM on 3 Oct 2026, with the test builds
 (`pytest -q -s tests/test_relay2.py -k transactions_waits`). Where the cluster takes 4,096-byte transactions and
 `knos-pay` 2.1 answers, the relay sends a token in two: the whole token and the first `Step`, then the last `Step`,
-the escrow's instruction and `Close`. Not measured on devnet: no 2.1 instruction had run there when this was written.
+the escrow's instruction and `Close`.
+
+Not measured on devnet: no 2.1 instruction had run there when this was written.
 
 | path | transactions | compute units in all | in the larger transaction |
 |---|---|---|---|
@@ -280,7 +309,9 @@ the escrow's instruction and `Close`. Not measured on devnet: no 2.1 instruction
 The figures move by a few thousand with the addresses involved. Where 4,096-byte transactions are not accepted the
 relay falls back to 1,232-byte ones: a token of up to 1,756 bytes then takes three transactions, and the real
 GitHub tokens we captured (2,086 to 2,276 bytes) take four, two of them sent side by side
-(`tests/test_relay2.py::test_how_long_a_token_each_write_carries`). The first deployment's relay takes 7 for a fund
+(`tests/test_relay2.py::test_how_long_a_token_each_write_carries`).
+
+The first deployment's relay takes 7 for a fund
 or a pay token and 6 for a claim, in the same test file.
 
 **Work orders** (`pytest -q -s tests/test_order_chain.py -k compute_units`, one run, 3 Oct 2026): `FundOrderWallet`
@@ -297,9 +328,12 @@ transaction created a payee's token account (`TIP`, `TIP_FIRST` in `programs-v2/
 (`tests/test_order_terms.py::test_a_used_marker_is_closed_once_no_token_it_stands_for_can_be_accepted`).
 
 **The meter** (`pytest -q -s tests/test_meter_chain.py -k what_a_relayer_pays`, 3 Oct 2026): one billable
-evaluation is the transactions that verify the token and one `Record` of 609 bytes and 81,357 compute units. Its
-marker is 88 bytes. The simulator held 1,503,360 lamports of the relayer's rent for it; at 5,080 lamports a byte,
-the rate [MARKET.md](MARKET.md) cites for a cluster, that is 1,097,280 (computed, not measured). It is locked
+evaluation is the transactions that verify the token and one `Record` of 609 bytes and 81,357 compute units. Its marker is 88 bytes.
+
+The simulator held 1,503,360 lamports of the relayer's rent for it; at 5,080 lamports a byte,
+the rate [MARKET.md](MARKET.md) cites for a cluster, that is 1,097,280 (computed, not measured).
+
+It is locked
 until two hours into the next month and then returned in full by `CloseMark` (1,710 compute units each, 26 to a
 transaction).
 
@@ -334,7 +368,11 @@ refused token only when it takes the signature check on chain to tell. The token
 | of those payments, made by the second deployment's escrow | 54 |
 | seconds from the funding comment to the funded task, median | 36 |
 
-Merge to paid is defined as: seconds from the merge (GitHub's merged_at of the pull request) to the block time of the Solana transaction that paid, one sample per successful pay line of the public relay log, over its newest 500 such lines, both deployments, all time. A line is left out when the chain's history that was read does not show its transaction or GitHub does not give the merge time; `not_timed` counts those. p50 is the median, p95 and p90 are by nearest rank. One function measures it (`measure` in `scripts/network_stats.py`); this table, `docs/facts.json`, the site's Numbers page (`stats.json`) and `latency.json` all state that function's output.
+Merge to paid is defined as:
+
+> seconds from the merge (GitHub's merged_at of the pull request) to the block time of the Solana transaction that paid, one sample per successful pay line of the public relay log, over its newest 500 such lines, both deployments, all time. A line is left out when the chain's history that was read does not show its transaction or GitHub does not give the merge time; `not_timed` counts those. p50 is the median, p95 and p90 are by nearest rank.
+
+One function measures it (`measure` in `scripts/network_stats.py`); this table, `docs/facts.json`, the site's Numbers page (`stats.json`) and `latency.json` all state that function's output.
 
 Read from the site's `stats.json` of 2026-10-10 12:54 UTC (`python scripts/bench_docs.py --stats stats.json`).
 <!-- /bench:devnet -->
@@ -394,20 +432,36 @@ Measured on 2026-10-07 by `python scripts/decide_bench.py --write` on this machi
 | chain check | one request to the simulated chain and the updated answer (`knos.decide.chain_check`, `after_chain`) | 40 | 1.2 ms | 2.0 ms | 2.6 ms | accepted | under 100 ms |
 | offline, warm | the fund token through a `knos.decide.Decider` built before it arrived (what `--stream` runs for each line): the evidence in hand to the provisional receipt | 40 | 1.6 ms | 2.3 ms | 2.7 ms | accepted | under 100 ms |
 
-Requests to an RPC endpoint for one fund token, counted through an endpoint that only counts (`round_trips()`): before the split, the relay's whole precheck made 4 calls of the ledger (1 now, 1 simulate, 2 infos), each at least one request, one after another, and fetched the issuer's key list besides; the chain check makes 1 (1 infos: one getMultipleAccounts), with a timeout of 2 s, and the offline half makes none.
+Requests to an RPC endpoint for one fund token, counted through an endpoint that only counts (`round_trips()`): before the split, the relay's whole precheck made 4 calls of the ledger (1 now, 1 simulate, 2 infos), each at least one request, one after another, and fetched the issuer's key list besides.
 
-The whole offline command in a new process each time (`python -m knos.decide --token-file ... --no-chain`: interpreter start, imports, decision, receipt written), n 10: p50 473 ms, p95 586 ms, slowest 586 ms; of that, inside the command p50 310 ms, p95 336 ms. Every run said: Provisional: rejected (token expired) (the simulator's clock is not this machine's, so its token is past its time for the command; the signature and the key lookup are the same work). The command says the two parts of that apart: loading the rules (the relay's module and the Solana types, paid once a process) p50 282 ms, p95 317 ms; the decision itself p50 2.4 ms, p95 4.3 ms. The 100 ms target is for the decision once the rules are loaded and the evidence is in hand; a new process for every token does not meet it here.
+The chain check makes 1 (1 infos: one getMultipleAccounts), with a timeout of 2 s, and the offline half makes none.
 
-What `python -m knos.decide` imports, by `python -X importtime` (the median of 5 new processes, each module's own time summed): deciding on a token offline, 238 modules in 407 ms, typer not loaded, the relay's rules loaded (they are the rules it decides by); the free check, 94 modules in 93 ms, typer not loaded, the relay's rules not loaded. Before Knos 0.3.19 the same command loaded typer for every answer: on this machine, idle, 151 modules in 94 ms for the free check and 268 in 165 ms for a token.
+The whole offline command in a new process each time (`python -m knos.decide --token-file ... --no-chain`: interpreter start, imports, decision, receipt written), n 10: p50 473 ms, p95 586 ms, slowest 586 ms; of that, inside the command p50 310 ms, p95 336 ms.
 
-One process that stays up (`python -m knos.decide --stream`, a token a line), n 40, each line's own time from the line in hand to its provisional receipt: p50 1.6 ms, p95 2.2 ms, slowest 2.3 ms (the first line also runs each rule for the first time). The process loaded the rules once, in 310 ms, before the first line. Every line said: rejected (token expired) (the simulator's clock again). The target for this path is under 100 ms at p95, and it is met here.
+Every run said: Provisional: rejected (token expired) (the simulator's clock is not this machine's, so its token is past its time for the command; the signature and the key lookup are the same work).
+
+The command says the two parts of that apart: loading the rules (the relay's module and the Solana types, paid once a process) p50 282 ms, p95 317 ms; the decision itself p50 2.4 ms, p95 4.3 ms.
+
+The 100 ms target is for the decision once the rules are loaded and the evidence is in hand; a new process for every token does not meet it here.
+
+What `python -m knos.decide` imports, by `python -X importtime` (the median of 5 new processes, each module's own time summed): deciding on a token offline, 238 modules in 407 ms, typer not loaded, the relay's rules loaded (they are the rules it decides by); the free check, 94 modules in 93 ms, typer not loaded, the relay's rules not loaded.
+
+Before Knos 0.3.19 the same command loaded typer for every answer: on this machine, idle, 151 modules in 94 ms for the free check and 268 in 165 ms for a token.
+
+One process that stays up (`python -m knos.decide --stream`, a token a line), n 40, each line's own time from the line in hand to its provisional receipt: p50 1.6 ms, p95 2.2 ms, slowest 2.3 ms (the first line also runs each rule for the first time).
+
+The process loaded the rules once, in 310 ms, before the first line. Every line said: rejected (token expired) (the simulator's clock again). The target for this path is under 100 ms at p95, and it is met here.
 
 Real tokens (a file of `scripts/replay_tokens.py --capture`, each with the key set of its day, the clock one second after its `iat`), decided warm, n 44: p50 2.1 ms, p95 3.5 ms, slowest 10.4 ms; 44 accepted; 0 lines skipped.
 <!-- /decide:time -->
 
-**On devnet, the command as released in Knos 0.3.19** ([RELAY.md](RELAY.md), "Measuring the 0.3.18 path on devnet", step 4: `KNOS_CLUSTER=devnet python -m knos.decide --token-file token.txt --out provisional.json`, then the same with `--full`), run on 2026-10-07 between 13:19 and 14:07 UTC on the operator's machine (WSL, 2 CPUs, over the shared public RPC `api.devnet.solana.com`), once on each of 24 real GitHub-signed tokens of that day, every one at most an hour old: 11 of the release run's own rounds and 13 that other steps of the same run posted in drexthealpha's repositories. The figures are the command's own (`decided in N ms (offline A ms, chain check B ms in 1 request)`); the interpreter's start is not in them. Fewer than 30 tokens, so the samples are given as they are, not as a distribution.
+**On devnet, the command as released in Knos 0.3.19** ([RELAY.md](RELAY.md), "Measuring the 0.3.18 path on devnet", step 4: `KNOS_CLUSTER=devnet python -m knos.decide --token-file token.txt --out provisional.json`, then the same with `--full`), run on 2026-10-07 between 13:19 and 14:07 UTC on the operator's machine (WSL, 2 CPUs, over the shared public RPC `api.devnet.solana.com`).
 
-What that 356 ms was (24 tokens, 2026-10-07; program ids not recorded by that run: the command reads the pinned public ids unless `KNOS_PROGRAM_IDS` names a staging deployment): a new process for each token, so the offline figure (A) held the loading of the rules (the relay's module and the Solana types under it) as well as the decision. Since Knos 0.3.20 (8 Oct 2026) the command prints the two apart (`rules loaded in L ms, offline A ms`), and `knos decide --stream` is one process that stays up and decides on each line of its input: the block above has both, measured on the machine it names. Neither has been timed on devnet yet. The release run does it with `python scripts/replay_tokens.py --capture drexthealpha/knos-e2e --out tokens.jsonl` and `python scripts/decide_bench.py --tokens tokens.jsonl --write` (real tokens, decided warm on the operator's machine), and step 4 of [RELAY.md](RELAY.md) again for the new process and the chain check.
+It ran once on each of 24 real GitHub-signed tokens of that day, every one at most an hour old: 11 of the release run's own rounds and 13 that other steps of the same run posted in drexthealpha's repositories.
+
+The figures are the command's own (`decided in N ms (offline A ms, chain check B ms in 1 request)`); the interpreter's start is not in them. Fewer than 30 tokens, so the samples are given as they are, not as a distribution.
+
+What that 356 ms was (24 tokens, 2026-10-07; program ids not recorded by that run: the command reads the pinned public ids unless `KNOS_PROGRAM_IDS` names a staging deployment): a new process for each token, so the offline figure (A) held the loading of the rules (the relay's module and the Solana types under it) as well as the decision.
 
 | half | n | fastest | median | slowest |
 | --- | --- | --- | --- | --- |
@@ -415,7 +469,15 @@ What that 356 ms was (24 tokens, 2026-10-07; program ids not recorded by that ru
 | chain check (B): one getMultipleAccounts, left after 2 s | 23 answered, 1 not answered in 2 s | 687 ms | 854 ms | 1,801 ms |
 | `--full` (N): the relay's whole precheck, the 0.3.18 path | 24 | 6.0 s | 9.1 s | 15.6 s |
 
-23 of the 24 tokens had been carried to the chain before they were decided here, so both commands answered from what the chain already showed; one (a meter claim) was decided before its relayer carried it, and its provisional receipt said its batch was the next the chain takes. The three fund tokens whose orders had been paid since were accepted by the chain half ("used already: what it asks for is done") and rejected by `--full` ("a fund token works once"). Three meter tokens, decided before a later fix, were said by the chain half to be "unused": knos_meter keeps no marker for them, and the chain half now reads the pair's Ledger account instead.
+Since Knos 0.3.20 (8 Oct 2026) the command prints the two apart (`rules loaded in L ms, offline A ms`), and `knos decide --stream` is one process that stays up and decides on each line of its input: the block above has both, measured on the machine it names. Neither has been timed on devnet yet.
+
+The release run does it with `python scripts/replay_tokens.py --capture drexthealpha/knos-e2e --out tokens.jsonl` and `python scripts/decide_bench.py --tokens tokens.jsonl --write` (real tokens, decided warm on the operator's machine), and step 4 of [RELAY.md](RELAY.md) again for the new process and the chain check.
+
+23 of the 24 tokens had been carried to the chain before they were decided here, so both commands answered from what the chain already showed; one (a meter claim) was decided before its relayer carried it, and its provisional receipt said its batch was the next the chain takes.
+
+The three fund tokens whose orders had been paid since were accepted by the chain half ("used already: what it asks for is done") and rejected by `--full` ("a fund token works once").
+
+Three meter tokens, decided before a later fix, were said by the chain half to be "unused": knos_meter keeps no marker for them, and the chain half now reads the pair's Ledger account instead.
 
 | token | where it was posted | decided before or after the chain took it | A, ms | B, ms | N, ms | provisional | `--full` |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -465,7 +527,9 @@ Stages: `python scripts/latency_stages.py --separate --rpc https://api.devnet.so
 | payout | the paying transaction's block to test USDC in the payee's token account | not a wait: the paying transaction is the payout | - | - | - | - | - | nobody's |
 | payout | to a bank account | not applicable: no bank route | - | - | - | - | - | nobody's |
 
-The one number a person feels, the merge to the payment, on the public program ids (2026-10-07 reading): p50 25 s, p95 65 s, p99 none: fewer than 100 samples, worst not kept, over the 47 payments that completed and could be timed; it is not the sum of the rows above, which are different samples (a stage is timed only where the relay's log line carries it). The payments that failed or never completed are in the next table, not in these percentiles.
+The one number a person feels, the merge to the payment, on the public program ids (2026-10-07 reading): p50 25 s, p95 65 s, p99 none: fewer than 100 samples, worst not kept, over the 47 payments that completed and could be timed.
+
+It is not the sum of the rows above, which are different samples (a stage is timed only where the relay's log line carries it). The payments that failed or never completed are in the next table, not in these percentiles.
 
 Every payment asked for, on the public program ids, the failed and the unfinished counted (scripts/latency_stages.py --rpc https://api.devnet.solana.com --json on the public relay log of drexthealpha/Knos, 6 October 2026, 14:58 to 15:06 UTC):
 

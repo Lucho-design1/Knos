@@ -52,9 +52,9 @@ Money in the rows without tokens is a 6-decimal SPL Token mint made in the simul
 
 ## When a dependency fails
 
-These rows are of another kind than the ones above. Each breaks one thing Knos depends on and follows a payment through it.
+These rows are of another kind than the ones above. Each breaks one thing Knos depends on and follows a payment through it. They need a token signed for every step, and nothing but GitHub can sign one the deployed programs take.
 
-They need a token signed for every step, and nothing but GitHub can sign one the deployed programs take, so they run the programs' test builds (`knos_oidc` `1c7c7af6ca85f2c5e49aa69516069e5bd47a63328968d644703fb6d196ebc1ee`; `knos_pay` `412dd881e298c1e51d75f8790ab199b9b7b9203d4a86366974797dfd5ba23e0d`: the same source built with a key this repository holds) in LiteSVM, with the relay's own code and the fakes of GitHub and of the RPC endpoint that the tests use.
+So they run the programs' test builds (`knos_oidc` `1c7c7af6ca85f2c5e49aa69516069e5bd47a63328968d644703fb6d196ebc1ee`; `knos_pay` `412dd881e298c1e51d75f8790ab199b9b7b9203d4a86366974797dfd5ba23e0d`: the same source built with a key this repository holds) in LiteSVM, with the relay's own code and the fakes of GitHub and of the RPC endpoint that the tests use.
 
 Seconds are the simulator's: the drill moves the clock, and the relay makes a pass every 3 s as the public worker does. No cluster and no GitHub is touched, and none of these failures has been rehearsed on devnet.
 
@@ -194,7 +194,9 @@ expired key are refused: no funding by comment and no payment.
 days"; refresh from a repository of one's own,
 `test_anyone_refreshes_a_key_from_a_repository_of_his_own_and_nobody_registers_one_that_way`; a token refused while
 its key is expired and accepted again after a refresh,
-`test_a_token_is_refused_while_its_key_is_expired_and_works_again_once_the_key_is_refreshed`. *Not rehearsed:* a
+`test_a_token_is_refused_while_its_key_is_expired_and_works_again_once_the_key_is_refreshed`.
+
+*Not rehearsed:* a
 refresh on devnet by an account other than Knos's; and the state with every key expired, on a cluster.
 
 ### D. Knos's operator is gone, and devnet with it

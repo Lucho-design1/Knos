@@ -298,18 +298,18 @@ def bench_block(out):
                                      "number here, and none is taken from another measurement.", "<!-- backtest_paid:end -->"])
     p = out["paid"]
     h, m, e = p["failed_at_head"], p["failed_at_merge"], p["failed_at_head_or_merge"]
-    line = (f"Read {out['read']}: {out['issues']:,} closed bounty issues created {out['window'][0]} – {out['window'][1]}, "
+    read = (f"Read {out['read']}: {out['issues']:,} closed bounty issues created {out['window'][0]} – {out['window'][1]}, "
             f"{out['merged_prs']:,} merged pull requests linked from them, {p['paid']:,} of them paid by the platform's own "
-            f"account of it ({out['unpaid']:,} had no such comment and are left out). ")
+            f"account of it ({out['unpaid']:,} had no such comment and are left out).")
     if h["of"]:
-        line += (f"**At the head commit, {h['prs']} of {h['of']} ({_pct(h['share'])}) had a failed check** (95% Wilson interval "
+        line = (f"**At the head commit, {h['prs']} of {h['of']} ({_pct(h['share'])}) had a failed check** (95% Wilson interval "
                  f"{_pct(h['ci95'][0])}–{_pct(h['ci95'][1])}). At the commit the merge made: {m['prs']} of {m['of']}"
                  + (f" ({_pct(m['share'])}, {_pct(m['ci95'][0])}–{_pct(m['ci95'][1])})" if m["of"] else "")
                  + f". At either: {e['prs']} of {e['of']}"
                  + (f" ({_pct(e['share'])}, {_pct(e['ci95'][0])}–{_pct(e['ci95'][1])})" if e["of"] else "") + ".")
     else:
-        line += "None of the paid pull requests had finished checks, so no share is given."
-    rows = ["", line, "", "| platform | issues | merged pull requests | paid | classified at the head | failed at the head |",
+        line = "None of the paid pull requests had finished checks, so no share is given."
+    rows = ["", read, "", line, "", "| platform | issues | merged pull requests | paid | classified at the head | failed at the head |",
             "|---|---|---|---|---|---|"]
     for key, v in out["platforms"].items():
         f = v["paid"]["failed_at_head"]

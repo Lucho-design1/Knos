@@ -65,7 +65,7 @@ def test_the_document_holds_what_the_record_says_and_names_the_one_command_of_th
     held = doc.split(ls.SEP_OPEN)[1].split(ls.SEP_CLOSE)[0].strip("\n").split("\n")
     assert held == ls.separate_block(kept)                                      # written by the script, not by hand
     assert ls.RELEASE_COMMAND in held[-1] and "--separate" in ls.RELEASE_COMMAND and "--write" in ls.RELEASE_COMMAND
-    assert any("it is not the sum of the rows above" in line for line in held)
+    assert any("It is not the sum of the rows above" in line for line in held)
     said: list[str] = []
     assert ls.main(["--separate", "--recorded"], say=said.append) == 0 and said == held       # no network asked
     load = json.loads((ROOT / "docs" / "load.json").read_text(encoding="utf-8"))["relay"]["decision"]

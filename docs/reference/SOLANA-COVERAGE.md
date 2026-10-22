@@ -2,8 +2,9 @@
 
 Every capability the official Solana sources list on 22 Oct 2026, one row each: USED (the file that uses it and where a person
 meets it on each interface: the app at knos.onrender.com, the front door at drexthealpha.github.io/Knos, the hosted /mcp, the
-API and its OpenAPI document, and the `knos` CLI) or N/A with the source's own reason. Written by `scripts/solana_coverage.py`;
-`--check` fails CI when a row's file no longer holds its code. RPC rows are found in the code, not written by hand.
+API and its OpenAPI document, and the `knos` CLI) or N/A with the source's own reason.
+
+Written by `scripts/solana_coverage.py`; `--check` fails CI when a row's file no longer holds its code. RPC rows are found in the code, not written by hand.
 
 145 rows: 128 USED, 17 N/A. Devnet on 22 Oct 2026: solana-core 4.4.0-beta.1, feature-set 3993424257,
 324 of 329 features active.
@@ -60,7 +61,7 @@ API and its OpenAPI document, and the `knos` CLI) or N/A with the source's own r
 | `isBlockhashValid` | RPC HTTP | USED | `web/netfacts.js` | — | #network: Network facts panel / finality clock | — | — | — | https://solana.com/docs/rpc/http/isblockhashvalid |
 | `minimumLedgerSlot` | RPC HTTP | USED | `web/netfacts.js` | — | #network: Network facts panel / finality clock | — | — | — | https://solana.com/docs/rpc/http/minimumledgerslot |
 | `requestAirdrop` | RPC HTTP | USED | `apps/wanted/knos_wanted/static/app.js` | wallet and faucet | — | — | — | — | https://solana.com/docs/rpc/http/requestairdrop |
-| `sendTransaction` | RPC HTTP | USED | `apps/wanted/knos_wanted/static/valley.js` | project page | — | — | `x402.py` | `chain.py`; `onchain.py`; `fanout.py`; `client.py` | https://solana.com/docs/rpc/http/sendtransaction |
+| `sendTransaction` | RPC HTTP | USED | `apps/wanted/knos_wanted/static/valley.js` | project page | — | — | `valley.py`; `x402.py` | `chain.py`; `onchain.py`; `fanout.py`; `client.py` | https://solana.com/docs/rpc/http/sendtransaction |
 | `simulateTransaction` | RPC HTTP | USED | `web/anyissue.js` | — | fund any issue (fee preview); the site's wallet; #version | — | `preorder.py` | `chain.py`; `priority.py` | https://solana.com/docs/rpc/http/simulatetransaction |
 | `accountSubscribe` | RPC WebSocket | USED | `apps/wanted/knos_wanted/static/valley.js` | project page | — | — | — | — | https://solana.com/docs/rpc/websocket/accountsubscribe |
 | `accountUnsubscribe` | RPC WebSocket | USED | `apps/wanted/knos_wanted/static/valley.js` | project page | — | — | — | — | https://solana.com/docs/rpc/websocket/accountunsubscribe |

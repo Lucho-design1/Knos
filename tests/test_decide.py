@@ -339,15 +339,15 @@ def test_the_targets_hold_here_a_warm_offline_decision_under_100_ms_a_cached_one
     trips = bench.round_trips()
     assert trips["after"] == {"n": 1, "calls": ["infos"]} and trips["before"]["n"] > trips["after"]["n"]
     under = bench.split_lines(trips, {"n": 1, "p50": 700.0, "p95": 900.0, "max": 900.0, "inside": {"p50": 300.0, "p95": 400.0}, "decisions": ["x"]})
-    assert "the chain check makes 1 (1 infos: one getMultipleAccounts)" in under[1] and "does not meet it here" in under[3]
+    assert "The chain check makes 1 (1 infos: one getMultipleAccounts)" in under[3] and "does not meet it here" in under[9]
     apart = bench.split_lines(trips, {"n": 1, "p50": 700.0, "p95": 900.0, "max": 900.0, "inside": {"p50": 300.0, "p95": 400.0}, "decisions": ["x"],
-                                      "loaded": {"p50": 290.0, "p95": 380.0}, "offline": {"p50": 1.2, "p95": 2.4}})[3]
-    assert "loading the rules" in apart and "p50 290 ms, p95 380 ms; the decision itself p50 1.2 ms, p95 2.4 ms" in apart and "The 100 ms target" in apart
+                                      "loaded": {"p50": 290.0, "p95": 380.0}, "offline": {"p50": 1.2, "p95": 2.4}})
+    assert "loading the rules" in apart[9] and "p50 290 ms, p95 380 ms; the decision itself p50 1.2 ms, p95 2.4 ms" in apart[9] and "The 100 ms target" in apart[11]
     # what the document says of the process that stays up, and of real tokens, is what was measured: no file, no sentence
     assert bench.warm_lines(None, None) == [] and "the file given held none" in bench.warm_lines(None, {"n": 0})[1]
     said = bench.warm_lines({"n": 3, "p50": 0.7, "p95": 120.0, "max": 130.0, "loaded": 90.0, "decisions": ["accepted (x)"]},
                             {"n": 2, "p50": 0.8, "p95": 0.9, "max": 0.9, "decisions": {"accepted": 2}, "skipped": 1})
-    assert "NOT met here" in said[1] and "n 2: p50 0.8 ms, p95 0.9 ms" in said[3] and "2 accepted; 1 lines skipped" in said[3]
+    assert "NOT met here" in said[3] and "n 2: p50 0.8 ms, p95 0.9 ms" in said[5] and "2 accepted; 1 lines skipped" in said[5]
     kept = json.loads((ROOT / "docs" / "bench.json").read_text(encoding="utf-8"))["decision"]
     assert kept["local"]["rows"]["offline, warm"]["p95"] < 100 and kept["local"]["target_ms_p95_warm"] == 100 and "CPUs" in kept["local"]["machine"]
     assert kept["devnet"]["offline"] == {"n": 24, "fastest": 170, "median": 356, "slowest": 863, "p95": None}                 # the last release run's

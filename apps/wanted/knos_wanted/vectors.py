@@ -24,11 +24,18 @@ KEEP, SAVE_EVERY_S = 300, 600.0
 IDT = Path(__file__).resolve().parents[3] / "docs" / "idt" / "summary.json"
 
 
+_loaded = [False]
+
+
 def _load() -> None:
+    """The saved runs and proof, read once a process (the page that shows them must not wait on the store each time)."""
     global _proof
+    if _loaded[0]:
+        return
     from . import valley
     doc = valley._safe_load("pages", "vectors") or {}
     with _lock:
+        _loaded[0] = True
         if not _runs:
             _runs.extend(doc.get("runs") or [])
         if _proof is None and public(doc.get("proof") or {}):

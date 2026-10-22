@@ -16,11 +16,6 @@ Devnet, test money, no customers yet.
 
 [Check demand](https://drexthealpha.github.io/Knos/#demand) · [Check every claim yourself](docs/JUDGES.md)
 
-## Built during the Qloo hackathon
-
-The repository opened on 1 Sep 2026 as escrow that pays coding agents on proof. The hackathon opened on 30 Sep.
-The app in [`apps/wanted/`](apps/wanted/) began on 14 Oct, its Qloo demand check on 16 Oct, the Ready brief on 19 Oct and the front door's one box on 22 Oct.
-
 ## How it works
 
 ```mermaid

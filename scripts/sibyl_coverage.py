@@ -114,7 +114,7 @@ def render() -> str:
     out = ["# Sibyl Memory coverage (free plan)", "",
            "Every capability of Sibyl Memory's free plan on 22 Oct 2026, one row each: USED (the file, and where a person meets it on",
            "the app, the front door, the hosted /mcp, the API and the `knos` CLI) or N/A with the source's own reason; Pro-only features",
-           "are N/A on Free. Written by `scripts/sibyl_coverage.py`; `--check` fails CI when a row's file no longer holds its code.", "",
+           "are N/A on Free.", "", "Written by `scripts/sibyl_coverage.py`; `--check` fails CI when a row's file no longer holds its code.", "",
            f"{len(ROWS)} rows: {used} USED, {len(ROWS) - used} N/A. Installed on the founder's PC: sibyl cli 0.5.0, client 0.9.0, mcp 0.3.0,",
            "hermes 0.5.0 (MCP server sibyl-memory 1.30.0, 8 tools). The Knos server pins sibyl-memory-client 0.8.1 (0.9 needs an account).", "",
            "| Capability | Group | Status | Code | App | Front door | /mcp | API | CLI | Source |", "|---|---|---|---|---|---|---|---|---|---|"]

@@ -236,20 +236,19 @@ def render(results: dict[str, tuple[dict, list[dict]]], extra: list[str] | None 
     fooled = [r for r in total if r["knos"]]
     gaps = [r for r in fooled if r.get("gap")]
     out += [f"Of the {len(fooled)} that fool an in-process test run, {len(fooled) - len(gaps)} are limits of running tests "
-            "at all, not bugs to patch:",
-            "a stub that returns the expected constants passes any check made of fixed examples, and code that shares",
-            "a process with the test runner can stop the acceptance bodies from running, or from asserting anything,",
-            "while leaving every other test alone."
-            + (f" The other {'one is a gap' if len(gaps) == 1 else f'{len(gaps)} are gaps'} in one runner that the "
-               "others do not have: see the" if gaps else ""),
-            *(["note under that repository's table."] if gaps else []),
-            "The black-box check has none of these weaknesses, because the pull request's code is never in the process",
-            "that decides.",
-            "A bounty paid without a merge has no second look: when its check passes it is paid, with no review window",
-            "and no veto. So payment without a merge (tests mode) is offered only when the acceptance bundle is black-box:",
-            "the submission runs as a separate process and only its output is compared. Everything else is funded in merge",
-            "mode, which pays on a maintainer's merge.", "", *(extra or [])]
-    return "\n".join(out)
+            "at all, not bugs to patch. A stub that",
+            "returns the expected constants passes any check made of fixed examples.", "",
+            "Code that shares a process with the test runner can stop the acceptance bodies from running, or from asserting",
+            "anything, while leaving every other test alone.", "",
+            *([f"The other {'one is a gap' if len(gaps) == 1 else f'{len(gaps)} are gaps'} in one runner that the "
+               "others do not have: see the note under that repository's table."] if gaps else []),
+            "The black-box check has none of these weaknesses, because the pull request's code is never in the process that",
+            "decides.", "",
+            "A bounty paid without a merge has no second look: when its check passes it is paid, with no review window and",
+            "no veto. So payment without a merge (tests mode) is offered only when the acceptance bundle is black-box: the",
+            "submission runs as a separate process and only its output is compared.", "",
+            "Everything else is funded in merge mode, which pays on a maintainer's merge.", "", *(extra or [])]
+    return "\n".join(_prose(out))
 
 # ---- the six real-behaviour tasks ----------------------------------------------------------------------------------------
 
@@ -339,7 +338,7 @@ def real_section(results: dict[str, dict]) -> list[str]:
                 "check measures behaviour, not how it was reached; a buyer who wants an implementation of their own says "
                 "so in the task, and no check of outputs can enforce it.",
             "<!-- real:end -->"]
-    return out
+    return _prose(out)
 
 
 def _pytest_version() -> str:
@@ -372,16 +371,20 @@ def accept_section(results: dict, repeat: int) -> list[str]:
     false_refusals = [t for t, r in honest if r["accepts"] < HONEST_DRAWS]
     out = ["<!-- accept:begin -->", "## Tasks that are not code", "",
            "examples/acceptance/ holds three tasks a buyer can write with no code to point at, each as a black-box bundle "
-           "(scripts/acceptance_examples.py runs them; tests/test_acceptance_examples.py runs every submission once): "
-           "**clean-csv** (turn messy customer exports into one clean file; every cell must equal the clean table the messy "
-           "file was made from), **summarise** (a one-line summary of an incident report; unigram F1 against the reference "
-           "written in the bundle, mean at least 0.85 and 90% of reports at 0.70 or more) and **classify** (hold risky "
-           "payments; accuracy at least 0.85 on a hidden set and on a fresh one). Each has the text a buyer would write "
+           "(scripts/acceptance_examples.py runs them; tests/test_acceptance_examples.py runs every submission once).", "",
+           "**clean-csv**: turn messy customer exports into one clean file; every cell must equal the clean table the messy "
+           "file was made from.", "",
+           "**summarise**: a one-line summary of an incident report; unigram F1 against the reference "
+           "written in the bundle, mean at least 0.85 and 90% of reports at 0.70 or more.", "",
+           "**classify**: hold risky "
+           "payments; accuracy at least 0.85 on a hidden set and on a fresh one.", "",
+           "Each has the text a buyer would write "
            "(TASK.md), an honest solution, cheating submissions and near misses, and every submission goes through "
            f"`knos proof judge`, the command prove.yml runs. Each cheat and near miss was judged {repeat} times and each honest "
-           f"solution {HONEST_DRAWS} times, with new generated inputs each time. The cheats: a constant answer, reading the answer file (the held-out set, in the submission's own tree, in "
-           "the judge's other trees and in the judge's private copy), special-casing the visible examples, never finishing, "
-           "writing outside the sandbox (over the bundle in the judge's base checkout), asking a service on the network, "
+           f"solution {HONEST_DRAWS} times, with new generated inputs each time.", "",
+           "The cheats: a constant answer, reading the answer file (the held-out set, in the submission's own tree, in "
+           "the judge's other trees and in the judge's private copy), special-casing the visible examples, and never finishing.", "",
+           "More cheats: writing outside the sandbox (over the bundle in the judge's base checkout), asking a service on the network, "
            "answer bytes that are not text, too many answers, and editing the bundle in the pull request.", "",
            "| task | honest solution accepted | cheats | cheats accepted | near misses | near misses accepted |",
            "|---|---|---|---|---|---|"]
@@ -407,11 +410,14 @@ def accept_section(results: dict, repeat: int) -> list[str]:
                 "copy), and only the held-out parts are fixed data. The sandbox does the rest: no network (the cheat that "
                 "sends the work to a service on 127.0.0.1 got `Network is unreachable`), a user that cannot write the "
                 "judge's files or the base checkout (the sentence above), and, since this release, a tree with no copy of "
-                "the bundle. The first run of the cheat that reads the answer file (in clean-csv) found the "
-                "held-out set in `.knos/acceptance/1/` of its own tree and answered the held-out part right; it was stopped only "
+                "the bundle.", "",
+            "The first run of the cheat that reads the answer file (in clean-csv) found the "
+                "held-out set in `.knos/acceptance/1/` of its own tree and answered the held-out part right. It was stopped only "
                 "by the freshly generated part, so a bundle made of fixed answers alone (a hidden set, a reference) was "
-                "paid to it (tests/test_acceptance_examples.py::test_the_pull_request_cannot_read_the_bundle_it_is_judged_by "
-                "fails on 0.3.12's judge and passes now). `knos.judge` now removes the repository's bundles from the tree "
+                "paid to it.", "",
+            "The test tests/test_acceptance_examples.py::test_the_pull_request_cannot_read_the_bundle_it_is_judged_by "
+                "fails on 0.3.12's judge and passes now.", "",
+            "`knos.judge` now removes the repository's bundles from the tree "
                 "before the submission runs. What no judge can do: a bundle committed to a public repository is public to the "
                 "person who writes the submission, who can copy a fixed hidden set into it. A set that must stay hidden is "
                 "drawn at judge time, as the fresh parts here are; a fixed part (the held-out file, the hidden labels) only "
@@ -419,7 +425,7 @@ def accept_section(results: dict, repeat: int) -> list[str]:
                 "near misses are refused because they score below it (the summarise one that leaves out the fix, about 0.82 "
                 "against 0.85, is the closest), and a score near the bar can go either way.",
             "<!-- accept:end -->"]
-    return out
+    return _prose(out)
 
 
 # ---- honest work: does a judge refuse a submission that did what the task asked? ------------------------------------
@@ -653,13 +659,13 @@ def allowed_section(control: dict, rows: list[dict]) -> list[str]:
     words = sorted({r[k] for r in rows for k in ("word", "box_word") if r.get(k)})
     out += ["", f"The verdict words these runs gave: {', '.join(words)}. A run that cannot decide (the suite did not start, "
                 "ran out of time, or the machine could not run it) is `insufficient_evidence`: never accepted, never "
-                "rejected.",
-            "A file outside every protected path is the pull request's source and is in the tree: what keeps it from "
-            "deciding is the runner (plugin autoload is off, the acceptance checks are the base's, and Python reads "
-            "start-up and .pth files only from its own site directories), and for the black box that no test runner "
-            "shares a process with the submission at all.",
+                "rejected.", "",
+            "A file outside every protected path is the pull request's source and is in the tree. What keeps it from "
+            "deciding is the runner: plugin autoload is off, the acceptance checks are the base's, and Python reads "
+            "start-up and .pth files only from its own site directories.", "",
+            "For the black box, no test runner shares a process with the submission at all.",
             "<!-- allowed:end -->"]
-    return out
+    return _prose(out)
 
 
 HONEST_GROUPS = (("slug", "slugify, three repositories"), ("real", "real open-source behaviour, six tasks"),
@@ -675,14 +681,15 @@ def honest_section(rows: list[dict], cheats: list[tuple[int, int]], ruled: list[
     expected = [r for r in refused if r["name"] in H.EXPECTED_REFUSED]
     other = [r for r in refused if r["name"] not in H.EXPECTED_REFUSED]
     out = ["<!-- honest:begin -->", "## Honest work: is a correct submission refused?", "",
-           "A judge that refuses every cheat and every honest submission is worth nothing, so the same judges see "
-           f"{len(rows)} honest submissions (tests/bench_tamper/honest.py; `python scripts/tamper_bench.py --honest`): for "
-           "every task on this page, correct work written in other ways than the benchmark's own fix: another "
+           "A judge that refuses every cheat and every honest submission is worth nothing. So the same judges see "
+           f"{len(rows)} honest submissions (tests/bench_tamper/honest.py; `python scripts/tamper_bench.py --honest`).", "",
+           "For every task on this page, they are correct work written in other ways than the benchmark's own fix: another "
            "algorithm, another style, the code moved to new files, a slower way that is still right, checks of its "
-           "own, and regression tests added where the repository keeps its tests. The submissions are fixed text. The black-box checks draw new inputs on every run, so a count below "
+           "own, and regression tests added where the repository keeps its tests.", "",
+           "The submissions are fixed text. The black-box checks draw new inputs on every run, so a count below "
            "can differ between runs only if a submission is wrong on a rare input or a check asks for something the task "
            "does not define (one such fault was found, below).", "",
-           f"**Honest submissions accepted: Knos, black box {of(n['box'])}; Knos, tests {of(n['knos'])}; CI green {of(n['ci'])}.** "
+           f"**Honest submissions accepted: Knos, black box {of(n['box'])}; Knos, tests {of(n['knos'])}; CI green {of(n['ci'])}.**", "",
            f"**Cheating submissions accepted by Knos, black box: {', '.join(f'{a} of {b}' for a, b in cheats)}** "
            "(the attacks on slugify, on the six real tasks, the cheats on the tasks that are not code, and the cheats "
            "aimed at what a pull request may add; the tables of each follow on this page).", "",
@@ -752,7 +759,7 @@ def honest_section(rows: list[dict], cheats: list[tuple[int, int]], ruled: list[
             "(tests/bench_tamper/real_tasks.py, `accept`); on 150,000 samples drawn after the change the honest fix and "
             "the other algorithm of this set both agreed with csv.Sniffer on every one.",
             "<!-- honest:end -->"]
-    return out
+    return _prose(out)
 
 
 def place_honest(doc: str, lines: list[str]) -> str:
@@ -988,13 +995,17 @@ def escape_section(results: dict) -> list[str]:
     can, rows = results["places"], results["rows"]
     ran = [p for p, _ in PLACES if not can[p]]
     out = ["<!-- escape:begin -->", "## Escapes: what a submission can do to the machine that judges it", "",
-           "These five are not ways to pass without doing the work, so they are not among the 63. Each is something a "
-           "submission tries on the judge's machine while it runs; it is tried in each place a submission can run, by the "
+           "These five are not ways to pass without doing the work, so they are not among the 63.", "",
+           "Each is something a "
+           "submission tries on the judge's machine while it runs. It is tried in each place a submission can run, by the "
            "same call the judge uses to run a submission's command (`python scripts/tamper_bench.py --escape`; "
-           "tests/test_tamper_bench.py runs it). **host, no sandbox**: tests mode or black-box on a machine that has no "
-           "sandbox and was not told `--sandbox require` (prove.yml passes `require`). **host sandbox**: tests mode and "
+           "tests/test_tamper_bench.py runs it).", "",
+           "**host, no sandbox**: tests mode or black-box on a machine that has no "
+           "sandbox and was not told `--sandbox require` (prove.yml passes `require`).", "",
+           "**host sandbox**: tests mode and "
            "black-box as prove.yml runs them: another user, an empty environment, no network, the machine read-only but for "
-           "the run's folder, and process, CPU, memory and file size limits (docs/reference/ATTESTOR.md). **hermetic**: black-box "
+           "the run's folder, and process, CPU, memory and file size limits (docs/reference/ATTESTOR.md).", "",
+           "**hermetic**: black-box "
            f"with an `image` in the terms, or with none under `--sandbox hermetic` on a machine that runs containers; the "
            f"probe ran in `{ESCAPE_IMAGE}` (judge.DEFAULT_IMAGE).", "",
            "What is expected, from how each place is built:", "",
@@ -1019,7 +1030,7 @@ def escape_section(results: dict) -> list[str]:
             "memory limit is per process, where a container's is per container. Five probes are five probes: a kernel "
             "or runtime bug that lets a process out of a namespace or a container is outside what this page measures.",
             "<!-- escape:end -->"]
-    return out
+    return _prose(out)
 
 
 # ---- who wrote the cheats -------------------------------------------------------------------------------------------
@@ -1069,7 +1080,7 @@ def authors_section(cheats: list[tuple[int, int]], rows: list[dict]) -> list[str
                 f"{'n/a' if r['box'] is None else 'accepted' if r['box'] else 'refused'} |" for r in rows]
     else:
         out += ["", "No outsider has submitted a cheat yet: the outside row is 0 of 0, not a rate."]
-    return [*out, "<!-- authors:end -->"]
+    return _prose([*out, "<!-- authors:end -->"])
 
 
 def place_authors(doc: str, lines: list[str]) -> str:
@@ -1077,6 +1088,15 @@ def place_authors(doc: str, lines: list[str]) -> str:
         return update_block(doc, "authors", lines)
     head, sep, tail = doc.partition("<!-- honest:begin -->")
     return head + "\n".join(lines) + "\n\n" + sep + tail
+
+
+def _prose(lines: list[str]) -> list[str]:
+    """A block's lines with every prose paragraph of more than 60 words split between its sentences
+    (scripts/split_paragraphs.py `fix`, the rule the page is held to); a paragraph of 60 words or fewer is left as written."""
+    spec = importlib.util.spec_from_file_location("split_paragraphs", ROOT / "scripts" / "split_paragraphs.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.fix("\n".join(lines)).split("\n")
 
 
 def update_block(doc: str, name: str, lines: list[str]) -> str:

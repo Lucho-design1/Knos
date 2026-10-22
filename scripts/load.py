@@ -665,8 +665,10 @@ def render_measured(doc: dict) -> list[str]:
     runs = [m for m in doc.get("measured") or [] if m.get("cluster") == "devnet"]
     out = ["### Throughput with relays side by side: measured, and derived", "",
            "`python scripts/load.py measure --relays N --orders M --wallet <keypair> --write`, run by the operator at release. N relays, each with "
-           "a fee payer of its own, each fund their share of M orders one after another (a key signs for one thing at a time), twice: `apart`, "
-           "where no two relays write an account in common, and `shared`, where every transaction also writes one token account. That account "
+           "a fee payer of its own, each fund their share of M orders one after another (a key signs for one thing at a time).", "",
+           "They do it twice: `apart`, "
+           "where no two relays write an account in common, and `shared`, where every transaction also writes one token account.", "",
+           "That account "
            "stands for the fee account, which every release of a mint writes whoever relays it. A rate is confirmed transactions divided by the "
            "seconds from the first submission to the last confirmation. PayOrder is not sent (the table above says why): this measures funding "
            "with and without one shared writable account, not payments.", ""]
@@ -710,7 +712,7 @@ def render_measured(doc: dict) -> list[str]:
         d = doc["local"]["derived"]
         out += ["**Derived bound (not measured).** Section 3's arithmetic from the simulator's compute units and Solana's published limits: "
                 f"{d['one_relayer_orders_per_second']} orders a second per fee payer (verification included), {d['fee_account_orders_per_second']} "
-                f"payments a second through one fee account (K accounts: K times that, up to the block), {d['one_balance_orders_per_second']} fundings a second from one Balance. "
+                f"payments a second through one fee account (K accounts: K times that, up to the block), {d['one_balance_orders_per_second']} fundings a second from one Balance.", "",
                 "These are ceilings in an otherwise empty block. A measured rate above is of devnet on the day, with its own traffic, through one "
                 "public endpoint, and each relay waits for a confirmation before it sends again: the two are different quantities, and neither "
                 "is used in place of the other.", ""]
@@ -786,7 +788,26 @@ def paid_rows(m: dict, kind: str) -> list[str]:
         said += " The first refusals: " + "; ".join(m["first_refusals"]) + "."
     if m.get("stopped"):
         said += f" Stopped: {m['stopped']}."
-    return out + [said, ""]
+    for para in _paras(said):
+        out += [para, ""]
+    return out
+
+
+PARA_WORDS = 60     # scripts/split_paragraphs.py MAX: a prose paragraph is this many words at most
+
+
+def _paras(text: str) -> list[str]:
+    """One run's account, split between its sentences into paragraphs of PARA_WORDS words at most (a link's target
+    is not counted). Under its run's heading, so each part keeps the run's ids, date and sample."""
+    def words(s: str) -> int:
+        return len(re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", s).split())
+    out: list[str] = []
+    for s in re.split(r"(?<=[.!?])\s+(?=[A-Z\[(`\"'0-9])", text):
+        if out and words(out[-1] + " " + s) <= PARA_WORDS:
+            out[-1] += " " + s
+        else:
+            out.append(s)
+    return out
 
 
 def _kept(m: dict, key: str):
@@ -812,7 +833,8 @@ def side_by_side(runs: list[dict]) -> list[str]:
     return [f"**One relay against {b['relays']}, measured.** Devnet, {ids_of({k: v for k, v in (b.get('programs') or {}).items() if k != 'ids'})}: "
             f"{b['paid']} of {b['attempted']} payments in {b['seconds']} s, {b['paid_per_s']} a second, with {b['relays']} relays and "
             f"{b.get('fee_accounts', 1)} fee accounts ({b['date']}), against {a['paid']} of {a['attempted']} payments, {a['paid_per_s']} a second, "
-            f"through one relay and one fee account ({a['date']}): {b['paid_per_s'] / a['paid_per_s']:.2f} times the rate. Both runs had one owner's "
+            f"through one relay and one fee account ({a['date']}): {b['paid_per_s'] / a['paid_per_s']:.2f} times the rate.", "",
+            "Both runs had one owner's "
             "tokens and waited for each payment's answer before a relay sent the next.", ""]
 
 
@@ -892,7 +914,7 @@ def render(doc: dict) -> str:
     out = ["# Load: many orders open at once", "",
            "<!-- written by scripts/load.py from docs/load.json; change the numbers there by running it, not here -->", "",
            "The claim this page tests: 1,000 funded orders open at once, each settled in under a minute of submission, with no order paid twice "
-           "and none lost. The second half (paid once, none lost) is measured. The first half (a minute) is derived from what was measured, and "
+           "and none lost.", "", "The second half (paid once, none lost) is measured. The first half (a minute) is derived from what was measured, and "
            "holds or does not hold depending on how many relayers carry the tokens; the table below says which.", "",
            "Everything in the first three sections was **measured in the local simulator** (LiteSVM, the same virtual machine a validator runs, "
            "with the test builds in `tests/fixtures`). **Compute units are exact**: a cluster charges the same program the same units. "
@@ -903,7 +925,7 @@ def render(doc: dict) -> str:
         out += [f"## 1. Paid once, none lost ({i['orders']:,} orders)", "",
                 f"`python scripts/load.py --local {i['orders']}` on {loc['date']} (seed {loc['seed']}). {i['orders']:,} orders on {i['orders']:,} "
                 "different repositories and issues were funded from one Balance by tokens the harness signs with the test key, and all were open "
-                "before the first was paid. They were then paid in a shuffled order, four in five to one payee and one in five to two. Every "
+                "before the first was paid.", "", "They were then paid in a shuffled order, four in five to one payee and one in five to two. Every "
                 "10th fund token and every 10th pay token was sent a second time at once; every 50th order's fund token and pay token were sent "
                 "again after the order had closed.", "",
                 "| Check | Result |", "| --- | --- |",
@@ -945,8 +967,9 @@ def render(doc: dict) -> str:
                 "## 3. What that allows on a cluster (derived)", "",
                 f"Solana's limits: a block holds {L['block_cu'] // 10 ** 6}M compute units ({L['block_cu_before'] // 10 ** 6}M until SIMD-0286; "
                 f"mainnet has had the larger blocks since 29 July 2026, devnet since earlier), the transactions that write any one account may "
-                f"use {L['account_cu'] // 10 ** 6}M of a block, and a block is produced every {int(L['slot_s'] * 1000)} ms. Sources: "
-                + ", ".join(f"[{t}]({u})" for t, u in doc["sources"].items()) + ". The two sources disagree on one figure: Solana's page says the "
+                f"use {L['account_cu'] // 10 ** 6}M of a block, and a block is produced every {int(L['slot_s'] * 1000)} ms.", "", "Sources:", "",
+                *(f"- [{t}]({u})" for t, u in doc["sources"].items()), "",
+                "The two sources disagree on one figure: Solana's page says the "
                 "per-account limit stays at 12M, while the development branch of the Agave validator carries 24,000,000 for that constant (read "
                 "on 4 October 2026). This page uses 12M, the published figure for the live clusters; with 24M the per-relayer, per-Balance and "
                 "fee-account rates below double.", "",
@@ -972,10 +995,12 @@ def render(doc: dict) -> str:
             out.append(f"| {r} | {x['blocks']} | {x['seconds']} | {x['orders_per_second']} | {x['bound_by']} | {'yes' if x['under_a_minute'] else 'no'} | "
                        f"{loc['derived_before_simd_0286']['relayers'][r]['seconds']} |")
         out += ["", "How it is derived: blocks = the largest of (all compute / the block limit), (all compute / relayers x 12M), (fund compute / "
-                "12M) and (pay compute / 12M), rounded up; seconds = blocks x 0.4. It is a floor on the time, not a forecast: it counts only the "
-                "compute the transactions consumed (a cluster also charges signatures, write locks and data against the same limits), it assumes "
+                "12M) and (pay compute / 12M), rounded up; seconds = blocks x 0.4. It is a floor on the time, not a forecast.", "",
+                "It counts only the "
+                "compute the transactions consumed (a cluster also charges signatures, write locks and data against the same limits). It assumes "
                 "the relayers split the tokens evenly and that no other transaction is in the block, and it ignores that the transactions of one "
-                "token must land one after another. With one relayer the claim of a minute does **not** hold for 1,000 orders arriving together; "
+                "token must land one after another.", "",
+                "With one relayer the claim of a minute does **not** hold for 1,000 orders arriving together; "
                 "the table shows from how many relayers it does." if not d["relayers"]["1"]["under_a_minute"] else
                 "How it is derived: blocks = the largest of (all compute / the block limit), (all compute / relayers x 12M), (fund compute / 12M) "
                 "and (pay compute / 12M), rounded up; seconds = blocks x 0.4. It is a floor on the time, not a forecast: it counts only the compute "
@@ -1032,12 +1057,14 @@ def render_relay(rel: dict) -> list[str]:
         n = [row["n"] for row in st["six"]]
         out += ["### The stages of a payment (recorded on devnet)", "",
                 f"From {st['source']}. Every payment in it was made by the public program ids (the relay log's payments, read from their "
-                f"escrows' history). Each stage is timed only for the payments whose log line recorded it, so each row has its own n; "
+                f"escrows' history).", "",
+                f"Each stage is timed only for the payments whose log line recorded it, so each row has its own n; "
                 f"a stage no line recorded says \"{latency_stages.NOT_RECORDED}\", and no figure here is derived from another row.", "",
                 *latency_stages.table(st["six"], st["whole"]), "",
                 f"Read it with its n. The whole wait is {st['whole']['n']} payments; the stage rows are {max(n)} of them, because the log lines of the other "
                 f"{st['whole']['n'] - max(n)} carry no stage fields: for those payments every stage is "
-                f"{latency_stages.NOT_RECORDED}, and their time is in the first row only. With {max(n)} samples the 95th percentile by nearest "
+                f"{latency_stages.NOT_RECORDED}, and their time is in the first row only.", "",
+                f"With {max(n)} samples the 95th percentile by nearest "
                 "rank is the slowest of them, so a p95 in a stage row is one payment, not a band. `python scripts/latency_stages.py --md` prints "
                 "this table from the live log.", ""]
         dec = rel.get("decision")
@@ -1047,20 +1074,24 @@ def render_relay(rel: dict) -> list[str]:
                 "percentiles of different samples do not add. A target is a target, not a measurement.", "",
                 *latency_stages.clock_table(latency_stages.clocks(st["six"], dec, st["whole"])), "",
                 f"What was measured on devnet: {st['whole']['n']} payments have a whole wait (first table). Only {most} of those {st['whole']['n']} carry stage "
-                f"times in their log line, so every devnet row above is {most} payments, and its p95 is the slowest one of them. "
+                f"times in their log line, so every devnet row above is {most} payments, and its p95 is the slowest one of them.", "",
                 f"Chain inclusion is timed to the block of the paying transaction, read at the commitment level `{latency_stages.COMMITMENT}`, which is the "
                 "level the relay waits for; no payment's finality was recorded.", ""]
         if dec:
-            out += [f"What was measured locally: {dec['source']}. Machine: {dec['machine']}. That is the time Knos's own code takes to decide; on a "
-                    "cluster every read of the chain adds a round trip: four runs of the older one-step command (release 0.3.18) on devnet took 4.3 to 32.6 s each; the two-step "
-                    "command (release 0.3.19), once on each of 24 real tokens, took a median of 356 ms offline (a new process for each token, so that figure included loading the rules), 854 ms for the chain check and 9.1 s for the whole precheck ([BENCH.md](BENCH.md), \"Decision time\").", ""]
-        out += ["What is a target and not a measurement: the last column. No decision has been timed on devnet by a benchmark (four `knos decide` runs on real fund tokens of the 0.3.18 release's public rounds took 4.3 to 32.6 s each over the shared public RPC: a first reading, not a sample), no payment has been carried there by the "
-                "0.3.18 relay, and the floor stays above zero: a forge must run a job and sign before there is anything to decide "
+            out += [f"What was measured locally: {dec['source']}.", "", f"Machine: {dec['machine']}.", "",
+                    "That is the time Knos's own code takes to decide; on a "
+                    "cluster every read of the chain adds a round trip: four runs of the older one-step command (release 0.3.18) on devnet took 4.3 to 32.6 s each.", "",
+                    "The two-step "
+                    "command (release 0.3.19), once on each of 24 real tokens (2026-10-07, program ids not recorded), took a median of 356 ms offline (a new process for each token, so that figure included loading the rules), 854 ms for the chain check and 9.1 s for the whole precheck ([BENCH.md](BENCH.md), \"Decision time\").", ""]
+        out += ["What is a target and not a measurement: the last column.", "",
+                "No decision has been timed on devnet by a benchmark (four `knos decide` runs on real fund tokens of the 0.3.18 release's public rounds took 4.3 to 32.6 s each over the shared public RPC: a first reading, not a sample).", "",
+                "No payment has been carried there by the "
+                "0.3.18 relay. The floor stays above zero: a forge must run a job and sign before there is anything to decide "
                 "([RELAY.md](RELAY.md), \"The floor\").", ""]
     if q:
         out += ["### The relay's queue (a local test of the queue, not a benchmark of the service)", "",
                 f"`python scripts/queue_drill.py --write` (seed {q['seed']}). **This is a local test of the queue, not an end-to-end service "
-                "benchmark**: nothing is signed, no transaction is built, no cluster and no GitHub is asked, and the clock is the test's own. "
+                "benchmark**: nothing is signed, no transaction is built, no cluster and no GitHub is asked, and the clock is the test's own.", "",
                 "The chain is a stand-in that keeps one rule, the programs' single-use rule (a token is taken once; a second send is answered "
                 "\"already\" and moves nothing). It says how the queue (`src/knos/settle/v2/relayq.py`) behaves, and nothing about seconds on a cluster.", "",
                 f"{q['items']:,} entries of {q['lanes']} payers were queued and carried by {q['workers']} workers. One worker was killed after it "
@@ -1086,8 +1117,9 @@ def render_relay(rel: dict) -> list[str]:
             "No payment recorded on devnet was carried by the sweep on the queue: no figure on this page times the queue on a cluster."
         out += ["### The always-on sweep on the queue (the same local test, through the relay's own pass)", "",
                 "The same command runs a second part: `knos.proof.ghrelay.once`, the pass the public worker repeats every 3 s, which now "
-                f"queues what it reads and carries it with the queue's {sw['workers']} workers. **This too is a local test of the queue, not an "
-                f"end-to-end benchmark**: GitHub and the chain are stand-ins and the clock is the test's own. {made}", "",
+                f"queues what it reads and carries it with the queue's {sw['workers']} workers.", "",
+                "**This too is a local test of the queue, not an "
+                "end-to-end benchmark**: GitHub and the chain are stand-ins and the clock is the test's own.", "", made, "",
                 f"{sw['tokens']} tokens of {sw['owners']} owners were posted; the confirmation of one took {sw['slow_s']:.0f} s of the test's "
                 "clock. Then two more were posted, and the pass that carried them was killed after it had sent one and before it noted anything.", "",
                 "| Check | Result |", "| --- | --- |",
@@ -1101,8 +1133,10 @@ def render_relay(rel: dict) -> list[str]:
                 "(the second send was answered \"already\") |",
                 f"| Tokens the chain took, and log lines | {sw['taken_by_chain']}, {sw['log_lines']} |", "",
                 "What changed after this drill was recorded (in release 0.3.18, October 2026): a pass reads the comments again every 3 s while a worker still waits for a "
-                "confirmation, and a free worker carries what is new, so a comment posted meanwhile no longer waits for the slowest token of the pass "
-                "(`tests/test_relay_speed.py`, on a stand-in chain; not measured on a cluster). The pass itself still returns when its last worker has answered.", ""]
+                "confirmation, and a free worker carries what is new.", "",
+                "So a comment posted meanwhile no longer waits for the slowest token of the pass "
+                "(`tests/test_relay_speed.py`, on a stand-in chain; not measured on a cluster).", "",
+                "The pass itself still returns when its last worker has answered.", ""]
     return out
 
 
@@ -1118,12 +1152,13 @@ def render_workflow(w: dict, runs: list) -> list[str]:
     ways = {"own": "the job's own relay", "public": "the public worker"}
     out = ["## 5. The whole workflow", "",
            "A chain rate is not the system's capacity. An order is also two workflow jobs, the requests each makes of GitHub with a token "
-           "GitHub rations, the comments it posts, a token GitHub signs, a relay that carries it and a statement someone reads back. This "
-           "section counts those and asks which limit a customer meets first. `python scripts/capacity.py --write` wrote it; "
+           "GitHub rations, the comments it posts, a token GitHub signs, a relay that carries it and a statement someone reads back.", "",
+           "This section counts those and asks which limit a customer meets first. `python scripts/capacity.py --write` wrote it; "
            "`python scripts/capacity.py -R <repositories> -N <deliverables a day>` answers for any customer.", "",
            "### What one word of the workflow asks of GitHub (counted)", "",
            "Counted by running `command`, `settle` and `attest` of `src/knos/flow.py` against the tests' stand-in for api.github.com "
-           "(`tests/_flow.py`), on the simplest order: one issue, one pull request, one payee with a bound wallet. It is a count of the "
+           "(`tests/_flow.py`), on the simplest order: one issue, one pull request, one payee with a bound wallet.", "",
+           "It is a count of the "
            "code's requests, exact for that case; an order with more payees, more closing issues or a policy file reads more. It was not "
            "counted on GitHub itself.", "",
            "| Word | Token carried by | Requests read | Requests written | Comments made | Tokens GitHub signs | Jobs |",
@@ -1131,7 +1166,7 @@ def render_workflow(w: dict, runs: list) -> list[str]:
     for way in ("own", "public"):
         for x in c[way].values():
             out.append(f"| {x['word']} | {ways[way]} | {x['reads']} | {x['writes']} | {x['comments']} | {x['tokens_signed']} | {x['jobs']} |")
-    out += ["", "The job's own relay is the job sending the transactions itself with a fee key the repository keeps (`KNOS_RELAY_KEY`). "
+    out += ["", "The job's own relay is the job sending the transactions itself with a fee key the repository keeps (`KNOS_RELAY_KEY`).", "",
             "Without the key the token is posted as a comment and the public worker carries it; the job then reads the worker's log every "
             f"{rel['wait_every_s']:g} s for up to {rel['wait_at_most_s']} s. Those reads use the repository's own token and are not "
             "conditional, so each one counts.", "",
@@ -1158,9 +1193,10 @@ def render_workflow(w: dict, runs: list) -> list[str]:
             f"Runner queue time: {lat['stage_split']}.", "",
             "What the public worker itself spends: every pass (one every "
             f"{rel['pass_every_s']:g} s) reads at most {rel['repositories_read_per_pass_at_most']} repositories' newest comments, each a "
-            "conditional request. GitHub does not count a conditional request it answers 304 when it carries an Authorization header, so a "
+            "conditional request.", "",
+            "GitHub does not count a conditional request it answers 304 when it carries an Authorization header, so a "
             f"pass that finds nothing new costs nothing against the worker's {L['github_token_requests_per_hour']:,} an hour; a repository "
-            f"with a new token costs {rel['counted_reads_per_token']} counted read, and the token {rel['log_comments_per_token']} log comment. "
+            f"with a new token costs {rel['counted_reads_per_token']} counted read, and the token {rel['log_comments_per_token']} log comment.", "",
             f"The search for repositories it does not know runs every {rel['search_every_s']} s, under the search limit of "
             f"{L['search_per_minute']} a minute. A pass queues the tokens it reads and carries up to {rel['tokens_at_a_time']} at once, the "
             "tokens of one owner in the order GitHub issued them (section 6).", "",
@@ -1174,8 +1210,9 @@ def render_workflow(w: dict, runs: list) -> list[str]:
         out.append(f"| {int(n):,} | {x['one_by_one']:,} | {x['batched_daily']:,} |")
     out += ["", "### Which limit binds first", "",
             "For a customer with R repositories and N accepted deliverables a day, the work spread evenly over the repositories and over "
-            "the day (an assumption: a busier hour lowers every figure in proportion; `--peak` sets it). \"Binds at\" is the N at which "
-            "the limit is reached; the model is arithmetic on the numbers above and on the published limits, and none of these volumes was run. "
+            "the day (an assumption: a busier hour lowers every figure in proportion; `--peak` sets it).", "",
+            "\"Binds at\" is the N at which "
+            "the limit is reached; the model is arithmetic on the numbers above and on the published limits, and none of these volumes was run.", "",
             "\"Binds first\" is among the limits on the work; the meter's statement is a limit on reading the count back, listed in the last column.", "",
             "| Repositories | Deliverables a day | Token carried by | Binds first | Binds at (a day) | This volume fits | Limits this volume is past |",
             "| --- | --- | --- | --- | --- | --- | --- |"]
@@ -1197,9 +1234,9 @@ def render_workflow(w: dict, runs: list) -> list[str]:
     for r, way in sorted(rows, key=lambda x: x[0]["at"]):
         out.append(f"| {r['limit']}{way} | {r['scope']} | {r['at']:,} | {r['from']} | {r['lift']} |")
     out += ["", "What this says. The public worker is a convenience for small volumes. The reads of its log that a waiting job makes "
-            "are what uses up a repository's hourly requests first, and its own two limits are shared by every repository it serves. A "
-            "customer past them relays in its own job with its own fee key, which removes the token comment, the polling and both "
-            "shared limits at once. After that the limits are GitHub's, per repository and per account, long before they are Solana's. "
+            "are what uses up a repository's hourly requests first, and its own two limits are shared by every repository it serves.", "",
+            "A customer past them relays in its own job with its own fee key, which removes the token comment, the polling and both "
+            "shared limits at once. After that the limits are GitHub's, per repository and per account, long before they are Solana's.", "",
             "The fee account of the mint is moved by configuration too: K fee accounts, each order using one (no program change). "
             "Of all the bounds a single Balance's is the furthest away.", "",
             "### Measured, recorded, derived", "",
@@ -1216,7 +1253,7 @@ def render_workflow(w: dict, runs: list) -> list[str]:
             "token, which this page assumes |",
             "| Cluster rates, the relay log polling, statement requests, every \"binds at\" | derived |",
             "| Actions minutes, runner queue time apart from the rest, RPC requests per order, any GitHub limit actually being hit | not measured |", "",
-            "Sources: " + "; ".join(f"[{t}]({u})" for t, u in w["sources"].items()) + ".", ""]
+            "Sources:", "", *(f"- [{t}]({u})" for t, u in w["sources"].items()), ""]
     return out
 
 

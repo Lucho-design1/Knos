@@ -499,7 +499,8 @@ def verify(chain: dict, which: str) -> str:
     worst = max(max(row["steps"]) for row in d["verify"])
     lines += ["", f"The limit is {chain['limit']:,} compute units per transaction; the costliest step here leaves "
                   f"{chain['limit'] - worst:,}. Each figure is for a token account whose address the program finds at "
-                  f"its first try, and is the lowest of {d['runs']} runs of the tests. Every further try costs "
+                  f"its first try, and is the lowest of {d['runs']} runs of the tests.", "",
+              f"Every further try costs "
                   f"{chain['per_try']:,} more in each step: about half of all tokens need none, a quarter need one. "
                   f"Measured on {d['measured']} with {d['build']}."]
     keys = d.get("keys")
@@ -518,7 +519,8 @@ def pay_second(chain: dict) -> str:
     to_wallet = [c for c in p["cases"] if c.get("pays")]
     lines += ["", f"Compute units of knos-pay, the token program's share included, over {p['payments']:,} payments of "
                   f"each kind: the test file run {p['runs']} times, each run on a fresh chain with {p['payments'] // p['runs']} "
-                  f"payments of each kind ({d['measured']}). A payment to a wallet took {min(c['min'] for c in to_wallet):,} to "
+                  f"payments of each kind ({d['measured']}).", "",
+              f"A payment to a wallet took {min(c['min'] for c in to_wallet):,} to "
                   f"{max(c['max'] for c in to_wallet):,}. The spread is not noise: Pay derives the addresses it pays "
                   f"through (the payee's binding and record, the funder's marker, the vault and its authority), and "
                   f"each costs {chain['per_try']:,} for every try after the first.", "",
@@ -591,9 +593,10 @@ def devnet(d: dict) -> str:
     lines = ["| the second deployment on devnet | measured |", "|---|---|"]
     lines += [f"| {what} | {_said(_dig(stats, path))} |" for what, path in DEVNET]
     if _dig(stats, DEFINITION):
-        lines += ["", f"Merge to paid is defined as: {_dig(stats, DEFINITION)}. One function measures it (`measure` in "
-                      "`scripts/network_stats.py`); this table, `docs/facts.json`, the site's Numbers page (`stats.json`) and "
-                      "`latency.json` all state that function's output."]
+        lines += ["", "Merge to paid is defined as:", "", f"> {_dig(stats, DEFINITION)}.", "",
+                  "One function measures it (`measure` in "
+                  "`scripts/network_stats.py`); this table, `docs/facts.json`, the site's Numbers page (`stats.json`) and "
+                  "`latency.json` all state that function's output."]
     if stats.get("note"):
         lines += ["", stats["note"]]
     lines += ["", (f"Read from the site's `stats.json` of {read} (`python scripts/bench_docs.py --stats stats.json`)." if read else

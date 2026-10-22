@@ -337,7 +337,8 @@ def separate_block(kept: dict) -> list[str]:
         worst = f"{w['max']} s" if w.get("max") is not None else NOT_KEPT
         out += [f"The one number a person feels, the merge to the payment, on the public program ids ({day.group(0) if day else NOT_RECORDED} reading): "
                 f"p50 {w['p50']} s, p95 {w['p95']} s, p99 {FEW99 if w['n'] < 100 else w.get('p99') or NOT_KEPT}, worst {worst}, over the {w['n']} payments "
-                "that completed and could be timed; it is not the sum of the rows above, which are different samples (a stage is timed only where the "
+                "that completed and could be timed.", "",
+                "It is not the sum of the rows above, which are different samples (a stage is timed only where the "
                 "relay's log line carries it). The payments that failed or never completed are in the next table, not in these percentiles.", ""]
     out += [*attempts_block(kept), ""]
     out += [f"The release run measures every row with a sample again, on the live relay log and devnet, and rewrites this block: `{RELEASE_COMMAND}` "
