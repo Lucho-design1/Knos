@@ -1,27 +1,27 @@
 {
  "date": "2026-10-22",
- "by": "a fresh agent with no context, from the live site (round 3)",
- "report_sha256": "f0a25954620fb11fa3773374a2cd5260264ce3a36ecad2291697a77a87b6673b",
+ "by": "a fresh agent with no context, from the live site (round 4)",
+ "report_sha256": "d87d5a986af0a4f47bded401480e34b7367156c24184c84bf1d8ae6394f815a5",
  "scores": [
   {
    "name": "rule-1",
-   "score": 85
+   "score": 75
   },
   {
    "name": "rule-2",
-   "score": 55
+   "score": 90
   },
   {
    "name": "rule-3",
-   "score": 45
+   "score": 40
   },
   {
    "name": "rule-4",
-   "score": 70
+   "score": 80
   },
   {
    "name": "rule-5",
-   "score": 80
+   "score": 70
   },
   {
    "name": "rule-6",
@@ -37,15 +37,15 @@
   },
   {
    "name": "rule-9",
-   "score": 70
+   "score": 55
   },
   {
    "name": "rule-10",
-   "score": 85
+   "score": 35
   },
   {
    "name": "rule-11",
-   "score": 80
+   "score": 90
   },
   {
    "name": "rule-12",
@@ -53,71 +53,111 @@
   },
   {
    "name": "rule-13",
-   "score": 90
+   "score": 85
   },
   {
    "name": "rule-14",
-   "score": 90
+   "score": 80
   },
   {
    "name": "rule-15",
-   "score": 70
-  },
-  {
-   "name": "rule-16",
-   "score": 72
-  },
-  {
-   "name": "rule-17",
-   "score": 50
-  },
-  {
-   "name": "rule-18",
-   "score": 30
-  },
-  {
-   "name": "rule-19",
-   "score": 50
-  },
-  {
-   "name": "rule-20",
-   "score": 70
-  },
-  {
-   "name": "rule-21",
-   "score": 82
-  },
-  {
-   "name": "rule-22",
    "score": 90
   },
   {
-   "name": "rule-23",
-   "score": 88
+   "name": "rule-16",
+   "score": 50
   },
   {
-   "name": "rule-24",
-   "score": 70
+   "name": "rule-17",
+   "score": 0
   },
   {
-   "name": "rule-25",
+   "name": "rule-18",
+   "score": 65
+  },
+  {
+   "name": "rule-19",
+   "score": 45
+  },
+  {
+   "name": "rule-20",
+   "score": 35
+  },
+  {
+   "name": "rule-21",
+   "score": 55
+  },
+  {
+   "name": "rule-22",
    "score": 60
   },
   {
+   "name": "rule-23",
+   "score": 75
+  },
+  {
+   "name": "rule-24",
+   "score": 90
+  },
+  {
+   "name": "rule-25",
+   "score": 70
+  },
+  {
    "name": "rule-26",
-   "score": 68
+   "score": 70
+  },
+  {
+   "name": "rule-27",
+   "score": 85
+  },
+  {
+   "name": "rule-28",
+   "score": 85
+  },
+  {
+   "name": "rule-29",
+   "score": 90
+  },
+  {
+   "name": "rule-30",
+   "score": 75
+  },
+  {
+   "name": "rule-31",
+   "score": 55
+  },
+  {
+   "name": "rule-32",
+   "score": 90
+  },
+  {
+   "name": "rule-33",
+   "score": 85
+  },
+  {
+   "name": "rule-34",
+   "score": 75
+  },
+  {
+   "name": "rule-35",
+   "score": 60
+  },
+  {
+   "name": "rule-36",
+   "score": 75
   },
   {
    "name": "judge-1",
-   "score": 28
+   "score": 60
   },
   {
    "name": "judge-2",
-   "score": 68
+   "score": 60
   },
   {
    "name": "judge-3",
-   "score": 55
+   "score": 35
   },
   {
    "name": "judge-4",
@@ -125,28 +165,33 @@
   },
   {
    "name": "judge-5",
-   "score": 18
+   "score": 30
   },
   {
    "name": "judge-6",
-   "score": 30
+   "score": 20
   }
  ],
  "outside_gaps": [
   {
-   "score": "judge-1",
-   "gap": "real pre-orders on consumer ideas",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside)"
+   "score": "judge-3",
+   "gap": "real customers and pre-orders",
+   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); Devpost gallery unpublished"
   },
   {
-   "score": "judge-4",
-   "gap": "a real brand pilot",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside)"
+   "score": "judge-5",
+   "gap": "a consumer-brand pilot with revenue",
+   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); Devpost gallery unpublished"
   },
   {
-   "score": "judge-6",
-   "gap": "a promoter or venue pilot",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside)"
+   "score": "rule-16",
+   "gap": "the entrant's own eligibility, confirmed on Devpost",
+   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); Devpost gallery unpublished"
+  },
+  {
+   "score": "rule-17",
+   "gap": "the entrant's own Devpost submission (by 30 Oct, 11:45 pm ET)",
+   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); Devpost gallery unpublished"
   }
  ]
 }
