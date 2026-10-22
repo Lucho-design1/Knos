@@ -63,6 +63,13 @@ def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) 
         api, app_pages, js = HEROES[path]
         t = (WEB / "brand" / "hero.html").read_text(encoding="utf-8").strip().replace("{API}", api).replace("{APP}", app_pages)
         s = HERO.sub(lambda _: f'<!-- k-hero -->\n{t}\n<script src="{js}" defer></script>\n<!-- /k-hero -->', s, count=1)
+    # the two fonts of the first paint are asked for with the page, as the front door does (no swap after it)
+    fonts = tokens.replace("brand/tokens.css", "fonts/")
+    for f in ("geist.woff2", "bricolage-grotesque.woff2"):
+        pre = f'<link rel="preload" href="{fonts}{f}" as="font" type="font/woff2" crossorigin>'
+        if f'fonts/{f}" as="font"' not in s:
+            s = s.replace("</head>", f"{pre}\n</head>", 1) if '<link rel="stylesheet"' not in s else \
+                re.sub(r'(<link rel="stylesheet")', lambda m, pre=pre: f"{pre}\n{m.group(1)}", s, count=1)
     link = f'<link rel="stylesheet" href="{tokens}">'
     if link not in s:
         s = re.sub(r'(<link rel="stylesheet")', lambda m: f"{link}\n{m.group(1)}", s, count=1) if "<link rel=\"stylesheet\"" in s \

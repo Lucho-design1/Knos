@@ -151,19 +151,19 @@ def test_the_site_names_its_own_files_for_the_icon_and_the_card():
     asks = [tag for tag in re.findall(r'<[^>]*(?:href|src)="(?:https?:)?//[^>]*>', head) if not re.search(r'\brel="canonical"', tag)]
     assert not asks, asks                    # the head asks no other host for anything (the canonical link names the address; nothing fetches it)
     assert head.count('rel="canonical"') == 1 and '<link rel="canonical" href="https://drexthealpha.github.io/Knos/">' in head
-    css = _text(ROOT / "web" / "app.css")
-    assert 'url("brand/wordmark.svg")' in css and 'url("brand/mark.svg")' in css
+    css = _text(ROOT / "web" / "app.css") + _text(BRAND / "tokens.css")          # the palette, fonts and bar: the one design system
+    assert 'url("wordmark.svg")' in css and 'url("mark.svg")' in css             # brand/tokens.css names them beside itself
     for slot in ("status", "index", "pilot", "reproduce", "shadow", "verifier", "playground"):      # pages other modules fill: empty, hidden
         label = {"shadow": "Check an invoice"}.get(slot, slot.capitalize())
         assert f'<section id="{slot}" class="mount" aria-label="{label}" hidden></section>' in page
-        assert f'<a href="#{slot}" data-mount="{slot}" hidden>' in page and f'"{slot}"' in _text(ROOT / "web" / "front.js")
+        assert f'data-mount="{slot}"' not in page and f'"{slot}"' in _text(ROOT / "web" / "front.js")   # opened by its address: the bar is one
 
 
 def test_the_mark_with_depth_is_the_same_drawing_and_costs_no_download():
     """web/brand/mark3d.js draws no path of its own: every layer is brand/mark.svg as a mask (the stylesheet names the
     file), stacked on the z axis. No canvas, no WebGL, no library, no address; with motion.js under 18 KB (the budget
     tests/web/motion.mjs holds: 0.3.17 added countTo, sort, toast, skeleton and leave)."""
-    js, motion, css = _text(BRAND / "mark3d.js"), _text(ROOT / "web" / "motion.js"), _text(ROOT / "web" / "app.css")
+    js, motion, css = _text(BRAND / "mark3d.js"), _text(ROOT / "web" / "motion.js"), _text(ROOT / "web" / "app.css") + _text(BRAND / "tokens.css")
     assert "export function mount3dMark(el" in js and len(js.encode()) + len(motion.encode()) < 18_000
     code = re.sub(r"^\s*//.*$", "", js + motion, flags=re.M)
     assert not re.search(r"canvas|webgl|three|fetch\(|XMLHttpRequest|https?:|import\s|require\(| d=", code, re.I)

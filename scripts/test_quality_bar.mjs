@@ -41,6 +41,11 @@ if (process.argv[2] === "axe") {
   for (const url of PAGES) {
     const mine = runs.filter((r) => r.requestedUrl === url);
     const s = mine.map((r) => [Math.round(r.categories.accessibility.score * 100), Math.round(r.categories.performance.score * 100)]);
+    for (const r of mine) {
+      const a = (k) => r.audits[k]?.displayValue || "-";
+      console.log(`     ${url} FCP ${a("first-contentful-paint")} LCP ${a("largest-contentful-paint")} TBT ${a("total-blocking-time")} CLS ${a("cumulative-layout-shift")} SI ${a("speed-index")}`
+        + ` | failing a11y: ${Object.values(r.audits).filter((x) => r.categories.accessibility.auditRefs.some((ref) => ref.id === x.id) && x.score === 0).map((x) => x.id).join(",") || "none"}`);
+    }
     ok(mine.length >= 3 && s.every(([a, p]) => a === 100 && p >= 95), `lighthouse ${url}: ${mine.length} cold runs, accessibility/performance`, s.map(([a, p]) => `${a}/${p}`));
   }
 } else {
