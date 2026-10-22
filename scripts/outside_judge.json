@@ -1,99 +1,99 @@
 {
  "date": "2026-10-22",
- "by": "a fresh agent with no context, from the live site (round 2)",
- "report_sha256": "569e330a9417963161c7e02995365e78f2196c5b203a9d54a81165bf4e9b8e49",
+ "by": "a fresh agent with no context, from the live site (round 3)",
+ "report_sha256": "f0a25954620fb11fa3773374a2cd5260264ce3a36ecad2291697a77a87b6673b",
  "scores": [
   {
    "name": "rule-1",
-   "score": 70
+   "score": 85
   },
   {
    "name": "rule-2",
-   "score": 50
+   "score": 55
   },
   {
    "name": "rule-3",
-   "score": 85
+   "score": 45
   },
   {
    "name": "rule-4",
-   "score": 55
+   "score": 70
   },
   {
    "name": "rule-5",
-   "score": 55
-  },
-  {
-   "name": "rule-6",
-   "score": 60
-  },
-  {
-   "name": "rule-7",
    "score": 80
   },
   {
-   "name": "rule-8",
-   "score": 55
-  },
-  {
-   "name": "rule-9",
-   "score": 85
-  },
-  {
-   "name": "rule-10",
-   "score": 95
-  },
-  {
-   "name": "rule-11",
-   "score": 55
-  },
-  {
-   "name": "rule-12",
-   "score": 50
-  },
-  {
-   "name": "rule-13",
-   "score": 75
-  },
-  {
-   "name": "rule-14",
-   "score": 65
-  },
-  {
-   "name": "rule-15",
-   "score": 95
-  },
-  {
-   "name": "rule-16",
-   "score": 85
-  },
-  {
-   "name": "rule-17",
-   "score": 90
-  },
-  {
-   "name": "rule-18",
-   "score": 75
-  },
-  {
-   "name": "rule-19",
-   "score": 62
-  },
-  {
-   "name": "rule-20",
-   "score": 55
-  },
-  {
-   "name": "rule-21",
+   "name": "rule-6",
    "score": 40
   },
   {
-   "name": "rule-22",
+   "name": "rule-7",
+   "score": 85
+  },
+  {
+   "name": "rule-8",
+   "score": 100
+  },
+  {
+   "name": "rule-9",
+   "score": 70
+  },
+  {
+   "name": "rule-10",
+   "score": 85
+  },
+  {
+   "name": "rule-11",
+   "score": 80
+  },
+  {
+   "name": "rule-12",
+   "score": 100
+  },
+  {
+   "name": "rule-13",
+   "score": 90
+  },
+  {
+   "name": "rule-14",
+   "score": 90
+  },
+  {
+   "name": "rule-15",
+   "score": 70
+  },
+  {
+   "name": "rule-16",
+   "score": 72
+  },
+  {
+   "name": "rule-17",
    "score": 50
   },
   {
+   "name": "rule-18",
+   "score": 30
+  },
+  {
+   "name": "rule-19",
+   "score": 50
+  },
+  {
+   "name": "rule-20",
+   "score": 70
+  },
+  {
+   "name": "rule-21",
+   "score": 82
+  },
+  {
+   "name": "rule-22",
+   "score": 90
+  },
+  {
    "name": "rule-23",
-   "score": 75
+   "score": 88
   },
   {
    "name": "rule-24",
@@ -101,75 +101,23 @@
   },
   {
    "name": "rule-25",
-   "score": 90
-  },
-  {
-   "name": "rule-26",
-   "score": 75
-  },
-  {
-   "name": "rule-27",
-   "score": 70
-  },
-  {
-   "name": "rule-28",
-   "score": 90
-  },
-  {
-   "name": "rule-29",
-   "score": 75
-  },
-  {
-   "name": "rule-30",
-   "score": 75
-  },
-  {
-   "name": "rule-31",
-   "score": 85
-  },
-  {
-   "name": "rule-32",
-   "score": 90
-  },
-  {
-   "name": "rule-33",
    "score": 60
   },
   {
-   "name": "rule-34",
-   "score": 85
-  },
-  {
-   "name": "rule-35",
-   "score": 90
-  },
-  {
-   "name": "rule-36",
-   "score": 80
-  },
-  {
-   "name": "rule-37",
-   "score": 50
-  },
-  {
-   "name": "rule-38",
-   "score": 90
-  },
-  {
-   "name": "rule-39",
-   "score": 95
+   "name": "rule-26",
+   "score": 68
   },
   {
    "name": "judge-1",
-   "score": 30
+   "score": 28
   },
   {
    "name": "judge-2",
-   "score": 50
+   "score": 68
   },
   {
    "name": "judge-3",
-   "score": 40
+   "score": 55
   },
   {
    "name": "judge-4",
@@ -177,22 +125,27 @@
   },
   {
    "name": "judge-5",
-   "score": 25
+   "score": 18
   },
   {
    "name": "judge-6",
-   "score": 35
+   "score": 30
   }
  ],
  "outside_gaps": [
   {
    "score": "judge-1",
-   "gap": "real users and pre-orders",
+   "gap": "real pre-orders on consumer ideas",
    "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside)"
   },
   {
    "score": "judge-4",
-   "gap": "paying users",
+   "gap": "a real brand pilot",
+   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside)"
+  },
+  {
+   "score": "judge-6",
+   "gap": "a promoter or venue pilot",
    "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside)"
   }
  ]
