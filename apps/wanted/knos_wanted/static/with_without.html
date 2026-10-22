@@ -79,14 +79,27 @@ const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&":
 const WORD = { OPEN: "Open for pre-orders", REFUSE: "Not yet", CANNOT_DECIDE: "Cannot decide" };
 const word = (v) => `<span class="ww-v ${esc(v)}">${esc(WORD[v] || v || "No verdict")}</span>`;
 const n = (x) => Number(x).toLocaleString("en-US");
-const said = (g) => !g.answered ? `${esc(g.source)}: no answer`
-  : g.views_per_day != null ? `Wikipedia, ${esc(g.article.replace(/_/g, " "))}: ${n(g.views_per_day)} views a day`
-  : g.articles_3_months != null ? `GDELT: ${n(g.articles_3_months)} news articles in 3 months`
-  : g.stories_2_years != null ? `Hacker News: ${n(g.stories_2_years)} stories in 2 years`
-  : g.works_since_2023 != null ? `OpenAlex: ${n(g.works_since_2023)} works since 2023`
-  : g.gdp_per_person_usd != null ? `World Bank: ${n(g.gdp_per_person_usd)} US dollars of GDP per person`
-  : g.label ? `Wikidata: ${esc(g.label)}` : esc(g.source);
-const sig = (g) => `<li>${g.link ? `<a href="${esc(g.link)}" rel="noopener">${said(g)}</a>` : said(g)}${g.counts ? " (counts)" : ""}</li>`;
+// each open signal as published (scripts/qloo_vs_open_signals.py): [source, value or null, counts, article or concept];
+// its public link is rebuilt from the idea's subject phrase, as knos_wanted/open_signals.py asked it
+const q = (s) => encodeURIComponent(s || "");
+const LINK = {
+  "Wikimedia pageviews": (x, ph) => `https://en.wikipedia.org/wiki/${q(x[3])}`,
+  "GDELT news": (x, ph) => `https://api.gdeltproject.org/api/v2/doc/doc?query=${q(ph)}&mode=artlist&timespan=3months`,
+  "Hacker News": (x, ph) => `https://hn.algolia.com/?query=${q(ph)}&type=story`,
+  "OpenAlex": (x, ph) => `https://openalex.org/works?search=${q(ph)}&filter=from_publication_date:2023-01-01`,
+  "World Bank": () => "https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=US",
+  "Wikidata": (x) => `https://www.wikidata.org/wiki/${q(x[1])}`,
+};
+const SAID = {
+  "Wikimedia pageviews": (x) => `Wikipedia, ${esc(String(x[3]).replace(/_/g, " "))}: ${n(x[1])} views a day`,
+  "GDELT news": (x) => `GDELT: ${n(x[1])} news articles in 3 months`,
+  "Hacker News": (x) => `Hacker News: ${n(x[1])} stories in 2 years`,
+  "OpenAlex": (x) => `OpenAlex: ${n(x[1])} works since 2023`,
+  "World Bank": (x) => `World Bank: ${n(x[1])} US dollars of GDP per person`,
+  "Wikidata": (x) => `Wikidata: ${esc(x[3] || x[1])}`,
+};
+const sig = (x, ph) => x[1] === null || x[1] === undefined ? `<li>${esc(x[0])}: no answer</li>`
+  : `<li><a href="${esc((LINK[x[0]] || (() => "#"))(x, ph))}" rel="noopener">${(SAID[x[0]] || ((y) => esc(y[0])))(x)}</a>${x[2] ? " (counts)" : ""}</li>`;
 (async () => {
   const r = await fetch("/api/qloo-diff");
   const d = await r.json().catch(() => ({}));
@@ -100,7 +113,7 @@ const sig = (g) => `<li>${g.link ? `<a href="${esc(g.link)}" rel="noopener">${sa
     <span class="ww-field">${esc(x.field)}</span><h2>${esc(x.idea)}</h2>
     <div class="ww-sides">
       <section class="ww-side"><h3>Open signals only</h3><p>${word(open(x).verdict)}${open(x).tier ? ` · price tier ${esc(open(x).tier)}` : ""}</p>
-        <p class="muted">No audience, no cities: no open source says who or where.</p><ul>${(open(x).signals || []).map(sig).join("")}</ul></section>
+        <p class="muted">No audience, no cities: no open source says who or where.</p><ul>${(open(x).signals || []).map((g) => sig(g, open(x).phrase)).join("")}</ul></section>
       <section class="ww-side" data-qloo><h3>With Qloo added</h3><p>${word(x.with.verdict)}</p>
         <p>${esc(x.with.audience || "no audience")} · ${esc((x.with.cities || []).join(", ") || "no cities")} · ${esc(x.with.tier ? "price tier " + x.with.tier : "no price tier")}</p>
         <p><a data-trace href="/trace.html?hash=${esc(x.with.hash)}">The Qloo calls: request, result and limit</a></p></section>

@@ -54,10 +54,14 @@ def with_qloo(rep: dict) -> dict:
 
 
 def open_only(b: dict) -> dict:
-    keep = ("source", "answered", "article", "views_per_day", "articles_3_months", "stories_2_years", "works_since_2023",
-            "gdp_per_person_usd", "label", "counts", "link")
+    """The open signals, compact (the page rebuilds each source's public link from the subject phrase): source, the value
+    it gave (None: no answer), whether it counts, and the article or concept it found."""
+    keys = {"Wikimedia pageviews": "views_per_day", "GDELT news": "articles_3_months", "Hacker News": "stories_2_years",
+            "OpenAlex": "works_since_2023", "World Bank": "gdp_per_person_usd", "Wikidata": "id"}
+    sig = [[x.get("source"), x.get(keys.get(x.get("source"), ""), None) if x.get("answered") else None, bool(x.get("counts")),
+            x.get("article") or x.get("label") or ""] for x in b.get("signals") or []]
     return {"verdict": b.get("verdict"), "audience": "", "cities": [], "tier": b.get("price_tier") or "", "phrase": b.get("phrase"),
-            "counted": b.get("attention_counted"), "signals": [{k: v for k, v in x.items() if k in keep} for x in b.get("signals") or []]}
+            "counted": b.get("attention_counted"), "signals": sig}
 
 
 def main(publish: bool) -> int:
