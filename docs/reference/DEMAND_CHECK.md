@@ -13,12 +13,20 @@ are not built yet against tastes the buyer chooses. The code is [`apps/wanted/`]
 Every Qloo result is aggregate taste, not a prediction about one person. A report is directional demand evidence,
 not a sales forecast.
 
-## The decision check (Qloo REST, primary since 16 Oct 2026)
+## The decision check (Qloo's harness first, since 22 Oct 2026)
 
 `POST /api/check {idea, place?, leader?}` (web page, or `knos mcp` tool `knos_demand_check` with
 `KNOS_MCP_TOOLS=demand`, which POSTs to the hosted app at `KNOS_WANTED_URL`). Code: `apps/wanted/knos_wanted/check.py`
 over `qloo_rest.py` (key in the request header only, from the server's environment; answers cached privately for 7
 days; at most 4 calls per second; a monthly budget, `QLOO_MONTHLY_BUDGET`, default 9,000 uncached calls).
+
+Each call goes first to Qloo's harness: one long-lived `qloo api mcp` process (`qloo_harness.py`), a surface the kit
+supports. A call goes there only when every parameter it sends maps onto a harness tool's argument, so its answer is
+the one REST gives (checked call by call on 22 Oct 2026: demographics, audiences, heatmap, places, search).
+
+The other calls need a parameter the harness does not take (a popularity floor, a trend bias, diversification, a tag
+filter). They go to the REST API as before. The trace page says, for every call, which surface answered it, and
+`/api/status` counts the harness's answers.
 
 | Step | Qloo call | Gives |
 |---|---|---|
@@ -198,8 +206,8 @@ browser --> Knos server (Python) --JSON lines--> apps/wanted/bridge/qloo_bridge.
 - Only Qloo's supported stack: `qloo mcp`, the canonical local MCP server of the public harness, started from the
   backend with the official MCP SDK, as Qloo's starter `starter/mcp-client/backend.mjs` does
   ([qloo-hackathon-kit](https://github.com/qloo/qloo-hackathon-kit)). Not used: hosted MCP endpoints (there are
-  none), the legacy `qloo api mcp`, the integrate/plan/build modes. `qloo api` is not needed: the nine workflows
-  cover every question below.
+  none), the integrate/plan/build modes. In this flow `qloo api` is not needed: the nine workflows
+  cover every question below (the decision check above uses `qloo api mcp`).
 - Why a Node sidecar and not a Python MCP client: it is the SDK and version Qloo's starter pins, the harness
   already needs Node 22.19+, and the Python service stays on the standard library.
 - Mode: **live** when `qloo_capabilities` reports `adapter.ready: true` (a credential is configured on the server);

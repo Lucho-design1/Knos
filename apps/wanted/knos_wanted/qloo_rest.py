@@ -27,6 +27,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from . import qloo_harness
+
 TTL_S = 7 * 86_400
 ERROR_TTL_S = 86_400          # a 4xx answer (Qloo refused the question) is remembered for a day
 RATE_PER_S = 4.0
@@ -99,6 +101,7 @@ class Client:
         self.folder = folder or cache_dir()
         self.budget = budget if budget is not None else int(os.environ.get("QLOO_MONTHLY_BUDGET") or DEFAULT_BUDGET)
         self.opener = opener or urllib.request.urlopen
+        self.harness = opener is None and key is None          # the real network only: Qloo's harness answers first
         self.clock = clock
         self.bucket = bucket or BUCKET
         self.live_calls = 0                   # uncached calls made by this client (for build/test accounting)
@@ -151,11 +154,12 @@ class Client:
         ttl = ERROR_TTL_S if doc.get("error") else TTL_S
         return doc if self.clock() - doc.get("t", 0) <= ttl else None
 
-    def _store(self, k: str, body, error: str | None = None) -> None:
+    def _store(self, k: str, body, error: str | None = None, surface: str | None = None) -> None:
         d = self.folder / k[:2]
         d.mkdir(parents=True, exist_ok=True)
         tmp = d / f"{k}.tmp"
-        tmp.write_text(json.dumps({"t": self.clock(), "body": body, **({"error": error} if error else {})}), encoding="utf-8")
+        tmp.write_text(json.dumps({"t": self.clock(), "body": body, **({"error": error} if error else {}),
+                                   **({"surface": surface} if surface else {})}), encoding="utf-8")
         os.replace(tmp, d / f"{k}.qloo")
 
     def get(self, path: str, params: dict | None = None) -> dict:
@@ -168,12 +172,21 @@ class Client:
         if hit is not None and hit.get("error"):
             raise QlooError(hit["error"] + " (cached refusal)")
         if hit is not None:
-            return {"body": hit["body"], "source": {**src, "cached": True, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(hit["t"]))}}
+            return {"body": hit["body"], "source": {**src, "cached": True, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(hit["t"])),
+                                                     **({"surface": hit["surface"]} if hit.get("surface") else {})}}
         ok, why = self.ready()
         if not ok:
             raise NoKey(why)
         self._count_one()
         self.bucket.take()
+        m = qloo_harness.mapped(path, params) if self.harness and method == "GET" else None
+        hb = qloo_harness.harness().call(*m) if m else None
+        if hb is not None:                                  # Qloo's harness asked exactly this question (kit API_ACCESS)
+            self.live_calls += 1
+            self._store(k, hb, surface=qloo_harness.SURFACE)
+            return {"body": hb, "source": {**src, "surface": qloo_harness.SURFACE, "cached": False,
+                                           "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(self.clock()))}}
+        src["surface"] = "REST API"
         headers = {"x-api-key": self._key, "Accept": "application/json", "User-Agent": "knos-demand-check/0.3.34"}
         if method == "POST":
             req = urllib.request.Request(self.base + path, data=json.dumps(params).encode(), method="POST",
@@ -208,5 +221,5 @@ class Client:
                     continue
                 raise QlooError(f"{method} {path}: {type(e).__name__}") from None
         self.live_calls += 1
-        self._store(k, body)
+        self._store(k, body, surface="REST API")
         return {"body": body, "source": {**src, "cached": False, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(self.clock()))}}

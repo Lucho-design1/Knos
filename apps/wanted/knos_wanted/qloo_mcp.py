@@ -4,7 +4,8 @@
 
 Why a Node sidecar and not a Python MCP client: it is the exact SDK and version Qloo's starter pins
 (qloo-hackathon-kit starter/mcp-client), the harness already needs Node 22.19+, and the Python service stays on the
-standard library. `qloo api` (raw endpoints) is not used: the nine workflows cover every question the demand check
+standard library. This flow does not use `qloo api` (raw endpoints; the decision check does, qloo_harness.py): the
+nine workflows cover every question the demand check
 asks (docs/reference/DEMAND_CHECK.md, "Tools used and why").
 
 Mode, decided once at start and shown on every answer:

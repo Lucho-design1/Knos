@@ -261,6 +261,7 @@ class _Run:
                 continue
             rec = self._add({"call": got["source"]["call"], "what": what, "params": got["source"]["params"],
                              "cached": got["source"]["cached"], "at": got["source"]["at"], "body_digest": _digest(got["body"]),
+                             **({"surface": got["source"]["surface"]} if got["source"].get("surface") else {}),
                              **({"note": "retried without location/tags after Qloo refused them"} if p is not params else {})})
             narrow = [k for k in p if k.startswith(self.NARROWING)]
             if broaden and narrow and not _results(got["body"]) and not _broadened:

@@ -34,7 +34,7 @@ def _dir():
 
 def build(rep: dict) -> dict:
     d = rep.get("decision") or {}
-    calls = [{"n": c.get("n"), "endpoint": c.get("call"), "params": c.get("params") or {}, "at": c.get("at"), "cached": bool(c.get("cached")),
+    calls = [{"n": c.get("n"), "endpoint": c.get("call"), "params": c.get("params") or {}, "at": c.get("at"), "cached": bool(c.get("cached")), "surface": c.get("surface"),
               "what": c.get("what"), "used_for": c.get("effect"), "excerpt": c.get("body_digest") or c.get("out")}
              for c in rep.get("calls") or []]
     return {"v": 1, "hash": rep.get("hash"), "idea": rep.get("idea"), "made": rep.get("made"), "label": rep.get("label"),

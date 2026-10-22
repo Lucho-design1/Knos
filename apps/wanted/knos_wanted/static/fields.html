@@ -16,6 +16,8 @@
 .fx a.fc { display: block; min-height: 72px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--fg); text-decoration: none; font-size: var(--s0); line-height: 1.35; }
 .fx a.fc:hover { border-color: var(--accent); }
 .fx a.fc.unlock { border: 2px solid var(--accent); }
+.fx a.fc.co { border-style: dashed; }
+.st.co { border: 1px dashed var(--muted); border-radius: 8px; }
 .st { display: inline-block; margin-top: 6px; padding: 1px 8px; border-radius: 99px; font-size: var(--s-1); font-weight: 700; }
 .st.live { background: var(--ok); color: var(--paper); } .fx .st.live::after { content: "Live"; } .fx .st.next::after { content: "Next"; } .st.next { background: var(--soft); color: var(--fg); border: 1px dashed var(--line); }
 .st.unlock { border: 2px solid var(--accent); border-radius: 8px; }
@@ -79,7 +81,7 @@
 <!-- /k-bar -->
 <main class="wrap">
   <h1>49 fields, one check each</h1>
-  <ul class="fx-key" aria-label="Key"><li><span class="st live" title="Works now: run its demand check">Live</span></li><li><span class="st next" title="Not real at scale yet">Next</span></li><li><span class="st unlock" title="The framework's own pair">Unlock</span></li></ul>
+  <ul class="fx-key" aria-label="Key"><li><span class="st live" title="Real at scale today">Live</span></li><li><span class="st next" title="Not real at scale yet">Next</span></li><li><span class="st unlock" title="The framework's own pair">Unlock</span></li><li><span class="st co" title="Opens companies mode: Qloo has no taste data for it">Companies</span></li></ul>
   <table class="fx" id="fx" data-not-prose aria-label="Seven bottlenecks by seven technologies"><thead></thead><tbody></tbody></table>
   <details class="fx-unlocks"><summary>The framework's 12 unlocks</summary><ol id="fx-unlocks"></ol></details>
 <script type="application/json" id="k-data">null</script>
@@ -92,7 +94,7 @@
   document.querySelector("#fx thead").innerHTML = `<tr><th scope="col"><span class="k-sr">Bottleneck</span></th>${d.technologies.map((t) => `<th scope="col">${esc(t.name)}</th>`).join("")}</tr>`;
   document.querySelector("#fx tbody").innerHTML = d.bottlenecks.map((b) => `<tr><th scope="row" title="${esc(b.full)}">${esc(b.name)}</th>${d.technologies.map((t) => {
     const c = at(b.id, t.id);
-    return `<td><a class="fc${c.unlock ? " unlock" : ""}" aria-label="${esc(`${b.name} by ${t.name}: ${c.title}, ${c.status === "live" ? "live" : "next"}${c.unlock ? ", the framework's unlock" : ""}`)}" href="${esc(link(c))}" data-b="${esc(b.id)}" data-t="${esc(t.id)}" data-status="${esc(c.status)}" title="${esc(c.unlock || c.idea)}">
+    return `<td><a class="fc${c.unlock ? " unlock" : ""}${c.door === "companies" ? " co" : ""}" aria-label="${esc(`${b.name} by ${t.name}: ${c.title}, ${c.status === "live" ? "live" : "next"}${c.unlock ? ", the framework's unlock" : ""}${c.door === "companies" ? ", opens companies mode" : ""}`)}" href="${esc(link(c))}" data-b="${esc(b.id)}" data-t="${esc(t.id)}" data-status="${esc(c.status)}" title="${esc(c.unlock || c.idea)}">
       <span class="tn">${esc(t.name)}</span>${esc(c.title)}<br><span class="st ${esc(c.status)}" aria-hidden="true"></span></a></td>`;
   }).join("")}</tr>`).join("");
   document.getElementById("fx-unlocks").innerHTML = d.cells.filter((c) => c.unlock).map((c) =>

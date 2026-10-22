@@ -149,7 +149,8 @@ Qloo is reached only from the server, only through Qloo's canonical local MCP se
 | Buyer: what this taste also likes | `qloo_recommend` | per target type the buyer picks, from the buyer's confirmed signals |
 | Buyer: which unbuilt product fits | `qloo_rank` | the confirmed proxies of the products open for pre-order, against the buyer's signals |
 
-`qloo api` is not used: the workflows cover every question. Not Qloo-powered: the planner that proposes search words
+In this flow `qloo api` is not used: the workflows cover every question (the decision check asks `qloo api mcp`
+first). Not Qloo-powered: the planner that proposes search words
 (keyword rules by default, or any OpenAI-compatible LLM you configure; it proposes words only, never numbers), the
 one-word lean, the page, the Knos Record and the pre-order escrow (Knos).
 

@@ -76,6 +76,8 @@ FIELDS = {
    "t": "ai",
    "title": "Paper plan",
    "idea": "an AI tool that turns a lab paper into an investor ready business plan",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -93,6 +95,7 @@ FIELDS = {
    "title": "Quantum chemistry",
    "idea": "a quantum chemistry simulation service for early drug startups",
    "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -100,6 +103,8 @@ FIELDS = {
    "t": "energy",
    "title": "Community solar",
    "idea": "a community solar subscription for small businesses",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -108,6 +113,7 @@ FIELDS = {
    "title": "Patient fund",
    "idea": "a crowdfunded rare disease research fund for patients",
    "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -122,6 +128,8 @@ FIELDS = {
    "t": "pqc",
    "title": "Safe cap-table",
    "idea": "a post-quantum secure cap table for startups",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -129,6 +137,8 @@ FIELDS = {
    "t": "ai",
    "title": "Factory scheduler",
    "idea": "an AI factory scheduling tool for small machine shops",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live",
    "unlock": "AI world models optimize factory schedules and simulate hardware configurations."
   },
@@ -137,6 +147,8 @@ FIELDS = {
    "t": "web3",
    "title": "Tool library",
    "idea": "a shared tool library for makers with on chain deposits",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -144,6 +156,8 @@ FIELDS = {
    "t": "quantum",
    "title": "Pipe sensor",
    "idea": "a quantum sensor for finding underground pipes",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -151,6 +165,8 @@ FIELDS = {
    "t": "energy",
    "title": "Site battery",
    "idea": "a portable battery generator for construction sites",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -158,6 +174,8 @@ FIELDS = {
    "t": "biotech",
    "title": "Mycelium packaging",
    "idea": "a mycelium packaging replacement for foam",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -165,6 +183,8 @@ FIELDS = {
    "t": "materials",
    "title": "Cooling paint",
    "idea": "a passive radiative cooling paint for server rooms",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live",
    "next_part": "room-temperature superconductors",
    "unlock": "Metamaterials, room-temperature superconductors and high-efficiency heat sinks cut hardware size."
@@ -174,6 +194,8 @@ FIELDS = {
    "t": "pqc",
    "title": "Safe firmware",
    "idea": "a post-quantum secure firmware update service for factory machines",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -181,6 +203,8 @@ FIELDS = {
    "t": "ai",
    "title": "Bill cutter",
    "idea": "an AI tool that cuts home electricity bills",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -188,6 +212,8 @@ FIELDS = {
    "t": "web3",
    "title": "Solar trading",
    "idea": "peer to peer neighborhood solar energy trading",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -195,6 +221,8 @@ FIELDS = {
    "t": "quantum",
    "title": "Charging optimizer",
    "idea": "a quantum inspired battery charging optimizer",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -202,6 +230,8 @@ FIELDS = {
    "t": "energy",
    "title": "Data-center reactor",
    "idea": "a small modular reactor for a data center",
+   "feature": "/companies",
+   "door": "companies",
    "status": "next",
    "unlock": "SMRs, microreactors and fusion give 24/7 on-site baseload; behind-the-meter power bypasses 3-5-year grid queues."
   },
@@ -210,6 +240,8 @@ FIELDS = {
    "t": "biotech",
    "title": "Algae fuel",
    "idea": "algae biofuel for backup generators",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -217,6 +249,8 @@ FIELDS = {
    "t": "materials",
    "title": "Perovskite tile",
    "idea": "a perovskite solar roof tile for homes",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -224,6 +258,8 @@ FIELDS = {
    "t": "pqc",
    "title": "Safe meter",
    "idea": "a post-quantum secure smart meter",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -231,6 +267,8 @@ FIELDS = {
    "t": "ai",
    "title": "Permit filler",
    "idea": "an AI assistant that fills building permit applications",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -238,6 +276,8 @@ FIELDS = {
    "t": "web3",
    "title": "Research DAO",
    "idea": "a DAO that funds and governs open research",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live",
    "unlock": "Permissionless governance for borderless capital and research."
   },
@@ -253,6 +293,8 @@ FIELDS = {
    "t": "energy",
    "title": "Battery kit",
    "idea": "a pre approved home battery installation kit",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -282,6 +324,8 @@ FIELDS = {
    "t": "ai",
    "title": "Supplier finder",
    "idea": "an AI tool that finds alternative suppliers for rare parts",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -289,6 +333,8 @@ FIELDS = {
    "t": "web3",
    "title": "Mineral tracing",
    "idea": "on chain traceability for conflict free minerals",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -304,6 +350,8 @@ FIELDS = {
    "t": "energy",
    "title": "Sodium-ion battery",
    "idea": "a sodium ion battery without lithium or cobalt",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -311,6 +359,8 @@ FIELDS = {
    "t": "biotech",
    "title": "Fermented protein",
    "idea": "precision fermented dairy protein",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live",
    "unlock": "Precision fermentation synthesizes materials domestically."
   },
@@ -326,6 +376,8 @@ FIELDS = {
    "t": "pqc",
    "title": "Supply ledger",
    "idea": "a post-quantum secure supply chain ledger",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -348,6 +400,8 @@ FIELDS = {
    "t": "quantum",
    "title": "Quantum course",
    "idea": "a quantum computing course for teenagers",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -363,6 +417,7 @@ FIELDS = {
    "title": "Cognitive healthspan",
    "idea": "a supplement that extends cognitive healthspan",
    "feature": "/companies",
+   "door": "companies",
    "status": "next",
    "unlock": "Biotech extends cognitive healthspan."
   },
@@ -371,6 +426,8 @@ FIELDS = {
    "t": "materials",
    "title": "Machining glove",
    "idea": "a smart glove that teaches precision machining",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -378,6 +435,8 @@ FIELDS = {
    "t": "pqc",
    "title": "PQC course",
    "idea": "a post-quantum cryptography course for developers",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -385,6 +444,8 @@ FIELDS = {
    "t": "ai",
    "title": "Neighbor answers",
    "idea": "an AI tool that answers neighbors questions about a new project",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -399,6 +460,8 @@ FIELDS = {
    "t": "quantum",
    "title": "Random key",
    "idea": "a quantum random number generator USB key",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -406,6 +469,8 @@ FIELDS = {
    "t": "energy",
    "title": "Town microreactor",
    "idea": "a zero emission microreactor for a town",
+   "feature": "/companies",
+   "door": "companies",
    "status": "next",
    "live_part": "passive cooling",
    "unlock": "Zero-emission nuclear and passive cooling remove noise, heat and pollution concerns."
@@ -422,6 +487,8 @@ FIELDS = {
    "t": "materials",
    "title": "Quiet module",
    "idea": "a quiet passive cooled data center module",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live"
   },
   {
@@ -429,6 +496,8 @@ FIELDS = {
    "t": "pqc",
    "title": "Safe messaging",
    "idea": "a post-quantum encrypted messaging app",
+   "feature": "/companies",
+   "door": "companies",
    "status": "live",
    "unlock": "Post-quantum security gives zero-trust protection for utilities and national infrastructure."
   }

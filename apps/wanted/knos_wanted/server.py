@@ -476,6 +476,10 @@ def make_handler(state: State):
                        "mcp_flow": {k: mcp.get(k) for k in ("mode", "label", "reason")}}
             else:
                 top = {"no_key_behaviour": "every check answers CANNOT_DECIDE (" + check.NO_EVIDENCE + "); pre-orders never open"}
+            from . import qloo_harness
+            hz = qloo_harness.harness()
+            rest = {**rest, "harness_first": {"surface": qloo_harness.SURFACE, "on": hz.enabled(), "answered": hz.answered,
+                                              "rule": "a call goes through the harness when every parameter maps onto a harness tool; else REST"}}
             return {**mcp, **top, "qloo_rest": rest, "preorders": pf, "record_anchor": state.last_anchor,
                     "x402": {"ready": x402.ready(), "route": "/api/x402/report?hash=<report>", "price": f"{x402.PRICE_UNITS} test unit per read"},
                     "fees": preorder.fee_line(), "auth": auth.config(),
@@ -826,6 +830,8 @@ def serve(host: str | None = None, port: int | None = None) -> None:
     threading.Thread(target=lambda: preorder.preflight_status(force=True), daemon=True).start()   # the money path, simulated
     threading.Thread(target=tasks.available, daemon=True).start()        # seeds the demo round when no round is open
     valley.start_sweeper()                 # missed milestone deadlines: refund + reopen, every KNOS_VALLEY_SWEEP_S seconds
+    from . import qloo_harness
+    threading.Thread(target=qloo_harness.harness().warm, daemon=True, name="qloo-harness-warm").start()   # Qloo's harness, started before the first check
     front.start(state)                     # the seeded research products (a wiped disk never shows an empty app)
     httpd = ThreadingHTTPServer((host, port), make_handler(state))
     rest_ok, rest_why = state.rest.ready()

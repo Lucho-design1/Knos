@@ -90,6 +90,7 @@ const ids = (params) => Object.entries(params || {}).filter(([k, v]) => /entit|t
       <dt>Ids</dt><dd>${ids(c.params).map(([k, v]) => `<code>${esc(k)}=${esc(v)}</code>`).join(" ") || "none"}</dd>
       <dt>Result</dt><dd>${esc(c.excerpt || "")}</dd>
       <dt>When</dt><dd>${esc(c.at || "")}${c.cached ? " (from the server's cache)" : ""}</dd>
+      ${c.surface ? `<dt>Asked through</dt><dd>${esc(c.surface)}</dd>` : ""}
       <dt>Limit</dt><dd>aggregate taste, not causal, not about a person</dd></dl></li>`).join("");
   if (location.hash) { const e = document.querySelector(location.hash); if (e) e.scrollIntoView(); }
 })();
