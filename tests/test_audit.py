@@ -258,7 +258,7 @@ def test_knos_audit_export_and_verify(capsys, world, tmp_path):
 def test_a_history_the_cluster_did_not_give_whole_is_refused_unless_partial(capsys, world):
     world.record = records.Record(month(), unread=2, limit=1000)
     rc, out, err = run(capsys, "audit", "export", "--owner", str(ACME), "--to", "2026-09-30")
-    assert rc == 1 and "did not give the escrow's whole history" in out and "--partial" in out and "2 transactions could not be read" in err
+    assert rc == 1 and "did not give the payment program's whole history" in out and "--partial" in out and "2 transactions could not be read" in err
     rc, out, err = run(capsys, "audit", "export", "--owner", str(ACME), "--to", "2026-09-30", "--partial")
     assert rc == 0 and audit.parse(out)[0]["partial"] == 1 and "partial: not a head to compare" in err and audit.verify(out) == []
 
@@ -492,7 +492,7 @@ def test_knos_audit_show_owed_and_a_finance_format(capsys, world, tmp_path):
     rc, out, _ = run(capsys, "audit", "show", "Nowhere", "--chain-lines-only")
     assert rc == 1 and "shows no order, bounty or deliverable Nowhere" in out
     rc, out, _ = run(capsys, "audit", "owed", "--payee", "dev1", "--to", "2026-09-30")
-    assert rc == 0 and out.startswith("Owed to dev1, from the escrow's own records on devnet") and "in a review window until 2026-10-24T00:00:00Z" in out
+    assert rc == 0 and out.startswith("Owed to dev1, from the payment program's own records on devnet") and "in a review window until 2026-10-24T00:00:00Z" in out
     rc, out, _ = run(capsys, "audit", "owed", "--payee", "8006", "--json")
     assert rc == 0 and json.loads(out)[0]["reason"] == "held for a wallet"
     from knos import exports

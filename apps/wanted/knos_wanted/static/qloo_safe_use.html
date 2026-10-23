@@ -48,7 +48,6 @@
         <a href="https://drexthealpha.github.io/Knos/#install">Install</a>
         <a href="https://drexthealpha.github.io/Knos/#records">Records</a>
         <a href="https://drexthealpha.github.io/Knos/#network">Numbers</a>
-        <a href="https://drexthealpha.github.io/Knos/#judges">Check every claim yourself</a>
         <a href="https://drexthealpha.github.io/Knos/faq.html">Questions</a>
       </div>
     </div>
@@ -63,7 +62,7 @@
 <!-- /k-bar -->
 <main class="wrap">
   <h1>How Knos uses Qloo safely</h1>
-  <p>Each rule of the <a href="https://github.com/qloo/qloo-hackathon-kit/tree/main/docs" rel="noopener">Qloo developer kit</a>,
+  <p>Each rule Qloo sets for developers,
     the code that keeps it, and the test that checks it.</p>
   <h2 id="safe-use">SAFE_USE.md</h2>
   <details class="su-fold"><summary>7 rules, each kept in code and tested</summary>
@@ -93,8 +92,8 @@
   <h2 id="api-access">API_ACCESS.md</h2>
   <details class="su-fold"><summary>6 rules, each kept in code and tested</summary>
   <table class="su" id="su-api"><thead><tr><th scope="col">Rule</th><th scope="col">In Knos</th><th scope="col">Checked by</th></tr></thead><tbody>
-  <tr id="r-credential"><td data-h="Rule">An event-issued, individual credential; never shared, never in source control, a browser app, a public MCP configuration or a recording.</td>
-    <td data-h="In Knos">One event key, held as a secret of the hosted server. The front door and the app's pages never hold it: they ask the server, which asks Qloo. The public <code>/mcp</code> needs no Qloo key from anyone.</td>
+  <tr id="r-credential"><td data-h="Rule">An individual credential; never shared, never in source control, a browser app, a public MCP configuration or a recording.</td>
+    <td data-h="In Knos">One key, held as a secret of the hosted server. The front door and the app's pages never hold it: they ask the server, which asks Qloo. The public <code>/mcp</code> needs no Qloo key from anyone.</td>
     <td data-h="Checked by"><code>test_qloo_safe_use</code></td></tr>
   <tr id="r-errors"><td data-h="Rule">A clear authentication or rate-limit error, never a silent fallback to another endpoint or credential.</td>
     <td data-h="In Knos"><code>qloo_rest.Client.get</code>: HTTP 401 or 403 says Qloo refused the key; 429 says the rate limit was reached. The report then says "NO QLOO EVIDENCE" and "cannot decide". There is no other key and no other endpoint to fall back to.</td>

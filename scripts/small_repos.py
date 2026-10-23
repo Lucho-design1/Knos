@@ -1,14 +1,14 @@
 """The small repositories a user makes from Knos's files, each written from this repository's own files, byte for
 byte, with nothing in them that is not derived from the sources here.
 
-Since 0.3.31 (one repository: docs/reference/MONOREPO.md) the four a user copies live in this repository as folders,
+Since 0.3.31 (one repository) the four a user copies live in this repository as folders,
 templates/<name>/ (FOLDED): the site and `knos claim` give the user a link that creates an EMPTY repository of their
 own and links (or `gh` calls) that add these files to it; nothing is generated from a GitHub template repository any
 more, and Knos creates no repository unless the user runs the command that does. drexthealpha/knos-task, knos-attest,
-knos-claim and knos-claim-org on GitHub are the old homes: frozen, kept until the founder deletes them.
-Since the 0.3.34 branch (docs/reference/CUTOVER-0331.md section 4) the playground is Knos's own issues too: `fold`
+knos-claim and knos-claim-org on GitHub are the old homes, frozen.
+Since the 0.3.34 branch the playground is Knos's own issues too: `fold`
 writes its files into this repository (playground_in_knos). drexthealpha/knos-playground is its old home: frozen at
-0.3.28's files, kept until its funded tasks are paid or refunded and the founder deletes it.
+0.3.28's files, kept until its funded tasks are paid or refunded.
 
     python scripts/small_repos.py list                 the repositories and what each is for
     python scripts/small_repos.py fold                 write templates/<name>/ for every folded one, and the playground
@@ -91,10 +91,10 @@ For a task:
 
 1. You open an issue that says what you want built, and add the acceptance files the form made
    (`.knos/acceptance/<issue>/`): pairs of an input and the answer it must get.
-2. You fund the issue with a comment, `/knos fund <amount> checks: none auto`. The money goes into an escrow on Solana, and the
-   terms are fixed at that moment.
+2. You fund the issue with a comment, `/knos fund <amount> checks: none auto`. The money is held on Solana until the proof passes, and
+   the terms are fixed at that moment.
 3. Anyone opens a pull request that solves it. Knos runs the solution on every recorded input in a sandbox. When every
-   answer matches, GitHub signs that it did, and the escrow pays the author. No merge and no decision of yours is
+   answer matches, GitHub signs that it did, and the payment program pays the author. No merge and no decision of yours is
    needed, and nobody can change the terms afterwards.
 
 The files in `.github/workflows/` are copied from
@@ -111,14 +111,14 @@ Try [Knos](https://github.com/drexthealpha/Knos) from both sides with a GitHub a
 installed, and no wallet is needed.
 
 **Fund a test task.** [Open the issue](https://github.com/drexthealpha/knos-playground/issues/new?template=fund-a-test-task.md)
-and press **Submit new issue**. Its text holds the line `{fund}`: 5 test USDC from the devnet faucet go into an
-escrow on Solana for that issue, and Knos answers in a comment.
+and press **Submit new issue**. Its text holds the line `{fund}`: 5 test USDC from the devnet faucet are held on
+Solana for that issue until the proof passes, and Knos answers in a comment.
 
 **Take one.** Pick an [open issue](https://github.com/drexthealpha/knos-playground/issues),
 [edit `{task}`](https://github.com/drexthealpha/knos-playground/edit/main/{task}) in the browser so that it prints the
 words of a line in reverse order, and open the pull request with `Closes #<the issue's number>` in its description.
 The checks in `.knos/acceptance/<number>/` run your file as a separate process and compare what it prints. When every
-answer matches, GitHub signs that it did and the escrow pays you: to the wallet you bound, or held for your account
+answer matches, GitHub signs that it did and the payment program pays you: to the wallet you bound, or held for your account
 until you bind one. Nobody merges and nobody decides.
 
 **Take a funded task.** Issues labelled [`knos-funded`](https://github.com/drexthealpha/knos-playground/issues?q=is%3Aissue+is%3Aopen+label%3Aknos-funded)
@@ -156,7 +156,7 @@ contact_links:
 
 PULL_TEMPLATE = """Closes #
 
-<!-- Put the number of the task you took after the # above. That is how the escrow knows which task this solves. -->
+<!-- Put the number of the task you took after the # above. That is how the payment program knows which task this solves. -->
 """
 
 STARTER = """# The playground's starter task: print the words of one line in reverse order, one space between them.
@@ -221,7 +221,7 @@ who did the work can ask for the payment himself. These files are kept in Knos i
    `knos settle --neutral <pull request url>`, which starts the same run.
 3. The run reads GitHub's public record of that pull request and the order on Solana. If the record supports it,
    GitHub signs a statement that names the order, the pull request and the commit, and a relayer carries it to
-   Solana, where the escrow pays.
+   Solana, where the payment program pays.
 
 It needs no secret, checks out no code and changes nothing anywhere. What it can do is written at the top of
 [the file](.github/workflows/knos-attest.yml), and why a run started by hand in your own repository is trusted.
@@ -492,7 +492,7 @@ def files(name: str, board: dict[int, str] | None = None) -> dict[str, bytes]:
     return out
 
 
-# The playground in Knos's own issues (the 0.3.34 branch; docs/reference/CUTOVER-0331.md section 4): what a stranger's
+# The playground in Knos's own issues (the 0.3.34 branch): what a stranger's
 # issue and pull request there need, written into this repository's own tree by `fold`. What Knos holds already is not
 # written again: its two callers (.github/workflows/knos.yml and knos-check.yml are the examples, byte for byte:
 # scripts/pinned_workflows.py check), the faucet (the worker's own `faucet` job runs in Knos), its issue chooser's
@@ -539,7 +539,7 @@ def wrong(name: str, out: dict[str, bytes]) -> list[str]:
         whose, key = ("a person's", "claim_sha") if name == "knos-claim" else ("an organisation's", "claim_sha_org")
         for ref in re.findall(r"knos-oidc-rotate/\.github/workflows/claim\.yml@(\w+)", text):
             if ref != ids[key]:
-                said.append(f"{rel} calls the claim workflow at {ref}, and the escrow takes {whose} claim at {ids[key]}")
+                said.append(f"{rel} calls the claim workflow at {ref}, and the payment program takes {whose} claim at {ids[key]}")
     return said
 
 
@@ -563,7 +563,7 @@ def settings(name: str, apply: bool = False, run=subprocess.run) -> int:
             if got.returncode:
                 print(f"GitHub refused it: {(got.stderr or got.stdout).strip()[:300]}")
                 return 1
-    template = SETTINGS[name][0][2]["is_template"]      # the old homes on GitHub, until the founder deletes them
+    template = SETTINGS[name][0][2]["is_template"]      # the old homes on GitHub, frozen
     print(f"{'Set' if apply else 'A dry run: nothing was sent. With --apply this sets'} {OWNER}/{name}: "
           f"{'a template repository' if template else 'not a template'}, issues on.")
     return 0

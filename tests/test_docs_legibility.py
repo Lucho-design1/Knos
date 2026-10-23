@@ -1,4 +1,4 @@
-"""Docs legibility (TASK-CHAMPION T6): no prose paragraph of the README or docs/ runs past 60 words, the generated documents
+"""Docs legibility: no prose paragraph of the README or docs/ runs past 60 words, the generated documents
 included (scripts/split_paragraphs.py --strict; a generator splits its own)."""
 import subprocess
 import sys

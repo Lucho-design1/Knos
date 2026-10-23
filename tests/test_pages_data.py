@@ -627,7 +627,7 @@ def test_the_documents_and_the_site_state_one_merge_to_paid(tmp_path):
     bench = json.loads((tmp_path / "docs" / "bench.json").read_text(encoding="utf-8"))
     table = bd.devnet(bench["devnet"])
     assert slots.read_text(encoding="utf-8") == "From merge to paid took 55 seconds at the median, over 2 payments.\n"
-    assert "(n) | 2 |" in table and "(p50) | 55 |" in table and "(p95) | 100 |" in table and "second deployment's escrow | 2 |" in table
+    assert "(n) | 2 |" in table and "(p50) | 55 |" in table and "(p95) | 100 |" in table and "second deployment's payment program | 2 |" in table
     assert m["definition"] in table and f"| {iso(T0)[:10]} |" in table           # the definition is printed next to the number
     # ... and a document, a fact or a site file that says another number is named
     edits = {"docs/bench.json": lambda d: d["devnet"]["stats"]["latency"]["merge_to_paid"].__setitem__("p95", 99),

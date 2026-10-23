@@ -1,4 +1,4 @@
-"""The Qloo demand families: one table that every Knos interface reads (TASK-QLOO-FULL B and C).
+"""The Qloo demand families: one table that every Knos interface reads.
 
 Each family answers one demand question before money moves. Each field is ONE typed name, the same everywhere:
 the app's controls (the family's plain control first, the rest under "Advanced"), the front door's demand check,

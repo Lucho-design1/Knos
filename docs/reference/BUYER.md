@@ -7,7 +7,7 @@
 1. Write the spec.
 2. Keep the hidden tests outside every repository.
 3. `knos task post`: the issue, the seal and the funding command.
-4. `knos fund-wallet`: the money goes into escrow.
+4. `knos fund-wallet`: the money is held until the proof passes.
 5. `knos referee works`: the sealed tests judge the delivery.
 *Five steps from a spec to a verdict; only step 4 moves money.*
 
@@ -60,14 +60,14 @@ knos task judge --seal ~/hidden/seal-N.json --hidden ~/hidden/my-task --commit <
   `knos task post` and `calibrate` warn when a bundle names one of them.
 - `judge` builds the base (`git archive` of the commit) and the delivered tree (the patch applied with `git apply`),
   then runs `knos referee works` on them.
-- A `/knos take` reservation never outlasts the escrow: `knos fund-wallet --days 3` reserves for 3 days at most.
+- A `/knos take` reservation never outlasts the held money: `knos fund-wallet --days 3` reserves for 3 days at most.
 
 ## What is not there yet
 
-- **Payment needs GitHub Actions.** An escrow pays only on a signed run of the pinned `prove.yml` on a merged pull
+- **Payment needs GitHub Actions.** Held money pays only on a signed run of the pinned `prove.yml` on a merged pull
   request. Work delivered as a patch, or in a repository without Actions minutes, cannot be paid by the program; it
   goes back to the funder at the deadline. Our own 0.3.31 payouts were shown in LiteSVM, labelled so.
-- **The seal is not in the escrow.** `knos fund-wallet` locks check names and paths; the seal's hash is public on the
+- **The seal is not in the payment program.** `knos fund-wallet` locks check names and paths; the seal's hash is public on the
   issue, not part of the on-chain terms.
 - **A document-only delivery is refused** by the cheat rule `no_source_change`: judge a report together with a
   script, or wait for a document kind of seal.

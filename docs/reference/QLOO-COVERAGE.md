@@ -8,7 +8,7 @@ names every interface reads). CI runs `--check`, so this file cannot drift from 
 
 Qloo answers the demand wall before money moves. The 2.08x IDT result is Knos's own (clear briefs), not Qloo's.
 
-## The families (TASK-QLOO-FULL B)
+## The families
 
 | Family | Question | Plain control | Fields |
 |---|---|---|---|

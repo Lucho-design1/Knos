@@ -51,7 +51,7 @@ jobs:
       - name: /stats.json, counted from devnet
         # --budget (seconds a program): a build with no cache to restore (the first, or one after GitHub dropped it)
         # reads the whole history at once. A runner reads the public RPC at under one transaction a second (10 Oct 2026:
-        # 209 in 300 s, while the second escrow had 1,427); a build that restored the cache asks only for what is new.
+        # 209 in 300 s, while the second payment program had 1,427); a build that restored the cache asks only for what is new.
         run: python scripts/network_stats.py --out _site/stats.json --events-out _events.json --cache _history/history.json --budget 3600
         env:
           GH_TOKEN: ${{ github.token }}       # without it GitHub is read unauthenticated, and merge-to-paid has no merges to time

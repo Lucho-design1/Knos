@@ -157,7 +157,7 @@ def passkey_fund_reply(r: dict) -> str:
         money = (lambda n: f"{_units(n)} test USDC") if test else (lambda n: f"{n} units of the test token {r.get('mint')}")
         where = f"issue #{r['issue']}" if r.get("issue") else "a private order"
         fee = f", and the wallet paid {money(r['fee'])} fee on top" if r.get("fee") is not None else ""
-        return (f"Knos: funded from a passkey wallet. {money(r['amount'])} is in escrow for {where}{fee}. The order is `{r['order']}` on Solana devnet. "
+        return (f"Knos: funded from a passkey wallet. {money(r['amount'])} is held for {where}{fee}. The order is `{r['order']}` on Solana devnet. "
                 + (f"If it is not paid by {_when(r['deadline'])}, anyone can send it back to the wallet. " if r.get("deadline") else "")
                 + "Nobody can change its terms now. The funder paid no SOL: the relay paid the transaction and the order's rent.")
     again = " The same line can be posted again in a few minutes." if r.get("retry") else ""

@@ -38,7 +38,7 @@ that the tests run, to show that the checks refuse them ([docs/reference/TAMPER.
 
 | example | what it shows | for |
 |---|---|---|
-| [agent_pays_agent/](agent_pays_agent) | One agent pays another from escrow, only when the work is accepted. | an agent builder |
+| [agent_pays_agent/](agent_pays_agent) | One agent pays another from held money, only when the work is accepted. | an agent builder |
 | [x402_attested/](x402_attested) | `knos-order`, Knos's proposed scheme for x402 (paying over HTTP with status 402), runnable. | an agent or API builder |
 | [record_api/](record_api) | A server that sells a supplier's record as a paid lookup. | someone selling data to agents |
 

@@ -55,7 +55,7 @@ def document(base: str = "https://knos.onrender.com") -> dict:
     return {"openapi": "3.1.0",
             "info": {"title": "Knos", "version": _version(),
                      "description": "Knos carries research across the valley of death: each step is paid only on verified proof. Demand checks on Qloo, Ready briefs, milestone "
-                                    "escrow on Solana and pay on proof; devnet, test money, no customers yet. Agents: the same tools over MCP at /mcp."},
+                                    "money held on Solana until the proof passes; devnet, test money, no customers yet. Agents: the same tools over MCP at /mcp."},
             "servers": [{"url": base}],
             "components": {"securitySchemes": {"session": {"type": "http", "scheme": "bearer",
                                                            "description": "the session token a sign-in returns (passkey, SSO, Google, ORCID, email, guest)"}}},

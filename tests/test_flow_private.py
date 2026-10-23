@@ -173,8 +173,8 @@ def test_a_private_order_is_funded_from_the_attestor_and_its_salt_and_terms_stay
     assert (kept["answers"], kept["order"], kept["salt"]) == (w.hub.comments[ISSUE][0]["id"], address, SALT.hex())
     assert json.loads(raw)["checks"][0]["name"] == "unit-suite" and json.loads(raw)["paths"] == ["src/secret_module/**"]
     assert json.loads(raw)["policy"] == policy.digest(policy.load(POLICY))
-    assert reply.startswith(flow.ANSWER.format(kept["answers"]) + f"\nKnos: 20.00 test USDC from the balance `{w.balance}` is in escrow for issue "
-                            f"#{ISSUE} as a private work order ([order on Solana](https://explorer.solana.com/address/{address}?cluster=devnet)), ")
+    assert reply.startswith(flow.ANSWER.format(kept["answers"]) + f"\nKnos: 20.00 test USDC from the balance `{w.balance}` is held for issue "
+                            f"#{ISSUE} as a private work order until the proof passes ([order on Solana](https://explorer.solana.com/address/{address}?cluster=devnet)), ")
     assert f"The funder pays Knos's fee of {P('0.50', '0.06')} on top" in reply and "`unit-suite` (the checks you named)" in reply
     assert reply.endswith(f"It is a private order: Solana shows its amount and, once it is paid, who was paid and the commit that was accepted, and never "
                           f"this repository, this issue or these terms. {ATTESTOR}'s workflow pays it after the merge, on its schedule or started by "
@@ -182,7 +182,7 @@ def test_a_private_order_is_funded_from_the_attestor_and_its_salt_and_terms_stay
     # in public: one comment on the attestor's "knos tokens" issue, with the line the relay expects (128 hex: scope, terms hash)
     [said] = pub.comments
     assert [i["title"] for i in pub.issues] == ["knos tokens"] and said["body"].startswith(f"knos-fund: {w.relay.submitted[0][0]}\nknos-terms: {(scope + hashed).hex()}\n")
-    assert pub.log[0].startswith(f"knos-relay fund {ATTESTOR}#1 ") and "is in escrow as a private work order" in pub.log[0]
+    assert pub.log[0].startswith(f"knos-relay fund {ATTESTOR}#1 ") and "is held as a private work order" in pub.log[0]
     # the schedule finds the same comment and leaves it: it was answered. A new comment is a new order, with a salt of its own
     assert flow.command(run(w, pub, SCHEDULE)) == 0 and len(w.chain.orders()) == 1 and len(w.hub.comments[ISSUE]) == 3 and len(w.signer.asked) == 1
     assert "answered 0 funding comments, funded 0 private orders" in (w.tmp / "summary.md").read_text(encoding="utf-8")

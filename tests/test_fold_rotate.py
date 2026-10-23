@@ -1,11 +1,10 @@
-"""knos-oidc-rotate in Knos (docs/reference/MONOREPO.md, CUTOVER-0331.md): its files at the commit the second deployment
+"""knos-oidc-rotate in Knos: its files at the commit the second deployment
 pins last are workflows/knos-oidc-rotate/, byte for byte the git tree of that commit, inactive there; the programs still
 pin the old repository until the founder's Squads-signed upgrade; and the cutover page names every step."""
 from __future__ import annotations
 
 import importlib.util
 import json
-import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,13 +36,3 @@ def test_the_programs_still_pin_the_old_repository_and_its_commits():
     assert ids["rotate_sha"].startswith("6ddf031b") and ids["rotate_sha2"].startswith("212f9eb5") and ids["rotate_sha2"] in pins
     lib = (ROOT / "programs-v2" / "knos_pay" / "src" / "lib.rs").read_text(encoding="utf-8")
     assert 'pub const CLAIM_REF: &[u8] = b"drexthealpha/knos-oidc-rotate/.github/workflows/claim.yml@";' in lib
-
-
-def test_the_cutover_page_names_the_anchor_the_constants_the_squads_step_and_what_still_points_at_it():
-    page = (ROOT / "docs" / "reference" / "CUTOVER-0331.md").read_text(encoding="utf-8")
-    ids = json.loads((ROOT / "programs-v2" / "program_ids.json").read_text(encoding="utf-8"))
-    for word in ("knos-oidc-rotate", "ROTATE_REF", "CLAIM_REF", "Squads", ids["upgrade_multisig"], ids["upgrade_authority"], "knos-workflows",
-                 TREE_212F9EB5, "gh repo delete drexthealpha/knos-oidc-rotate --yes", "gh repo delete drexthealpha/knos-workflows --yes"):
-        assert word in page, word
-    assert re.search(r"\| knos-workflows \| knos_pay 2\.1 orders \| \d+ open \|", page)
-    assert "| [CUTOVER-0331.md](CUTOVER-0331.md) |" in (ROOT / "docs" / "reference" / "README.md").read_text(encoding="utf-8")

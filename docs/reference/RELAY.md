@@ -100,7 +100,7 @@ Where each is written:
   ("Knos: accepted, settling.") before the token goes anywhere, and edits it again into the comment a settlement has
   always written (paid, held, or why not) with the time of every state under it, then once more when the payment is
   finalized. It is never a new comment per state: one settlement is one comment creation. A pull request with nothing
-  in escrow still gets no comment from a push. Under the words the comment carries one line for people (each state,
+  held still gets no comment from a push. Under the words the comment carries one line for people (each state,
   its UTC time, the seconds since the merge) and one for programs:
   `<!-- knos-states since=<t> received=<t> accepted=<t> submitted=<t> confirmed=<t> finalized=<t> tx=<signature>`
   (Unix seconds; a state not reached is absent). `web/live.js` shows the five states of the canary's latest round
@@ -602,7 +602,7 @@ Three things follow, and one does not.
   seconds and cannot be split from those files. `scripts/latency_stages.py` splits a payment only where its log line
   carries the stage fields (`workflow=`, `wait=`, `chain=`), and the 164 s payment's line does not.
 
-`scripts/latency_stages.py` on the live log (6 October 2026, 14:58 to 15:06 UTC; the escrows' history and the
+`scripts/latency_stages.py` on the live log (6 October 2026, 14:58 to 15:06 UTC; the payment programs' history and the
 block times read from devnet's public endpoint by the script itself, `--rpc`). Each row is measured only where
 the line carries it, so each has its own n:
 

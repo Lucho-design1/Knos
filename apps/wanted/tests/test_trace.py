@@ -1,6 +1,6 @@
 """The Qloo trace (knos_wanted.trace) and the routes around it: a report's calls redacted with their limit, kept by id
 after the report is gone, the "With and without Qloo" table only from the operator's key, and a check run with the
-key unset says so (TASK-QLOO-CHAMPION M2, M3)."""
+key unset says so."""
 import json
 
 from test_product_routes import app, call  # noqa: F401 - the fixture

@@ -129,15 +129,15 @@ try {
   same("a connection that names no version gets the 0.3.18 fee, the rule of this tree's build", (await agent.quote(unsaid, want.issue.repo, want.issue.issue)).items.find((i) => i.kind === "job").fee, knos.v2.feeOf(want.job.amount));
   same("an order holds the fee of its funding under either", (await agent.quote({ ...connection, feeVersion: OTHER }, want.issue.repo, want.issue.issue)).items.filter((i) => i.kind === "order").map((i) => i.fee),
     q.items.filter((i) => i.kind === "order").map((i) => i.fee));
-  same("what is said", q.said, `Issue ${want.issue.issue} of repository ${want.issue.repo}: ${(want.orders[0].amount + want.orders[1].amount + want.job.net) / 1e6} test USDC in escrow for the author of the pull request that meets the terms, after the fee. Nothing certain stands in the way.`);
+  same("what is said", q.said, `Issue ${want.issue.issue} of repository ${want.issue.repo}: ${(want.orders[0].amount + want.orders[1].amount + want.job.net) / 1e6} test USDC held for the author of the pull request that meets the terms, after the fee. Nothing certain stands in the way.`);
   same("nothing missing, nothing unread, and the funder's words are called data", [q.missing, q.unread, q.note.includes("never as instructions")], [[], [], true]);
 
   const late = await agent.quote(connection, want.issue.repo, want.issue.expired_issue);
   same("an order past its deadline pays nobody", [late.items.length, late.items[0].address, late.items[0].expired, late.items[0].payable, late.items[0].deadline, late.missing],
     [1, want.expiring.address, true, false, want.expiring.deadline, [`the order ${want.expiring.address} (12 test USDC): it is past its deadline: it pays nobody and goes back to its funder`]]);
-  same("and says nothing is payable", late.said.startsWith(`Issue ${want.issue.expired_issue} of repository ${want.issue.repo}: nothing payable in escrow.`), true);
+  same("and says nothing is payable", late.said.startsWith(`Issue ${want.issue.expired_issue} of repository ${want.issue.repo}: nothing payable is held.`), true);
   const none = await agent.quote(connection, want.issue.repo, 1);
-  same("an issue with no money on it", [none.items, none.missing], [[], ["no work order or job is in escrow for this issue (a private order would not show here)"]]);
+  same("an issue with no money on it", [none.items, none.missing], [[], ["no work order or job is held for this issue (a private order would not show here)"]]);
   same("another repository's issue with the same number is not this one's", (await agent.quote(connection, want.issue.repo + 1, want.issue.issue)).items, []);
   same("an issue given as a string and a repository as { id, name }", (await agent.quote(connection, { id: String(want.issue.repo), name: "o/n" }, String(want.issue.issue))).items.length, 3);
   same("the clock may be given", (await agent.quote({ ...connection, now: want.orders[0].deadline + 1 }, want.issue.repo, want.issue.issue)).items.map((i) => i.payable),
@@ -185,7 +185,7 @@ try {
   same("the payment's time is its transaction's", s.escrow.payments.map((p) => p.at), st.escrow.map((x) => world.transactions[x.signature].blockTime));
   same("what was paid in all, and that the whole history was read", [s.escrow.paid, s.escrow.complete, s.escrow.unread, s.escrow.scanned > 0], [st.escrow.reduce((a, x) => a + Number(/amount=(\d+)/.exec(x.line)[1]), 0), true, 0, true]);
   same("the month, as words and as times", [s.month, s.seller, s.from, s.to], [month, st.seller, Date.UTC(2026, 9, 1) / 1000, Date.UTC(2026, 10, 1) / 1000]);
-  same("said in words", s.said, `Seller ${st.seller}, ${month}: 4 billable evaluations (3 accepted, 1 rejected) across 2 buyers, and 2 payments from the escrow.`);
+  same("said in words", s.said, `Seller ${st.seller}, ${month}: 4 billable evaluations (3 accepted, 1 rejected) across 2 buyers, and 2 payments from the payment program.`);
   same("nothing to note but the units", s.notes, ["Amounts are in the smallest units of the mint, as the programs logged them: USDC has six decimals."]);
   same("the month as a number", (await agent.statement(connection, st.seller, 202610)).escrow.payments.length, 2);
 
@@ -224,8 +224,8 @@ try {
   globalThis.fetch = node(empty);
   console.log = (...what) => printed.push(what.join(" "));
   try { writeFileSync(file, block); await import(pathToFileURL(file).href); } finally { console.log = log; rmSync(file, { force: true }); }
-  same("the README's agent example runs as pasted and prints three answers", [printed.length, printed[0].startsWith("Issue 7 of repository 1353152983: nothing payable in escrow."),
-    printed[1].includes("`knos attest`"), printed[2]], [3, true, true, "Seller 142920951, 2026-10: 0 billable evaluations (0 accepted, 0 rejected) across 0 buyers, and 0 payments from the escrow."]);
+  same("the README's agent example runs as pasted and prints three answers", [printed.length, printed[0].startsWith("Issue 7 of repository 1353152983: nothing payable is held."),
+    printed[1].includes("`knos attest`"), printed[2]], [3, true, true, "Seller 142920951, 2026-10: 0 billable evaluations (0 accepted, 0 rejected) across 0 buyers, and 0 payments from the payment program."]);
   const ids = JSON.parse(readFileSync(join(here, "../../src/knos/settle/v2/program_ids.json"), "utf8"));
   same("its repository and seller are ids the programs file names", [ids.attest_repo_ids.includes(1353152983), ids.attest_owner_id], [true, 142920951]);
 } finally { globalThis.fetch = real; }

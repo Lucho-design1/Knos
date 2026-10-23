@@ -86,7 +86,7 @@ class PCBWay(Adapter):
         if not (p.get("PcbFileUrl") or p.get("DataZipFile")) or not p.get("PcbFileName"):
             raise LabError("PlaceOrder needs the Gerber files: PcbFileUrl (or DataZipFile) and PcbFileName")
         body = {**p, "BuildDays": p.get("BuildDays") or (quote.turnaround_days if quote else None), "PONumber": escrow_ref[:50],
-                "Note": "paid from a Knos escrow on the LAB verdict"}
+                "Note": "paid from money Knos holds until the LAB verdict"}
         _s, a, _h = self._call("POST", "/api/Pcb/PlaceOrder", body, spends=True)
         self._ok(a, "the order")
         return Order(self.NAME, a["OrderNo"], escrow_ref, spec.hash(), "submitted", self.is_fixture, self.label, a)

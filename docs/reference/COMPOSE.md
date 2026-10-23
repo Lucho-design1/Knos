@@ -1,7 +1,7 @@
 # Building on Knos
 
 Knos is three things other software can use without asking anyone: a program that verifies an OIDC token on Solana (`knos-oidc`), an
-escrow that pays on such a token (`knos_pay`), and the public record both leave. Nothing below needs a key of Knos's, an account with
+the payment program that pays on such a token (`knos_pay`), and the public record both leave. Nothing below needs a key of Knos's, an account with
 Knos, or a change to the programs.
 
 Everything runs on devnet with test USDC; the programs are upgradeable only through a multisig with a public 8-day delay, until an
@@ -29,7 +29,7 @@ does not prove. [`examples/issuers`](../../examples/issuers) has one example per
 | let one agent pay another only when a third party accepted the work | the same scheme, two scripts with keys of their own and an evaluator; nothing is released on wrong work and the buyer is refunded at expiry | [`examples/agent_pays_agent`](../../examples/agent_pays_agent) (`tests/test_agent_pays_agent.py`): both endings on the simulator; the devnet run has not been made |
 | file, show or attest a settlement | [RECEIPT.md](RECEIPT.md): the acceptance receipt, its JSON Schema and vectors; [`scripts/sas_receipt.mjs`](../../scripts/sas_receipt.mjs) writes one as a Solana Attestation Service attestation | `tests/test_receipt.py` |
 | build a client in JavaScript or Python | [`sdk/settle`](../../sdk/settle) (one file, no dependency) and `knos.settle.v2`; the instructions and layouts are in [`idl/`](../../idl) | `sdk/settle/test.mjs`, `tests/test_idl.py` |
-| count accepted outcomes without escrow | `knos_meter` ([`programs-v2/knos_meter`](../../programs-v2/knos_meter)) reads tokens through the same interface crate | `tests/test_meter_chain.py` |
+| count accepted outcomes without held money | `knos_meter` ([`programs-v2/knos_meter`](../../programs-v2/knos_meter)) reads tokens through the same interface crate | `tests/test_meter_chain.py` |
 | pay a person who has no wallet app | `knos_passkey` ([`programs-v2/knos_passkey`](../../programs-v2/knos_passkey)): a wallet at an address a WebAuthn passkey derives; [`sdk/settle/passkey.js`](../../sdk/settle/passkey.js) and `knos.settle.v2.passkey` | `tests/test_passkey_chain.py`, `sdk/settle/passkey.test.mjs` |
 | list funded work, or show an account's or a repository's record | the static files the site publishes, written by [`scripts/pages_data.py`](../../scripts/pages_data.py): `bounties.json`, `u/<login>.json`, `r/<owner>/<repo>.json`, `badge/...`, `rank/...` | `tests/test_pages_data.py` |
 | let a coding agent find, take, fund and settle work | `knos mcp`: eighteen tools; the ones that act return the comment or transaction to send ([INSTALL.md](INSTALL.md)) | `tests/test_mcp.py` |

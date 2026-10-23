@@ -63,14 +63,14 @@ def _kp(v):
 def referees() -> list:
     raw = os.environ.get("KNOS_WANTED_REFEREE_KEYS", "")
     if not raw:
-        raise Unavailable("escrow unavailable on this server (no referee keys: KNOS_WANTED_REFEREE_KEYS)")
+        raise Unavailable("holding money is unavailable on this server (no referee keys: KNOS_WANTED_REFEREE_KEYS)")
     try:
         got = json.loads(raw) if raw.strip().startswith("[") else json.loads(Path(raw).expanduser().read_text(encoding="utf-8"))
         keys = [_kp(k) for k in got]
     except Exception:  # noqa: BLE001 - never echo the value
-        raise Unavailable("escrow unavailable on this server (KNOS_WANTED_REFEREE_KEYS is not a JSON list of 3 secret keys)") from None
+        raise Unavailable("holding money is unavailable on this server (KNOS_WANTED_REFEREE_KEYS is not a JSON list of 3 secret keys)") from None
     if len(keys) != 3 or len({str(k.pubkey()) for k in keys}) != 3:
-        raise Unavailable("escrow unavailable on this server (KNOS_WANTED_REFEREE_KEYS: 3 distinct keys)")
+        raise Unavailable("holding money is unavailable on this server (KNOS_WANTED_REFEREE_KEYS: 3 distinct keys)")
     return keys
 
 
@@ -86,12 +86,12 @@ def panel() -> tuple[int, list[str]]:
 def ready() -> tuple[bool, str]:
     from . import referee
     if not (os.environ.get("KNOS_WANTED_REFEREE_KEYS") or referee.enabled()) or not os.environ.get("KNOS_WANTED_DEVNET_KEYPAIR"):
-        return False, "escrow unavailable on this server"
+        return False, "holding money is unavailable on this server"
     try:
         escrow.knos()
         from knos.ideas import commit  # noqa: F401
     except Exception as why:  # noqa: BLE001
-        return False, f"escrow unavailable on this server ({type(why).__name__})"
+        return False, f"holding money is unavailable on this server ({type(why).__name__})"
     return True, "ok"
 
 
@@ -153,7 +153,7 @@ def of_report(report_hash: str) -> list[dict]:
 
 
 PREORDER_VIA = "pre-order signed by the buyer's passkey (test money)"
-FUNDER_VIA = ("funder money: a funder's escrow for this milestone (its own devnet order and claim id, beside the pre-orders; "
+FUNDER_VIA = ("funder money: a funder's money, held for this milestone (its own devnet order and claim id, beside the pre-orders; "
               "paid to the maker on proof, refunded after the deadline)")
 
 
@@ -308,7 +308,7 @@ def reserve_status(report: dict, held: dict | None = None) -> dict:
 
 
 class Settled(ValueError):
-    """The escrow order is closed on chain: knos_pay paid (or refunded) it, and a stage is paid once."""
+    """The order is closed on chain: knos_pay paid (or refunded) it, and a stage is paid once."""
 
 
 def chain_gate(rec: dict, led) -> None:
@@ -316,7 +316,7 @@ def chain_gate(rec: dict, led) -> None:
     and the program would refuse it too (no order account, nothing to pay)."""
     from solders.pubkey import Pubkey
     if led.account(Pubkey.from_string(rec["order"])) is None:
-        raise Settled(f"refused: the escrow order {rec['order']} is closed on devnet (already released or refunded); "
+        raise Settled(f"refused: the order {rec['order']} is closed on devnet (already released or refunded); "
                       "knos_pay pays a stage once")
 
 

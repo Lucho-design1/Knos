@@ -7,7 +7,7 @@ What it pays (config/fees.yaml, read through knos.money.fees_config; nothing her
                      price), the team's first `free_first` verifications free
     x402_check       per raw check an AGENT buys itself over x402 (exact scheme): paid on chain at the call, so the
                      invoice shows it as paid, never bills it again
-    bounty_platform  5% of a bounty the team funded in a knos_pay escrow; the program takes its 0.30% (at least 0.05)
+    bounty_platform  5% of a bounty the team funded in knos_pay (held until the proof passes); the program takes its 0.30% (at least 0.05)
                      at payout, the rest is invoiced off chain until a program upgrade carries it
 
 The usage record is an append-only JSONL file (one event a line, `record`), written by the flow that did the work
@@ -17,7 +17,7 @@ not billed. LiteSVM evidence is labelled and never billed.
 
     python -m knos.money.teams usage     --file usage.jsonl [--team T]
     python -m knos.money.teams invoice   --file usage.jsonl --team T [--month 2026-10] [--chain]
-    python -m knos.money.teams dashboard --file usage.jsonl --team T [--chain] [--out web/team_data.json]
+    python -m knos.money.teams dashboard --file usage.jsonl --team T [--chain] [--out <file>]
 """
 from __future__ import annotations
 
@@ -164,7 +164,7 @@ def invoice(events: Iterable[dict], team: str, month: str | None = None, *, chec
                           "why": "the agent paid it on chain when it called; never billed again"})
         elif ev["kind"] == "escrow_funded":
             ch = _on_chain(ev, check)
-            lines.append({"at": ev["at"], "agent": ev["agent"], "task": ev.get("task"), "line": "bounty funded into escrow", "usd": "0.00",
+            lines.append({"at": ev["at"], "agent": ev["agent"], "task": ev.get("task"), "line": "bounty funded, held until the proof passes", "usd": "0.00",
                           "held_usd": _q(_usd(ev.get("amount_units", 0), ev.get("decimals", 6))), **ch,
                           "why": "the team's own money, held by knos_pay until a verdict pays it or the deadline returns it: no charge"})
         elif ev["kind"] == "payout":
@@ -181,7 +181,7 @@ def invoice(events: Iterable[dict], team: str, month: str | None = None, *, chec
                           + ("" if ch["billable"] else "; not billed: this payout is not a confirmed devnet transaction")})
             due += usd
     return {"team": team, "month": month or "all", "currency": "USD", "lines": lines, "due_usd": _q(due),
-            "test_money": True, "pay_with": "USDC on Solana (x402 exact via the x402.org facilitator, or a knos_pay escrow); card and bank via Airwallex later (not built)",
+            "test_money": True, "pay_with": "USDC on Solana (x402 exact via the x402.org facilitator, or held by knos_pay until the proof passes)",
             "note": "devnet: every amount is test money, and Knos's revenue is 0"}
 
 

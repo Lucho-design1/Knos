@@ -71,6 +71,6 @@ Who carries what, in four rows: [docs/reference/ADVANCE.md](../../docs/reference
 
 - An assignment of only the holdback after acceptance. The program would have to let the recorded wallet of a
   holdback hand it on.
-- An escrow for the advance. `knos advance take` puts the financier's payment and the assignment in one transaction,
+- Held money for the advance. `knos advance take` puts the financier's payment and the assignment in one transaction,
   which lands whole or not at all ([docs/reference/ADVANCE.md](../../docs/reference/ADVANCE.md)); nothing holds the money longer than that.
 - Nobody has financed an order this way; no financier exists.

@@ -165,7 +165,7 @@ the cost of a statement in a new process is the read (6.55 s here) plus 0.059 s 
 figures are from one run on a busy machine; run the script for your own.
 
 Once on the chain's own lines, on 6 Oct 2026: `knos audit export --owner drexthealpha --from 2026-09-01 --to 2026-10-06`
-(the escrow's log lines on devnet, 52 lines, all of them the founder's own test orders and bounties) was taken in with
+(the payment program's log lines on devnet, 52 lines, all of them the founder's own test orders and bounties) was taken in with
 `--from settle`: 45 paid lines counted. Taken in again: 0 counted, 45 seen before from this source.
 
 `knos events verify`: 45 lines check, acknowledged by nobody. `knos events dupes`: none, since one mode wrote every

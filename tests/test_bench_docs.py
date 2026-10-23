@@ -1,5 +1,5 @@
 """Every benchmark number in the docs is generated from docs/bench.json: a doc that drifts fails here. Every number in
-the pitch-facing text has a fact, and a number only the release run can measure is a slot until that run fills it."""
+the front-facing text has a fact, and a number only the release run can measure is a slot until that run fills it."""
 
 from __future__ import annotations
 
@@ -74,12 +74,12 @@ def test_a_number_without_a_fact_and_a_stale_fact_both_fail(tmp_path, monkeypatc
     # a number a document says under a fact: the document must go on saying it, and the fact must go on holding
     doc_facts = [f for f in facts if "doc" in f]
     assert doc_facts and all(not cc.unsaid(f, {p: {t for t, _l in cc.numbers(p)} for p in cc.docs_of(facts)}) for f in doc_facts)
-    one = next(f for f in doc_facts if isinstance(f["doc"], str) and len(f["say"]) == 1 and f["say"][0] == "15.9")
+    one = next(f for f in doc_facts if isinstance(f["doc"], str) and len(f["say"]) == 1 and f["say"][0] == "5,410,436")
     page = tmp_path / one["doc"]
-    page.write_text(page.read_text(encoding="utf-8").replace("15.9", "15.8"), encoding="utf-8")
+    page.write_text(page.read_text(encoding="utf-8").replace("5,410,436", "5,410,437"), encoding="utf-8")
     capsys.readouterr()
     assert cc.main(["--offline"]) == 1
-    assert "no longer says ['15.9']" in capsys.readouterr().out
+    assert "no longer says ['5,410,436']" in capsys.readouterr().out
 
 
 def test_every_slot_in_the_submission_is_one_the_script_knows_and_holds_no_digit():
@@ -137,7 +137,7 @@ def test_the_release_fills_a_slot_once_with_its_number_and_a_fact(tmp_path, monk
     sample.write_text("[[stat: made_up_number]] things.\n", encoding="utf-8")
     capsys.readouterr()
     assert bd.main(check=True, root=tmp_path) == 1 and "made_up_number" in capsys.readouterr().out
-    # and a number filled only in a document that is not pitch-facing is held to that document
+    # and a number filled only in a document that is not front-facing is held to that document
     _a_number_filled_only_outside_the_pitch_is_a_doc_fact_that_document_is_held_to(tmp_path / "outside")
 
 
@@ -154,12 +154,12 @@ def _tree(tmp_path: Path, bd, cc) -> None:
 
 def test_the_documents_a_judge_opens_can_carry_slots_and_this_tree_states_each_fact_once():
     bd = _script("bench_docs")
-    assert {"README.md", "docs/reference/DISCLOSURE.md", "docs/reference/WHY.md", "docs/reference/COMPARE.md"} <= set(bd.SLOTTED)
+    assert {"README.md", "docs/reference/DISCLOSURE.md", "docs/reference/WHY.md"} <= set(bd.SLOTTED)
     assert set(bd.FRAMES) <= set(bd.SLOTS)
     assert "web/index.html" in bd.public_text() and bd.disagreements() == []
     # the facts that once stood in two or three versions are each stated, and each in more than one document
     told = bd.said()
-    assert len({doc for files in told["seconds_from_merge_to_paid"].values() for doc in files}) >= 4
+    assert len({doc for files in told["seconds_from_merge_to_paid"].values() for doc in files}) >= 2
     assert len({doc for files in told["payments_between_unrelated_accounts"].values() for doc in files}) >= 2
 
 
@@ -244,9 +244,9 @@ def test_the_one_sentence_leads_the_readme_and_the_site_and_the_readmes_first_sc
     measured = (f"Ready briefs: {idt['ratio_vague_to_ready']}x fewer reasoning tokens, {round(100 * idt['ready_pass_rate'])}% vs "
                 f"{round(100 * idt['vague_pass_rate'])}% passed ([measured](docs/idt/summary.json)).")
     assert lines[0] == f"**{cc.SENTENCE}**" and cc.SENTENCE.startswith("Knos carries research ") and len(lines) == 5
-    assert lines[1] == "From a paper or idea to a product people want: a demand check on Qloo, a Ready brief, escrow on Solana, paid on proof." and lines[2] == measured
+    assert lines[1] == "From a paper or idea to a product people want: a demand check on Qloo, a Ready brief, money held on Solana, paid on proof." and lines[2] == measured
     assert lines[3] == "Devnet, test money, no customers yet."
-    assert lines[4] == "[Check demand](https://drexthealpha.github.io/Knos/#demand) · [Check every claim yourself](docs/JUDGES.md)"
+    assert lines[4] == "[Check demand](https://drexthealpha.github.io/Knos/#demand) · [Check every claim yourself](docs/reference/MANIFEST.md)"
     hero = (ROOT / "web" / "index.html").read_text(encoding="utf-8").split('<div class="hero-words">')[1].split("</form>")[0]
     # the check of agent work (one use of Knos) leads with what it does, says it is one use, then Knos in a few words and
     # the number; the one sentence is folded under "What is here", before what a work order is
@@ -291,7 +291,7 @@ def test_the_one_sentence_leads_the_readme_and_the_site_and_the_readmes_first_sc
 
 
 def _a_number_filled_only_outside_the_pitch_is_a_doc_fact_that_document_is_held_to(tmp_path):
-    """A slot filled only in a document that is not pitch-facing (docs/reference/ASSURANCE.md) gets a fact with "doc", so
+    """A slot filled only in a document that is not front-facing (docs/reference/ASSURANCE.md) gets a fact with "doc", so
     claims_check.py holds that document to the number instead of failing it as said nowhere."""
     bd, cc = _script("bench_docs"), _script("claims_check")
     assert bd.PITCH == cc.PITCH

@@ -3,7 +3,7 @@ its homes, drexthealpha/knos-oidc-rotate and Knos's branch `oidc-rotate` (the sa
 ROTATE_SHA2), and nowhere else: not someone else's Knos, not a repository whose name only starts like Knos, not another
 case. LiteSVM, the testkeys build tests/fixtures/knos_oidc_v2_0335_test.so (scripts/build_programs_v2.sh oidc). The
 committed 0.3.34 test build refuses the new home, which is why the founder's upgrade is needed
-(docs/reference/CUTOVER-0331.md section 2, deploy/upgrade-0335/STEPS.md)."""
+(the upgrade that accepts both homes)."""
 from __future__ import annotations
 
 import re

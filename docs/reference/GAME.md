@@ -100,8 +100,7 @@ once comments, blank lines, spacing and docstrings are set aside; the same score
 to the first submitter only. A copy with real changes is a new attempt and is judged as one.
 
 **Refusals and earlier work.** Refusals count only against later attempts: reaching `max_refusals` stops a player from
-submitting again, and never voids an honest attempt made before (an outside judge saw an honest win voided by two
-later refusals).
+submitting again, and never voids an honest attempt made before.
 
 ## Step 6: the result graduates
 
@@ -109,9 +108,9 @@ later refusals).
 locked against the game's spec in its pre-order pool, read from the chain by `knos.graduation.pool`), and Makeable
 (sourced cost quotes against the locked price).
 
-When all three pass, `knos.graduation.plan` opens the milestone escrow and the pre-order pool, and the contributor
+When all three pass, `knos.graduation.plan` opens the held milestone money and the pre-order pool, and the contributor
 split of config/fees.yaml (`knos.splits`) names the payees: researcher (who posted the goal), agent (the winning
-player, person or AI), referee. The escrow and each pre-order are paid to that split.
+player, person or AI), referee. The held milestone money and each pre-order are paid to that split.
 
 These graduation orders are GitHub-judged knos_pay orders, which a game result has no GitHub run for, so this leg
 still replays in LiteSVM (labelled); the game's pot itself is paid on devnet by the panel verdict (above). `python -m

@@ -2,7 +2,7 @@
 
 Each front page opens with the mark, then its title, then an "In plain words" summary of three sentences with a
 Flesch-Kincaid grade of 8 at most (the formula and the syllable rule are tests/test_docs_plain.py's). It has at most
-1,200 words of prose (docs/JUDGES.md is written by scripts/judges.py and is excepted), no paragraph longer than four
+1,200 words of prose, no paragraph longer than four
 lines, and at least one ```mermaid block with a one-line caption in italics right under it.
 
 A line is 100 characters of the text a reader sees: link targets, marks and tags are not counted. Each item of a
@@ -18,9 +18,9 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-FRONT = ["docs/README.md", "docs/STORY.md", "docs/START.md", "docs/PRICING.md", "docs/TRUST.md", "docs/JUDGES.md",
+FRONT = ["docs/README.md", "docs/STORY.md", "docs/START.md", "docs/PRICING.md", "docs/TRUST.md",
          "docs/NUMBERS.md", "docs/TRANSACTION.md", "docs/WORDS.md"]
-GENERATED = {"docs/JUDGES.md"}          # scripts/judges.py writes it; its length is the script's
+GENERATED: set[str] = set()          # a page a script writes; its length is the script's
 MARK = '<img src="../web/brand/mark.svg" height="40" alt="Knos">'
 PLAIN = "**In plain words.**"
 MAX_WORDS, MAX_LINES, LINE = 1_200, 4, 100

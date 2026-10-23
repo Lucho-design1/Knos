@@ -191,8 +191,8 @@ This describes the mechanism. It is not legal advice, and the contract between t
   with **both** parties' signatures over the same outcome. One party alone cannot close it, and Knos signs nothing.
   The dispute is a file the two parties hold. Nothing publishes it and no program reads it.
 - **The money meanwhile.** A disputed line is not an accepted one: it is not billed and it is not paid. Lines that
-  are not disputed are approved and paid as usual. For an order held in escrow on devnet, the test USDC stays in
-  escrow until a signed acceptance pays it or the deadline returns it to the funder ([DRILLS.md](DRILLS.md), "refund
+  are not disputed are approved and paid as usual. For an order held on devnet, the test USDC stays in
+  the payment program until a signed acceptance pays it or the deadline returns it to the funder ([DRILLS.md](DRILLS.md), "refund
   only after the deadline"). Paying from a private record is not built, so today the record informs an invoice;
   it does not move money.
 
@@ -202,7 +202,7 @@ This describes the mechanism. It is not legal advice, and the contract between t
 - The one command above has run only against its simulator. The release run's four lines have not run: Knos owns no
   private repository with a self-hosted runner yet.
 - A dispute file is checked, not enforced: no program and no invoice reads it yet, so honouring it is the contract's.
-- The record is not accepted by the escrow program. That program's audiences are in [OIDC.md](OIDC.md).
+- The record is not accepted by the payment program. That program's audiences are in [OIDC.md](OIDC.md).
 - The key size of an enterprise instance was not measured. A 3072-bit key would be refused.
 - Nothing checks that an administrator named in the attestors file is who the file says.
 - GitLab has no example pipeline for this path yet; the attestors file and the check take a GitLab token's claims.

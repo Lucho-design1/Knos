@@ -215,9 +215,8 @@ The CU column is what the knos_pay instruction itself used (the Ed25519 precompi
 Confidential Space and ORCID paths were not run on devnet: no Google or ORCID key is registered in the devnet
 knos-oidc, and registering one is the attester's and the guardian's act on the real verifier.
 
-## 9. The founder's Squads steps for the real knos_pay
+## 9. The Squads steps for the real knos_pay
 
 Nothing was proposed and nothing was signed. The upgrade buffer `Dfo5pYRLY8z9yvuXDQjJQtaoqJeL7Atso8zhWy9Ehkfj` is written (with the build team's own devnet test SOL)
 and its authority is handed to the upgrade vault `CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2` (multisig
-`9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK`). The exact steps, with the buffer address and the executable hash,
-are in `deploy/upgrade-0334/STEPS.md`.
+`9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK`).

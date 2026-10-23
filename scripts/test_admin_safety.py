@@ -1,4 +1,4 @@
-"""T6 test_admin_safety: every admin path of Knos on devnet, read from the chain. Read only: it signs and sends nothing.
+"""test_admin_safety: every admin path of Knos on devnet, read from the chain. Read only: it signs and sends nothing.
 
     python scripts/test_admin_safety.py [--rpc URL] [--txs N]
 

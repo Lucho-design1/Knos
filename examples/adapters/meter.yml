@@ -1,5 +1,5 @@
 # .github/workflows/knos-count-on-deployment.yml: a deployment succeeded, so each pull request it contains is counted as
-# one evaluation at knos_meter (a count with no escrow), under a milestone of its own.
+# one evaluation at knos_meter (a count; no money is held), under a milestone of its own.
 #
 # For the BUYER, in the repository the pull requests are merged into. For each pull request merged in the last DAYS
 # days that the deployed commit contains, it starts this repository's `knos attest` workflow (examples/knos-attest.yml)

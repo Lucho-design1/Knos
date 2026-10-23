@@ -387,9 +387,9 @@ def test_a_token_goes_to_the_deployment_its_audience_names(monkeypatch):
 def test_what_the_second_deployments_results_say_in_words():
     fund = {"ok": True, "kind": "fund", "sigs": ["a"], "job": "J", "repo_id": 5, "issue": 3, "amount": 5_000_000, "mode": 0, "faucet": True,
             "balance": "B", "deadline": 1_791_209_600}
-    assert ghrelay.note(fund) == ("5.00 test USDC is in escrow for issue #3, paid when the pull request that closes this issue is merged and meets "
+    assert ghrelay.note(fund) == ("5.00 test USDC is held for issue #3, paid when the pull request that closes this issue is merged and meets "
                                   "the bounty's terms. Unpaid by 2026-10-05 14:13 UTC, it goes back to its funder. Job J.")
-    assert ghrelay.note({**fund, "faucet": False, "mode": 1}).startswith("5.00 from balance B is in escrow for issue #3, paid when the issue's acceptance checks pass")
+    assert ghrelay.note({**fund, "faucet": False, "mode": 1}).startswith("5.00 from balance B is held for issue #3, paid when the issue's acceptance checks pass")
     entry = {"job": "J", "amount": 5_000_000, "fee": 125_000, "mint": "M", "to": "W", "held_until": None}
     paid = {"ok": True, "kind": "pay", "sigs": ["a"], "repo_id": 5, "issue": 3, "payee_id": 42, "head": "a" * 40, "paid": [entry, entry]}
     assert ghrelay.note(paid) == "9.75 was paid to W for issue #3 (GitHub user id 42)."
@@ -529,7 +529,7 @@ def test_a_withdrawal_request_is_read_only_in_a_knos_claim_repository_and_an_eva
     # what their results say in words
     order = {"ok": True, "kind": "fund", "sigs": ["a"], "order": "O", "repo_id": 5, "issue": 3, "seq": 0, "amount": 20_000_000, "fee": 500_000, "mode": 0,
              "faucet": False, "balance": "B", "deadline": 1_791_209_600}
-    assert ghrelay.note(order) == ("20.00 from balance B is in escrow as a work order for issue #3 (its funder paid a fee of 0.50 on top), paid when a pull request "
+    assert ghrelay.note(order) == ("20.00 from balance B is held as a work order for issue #3 (its funder paid a fee of 0.50 on top), paid when a pull request "
                                    "for this issue is merged and meets the order's terms. Unpaid by 2026-10-05 14:13 UTC, it goes back to its funder. Order O.")
     paid = {"ok": True, "kind": "pay", "sigs": ["a"], "order": "O", "head": "a" * 40, "pr": 7,
             "paid": [{"payee_id": 42, "amount": 12_000_000, "to": "W", "held_until": None}, {"payee_id": 43, "amount": 8_000_000, "to": "X", "held_until": None}]}
@@ -549,14 +549,14 @@ def test_a_log_line_keeps_its_format_and_says_how_long_the_token_took(world, mon
     t0 = time.time()
     gh.search = ["octo/widgets"]
     good, bad, known = jwt(fund_aud(7)), jwt(fund_aud(8), iat=1001), jwt("knos-oidc:key:0:" + "ab" * 32, iat=1002)
-    relays.answers[ghrelay.token_id(good)] = {"ok": True, "kind": "fund", "sigs": ["s1", "s2", "s3", "s4"], "note": "5.00 test USDC is in escrow for issue #7."}
+    relays.answers[ghrelay.token_id(good)] = {"ok": True, "kind": "fund", "sigs": ["s1", "s2", "s3", "s4"], "note": "5.00 test USDC is held for issue #7."}
     relays.answers[ghrelay.token_id(bad)] = {"ok": False, "kind": "fund", "why": "this commenter may not\nspend that balance"}
     relays.answers[ghrelay.token_id(known)] = {"ok": True, "kind": "key", "sigs": [], "key": "K", "added": False, "refreshed": False}
     gh.comment("octo/widgets", 7, ghrelay.token_comment("fund", good, TERMS), at=t0 - 5)
     gh.comment("octo/widgets", 8, ghrelay.token_comment("fund", bad, TERMS), at=t0 - 5)
     gh.comment("octo/widgets", 9, ghrelay.token_comment("key", known), at=t0 - 5)
     lines = passes(t0)
-    m = re.fullmatch(rf"knos-relay fund octo/widgets#7 {ghrelay.token_id(good)} ok sig=s2,s3,s4 wait=(\d+) chain=0 queued_at=[\d.]+ seen_at=[\d.]+ sent_at=[\d.]+ confirmed_at=[\d.]+ note=5.00 test USDC is in escrow for issue #7. t=(\d+)", lines[0])
+    m = re.fullmatch(rf"knos-relay fund octo/widgets#7 {ghrelay.token_id(good)} ok sig=s2,s3,s4 wait=(\d+) chain=0 queued_at=[\d.]+ seen_at=[\d.]+ sent_at=[\d.]+ confirmed_at=[\d.]+ note=5.00 test USDC is held for issue #7. t=(\d+)", lines[0])
     assert m and 5 <= int(m.group(1)) <= int(m.group(2)) <= 7, lines     # from the comment's creation to the last transaction; the stages come before the note
     assert lines[1:] == [f"knos-relay fund octo/widgets#8 {ghrelay.token_id(bad)} fail this commenter may not spend that balance"]      # one line; no time on a refusal;
     assert gh.log() == [lines[0], lines[1]]                      # and nothing for a key the chain already had. What worked was logged at once
@@ -656,7 +656,7 @@ def test_a_token_that_must_wait_is_tried_again_when_its_time_comes_not_on_every_
 def test_wait_for_finds_the_workers_line_for_a_token(world):
     gh, _relays, _state = world
     tid = ghrelay.token_id(jwt(fund_aud(7)))
-    line = f"knos-relay fund octo/widgets#7 {tid} ok sig=s1,s2 note=5.00 test USDC is in escrow for issue #7. t=6"
+    line = f"knos-relay fund octo/widgets#7 {tid} ok sig=s1,s2 note=5.00 test USDC is held for issue #7. t=6"
     gh.comment(HOME, 1, f"knos-relay fund a/b#1 {'0' * 16} ok sig=x note=y t=1\nknos-relay proof a/b#2 {'1' * 16} fail no")
     gh.comment(HOME, 1, line.replace(" ok ", " fail "), who="mallory")       # anyone can comment on a public issue: not the worker's, not counted
     assert ghrelay.wait_for(tid, HOME, 0.05, every=0.01) is None
@@ -721,7 +721,7 @@ def test_a_pass_carries_a_fund_token_and_its_proof_to_the_second_deployment(monk
     gh.comment("octo/widgets", 7, ghrelay.token_comment("fund", fund, terms), at=time.time() - 4)
     [line] = ghrelay.once(net, c.payer)
     job = pay.job_pda(repo, 7, pay.faucet_balance_pda(org))
-    assert re.fullmatch(rf"knos-relay fund octo/widgets#7 {ghrelay.token_id(fund)} ok sig=\S+ wait=\d+ chain=\d+ queued_at=[\d.]+ seen_at=[\d.]+ sent_at=[\d.]+ confirmed_at=[\d.]+ note=5.00 test USDC is in escrow for issue #7, paid when .* Job {job}\. t=\d+", line), line
+    assert re.fullmatch(rf"knos-relay fund octo/widgets#7 {ghrelay.token_id(fund)} ok sig=\S+ wait=\d+ chain=\d+ queued_at=[\d.]+ seen_at=[\d.]+ sent_at=[\d.]+ confirmed_at=[\d.]+ note=5.00 test USDC is held for issue #7, paid when .* Job {job}\. t=\d+", line), line
     assert pay.read_job(c.data(job)).terms == pay.terms_hash(terms) and net.terms_of(job) == terms
     # a fund token in a comment without its terms line (a copy somebody made, or a broken workflow) funds nothing; the
     # log says why without naming the token, and the token is still carried from the comment that posts it whole
@@ -912,7 +912,7 @@ def test_a_job_relays_its_own_token_from_a_file_with_knos_relay(build, monkeypat
     (tmp_path / "fund").write_text(ghrelay.token_comment("fund", fund, terms), encoding="utf-8")
     assert flow.relay(str(tmp_path / "fund"), **kw) == 0
     r, job = result(), pay.job_pda(repo, 7, pay.faucet_balance_pda(org))
-    assert r["ok"] and r["sigs"] and "5.00 test USDC is in escrow for issue #7" in r["note"] and pay.read_job(c.data(job)).state == "open"
+    assert r["ok"] and r["sigs"] and "5.00 test USDC is held for issue #7" in r["note"] and pay.read_job(c.data(job)).state == "open"
     c.warp(60)
     (tmp_path / "bare").write_text(faucet_jwt(c, 8, org, repo) + "\n", encoding="utf-8")
     (tmp_path / "terms").write_bytes(terms + b"\n")

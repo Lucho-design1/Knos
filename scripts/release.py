@@ -183,8 +183,8 @@ def on_published_tag(folder: Path, prefix: str) -> str | None:
 
 def workflows_cmd(folder: Path, push: bool = True) -> int:
     """Write the published set into a detached worktree at the latest `workflows-<sha12>` tag of this repository, commit
-    it there when it changed, tag the commit `workflows-<sha12>` and push the tag (docs/reference/CUTOVER-0331.md,
-    section 1, step 5). There is no branch: each tag keeps its commit, and a new set's parent is the previous set, so a
+    it there when it changed, tag the commit `workflows-<sha12>` and push the tag.
+    There is no branch: each tag keeps its commit, and a new set's parent is the previous set, so a
     commit a caller names stays reachable from its own tag."""
     pub = _load("pinned_workflows")
     want = pub.published(pub._read(pub._own_lock()), None)

@@ -26,13 +26,13 @@ SRC = ROOT / "src"
 # knos.gate.app: the GitHub App's webhook handler that github-app/server.py runs (docs/reference/PR_GATE.md)
 # knos.hermes_plugin: the `hermes_agent.plugins` entry point in pyproject.toml; knos.verify.sealed: the sealed scorer that
 # hermes/gepa and hermes/atropos import (docs/reference/HERMES.md)
-# knos.money.x402: `python -m knos.money.x402`, the x402 endpoint; knos.money.revenue: writes web/revenue_data.json;
+# knos.money.x402: `python -m knos.money.x402`, the x402 endpoint; knos.money.revenue: writes the revenue data (--out);
 # knos.graduation.devnet: the devnet demo of the escrow and pre-order pool (docs/reference/MONEY.md)
 # knos.zk.__main__: `python -m knos.zk verify DIR`, the Groth16 checker (docs/reference/ZK.md)
 # knos.platform.claims: the per-claim account check a relay calls before batching claims (docs/reference/PLATFORM.md)
 # knos.repro.example: `python -m knos.repro.example`, the synthetic example repository (docs/reference/REPRODUCED.md)
 # knos.nebius.__main__: `python -m knos.nebius status|demo|rerun|job`, Knos on Nemotron (docs/reference/NEBIUS.md)
-# knos.money.business: `python -m knos.money.business`, writes web/teams_data.json (docs/reference/TEAMS.md)
+# knos.money.business: `python -m knos.money.business`, writes the prices JSON (--out; docs/reference/TEAMS.md)
 # knos.game.__main__, knos.game.devnet, knos.game.local_agent: `python -m knos.game ...` (= `knos game`), the game's devnet
 # round, and the no-model agent behind the command protocol (docs/reference/GAME.md)
 # knos.ideas.devnet / devnet_panel: the devnet demos of docs/reference/IDEAS.md; knos.ideas.tools: the opt-in MCP tools (KNOS_MCP_TOOLS=ideas)

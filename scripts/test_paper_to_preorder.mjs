@@ -1,4 +1,4 @@
-// M5 test_paper_to_preorder, live, at 375x812 and 1280x800: 5 papers (DOI or arXiv id) from 5 fields go from the
+// test_paper_to_preorder, live, at 375x812 and 1280x800: 5 papers (DOI or arXiv id) from 5 fields go from the
 // app's research form to pre-orders open and a brief marked "Ready to fund"; the median time from "Run the crossing"
 // to "Ready" must be 60 s or less. Pre-orders open = Qloo's evidence set the verdict OPEN and the product page shows
 // its pre-order box. The operator's key (KNOS_ADMIN_KEY, a header, never printed) lets this run past the per-address

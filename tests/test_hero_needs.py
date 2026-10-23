@@ -1,4 +1,4 @@
-"""TASK-WORLD T4 test_hero_needs, the page half: the hero's examples cover housing, food, energy and health, across at
+"""test_hero_needs, the page half: the hero's examples cover housing, food, energy and health, across at
 least five technologies, on every copy of the hero (the live half is scripts/test_world_live.py)."""
 from __future__ import annotations
 

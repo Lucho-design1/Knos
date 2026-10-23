@@ -128,7 +128,7 @@ ${src(h, price.src)}</section>
   // a link that names an idea (?q=, from the fields page) runs its check at once: one press, already pressed
   const asked = new URLSearchParams(location.search).get("q");
   if (asked) { q.value = asked.slice(0, 500); ask(q.value); }
-  // proof first: the latest real verdict this server reached, drawn at load and labelled as a past check (T3);
+  // proof first: the latest real verdict this server reached, drawn at load and labelled as a past check;
   // the visitor's own check replaces it
   const seen = (el, then) => {
     if (!("IntersectionObserver" in window)) return then();

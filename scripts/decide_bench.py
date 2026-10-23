@@ -62,7 +62,7 @@ DEVNET = ("On devnet, four runs of the command as it was in Knos 0.3.18 (the rel
           "real tokens: the tables after this block.")
 BENCH_JSON = ROOT / "docs" / "bench.json"
 ROWS = (("fresh, accepted", "fresh", "a fund token never seen: signature checked, chain read"),
-        ("fresh, rejected", "fresh", "a pay token for an issue with nothing in escrow: signature checked, chain read"),
+        ("fresh, rejected", "fresh", "a pay token for an issue with nothing held: signature checked, chain read"),
         ("cached, accepted", "cached", "the same fund token again, the chain's answers kept (`knos.decide.Cached`)"),
         ("no chain", "cached", "the token alone, `ledger=None`: insufficient evidence, or rejected"),
         ("free check", "cached", "the conclusions of three named checks, no token"),

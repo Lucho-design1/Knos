@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The SELLER agent: it lists the work it does (GET /tasks), sells one task under the x402 "knos-order" scheme, and
-// delivers once the buyer's order is funded on chain. It is paid by the escrow when the evaluator accepts, never by
+// delivers once the buyer's order is funded on chain. It is paid by the payment program when the evaluator accepts, never by
 // the buyer and never before. Its key file only names where the money goes: this script signs nothing.
 //
 //   node examples/agent_pays_agent/seller.mjs --rpc URL --key seller.json --offer offer.json [--port 4021] [--wrong]
@@ -36,7 +36,7 @@ async function main() {
   const deliver = async (order) => {
     const result = (flags.wrong ? wrongWork : work)(task.input);
     return { task: task.id, kind: KIND, result, digest: digest(result), order,
-             note: "paid when the evaluator's signed acceptance reaches the escrow; refunded to the funder after the deadline otherwise" };
+             note: "paid when the evaluator's signed acceptance reaches the payment program; refunded to the funder after the deadline otherwise" };
   };
   const shop = server(full, chainOf(rpc, Number(flags.wait ?? 60)), deliver);
   const srv = http.createServer((req, res) => {

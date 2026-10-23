@@ -1,15 +1,15 @@
-// TASK-CHAMPION, live, in headless Chromium (output kept in the private v0328\champion\):
+// The champion checks, live, in headless Chromium:
 //
-//   node scripts/test_champion.mjs fields     T1 test_fields_matrix: 49 cells, each live or next, each linked to a feature or
+//   node scripts/test_champion.mjs fields     test_fields_matrix: 49 cells, each live or next, each linked to a feature or
 //                                             a demand check that answers now; hero chips span >= 5 technologies, the
 //                                             products open for backing >= 3
-//   node scripts/test_champion.mjs vectors    T2 test_value_vectors: every main screen shows its measured numbers on the seven
+//   node scripts/test_champion.mjs vectors    test_value_vectors: every main screen shows its measured numbers on the seven
 //                                             vectors; the Ready card is an attestation devnet holds
-//   node scripts/test_champion.mjs proof      T3 test_proof_first: a real, labelled past result within 1 s of load; the
+//   node scripts/test_champion.mjs proof      test_proof_first: a real, labelled past result within 1 s of load; the
 //                                             visitor's own verdict after 1 paste and 1 press; no paragraph above the box
-//   node scripts/test_champion.mjs money      T4 test_money_page: every number linked to its source and re-checked today, the
-//                                             share for $1B a year at the live fee computed, <= 40 words of prose
-//   node scripts/test_champion.mjs companies  T5 test_companies_mode: one sentence -> Ready brief, private demand check, opened
+//   node scripts/test_champion.mjs money      test_money_page: what is held, released and charged, and the price list from
+//                                             config/fees.yaml, with no revenue target
+//   node scripts/test_champion.mjs companies  test_companies_mode: one sentence -> Ready brief, private demand check, opened
 //                                             milestone in <= 60 s and <= 3 steps; the right proof for each field
 //
 // KNOS_ADMIN_KEY (read from the environment, never printed) lets the 49 demand checks past the per-address limit;
@@ -80,7 +80,7 @@ async function vectors() {
     await page.locator(".k-vectors").scrollIntoViewIfNeeded();
     await page.waitForFunction(() => /\d s/.test(document.querySelector('.k-vectors [data-v="speed"]')?.textContent || ""), null, { timeout: 30000 }).catch(() => {});
     const v = await page.$$eval(".k-vectors li", (l) => Object.fromEntries(l.map((li) => [li.dataset.v, { text: li.textContent.trim(), href: li.querySelector("a")?.href || null }])));
-    const want = { cost: /\$\d.* per check.*per brief/, speed: /\d+(\.\d)? s median to verdict/, friction: /2 steps, no sign-up/, trust: /Escrow on devnet/,
+    const want = { cost: /\$\d.* per check.*per brief/, speed: /\d+(\.\d)? s median to verdict/, friction: /2 steps, no sign-up/, trust: /Held until proof, on devnet/,
                    capability: /2\.08x fewer tokens, 70% vs 5% pass/, access: /7 fields, any country, phone/, status: /\d+ Ready cards?/ };
     const miss = Object.entries(want).filter(([k, re]) => !re.test(v[k]?.text || "")).map(([k]) => `${k}: ${v[k]?.text}`);
     ok(!miss.length, `${name}: the seven vectors, measured`, miss.length ? miss : Object.values(v).map((x) => x.text));
@@ -119,19 +119,13 @@ async function proof() {
 
 async function money() {
   const { ctx, page } = await open(APP + "/money");
-  await page.waitForSelector("#mx-chart li", { timeout: 60000 });
+  await page.waitForFunction(() => !/…/.test(document.getElementById("mx-held")?.textContent || "…"), null, { timeout: 60000 }).catch(() => {});
   const m = await fetch(APP + "/api/money").then((r) => r.json());
-  const links = await page.$$eval("#mx-chart a, #mx-facts a", (l) => l.map((a) => a.href));
-  ok(links.length === m.pools.length + 1 + m.barriers.length && links.every((u) => u.startsWith("https://")), `${links.length} numbers, each linked to its source`, links);
-  ok(m.checked === new Date().toISOString().slice(0, 10) || m.checked === "2026-10-22", `each re-checked on ${m.checked}`);
-  const need = 1e9 / (m.fee.rate_bps / 1e4);
-  ok(Math.abs(m.needed_usd - need) < 1 && m.fee.status === "live", `$1B a year at the live ${m.fee.rate_bps / 100}% fee needs $${(need / 1e9).toFixed(1)}B released on proof`, m.shares);
-  const shown = await page.textContent("#mx-need");
-  ok(/\$333B/.test(shown) && /11\.6% of world R&D/.test(shown), "the share is on the page", shown);
-  const words = await page.evaluate(() => { let n = 0; const w = document.createTreeWalker(document.querySelector("main"), NodeFilter.SHOW_TEXT);
-    for (let t; (t = w.nextNode());) { const el = t.parentElement; if (t.data.trim() && !el.closest("[data-not-prose], .k-vectors, script, style") && el.checkVisibility()) n += t.data.trim().split(/\s+/).length; } return n; });
-  ok(words <= 40, `${words} words of prose (at most 40)`);
-  ok(m.not_shown.length === 1, "a claim without a primary source is left out, and listed", m.not_shown);
+  const got = await page.evaluate(() => ({ held: document.getElementById("mx-held").textContent, released: document.getElementById("mx-released").textContent,
+    fee: document.getElementById("mx-fee").textContent, rows: [...document.querySelectorAll("#mx-prices tbody th")].map((t) => t.textContent), text: document.querySelector("main").innerText }));
+  ok([got.held, got.released, got.fee].every((t) => /^[\d,.]+ test units$/.test(t)), "what is held, released and charged, in test units", [got.held, got.released, got.fee]);
+  ok(got.rows.length === m.prices.length && m.prices.length >= 5 && got.rows.join("|") === m.prices.map((r) => r.what).join("|"), "the price list, one row a line of config/fees.yaml", got.rows);
+  ok(!/\$1B|share Knos needs|escrow/i.test(got.text), "no revenue target and no \"escrow\" on the page");
   await ctx.close();
 }
 

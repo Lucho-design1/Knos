@@ -1,4 +1,4 @@
-// Fund any issue: put test USDC in escrow, from a wallet, for an issue of any public repository. This page reads the issue from
+// Fund any issue: hold test USDC, from a wallet, for an issue of any public repository. This page reads the issue from
 // GitHub, fixes the terms (shown whole before anything is asked of the wallet), and builds the one transaction that funds the order
 // with sdk/settle (settle.js here). It sends nothing itself: the wallet shows the transaction and signs it, or does not.
 //
@@ -174,7 +174,7 @@ export function availability({ version, funding, up = { upgrades: [] } }) {
 }
 
 // ---- the card -----------------------------------------------------------------------------------------------------------------------
-const ROLES = ["the funder (you, signing)", "the order", "the order's token account", "your token account", "the mint", "the escrow's authority", "the token program", "the system program", "the pause switch"];
+const ROLES = ["the funder (you, signing)", "the order", "the order's token account", "your token account", "the mint", "the payment program's authority", "the token program", "the system program", "the pause switch"];
 
 export function initAnyIssue(ctx) {
   const { $, esc, knos, RPC, EXPLORER, gh, ids, client, devnet, wallet, sendable, whyFailed, sign, say, upgrades } = ctx;
@@ -251,7 +251,7 @@ export function initAnyIssue(ctx) {
             <dt>Time to do it</dt><dd id="any-time">${read.days} day${read.days === 1 ? "" : "s"}. Unpaid by then, the order can be sent back to your wallet.</dd>
             <dt>Paid when</dt><dd><ul id="any-sentences">${describeTerms(read.terms).map((s) => `<li>${esc(s).replace(/`([^`]*)`/g, "<code>$1</code>")}</li>`).join("")}</ul></dd>
             <dt>Paid only by</dt><dd id="any-pin">a signed run of the workflows of <a href="https://github.com/${esc(pin.repo)}" target="_blank" rel="noopener">${esc(pin.repo)}</a> at commit
-              <a href="https://github.com/${esc(pin.repo)}/commit/${pin.sha}" target="_blank" rel="noopener"><code>${pin.sha.slice(0, 7)}</code></a>. The order records that commit, and the escrow takes a pay token from no other.</dd>
+              <a href="https://github.com/${esc(pin.repo)}/commit/${pin.sha}" target="_blank" rel="noopener"><code>${pin.sha.slice(0, 7)}</code></a>. The order records that commit, and the payment program takes a pay token from no other.</dd>
             <dt>Terms</dt><dd><pre id="any-terms">${esc(read.text)}</pre>sha256 <span class="mono" id="any-hash">${hash}</span></dd>
           </dl>
           <p class="fine">The funding transaction carries these bytes and the order stores their hash, so the terms cannot change afterwards. No file is needed in the repository: it is funded
@@ -290,7 +290,7 @@ export function initAnyIssue(ctx) {
       state.pending = { ixs: [ix], address, order: orders[seq] };
       tx.innerHTML = `<h4>This is what you would sign</h4><p class="fine">On Solana devnet, from <span class="mono">${esc(address)}</span>. Devnet checked it just now and accepts it.</p>
         <ol id="any-steps"><li>Fund the order for ${esc(p.full)}#${p.ref.number}: ${show(p.q.amount)} test USDC for the person who does the work and ${show(p.q.fee)} fee, ${show(p.q.funderPays)} in all, from your token account
-          into the order's own escrow account${seq ? ` (this wallet has funded this issue ${seq} time${seq === 1 ? "" : "s"} before, so this is order ${seq})` : ""}. Its terms hash is <span class="mono">${p.hash.slice(0, 16)}…</span>.
+          into the order's own account, held until the proof passes${seq ? ` (this wallet has funded this issue ${seq} time${seq === 1 ? "" : "s"} before, so this is order ${seq})` : ""}. Its terms hash is <span class="mono">${p.hash.slice(0, 16)}…</span>.
           <details><summary class="fine">knos_pay: FundOrderWallet</summary><ul class="mono">${ix.accounts.map((a, n) => `<li>${esc(ROLES[n] ?? "account")}: ${esc(a.pubkey)}${a.signer ? " (signs)" : ""}${a.writable ? " (changes)" : ""}</li>`).join("")}</ul></details></li></ol>
         <p class="fine">The order's account will be ${link("address", orders[seq])}.</p><button type="button" id="any-send">Sign in my wallet</button>`;
       $("any-send").onclick = send;

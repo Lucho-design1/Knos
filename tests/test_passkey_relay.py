@@ -70,9 +70,9 @@ def test_a_comment_funds_the_order_and_the_same_comment_again_is_refused(w: Worl
     assert net.sent == 1 and w.lamports(w.p.wallet) == wallet_sol and relay_sol - w.lamports(w.payer.pubkey()) >= sum(w.rent)
     assert (relay._rent(pf.ORDER_LEN), relay._rent(165)) == w.rent
     said = relay.passkey_fund_reply(r)
-    assert said.startswith(f"Knos: funded from a passkey wallet. {20 * USDC} units of the test token {w.usdc} is in escrow for issue #{n}") and f"`{order}`" in said
+    assert said.startswith(f"Knos: funded from a passkey wallet. {20 * USDC} units of the test token {w.usdc} is held for issue #{n}") and f"`{order}`" in said
     devnet = relay.passkey_fund_reply(r | {"mint": str(pay.USDC_DEVNET)})   # Circle's devnet USDC, as the site funds: said as money
-    assert devnet.startswith(f"Knos: funded from a passkey wallet. 20.00 test USDC is in escrow for issue #{n}, and the wallet paid {w.build.pick('0.50', '0.06')} test USDC fee on top. ")
+    assert devnet.startswith(f"Knos: funded from a passkey wallet. 20.00 test USDC is held for issue #{n}, and the wallet paid {w.build.pick('0.50', '0.06')} test USDC fee on top. ")
     assert "anyone can send it back to the wallet" in devnet and "The funder paid no SOL" in devnet
     # the same comment again (a replay, by anyone): refused from a read, nothing sent, nothing moved
     before = (w.balance(w.source), w.lamports(w.payer.pubkey()))

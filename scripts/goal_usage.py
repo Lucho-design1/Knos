@@ -1,11 +1,10 @@
-"""One Claude Code goal's own token use, read from its session transcript (TASK-QLOO-CHAMPION M11).
+"""One Claude Code goal's own token use, read from its session transcript.
 
-    python scripts/goal_usage.py <session .jsonl> --since 2026-10-21T15:13:34Z [--goal TASK-QLOO-CHAMPION] [--out docs/idt/self_usage.json]
+    python scripts/goal_usage.py <session .jsonl> --since 2026-10-21T15:13:34Z --goal NAME --out FILE
 
 Sums the `usage` the API returned on every assistant message after `--since` (each message counted once, by its id):
 output tokens (thinking included), input tokens, and cache reads and writes. The same numbers are recorded on the
-hosted server through the knos_usage MCP tool (scripts/goal_usage.py --record), and the home page shows them beside
-the 2.08x IDT ratio, which is the IDT benchmark's own result, not this goal's. Nothing is estimated.
+hosted server through the knos_usage MCP tool (scripts/goal_usage.py --record). Nothing is estimated.
 """
 from __future__ import annotations
 
@@ -48,8 +47,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("transcript")
     ap.add_argument("--since", required=True)
-    ap.add_argument("--goal", default="TASK-QLOO-CHAMPION")
-    ap.add_argument("--out", default=str(ROOT / "docs" / "idt" / "self_usage.json"))
+    ap.add_argument("--goal", required=True)
+    ap.add_argument("--out", required=True)
     ap.add_argument("--record", action="store_true", help="also record it on the hosted server (knos_usage, the operator's key)")
     a = ap.parse_args(argv)
     u = {"v": 1, "goal": a.goal, "measured_with": "the Claude Code session transcript: usage as the API returned it, each message once",

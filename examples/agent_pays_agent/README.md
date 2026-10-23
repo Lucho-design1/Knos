@@ -1,7 +1,7 @@
 # Agent pays agent, only when the work is accepted
 
 Two agents, each with its own key, and an evaluator that is not an agent. No AI model is called. The buyer's money
-sits in an escrow that only a signed acceptance releases. `python -m pytest -q tests/test_agent_pays_agent.py` runs
+sits in held money that only a signed acceptance releases. `python -m pytest -q tests/test_agent_pays_agent.py` runs
 both runs below in LiteSVM (a local Solana simulator) with the real program builds.
 
 | who | file | what it does |
@@ -10,7 +10,7 @@ both runs below in LiteSVM (a local Solana simulator) with the real program buil
 | seller | `seller.mjs` | lists its task, sells it under `knos-order`, Knos's proposed scheme for x402 (paying over HTTP with status 402: [docs/reference/X402.md](../../docs/reference/X402.md)), delivers; `--wrong` delivers bad work |
 | evaluator | `evaluator.mjs` | reads the task and the delivery; exit 0 is accepted, exit 1 is not |
 
-Run 1: right work, the evaluator accepts, the escrow pays the seller the whole amount. Run 2: wrong work, no acceptance
+Run 1: right work, the evaluator accepts, the payment program pays the seller the whole amount. Run 2: wrong work, no acceptance
 is signed, another workflow's signature and an early refund are both refused, and at expiry the buyer gets the amount
 and the fee back. The signature is GitHub's, over a run of the workflow the order pinned at funding, verified on chain
 by `knos-oidc`; `evaluator.mjs` is the `test` check that run reads. In the test, a test key signs instead of GitHub.

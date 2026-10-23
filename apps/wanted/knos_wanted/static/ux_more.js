@@ -115,7 +115,7 @@
   const haptic = Knos.haptic;
   Knos.haptic = function (kind) {
     if (haptic) haptic(kind); Knos.cue(kind);
-    Knos.notify(kind === "release" ? "Money released" : "Money locked", kind === "release" ? "A milestone was verified and paid." : "Your test units are in escrow until proof.", location.href);
+    Knos.notify(kind === "release" ? "Money released" : "Money locked", kind === "release" ? "A milestone was verified and paid." : "Your test units are held until the proof passes.", location.href);
   };
 
   // ---- read aloud: the Ready answer (with the microphone, a voice conversation) ---------------------------------------
@@ -236,7 +236,7 @@
     const list = $("msList"); if (!list) return;
     const items = [...list.children], score = (li) => {
       const t = li.textContent.toLowerCase();
-      if (/money|escrow|fund/.test(ask)) return -Number((t.match(/(\d+) test units in escrow/) || [0, 0])[1]);
+      if (/money|escrow|fund/.test(ask)) return -Number((t.match(/(\d+) test units (?:held|in escrow)/) || [0, 0])[1]);
       if (/proof|evidence|verified/.test(ask)) return /released|verdict|checked/.test(t) ? -1 : 0;
       if (/open|todo|left/.test(ask)) return /released/.test(t) ? 1 : 0;
       return 0;
@@ -367,7 +367,7 @@
   // ---- help beside the page, and a person when help is not enough -----------------------------------------------------
   const HELP = { home: "Pick a product to back, or write a brief: money locks only when the brief is Ready.",
     projects: "Write the brief in one sentence; the check says what is missing; tap a reading; then Open and fund.",
-    buy: "Backing pre-orders a product: your test units wait in escrow until the maker proves it.",
+    buy: "Backing pre-orders a product: your test units are held until the maker proves it.",
     fund: "Funding locks test units on one milestone; it pays only on a result plus an independent check.",
     make: "Claim a milestone, post a public page with its claim id, and the referees check it.",
     teams: "Teams share a Squads multisig made by your passkey, and can sign in with SSO.",

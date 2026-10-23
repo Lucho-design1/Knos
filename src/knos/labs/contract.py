@@ -106,7 +106,7 @@ class Lab:
 
     def order(self, spec: Spec | dict | None, escrow_ref: str | None) -> dict:
         if not escrow_ref or not isinstance(escrow_ref, str):
-            raise ValueError("no order without money in escrow: name the Knos escrow (escrow_ref) that pays this lab")
+            raise ValueError("no order without held money: name the Knos order (escrow_ref) that holds the money for this lab")
         spec = _spec(spec, self.example)
         a = self._adapter()
         o = a.order(spec, escrow_ref)

@@ -226,7 +226,7 @@ def test_a_labelled_dataset_is_funded_by_a_comment_and_only_the_honest_file_is_p
     assert terms.parse(raw)["accept"] == judge.checks_hash(bundle) and pay.terms_hash(raw).hex() == doc["terms_hash"]
     assert w.signer.asked == [pay.order_fund_audience(SUITE, 40_000_000, pay.TESTS, pay.terms_hash(raw), FAUCET, 14 * 86_400, 0,
                                                       pay.opts(pay.F_NEUTRAL, reserve_days=7))]
-    assert "is in escrow for issue #1 as a work order" in got and "Judge: black-box." in got
+    assert "is held for issue #1 as a work order" in got and "Judge: black-box." in got
     w.chain.bind(MONA)
     w.clock.sleep(3600)
 

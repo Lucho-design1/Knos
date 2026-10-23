@@ -87,8 +87,8 @@ def test_mcp_covers_the_roles_with_a_confirm_convention(app):
     for t in lst["result"]["tools"]:
         if t["name"] in MONEY_TOOLS:
             assert "CONFIRM FIRST" in t["description"] and "TEST money" in t["description"]
-        if t["name"] in MONEY_TOOLS - {"knos_sign_in"}:
-            assert "session" in t["inputSchema"]["required"]
+        if t["name"] in MONEY_TOOLS - {"knos_sign_in"}:          # a person's session, or a Bearer header alone (T12)
+            assert "session" in t["inputSchema"]["properties"] and "session" not in t["inputSchema"]["required"]
     s, x, _ = call(base, "/mcp", {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
                                   "params": {"name": "knos_preorder", "arguments": {"report": "0" * 64, "units": 5, "session": "bad"}}})
     sc = x["result"]
@@ -193,7 +193,7 @@ def test_release_findings_version_fee_funder_label_and_translations():
     f48 = preorder.fee_line(48, 2)
     assert f48["on_amount"] == 96 and f48["on_this_preorder"] == preorder.fee_line(96, 1)["on_this_preorder"]
     # a funder's money is its own escrow, labelled as funder money; a pre-order stays a pre-order
-    assert "funder" in preorder.FUNDER_VIA and "escrow for this milestone" in preorder.FUNDER_VIA
+    assert "funder" in preorder.FUNDER_VIA and "held for this milestone" in preorder.FUNDER_VIA
     js = (STATIC / "app.js").read_text(encoding="utf-8")
     assert "viaLabel(c)" in js and "factorNote(" in js
     i18n = (STATIC / "i18n.js").read_text(encoding="utf-8")

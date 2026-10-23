@@ -143,7 +143,7 @@ def problems(spec: Any) -> list[str]:
         out.append("the first tier's min_lift is below success.min_lift")
     total = round(sum(micro(t["amount"]) for t in tiers))
     if total != micro(spec["price"]["cap"]):
-        out.append(f"the tiers add up to {total / 1e6:g} and the cap is {spec['price']['cap']:g}: the cap is the total escrowed, so they must be equal")
+        out.append(f"the tiers add up to {total / 1e6:g} and the cap is {spec['price']['cap']:g}: the cap is the total held, so they must be equal")
     if any(abs(t["amount"] * 1_000_000 - round(t["amount"] * 1_000_000)) > 1e-6 for t in tiers):
         out.append("tier amounts have at most 6 decimals")
     if spec["escrow"]["cluster"] not in ("devnet", "localnet"):

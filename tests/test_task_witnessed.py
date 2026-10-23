@@ -31,7 +31,7 @@ def funded_reply(issue: int) -> str:
     with the memory's paragraph that `_proposed` may add."""
     order = f"[order on Solana](https://explorer.solana.com/address/{ORDER}?cluster=devnet)"
     return "\n\n".join((
-        f"Knos: 5.00 test USDC from the balance `{'B' * 44}` is in escrow for issue #{issue} as a work order ({order}), 14 s after the comment. "
+        f"Knos: 5.00 test USDC from the balance `{'B' * 44}` is held for issue #{issue} as a work order until the proof passes ({order}), 14 s after the comment. "
         "The funder pays Knos's fee of 0.05 test USDC on top, so whoever is paid receives the full amount.",
         "The acceptance checks decide. `auto`: the first pull request they pass is paid, with no merge.",
         f"To earn it: open a pull request whose description says `Fixes #{issue}`. Reserve it with `/knos reserve`.",
@@ -366,7 +366,9 @@ def test_the_funding_reply_is_read_by_the_words_knos_writes():
     """The reply links the order's address, not a transaction: 0.3.21 and 0.3.22 read it as "nothing was funded"."""
     assert W.funding(funded_reply(7), 7) == ORDER
     assert W.funding(funded_reply(7).replace("as a work order", "as a private work order"), 7) == ORDER
-    with pytest.raises(W.Stop, match="does not say the money is in escrow for #8"):
+    # an older Knos's reply said "is in escrow for issue #N as a work order (": those comments are still on GitHub
+    assert W.funding(funded_reply(7).replace("is held for", "is in escrow for").replace(" until the proof passes", ""), 7) == ORDER
+    with pytest.raises(W.Stop, match="does not say the money is held for #8"):
         W.funding(funded_reply(7), 8)
     for refused in ("Knos: nothing was funded. New funding is paused on Solana until 2026-10-09 08:25 UTC.",
                     "Knos: GitHub did not sign the request (timed out), so nothing was funded. Post the comment again.",
@@ -375,7 +377,7 @@ def test_the_funding_reply_is_read_by_the_words_knos_writes():
             W.funding(refused, 7)
     # the words are knos.flow's and knos.faucet's own: a change there fails here
     flow = (ROOT / "src" / "knos" / "flow.py").read_text(encoding="utf-8")
-    assert "is in escrow for issue #{number} as a {'private ' if plan.get('attestor') else ''}work order ({order}), {took}." in flow
+    assert "is held for issue #{number} as a {'private ' if plan.get('attestor') else ''}work order until the proof passes ({order}), {took}." in flow
     assert 'order = _link(run, "order on Solana", "address",' in flow and 'return f"[{text}](https://explorer.solana.com/{kind}/{at}' in flow
     assert all(x in flow for x in ('"Knos: nothing was funded. ', "so nothing was funded.", '"Knos: not confirmed yet. '))
     assert W.FAUCET_NO.match(faucet.no("x").reply) and W.FAUCET_SENT.match(faucet._words({"to": "1" * 32, "units": 1, "state": "sent", "sig": "s"}))

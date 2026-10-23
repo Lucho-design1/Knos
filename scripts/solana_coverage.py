@@ -59,7 +59,7 @@ def na(cap, group, reason, source):
 EXT = f"{DOCS}/tokens/extensions"
 T22 = "src/knos/platform/token22.py"
 CHX = "apps/wanted/knos_wanted/chainx.py"
-READ = dict(cli="`knos fund` refuses a bounty mint whose extensions break escrow (token22.mint_risks)", mcp="local `knos mcp` token check (mcp_more.token)")
+READ = dict(cli="`knos fund` refuses a bounty mint whose extensions would stop the payment program from paying it (token22.mint_risks)", mcp="local `knos mcp` token check (mcp_more.token)")
 BADGE = dict(app="project page: the maker's track-record badge per verified milestone", api="`GET /api/track`, `GET /api/project`")
 ROWS = [
     # ---- Token-2022: every ExtensionType of the source (spl-token-2022 ExtensionType, docs/tokens/extensions)
@@ -72,14 +72,14 @@ ROWS = [
     u("DefaultAccountState", "Token-2022", f"{CHX}::DefaultAccountState", EXT, app="a funder's pledge receipt is frozen by default (a receipt never moves)",
       api="`POST /api/project/fund`", cli=READ["cli"]),
     u("ImmutableOwner", "Token-2022", f"{CHX}::ImmutableOwner", EXT, **BADGE),
-    u("MemoTransfer", "Token-2022", f"{CHX}::MemoTransfer", EXT, app="the escrow's receipt ledger takes a pledge only with its order's claim as a memo", api="`POST /api/project/fund`", cli=READ["cli"]),
+    u("MemoTransfer", "Token-2022", f"{CHX}::MemoTransfer", EXT, app="the project's receipt ledger takes a pledge only with its order's claim as a memo", api="`POST /api/project/fund`", cli=READ["cli"]),
     u("NonTransferable", "Token-2022", f"{CHX}::NonTransferable", EXT, **BADGE, cli=READ["cli"]),
     u("InterestBearingConfig", "Token-2022", f"{T22}::InterestBearingConfig", EXT, **READ),
-    u("CpiGuard", "Token-2022", f"{CHX}::CpiGuard", EXT, app="the escrow's receipt ledger refuses transfers by another program (CPI)", api="`POST /api/project/fund`"),
+    u("CpiGuard", "Token-2022", f"{CHX}::CpiGuard", EXT, app="the project's receipt ledger refuses transfers by another program (CPI)", api="`POST /api/project/fund`"),
     u("PermanentDelegate", "Token-2022", f"{CHX}::PermanentDelegate", EXT, app="a refunded pledge's receipt is burned by the relayer (permanent delegate)", api="`POST /api/project/fund`", cli=READ["cli"]),
     u("NonTransferableAccount", "Token-2022", f"{T22}::NonTransferableAccount", EXT, **READ),
     u("TransferHook", "Token-2022", "apps/wanted/knos_wanted/chainx.py::project_credits", EXT,
-      app="project page: 'Project credits ... held only in escrow' (each lock's units, moved in through knos_hook)",
+      app="project page: 'Project credits ... held only in the project's own account' (each lock's units, moved in through knos_hook)",
       api="`GET /api/project` (credits: mint, hook, rules)", cli=READ["cli"]),
     u("TransferHookAccount", "Token-2022", f"{T22}::TransferHookAccount", EXT, **READ),
     u("ConfidentialTransferFeeConfig", "Token-2022", f"{T22}::ConfidentialTransferFeeConfig", EXT, **READ),
@@ -113,7 +113,7 @@ ROWS = [
     na("Loader v4", "Programs", "the source: the newer loader; Knos's programs stay under the Upgradeable Loader, whose upgrade authority the Squads multisig holds", f"{DOCS}/core/programs"),
     na("BPF Loader (deprecated) / BPF Loader 2", "Programs", "the source: deprecated loaders for older programs; nothing new is deployed with them", f"{DOCS}/core/programs"),
     na("Stake / Vote / Config", "Programs", "the source: staking and validator voting; Knos is not a validator or a staking product", f"{DOCS}/core/programs"),
-    u("SPL Token", "Programs", "web/netfacts.js::TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", f"{DOCS}/tokens", app="test units held in escrow", front="#network: Knos test units",
+    u("SPL Token", "Programs", "web/netfacts.js::TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", f"{DOCS}/tokens", app="test units held until the proof passes", front="#network: Knos test units",
       api="`POST /api/project/fund`", cli="`knos fund`"),
     u("Token-2022", "Programs", f"{CHX}::TOKEN22", f"{DOCS}/tokens", **BADGE),
     u("Associated Token Account", "Programs", f"{CHX}::ATA", f"{DOCS}/tokens", app="every payee's account", api="every funding transaction"),
@@ -130,13 +130,13 @@ ROWS = [
     na("Bubblegum (compressed NFTs)", "Programs", "the source: compressed NFTs; the track record is compressed with Account Compression directly and sells no NFT", "https://developers.metaplex.com/bubblegum"),
     na("Token Wrap", "Programs", "devnet: getAccountInfo on TwRapQCDhWkZRrDaHfZGuHxkZ91gHDRkyuzNqeU5MgR returned null on 22 Oct 2026 (not deployed)", "https://github.com/solana-program/token-wrap"),
     na("Stake Pool / Single-Validator Stake Pool", "Programs", "the source: pooled staking; Knos holds no stake", "https://spl.solana.com/stake-pool"),
-    na("Token Swap", "Programs", "the source: an AMM; the founder's guardrail is no speculation, and escrow needs no swap", "https://spl.solana.com/token-swap"),
+    na("Token Swap", "Programs", "the source: an AMM; Knos does no speculation, and holding money needs no swap", "https://spl.solana.com/token-swap"),
     u("Record", "Programs", "apps/wanted/knos_wanted/chainstate.py::recr1L3PCGKLbckBqMNcJhuuyU1zgo8nBhfLVsJNwr5", "https://github.com/solana-program/record",
       app="a project, its trace and the pages it links survive a redeploy (read back from devnet)", api="`GET /api/project`, `GET /api/trace`"),
     # ---- payments (docs/payments) and Actions (docs/tools/actions)
     u("Solana Pay transaction request", "Payments", "apps/wanted/knos_wanted/blink.py::PAY_PATH", f"{DOCS}/payments/accept-payments",
       app="project page: 'Or from any wallet: Solana Pay' on every Ready milestone", api="`GET`/`POST /api/pay/fund` (OpenAPI)"),
-    na("Solana Pay transfer request (plain SPL transfer link)", "Payments", "the source: a transfer request moves tokens to a wallet; a milestone's money must go through the escrow program, so Knos answers a transaction request instead", f"{DOCS}/payments/accept-payments"),
+    na("Solana Pay transfer request (plain SPL transfer link)", "Payments", "the source: a transfer request moves tokens to a wallet; a milestone's money must go through the payment program, so Knos answers a transaction request instead", f"{DOCS}/payments/accept-payments"),
     u("Solana Actions / Blinks", "Payments", "apps/wanted/knos_wanted/blink.py::/actions.json", f"{DOCS}/tools/actions", app="pre-order from a demand report with any wallet",
       api="`GET /actions.json`, `GET`/`POST /api/actions/preorder`", mcp="`knos_cross` returns the report the Blink sells"),
     u("x402 V2 (exact, self-facilitated)", "Payments", "apps/wanted/knos_wanted/x402.py::PAYMENT-SIGNATURE", f"{DOCS}/payments/agentic-payments/x402",

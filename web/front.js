@@ -119,9 +119,9 @@ export const WORKFLOW = `# .github/workflows/knos.yml: Knos in this repository. 
 #
 #   A new comment (\`issue_comment\`).
 #       A comment with a line that starts with /knos is a command; any other comment starts no job. The command job
-#       runs it and always answers with a comment. \`/knos fund 20\` on an issue puts 20 test USDC in escrow for it;
+#       runs it and always answers with a comment. \`/knos fund 20\` on an issue holds 20 test USDC for it until the proof passes;
 #       \`/knos help\` lists the rest. Commands are read on issues and on pull requests, from anyone who can comment.
-#       Who may give which command is decided by the command itself and, where money moves, by the escrow on
+#       Who may give which command is decided by the command itself and, where money moves, by the payment program on
 #       Solana, which goes by GitHub's own signature of who commented.
 #   A new issue (\`issues\`).
 #       An issue whose description has a line \`/knos fund <amount>\` is funded as it is opened.
@@ -155,11 +155,11 @@ export const WORKFLOW = `# .github/workflows/knos.yml: Knos in this repository. 
 # has a token that can only read this repository's contents, no secret, and no way to ask for a signed statement.
 #
 # No secret is needed. The signed statements are posted as comments, and Knos's public relay carries them to Solana
-# and pays the transaction fees. They are public on purpose: each names one action and the escrow takes it once.
+# and pays the transaction fees. They are public on purpose: each names one action and the payment program takes it once.
 # Optional: with a repository secret KNOS_RELAY_KEY (a Solana key that holds a little SOL for fees, never a bounty's
 # money) the jobs carry their own statements and do not wait for the relay.
 #
-# The Knos workflows are named by a full commit. The escrow records that commit when a bounty is funded and takes
+# The Knos workflows are named by a full commit. The payment program records that commit when a bounty is funded and takes
 # the pay token only from the same commit. They accept no inputs, so this file cannot change what they do:
 # editing the conditions below only changes when they run. Keep the three names that start with "knos": by them
 # Knos tells its own jobs from the checks a bounty can require.
@@ -332,7 +332,7 @@ export function workflowFacts() {
     return `<code>${file}</code> calls ${calls} of ${at}`;
   };
   el.innerHTML = `<p class="fine" data-fold="Which commit it calls">${said("knos.yml", WORKFLOW)}; ${said("knos-check.yml", CHECK_WORKFLOW)}. A bounty records that
-    commit when it is funded, and the escrow takes the pay token only from the same commit.</p>`;
+    commit when it is funded, and the payment program takes the pay token only from the same commit.</p>`;
 }
 
 // The files themselves, to read or to copy where a prefilled link is not wanted.

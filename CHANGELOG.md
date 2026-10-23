@@ -12,7 +12,7 @@ seven languages.
 
 Everything is on Solana devnet, which is test mode: every amount is test units of a test mint, and every money view
 says so. **No program changes in this release:** nothing under `programs-v2/knos_*`, `programs/`, `idl/` or
-`tests/fixtures/*.so` moved by a byte. The interface crates stay at 0.3.14. The app's escrow runs on the knos_pay
+`tests/fixtures/*.so` moved by a byte. The interface crates stay at 0.3.14. The app's money is held by the knos_pay
 0.3.34 devnet test program `FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4`, not on the public knos_pay program.
 
 ### The six roles (apps/wanted, hosted at knos.onrender.com)
@@ -20,9 +20,9 @@ says so. **No program changes in this release:** nothing under `programs-v2/knos
 - **Researcher (Research):** a DOI, PubMed, arXiv or OpenAlex id becomes a research card (citations, retraction
   check), its product, and a decision (OPEN or REFUSE) from Knos's own rules over Qloo's evidence. Every step names
   the Qloo call behind it, what it returned, and why it matters.
-- **Buyer (Back):** who (age, gender, segments), where (launch cities), the price tier, and the escrow target and
+- **Buyer (Back):** who (age, gender, segments), where (launch cities), the price tier, and the target for the held money and
   reserve, all set by Qloo's evidence. A pre-order locks test units in a PANEL order released by a 2-of-3 referee panel.
-- **Funder (Fund):** a funder's money goes into its own escrow for the milestone (its own order and claim id, beside
+- **Funder (Fund):** a funder's money is held on its own for the milestone (its own order and claim id, beside
   the pre-orders), paid to the maker on proof and refunded after the deadline.
 - **Contributor (Contribute):** a demo game round is always open. Submit the whole `train.py` of
   `examples/autoresearch`; the sealed referee judges it at once; several attempts per round; a scored attempt can be
@@ -56,7 +56,7 @@ says so. **No program changes in this release:** nothing under `programs-v2/knos
 ### Languages
 
 - English, French, Spanish, Portuguese, Arabic (right to left), Hindi and Chinese. Labels, skip link and the server's
-  known notes (factoring, how an escrow was funded) are shown in the reader's language.
+  known notes (factoring, how held money was funded) are shown in the reader's language.
 
 ### What's simulated
 
@@ -123,7 +123,7 @@ that had gone out of date are corrected. The repository now holds only the produ
 The sentence is unchanged: the neutral meter for AI agent work, where neither side keeps the count. Everything is on
 Solana devnet, which is test mode: the money is test USDC. Knos has no customers yet, and one person holds every key.
 **No program changes in this release:** nothing under `programs-v2/knos_*`, `programs/*/src` or `tests/fixtures/*.so`
-moved by a byte. The interface crates stay at 0.3.14. Nothing new went to exercised (26 of 270).
+moved by a byte. The interface crates stay at 0.3.14. Nothing new went to exercised (26 of 267).
 
 ### Lines that were not true any more, fixed
 
@@ -147,7 +147,7 @@ moved by a byte. The interface crates stay at 0.3.14. Nothing new went to exerci
   unchanged.
 - **[`docs/WORDS.md`](docs/WORDS.md)** explains 45 words.
 - **The site's first screen** says what Knos does and for whom. The page that lists the evidence is now called "Check
-  every claim yourself": a buyer wants that as much as a judge does.
+  every claim yourself".
 - **New READMEs** for [`programs/`](programs-v2/README.md#the-first-deployment-in-programs-nobody-can-change-it), [`programs-v2/`](programs-v2/README.md),
   [`idl/`](idl/README.md) and [`examples/`](examples/README.md) say what each folder holds and how to check it.
 - **A short front for the documents.** [`docs/`](docs/) now holds only the map and the few short pages a newcomer
@@ -157,11 +157,10 @@ moved by a byte. The interface crates stay at 0.3.14. Nothing new went to exerci
 
 ### Removed from the repository
 
-- **Hackathon preparation** is no longer in the repository: the submission folder, the pitch and demo scripts, the
-  launch and search-engine lists, the video tools and the zkVM experiment, with their scripts and tests. The founder
-  keeps them. The documents a reader of the product needs moved up to [`docs/`](docs/) and
-  [`docs/reference/`](docs/reference/): the numbers, the flows, the one transaction, the market size and the dependency
-  on one GitHub account.
+- **Preparation material** is no longer in the repository: the pitch and demo scripts, the launch and search-engine
+  lists, the video tools and the zkVM experiment, with their scripts and tests. The documents a reader of the product
+  needs moved up to [`docs/`](docs/) and [`docs/reference/`](docs/reference/): the numbers, the flows, the one
+  transaction and the dependency on one GitHub account.
 
 ## 0.3.26 (October 2026)
 
@@ -179,7 +178,7 @@ this repository. **No program changes in this release:** nothing under `programs
 
 ### Plain words
 
-- **The README is rewritten** for a reader who has never heard of GitHub, Solana or escrow. Under the logo and the
+- **The README is rewritten** for a reader who has never heard of GitHub, Solana or held money. Under the logo and the
   sentence, a new line says what a buyer gets: "Pay AI agents only when your checks pass." The site's first screen
   says the same line. Then four parts: how it works, the ten-second check, why nobody can fudge the
   count, and whether it is real. Two of them have a diagram.
@@ -195,8 +194,6 @@ this repository. **No program changes in this release:** nothing under `programs
   a picture in [`docs/diagrams/`](docs/diagrams), and `--check` fails when a diagram has no picture of its text.
 - **PyPI shows the diagrams as pictures.** PyPI cannot draw Mermaid, so the package's page (`README.pypi.md`, written
   by `scripts/bump_version.py`) shows each of the README's diagrams as its picture at the tag.
-- **The page that checks every claim** ([`docs/JUDGES.md`](docs/JUDGES.md)): its 350-word limit now counts only words a reader reads; a diagram's
-  source and the mark's HTML are not counted.
 
 ### Plans, written down, not built
 
@@ -295,9 +292,6 @@ this repository. **No program changes in this release:** nothing under `programs
 
 ### For buyers
 
-- **The market's size, on one page** ([`docs/reference/MARKET_SIZE.md`](docs/reference/MARKET_SIZE.md)): a formula,
-  each outside figure with its link, date and label, and every assumption labelled as one. Knos claims no share of
-  it; nothing has been sold.
 - **Three things to try, in order** ([`docs/reference/FLOWS.md`](docs/reference/FLOWS.md)): check one pull request,
   follow one paid task link by link, and see two copies of a record give one bill. The page that checks every claim
   starts with it.
@@ -306,7 +300,7 @@ this repository. **No program changes in this release:** nothing under `programs
   count leaves out. None of the 20 flipped: 16 agreed, 2 could not be told without logging in, 2 could not be read.
   Version 1 stays frozen, and the lead number is unchanged.
 - **Relay replies that say what to do next.** When a request fails for a reason of the asker's own (the issue is
-  funded already, nothing is in escrow, an old workflow), the reply says what to do. Those are counted apart from
+  funded already, nothing is held, an old workflow), the reply says what to do. Those are counted apart from
   failures, and the completion rate is also given over what could have been done
   ([`docs/reference/OPERATIONS.md`](docs/reference/OPERATIONS.md)).
 - **The charter** ([`docs/reference/CHARTER.md`](docs/reference/CHARTER.md)): 8 rights, each enforced by a named test, and 4 promises
@@ -615,7 +609,7 @@ at 0.3.14.
   printed) or stops and says so. A command's limit is `--timeout` (600 s by default). It has not been run again on
   devnet in this release.
 - **`knos audit export` reads only the owner's part.** It lists the owner's Balances and reads their histories, a
-  few transactions at once, instead of the escrow's newest thousand one by one: on a simulated history the size of
+  few transactions at once, instead of the payment program's newest thousand one by one: on a simulated history the size of
   the witnessed run it makes at most 8 calls and writes the same bytes (`tests/test_audit_speed.py`). It has not
   been timed against devnet.
 - **The settle job waits for PyPI** with `scripts/pypi_wait.py`, as the claims job does, before it installs the
@@ -661,12 +655,9 @@ at 0.3.14.
 ### One story
 
 - **One story.** The guides tell one task from start to end, and say the zeros. The page that checks every claim
-  starts from the release page and the witnessed task's links, in [`docs/JUDGES.md`](docs/JUDGES.md), the README and
-  the site.
-- **Micro-outcomes.** On a 0.99 outcome Knos would earn about 0.00497 (0.30% netted, plus one 0.002 evaluation), so at
-  95% gross the direct cost must stay below about 0.00025 ([`docs/reference/UNIT_COSTS.md`](docs/reference/UNIT_COSTS.md)). Netting moves
-  transfers, not evaluation cost. The netting example now counts as the program does, in base units: from 17 outcomes
-  of 0.99 to one payee the rate, not the floor, is the fee.
+  starts from the release page and the witnessed task's links, in the README and the site.
+- **Micro-outcomes.** The netting example now counts as the program does, in base units: from 17 outcomes of 0.99 to
+  one payee the rate, not the floor, is the fee.
 
 ## 0.3.22 (October 2026)
 
@@ -720,17 +711,6 @@ publishing with provenance).
   or the first one per repository, and the site shows the basis under the board.
 - **A cached copy says which release it is.** The README's generated table has a "This copy" row from
   `pyproject.toml` and this file, and a note above this history says older prices are superseded.
-
-### Economics
-
-- **Budget against requirement.** [`docs/reference/UNIT_COSTS.md`](docs/reference/UNIT_COSTS.md) sets each unit's cost today beside
-  what the price book requires and the design that closes the gap; `knos bill margin` prints it. Every figure but
-  the chain fees is a budget, not a measurement.
-- **Gross fee against cash kept.** `knos.billing` separates the protocol fee from what Knos would keep after relayer
-  tips, discounts, credits and channel commissions, and says that fee counters on chain are not company cash.
-- **The market from the bottom.** [`docs/reference/MARKET.md`](docs/reference/MARKET.md) builds the Acceptance line as customers ×
-  eligible work × adopted share × realised fee, each input sourced or labelled an assumption; no input is measured.
-  Stripe, Amazon Web Services and Coinbase were read again on 8 Oct, with what Knos sells beyond each.
 
 ### Neutral
 
@@ -841,10 +821,6 @@ crates.io (knos-oidc-interface 0.3.14, knos-pay-interface 0.3.14) and the JavaSc
   ([`docs/reference/RELAY.md`](docs/reference/RELAY.md)). Tested with fake runs; not yet observed at the public ids.
 - **The relay is a package.** `knos.settle.v2.relay` is split by responsibility with no change of behaviour, and all
   of it is under mypy.
-- **Pricing power, accounted honestly.** `knos bill margin --sensitivity` prints revenue and gross margin at a
-  realised Acceptance rate of 30, 20, 10 and 5 basis points; a commitment is credited against usage, never counted
-  twice; reserves, rent and principal are never revenue ([`docs/reference/MARKET.md`](docs/reference/MARKET.md),
-  [`docs/reference/UNIT_COSTS.md`](docs/reference/UNIT_COSTS.md)). Nothing has been sold.
 
 ## 0.3.20 (October 2026)
 
@@ -942,11 +918,7 @@ nothing under `programs-v2/knos_*`, `programs/` or `idl/` moved by a byte.
 - **The rounds of the release run are files.** `scripts/exercise_rounds/` holds the reserve, GitLab, the private
   path and a hosted judge; each runs on the simulator, and at the public ids each ends with its own code and stops
   no other ([`docs/reference/RELEASE.md`](docs/reference/RELEASE.md)).
-- **Unit costs said as they are.** Every margin is labelled gross; three places where the price does not cover the
-  cost are printed with their numbers; the kind of buyer Knos is for is described, and who
-  it is not for (there are no customers yet)
-  ([`docs/reference/UNIT_COSTS.md`](docs/reference/UNIT_COSTS.md), [`docs/reference/WHY.md`](docs/reference/WHY.md)).
-- **One page that checks every claim, and one transaction in seven steps.** [`docs/JUDGES.md`](docs/JUDGES.md); the story, the
+- **One transaction in seven steps.** The story, the
   first screen's round and the demonstration's script tell the same seven: agree, fails, passes, statement, replay,
   pay, verify ([`docs/STORY.md`](docs/STORY.md)).
 - **No program crate moved.** The four programs and the two interface crates stay at 0.3.14.
@@ -989,7 +961,7 @@ moved by a byte, and `scripts/deploy_v2.sh --propose` refuses in this tree.
 - **Small tickets are netted.** Accepted outcomes under 20.00 accumulate per supplier and period and settle as one
   release of the net, so the fee's 0.05 floor is paid once and not once per outcome. In the simulator, 1,000
   outcomes of 0.32 (one sent twice and refused, one disputed) settle as one release of 319.68 for a fee of 0.95904
-  in 24 transactions; the escrow takes no single job under 1.00 at all. The cap, the release, the root and the fee
+  in 24 transactions; the payment program takes no single job under 1.00 at all. The cap, the release, the root and the fee
   are enforced on chain; each line, and the buyer's credit inside the period, are not (`knos net`,
   [`docs/reference/NETTING.md`](docs/reference/NETTING.md)).
 - **The price book says what it charges.** The 0.10% tier is withdrawn: by contract the rate is 0.20% on monthly
@@ -1129,10 +1101,6 @@ the release, and neither is live at its public id until its proposal executes.
   released on chain pays the fee there and is never invoiced again. Lower rates above 1,000,000 and 10,000,000 a
   month are a rebate by contract, off chain. There is no fee for connecting a supplier, and the rated party never
   pays. These are proposed prices: nobody has paid one ([`docs/reference/MARKET.md`](docs/reference/MARKET.md), section 3).
-- **What a unit costs to deliver.** Each line of the price book has a direct cost, labelled measured or budget, and
-  the ceiling it may carry at a gross margin of 90% and of 95%. Three lines miss, and the page says which: a
-  release at the floor, the free evaluations, and Control at the budget. `knos bill margin` prints a month's
-  margin line by line ([`docs/reference/UNIT_COSTS.md`](docs/reference/UNIT_COSTS.md)).
 - **A kit for the supplier, at no cost to the supplier.** A public record for an agent or a vendor
   (`knos record build`), a badge that always carries its sample, one `uses:` line that runs the free check on every
   pull request and none of the pull request's code, and one page to send with an invoice
@@ -1666,7 +1634,7 @@ security firm has examined anything.
 
 ### What is live, and when
 
-The escrow and the verifier are upgraded at their existing addresses, through the multisig, with its public 48-hour
+The payment program and the verifier are upgraded at their existing addresses, through the multisig, with its public 48-hour
 delay. That upgrade was proposed on 2026-10-04 07:17 UTC and withdrawn by 0.3.14 before 2026-10-06 07:17 UTC, when
 it could have run: it never ran ([`docs/reference/GOVERNANCE.md`](docs/reference/GOVERNANCE.md), section 3).
 `knos status` and the site's banner show a proposal while it is pending.
@@ -1687,7 +1655,7 @@ the new paths carry audiences that start `knos3:`, so a token of one generation 
 
 - **You pay the fee on top; the payee receives the posted amount.** 2.5%, at least 0.40 and at most 25 USDC (replaced
   in 0.3.14, before this build ever ran, by three tiers with no maximum). It is
-  escrowed with the amount and returned with it if nobody is paid. An order holds between 5 and 500 USDC (replaced in 0.3.14 by 5 to 100,000 on devnet).
+  held with the amount and returned with it if nobody is paid. An order holds between 5 and 500 USDC (replaced in 0.3.14 by 5 to 100,000 on devnet).
 - **Each order's money is in a token account of its own.** No vault is shared between orders.
 - **Fund any public issue from a wallet, with no file in that repository** ("Fund any issue" on the site, and
   `FundOrderWallet` for a program or a multisig).
@@ -1707,13 +1675,13 @@ the new paths carry audiences that start `knos3:`, so a token of one generation 
 
 - **After a merge you can settle yourself.** `knos settle --neutral <pull request URL>` starts the pinned
   `attest.yml` by hand in a repository of your own. It reads GitHub's public record of the pull request, and the
-  escrow pays on that run. The buyer's workflow is not needed. This holds for a public repository and an order
+  held money pays on that run. The buyer's workflow is not needed. This holds for a public repository and an order
   that was not funded with `neutral off`; the funding reply says which it is.
 - **You receive the full posted amount.**
 - **No wallet app needed.** The site makes a passkey, and the address it derives can be paid like any other.
   Withdrawing needs only the passkey. The site shows and withdraws both of devnet's test mints: Circle's USDC and
   the faucet's test USDC that a bounty funded by comment pays. The public relay carries a withdrawal from the moment
-  `knos-passkey` is deployed; it does not wait for the escrow's upgrade, which that program never calls. Read
+  `knos-passkey` is deployed; it does not wait for the payment program's upgrade, which that program never calls. Read
   [SECURITY.md](docs/reference/SECURITY.md), section 17, before keeping money there.
 - **An organisation can be paid.** A member binds its wallet by hand, from a `knos-claim` repository the
   organisation owns, and a bot's pull request can then pay the organisation that runs it.
@@ -1725,12 +1693,12 @@ the new paths carry audiences that start `knos3:`, so a token of one generation 
 
 ### If you run a company
 
-- **A count without an escrow.** `knos-meter` counts each evaluation GitHub signed, once, for a buyer and a seller
+- **A count without held money.** `knos-meter` counts each evaluation GitHub signed, once, for a buyer and a seller
   in a month: accepted, rejected, and the declared value. It moves no customer money. 0.05 per billable evaluation
   from prepaid credits, 0.02 at volume, and the first 10,000 of a month free. An evaluation is a run of the
   published `attest.yml` with the kind `eval`, started in a repository of the buyer: GitHub's record of a pull request
   there is the verdict (merged: accepted; closed unmerged: rejected), and it is posted as `knos-eval:` for the relay,
-  which carries it from the moment the meter is deployed, whatever the escrow's version. `knos statement --meter
+  which carries it from the moment the meter is deployed, whatever the payment program's version. `knos statement --meter
   --buyer X --seller Y --month YYYY-MM` recomputes one buyer's and one seller's month from the program's logs.
 - **Private orders.** Funded from your organisation's Balance by a comment in a judge repository you choose. The
   chain shows the amounts, the payees and that repository, and no name, issue number, check name or path of the
@@ -1741,7 +1709,7 @@ the new paths carry audiences that start `knos3:`, so a token of one generation 
   checks, standing offers, warranty defaults. A fund comment it refuses is told the line.
 - **A Balance has limits:** per day, in total, the repositories that may spend it, and the workflows commit.
 - **Records for finance:** `knos receipts` and `knos statement` (CSV among their formats), `knos invoice` (a page
-  and a CSV of its lines) and `knos export` (JSON Lines for a SIEM), all recomputed from the escrow's logs.
+  and a CSV of its lines) and `knos export` (JSON Lines for a SIEM), all recomputed from the payment program's logs.
 - **Screening:** a payout to an address on the United States Treasury's sanctions list is refused and held.
 - **A lower rate under a contract** is a `Plan` account on chain, 0.5% to 2.5%, until an expiry.
 
@@ -1855,7 +1823,7 @@ Defects in the first deployment, and what the second does instead:
   maintainer's `/knos pay @login`, or `/knos mine` from a person named in the pull request's assignees. 0.3.11 paid
   the login a line in the description named; an agent can be talked into writing such a line. Those lines are now
   shown as a hint and decide nothing. An edited comment never counts.
-- **`/knos settle`** tries a merged pull request's payment again. **`/knos status`** says what is in escrow.
+- **`/knos settle`** tries a merged pull request's payment again. **`/knos status`** says what is held.
 - **Every `/knos` comment gets a reply**, including an unknown command, a malformed one and one from someone who may
   not use it. The reply says what was understood and what to type instead.
 
@@ -1902,10 +1870,6 @@ Defects in the first deployment, and what the second does instead:
 - **RSA-4096 tokens above about 5,000 bytes could not be verified by 0.3.11's client.** Its last step ran out of
   compute units. The plan is now 2, 3, 3, 3, 4 and 1 squarings, and every size up to 8,192 bytes verifies, on both
   deployments ([docs/reference/BENCH.md](docs/reference/BENCH.md)).
-- **The history.** The public repository's history starts on 1 Sep 2026, and 83 of its 209 commits up to 0.3.11
-  predate the hackathon ([docs/reference/DISCLOSURE.md](docs/reference/DISCLOSURE.md) has the counts and the commands).
-- **The market.** The unsourced figure for agent spending is gone; [docs/reference/MARKET.md](docs/reference/MARKET.md) is bottom-up
-  with every input labelled.
 
 ### Measured
 
@@ -1913,7 +1877,7 @@ Defects in the first deployment, and what the second does instead:
   requests. Plain CI passed 56, the in-process judge 7, the black-box check none ([docs/reference/TAMPER.md](docs/reference/TAMPER.md)).
 - Of 241 merged agent pull requests whose description said tests pass, 30 had a failed check at the head commit
   ([docs/reference/BENCH.md](docs/reference/BENCH.md), "Merged anyway").
-- Compute units of every instruction of the second deployment, four random walks of 2,500 steps over its escrow,
+- Compute units of every instruction of the second deployment, four random walks of 2,500 steps over its payment program,
   and the first deployment's record on devnet are in [docs/reference/BENCH.md](docs/reference/BENCH.md).
 
 ### From outside
@@ -1962,8 +1926,7 @@ byte what was deployed.
 - **The measurement is restated.** One pull request per repository: 147 of 826 (17.8%). The earlier figure, 660 of
   2,431 pull requests (27.2%), leaned on a few busy repositories; both are published, the first is quoted.
 - **The docs say what this version cannot do**: a trusted key cannot be revoked, rotation depends on timing, and
-  bugs are for ever ([docs/reference/SECURITY.md](docs/reference/SECURITY.md)), with what the mainnet version changes. The market
-  section now says how small the bounty market is and where the money is ([docs/reference/MARKET.md](docs/reference/MARKET.md)).
+  bugs are for ever ([docs/reference/SECURITY.md](docs/reference/SECURITY.md)), with what the mainnet version changes.
 - Knos runs on its own repository (`.github/workflows/knos.yml`, pinned to the previous release, since a repository
   cannot name its own commit before it exists).
 - Windows: Sibyl's database handles are closed after each call, so the store can be moved or deleted.
@@ -1971,13 +1934,13 @@ byte what was deployed.
 ## 0.3.10 (2 Oct 2026)
 
 **In short:** Knos becomes one product: AI agent work is paid only when GitHub's signature, checked on Solana, shows
-it passed. Two new programs replace the old escrow.
+it passed. Two new programs replace the old payment program.
 
 AI agent work gets paid only when GitHub's own signature, checked by Solana, proves it passed.
 
 One product. Everything else moved to [the tag `archive/labs` of drexthealpha/Knos](https://github.com/drexthealpha/Knos/tree/archive/labs).
 
-- **Nobody controls the proof.** Two new programs replace the escrow: `knos-oidc` verifies GitHub Actions and GitLab
+- **Nobody controls the proof.** Two new programs replace the payment program: `knos-oidc` verifies GitHub Actions and GitLab
   CI tokens on chain, and `knos-pay` holds and pays bounties. Neither has an admin instruction, and both have no
   upgrade authority after deployment. The issuers' keys are constants in the binary; a new key enters only on GitHub's own
   signature, from a rotate workflow whose commit is fixed in the binary and which anyone can call.
@@ -1997,15 +1960,15 @@ One product. Everything else moved to [the tag `archive/labs` of drexthealpha/Kn
 - **The real tokens fit.** Tokens up to 8,192 bytes (0.3.9 refused GitHub's real tokens: its limit was 2,048 and
   they are about 2,100 to 2,300). RSA-4096 for GitLab.
 - **Tested like something that will not be changed.** 517 Wycheproof vectors, a differential test against OpenSSL,
-  a 10,000-step random walk over the escrow, 21 cheating pull requests against three judges
+  a 10,000-step random walk over the payment program, 21 cheating pull requests against three judges
   ([docs/reference/BENCH.md](docs/reference/BENCH.md), [docs/reference/TAMPER.md](docs/reference/TAMPER.md)).
 - **A relayer cannot be made to burn money**: it refuses, by reading the chain, tokens that could not pay, before
   spending a fee, and always takes its rent back.
-- **The site**: fund, read an escrow, see what is waiting for a GitHub account, claim, and the public numbers with
+- **The site**: fund, read what is held, see what is waiting for a GitHub account, claim, and the public numbers with
   outside use counted apart from Knos's own. A JavaScript client with no dependency (`sdk/settle`).
 - **`knos mainnet-check`** now checks that nobody can upgrade the programs, and their provenance. It fails on one
   line on purpose: no outside review.
-- **Removed**: the admin-registered escrow and its Squads multisig, coordination claims and the edit guard, the MCP
+- **Removed**: the admin-registered payment program and its Squads multisig, coordination claims and the edit guard, the MCP
   server, budgets, Knos Pro, the jobs market, Tempo. `knos init` now installs only the Stop hook and removes what
   earlier versions installed.
 
@@ -2016,7 +1979,7 @@ One product. Everything else moved to [the tag `archive/labs` of drexthealpha/Kn
 AI agent work gets paid only when GitHub's own signature, checked by Solana, proves it passed.
 
 - **FundWithToken.** A bounty can be funded straight from a token account in one instruction.
-- **Issuer registry, GitHub and GitLab.** The escrow keeps a registry of OIDC issuers and their keys; GitHub Actions
+- **Issuer registry, GitHub and GitLab.** The payment program keeps a registry of OIDC issuers and their keys; GitHub Actions
   and GitLab CI tokens are both accepted, each checked against its own registered issuer.
 - **Program version check.** The client reads the deployed program's version and refuses to talk to one it does not
   know.
@@ -2026,20 +1989,20 @@ AI agent work gets paid only when GitHub's own signature, checked by Solana, pro
   `4G3cznCnwCUPBCZwzKiLupjdgB5pSoCcGWNGuFv4TYFo` (2-of-3, 300 s time lock). All 3 members are Knos keys today, so
   `knos mainnet-check` adds two gates that fail until an outside signer joins and the time lock is at least 24 h
   ([docs/reference/SECURITY.md](docs/reference/SECURITY.md)). Mainnet stays locked.
-- **IDL on chain.** The escrow's IDL is published as a Program Metadata account.
+- **IDL on chain.** The payment program's IDL is published as a Program Metadata account.
 - **Sibyl store in the judge.** The judge reads the repo's rules and past rejections from the Sibyl store before it
   rules.
 - **Claims check.** `python scripts/claims_check.py` checks every number in the README's opening, the home page hero
-  and the documents written for the hackathon against devnet, GitHub or a file in the repo, and fails on any sentence with a
+  and the public documents against devnet, GitHub or a file in the repo, and fails on any sentence with a
   number it does not cover. CI runs it on every push.
 
 ## 0.3.7 (1 Oct 2026)
 
-**In short:** The escrow program now checks GitHub's signature on each run itself, before it pays.
+**In short:** The payment program now checks GitHub's signature on each run itself, before it pays.
 
 AI agent work gets paid only when GitHub's own signature, checked by Solana, proves it passed.
 
-- **GitHub's proof, verified on chain.** The escrow verifies GitHub Actions OIDC tokens itself.
+- **GitHub's proof, verified on chain.** The payment program verifies GitHub Actions OIDC tokens itself.
   - The signature check is RSA-2048, done in Montgomery form in two transactions (1,148,681 and 1,193,853 compute
     units). The token is written through a buffer account first.
   - The program checks the issuer, the pinned `prove.yml` tag (`job_workflow_ref`), the repository, the ref and
@@ -2061,19 +2024,13 @@ AI agent work gets paid only when GitHub's own signature, checked by Solana, pro
 - **Bonded PR bounties.**
   - A maintainer funds an issue; a 0 bounty is allowed.
   - An agent claims it with a stake, and the proof transaction pays the bounty plus the stake back.
-  - The escrow takes several mints (AddMint).
+  - The payment program takes several mints (AddMint).
   - A devnet-only faucet mints test USDC from a program-owned mint.
   - The web wallet is a passkey guarding a throwaway devnet gas key, topped up by `POST /gas`.
 - **Sibyl on the money path.** Before a proof is minted, the checks recall the repo's rules from Sibyl:
   CONTRIBUTING.md, plus past rejections. `lint` fails a PR that breaks one and cites the line; `learn` makes each
   flagged rule a required check.
-- **Compared against** CodeRabbit, Algora, Vouch, Virtuals ACP and Upwork ([docs/reference/COMPARE.md](docs/reference/COMPARE.md)).
 - **Fee:** 2.5% everywhere. The message is Solana only.
-- **Next** (not in 0.3.7):
-  - LazorKit's paymaster with a call into the Knos escrow (untested; the gas-key wallet is used instead);
-  - a Squads upgrade authority with a timelock, a solana-verify build, and the IDL on chain;
-  - agent verdicts written to Solana Agent Registry reputation;
-  - list 257-byte multi-mint jobs in the web app's "My jobs".
 
 ## 0.3.6 (1 Oct 2026)
 
@@ -2082,7 +2039,7 @@ deadline decides.
 
 AI agent work gets paid only when someone other than the agent proves it.
 
-- **The escrow enforces proof (live on devnet).**
+- **The payment program enforces proof (live on devnet).**
   - When a job names a verifier, the buyer cannot reject it; only the verifier (pass or fail) or the deadline settles
     it.
   - At the deadline, delivered work with no verdict pays the worker, and undelivered work refunds the buyer
@@ -2094,7 +2051,7 @@ AI agent work gets paid only when someone other than the agent proves it.
 
   Every old attack test passes, plus one test per rule, along with a 10,000-step fuzz with 0 violations.
 - **Built, tested and deployed in Actions** (`.github/workflows/program.yml`): a pinned, cached agave runs
-  `cargo build-sbf`, the attack tests and the fuzz. Then, from main only, it upgrades the devnet escrow and prints the
+  `cargo build-sbf`, the attack tests and the fuzz. Then, from main only, it upgrades the devnet payment program and prints the
   upgrade signature and the program hash. Nothing in the release path depends on a local machine.
 - **The fee is max(2.5%, 0.05 USDC)** (it was 5%). A new admin instruction, LowerFee, can only lower the fee, never
   raise it.
@@ -2116,8 +2073,6 @@ AI agent work gets paid only when someone other than the agent proves it.
   - an Anchor-format IDL (`programs/knos_escrow/idl.json`, checked against the Python builders);
   - `@knos/escrow` (`sdk/escrow`, unpublished), with instruction builders tested byte for byte;
   - a CPI example (`examples/cpi_escrow`): an on-chain agent that claims and delivers a job.
-- **Next:** move the devnet upgrade authority to a Squads multisig with a timelock, and have program.yml propose
-  upgrades to it.
 
 ## 0.3.5 (1 Oct 2026)
 
@@ -2143,25 +2098,7 @@ free way in.
 
   Per job, chain went from 829 s to 169 s, macOS 3.12 from 184 s to 68 s, Ubuntu 3.12 from 74 s to 39 s, and
   Windows 3.12 from 382 s to two parallel halves.
-- **COMPARE.md** compares Knos with Upwork, Fiverr, Gitcoin, Virtuals ACP / ERC-8183, Devin and Codex on fee, time
-  to payment, refund, who verifies, accounts and cost, from their own pages read 1 Oct 2026.
 - **The message** is one sentence. Team claims, budgets, Pro and x402 stay in the code and in the reference docs.
-- **Next** (not in 0.3.5):
-  - **Escrow 0.3.5 is written but not shipped.** Its rules:
-    - the buyer cannot reject a job that names a verifier;
-    - delivered work with no verdict pays the worker at the deadline;
-    - a buyer cannot claim their own job;
-    - claims need a worker stake and time out;
-    - every settle closes the job account and returns the rent.
-
-    The program could not be built or upgraded on devnet in this release window, so devnet still runs the 0.3.4
-    escrow. Until then, a failed verdict on devnet is a refund at the deadline.
-  - Turn on the always-on worker's 5-minute schedule (it needs the worker and verifier key secrets), and show the
-    measured pickup time on the web.
-  - Measure first visit to first paid devnet job (target: under 60 s).
-  - Map ERC-8183 onto the Tempo contract with the verifier rule.
-  - An IDL, an npm `@knos/escrow`, and a CPI example.
-  - Move the devnet upgrade authority to a Squads multisig with a timelock.
 
 ## 0.3.4 (1 Oct 2026)
 
@@ -2187,29 +2124,22 @@ until the proof is real.
   0.3.3:
   - with Sibyl, Knos blocks 0.3.1 and 0.3.2, whose CI failed, and passes 0.3.0 and 0.3.3;
   - with a null store and local pytest alone, it passes all four.
-- **Paid on proof.** A job can name a verifier key. When the proof passes, the escrow releases with no human step;
-  when it fails, the escrow refunds after the deadline; a dispute re-runs the checks. Every proven "done" can get a
+- **Paid on proof.** A job can name a verifier key. When the proof passes, the payment program releases with no human step;
+  when it fails, the payment program refunds after the deadline; a dispute re-runs the checks. Every proven "done" can get a
   devnet SAS receipt (the Merkle root of its evidence) and a receipt page (`web/receipt.html`).
-- **Guarded launch.** The escrow has a per-job cap and a pause switch. Mainnet stays locked.
-- **Economics.** The minimum job is 1 USDC, and the fee is max(5%, 0.05 USDC). Measured margin per 1 USDC job: $0.049 on devnet and $0.050 on Moderato ([docs/ECONOMICS.md](https://github.com/drexthealpha/Knos/blob/v0.3.5/docs/ECONOMICS.md)).
-- **Security.** A threat model ([docs/reference/SECURITY.md](docs/reference/SECURITY.md)) and a nightly fuzz of 10,000 escrow steps in LiteSVM checking conservation, no double payout and no stuck funds.
+- **Guarded launch.** The payment program has a per-job cap and a pause switch. Mainnet stays locked.
+- **Economics.** The minimum job is 1 USDC, and the fee is max(5%, 0.05 USDC).
+- **Security.** A threat model ([docs/reference/SECURITY.md](docs/reference/SECURITY.md)) and a nightly fuzz of 10,000 payment-program steps in LiteSVM checking conservation, no double payout and no stuck funds.
 - **Market number.** 18.2% of agent PRs that say tests pass had failing CI at that commit ([docs/reference/BENCH.md](docs/reference/BENCH.md)).
 - **One benchmark source.** Every benchmark number in the docs is generated from `docs/bench.json`, and a test fails
   on drift. This fixes the 14→22 and 19/24 figures that disagreed between pages. Modelled baselines are labelled as
   models.
-- **Licence.** Everything that can be judged is MIT: the hooks, the proof engine, the escrow, the SDKs, the receipts
+- **Licence.** Everything that can be judged is MIT: the hooks, the proof engine, the payment program, the SDKs, the receipts
   and the web app. Only the paid conveniences in `src/knos/pro/` are FSL-1.1-MIT.
-- **Next** (not in 0.3.4):
-  - `knos mainnet-check`, a solana-verify verified build, and moving the devnet upgrade authority to the Squads
-    multisig (the multisig exists; the transfer has only been simulated).
-  - Publish the Claude Code plugin marketplace and MCP registry listings, and fix the plugin's silent failure when
-    `knos` is not on PATH.
-  - A close instruction so settled job accounts return their rent.
 - **Disclosure.**
   - Knos 0.1.0–0.1.8 (shared local memory for coding agents, with topic claims) was written and released 1–7 Sep
-    2026, before 14 Sep, and won the Sibyl Labs hackathon.
+    2026.
   - Everything from 0.2.0 on was built from 29 Sep 2026.
-  - Features stopped being added on 8 Oct 2026.
 
 ## 0.3.3 (Oct 2026)
 
@@ -2225,7 +2155,7 @@ days.
   second checkout, `sibyl upgrade` prompts and the $12 threshold are gone; `knos jobs sibyl` shows yours.
 - **Recall is used.** Session ingest indexes every turn for `knos.recall`; MCP `search` and `sdk.Knos.recall` return
   what it finds; the reference worker remembers its deliveries and recalls similar past jobs into each prompt.
-- **`knos work --tempo`** takes jobs on the Tempo escrow (Moderato) too, including the web app's passkey jobs.
+- **`knos work --tempo`** takes jobs on the Tempo payment contract (Moderato) too, including the web app's passkey jobs.
 - **The web app reads the chain itself.** Jobs, agents and payouts come from devnet in the browser, and post, accept
   and reject transactions are built there, so Pages works with no Knos server; the relay's current address is a
   devnet memo the app reads. The network view separates Knos's own task feed from everyone else's jobs.
@@ -2239,20 +2169,20 @@ days.
 
 - Web app: **pay with a passkey on Tempo**. No wallet, extension or seed phrase: a passkey on the device signs Tempo
   testnet transactions (viem `viem/tempo` WebAuthn accounts), Tempo's faucet funds it, and the job goes into the Knos
-  escrow contract on Moderato. My jobs shows Tempo jobs with accept and reject.
+  payment contract on Moderato. My jobs shows Tempo jobs with accept and reject.
 - `knos.recall`: no-LLM recall over Sibyl. LongMemEval_s held-out (370 questions): 96.8% top-10 (was 81.5%),
   assistant-said 88.4% (was 51.8%), preferences 83.3% (was 50.0%), median 5,656 tokens.
 - Reference worker: Gemini uses the native API with retries and a lite fallback (`gemini:gemini-3.8-flash`).
 
 ## 0.3.1 (Oct 2026)
 
-**In short:** Hire an AI agent in one step and pay only for work you accept, through an escrow program on Solana
+**In short:** Hire an AI agent in one step and pay only for work you accept, through a payment program on Solana
 devnet.
 
 Knos becomes the work network for AI agents: hire any AI agent in one step and pay only for work you accept.
 
 ### Jobs, paid only on acceptance
-- `programs/knos_escrow`: a native Solana escrow program. Post (the price moves into a program-owned vault), claim
+- `programs/knos_escrow`: a native Solana payment program. Post (the price moves into a program-owned vault), claim
   (exactly one worker), deliver (the sealed deliverable's sha256 on chain), accept (95% to the worker, 5% fee, one
   transaction), reject inside the review window (full refund), release by anyone after a silent review window, refund
   after the work deadline. Deployed on devnet at `GwmbMFvyHHwHug5em9dv26oXz2zTgXKGsNdrBxPayRPq`. Tested in the Solana

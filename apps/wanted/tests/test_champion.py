@@ -1,5 +1,5 @@
-"""TASK-CHAMPION, offline: the fields matrix (T1), the value vectors (T2), the proof shown first (T3), the money page
-(T4) and companies mode (T5). The live tests are scripts/test_champion.mjs."""
+"""Offline: the fields matrix, the value vectors, the proof shown first, the money page and companies mode. The live
+tests are scripts/test_champion.mjs."""
 from pathlib import Path
 
 from knos import ready as kr
@@ -72,9 +72,17 @@ def test_a_brief_that_is_not_ready_gets_no_card():
     assert got["ready"] is False and got["card"] is None and got["missing"]
 
 
-def test_the_money_page_lists_each_number_with_its_source():
+def test_the_money_page_shows_what_is_held_and_the_price_list_with_no_revenue_target():
     from knos_wanted.money_data import MONEY as m
-    assert m["checked"] == "2026-10-22" and len(m["pools"]) == 4 and len(m["barriers"]) == 4
-    assert all(x["url"].startswith("https://") and x["source"] for x in m["pools"] + m["barriers"])
-    assert {x["shown"] for x in m["pools"]} == {"$43.1T", "$2.87T", "EUR 1,446B", "$425B"}
-    assert [x["claim"] for x in m["not_shown"]] == ["failed validation adds 12-24 months (BOM)"]   # no primary source: not shown
+    from knos.money import fees_config
+    f = fees_config.load().doc["fees"]
+    assert m["pools"] == [] and "barriers" not in m and "not_shown" not in m
+    rows = {r["what"]: r for r in m["prices"]}
+    assert list(rows) == ["Demand check", "Deep demand check", "Ready brief", "Proof page", "Release on verified proof", "How a milestone is paid"]
+    assert rows["Demand check"]["price"] == f"{f['demand_check']['free_a_month']} a month free"
+    assert rows["Deep demand check"]["price"].startswith(f"{f['deep_demand_check']['usd_each']} USD each, by card once the company exists")
+    assert rows["Release on verified proof"]["price"].startswith(f"{f['release']['rate_bps'] / 100:g}% on top, plus payment costs; the solver keeps 100%")
+    assert "0.3% (at least 0.05 test units)" in rows["Release on verified proof"]["today"] and "nobody is charged" in rows["Deep demand check"]["today"]
+    page = (Path(__file__).resolve().parents[1] / "knos_wanted" / "static" / "money.html").read_text(encoding="utf-8")
+    assert 'id="mx-held"' in page and 'id="mx-released"' in page and 'id="mx-fee"' in page and "/api/projects" in page
+    assert "$1B" not in page and "share Knos needs" not in page and "escrow" not in page.lower()

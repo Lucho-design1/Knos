@@ -8,7 +8,7 @@ None of the moves below has been made.
 
 | what | where | what depends on it |
 |---|---|---|
-| The pinned workflows a repository calls (`fund.yml`, `prove.yml`, `attest.yml`, `check.yml`) | the `workflows-<sha12>` tags of `drexthealpha/Knos` (`drexthealpha/knos-workflows` for orders funded before the 0.3.34 branch), at one pinned commit that every order records | Every payment. The escrow accepts a token only from that workflow file at that commit. |
+| The pinned workflows a repository calls (`fund.yml`, `prove.yml`, `attest.yml`, `check.yml`) | the `workflows-<sha12>` tags of `drexthealpha/Knos` (`drexthealpha/knos-workflows` for orders funded before the 0.3.34 branch), at one pinned commit that every order records | Every payment. The payment program accepts a token only from that workflow file at that commit. |
 | The key-rotation workflow | `drexthealpha/knos-oidc-rotate`; the verifier accepts its attestation only from repositories of this one account (GitHub id 142920951) | Registering a new signing key of an issuer. A registered key expires after 30 days unless it is attested again. |
 | The claim workflow and its template | `drexthealpha/knos-oidc-rotate` (`claim.yml`, pinned in `knos-pay`) and `drexthealpha/knos-claim` | A payee binding a wallet to a GitHub account. |
 | The public relay | run from the account | Carrying a signed token to the chain when the repository's own run did not. Anyone can relay, and the program tips whoever does. |
@@ -17,7 +17,7 @@ None of the moves below has been made.
 ## What happens if the account is suspended
 
 - **Funded orders can only be refunded.** With the account suspended its repositories are unavailable, so the
-  pinned workflows cannot be called, no new token comes from them, and the escrow accepts no other. Nothing can be
+  pinned workflows cannot be called, no new token comes from them, and the payment program accepts no other. Nothing can be
   paid.
 - **Refunds still work.** A refund needs no token, no GitHub and no action by Knos: at an order's deadline the
   instruction that returns the amount and the fee to the funder can be sent without any of them. No money is lost;
@@ -153,9 +153,8 @@ preflight warns about.
 
 ## The delete-the-memory test
 
-Sibyl Labs states the test for memory that carries weight: "Delete the memory layer. If your project still does what
-it claims, it is a wrapper and does not qualify. If the core function breaks, memory is load-bearing."
-([hack.sibyllabs.org](https://hack.sibyllabs.org), read 8 October 2026). Answers coming back empty is half of it.
+The test for memory that carries weight: delete the memory layer, and the core function must break. Answers coming
+back empty is half of it.
 The other half is a decision that changes.
 
 Two do, and each test runs the same input with and without the memory:

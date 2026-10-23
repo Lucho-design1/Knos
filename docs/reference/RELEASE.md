@@ -18,7 +18,7 @@ Four things depend on each other, and only one order satisfies all of them.
 - The jobs that sign install by hash. Their list is the last line of `requirements/sign.txt`: the knos wheel by
   its sha256.
 - The workflows a repository calls are published at ONE commit of the `workflows-<sha12>` tags of `drexthealpha/Knos` (the
-  same commits as the old home `drexthealpha/knos-workflows`; docs/reference/CUTOVER-0331.md), and that commit
+  same commits as the old home `drexthealpha/knos-workflows`), and that commit
   holds the list. So the commit exists only after the wheel does.
 - This repository names that commit in `examples/`, in its own `knos.yml`, in `docs/` and on the site.
 - The jobs that sign nothing install knos from PyPI with a cutoff, `UV_EXCLUDE_NEWER`. uv takes no file uploaded
@@ -85,7 +85,6 @@ python scripts/truth_check.py                     # no document or page contradi
 python scripts/rate_claims.py                     # every latency or throughput figure has its sample size, its program ids and its date
 python scripts/stale_check.py                     # no public file states a retired figure as current
 python scripts/public_face.py --check             # every description of Knos in this tree is the one sentence
-python scripts/judges.py --check                  # docs/JUDGES.md keeps its rules, and docs/judges.json is that page
 python -m knos.enforce --check                    # docs/reference/ENFORCEMENT.md is the table the code gives
 python scripts/archive_verify.py --check          # the recorded run of the stand-alone verifier is what a run gives now
 ```

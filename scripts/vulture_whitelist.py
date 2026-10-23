@@ -81,7 +81,6 @@ _.hash_from
 
 # 0.3.18. Typer registers these inside each module's `register` and calls them when a person types the command.
 _.decide_                       # knos.decide.register: knos decide
-_.margin_                       # knos.billing.register: knos bill margin
 _.migrate_                      # knos.ledger.register: knos meter migrate
 _._propose                      # knos.terms_templates.register: knos terms propose
 # The line by which a final receipt replaces a provisional one: the library's call for whoever holds both (docs/reference/RELAY.md),
@@ -181,8 +180,9 @@ _.__class__
 from knos import exports as exports_
 from knos.proof import history as history_
 
-billing_.release_split                              # a release's money, whose it is (docs/reference/UNIT_COSTS.md); tests/test_billing.py
-billing_.support_hours                              # the support hours a budget buys (docs/reference/UNIT_COSTS.md); tests/test_billing.py
+billing_.release_split                              # a release's money, whose it is; tests/test_billing.py
+billing_.floor_split, billing_.floor_remedy         # who earns what at the floor, and netting as its remedy; tests/test_billing.py
+billing_.netting_example                            # what a small outcome pays alone and netted; tests/test_billing.py
 exports_.parts_check                                # an export held to its parts file; tests/test_exports_parts.py
 history_.grant_withdrawn                            # whether a buyer withdrew a supplier's grant; tests/test_history_defence.py
 
@@ -203,7 +203,6 @@ _.protect_                      # knos.strip_check.register: knos protect
 _.settle_sync_                  # knos.statement.register: knos statement settle-sync
 _.complete_                     # knos.statement.register: knos statement complete
 # Public functions with no caller inside src/knos or scripts, each held by the tests that name it.
-billing_.review_budget                              # the arithmetic of an exceptional review (docs/reference/UNIT_COSTS.md); tests/test_billing_review.py
 _.relative_left                                     # scripts/bump_version.py: no link of README.pypi.md leans on the repository; tests/test_pypi_readme.py
 
 # 0.3.26. knos.sources: a library a caller uses in its own code (docs/reference/SOURCES.md); nothing in the package calls it yet.
@@ -293,7 +292,7 @@ outcome_synth_.drop_treated_failures, outcome_synth_.relabel, outcome_synth_.exa
 platform_claims_.shared_writable, platform_claims_.per_block      # docs/reference/PLATFORM.md; tests/test_platform_claims.py
 platform_referees_.labelled                         # tests/test_labs_fix34b.py
 platform_verify_.one_transaction_ixs, platform_verify_.fits_v1, platform_verify_.es256_v1_ixs     # docs/reference/PLATFORM.md; tests/test_platform_verify.py, tests/test_platform_es256.py
-playground_.OLD_REPO                                # the playground's home until 0.3.34 (docs/reference/MONOREPO.md); tests/test_playground.py
+playground_.OLD_REPO                                # the playground's home until 0.3.34; tests/test_playground.py
 issuers_.FORGE                                      # the judge kind 0 of order_proof.rs, named beside ATTESTED and PANEL
 issuers_.TEST_ORCID_CLIENT, issuers_.orcid_of, issuers_.bind_orcid_ix, issuers_.proof_audience      # tests/test_proof_issuers.py
 issuers_.cs_claims, issuers_.orcid_claims, issuers_.judge_of, issuers_.pay_order_proof_ix                          # tests/test_proof_issuers.py

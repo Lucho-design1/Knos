@@ -39,7 +39,7 @@ def _github_token(t: _Token, now: int, private: bool = False) -> None:
     times that GitHub's clock wrote. `private`: the kind also takes a token under a key some wallet registered itself,
     where its planner finds that wallet to be the one whose money it pays out (`_own_key`)."""
     if t.issuer != oidc.GITHUB and not (private and any(k.private for _a, k in t.held)):
-        raise _no(t.kind, "the escrow takes GitHub's tokens only" + ("" if t.url is None else
+        raise _no(t.kind, "the payment program takes GitHub's tokens only" + ("" if t.url is None else
                           ": a token of another issuer is verified for other programs to read (post it as `knos-verify:`), and a pay token under a "
                           "key a wallet registered itself pays a private order of that wallet's own balance"))
     if t.c.get("runner_environment") != "github-hosted":

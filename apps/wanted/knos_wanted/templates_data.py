@@ -3,7 +3,7 @@ regulatory milestone sets from OpenRegulatory's open templates (ISO 13485, EU MD
 attribution and licence), and where each kind of work can be bought (knos.labs adapters, knos.game)."""
 
 CATALOGUE = {'v': 1,
- 'note': 'Milestone templates for Knos projects. Every milestone is its own escrow order on Solana devnet (test '
+ 'note': 'Milestone templates for Knos projects. Every milestone is its own held order on Solana devnet (test '
          "units), released only on the maker's evidence plus an independent check by someone else on another site; "
          'past its deadline it is refunded and reopened to other makers.',
  'templates': {'ai_model_eval': {'name': 'AI model eval',
@@ -143,7 +143,7 @@ CATALOGUE = {'v': 1,
               'electronics': [{'adapter': 'pcbway', 'name': 'PCBWay (PCB fabrication)'},
                               {'name': 'JLCPCB',
                                'manual': 'https://jlcpcb.com',
-                               'why': "orders on JLCPCB's site; Knos holds the escrow and the maker posts the "
+                               'why': "orders on JLCPCB's site; Knos holds the money and the maker posts the "
                                       'inspection report'}],
               'mechanical': [{'adapter': 'xometry', 'name': 'Xometry (machined parts)'}],
               'cloudlab': [{'adapter': 'emerald', 'name': 'Cloud lab'}],

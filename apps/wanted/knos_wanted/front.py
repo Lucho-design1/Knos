@@ -187,7 +187,7 @@ def board(state, n: int = 6) -> dict:
             out.append(product(state, rep, c["report"][:16], by_report.get(c["report"])))
     waking = [s["slug"] for s in SEEDS if (seeded().get(s["slug"]) or {}).get("state") == "crossing"]
     return {"products": out[:n], "crossing_now": waking, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "source": "this server's own files (live Qloo decisions, devnet escrow)", "money": "devnet test units: no real money",
+            "source": "this server's own files (live Qloo decisions, money held on devnet)", "money": "devnet test units: no real money",
             "app": "https://knos.onrender.com"}
 
 

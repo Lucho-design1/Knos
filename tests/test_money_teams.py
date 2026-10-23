@@ -1,13 +1,9 @@
 """Knos for teams: the verified-merge price in the one fee config, usage metered per team and per agent, invoices that
 bill only what the chain confirms (first verification free, LiteSVM never billed), "paid and final in N ms", and the
-business model + 1B USD arithmetic labelled a model with every outside figure sourced."""
+business model labelled a model."""
 from __future__ import annotations
 
 import copy
-import json
-import re
-import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -95,7 +91,7 @@ def test_the_invoice_bills_what_the_chain_confirms_and_the_first_verification_is
     assert paid[1]["usd"] == "0.94" and paid[1]["onchain_part_usd"] == "0.06" and paid[1]["whole_fee_usd"] == "1.00"
     x = next(x for x in inv["lines"] if x["line"].startswith("agent check"))
     assert x["usd"] == "0.00" and x["paid_on_chain_usd"] == "0.02" and x["evidence"] == "finalized on devnet"
-    assert inv["due_usd"] == "1.94" and inv["test_money"] and "Airwallex" in inv["pay_with"]
+    assert inv["due_usd"] == "1.94" and inv["test_money"] and "knos_pay" in inv["pay_with"]
     # November: the free one was used in October, so it is billed
     assert teams.invoice(_events(), "acme", "2026-11", cfg=cfg)["due_usd"] == "1.00"
 
@@ -136,43 +132,6 @@ def test_the_model_is_price_times_volume_and_says_it_is_a_model(cfg):
     assert m["month_total"] == "4500.00" and m["year_total"] == "54000.00"
 
 
-def test_the_billion_is_arithmetic_on_sourced_inputs(cfg):
-    b = business.billion(cfg)
-    a = b["each_line_alone"]
-    assert b["label"].startswith("ARITHMETIC") and "not a forecast" in b["label"]
-    assert a["verified_merges_a_month"] == "83333333" and a["verified_merges_share_of_github_merges"] == "92.6%"
-    assert a["agent_checks_a_month"] == "4166666667" and a["bounty_volume_usd_a_year"] == "20000000000"
-    assert (a["task_packages_a_year_at_2000_usd"], a["task_packages_a_year_at_200_usd"]) == ("5000000", "50000000")
-    assert b["share_of_github_merges_at_starting_price"][2] == {"share_pct": 10, "verified_merges_a_month": 9_000_000, "usd_a_year": "108000000"}
-    w = business.why_now()
-    assert "1,119 of 3,736" in w["claim_vs_ci"] and "(30%)" in w["claim_vs_ci"] and "6,059 of 8,954" in w["merged_anyway"]
-    assert "Visual Studio Magazine, 30 Jun 2026" in w["volume_source"] and "Epoch AI, 12 Jan 2026" in w["labs_source"]
-
-
-def test_the_committed_page_data_is_the_builder_s_and_holds_no_key(cfg):
-    raw = (WEB / "teams_data.json").read_text(encoding="utf-8")
-    d = json.loads(raw)
-    assert not re.search(r"\[\s*\d+\s*(,\s*\d+\s*){63}\]", raw) and "BEGIN" not in raw and "secret" not in raw.lower()
-    built = business.build(cfg)
-    for k in ("prices", "model", "scale", "why_now", "sources", "rails", "onboarding", "revenue_today_usd"):
-        assert d[k] == built[k], k
-    t = d["team"]
-    assert t and t["team"] == "knos-internal-dogfooding" and any("internal dogfooding" in x for x in t["labels"])
-    assert t["synthetic_events"] >= 1 and t["paid_and_final"]["n"] >= 1
-    page = (WEB / "teams" / "index.html").read_text(encoding="utf-8")
-    assert "../teams_data.json" in page and "MODEL, not a forecast" in page and "Revenue today: 0 USD" in page
-    assert "innerHTML" not in (WEB / "teams.js").read_text(encoding="utf-8")
-
-
-@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
-def test_the_page_computes_what_python_computes(tmp_path, cfg):
-    inputs = {"verified_merges": 1234, "agent_checks": 98_765, "bounty_volume_usd": 4321, "task_packages": 7, "task_package_price_usd": 650}
-    p = business.billion(cfg)["inputs"]
-    params = {"verified_merge_usd": p["verified_merge_usd"], "agent_check_usd": p["agent_check_usd"], "bounty_fee_bps": p["bounty_fee_bps"],
-              "task_package_knos_bps": p["task_package_knos_bps"]}
-    script = tmp_path / "m.mjs"
-    script.write_text(f"import {{ model }} from {json.dumps((WEB / 'teams.js').as_uri())};\n"
-                      f"console.log(JSON.stringify(model({json.dumps(inputs)}, {json.dumps(params)})));\n", encoding="utf-8")
-    got = json.loads(subprocess.run(["node", str(script)], capture_output=True, text=True, timeout=60, check=True).stdout)
-    py = business.model(inputs, cfg)
-    assert got["month"] == py["month"] and got["month_total"] == py["month_total"] and got["year_total"] == py["year_total"]
+def test_the_teams_page_is_not_published():
+    for name in ("teams_data.json", "team_data.json", "teams.js", "teams/index.html"):
+        assert not (WEB / name).exists(), name

@@ -423,8 +423,8 @@ def graph_text(g: dict) -> list[str]:
             out.append(f"{word} {c['id']}{' (' + c['name'] + ')' if c['name'] else ''}: {c['paid']} in {c['payments']} payments on {c['orders']} orders "
                        f"({', '.join(c['sizes'])}), {c['first']} to {c['last']}{every}; wallets: {', '.join(c['wallets']) or 'not named in the log'}.")
     if not g["pays"] and not g["paid_by"]:
-        out.append("The escrow's history that was read shows no payment from or to this id.")
-    return out + ["An outsider reads this from the escrow's log lines alone. Private orders are in it: their lines name the payee, the amount and the time."]
+        out.append("The payment program's history that was read shows no payment from or to this id.")
+    return out + ["An outsider reads this from the payment program's log lines alone. Private orders are in it: their lines name the payee, the amount and the time."]
 
 
 # ---- docs/reference/PRIVACY.md ----------------------------------------------------------------------------------------------------
@@ -473,7 +473,7 @@ def register(app, help_lines: list | None = None) -> None:
                  as_graph: bool = typer.Option(False, "--graph", help="the whole history of a GitHub id: who it pays and who pays it, how much, how often"),
                  offline: bool = typer.Option(False, "--offline", help="do not ask GitHub's public API for the names behind ids"),
                  as_json: bool = typer.Option(False, "--json", help="print JSON"),
-                 limit: int = typer.Option(1000, "--limit", help="with --graph: how many of the escrow's newest transactions to read (at most 1000)")) -> None:
+                 limit: int = typer.Option(1000, "--limit", help="with --graph: how many of the payment program's newest transactions to read (at most 1000)")) -> None:
         """Show what anyone can learn about a work order from public data alone: the Knos programs' accounts and logs,
         and GitHub's public API without a login. Each fact is marked learned, learned only as a hash, or not
         learned, with where it came from. For a private order it lists what still leaks: amounts, payees,
@@ -489,7 +489,7 @@ def register(app, help_lines: list | None = None) -> None:
                 events, unread, cut = records.history(url, pay2.PAY_ID, max(1, min(limit, 1000)))
                 got = {**graph(events, int(target), names), "unread": unread, "history_cut": cut}
                 said = graph_text(got) + ([f"{unread} transactions could not be read (the public RPC throttled): the totals are a lower bound."] if unread else []) \
-                    + ([f"Only the escrow's newest {limit} transactions were read: older payments are not here."] if cut else [])
+                    + ([f"Only the payment program's newest {limit} transactions were read: older payments are not here."] if cut else [])
             else:
                 got = order_facts(Rpc(url), target, names)
                 said = table_text(got)

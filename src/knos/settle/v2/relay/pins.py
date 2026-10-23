@@ -25,7 +25,7 @@ CLAIM_REF = "drexthealpha/knos-oidc-rotate/.github/workflows/claim.yml@"
 
 # The same two workflows at their home in Knos (branch `oidc-rotate`, the same commits), which the 0.3.35 builds of the
 # second deployment accept beside the prefixes above (programs-v2/knos_oidc/src/pins.rs ROTATE_REF_KNOS, knos_pay
-# CLAIM_REF_KNOS; docs/reference/CUTOVER-0331.md section 2). Exact prefixes, case and all: `someone/Knos/...`,
+# CLAIM_REF_KNOS). Exact prefixes, case and all: `someone/Knos/...`,
 # `drexthealpha/Knos-x/...` and `drexthealpha/knos/...` are neither. The first deployment (programs/knos_oidc, v0) has no
 # upgrade authority and only ever takes ROTATE_REF.
 ROTATE_REF_KNOS = "drexthealpha/Knos/.github/workflows/rotate.yml@"

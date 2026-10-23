@@ -6,14 +6,14 @@
 alone decides what is kept, and a model's words cannot change that. Tavily looks for copied code and for new tricks,
 and a new trick becomes a rule only if it passes the referee's own test.
 
-Track: **Coding and Agentic Engineering**. Code: `src/knos/nebius/`. The flow, the demo and the panel:
+Code: `src/knos/nebius/`. The flow, the demo and the panel:
 [examples/nebius/](../../examples/nebius/README.md). Tests: `tests/test_nebius_clients.py`, `tests/test_nebius_referee.py`,
 `tests/test_nebius_demo.py`, `tests/test_nebius_flow.py`.
 
 ## The one flow (v0.3.32)
 
 `python -m knos.nebius flow --out DIR [--wallets DIR]`: a team posts a task (sealed hidden tests; with `--wallets` a
-`knos_pay` escrow on devnet) -> **Nemotron 3 Super on Token Factory writes the code and its tests, the agent runs
+money held by `knos_pay` on devnet) -> **Nemotron 3 Super on Token Factory writes the code and its tests, the agent runs
 pytest and fixes what fails** (`knos.nebius.agent`).
 
 Then the agent pays one check over x402 on devnet -> Tavily provenance on the agent's code -> the Knos referee judges
@@ -39,7 +39,7 @@ response)** in its JSON (`knos_mock`), in the panel and in the demo output. MOCK
 `mock.invalid` domain. The referee's runs in a MOCK demo are real: it judges the proposed files and diffs.
 
 No live call to Token Factory, Tavily or Serverless Jobs has been made from this code yet. The request shapes are
-tested against the documented ones with a fake transport; the first live run is the founder's (below).
+tested against the documented ones with a fake transport.
 
 ## The API facts used, with their sources
 
@@ -88,17 +88,3 @@ The catalog lists no Content Safety model on Token Factory (searched 14 Oct 2026
 - In the self-loop part, the demo screens the diffs (`check-pr`) but does not run `knos self run`. That run needs the
   founder's state folder, sealed bundles and jail ([SELF.md](SELF.md)).
 - The autoresearch referee's static rules are a filter, not an OS sandbox ([AUTORESEARCH.md](AUTORESEARCH.md)).
-
-## Demo URL (founder steps)
-
-1. Get a Token Factory key and Tavily key (Nebius Builder Program), and install and configure the `nebius` CLI with
-   the project id.
-2. Build and push the image: `docker build -f examples/nebius/Dockerfile -t <registry>/knos-nebius:0.3.30 .`, then
-   `docker push` to a registry the project can pull from.
-3. `export AUTH_TOKEN=$(openssl rand -hex 32)`, then `nebius ai endpoint create --name knos-nebius --image
-   <registry>/knos-nebius:0.3.30 --platform cpu-d3 --preset 4vcpu-16gb --container-port 8080 --auth token --token
-   "$AUTH_TOKEN" --subnet-id <subnet id>` (the quickstart's form). Pass the two keys as container environment variables if the CLI offers it; without them the page
-   shows the MOCK run, labelled.
-4. Read the URL: `nebius ai endpoint get <id> --format json | jq -r '.status.public_endpoints[]'`. With `--auth token`
-   a visitor needs the token: share it with the judges, or check the endpoints docs for an open option first.
-5. When the contest is over: `nebius ai endpoint delete <id>`.

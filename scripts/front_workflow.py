@@ -15,7 +15,7 @@ with them the file does not fit in a link) and examples/terms/*.json (TERMS, one
 web/install.js also carries examples/knos-check.yml (CHECK_WORKFLOW) for the task form (web/task.js), which adds both
 callers to a repository the person has just created, and web/payee.js carries examples/knos-claim.yml (CLAIM_WORKFLOW),
 the one file of a person's knos-claim repository: since 0.3.31 no page makes a repository from a GitHub template, the
-files come from here (templates/ of drexthealpha/Knos holds the same files, docs/reference/MONOREPO.md).
+files come from here (templates/ of drexthealpha/Knos holds the same files).
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ TEMPLATES = {"WORKFLOW": "knos-workflow.yml", "CHECK_WORKFLOW": "knos-check.yml"
 INSTALL = ROOT / "web" / "install.js"
 PAYEE = ROOT / "web" / "payee.js"
 # the published workflows in either home (scripts/pinned_workflows.py HOMES): drexthealpha/knos-workflows until the
-# cutover, the monorepo's branch `workflows` after it (docs/reference/MONOREPO.md)
+# cutover, the monorepo's branch `workflows` after it
 PIN = re.compile(r"drexthealpha/(?:knos-workflows/\.github/workflows/[\w.-]+|Knos/\.github/workflows/(?:fund|prove|check|attest)\.yml)@(\S+)")
 
 

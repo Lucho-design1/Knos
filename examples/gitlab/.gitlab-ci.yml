@@ -1,9 +1,9 @@
 # .gitlab-ci.yml for the protected branch `knos` of a gitlab.com project: fund a Knos work order from the project,
-# and pay the author of a merge request once it is merged. docs/reference/OIDC.md, "GitLab", says what the escrow checks.
+# and pay the author of a merge request once it is merged. docs/reference/OIDC.md, "GitLab", says what the payment program checks.
 #
-# NOT RUN ON gitlab.com YET. The escrow's rules for the tokens this file asks for are tested against GitLab-shaped
+# NOT RUN ON gitlab.com YET. The payment program's rules for the tokens this file asks for are tested against GitLab-shaped
 # tokens (tests/test_gitlab_pay.py). The jobs below show which pipeline asks for which token and what the paying job
-# must read first; nobody has run them in a project. The always-on relay takes no GitLab token for the escrow: each
+# must read first; nobody has run them in a project. The always-on relay takes no GitLab token for the payment program: each
 # job leaves the signed token as an artifact (`knos-token.jwt`), and `python scripts/gitlab_round.py run` carries the
 # pay token to Solana (it also does the set-up below through GitLab's API, funds the order from a wallet and starts
 # the pipeline: docs/reference/OIDC.md, "The round as one command"). By hand, the client is in src/knos/settle/v2
@@ -27,8 +27,8 @@
 #      wrote in the merge request's description as `Knos-Pay-To: <address>` (a GitLab user cannot bind a wallet yet).
 #      Whoever may edit that description can change the address: on GitLab that includes the project's maintainers.
 #
-# Only GitLab-hosted runners: the escrow refuses a token from a runner of your own.
-# A token lives as long as its job may run, so each job has a short timeout; the escrow refuses one that lives over
+# Only GitLab-hosted runners: the payment program refuses a token from a runner of your own.
+# A token lives as long as its job may run, so each job has a short timeout; the payment program refuses one that lives over
 # an hour.
 
 stages: [knos]
@@ -47,7 +47,7 @@ stages: [knos]
 
 # Fund: someone the Balance lists runs this pipeline by hand (Build > Pipelines > New pipeline, branch `knos`) with
 # the variable KNOS_AUD = knos3:fund:<issue>:<amount>:<mode>:<terms hash>:<seconds>:<balance>:<seq>:<options>.
-# GitLab signs who ran it; the escrow checks that this person may spend the Balance the audience names.
+# GitLab signs who ran it; the payment program checks that this person may spend the Balance the audience names.
 knos-fund:
   extends: .knos
   rules:

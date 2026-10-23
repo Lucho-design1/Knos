@@ -18,7 +18,7 @@ In every case, first see where you stand:
 ```
 pip install knos                 # from PyPI: needs nothing of GitHub's
 knos status                      # the programs, their upgrade authority, every signing key and its expiry, pending upgrades
-knos bounty OWNER/REPO#ISSUE     # what is in escrow for an issue
+knos bounty OWNER/REPO#ISSUE     # what is held for an issue
 ```
 
 To send anything you need a Solana key with a little devnet SOL, and an RPC endpoint (`KNOS_RPC`; the default is
@@ -70,7 +70,7 @@ token is signed for an order that pinned the published workflows, and nobody car
    - **After the deadline, for either:** `KNOS_RELAY_KEY=<your key file> knos relay` sends `RefundOrder` for every
      order that is due. Anyone's key will do. The amount and the fee go back to the wallet or the Balance they came
      from; then withdraw the Balance as above.
-4. **Check it.** `knos bounty OWNER/REPO#ISSUE` shows nothing in escrow, and your wallet's token account holds the
+4. **Check it.** `knos bounty OWNER/REPO#ISSUE` shows nothing held, and your wallet's token account holds the
    amount and the fee again.
 5. **What you cannot recover.** Work a seller delivered and you merged but that was not yet paid is not paid by the
    program: settle it with the seller directly. A holdback in its warranty cannot be reverted (that needs a token);
@@ -149,14 +149,14 @@ wait and for how long, and how many it refused or retried in 24 hours. Then:
 
 | What happened | What you see | What you do | How long it took in the drill |
 | --- | --- | --- | --- |
-| GitHub's API is down | The pull request is merged and no payment comment appears. `knos bounty OWNER/REPO#ISSUE` still shows the money in escrow. | Nothing. The relay asks GitHub again every 3 seconds, and a signed token is good for an hour past its expiry. If GitHub was down for more than an hour, comment `/knos settle` on the pull request: a fresh token is signed. | All three waiting payments were paid 3 s after GitHub answered again, none twice. |
+| GitHub's API is down | The pull request is merged and no payment comment appears. `knos bounty OWNER/REPO#ISSUE` still shows the held money. | Nothing. The relay asks GitHub again every 3 seconds, and a signed token is good for an hour past its expiry. If GitHub was down for more than an hour, comment `/knos settle` on the pull request: a fresh token is signed. | All three waiting payments were paid 3 s after GitHub answered again, none twice. |
 | The key GitHub signs with has expired on chain | No payment, and the relay's log line says `this signing key expired ...: Run the rotate workflow and send Refresh with its token`. No fee was spent on the refusal. | Anyone can refresh the key (case C above). Then the same token is paid: nothing is signed again, as long as the refresh lands within the token's hour. | Paid 121 s after the expiry, the refresh having been sent 120 s in by a key that held nothing. |
 | The relay was stopped in the middle of your payment | The money arrives. The payment comment is a few seconds late. | Nothing. The token was written down before it was sent; the next pass sends it again and the program, which takes a token once, answers that it is done. | Answered 3 s after the stop; the payee held the payment once after two sends. |
 | The RPC endpoint errors, or its blockhashes are stale | The payment comment is late. Nothing says "failed": the failure says nothing about your token. | Nothing. The relay tries again after 3 s, twice, then 10, 20, up to 60 s apart, for as long as the token is good. | Paid 12 s after the endpoint answered again, on the sixth try; once. |
 | The evidence is missing: a check the terms require is no longer on the merged commit | One comment: `Knos: not paid.`, each required check with what GitHub shows for it, and what to do. No token is signed, so nothing can be paid by mistake. | Run the check again on that commit and comment `/knos settle` (anyone may). A maintainer can pay the work anyway with `/knos tip <amount>`. Otherwise the money goes back to the funder at the deadline. | Refused by the job the merge started; paid 30 s after `/knos settle` once the check was back. |
 | Devnet was reset | `knos status` says the programs are not deployed. Open orders are gone; it was test USDC. Explorer links to old transactions stop working. | Keep proving what was paid: `knos bundle verify FILE --mirror DIR` and `knos receipt verify ORDER --mirror DIR` check a saved bundle and the mirrored receipt with no cluster. Then case A above: wait until `knos status` passes again, and fund anew. | The bundle and the mirror's receipt verified with the chain gone, at once. The orders are not recovered; redeploying is by hand and was not timed. |
 | Devnet was reset and Knos's own copies are gone | Nothing from Knos answers: no cluster holds the payment, and no operator holds the evidence. | Restore from the archive you kept: `knos vault restore knos-evidence.tar --to DIR`, then `knos bundle verify --no-chain --no-network FILE` for each bundle (case D above). | The one bundle of the drill was restored byte for byte and its receipt verified with no chain and no network, at once. Open orders and their test USDC are not recovered. |
-| GitHub signs with a new key | Nothing, if the key was admitted in time. Otherwise no payment, and the money stays in escrow. | Nothing, normally: the daily rotate run names the new key while GitHub still signs with an old one, anyone registers it, the guardian approves, and a day later it verifies. If GitHub stopped signing with every key the verifier holds first, only an upgrade of the verifier admits a key (8 days); until then your money goes back to you at the order's deadline (`knos exit` shows when). | Paid one day after the new key was published (the program's own wait). Not admitted: never paid, refunded in full after the deadline. |
+| GitHub signs with a new key | Nothing, if the key was admitted in time. Otherwise no payment, and the money stays held. | Nothing, normally: the daily rotate run names the new key while GitHub still signs with an old one, anyone registers it, the guardian approves, and a day later it verifies. If GitHub stopped signing with every key the verifier holds first, only an upgrade of the verifier admits a key (8 days); until then your money goes back to you at the order's deadline (`knos exit` shows when). | Paid one day after the new key was published (the program's own wait). Not admitted: never paid, refunded in full after the deadline. |
 
 What these rows do not cover: GitHub's Actions being down (no workflow runs, so no token is signed: wait, or use
 case B), a relay that never starts again (relay it yourself: `KNOS_RELAY_KEY=<your key file> knos relay`), and

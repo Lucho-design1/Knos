@@ -16,7 +16,7 @@ Demand evidence, two kinds:
         results_posted     ClinicalTrials.gov `hasResults` is true
         not_retracted      Crossref's Retraction Watch data shows no retraction for the claim's DOI
         referee_pass       a Knos referee verdict for this claim passed (sealed tests, independent re-runs)
-        lab_qc             a Knos lab adapter verdict for this claim passed protocol + QC (TASK-LABS)
+        lab_qc             a Knos lab adapter verdict for this claim passed protocol + QC
 
      A stage nobody meets by its deadline refunds the buyer (anyone may send RefundOrder). This is the advance market
      commitment pattern (Gavi's pneumococcal AMC) on a public escrow, priced by config/fees.yaml (payout fee on top of
@@ -349,7 +349,7 @@ def release_audience(p: dict, part: str, order: Pubkey, evidence_hash: str, pr: 
     head = evidence_hash[:40]
     return {"route": "github-oidc (knos_pay today)", "audience": pay.order_pay_audience(order, head, bytes.fromhex(p[part]["terms_hash"]), p["mode"], pr, ps),
             "head_sha_is": "the first 40 hex of the oracle's evidence_hash", "evidence_hash": evidence_hash,
-            "next_route": "an m-of-n signed Knos referee verdict over (order, evidence_hash, amount, recipient, expiry): knos_pay's issuer-agnostic release (V34PAY)"}
+            "next_route": "an m-of-n signed Knos referee verdict over (order, evidence_hash, amount, recipient, expiry): knos_pay's issuer-agnostic release (next)"}
 
 
 def refund_ix(relayer: Pubkey, order: Pubkey, o: pay.Order, program: Pubkey | None = None) -> Instruction:

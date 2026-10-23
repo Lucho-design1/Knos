@@ -72,8 +72,8 @@
  "pull_request_heads": {},
  "changed_here": {
   "pyproject.toml": {
-   "blob": "c6c30e0fc6b4b3342887138528276259500b66ad",
-   "why": "[project.urls] point at drexthealpha/Knos (the repository drexthealpha/knos-hermes is to be deleted); nothing else changed. The original blob is the one under files."
+   "blob": "378365ba01bda9117efde2cc4e73ea85ada53871",
+   "why": "[project.urls] point at drexthealpha/Knos (the repository drexthealpha/knos-hermes is to be deleted), and the author entry carries no email address; nothing else changed. The original blob is the one under files."
   }
  }
 }

@@ -59,7 +59,7 @@ def _search(name: str) -> list[str]:
     return [x["id"] for x in ((_get(f"{WIKIDATA}?{q}") or {}).get("search") or []) if isinstance(x, dict) and x.get("id")]
 
 
-# ---- the no-Qloo baseline (DEMAND-ENGINE layer 2) --------------------------------------------------------------------
+# ---- the no-Qloo baseline ----------------------- --------------------------------------------------------------------
 # Six keyless public sources answer for an idea: how much people read about it (Wikimedia pageviews), how much the news
 # writes about it (GDELT), how much builders post about it (Hacker News), how much research there is (OpenAlex), what
 # the concept is (Wikidata) and what the launch country earns (World Bank). What they cannot say, they leave empty:

@@ -1,6 +1,6 @@
 {
  "name": "Knos",
- "description": "The referee and escrow for machine and human research work: Knos re-runs the work against sealed checks, refuses known cheats, and releases escrowed money on Solana only on verified proof.",
+ "description": "The referee and the payment program for machine and human research work: Knos re-runs the work against sealed checks, refuses known cheats, and releases held money on Solana only on verified proof.",
  "supportedInterfaces": [
   {
    "url": "http://127.0.0.1:8765/a2a/v1",
@@ -73,11 +73,11 @@
   {
    "id": "find-work",
    "name": "Find funded work",
-   "description": "Lists open work orders with money in escrow that an agent can take, with the terms that decide payment.",
+   "description": "Lists open work orders with held money that an agent can take, with the terms that decide payment.",
    "tags": [
     "work",
     "bounty",
-    "escrow"
+    "held-until-proof"
    ],
    "examples": [
     "{\"skill\": \"find-work\"}"

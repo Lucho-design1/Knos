@@ -53,7 +53,7 @@ def register(app: Any, help_lines: list | None = None) -> None:
     def wanted_cmd(spec_hash: str = typer.Argument(...), min_buyers: int = typer.Option(..., "--min-buyers"),
                    min_locked: int = typer.Option(..., "--min-locked", help="in the currency's smallest unit"),
                    book: Path = typer.Option(None, "--book", help="the demand book (default KNOS_HOME/referee/demand.json)")) -> None:
-        """Is the result wanted: N distinct buyers with X locked in escrow against this spec."""
+        """Is the result wanted: N distinct buyers with X held until the proof passes against this spec."""
         from . import DemandBook
         c = DemandBook(book).wanted(spec_hash, min_buyers=min_buyers, min_locked=min_locked)
         emit(c.to_dict(), None)

@@ -1,7 +1,7 @@
-"""The fields page (TASK-CHAMPION T1): the founder's 7 bottlenecks by 7 technologies, 49 cells, each live or next,
+"""The fields page: 7 bottlenecks by 7 technologies, 49 cells, each live or next,
 the framework's 12 unlock pairs in its own words. Served at GET /api/fields."""
 FIELDS = {
- "source": "the founder's framework (22 Oct 2026): 7 bottlenecks, 7 technologies, and which technology solves which bottleneck",
+ "source": "the framework (22 Oct 2026): 7 bottlenecks, 7 technologies, and which technology solves which bottleneck",
  "rule": "next = the technology is not real at scale today (fusion or SMR baseload, room-temperature superconductors, quantum-designed catalysts, cognitive healthspan); live = a demand check of a real product works now",
  "bottlenecks": [
   {
@@ -83,8 +83,8 @@ FIELDS = {
   {
    "b": "capital",
    "t": "web3",
-   "title": "Milestone escrow",
-   "idea": "milestone escrow that pays a lab only on verified proof",
+   "title": "Milestone money, held",
+   "idea": "milestone money held until a lab's proof passes, then paid to the lab",
    "status": "live",
    "feature": "/#projects",
    "unlock": "DeSci, tokenized IP-NFTs and DAOs crowdsource risk capital; milestone-based smart contracts bypass legacy VC and bank timelines."

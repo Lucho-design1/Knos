@@ -108,7 +108,9 @@ def _external(name: str) -> list[str]:
     """What a page would load from another host: a stylesheet, a script, an image, a font (links to follow are fine)."""
     html = (WEB / name).read_text(encoding="utf-8")
     loads = re.findall(r'<(?:script|img|source|video|audio|iframe)[^>]*\ssrc="([^"]+)"', html)
-    loads += [h for rel, h in re.findall(r'<link rel="([^"]+)" href="([^"]+)"', html) if rel not in ("canonical", "alternate")]
+    # a preconnect to the site's own host downloads nothing (scripts/sync_brand.py PRECONNECT: the fonts' CORS connection)
+    loads += [h for rel, h in re.findall(r'<link rel="([^"]+)" href="([^"]+)"', html)
+              if rel not in ("canonical", "alternate") and (rel, h) != ("preconnect", "https://drexthealpha.github.io")]
     return [u for u in loads if re.match(r"(https?:)?//", u)]
 
 

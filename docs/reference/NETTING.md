@@ -1,7 +1,7 @@
 # Netting: pay many small results as one payment
 
 A 0.32 USDC agent call is too small to pay on its own: the minimum fee is 0.05, and it would need transactions of
-its own. The escrow takes no job under 1.00 and no order under 5.00, so a single 0.32 outcome cannot be paid on
+its own. The payment program takes no job under 1.00 and no order under 5.00, so a single 0.32 outcome cannot be paid on
 chain alone at all.
 
 Netting lets small accepted outcomes accumulate off chain and pays their sum in one release per supplier per
@@ -36,13 +36,13 @@ once. `add` refuses, line by line and by name:
 later say it was never there.
 
 If the two books differ, `close` names the lines that differ and closes nothing; the two must also name the same
-reserve. An unsecured net under 5.00 stays open: the escrow takes no order that small.
+reserve. An unsecured net under 5.00 stays open: the payment program takes no order that small.
 
 ## Who carries the buyer's credit: reserved or unsecured
 
 Every period is one of two things, and `open`, `add`, `close` and `statement` each say which.
 
-**Reserved.** The buyer locks money before the work, as a marketplace escrow does when a client funds a milestone
+**Reserved.** The buyer locks money before the work, as a marketplace does when a client funds a milestone
 before the freelancer starts ([Upwork's description of its own](https://support.upwork.com/hc/en-us/articles/360000990428)).
 
 Here the lock is a standing order of knos_pay as it is today: the order's own token account holds the money, no
@@ -84,7 +84,7 @@ Three limits, because netting uses the programs as they are:
 - **Tranches.** A draw pays exactly one tranche. A small tranche leaves little undrawn and takes more draws; each
   draw is one signed token and its transactions. Undrawn value with no later period before the deadline goes back
   to the buyer: that last part, under one tranche, is the supplier's to lose.
-- **The fee.** The escrow takes its fee when the reserve is funded: 0.30% of the reserve, at least 0.05. Each draw
+- **The fee.** The payment program takes its fee when the reserve is funded: 0.30% of the reserve, at least 0.05. Each draw
   carries its share and the rest returns with what is not drawn, so a reserve of 16.67 or more costs 0.30% of what
   is drawn. A smaller one pays the floor on the whole.
 
@@ -118,7 +118,7 @@ the net. (A reserved period is paid by draws on its standing order, above, and f
 | a reserve | The order's account holds the money from before the work. Only a pay token of the judge the order pins moves it to a payee, one tranche a token, each number once. `RefundOrder` returns the rest only to its funder, only after the deadline. | That a draw is signed: a buyer whose own repository is the judge can withhold it. The link from a draw to the batch: the token names the first 40 hex characters of the root, and the program does not read it. |
 | the release | One order of exactly the net, paid only by a token naming the order, the terms hash fixed at funding, and the supplier. | That the buyer funds it at all. |
 | the root | knos_meter keeps the buyer's batch and the supplier's claim; equal running hashes mean the same root. | The link from the release to the batch: the terms name the root and the program stores their hash. A reader compares them; knos_pay does not read knos_meter. |
-| each line | Committed by the batch root: any line is proved under it (`knos meter prove`). | No line is escrowed one by one. No program reads a line. |
+| each line | Committed by the batch root: any line is proved under it (`knos meter prove`). | No line is held one by one. No program reads a line. |
 | duplicates | A batch number is used once per pair and month. | Refused by the book and by the events log both sides acknowledge, not by a program. |
 | the fee | 0.30% of the net, at least 0.05, once, taken when the order is funded. | Volume rates: a rebate by contract. |
 
@@ -137,7 +137,7 @@ programs in LiteSVM: 1,000 outcomes of 0.32, one of them sent twice (refused), o
 
 | | netted | each outcome singly |
 |---|---|---|
-| outcomes paid | 999 in one release of 319.68 | 0: the escrow takes no job under 1.00 |
+| outcomes paid | 999 in one release of 319.68 | 0: the payment program takes no job under 1.00 |
 | fee | 0.95904 (0.30% of 319.68; the floor does not bind) | 49.95 if the 0.05 floor alone applied to each of the 999 |
 | transactions | 24: two tokens verified and two batches anchored, one token and one funding, one token and one payment | 11,988: 12 for one funded and paid order, 999 times |
 | meter fee | 0: 1,000 evaluations are inside a month's free evaluations (10,000 on devnet; 100,000 proposed) | the same |

@@ -49,7 +49,7 @@ def test_fund_terms_funds_the_order_the_document_describes_and_its_terms_carry_t
     w, doc = with_terms(tmp_path, version)
     assert isinstance(commands.parse("/knos fund terms"), commands.FundTerms) and commands.cite(doc) == commands.Fund(20_000_000, checks=("test",), cited=True)
     got = said(w, 7, HUBOT, "/knos fund terms", most=2000)
-    assert got.startswith("Knos: 20.00 test USDC from the devnet faucet is in escrow for issue #7 as a work order") and f"{terms3.cite(doc)}." in got
+    assert got.startswith("Knos: 20.00 test USDC from the devnet faucet is held for issue #7 as a work order") and f"{terms3.cite(doc)}." in got
     (address, o), = w.chain.orders(7)
     raw = flow._logged(w.run({}), address, bytes(o.terms), flow.ORDER_LOG)
     assert terms.parse(raw)["contract"] == terms3.digest(doc) and terms.canonical(terms.parse(raw)) == terms.canonical(terms3.order_terms(doc))
@@ -90,11 +90,11 @@ def test_fund_terms_with_no_document_a_broken_one_or_no_work_orders_funds_nothin
     w.hub.contents[flow.TERMS3] = terms3.dumps(terms3.template("support-resolution"))            # a template that cannot be funded
     assert "These terms cannot fund an order: `support-resolution` describes work nothing can be paid for yet (not built: needs a signing system of record)." in said(w, 7, HUBOT, "/knos fund terms") and w.signer.asked == []
     w0, _doc = with_terms(tmp_path / "v0", version=0)                                             # the escrow holds no work orders: a job cannot carry these terms
-    assert "describe a work order, and the escrow on this cluster does not hold work orders yet" in said(w0, 7, HUBOT, "/knos fund 20") and w0.signer.asked == []
+    assert "describe a work order, and the payment program on this cluster does not hold work orders yet" in said(w0, 7, HUBOT, "/knos fund 20") and w0.signer.asked == []
     # a file that is not Knos Terms 3 keeps its meaning, and a repository with none funds as it always did
     w.hub.contents[flow.TERMS3] = json.dumps({"standard": "Knos Terms 1", "name": "old"})
     got = said(w, 7, HUBOT, "/knos fund 20")
-    assert got.startswith("Knos: 20.00 test USDC from the devnet faucet is in escrow for issue #7 as a work order") and "Acceptance is governed" not in got
+    assert got.startswith("Knos: 20.00 test USDC from the devnet faucet is held for issue #7 as a work order") and "Acceptance is governed" not in got
 
 
 def funded_under(tmp_path, version: int = 1, **fields) -> tuple[World, dict]:
@@ -204,8 +204,8 @@ def test_grace_is_an_option_of_fund_that_the_token_signs_on_2_2_and_a_plain_refu
     assert "still pays for 2 hours after it (`grace`). If it is not paid by then, the money and the fee go back to where they came from." in got
     w = world(tmp_path / "plain", version=2)                                                      # without the word the options are what they were
     assert "grace" not in said(w, 7, HUBOT, "/knos fund 20", most=2000) and bytes.fromhex(w.signer.asked[-1].split(":")[-1])[33] == 0
-    for version, words in ((1, "the escrow that is live on this cluster does not know that option yet (it comes with knos_pay 2.2). Leave out `grace`"),
-                           (0, "`grace` is an option of a work order, and the escrow on this cluster does not hold work orders yet")):
+    for version, words in ((1, "the payment program that is live on this cluster does not know that option yet (it comes with knos_pay 2.2). Leave out `grace`"),
+                           (0, "`grace` is an option of a work order, and the payment program on this cluster does not hold work orders yet")):
         w = world(tmp_path / f"v{version}", version=version)
         got = said(w, 7, HUBOT, "/knos fund 20 grace")
         assert got.startswith("Knos: nothing was funded. ") and words in got and w.signer.asked == [] and w.chain.orders(7) == [] and w.chain.jobs(7) == []
@@ -433,7 +433,7 @@ def test_the_workers_line_words_an_orders_quorum_so_that_its_reasons_reach_the_c
     w.worker.wait_for = wait_for
     got = settled(w)
     assert got.startswith("Knos: not paid yet. ") and "1 of the 2 different judges its funder asked for have passed this commit, so nothing is paid until 2 have." in got
-    assert f"It counts 1 because {SAME[:150]}" in got and "The order's own repository passed this commit before the escrow's upgrade to knos_pay 2.2" in got
+    assert f"It counts 1 because {SAME[:150]}" in got and "The order's own repository passed this commit before the payment program's upgrade to knos_pay 2.2" in got
     assert "received" not in got and w.chain.orders(7)[0][1].state == "open"
     line = wait_for(w.worker.token_id(w.worker.posted()[-1][2]), "", 0)
     assert flow._verdict(line, "pay", w.worker.token_id(w.worker.posted()[-1][2]))["quorum"] == q

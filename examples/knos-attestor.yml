@@ -29,7 +29,7 @@
 #   You, by hand (`workflow_dispatch`).
 #       Actions > knos attestor > Run workflow. `repository`: one target, or empty for all of them. `issue`: the issue
 #       whose `/knos fund` comment to answer now. `pull`: the merged pull request whose payment to try now; that run
-#       always answers on the pull request, also when nothing is in escrow for it.
+#       always answers on the pull request, also when nothing is held for it.
 #
 # What is public, and what is not. The signed statements are public: each is posted as a comment on this repository's
 # issue titled "knos tokens" (made the first time), where a relayer finds it and carries it to Solana. A statement
@@ -54,10 +54,10 @@
 #
 # The money. A private order is paid from a balance on Solana of this repository's owner. Its wallet must list this
 # repository among the repositories that may spend it, and list as a spender whoever starts the run: GitHub signs
-# that account's id, and the escrow goes by it.
+# that account's id, and the payment program goes by it.
 #
 # Why it is safe to install. It does not use `pull_request_target`, and no job checks anything out. The Knos
-# workflows are named by a full commit, the one the other Knos files name; the escrow records that commit when an
+# workflows are named by a full commit, the one the other Knos files name; the payment program records that commit when an
 # order is funded and takes the pay token only from the same commit. They accept no inputs: what you type into "Run
 # workflow" reaches the command as data, and a repository the policy does not list is refused. Keep the two names
 # that start with "knos".

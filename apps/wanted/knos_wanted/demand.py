@@ -1,6 +1,6 @@
 """MAKER flow of Knos's demand check: an idea -> Qloo inputs the maker CONFIRMS -> a demand report inside Knos.
 
-Qloo's recommended chain (qloo-hackathon-kit starter/mcp-client README, "Choose a tool chain"): resolve vague words
+Qloo's recommended chain (Qloo's starter/mcp-client README, "Choose a tool chain"): resolve vague words
 into Qloo ids, confirm the matches with the user, then ask the taste question. Here:
 
   1. start    planner words -> qloo_find_tags (taste words -> tag URNs) + qloo_describe (existing products that stand

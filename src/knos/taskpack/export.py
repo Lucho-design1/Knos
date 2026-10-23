@@ -19,7 +19,7 @@ Rules a package keeps (each refuses the export with its reason):
   - the fix must carry tests (nothing to seal otherwise) and change at least one non-test file;
   - the task must be real: at the base commit with the hidden tests added the judge FAILS, and at the merge it PASSES.
 The licence is read (LICENSE / COPYING at the merge). With no licence found the package is built for the copyright
-holder's own use and is marked not sellable. Selling task packages is a founder decision in every case.
+holder's own use and is marked not sellable.
 """
 from __future__ import annotations
 
@@ -202,10 +202,10 @@ def fee_terms(price_units: int | None) -> dict:
     try:
         from ..money import fees_config  # type: ignore[import-not-found]
     except ImportError:
-        return {"source": "config/fees.yaml via knos.money.fees_config", "status": "REQ MONEY: knos.money is not in this install", "price": price_units}
+        return {"source": "config/fees.yaml via knos.money.fees_config", "status": "knos.money is not in this install", "price": price_units}
     cfg = fees_config.load()
     if price_units is None:
-        return {"source": "config/fees.yaml via knos.money.fees_config", "price": None, "status": "no price: setting one is a founder decision"}
+        return {"source": "config/fees.yaml via knos.money.fees_config", "price": None, "status": "no price given"}
     split = cfg.task_package(int(price_units))
     return {"source": "config/fees.yaml via knos.money.fees_config", "price": int(price_units), "status": "computed", **split}
 
@@ -263,7 +263,7 @@ def export(repo: Path | str, *, merge: str, pr: dict, issue: dict, out: Path | s
                    "reference_sha256": hashlib.sha256(ref_bytes).hexdigest(), "encrypted": bool(encrypt)},
         "verified": {"base_fails": True, "merge_passes": True, "base_summary": at_base["summary"], "merge_summary": at_merge["summary"], "seconds": took},
         "fee": fee_terms(price_units),
-        "sale": "selling task packages is a founder decision; nothing here offers or sells one",
+        "sale": "nothing here offers or sells a task package",
         "made": int(now()),
     }
     manifest["spec_sha256"] = spec_hash(manifest)

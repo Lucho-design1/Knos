@@ -75,7 +75,7 @@ def money(order_state: str = "open", mode: str = "tests") -> str:
         return "The order's deadline passed and the money went back to its funder; a new order would pay an overturned verdict."
     if order_state == "none":
         return "No money is held for this work: the appeal is about the count only."
-    return ("The money stays in escrow, as the order's terms put it: an appeal moves nothing, and nobody can take it "
+    return ("The money stays held, as the order's terms put it: an appeal moves nothing, and nobody can take it "
             "out before the order's deadline.")
 
 

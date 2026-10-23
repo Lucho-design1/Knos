@@ -8,13 +8,13 @@
 
 **Knos carries research across the valley of death: each step is paid only on verified proof.**
 
-From a paper or idea to a product people want: a demand check on Qloo, a Ready brief, escrow on Solana, paid on proof.
+From a paper or idea to a product people want: a demand check on Qloo, a Ready brief, money held on Solana, paid on proof.
 
 Ready briefs: 2.08x fewer reasoning tokens, 70% vs 5% passed ([measured](docs/idt/summary.json)).
 
 Devnet, test money, no customers yet.
 
-[Check demand](https://drexthealpha.github.io/Knos/#demand) · [Check every claim yourself](docs/JUDGES.md)
+[Check demand](https://drexthealpha.github.io/Knos/#demand) · [Check every claim yourself](docs/reference/MANIFEST.md)
 
 ## How it works
 
@@ -22,8 +22,8 @@ Devnet, test money, no customers yet.
 flowchart TB
     idea["A paper or an idea"] --> demand["Demand check on Qloo: who wants it, where, at what price"]
     demand --> ready["A Ready brief: each milestone has a number, who checks it, and a deadline"]
-    ready --> escrow["Backers fund milestones; the money waits in escrow on Solana"]
-    escrow --> proof["The maker posts a result; a check judges it"]
+    ready --> held["Backers fund milestones; the money is held on Solana until the proof passes"]
+    held --> proof["The maker posts a result; a check judges it"]
     proof -->|verified| paid["The maker is paid for that milestone"]
     proof -->|not verified by the deadline| back["Nobody is paid; the money goes back to the backers"]
 ```
@@ -32,13 +32,13 @@ flowchart TB
 
 1. **Is it wanted?** A [demand check](docs/reference/DEMAND_CHECK.md) asks Qloo's taste data who would buy the product, where, and at what price.
 2. **Ready to fund.** No money locks on a vague brief: each milestone needs a number to hit, who checks it, and a deadline ([the IDT benchmark](docs/idt/summary.json)).
-3. **Escrow, then proof.** Backers fund one milestone at a time; the money waits in a program on [Solana](docs/WORDS.md#solana), not with Knos. It is paid only on verified proof: GitHub checks today; lab and referee verdicts with a challenge window. Without proof by the deadline, it goes back. Open [the app](https://knos.onrender.com/) or [get started](docs/START.md).
+3. **Held, then proof.** Backers fund one milestone at a time; the money waits in a program on [Solana](docs/WORDS.md#solana), not with Knos. It is paid only on verified proof: GitHub checks today; lab and referee verdicts with a challenge window. Without proof by the deadline, it goes back. Open [the app](https://knos.onrender.com/) or [get started](docs/START.md).
 
 **Open call:** have research waiting for a market? [Cross it on Knos](https://knos.onrender.com/invite): the page counts every crossing and pre-order by people outside Knos, live.
 
 ## One use: paying AI agents for verified pull requests
 
-The same escrow pays for code. One comment on a GitHub issue posts the task, your checks and the pay (`/knos fund 20 checks: test`); an [AI agent](docs/WORDS.md#ai-agent) or a person sends the work as a [pull request](docs/WORDS.md#pull-request); when the [checks](docs/WORDS.md#checks-ci) pass and you [merge](docs/WORDS.md#merge), a program pays the worker.
+The same held money pays for code. One comment on a GitHub issue posts the task, your checks and the pay (`/knos fund 20 checks: test`); an [AI agent](docs/WORDS.md#ai-agent) or a person sends the work as a [pull request](docs/WORDS.md#pull-request); when the [checks](docs/WORDS.md#checks-ci) pass and you [merge](docs/WORDS.md#merge), a program pays the worker.
 
 ```mermaid
 flowchart TB
@@ -95,11 +95,11 @@ One person holds every key today. Any change to the programs waits in public for
 | What | Today | Read from |
 |---|---|---|
 | This copy | Release 0.4.0, October 2026. A copy naming an older release, or another product, is out of date | [CHANGELOG.md](CHANGELOG.md); the newest: [PyPI](https://pypi.org/project/knos/) |
-| Reproduced by someone else | 0 of 270 | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "reproduced by someone else" |
-| Exercised at the public devnet program ids | 26 of 270: GitHub token verification, funding by one comment, funding from a wallet, pay on merge, refund at the deadline, pause, work orders, an order paying up to four payees, orders judged by the buyer's black-box tests, auto-accepted orders, a holdback released after its warranty, top-ups, single-use tokens, one counted evaluation, a counted batch of evaluations, the seller's own count, a payee's passkey wallet, a passkey funder, the passkey relay, the site's Buy page, an x402 order, the upgrade gate, strict JSON in the verifier, an outcome that is not code, ES256 tokens in one transaction, the presentation grace | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "exercised on devnet" |
-| Deployed at the public devnet program ids, no transaction recorded | 3 of 270: GitLab token verification, the key guardian, holding pay for a payee with no wallet | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "deployed on devnet" |
-| Tested here only | 237 of 270, each with the test its row names | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "tested locally" |
-| Written, not tested | 4 of 270 | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "implemented" |
+| Reproduced by someone else | 0 of 267 | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "reproduced by someone else" |
+| Exercised at the public devnet program ids | 26 of 267: GitHub token verification, funding by one comment, funding from a wallet, pay on merge, refund at the deadline, pause, work orders, an order paying up to four payees, orders judged by the buyer's black-box tests, auto-accepted orders, a holdback released after its warranty, top-ups, single-use tokens, one counted evaluation, a counted batch of evaluations, the seller's own count, a payee's passkey wallet, a passkey funder, the passkey relay, the site's Buy page, an x402 order, the upgrade gate, strict JSON in the verifier, an outcome that is not code, ES256 tokens in one transaction, the presentation grace | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "exercised on devnet" |
+| Deployed at the public devnet program ids, no transaction recorded | 3 of 267: GitLab token verification, the key guardian, holding pay for a payee with no wallet | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "deployed on devnet" |
+| Tested here only | 234 of 267, each with the test its row names | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "tested locally" |
+| Written, not tested | 4 of 267 | [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md), the rows "implemented" |
 | Outside funders | 0 | [docs/NUMBERS.md](docs/NUMBERS.md), row 1 |
 | Outside repositories | 0 | [docs/NUMBERS.md](docs/NUMBERS.md), row 2 |
 | Outside payees | 1, on tasks Knos funded itself | [docs/NUMBERS.md](docs/NUMBERS.md), row 3 |
@@ -122,7 +122,7 @@ Start at [the release page](docs/reference/MANIFEST.md): the code, how it is bui
 
 One task from start to end, on 9 Oct 2026 with Knos 0.3.23, in a repository Knos owns, with test USDC (one step fixed by hand): [funded](https://explorer.solana.com/tx/3UaY22WKexigMpkVhibfeMdNgBiyybWm2Z4LuLskKGbNUDXV34yYWyH42atxFjELbrqSgoVs6TwpFzSQwhfXqzgM?cluster=devnet) · [wrong work refused](https://github.com/drexthealpha/knos-witness/actions/runs/37890511112/job/113690226126) · [paid](https://explorer.solana.com/tx/2PtmKUrQHKPARZE4nr35Te559NGQSG7tSHUfwzcKCAjL7gzvQ76fNTVLMWvq8mcZLxd27tbyTe31mCk2PxEGfAqa?cluster=devnet) · [replay paid nothing more](https://github.com/drexthealpha/knos-witness/pull/10#issuecomment-6075196710) · [the record](https://raw.githubusercontent.com/drexthealpha/Knos/knos-0.3.34/evidence/knos-witness-acaa854d/witness.json).
 
-Every other claim is one click from [docs/JUDGES.md](docs/JUDGES.md).
+Every capability, with the file or transaction that shows it: [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md).
 
 ## The number
 
@@ -176,13 +176,11 @@ Open [the check](https://drexthealpha.github.io/Knos/check/) and paste an AI age
 
 - [Get started](docs/START.md): check a pull request, fund a task, get paid, install the tools.
 
-- [Pricing](docs/PRICING.md): what Knos costs. Demand checks are free, 10 a month.
+- [Pricing](docs/PRICING.md): what Knos costs. Demand checks are free, 10 a month. The solver keeps 100%; the company pays the 1% release fee and the payment costs on top. Nobody is charged today.
 
 - [Trust](docs/TRUST.md): who holds the keys, what is tested, and what is not.
 
 - [The story](docs/STORY.md): one task in seven steps, each with its evidence.
-
-- [Check every claim](docs/JUDGES.md): each claim, one click from its proof.
 
 - [Every other document](docs/README.md): the map of the documents.
 
@@ -196,7 +194,7 @@ Below: tables that scripts write from the code and the chain, and the licence. N
 | program | address | on devnet, as [`docs/capabilities.json`](docs/capabilities.json) records it |
 |---|---|---|
 | `knos-oidc`, the verifier | `FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W` | runs `2.2` |
-| `knos-pay`, the escrow | `5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k` | runs `2.2` |
+| `knos-pay`, the payment program | `5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k` | runs `2.2` |
 | `knos-meter`, the count | `FUMKkcE95x2kZUj1zZTCbgcYBmJ3WXPHL8pyA8J6anX` | runs `1.1` |
 | `knos-passkey`, a wallet from a passkey | `FQPX9i5kQxLYKZyyPgM2fVK9am3w1LSk1Cuoer1sSY85` | runs `1.1` |
 <!-- programs:end -->

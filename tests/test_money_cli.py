@@ -95,7 +95,7 @@ def test_relay_carries_one_token_from_a_file_and_prints_the_result_as_json(world
     # a refusal is JSON too, and the command ends 1
     (tmp_path / "token").write_text(pay_jwt(c, repo, 99, user()))
     rc, said = knos("relay", "--token", tmp_path / "token")                # the option's name before 0.3.12 still works
-    assert rc == 1 and json.loads(said) == {"ok": False, "kind": "pay", "why": "no bounty is in escrow for this issue (never funded, or already paid or refunded)"}
+    assert rc == 1 and json.loads(said) == {"ok": False, "kind": "pay", "why": "no bounty is held for this issue (never funded, or already paid or refunded)"}
     # with no token: one pass of the worker, or passes for a while
     ran = []
     # (knos.flow reads the command and keeps the loop of passes itself: tests/test_worker.py runs that loop)
@@ -232,7 +232,7 @@ def test_fund_wallet_fixes_the_terms_from_the_repositorys_checks_and_funds_from_
     job = pay.job_pda(REPO, 7, wallet)
     rc, said = knos("fund-wallet", "octo/widgets#7", "20", "--checks", "test", "--mint", mint, "--keypair", c.keyfile)
     assert rc == 0 and said.splitlines()[:-1] == [
-        f"20.00 of mint {mint} is in escrow for octo/widgets#7. Job {job}.",
+        f"20.00 of mint {mint} is held for octo/widgets#7 until the proof passes. Job {job}.",
         "  It is paid when a maintainer merges a pull request that closes this issue, if these checks passed at that pull request's last commit: `test` (the checks you named).",
         "  The pull request may not change `.github/**` or `.knos/**`.",
         "  `/knos take` reserves the issue for 7 days.",
@@ -301,7 +301,7 @@ def test_fund_wallet_on_a_repository_with_no_knos_file_funds_a_neutral_order_pin
     assert rc == 0, said
     assert f"repos/drexthealpha/Knos/contents/examples/knos-attest.yml?ref=v{version()}" in asked      # the release's own file, at its tag
     lines = said.splitlines()
-    assert lines[0] == f"20.00 of mint {mint} is in escrow for octo/bare#1, and Knos's fee of {build.pick('0.50', '0.06')} of mint {mint} was paid on top. Work order {order}."
+    assert lines[0] == f"20.00 of mint {mint} is held for octo/bare#1 until the proof passes, and Knos's fee of {build.pick('0.50', '0.06')} of mint {mint} was paid on top. Work order {order}."
     assert "  Nobody can reserve it: the first accepted pull request is paid." in lines             # nothing there answers `/knos take`
     assert not any("/knos take` reserves" in x for x in lines)
     assert lines[-2] == ("  Unpaid after 1 day, it goes back to this wallet. octo/bare needs no Knos file: after the merge, whoever did the work runs "
@@ -332,7 +332,7 @@ def test_bounty_and_due_say_what_both_deployments_hold(world, monkeypatch, build
     assert c.send([pay1.init_faucet_ix(c.payer.pubkey())]), c.err
     org, repo, mona = user(), user(), user()
     github(monkeypatch, {"repos/octo/widgets": {"id": repo}, "users/mona": {"id": mona}})
-    assert knos("bounty", "octo/widgets#7")[1].strip() == "No bounty is in escrow for octo/widgets#7. A maintainer funds one by commenting on the issue: /knos fund 20"
+    assert knos("bounty", "octo/widgets#7")[1].strip() == "No bounty is held for octo/widgets#7. A maintainer funds one by commenting on the issue: /knos fund 20"
     assert knos("due", "mona")[1].splitlines() == [
         f"mona (GitHub user id {mona}) has named no wallet: a payment whose pull request gives no address is held for them.",
         "Name a wallet, and what is held is sent there: knos claim <address>   (or in the browser: https://drexthealpha.github.io/Knos/#claim)"]
@@ -368,7 +368,7 @@ def test_bounty_and_due_say_what_both_deployments_hold(world, monkeypatch, build
     said = knos("due", "mona")[1].splitlines()
     assert said[:2] == [f"mona (GitHub user id {mona}) is paid at {wallet}.",
                         f"1 payment in the faucet's test USDC, {net_of} in all: test money, kept apart from the record."] and len(said) == 5, said
-    assert knos("bounty", "octo/widgets#7")[1].startswith("No bounty is in escrow")
+    assert knos("bounty", "octo/widgets#7")[1].startswith("No bounty is held")
 
 
 # -- knos claim ----------------------------------------------------------------------------------------------------------------

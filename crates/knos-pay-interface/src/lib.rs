@@ -1,6 +1,6 @@
 //! Fund and read a Knos work order from another Solana program.
 //!
-//! knos_pay holds a work order's money in escrow and pays it when GitHub signs that the order's terms were met
+//! knos_pay holds a work order's money until the proof passes and pays it when GitHub signs that the order's terms were met
 //! (the token is verified on chain by knos-oidc). This crate is what a program needs to be a FUNDER by CPI: the
 //! program ids, the addresses, the three instructions a funder sends (FundOrderWallet, TopUp, RefundOrder) and a
 //! reader of the Order account. It depends on solana-program and nothing else, and none of knos_pay's code.

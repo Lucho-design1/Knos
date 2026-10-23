@@ -21,7 +21,7 @@
 /src/knos/receipt2/             @drexthealpha
 /tests/bench_tamper/            @drexthealpha
 
-# Money: settlement, treasury, escrow, fees, splits, keys
+# Money: settlement, treasury, held money, fees, splits, keys
 /src/knos/settle/               @drexthealpha
 /src/knos/money/                @drexthealpha
 /src/knos/graduation/           @drexthealpha

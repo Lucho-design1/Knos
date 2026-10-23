@@ -13,7 +13,7 @@ APP = ROOT / "apps" / "wanted"
 
 def test_the_apps_own_suite_passes_against_this_knos():
     env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(ROOT / "src"), str(APP)])}
-    # from the Knos root, as docs/reference/MONOREPO.md says: PYTHONPATH=src:apps/wanted python -m pytest -q apps/wanted
+    # from the Knos root: PYTHONPATH=src:apps/wanted python -m pytest -q apps/wanted
     got = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "apps/wanted"], cwd=ROOT, env=env,
                          capture_output=True, text=True, timeout=600)
     assert got.returncode == 0, got.stdout[-3000:] + got.stderr[-2000:]

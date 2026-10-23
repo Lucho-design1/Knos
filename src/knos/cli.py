@@ -15,7 +15,7 @@
     knos accept init          scaffold a black-box acceptance bundle from a reference implementation
 
   for money
-    knos bounty owner/repo#7  what is in escrow for an issue, and its state
+    knos bounty owner/repo#7  what is held for an issue, and its state
     knos due <github login>   where a GitHub account is paid, what is held for it, and its record
     knos fund-wallet o/r#7 20 put a bounty on an issue straight from a wallet
     knos balance ...          money a wallet sets aside for one GitHub owner's repositories: show, open, deposit, set, withdraw
@@ -703,10 +703,10 @@ def fund_wallet(where: str = typer.Argument(..., metavar="OWNER/REPO#ISSUE"), am
     sig = _send(ledger, [ix], wallet)
     after = f"  Unpaid after {days} day{'s' if days != 1 else ''}, it goes back to this wallet."
     if order:
-        out.print(f"{_money(units, m, decimals)} is in escrow for {where}, and Knos's fee of {_money(fee, m, decimals)} was paid on top. "
+        out.print(f"{_money(units, m, decimals)} is held for {where} until the proof passes, and Knos's fee of {_money(fee, m, decimals)} was paid on top. "
                   f"Work order {made}.", markup=False)
     else:
-        out.print(f"{_money(units, m, decimals)} is in escrow for {where}. Job {job}.", markup=False)
+        out.print(f"{_money(units, m, decimals)} is held for {where} until the proof passes. Job {job}.", markup=False)
     for line in [*terms.describe(built.terms, built.source), *built.notes]:
         out.print(f"  {line}", markup=False)
     if not order:
@@ -724,7 +724,7 @@ def fund_wallet(where: str = typer.Argument(..., metavar="OWNER/REPO#ISSUE"), am
 
 @_app.command()
 def bounty(where: str = typer.Argument(..., metavar="OWNER/REPO#ISSUE")) -> None:
-    """What is in escrow for an issue, read from Solana devnet."""
+    """What is held for an issue, read from Solana devnet."""
     from . import fees
     from .settle import relay as first
     from .settle.v2 import relay as second
@@ -734,7 +734,7 @@ def bounty(where: str = typer.Argument(..., metavar="OWNER/REPO#ISSUE")) -> None
     now = ledger.now()
     jobs, old = second.jobs_for(ledger, repo_id, n), first.jobs_for(ledger, repo_id, n)
     if not jobs and not old:
-        out.print(f"No bounty is in escrow for {where}. A maintainer funds one by commenting on the issue: /knos fund 20", markup=False)
+        out.print(f"No bounty is held for {where}. A maintainer funds one by commenting on the issue: /knos fund 20", markup=False)
         return
     rule = fees.live(ledger) if jobs else fees.rule()   # a job's fee is taken when it is paid: by the build that is live (asked only when a job is there)
     for addr, j in jobs:
@@ -841,7 +841,7 @@ def status_cmd(as_json: bool = typer.Option(False, "--json", help='print the che
 
 
 # ---- records: receipts, statements, the SIEM export, invoices ----------------------------------------------------------------
-# For the person who signs off spend. Everything is recomputed from the escrows' log lines on devnet (knos.records), never
+# For the person who signs off spend. Everything is recomputed from the payment programs' log lines on devnet (knos.records), never
 # from a database; a transaction the public RPC would not give is said, and the totals are then a lower bound.
 
 def _days(first: str, last: str) -> tuple[str, str]:
@@ -872,7 +872,7 @@ def _history(limit: int):
     try:
         got = records.read(_ledger().url, min(limit, 1000))
     except (chain.Refused, OSError, ValueError) as why:
-        raise Stop(f"Solana did not give the escrows' history: {ghwords.first_line(why)}.") from None
+        raise Stop(f"Solana did not give the payment programs' history: {ghwords.first_line(why)}.") from None
     for note in got.notes():
         err.print(note, markup=False)
     return got
@@ -890,7 +890,7 @@ def _said(names) -> None:
 
 _FIRST = typer.Option("", "--from", help="first UTC day, like 2026-09-01")
 _LAST = typer.Option("", "--to", help="last UTC day, like 2026-09-30 (inclusive)")
-_LIMIT = typer.Option(1000, "--limit", help="how many of each escrow's newest transactions to read (at most 1000)")
+_LIMIT = typer.Option(1000, "--limit", help="how many of each payment program's newest transactions to read (at most 1000)")
 _NO_NAMES = typer.Option(False, "--no-names", help="do not ask GitHub for repository and account names: ids only")
 
 
@@ -917,7 +917,7 @@ def receipt_check(path: str = typer.Argument(..., help="an acceptance receipt (J
 def receipts(owner: str = typer.Option(..., "--owner", help="the GitHub login or id whose money paid"), first: str = _FIRST, last: str = _LAST,
              fmt: str = typer.Option("csv", "--format", help="csv or jsonl"), limit: int = _LIMIT, no_names: bool = _NO_NAMES,
              to_file: Path = typer.Option(None, "--out", help="write the rows here instead of printing them")) -> None:
-    """One row per payment out of an owner's money, recomputed from the escrows' log lines: date, repository, issue, pull request, who was paid and where, amount, fee, the terms' hash, the transaction. Each column is named in the file's first row."""
+    """One row per payment out of an owner's money, recomputed from the payment programs' log lines: date, repository, issue, pull request, who was paid and where, amount, fee, the terms' hash, the transaction. Each column is named in the file's first row."""
     from . import records
     if fmt not in ("csv", "jsonl"):
         raise Stop(f"--format is csv or jsonl; {fmt!r} is neither.")
@@ -959,7 +959,7 @@ def statement(ctx: typer.Context,
               meter: bool = typer.Option(False, "--meter", help="the meter's statement instead: the evaluations knos_meter billed --buyer for, of --seller's work, in "
                                                                 "--month (how many, accepted and rejected, their declared value, the fees), with the count the program keeps"),
               buyer: str = typer.Option(None, "--buyer", help="with --meter: the GitHub login or id of the owner whose credits paid")) -> None:
-    """What one seller was paid in a month: each payment with its transaction, and the totals, recomputed from the escrows' log lines. With --meter and --buyer: what knos_meter counted for that buyer and that seller in the month."""
+    """What one seller was paid in a month: each payment with its transaction, and the totals, recomputed from the payment programs' log lines. With --meter and --buyer: what knos_meter counted for that buyer and that seller in the month."""
     if ctx.invoked_subcommand:      # `knos statement make | approve | pay | show | export | verify` (src/knos/statement.py)
         return
     from . import records
@@ -987,13 +987,13 @@ def statement(ctx: typer.Context,
 
 
 @_app.command()
-def export(siem: bool = typer.Option(False, "--siem", help="JSON Lines, one escrow event per line: time, actor, action, repository, issue, amount, transaction (the field names are in each line)"),
+def export(siem: bool = typer.Option(False, "--siem", help="JSON Lines, one event of the payment programs per line: time, actor, action, repository, issue, amount, transaction (the field names are in each line)"),
            first: str = _FIRST, last: str = _LAST, limit: int = _LIMIT, no_names: bool = _NO_NAMES,
            to_file: Path = typer.Option(None, "--out", help="write the lines here instead of printing them")) -> None:
-    """Every event the escrows logged, as JSON Lines for a SIEM: time, actor, repository, action, amount, transaction (and the fields a line has)."""
+    """Every event the payment programs logged, as JSON Lines for a SIEM: time, actor, repository, action, amount, transaction (and the fields a line has)."""
     from . import records
     if not siem:
-        raise Stop("Say what to export: knos export --siem   (JSON Lines, one escrow event per line)")
+        raise Stop("Say what to export: knos export --siem   (JSON Lines, one event per line)")
     a, b = _days(first, last)
     names = _names(no_names)
     text = records.siem_lines(_history(limit).events, names, a, b)
@@ -1026,7 +1026,7 @@ def invoice(owner: str = typer.Option(..., "--owner", help="the GitHub login or 
             evals.write_text(records.evaluations_csv(counted), encoding="utf-8", newline="")
     except OSError as why:
         raise Stop(f"Could not write the invoice in {folder}: {ghwords.first_line(why)}.") from None
-    out.print(f"Wrote {page} and {sheet}: " + ("; ".join(f"{t['payments']} payment(s), {records.money_text(t['total_units'], c)} out of escrow" for c, t in inv["totals"].items()) or "no payment that month") + ".", markup=False)
+    out.print(f"Wrote {page} and {sheet}: " + ("; ".join(f"{t['payments']} payment(s), {records.money_text(t['total_units'], c)} taken from the held money" for c, t in inv["totals"].items()) or "no payment that month") + ".", markup=False)
     if counted:
         out.print(f"Wrote {evals}: {len(counted)} evaluation(s) knos_meter counted for this owner, {records.units_text(inv['meter']['fee_units'])} in fees from their credits.", markup=False)
 
@@ -1086,7 +1086,7 @@ _HELP = [    # (command or group, its panel (None: the first, "Commands"), the o
     ("proof", WORKFLOWS, "The same checks by hand, and the judge GitHub runs on a bounty's pull request."),
     ("judge", WORKFLOWS, "`judge rerun`: judge a verdict's artifact again in the same image, and say agree or disagree."),
     ("accept", WORKFLOWS, "Scaffold a black-box acceptance bundle from a reference implementation."),
-    ("bounty", MONEY, "What is in escrow for an issue, and its state."),
+    ("bounty", MONEY, "What is held for an issue, and its state."),
     ("due", MONEY, "Where a GitHub account is paid, what is held for it, and its record."),
     ("fund-wallet", MONEY, "Put a bounty on an issue straight from a wallet."),
     ("terms", MONEY, "Terms from a template: the comment to post, and the exact terms it funds."),
@@ -1097,7 +1097,7 @@ _HELP = [    # (command or group, its panel (None: the first, "Commands"), the o
     ("badge", MONEY, "Write a \"paid on proof\" badge (SVG) for a repository or a pull request, and its Markdown."),
     ("receipts", MONEY, "One row per payment for an owner, from the chain's log (csv or jsonl)."),
     ("statement", MONEY, "What one seller was paid in a month; `statement --meter`: evaluations billed. `statement make`: an invoice's statement."),
-    ("export", MONEY, "Every escrow event as JSON Lines for a SIEM."),
+    ("export", MONEY, "Every event of the payment programs as JSON Lines for a SIEM."),
     ("invoice", MONEY, "An owner's month as a plain HTML invoice and a CSV."),
     ("mainnet-check", MONEY, "Every gate that must hold before mainnet, with its evidence."),
 ]

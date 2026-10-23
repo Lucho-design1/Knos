@@ -1,5 +1,5 @@
 // x402 "knos-order": a PROPOSED payment scheme, not part of x402. The payment requirement is a Knos work order: the client
-// puts the amount in escrow (FundOrderWallet), the server delivers, and the escrow pays the seller when a GitHub-signed
+// holds the amount (FundOrderWallet), the server delivers, and the payment program pays the seller when a GitHub-signed
 // acceptance arrives (PayOrder), or returns everything to the client after the deadline (RefundOrder). docs/reference/X402.md is
 // the specification; this file is both roles' logic, with no dependency but Node and sdk/settle (which has none).
 import { ata, b58, findProgramAddress, hex, sha256, unb58, unhex, v2 } from "../../sdk/settle/index.js";
@@ -116,13 +116,13 @@ export async function verify(chain, req, payload, margin = 3600) {
   return { ok: true, order: o, payer: o.source };
 }
 
-/** The SettlementResponse the server returns with the resource (base64 in PAYMENT-RESPONSE): the money is in escrow, not yet the seller's. */
+/** The SettlementResponse the server returns with the resource (base64 in PAYMENT-RESPONSE): the money is held, not yet the seller's. */
 export const escrowed = (req, payload, v) => ({
   success: true, payer: v.payer, transaction: payload.transaction ?? "", network: req.network, amount: String(v.order.amount),
   extensions: { [SCHEME]: { info: { order: payload.order, state: "escrowed", deadline: v.order.deadline } } },
 });
 
-/** Where an order stands, from the chain alone: escrowed while its account exists; afterwards its last log line says how it ended. */
+/** Where an order stands, from the chain alone: `escrowed` (held) while its account exists; afterwards its last log line says how it ended. */
 export async function status(chain, program, order) {
   const got = await chain.account(order);
   if (got && got.owner === program && readOrder(got.data)) return { order, state: "escrowed", deadline: readOrder(got.data).deadline };

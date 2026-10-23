@@ -9,7 +9,7 @@ chosen by a hash nobody can steer, and the money is split into tiers that pay on
 that control group is large enough, at an agreed confidence.
 
 Nothing on Solana changed for this: the measurement runs
-as a pinned GitHub workflow, and the existing escrow pays each tier on GitHub's signed word that it passed.
+as a pinned GitHub workflow, and the existing payment program pays each tier on GitHub's signed word that it passed.
 
 Everything shown below ran on devnet with **SYNTHETIC** (made-up) support tickets and a test token worth nothing.
 Nobody has bought a measured result through Knos.
@@ -23,7 +23,7 @@ spec answers one of these:
 | The question | What answers it |
 |---|---|
 | What exactly is the result? | `metric`: a formula over one row of the buyer's own data, and the `window` it is counted in |
-| What is the most it can cost? | `price.cap`: the total escrowed; the tiers add up to it exactly and nothing above it can be paid |
+| What is the most it can cost? | `price.cap`: the total held; the tiers add up to it exactly and nothing above it can be paid |
 | What did the seller cause? | `control`: a share of the items (20% unless the spec says otherwise) handled the old way; only the difference counts |
 | What if the world moved anyway? | the control group lives through the same window, so a change both groups saw cancels out |
 | How sure must we be? | `success.confidence`: a tier pays when the *lower* bound of the lift's confidence interval reaches its bar, not the average |
@@ -90,7 +90,7 @@ Each refusal names a category that the cheat library and Knos Record share:
 
 A measurement before the window has closed, or with fewer than 30 items in either group, is refused too.
 
-Two more checks are the escrow's own and need nothing from this workflow: a token from any commit other than the
+Two more checks are the payment program's own and need nothing from this workflow: a token from any commit other than the
 pinned one is refused by `knos_pay` (error 86), and a spec edited after funding gives other terms, so its token names
 another terms hash and is refused (error 87).
 
@@ -178,7 +178,7 @@ An earlier round (pinned commit `aa9e366c`) is in `demo-round1.json`: its measur
 workflow could not fetch the data branch of a private repository; fixed since), so nothing was signed and the public
 relay refunded all three tiers after their deadline, as designed.
 
-The fees were the escrow's own (`knos_pay` order fee, 0.05 per order at these amounts).
+The fees were the payment program's own (`knos_pay` order fee, 0.05 per order at these amounts).
 
 ## What it does not do
 

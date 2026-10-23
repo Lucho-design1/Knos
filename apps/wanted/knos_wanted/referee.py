@@ -210,7 +210,7 @@ def start(rec: dict, url: str, led, kind: str = "preorder") -> dict:
         _live.add(s["id"])
     threading.Thread(target=host1, daemon=True).start()
     return {"session": s["id"], "digest": s["digest"], "github": GITHUB_HOST, "evidence_hash": ev["evidence_hash"],
-            "needs": "2 of 3 referee hosts (this server, GitHub Actions, the founder's PC) sign one FROST signature"}
+            "needs": "2 of 3 referee hosts (this server, GitHub Actions, a third host) sign one FROST signature"}
 
 
 def get(path: str, qs: dict) -> tuple[int, dict]:

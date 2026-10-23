@@ -1,4 +1,4 @@
-"""TASK-CHAMPION T9 test_knos_builds_knos, live: the brief that set this work is a Knos project, and each of its
+"""test_knos_builds_knos, live: the brief that set this work is a Knos project, and each of its
 milestones was released on devnet only after its test passed in CI.
 
     python scripts/test_knos_builds_knos.py <project id> [--except <check>]

@@ -66,7 +66,7 @@ def test_fund_pay_claim_from_tokens_alone(env):
     assert pay.read_due(c.data(pay.due_pda(AUTHOR, usdc))) == 19_500_000
     # the same proof again: nothing left to pay
     again = go(token(c, pay.pay_audience(REPO, 7, AUTHOR, "a" * 40)))
-    assert not again["ok"] and again["why"].startswith("no bounty is in escrow for this issue") and "sigs" not in again   # refused before any fee
+    assert not again["ok"] and again["why"].startswith("no bounty is held for this issue") and "sigs" not in again   # refused before any fee
     # the author claims everything, in every mint, to one address
     wallet = Keypair().pubkey()
     r = go(token(c, pay.claim_audience(wallet), file="claim.yml", event_name="workflow_dispatch", actor_id=str(AUTHOR), repository_owner_id=str(AUTHOR)))
@@ -272,7 +272,7 @@ def test_a_dropped_transaction_is_tried_again_and_a_second_relayer_does_no_harm(
     other = Keypair()
     c.airdrop(other.pubkey(), 10**9) if hasattr(c, "airdrop") else c.svm.airdrop(other.pubkey(), 10**9)
     late = relay.submit(ledger, other, proof, jwks, now=c.now())
-    assert late == {"ok": False, "kind": "pay", "why": "no bounty is in escrow for this issue (never funded, or already paid or refunded)"}
+    assert late == {"ok": False, "kind": "pay", "why": "no bounty is held for this issue (never funded, or already paid or refunded)"}
 
     # waiting out the one-funding-per-minute limit is not a failure, however many passes it takes
     waits = {"n": 0}

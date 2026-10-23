@@ -1382,7 +1382,7 @@ export function said(logs, program = null) {
   return out;
 }
 
-// ---- knos-meter (programs-v2/knos_meter): acceptance without escrow ---------------------------------------------------
+// ---- knos-meter (programs-v2/knos_meter): acceptance without held money ---------------------------------------------------
 const MICRO = 1_000_000, M_FEE = 50_000, M_PLAN_MIN = 20_000, FREE_PER_MONTH = 10_000, MIN_DECIMALS = 2, MAX_DECIMALS = 18;
 const M_EXTENSIONS = Object.freeze([3, 4, 10, 18, 19, 20, 21, 22, 23, 25]);     // the only Token-2022 extensions a mint of credits may carry
 const CREDITS_LEN = 168, M_PLAN_LEN = 40, MARK_LEN = 88, MONTH_LEN = 64;

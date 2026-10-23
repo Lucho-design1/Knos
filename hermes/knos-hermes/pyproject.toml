@@ -9,7 +9,7 @@ description = "Knos as a Hermes Agent memory provider: one local memory every co
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "drexthealpha", email = "zulibro1999@gmail.com" }]
+authors = [{ name = "drexthealpha" }]
 keywords = ["hermes", "hermes-agent", "memory", "mcp", "agents", "local-first"]
 classifiers = [
   "Development Status :: 4 - Beta",

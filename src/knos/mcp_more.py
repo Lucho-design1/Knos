@@ -4,9 +4,9 @@
         knos://fees                         every Knos fee and its status (config/fees.yaml): what a payer pays
         knos://cheats                       the cheat rules Knos Gate and the referee refuse: read them BEFORE writing the work
     resource templates
-        knos://bounty/{owner}/{repo}/{issue}   one issue's escrow, its state and terms (what knos_bounty returns)
+        knos://bounty/{owner}/{repo}/{issue}   what is held on one issue, its state and terms (what knos_bounty returns)
         knos://due/{login}                     what waits and what was paid for a GitHub account (knos_due)
-        knos://token/{address}                 whether a mint can hold an escrow, or a token account receive a payout
+        knos://token/{address}                 whether a mint can hold money until the proof passes, or a token account receive a payout
                                                (Token-2022 extensions: knos.platform.token22)
     prompts              the three jobs a person asks an agent to do with Knos, as ready messages:
         earn_a_bounty     find funded work, reserve it, verify before the pull request, open it, collect
@@ -44,12 +44,12 @@ RESOURCES = [
      "mimeType": "application/json"},
 ]
 TEMPLATES = [
-    {"uriTemplate": "knos://bounty/{owner}/{repo}/{issue}", "name": "bounty", "title": "Escrow on one issue",
-     "description": "What is in escrow for owner/repo#issue: each job's state and its terms in words.", "mimeType": "application/json"},
+    {"uriTemplate": "knos://bounty/{owner}/{repo}/{issue}", "name": "bounty", "title": "Held money on one issue",
+     "description": "What is held for owner/repo#issue: each job's state and its terms in words.", "mimeType": "application/json"},
     {"uriTemplate": "knos://due/{login}", "name": "due", "title": "Waiting for a GitHub account",
      "description": "Where a GitHub account is paid, what is held for it and its record.", "mimeType": "application/json"},
     {"uriTemplate": "knos://token/{address}", "name": "token", "title": "Token safety",
-     "description": "Whether a mint can hold an escrow (no permanent delegate, pause, transfer hook, fee, frozen default) or a token account can receive a payout (no required memo, not frozen).",
+     "description": "Whether a mint can hold money until the proof passes (no permanent delegate, pause, transfer hook, fee, frozen default) or a token account can receive a payout (no required memo, not frozen).",
      "mimeType": "application/json"},
 ]
 _PARTS = {"bounty": re.compile(r"knos://bounty/([A-Za-z0-9][A-Za-z0-9-]{0,38})/([\w.-]{1,100})/(\d{1,10})"),

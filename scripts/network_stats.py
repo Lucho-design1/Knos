@@ -4,12 +4,12 @@
 
 Three sources, nothing self-reported:
 
-  1. The escrow's own log lines in the WHOLE transaction history of both deployments, read a page of 1,000 signatures
+  1. The payment program's own log lines in the WHOLE transaction history of both deployments, read a page of 1,000 signatures
      at a time back to the first transaction (read_history; at most --pages pages and --budget seconds a program, and
      "error" says when a bound stopped it; --cache keeps what was read, so the next build reads only what is new;
      the lines are read by knos.records): `knos:` lines of the first
      (programs/), `knos2:` lines of the second (programs-v2/) and its `knos3:` lines, which are work orders (knos_pay
-     2.1). A line counts only when the escrow itself logged it in a transaction that succeeded: a line another program
+     2.1). A line counts only when the payment program itself logged it in a transaction that succeeded: a line another program
      prints in the same transaction is not one. knos_meter's `knosm:eval` lines are read the same way and counted
      apart, per month: an evaluation moves nobody's money.
   2. The public relay log (the issue labelled `knos-relay` in drexthealpha/Knos): one line per token a relay carried,
@@ -24,7 +24,7 @@ and open):
 
     own      the Balance's owner, the commenter who funded, a payee, the funding wallet or a wallet that was paid
              is Knos's own (scripts/own_github_ids.json: GitHub ids, and wallets, which have no GitHub id)
-    self     not own, paid, and the funder is a payee (the second escrow's own rule: the Balance's owner or the
+    self     not own, paid, and the funder is a payee (the second payment program's own rule: the Balance's owner or the
              commenter is a payee, or it is paid to the wallet whose money it was). A split that pays its funder a
              share is self as a whole: none of it counts as outside use
     test     not own, not self, and the money came from the devnet faucet (free test USDC)
@@ -86,7 +86,7 @@ from knos.records import PROGRAMS, events_of, history, jobs_of, meter_months, or
 # any of these is "own", never "outside".
 _OWN = json.loads((ROOT / "scripts" / "own_github_ids.json").read_text(encoding="utf-8"))
 OWN = frozenset(_OWN["ids"])
-# Internal dogfooding (Knos buying its own work, v0.3.31): its wallets are Knos's own, so its escrows and payouts are
+# Internal dogfooding (Knos buying its own work, v0.3.31): its wallets are Knos's own, so its held money and payouts are
 # never outside use and never in a public volume number.
 DOGFOOD = _OWN.get("internal_dogfooding") or {}
 OWN_WALLETS = frozenset(_OWN.get("wallets", [])) | frozenset(DOGFOOD.get("wallets", []))
@@ -325,7 +325,7 @@ def measure(name: str, lines: list[dict], events: list[dict], get=None, most: in
         n, p50, p95, slowest        the samples, the median, the 95th percentile by nearest rank, the longest (seconds)
         count, median, p90          n and p50 under the names the Numbers table reads, and its 90th percentile
         window                      {from, to}: the days (UTC) of the oldest and newest payment in the sample
-        deployment                  {first, second}: how many of the samples each deployment's escrow paid
+        deployment                  {first, second}: how many of the samples each deployment's payment program paid
         lines, not_timed            the relay log lines looked at, and how many of them gave no sample: a zero beside
                                     a large not_timed is a build that could not read the chain or GitHub, not a quiet week
         definition                  the sentence printed next to the number
@@ -392,7 +392,7 @@ def attempts(comments: list[dict], kinds: tuple = ATTEMPTS["pay"]) -> dict:
         never         asked, and no line says ok
         misposted     lines with `-` for the id: a comment that could not carry its token (they answer nobody)
         user_errors   of `never`, the ones whose every failed line is the asker's own (knos.ghwords.RELAY: the issue
-                      is funded already, nothing is in escrow, an old workflow): asking again the same way changes
+                      is funded already, nothing is held, an old workflow): asking again the same way changes
                       nothing, and the reply said what to do; `user_reasons` are their reasons
         failures      `never` less `user_errors`: asked, possible, and not done
         completion_possible  completed / (asked - user_errors): the rate over what could have been done (null for none)
@@ -479,7 +479,7 @@ def installed(get, own: frozenset = OWN, queries=INSTALLED_QUERIES) -> dict:
 
 # ---- what the chain holds now ----------------------------------------------------------------------------------------
 def live(ledger) -> dict:
-    """What is in escrow now, from the programs' accounts."""
+    """What is held now, from the programs' accounts."""
     first = [pay.read_job(d) for _, d in ledger.program_accounts(pay.PAY_ID, 256)]
     dues = [pay.read_due(d) for _, d in ledger.program_accounts(pay.PAY_ID, 48)]
     second = [pay2.read_job(d) for _, d in ledger.program_accounts(pay2.PAY_ID, pay2.JOB_LEN)]

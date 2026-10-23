@@ -120,7 +120,7 @@ def test_one_flow_end_to_end_without_a_chain(tmp_path):
     t = d["dashboard"]["totals"]
     assert (t["verifications"], t["verified"], t["refused"], t["failing_merges_blocked"]) == (2, 1, 1, 1)
     assert d["dashboard"]["invoice"]["due_usd"] == "0.00"          # the team's first verification is free
-    assert d["modes"]["token_factory"] == "mock" and d["track"] == "Coding and Agentic Engineering"
+    assert d["modes"]["token_factory"] == "mock" and "track" not in d
     assert (out / "flow.html").is_file() and "LiteSVM" in (out / "flow.html").read_text(encoding="utf-8")
     assert len((out / "usage.jsonl").read_text().splitlines()) == (3 if steps["paid"]["paid"] else 2)
     # the hidden tests were never in the agent's tree

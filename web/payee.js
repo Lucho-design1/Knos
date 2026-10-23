@@ -49,7 +49,7 @@ export const CLAIM_WORKFLOW = `# .github/workflows/knos-claim.yml: name the Sola
 # (id-token). What it cannot do: read or change code, or change settings. It has no access to the repository's
 # contents.
 #
-# Why nobody else can name an address for your account: the escrow on Solana takes the statement only when GitHub's
+# Why nobody else can name an address for your account: the payment program on Solana takes the statement only when GitHub's
 # signature says it came from the workflow named below, at exactly that commit, in a run that the owner of the
 # repository started by hand, in a repository named knos-claim. The address reaches that workflow as an input, never
 # a shell.

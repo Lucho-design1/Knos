@@ -1,5 +1,5 @@
 {
- "what": "the Knos lab escrow on Solana devnet: real transactions, TEST money (the demo's own mint), lab replies from FIXTURES; the LAB verdict pays the lab even though the science failed, the OUTCOME verdict does not pay the researcher",
+ "what": "the Knos lab's money, held on Solana devnet until the proof passes: real transactions, TEST money (the demo's own mint), lab replies from FIXTURES; the LAB verdict pays the lab even though the science failed, the OUTCOME verdict does not pay the researcher",
  "synthetic": true,
  "cluster": "devnet",
  "mint": "5XJJTDxBF1LqbQ9MAURyYUnHCPcd4JHxjdy9or2gWjsX",
@@ -28,7 +28,7 @@
     "outcome_pot": 50000000,
     "fee_rate_bps": 300,
     "fee_status": "decided",
-    "fee_bearer": "funder, on top of the price (the decision leaves who bears it open; this demo charges the funder)",
+    "fee_bearer": "funder, on top of the price",
     "fee_line": "config/fees.yaml fees.lab_order"
    },
    "pots": {
@@ -260,7 +260,7 @@
     "outcome_pot": 20000000,
     "fee_rate_bps": 300,
     "fee_status": "decided",
-    "fee_bearer": "funder, on top of the price (the decision leaves who bears it open; this demo charges the funder)",
+    "fee_bearer": "funder, on top of the price",
     "fee_line": "config/fees.yaml fees.lab_order"
    },
    "pots": {

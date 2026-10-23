@@ -34,7 +34,7 @@ that.
 A buyer waits for a person to approve the invoice: days to approve, from the day the invoice is received to the day
 it is approved. Knos has not measured that wait with any buyer, so no figure for it is given.
 
-Check every claim yourself: [JUDGES.md](JUDGES.md).
+Check every claim yourself: [every capability, with its evidence](reference/CAPABILITIES.md).
 
 ## The seven steps
 
@@ -96,12 +96,6 @@ Which build each public program id runs is in [MANIFEST.md](reference/MANIFEST.m
 
 What each would do is in [GOVERNANCE.md](reference/GOVERNANCE.md), [PILOT.md](reference/PILOT.md) and
 [ASSURANCE.md](reference/ASSURANCE.md).
-
-## Built during the Qloo hackathon
-
-The repository opened on 1 Sep 2026 as escrow that pays coding agents on proof. The hackathon opened on 30 Sep.
-The app in [`apps/wanted/`](../apps/wanted/) began on 14 Oct, its Qloo demand check on 16 Oct, the Ready brief on
-19 Oct and the front door's one box on 22 Oct.
 
 ## Limits
 

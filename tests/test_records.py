@@ -206,7 +206,7 @@ def test_a_statement_is_one_sellers_month_with_its_transactions(scenario):
     said = records.statement_lines(st)
     assert said[0].startswith("Statement for vendor-bot (GitHub id 8001), 2026-09:")
     assert all(r["transaction"] in x for r, x in zip(st["payments"], said[1:3], strict=True)) and "repository 7001#1" in said[1]
-    assert said[-1] == "  2 payments: 34.125000 test USDC received, 0.875000 test USDC in fees, 35.000000 test USDC out of escrow."
+    assert said[-1] == "  2 payments: 34.125000 test USDC received, 0.875000 test USDC in fees, 35.000000 test USDC taken from the held money."
     assert "funded by gh:5001" in said[1] and "funded by wallet:GLWd" in said[2]
     # another month, an unknown seller and a seller that could not be told are empty, and say so
     for st in (records.statement(rows, 8001, "vendor-bot", "2026-10"), records.statement(rows, 31337, "nobody", "2026-09"), records.statement(rows, 0, "x", "2026-09")):
@@ -310,7 +310,7 @@ def test_read_gives_both_escrows_oldest_first_and_says_what_it_could_not_read(mo
     assert [ev["tx"] for ev in got.events] == ["B", "A"] and [c[0] for c in calls] == ["http://rpc"] * 3 and {c[2] for c in calls} == {200}
     assert got.unread == 2 and got.cut == (2, "meter")
     assert got.notes() == ["2 transactions could not be read (the public RPC throttled): what follows is a lower bound.",
-                           "Only the newest 200 transactions of the second deployment's escrow were read: older payments are not here.",
+                           "Only the newest 200 transactions of the second deployment's payment program were read: older payments are not here.",
                            "Only the newest 200 transactions of knos_meter were read: older evaluations are not here."]
     assert records.Record([]).notes() == []
 
@@ -413,7 +413,7 @@ def test_a_cluster_that_will_not_answer_is_one_line_and_a_github_refusal_has_its
         raise OSError("Connection refused")
     monkeypatch.setattr(cli, "_ledger", lambda: SimpleNamespace(url="http://rpc"))
     monkeypatch.setattr(records, "read", down)
-    assert run(capsys, "receipts", "--owner", "5001", "--no-names")[:2] == (1, "Solana did not give the escrows' history: Connection refused.\n")
+    assert run(capsys, "receipts", "--owner", "5001", "--no-names")[:2] == (1, "Solana did not give the payment programs' history: Connection refused.\n")
     monkeypatch.setattr(records, "read", lambda url, limit: records.Record(scenario))
 
     def refused(path):
@@ -460,7 +460,7 @@ def test_knos_export_needs_siem_and_prints_json_lines(capsys, world, tmp_path):
 def test_knos_invoice_writes_a_page_and_a_csv(capsys, world, tmp_path):
     rc, text, _ = run(capsys, "invoice", "--owner", "acme", "--month", "2026-09", "--out", str(tmp_path / "out"))
     page, sheet = tmp_path / "out" / "KNOS-acme-202609.html", tmp_path / "out" / "KNOS-acme-202609.csv"
-    assert rc == 0 and f"Wrote {page} and {sheet}: 2 payment(s), 50.000000 test USDC out of escrow." in text
+    assert rc == 0 and f"Wrote {page} and {sheet}: 2 payment(s), 50.000000 test USDC taken from the held money." in text
     assert "Invoice KNOS-acme-202609" in page.read_text(encoding="utf-8") and len(sheet.read_text(encoding="utf-8").splitlines()) == 3
     rc, text, _ = run(capsys, "invoice", "--owner", "acme", "--month", "2026-08", "--out", str(tmp_path))
     assert rc == 0 and text.endswith("no payment that month.\n")
@@ -736,7 +736,7 @@ def test_knos_statement_meter_is_the_meters_month_and_an_invoice_and_the_export_
     assert rc == 0 and f"Wrote {evals}: 2 evaluation(s) knos_meter counted for this owner, 0.100000 in fees from their credits." in " ".join(text.split())
     html_ = page.read_text(encoding="utf-8")
     assert "<h2>Evaluations counted by knos_meter</h2>" in html_ and "a" * 40 in html_ and "c" * 40 not in html_ and "2 evaluations" in html_
-    assert "1 accepted, 1 rejected" in html_ and "not from an escrow" in html_ and "<script" not in html_.lower() and "http" not in html_
+    assert "1 accepted, 1 rejected" in html_ and "not from held money" in html_ and "<script" not in html_.lower() and "http" not in html_
     listed = list(csv.DictReader(io.StringIO(evals.read_text(encoding="utf-8"))))
     assert [x["transaction"] for x in listed] == [r["transaction"] for r in rows[:2]] and list(listed[0]) == list(records.EVAL_COLUMNS)
     # an owner with no evaluation that month gets the invoice it always got, and no third file

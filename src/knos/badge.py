@@ -258,7 +258,7 @@ def register(app) -> None:
                   what: str = typer.Argument("", help="with `record`: the supplier's slug, or the path of its record file"),
                   records_dir: Path = typer.Option(Path("docs/records"), "--records", help="with `record`: the folder the record files are in"),
                   to_file: Path = typer.Option(None, "--out", help="where the SVG is written (default: knos-paid.svg, or knos-paid-<pr>.svg)"),
-                  limit: int = typer.Option(1000, "--limit", help="how many of each escrow's newest transactions to read (at most 1000)")) -> None:
+                  limit: int = typer.Option(1000, "--limit", help="how many of each payment program's newest transactions to read (at most 1000)")) -> None:
         """Write a "paid on proof" badge (an SVG) for a repository or one pull request, and print the Markdown that links it to the record."""
         from . import cli, records
         if where == "record":

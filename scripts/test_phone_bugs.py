@@ -1,4 +1,4 @@
-"""TASK-WORLD T10 test_phone_bugs, live (the code half is apps/wanted/tests/test_phone_bugs.py):
+"""test_phone_bugs, live (the code half is apps/wanted/tests/test_phone_bugs.py):
 
 1. 10 of 10 runs of /auth/sso?tenant=knos-test reach the mocksaml email step, with 0 HTTP 429 (GETs only: the page is
    loaded, nothing is typed or submitted);

@@ -1,5 +1,5 @@
 # The uptime log of the hosted app, written by GitHub, not by hand: once a day this job
-# runs scripts/uptime_log.py over the window so far and puts the table in the run's summary. Nothing is committed; the
+# runs scripts/uptime_log.py over the last 14 days and puts the table in the run's summary. Nothing is committed; the
 # log is the list of these runs, each read from GitHub's own record of the keep-warm pings (keepalive.yml, worker.yml).
 name: uptime
 on:
@@ -14,9 +14,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: the window so far, from GitHub's record
+      - name: the last 14 days, from GitHub's record
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 scripts/uptime_log.py --from 2026-11-02 --to 2026-11-16 --markdown | tee -a "$GITHUB_STEP_SUMMARY"
+          python3 scripts/uptime_log.py --markdown | tee -a "$GITHUB_STEP_SUMMARY"
           python3 scripts/uptime_log.py --from "$(date -u -d yesterday +%F)" --to "$(date -u -d yesterday +%F)" --markdown | tail -1 | tee -a "$GITHUB_STEP_SUMMARY"

@@ -341,10 +341,10 @@ def test_knos_bounty_shows_every_job_on_an_issue_and_its_state():
     assert (opened["state"], opened["mode"], opened["amount_usdc"], opened["refunded_after"]) == (
         "open", "merge", "20.00", "2026-10-05T14:13:20Z") and "author_id" not in opened
     assert (proven["state"], proven["author_id"], proven["released_in_s"], proven["amount_usdc"]) == ("proven", MONA, 1800, "5.00")
-    assert got["issue"] == "octo/widgets#7" and got["said"] == "2 bounties in escrow for octo/widgets#7."
+    assert got["issue"] == "octo/widgets#7" and got["said"] == "2 bounties held for octo/widgets#7."
     none = call("knos_bounty", {"issue": "octo/widgets#8"}, ledger, github)
     assert none["isError"] is False and none["structuredContent"]["bounties"] == []
-    assert none["structuredContent"]["said"].startswith("no bounty in escrow for octo/widgets#8")
+    assert none["structuredContent"]["said"].startswith("no bounty held for octo/widgets#8")
 
 
 def _pull(body: str, runs: list[dict], sha: str = "a" * 40) -> GitHub:
@@ -494,7 +494,7 @@ def test_knos_bounty_says_a_jobs_terms_in_words_and_who_a_held_one_waits_for():
     ledger, github = world2()
     got = call("knos_bounty", {"issue": "octo/widgets#7"}, ledger, github)["structuredContent"]
     usdc, junk, old, proven = got["bounties"]
-    assert got["said"] == "4 bounties in escrow for octo/widgets#7." and [b["deployment"] for b in got["bounties"]] == [2, 2, 1, 1]
+    assert got["said"] == "4 bounties held for octo/widgets#7." and [b["deployment"] for b in got["bounties"]] == [2, 2, 1, 1]
     assert (usdc["state"], usdc["mode"], usdc["amount_usdc"], usdc["money"]) == ("open", "merge", "30.00", "test USDC")
     # the sentences repeat the funder's check names and globs, so they are in `untrusted`, with the names themselves
     assert usdc["untrusted"]["terms"] == terms.describe(BOUGHT) == [
@@ -517,7 +517,7 @@ def test_knos_bounty_says_a_jobs_terms_in_words_and_who_a_held_one_waits_for():
     late = call("knos_bounty", {"issue": "acme/gadgets#4"}, ledger, github)["structuredContent"]["bounties"]
     assert [b["state"] for b in late] == ["past its deadline: it pays nobody now and goes back to its funder"]
     none = call("knos_bounty", {"issue": "octo/widgets#8"}, ledger, github)["structuredContent"]
-    assert none["bounties"] == [] and none["said"] == ("no bounty in escrow for octo/widgets#8; a maintainer funds one by commenting "
+    assert none["bounties"] == [] and none["said"] == ("no bounty held for octo/widgets#8; a maintainer funds one by commenting "
                                                        "/knos fund 20 on it.")
 
 
@@ -792,7 +792,7 @@ def test_knos_take_says_what_stands_in_the_way():
     closed = got("knos_take", {"issue": "octo/widgets#7"}, ledger, GitHub({**github.pages, "repos/octo/widgets/issues/7": {"title": "t", "labels": [], "state": "closed"}}))
     assert closed["can"] is False and closed["missing"] == ["the issue is closed"]
     none = got("knos_take", {"issue": "octo/widgets#8"}, ledger, github)           # no bounty, and GitHub has no page for the issue
-    assert none["can"] is False and none["missing"] == ["no open bounty is in escrow for this issue"] and none["unread"] == ["who the issue is assigned to (from GitHub)"]
+    assert none["can"] is False and none["missing"] == ["no open bounty is held for this issue"] and none["unread"] == ["who the issue is assigned to (from GitHub)"]
     # terms that let nobody reserve the issue
     none_reserved = {**BOUGHT, "reserve": 0}
     raw = terms.canonical(none_reserved)
@@ -880,7 +880,7 @@ def test_knos_settle_checks_the_merge_and_the_escrow_before_it_hands_back_the_co
     assert (out["can"], out["missing"], out["merged"], out["closes"], out["escrow"]) == (True, [], True, [7], [{"issue": 7, "bounties": 4}])
     for body, merged, missing in (("Fixes #7", False, "the pull request is not merged: nothing is paid before a maintainer merges it"),
                                   ("Refactors things.", True, "its description closes no issue (it needs `Fixes #<issue>`)"),
-                                  ("Fixes #8", True, "none of the issues it closes has a bounty in escrow")):
+                                  ("Fixes #8", True, "none of the issues it closes has a held bounty")):
         github.pages["repos/octo/widgets/pulls/12"] = {"number": 12, "merged": merged, "body": body, "base": base}
         out = got("knos_settle", {"pr": "https://github.com/octo/widgets/pull/12/files"}, ledger, github)
         assert out["can"] is False and out["missing"] == [missing] and out["said"].startswith("Do not post it yet: ")
@@ -907,7 +907,7 @@ def test_knos_quote_says_the_amount_the_terms_what_stands_in_the_way_and_the_fun
     assert mine["reserve_days"] == 7 and mine["untrusted"]["checks"] == ["build", "test"] and mine["untrusted"]["terms"][0].startswith("It is paid when a maintainer merges")
     assert next(r for r in rows if r["amount_usdc"] == "30.00")["funder"]["kind"] == "a balance" and next(r for r in rows if r["amount_usdc"] is None)["funder"]["kind"] == "a wallet"
     assert out["missing"] == [f"the token {JUNK} bounty of 400000000 funded by a wallet is not test USDC"]
-    assert out["assigned"] is False and out["unread"] == [] and out["said"].startswith("octo/widgets#7: 75.00 test USDC in escrow")
+    assert out["assigned"] is False and out["unread"] == [] and out["said"].startswith("octo/widgets#7: 75.00 test USDC held")
     # a bounty held for a payee, one past its deadline, a closed issue and an assigned one
     held = asked("knos_quote", {"issue": "acme/gadgets#5"}, ledger, GitHub({**github.pages, "repos/acme/gadgets": {"id": GADGETS}, "repos/acme/gadgets/issues/5": {"title": "t", "labels": [], "assignee": {"login": "x"}, "state": "closed"}}))
     assert held["amount_usdc"] == "0.00" and any(f"is held for GitHub account {MONA}, who has bound no wallet" in m for m in held["missing"])
@@ -915,7 +915,7 @@ def test_knos_quote_says_the_amount_the_terms_what_stands_in_the_way_and_the_fun
     late = asked("knos_quote", {"issue": "acme/gadgets#4"}, ledger, GitHub({**github.pages, "repos/acme/gadgets": {"id": GADGETS}}))
     assert any("is past its deadline" in m for m in late["missing"]) and "the issue (from GitHub)" in late["unread"] and "Could not be read" in late["said"]
     empty = asked("knos_quote", {"issue": "octo/widgets#8"}, ledger, github)
-    assert empty["bounties"] == [] and empty["amount_usdc"] == "0.00" and empty["missing"][0].startswith("no bounty is in escrow for this issue") and empty["said"].startswith("octo/widgets#8: nothing payable")
+    assert empty["bounties"] == [] and empty["amount_usdc"] == "0.00" and empty["missing"][0].startswith("no bounty is held for this issue") and empty["said"].startswith("octo/widgets#8: nothing payable")
 
 
 def can_pay_world(sha: str = WF_SHA, checks=("build", "test"), conclusion: str = "success"):
@@ -975,7 +975,7 @@ def test_knos_can_pay_names_each_thing_that_would_stop_it(monkeypatch):
     # nothing in escrow
     key_of(monkeypatch)
     none = call("knos_can_pay", {"issue": "octo/widgets#8"}, *can_pay_world())["structuredContent"]
-    assert none["can_pay"] is False and none["jobs"] == [] and none["missing"] == ["no open bounty is in escrow for this issue"]
+    assert none["can_pay"] is False and none["jobs"] == [] and none["missing"] == ["no open bounty is held for this issue"]
 
 
 def test_knos_can_pay_says_not_known_when_github_cannot_be_read(monkeypatch):

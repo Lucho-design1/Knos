@@ -69,7 +69,7 @@ def test_export_seals_the_hidden_tests_and_proves_the_task_is_real(pack):
     assert "test_swapcase" not in public and "assert swap" not in public                  # no hidden test's name or content
     assert "swap the case" in (folder / "public" / "statement.md").read_text()
     assert ex.untar(ex.sealed(folder, "tests.tar")) == {"tests/test_swapcase.py": TEST.encode()}
-    assert "fee" in m and m["sale"].startswith("selling task packages is a founder decision")
+    assert "fee" in m and m["sale"] == "nothing here offers or sells a task package"
     assert _git(repo, "status", "--porcelain") == ""                                      # the clone was only read
 
 
@@ -184,7 +184,7 @@ def test_the_fee_split_comes_from_money_s_api(monkeypatch):
             raise ImportError(name)
         return real(name, *a, **k)
     monkeypatch.setattr("builtins.__import__", no_money)
-    assert ex.fee_terms(10_000_000)["status"].startswith("REQ MONEY")
+    assert ex.fee_terms(10_000_000)["status"] == "knos.money is not in this install"
     monkeypatch.setattr("builtins.__import__", real)
     cfg = types.SimpleNamespace(task_package=lambda price: {"maintainer": price * 9 // 10, "knos": price - price * 9 // 10, "fee_bps": 1000})
     fees_config = types.SimpleNamespace(load=lambda: cfg)

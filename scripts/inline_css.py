@@ -1,4 +1,4 @@
-"""The built site's pages carry their stylesheets in the page (TASK-CHAMPION T7): each was a render-blocking request
+"""The built site's pages carry their stylesheets in the page: each was a render-blocking request
 before the first paint. Their font and image addresses are rewritten for the page's place at the site's root.
 
     python scripts/inline_css.py _site/index.html [_site/wanted.html ...]   (pages at the site's root)

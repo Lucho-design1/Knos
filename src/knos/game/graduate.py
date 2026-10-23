@@ -98,12 +98,12 @@ def pay_litesvm(root, p: dict, wallets: list[str], preorders: list[int]) -> dict
         c.token_account(w, c.usdc)
     steps = []
     if not c.send([graduation.escrow_ix(lp, c.funder.pubkey(), c.funder_tok, c.usdc)], c.funder, tag="grad_escrow"):
-        return {"label": LABEL, "paid": False, "error": f"escrow funding refused: {c.err}"}
-    steps.append({"step": "milestone escrow funded", "litesvm_tx": sigs[-1]})
+        return {"label": LABEL, "paid": False, "error": f"funding the milestone hold refused: {c.err}"}
+    steps.append({"step": "milestone hold funded", "litesvm_tx": sigs[-1]})
     e = graduation.address(lp, "escrow", c.funder.pubkey())
     if not c.pay(e, payees, repository_id=p["repo_id"], tag="grad_escrow_pay"):
-        return {"label": LABEL, "paid": False, "error": f"escrow payment refused: {c.err}"}
-    steps.append({"step": "milestone escrow paid to the split", "litesvm_tx": sigs[-1]})
+        return {"label": LABEL, "paid": False, "error": f"paying the milestone's held money refused: {c.err}"}
+    steps.append({"step": "the milestone's held money paid to the split", "litesvm_tx": sigs[-1]})
     for amt in preorders:
         b, tok = c.wallet(c.usdc, amt + 10_000_000)
         if not c.send([graduation.preorder_ix(lp, b.pubkey(), tok, c.usdc, amt)], b, tag="grad_preorder"):

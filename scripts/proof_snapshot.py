@@ -1,4 +1,4 @@
-"""The proof shown first on the front door (TASK-CHAMPION T3): the app's latest real check (GET /api/proof), written
+"""The proof shown first on the front door: the app's latest real check (GET /api/proof), written
 into the built page so the card is there at the first paint, labelled with the time the app ran it. It is the built
 site's data, like stats.json: never in the repository (Qloo's answers stay on the app's server and in what it serves).
 

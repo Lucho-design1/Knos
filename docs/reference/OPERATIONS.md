@@ -24,6 +24,6 @@ Not measured: the relay log was not read.
 - **incident**: a finished canary run that did not succeed, with its run's link
 - **response**: from an outside issue or pull request being opened to the first comment of a team member who is not its author, over the newest 200 of the repository
 - **asked**: one funding of one issue, or one payment of one pull request, that the relay log shows a line for
-- **user_errors**: asked, never done, and every failed line was the asker's own (the issue is funded already, nothing is in escrow, an old workflow): the reply said what to do, and asking again the same way changes nothing
+- **user_errors**: asked, never done, and every failed line was the asker's own (the issue is funded already, nothing is held, an old workflow): the reply said what to do, and asking again the same way changes nothing
 - **failures**: asked, possible, and never done: asked less completed less user_errors
 - **completion_possible**: completed over what could have been done (asked less user_errors)

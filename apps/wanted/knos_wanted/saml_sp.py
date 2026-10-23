@@ -1,6 +1,6 @@
 """Knos as its own SAML service provider for the TEST identity providers (enterprise.test_idps: mocksaml.com, and the
 self-hosted Keycloak realm). Self-hosted, so no server-to-server call stands between a sign-in and the IdP: the
-separate Jackson service answered this server HTTP 429 (TASK-WORLD T10), and a company's own IdP still goes through
+separate Jackson service answered this server HTTP 429, and a company's own IdP still goes through
 Jackson (enterprise.sso_start).
 
     GET  /auth/sso?tenant=knos-test   ->  an AuthnRequest (HTTP-Redirect binding) to the IdP's sign-in page

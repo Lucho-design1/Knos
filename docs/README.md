@@ -1,8 +1,8 @@
 <img src="../web/brand/mark.svg" height="40" alt="Knos">
 
-# Start here: eight pages
+# Start here: seven pages
 
-**In plain words.** These eight pages tell you what Knos is and how to use it. Start with [the story](STORY.md), or [try it](START.md) in five minutes. When a word is new to you, look it up in [the word list](WORDS.md).
+**In plain words.** These seven pages tell you what Knos is and how to use it. Start with [the story](STORY.md), or [try it](START.md) in five minutes. When a word is new to you, look it up in [the word list](WORDS.md).
 
 **Knos carries research across the valley of death: each step is paid only on verified proof.**
 
@@ -13,17 +13,14 @@ flowchart TB
     start["START: try it in five minutes"]
     cost["PRICING: what it costs"]
     trust["TRUST: who holds the keys"]
-    check["JUDGES: check every claim yourself"]
     new --> story
     new --> start
     story --> trust
     start --> cost
-    trust --> check
-    cost --> check
 ```
-*Read the story or try it first; then check every claim yourself.*
+*Read the story or try it first; then see the costs and the keys.*
 
-## The eight pages
+## The seven pages
 
 | page | what it answers |
 |---|---|
@@ -31,7 +28,6 @@ flowchart TB
 | [START.md](START.md) | five minutes: check a pull request, fund a task, get paid, install the command |
 | [PRICING.md](PRICING.md) | what it costs: the check is free; the fee on a paid task; the meter |
 | [TRUST.md](TRUST.md) | who holds the keys today, what is tested, and how to check a program yourself |
-| [JUDGES.md](JUDGES.md) | check every claim yourself: one sentence and one link for each |
 | [NUMBERS.md](NUMBERS.md) | nine numbers about use by anyone outside, zeros included |
 | [TRANSACTION.md](TRANSACTION.md) | one order told end to end, from its terms to the payment |
 | [WORDS.md](WORDS.md) | every technical word in one plain line |

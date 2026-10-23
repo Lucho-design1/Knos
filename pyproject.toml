@@ -9,8 +9,8 @@ description = "Knos carries research across the valley of death: each step is pa
 readme = "README.pypi.md"   # README.md with its links pinned to the tag (scripts/bump_version.py writes it)
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
-authors = [{ name = "drexthealpha", email = "zulibro1999@gmail.com" }]
-keywords = ["neutral-meter", "metering", "ai-agents", "coding-agents", "invoice-reconciliation", "attestation", "verification", "escrow", "solana", "oidc", "github-actions", "agent-payments", "sibyl", "claude-code-hooks"]
+authors = [{ name = "drexthealpha" }]
+keywords = ["neutral-meter", "metering", "ai-agents", "coding-agents", "invoice-reconciliation", "attestation", "verification", "pay-on-proof", "solana", "oidc", "github-actions", "agent-payments", "sibyl", "claude-code-hooks"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",

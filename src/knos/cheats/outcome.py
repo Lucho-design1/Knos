@@ -1,5 +1,5 @@
 """The outcome rules of the cheat library: what may not change between funding and measurement when Knos pays for a
-measured result (TASK-OUTCOMES item 6). Each compares what was committed at funding with what the measurement saw.
+measured result. Each compares what was committed at funding with what the measurement saw.
 
     funded / now: {"spec_hash": hex, "window": {"start", "end"}, "salt": str, "control_share": float,
                    "measurement_commit": sha, "data_hashes": {path: sha256}}        (any key may be missing)

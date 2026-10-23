@@ -38,11 +38,11 @@ answered `null`; testnet answered a certificate.
 Every place Knos waited or read at a hard-coded `confirmed` now asks `knos.platform.finality`:
 
 - sending and waiting: `knos.chain.Ledger` (blockhash, preflight, the wait, reads), `chain.wait` / `wait_all`, the
-  fan-out ledger the relays use (escrow release, payouts, Gate bounty payments, refunds), the WebSocket wait;
+  fan-out ledger the relays use (release of held money, payouts, Gate bounty payments, refunds), the WebSocket wait;
 - Knos Record anchors (`knos.record.anchoring`), x402 settlement confirmation (`knos.money.x402_exact`), the faucet;
 - the readers: receipts rebuilt from the chain (`knos.receipt`, `knos.bundle`), statements, audit, observe and the
   ZK client ask the cluster once; the plan floor reads at its ledger's commitment; a ledger that only reads, the
-  escrow history reader (`knos.records`) and the mainnet check never add a request of their own and read at
+  payment history reader (`knos.records`) and the mainnet check never add a request of their own and read at
   `finalized` once the process knows the cluster runs Alpenglow (`finality.cached`), else at `confirmed`, which is
   the same state there.
 
@@ -77,8 +77,8 @@ the public RPC:
 | --- | --- | --- | --- |
 | all | 49 | 1,205 ms | 2,449 ms |
 | Knos Record anchors | 30 | 1,213 ms | 3,040 ms |
-| escrow funding (knos_pay FundWallet, 60 s deadline, test mint) | 15 | 1,134 ms | 2,449 ms |
-| escrow refund after the deadline | 4 | 1,249 ms | 1,322 ms |
+| funding held money (knos_pay FundWallet, 60 s deadline, test mint) | 15 | 1,134 ms | 2,449 ms |
+| refund of held money after the deadline | 4 | 1,249 ms | 1,322 ms |
 
 The `confirmed` and `finalized` notifications came at the same moment for every one of the 49, which is the "same
 state" the Alpenglow page describes. The figure includes the trip to the RPC and its notification, not only the

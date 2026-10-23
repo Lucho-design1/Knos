@@ -94,8 +94,7 @@ for (const name of [...PAGES, ...addedPages(root)]) {
     return { title: title ? title.textContent.trim().replace(/\s+/g, " ") : "", titleWords: title ? words(title.textContent).length : 0, under, lines, first: first.length, firstSaid: first.join(" "), long, banned, handles };
   }, name);
   if (list) console.log(`     ${name}: title ${got.titleWords} "${got.title}", ${got.under} under it (${got.lines} lines), first screen ${got.first}, long ${got.long.length}, record words ${got.banned.length}`);
-  // one page names its two readers in its title, "Check every claim yourself (for judges and buyers)": 8 words there
-  const titleMost = name === "judges" ? 8 : 6;
+  const titleMost = 6;
   if (id !== "check") check(`${name}: the title is 3 to ${titleMost} words`, got.titleWords >= 3 && got.titleWords <= titleMost, got.title);
   if (id !== "check") check(`${name}: at most one line under the title, then the thing itself`, got.under <= 1 && got.lines <= 1, [got.under, got.lines]);
   const most = id === "check" ? FIRST_DOOR : FIRST;

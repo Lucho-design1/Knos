@@ -77,7 +77,7 @@ def test_the_payment_comment_ends_with_one_badge_line_and_other_comments_are_unt
     got = badge.said("o/r", 12, both, NOW)
     assert got.count("[![paid on proof") == 1 and got.endswith(".html)") and "#12: 104.875 test USDC, 2026-10-04" in got   # one line, at the end; what is held is not in it
     for other in ("Knos: held for @ann. 100.00 test USDC for issue #3 waits for them until 2026-11-01.", "Knos: not paid yet. @ann would have received 5.00 test USDC.",
-                  "Knos: paid. With no amount in it.", "Knos: nothing is in escrow."):
+                  "Knos: paid. With no amount in it.", "Knos: nothing is held."):
         assert badge.said("o/r", 12, other, NOW) == other                      # nothing reached a wallet, or nothing says how much: no badge
     assert badge.said("o/r", 0, paid, NOW) == paid
 

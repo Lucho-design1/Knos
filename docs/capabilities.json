@@ -420,7 +420,7 @@
   },
   {
    "id": "pause",
-   "what": "The guardian pauses new funding for a limited time and money in escrow still leaves.",
+   "what": "The guardian pauses new funding for a limited time and held money still leaves.",
    "stage": "exercised",
    "evidence": {
     "implemented": {
@@ -933,7 +933,7 @@
   },
   {
    "id": "meter_single",
-   "what": "One attested evaluation is counted once on chain, with no escrow.",
+   "what": "One attested evaluation is counted once on chain, with no money held.",
    "stage": "exercised",
    "evidence": {
     "implemented": {
@@ -1516,7 +1516,7 @@
   },
   {
    "id": "statements",
-   "what": "Payments are exported as statements and receipts from the escrows' own logs.",
+   "what": "Payments are exported as statements and receipts from the payment programs' own logs.",
    "stage": "tested",
    "evidence": {
     "implemented": {
@@ -3288,22 +3288,6 @@
    "note": "`knos record serve` with an operator's key; `knos record verify` checks an answer offline. Knos hosts no server and budgets its revenue at zero. Tested in the simulator and on a local socket; the one devnet lookup of 0.3.19 was before the signed answer existed. No outside caller."
   },
   {
-   "id": "judges_page",
-   "what": "One page, \"Check every claim yourself\", holds six judged things and the seven further factors, one sentence and one link each, then five lines of what is not real yet.",
-   "stage": "tested",
-   "evidence": {
-    "implemented": {
-     "path": "scripts/judges.py",
-     "names": "def problems"
-    },
-    "tested": {
-     "test": "tests/test_judges.py",
-     "names": "test_the_page_is_one_page_thirteen_rows_five_zeros_and_the_file_is_the_page"
-    }
-   },
-   "note": "docs/JUDGES.md, and the site's #judges page from the same file (docs/judges.json). The page prints no fee: the live one is read from the chain on the pricing page."
-  },
-  {
    "id": "recall_exception",
    "what": "The buyer's memory says how the same exception under the same terms ended before: how often, each ending, how long it took.",
    "stage": "tested",
@@ -3704,22 +3688,6 @@
    "note": "`python scripts/public_face.py --check` reads this tree; `--remote` reads what PyPI, the MCP registry and GitHub serve and prints the command that corrects each. glama.json has no description field."
   },
   {
-   "id": "bill_margin_leaks",
-   "what": "The billing rule prints three places where the price does not cover the cost, each with its number and its design, and labels every margin gross.",
-   "stage": "tested",
-   "evidence": {
-    "implemented": {
-     "path": "src/knos/billing.py",
-     "names": "def leaks"
-    },
-    "tested": {
-     "test": "tests/test_billing.py",
-     "names": "test_the_three_leaks_each_with_its_number_and_its_design"
-    }
-   },
-   "note": "docs/reference/UNIT_COSTS.md. The costs are budgets and local measurements, not a customer's: nothing has been sold."
-  },
-  {
    "id": "bill_rails_once",
    "what": "Acceptance is charged once whichever rail pays, and a rail's own charge is shown apart from the software price.",
    "stage": "tested",
@@ -3749,7 +3717,7 @@
      "names": "test_a_supplier_paid_by_two_unrelated_buyers_and_the_buyer_that_arrived_through_it"
     }
    },
-   "note": "docs/reference/MARKET.md section 7, and `devnet.stats.loop` of the published statistics. All six read 0 today: with no outside buyer the three chain counters are 0 by arithmetic."
+   "note": "`devnet.stats.loop` of the published statistics. All six read 0 today: with no outside buyer the three chain counters are 0 by arithmetic."
   },
   {
    "id": "reserve_by_comment",
@@ -4024,22 +3992,6 @@
    "note": "In the Sibyl memory engine (one entity per commitment, one journal event per decision). `knos recall supplier` answers what a supplier brings from other buyers, only what was granted."
   },
   {
-   "id": "billing_sensitivity",
-   "what": "`knos bill margin --sensitivity` prints, for the worked customers, revenue and gross margin at a realised Acceptance rate of 30, 20, 10 and 5 basis points, credits and rebates applied.",
-   "stage": "tested",
-   "evidence": {
-    "implemented": {
-     "path": "src/knos/billing.py",
-     "names": "def sensitivity"
-    },
-    "tested": {
-     "test": "tests/test_billing.py",
-     "names": "test_sensitivity_prints_the_worked_customers_at_30_20_10_and_5_bps_realised"
-    }
-   },
-   "note": "Worked customers, not sales: nothing has been sold, and on devnet every fee is test money and zero revenue."
-  },
-  {
    "id": "fee_accounts_sharded",
    "what": "The relay pays each order's fee into one of K token accounts of Knos's fee owner, chosen by the order, and shares pay work out by order, with no program change.",
    "stage": "tested",
@@ -4182,7 +4134,7 @@
   },
   {
    "id": "audit_export_fast",
-   "what": "`knos audit export` reads only the owner's part of the escrow, a few transactions at once, so a history the size of the witnessed run takes a handful of calls instead of a thousand.",
+   "what": "`knos audit export` reads only the owner's part of the payment program's history, a few transactions at once, so a history the size of the witnessed run takes a handful of calls instead of a thousand.",
    "stage": "tested",
    "evidence": {
     "implemented": {

@@ -448,7 +448,7 @@ class Record:
     def notes(self) -> list[str]:
         said = [f"{self.unread} transactions could not be read (the public RPC throttled): what follows is a lower bound."] if self.unread else []
         return said + [f"Only the newest {self.limit} transactions of knos_meter were read: older evaluations are not here." if v == "meter" else
-                       f"Only the newest {self.limit} transactions of the {('first', 'second')[v - 1]} deployment's escrow were read: older payments are not here."
+                       f"Only the newest {self.limit} transactions of the {('first', 'second')[v - 1]} deployment's payment program were read: older payments are not here."
                        for v in self.cut]
 
 
@@ -660,13 +660,13 @@ def statement(rows: list[dict], seller_id: int, seller: str, month: str, names: 
 
 def statement_lines(st: dict) -> list[str]:
     lines = [f"Statement for {st['seller']} (GitHub id {st['seller_id']}), {st['month']}: UTC days {st['from']} to {st['to']}, "
-             "recomputed from the escrows' log lines on Solana devnet."]
+             "recomputed from the payment programs' log lines on Solana devnet."]
     for r in st["payments"]:
         lines.append(f"  {r['date']}  {_where(r)}  {money_text(r['amount_units'], r['currency'])} received, fee {money_text(r['fee_units'], r['currency'])}  "
                      f"funded by {r['funder'] or 'a funder older than the history read'}  {r['transaction']}")
     for cur, t in st["totals"].items():
         lines.append(f"  {t['payments']} payment{'' if t['payments'] == 1 else 's'}: {money_text(t['amount_units'], cur)} received, "
-                     f"{money_text(t['fee_units'], cur)} in fees, {money_text(t['total_units'], cur)} out of escrow.")
+                     f"{money_text(t['fee_units'], cur)} in fees, {money_text(t['total_units'], cur)} taken from the held money.")
     if not st["payments"]:
         lines.append("  No payment to this account in that month.")
     return lines
@@ -807,9 +807,9 @@ def invoice_html(inv: dict) -> str:
             f"<title>Invoice {e(inv['number'])}</title><style>{_STYLE}</style>\n"
             f"<h1>Invoice {e(inv['number'])}</h1>\n<p>For <strong>{e(inv['owner'])}</strong> (GitHub id {e(str(inv['owner_id']))}). "
             f"Period {e(inv['from'])} to {e(inv['to'])} (UTC). Issued {e(inv['issued'])}.</p>\n{test}"
-            "<table><thead><tr><th>Date</th><th>Issue</th><th>Paid to</th><th class=n>Received by the payee</th><th class=n>Escrow fee</th><th class=n>Taken from escrow</th>"
+            "<table><thead><tr><th>Date</th><th>Issue</th><th>Paid to</th><th class=n>Received by the payee</th><th class=n>Fee</th><th class=n>Taken from the held money</th>"
             f"<th>Transaction</th></tr></thead><tbody>{body}</tbody><tfoot>{foot}</tfoot></table>\n{empty}"
-            "<p>Each line is one payment the escrow made out of this owner's money in the period. It is read from the escrows' own log lines on Solana "
+            "<p>Each line is one payment the payment program made out of this owner's money in the period. It is read from the payment programs' own log lines on Solana "
             f"devnet, and names the transaction that holds it. No tax is calculated and none is included.</p>\n{_evaluations_html(inv)}")
 
 
@@ -829,7 +829,7 @@ def _evaluations_html(inv: dict) -> str:
             f"<tfoot><tr><th colspan=4>{e(_count(t['evaluations'], 'evaluation'))}</th><th>{e(str(t['accepted']))} accepted, {e(str(t['rejected']))} rejected</th>"
             f"<th class=n>{e(units_text(t['value_units']))}</th><th class=n>{e(units_text(t['fee_units']))}</th><th></th></tr></tfoot></table>\n"
             "<p>Each line is one evaluation the meter billed this owner for as its buyer in the period, read from the meter's own log lines. The fees were "
-            "taken from the credits this owner prepaid, not from an escrow; they and the declared values are in the units of the credits' mint, written with "
+            "taken from the credits this owner prepaid, not from held money; they and the declared values are in the units of the credits' mint, written with "
             "six decimals as test USDC has.</p>\n")
 
 
@@ -851,8 +851,8 @@ SIEM_FIELDS = ("time", "unix", "actor", "action", "deployment", "repository", "r
 
     time, unix      ISO 8601 UTC and unix seconds of the block (null when the cluster gave none)
     actor           who did it: gh:<id> (a commenter who funded, an account that named a wallet), else wallet:<address>
-                    (the transaction's fee payer: for a payment, the relay that sent it; the money moves by the escrow's rules, not the payer's)
-    action          the escrow's own event: funded, terms, paid, held, proven, vetoed, refunded, balance, bound, claimed, withdrawn, paused;
+                    (the transaction's fee payer: for a payment, the relay that sent it; the money moves by the payment program's rules, not the payer's)
+    action          the payment program's own event: funded, terms, paid, held, proven, vetoed, refunded, balance, bound, claimed, withdrawn, paused;
                     a work order's as order_<event> (order_funded, order_paid, order_settled, order_held, order_refunded, order_warranty,
                     order_released, order_reverted, order_reserved, order_cancelled, order_kill, order_topup, order_assigned), org_bound
                     (an organisation's wallet), and the meter's as meter_<event> (meter_eval, meter_credits, ...)

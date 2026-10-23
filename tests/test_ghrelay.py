@@ -51,7 +51,7 @@ def test_relay_one_reports_in_words_and_checks_the_marker():
     assert "4.88 will be released in 1 h (a maintainer's /knos veto on the issue takes it back) to GitHub user id 4242" in note
     funded = {"ok": True, "kind": "fund", "sigs": ["f"], "job": "J", "issue": 3, "amount": 5_000_000, "mode": 0, "review": 3600}
     note = ghrelay.relay_one(None, None, "fund", "t", submit=lambda *a: dict(funded))["note"]
-    assert "5.00 test USDC is in escrow for issue #3, paid when a maintainer merges" in note and "released 1 h after that" in note
+    assert "5.00 test USDC is held for issue #3, paid when a maintainer merges" in note and "released 1 h after that" in note
     # a fund token posted under a proof marker is refused; a failure is passed through and logged as fail
     assert not ghrelay.relay_one(None, None, "proof", "t", submit=lambda *a: dict(funded))["ok"]
     bad = ghrelay.relay_one(None, None, "fund", "t", submit=lambda *a: {"ok": False, "why": "token expired"})
@@ -180,7 +180,7 @@ def test_a_passkey_funding_line_on_an_issue_is_sent_by_the_worker_and_answered(m
     assert net.sent == 1 and (o.amount, o.repo_id, o.issue) == (20 * USDC, REPO, n) and had - w.balance(w.source) == 20 * USDC + o.fee
     ok = [ln for ln in lines if " ok " in ln]
     assert len(ok) == 1 and ok[0].startswith(f"knos-relay passkey-fund octo/widgets#{n} {ghrelay.token_id(text)} ok sig=")
-    assert f"note=funded from a passkey wallet. {20 * USDC} units of the test token {w.usdc} is in escrow for issue #{n}" in ok[0]
+    assert f"note=funded from a passkey wallet. {20 * USDC} units of the test token {w.usdc} is held for issue #{n}" in ok[0]
     # the answer is on the issue (this relay's token may write there); the copy's comment could not be answered, and its log line names no id
     said = [c["body"] for c in gh.comments["octo/widgets"] if c["user"]["login"] == ghrelay.LOG_BOT]
     assert len(said) == 1 and said[0].startswith("Knos: funded from a passkey wallet. ") and f"`{order}`" in said[0]

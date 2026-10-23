@@ -56,8 +56,8 @@ and knos-check.yml, in templates/ (the files a new repository copies), in docs/ 
 regenerates the site's templates (scripts/front_workflow.py writes web/front.js from the examples). `check` says every
 place that disagrees.
 
-Where the published set lives (docs/reference/MONOREPO.md). Until the cutover it was drexthealpha/knos-workflows (REPO).
-Since the 0.3.34 branch (CUTOVER-0331.md section 1, step 5) the examples name the monorepo's branch `workflows` (HOME,
+Where the published set lives. Until the cutover it was drexthealpha/knos-workflows (REPO).
+Since the 0.3.34 branch the examples name the monorepo's branch `workflows` (HOME,
 BRANCH): the same commits, with the same shas and trees. A caller says
 `drexthealpha/Knos/.github/workflows/prove.yml@<sha>`, an order funded through it pins sha256("drexthealpha/Knos") and
 that sha on chain, and `scripts/release.py workflows` commits a new set into a worktree of BRANCH (and tags it
@@ -89,7 +89,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO = "drexthealpha/knos-workflows"                # the published set's home until the cutover (docs/reference/MONOREPO.md)
+REPO = "drexthealpha/knos-workflows"                # the published set's home until the cutover
 HOME = "drexthealpha/Knos"                          # its home after the cutover: the monorepo's branch BRANCH, the same commits
 BRANCH = "workflows"
 HOMES = (REPO, HOME)
@@ -290,7 +290,7 @@ def readme(version: str, spec: str | None) -> str:
     return f"""# knos-workflows
 
 {note}The workflows that [Knos](https://github.com/drexthealpha/Knos) bounties pin by commit. A comment funds an issue,
-and the pull request that closes it is paid from an escrow on Solana when GitHub itself signs the facts. A bounty on
+and the pull request that closes it is paid from money held on Solana when GitHub itself signs the facts. A bounty on
 chain names this repository and one commit of it: the commit its `fund.yml` ran at. Only `prove.yml` of this
 repository at that same commit can pay it.
 
@@ -522,7 +522,7 @@ def move(to: str) -> list[str]:
 def branch_commands(sha: str) -> list[str]:
     """The git commands that give the monorepo the published commits of REPO, up to `sha`, as its branch BRANCH: the
     same objects, so the same shas and trees (nothing is rewritten), and a tag per release so they stay reachable.
-    Printed for the founder; nothing here runs them."""
+    Printed for the maintainer; nothing here runs them."""
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise SystemExit("branch takes the full sha of the published commit: 40 hex digits")
     return [f"git fetch https://github.com/{REPO}.git main",

@@ -2,14 +2,14 @@
 
 # Every document, under six questions
 
-**In plain words.** This page lists every Knos document once, under six questions. The eight pages to read first are on [the front map](../README.md). When a word is new to you, look it up in [the word list](../WORDS.md).
+**In plain words.** This page lists every Knos document once, under six questions. The seven pages to read first are on [the front map](../README.md). When a word is new to you, look it up in [the word list](../WORDS.md).
 
 ```mermaid
 flowchart TB
     you(["You have a question"])
     q1["1. Does it work? Start with STORY.md"]
     q2["2. Why does it matter? Start with WHY.md"]
-    q3["3. What is new? Start with COMPARE.md"]
+    q3["3. What is new? Start with VERIFIER.md"]
     q4["4. How do I use it? Start with START.md"]
     q5["5. How do I build on it? Start with COMPOSE.md"]
     q6["6. How is it run and paid for? Start with PRICING.md"]
@@ -22,7 +22,7 @@ flowchart TB
 ```
 *Pick your question; each one has a first page to read.*
 
-The documents in this folder are listed below, with the eight front pages too.
+The documents in this folder are listed below, with the seven front pages too.
 
 `tests/test_docs_map.py` fails when a file in this folder is missing from this page.
 
@@ -31,7 +31,6 @@ The documents in this folder are listed below, with the eight front pages too.
 | document | what it answers |
 |---|---|
 | [STORY.md](../STORY.md) | one task in seven steps on one page, each with its evidence |
-| [JUDGES.md](../JUDGES.md) | check every claim yourself: one sentence and one link for each, and what is not real yet |
 | [MANIFEST.md](MANIFEST.md) | this release on one page: source, the build live at each public id, every capability's stage, the limits |
 | [CAPABILITIES.md](CAPABILITIES.md) | every capability, the stage it has reached, and the file or transaction that shows it |
 | [BENCH.md](BENCH.md) | every measured number, with the command that reproduces it |
@@ -47,7 +46,6 @@ The documents in this folder are listed below, with the eight front pages too.
 | [ASSURANCE.md](ASSURANCE.md) | the tests, the fuzzing and the proofs; no outside firm has reviewed anything |
 | [UNWRAPS.md](UNWRAPS.md) | every place a program can panic, and why it cannot be reached |
 | [PROVENANCE.md](PROVENANCE.md) | how each deployed program traces back to the source code it was built from |
-| [AUDIT-0329.md](AUDIT-0329.md) | the audit before 0.3.29: the sBPF version of every program binary, what the Sibyl test proves, devnet feature gates |
 | [FAUCET.md](FAUCET.md) | how a stranger gets test USDC and funds a first task, the faucet's rules, and its key |
 | [REPRODUCE.md](REPRODUCE.md) | how someone else runs it and files a signed report |
 | [REPRODUCED.md](REPRODUCED.md) | knos.yml: a research repository's claims re-run on a second machine and held-out data; contested results stay private |
@@ -65,10 +63,8 @@ The documents in this folder are listed below, with the eight front pages too.
 | [VENDORS.md](VENDORS.md) | a page per rated agent vendor: its numbers, its right of reply, and how to earn the badge |
 | [INDEX.md](INDEX.md) | the Agent PR Index: how often "tests pass" agrees with the checks, by agent and week |
 | [INDEX_METHOD.md](../INDEX_METHOD.md) | the frozen count method, version 1, and a draft version 2 that also re-checks the pull requests counted as clean |
-| [MARKET.md](MARKET.md) | who buys, the price book, the costs, and what can stop this |
-| [MARKET_SIZE.md](MARKET_SIZE.md) | how big the market could be: a formula, its sources and labelled assumptions; no share claimed |
+| [MARKET.md](MARKET.md) | the price book, and what is devnet only or not yet legal |
 | [PILOT.md](PILOT.md) | the one offer for money, and the fair test written before it starts |
-| [UNIT_COSTS.md](UNIT_COSTS.md) | what one unit costs Knos to deliver, measured or a budget, and the ceilings at a 90% and a 95% gross margin |
 | [SHADOW.md](SHADOW.md) | a neutral count beside an invoice a buyer already receives |
 | [SHARE.md](SHARE.md) | share a check: link, copied result, X post box, PNG card, README badge |
 
@@ -76,7 +72,6 @@ The documents in this folder are listed below, with the eight front pages too.
 
 | document | what it answers |
 |---|---|
-| [COMPARE.md](COMPARE.md) | each alternative, read from its own pages, and where it is ahead |
 | [VERIFIER.md](VERIFIER.md) | a Solana program that checks the signed identity tokens of GitHub, GitLab, Google and others |
 | [OIDC.md](OIDC.md) | the `knos-oidc` program, instruction by instruction |
 | [METER.md](METER.md) | what is counted, the two ledgers, and the statement both sides rebuild |
@@ -113,33 +108,31 @@ The documents in this folder are listed below, with the eight front pages too.
 | [HERMES.md](HERMES.md) | Knos in Hermes Agent: the skill, the MCP server (stdio and HTTP), the plugin, the referee as GEPA's judge, an Atropos environment |
 | [AUTORESEARCH.md](AUTORESEARCH.md) | autoresearch for anyone: agents change one file, the referee keeps or refuses each run, sealed data decides payment |
 | [GAME.md](GAME.md) | the Knos game: people and AI scientists attack one sealed goal at once; a pooled pot split by the referee's verdicts |
-| [DEMAND_CHECK.md](DEMAND_CHECK.md) | the demand check on Qloo's MCP server: a maker's demand report, a buyer agent, pre-orders in a devnet escrow |
+| [DEMAND_CHECK.md](DEMAND_CHECK.md) | the demand check on Qloo's MCP server: a maker's demand report, a buyer agent, pre-orders held on devnet |
 | [REFUSE.md](REFUSE.md) | what Knos will not fund: the refuse list every Ready check applies |
 | [MCP_STORE.md](MCP_STORE.md) | Knos in AI assistants: the read-only app-store MCP, its tools, limits and privacy |
-| [QLOO_JUDGES.md](QLOO_JUDGES.md) | For the Qloo hackathon judges: where Qloo is used, measured and kept safe |
 | [OUTSIDE_TRUTH.md](OUTSIDE_TRUTH.md) | Open signals scored against 200 past SBIR awards with known outcomes: no better than chance |
 | [QLOO-COVERAGE.md](QLOO-COVERAGE.md) | every Qloo parameter, type and endpoint the docs list, and where a person sets it on each interface |
 | [IDEAS.md](IDEAS.md) | an idea in from anyone or any research source, every field; demand, then pull commitments released in stages |
 | [NEBIUS.md](NEBIUS.md) | Nemotron models on Nebius Token Factory as Knos coders and cheat explainers, Tavily provenance; the referee still decides |
 | [LABS.md](LABS.md) | cloud labs and fabs through one interface: the lab paid on protocol and QC, the researcher on the outcome |
-| [TEAMS.md](TEAMS.md) | Knos for teams: per verified merge, per agent check, bounty fee, task packages; metering, chain-checked invoices, the dashboard, the 1B USD arithmetic |
+| [TEAMS.md](TEAMS.md) | Knos for teams: per verified merge, per agent check, bounty fee, task packages; metering, chain-checked invoices, the dashboard |
 
 ## 5. How do I build on it?
 
 | document | what it answers |
 |---|---|
-| [COMPOSE.md](COMPOSE.md) | the verifier, the escrow and the record, from another program |
+| [COMPOSE.md](COMPOSE.md) | the verifier, the payment program and the record, from another program |
 | [GATE.md](GATE.md) | the upgrade gate for your own program: three commands, and what it cannot do |
 | [PR_GATE.md](PR_GATE.md) | Knos Gate: sealed hidden tests and cheat checks on outside pull requests, one check, one comment, a signed receipt |
 | [CODE_SCANNING.md](CODE_SCANNING.md) | Gate's findings as code-scanning alerts and line annotations, an attested receipt, and a required check |
 | [MCP_SERVER.md](MCP_SERVER.md) | knos mcp's resources, prompts, output schema, tasks and skills, and the person's confirmation before each post |
-| [TOKEN_SAFETY.md](TOKEN_SAFETY.md) | Token-2022 extensions that would break an escrow or a payout, and the check that refuses them |
+| [TOKEN_SAFETY.md](TOKEN_SAFETY.md) | Token-2022 extensions that would break held money or a payout, and the check that refuses them |
 | [PRIORITY_FEES.md](PRIORITY_FEES.md) | priority fees on a limit sized by simulation, and a WebSocket wait for confirmation |
 | [SELF.md](SELF.md) | Knos builds Knos: agents improve product code, judged by the referee from main, paid on devnet |
 | [ES256.md](ES256.md) | a second kind of signed token (ES256), checked in one transaction; live on devnet since 9 Oct 2026 |
 | [ALPENGLOW.md](ALPENGLOW.md) | how Knos tells a cluster runs Alpenglow, waits until a payment is final there, and how long that took on devnet |
 | [SOLANA-COVERAGE.md](SOLANA-COVERAGE.md) | every Solana devnet RPC method, Token-2022 extension, program, payment path and upgrade, used or not and why |
-| [SIBYL-COVERAGE.md](SIBYL-COVERAGE.md) | every capability of Sibyl Memory's free plan (CLI, MCP tools, tiers), used or not and why |
 | [PLATFORM.md](PLATFORM.md) | the programs on today's Solana: sBPF v3 builds, a GitHub token verified in one transaction, v1 transactions, finality, and the upgrade steps |
 | [PAY_ON_PROOF.md](PAY_ON_PROOF.md) | pay on proof: m of n referee signatures, ORCID iDs as payees, and a container-image judge path that has never run |
 | [CONFORMANCE.md](CONFORMANCE.md) | the formats, with test vectors and a runner |
@@ -149,11 +142,11 @@ The documents in this folder are listed below, with the eight front pages too.
 | [SOURCES.md](SOURCES.md) | signed results from systems other than CI: which can be neutral evidence |
 | [TASK_PACKAGES.md](TASK_PACKAGES.md) | a merged issue and fix as a sealed, verified task; maintainer opt-in; grading with cheat rules |
 | [ZK.md](ZK.md) | a research score proven without showing the hidden test set: Groth16 checked on Solana; toy setup |
-| [DURABLE_NONCES.md](DURABLE_NONCES.md) | the measured blockhash life, and escrow funding signed now and sent later by another party |
-| [X402_UPTO.md](X402_UPTO.md) | x402 `upto` on Solana: one ceiling escrowed, the checks used charged, the rest refunded, on devnet |
+| [DURABLE_NONCES.md](DURABLE_NONCES.md) | the measured blockhash life, and held money funding signed now and sent later by another party |
+| [X402_UPTO.md](X402_UPTO.md) | x402 `upto` on Solana: one ceiling held, the checks used charged, the rest refunded, on devnet |
 | [SAS_INPUTS.md](SAS_INPUTS.md) | attestations by issuers an order trusts, read as conditions before money moves |
 | [SPENDING_LIMITS.md](SPENDING_LIMITS.md) | Squads spending limits for bounded treasury costs, run on a test multisig, and the founder's steps |
-| [KORA_CCTP.md](KORA_CCTP.md) | gasless sends through a Kora fee relayer, and USDC from EVM chains into an escrow by CCTP V2 |
+| [KORA_CCTP.md](KORA_CCTP.md) | gasless sends through a Kora fee relayer, and USDC from EVM chains into held money by CCTP V2 |
 | [A2A.md](A2A.md) | Knos as an A2A agent: its Agent Card and the skills other agents can call |
 | [CLAUDE_AGENTS.md](CLAUDE_AGENTS.md) | Claude agents as guarded attempts, Knos judging Managed Agents, structured outputs and prompt caching |
 
@@ -164,7 +157,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [PRICING.md](../PRICING.md) | what it costs: the check is free, the fee on a paid task, the meter's price |
 | [TRUST.md](../TRUST.md) | who holds the keys today, what is tested and proven, and how to check a program yourself |
 | [GOVERNANCE.md](GOVERNANCE.md) | who can change what today, and three plans that are not done |
-| [MONEY.md](MONEY.md) | the one fee config, graduation escrow and pre-orders, contributor splits, x402, the revenue page |
+| [MONEY.md](MONEY.md) | the one fee config, graduation held money and pre-orders, contributor splits, x402, the revenue data |
 | [CHARTER.md](CHARTER.md) | the rights Knos gives you: each enforced by a named test, or marked a promise |
 | [STANDARD.md](STANDARD.md) | how work should be judged and rule-breakers treated: what runs today, what is only a plan |
 | [KEYS.md](KEYS.md) | who holds the keys today, and the plan |
@@ -172,7 +165,7 @@ The documents in this folder are listed below, with the eight front pages too.
 | [KEYHOLDER.md](KEYHOLDER.md) | hold a member key: what it can do, and three steps to ask; outside holders today: 0 |
 | [SELFHOST.md](SELFHOST.md) | the record API, relay and approver in your cloud; single sign-on through any OpenID Connect provider, tested against a stand-in provider only |
 | [OPERATOR.md](OPERATOR.md) | a second person runs it from a clean machine; the drill nobody has run yet |
-| [TEAM.md](TEAM.md) | who builds it, and the three roles needed first, none filled |
+| [TEAM.md](TEAM.md) | who builds it today, and what an outside key holder would do |
 | [SECURITY.md](SECURITY.md) | who is trusted for what, every command and term, and every limit |
 | [ATTESTOR.md](ATTESTOR.md) | what the forge's signature proves and does not, and five ways to narrow the gap; two exist |
 | [MAINNET.md](MAINNET.md) | the gates between devnet and mainnet; not planned for this release |
@@ -183,8 +176,6 @@ The documents in this folder are listed below, with the eight front pages too.
 | [REGULATION.md](REGULATION.md) | what has been examined; no lawyer has read it |
 | [DISCLOSURE.md](DISCLOSURE.md) | what was built when, what came from elsewhere, what does not exist |
 | [RELEASE.md](RELEASE.md) | how a release is made: one commit, one push |
-| [MONOREPO.md](MONOREPO.md) | one repository: what was folded into Knos, and what still points at the old repositories |
-| [CUTOVER-0331.md](CUTOVER-0331.md) | the founder's steps to move the trust anchors into Knos (knos-workflows, knos-oidc-rotate with its Squads step) |
 | [ROLLBACK.md](ROLLBACK.md) | how to take a bad release back, surface by surface |
 | [DEPENDENCY.md](DEPENDENCY.md) | what depends on one personal GitHub account, what happens if it is lost, and the plan to end it |
 

@@ -1,4 +1,4 @@
-"""The cutover of the published workflows on the 0.3.34 branch (docs/reference/CUTOVER-0331.md section 1, step 5): every
+"""The cutover of the published workflows on the 0.3.34 branch: every
 caller, template, site page, SDK example and terms 3 document names drexthealpha/Knos/.github/workflows/...@<the same
 commit>, and `scripts/release.py workflows` publishes into a worktree of the `workflows-<sha12>` tags of this repository."""
 from __future__ import annotations

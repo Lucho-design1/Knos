@@ -25,7 +25,7 @@
 # (id-token). What it cannot do: read or change code, or change settings. It has no access to the repository's
 # contents.
 #
-# Why nobody outside can name an address for the organisation: the escrow on Solana takes the statement only when
+# Why nobody outside can name an address for the organisation: the payment program on Solana takes the statement only when
 # GitHub's signature says it came from the workflow named below, at exactly that commit, in a run someone started by
 # hand in a repository named knos-claim that the organisation owns. It never replaces a wallet a person bound for
 # his own account. The address reaches that workflow as an input, never a shell.

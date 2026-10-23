@@ -117,7 +117,7 @@ def test_m_minus_one_wrong_key_replay_expiry_and_changed_fields_are_refused():
     assert any("same" in p or "1 valid" in p for p in verdicts.check(msg, sigs[:1] + sigs[:1], SET, 2, now=0))   # one key twice
     assert any("already used" in p for p in verdicts.check(msg, sigs, SET, 2, now=0, seen_nonces={"n1"}))
     assert any("expired" in p for p in verdicts.check(msg, sigs, SET, 2, now=2_000_000_001))
-    assert any("escrow holds" in p for p in verdicts.check(msg, sigs, SET, 2, now=0, amount=1))
+    assert any("the held money is" in p for p in verdicts.check(msg, sigs, SET, 2, now=0, amount=1))
     assert any("another recipient" in p for p in verdicts.check(msg, sigs, SET, 2, now=0, recipient="Thief"))
     tampered = dict(msg, verdict="PASS" if msg["verdict"] == "FAIL" else "FAIL")
     assert any("does not verify" in p for p in verdicts.check(tampered, sigs, SET, 2, now=0))

@@ -3,7 +3,7 @@
     python hermes/publish.py well-known     writes web/.well-known/skills/index.json and a copy of each skill's files
                                             under web/.well-known/skills/<name>/ (the site serves web/ as it is)
     python hermes/publish.py tap OUT        writes a GitHub tap layout into OUT: OUT/skills/<name>/... and a README;
-                                            push OUT as its own repository (a founder decision) and users run
+                                            push OUT as its own repository and users run
                                             `hermes skills tap add <owner>/<repo>`
     python hermes/publish.py check          exit 1 when the committed well-known copy differs from hermes/knos/
 

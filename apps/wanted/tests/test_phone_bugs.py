@@ -1,4 +1,4 @@
-"""TASK-WORLD T10 test_phone_bugs, the code half (scripts/test_phone_bugs.py is the live half): SSO tries Jackson again
+"""test_phone_bugs, the code half (scripts/test_phone_bugs.py is the live half): SSO tries Jackson again
 on 429 and says plainly when it is still busy; the sign-in sheet shows only what works; "Who wants it" shows only
 segments tied to the idea; every Knos page carries the crow icon set."""
 import io

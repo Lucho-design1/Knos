@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The BUYER agent: it reads a seller's board, picks a task of the kind it needs within its limit, and opens an order
-// through the x402 "knos-order" scheme: the 402 names an escrow, this agent funds it with its own key and asks again.
+// through the x402 "knos-order" scheme: the 402 names an order that holds the money, this agent funds it with its own key and asks again.
 // Its money is then in the order's own account. It goes to the seller only on the evaluator's signed acceptance and
 // comes back whole after the deadline otherwise.
 //
@@ -35,7 +35,7 @@ async function main() {
   const task = fits[0];
   // an order whose payee is its own funder proves nothing: the program records such a payment as self-paid
   if (task.payee === key.address) throw new Error("the payee is this buyer's own account: the payee must be an account other than the funder");
-  // 2. open the order: read the 402, check it, fund the escrow, ask again (client.mjs does each check)
+  // 2. open the order: read the 402, check it, fund the payment program, ask again (client.mjs does each check)
   const got = await fetchAttested(`${board}${task.path}`, await walletOf(chain, key, mint, flags.token ?? null), { maxAmount: String(max), mints: [mint], programs: [program] });
   const req = got.messages.paymentRequired?.accepts[0];
   console.log(JSON.stringify({ status: got.status, task: { id: task.id, kind: task.kind, input: task.input }, payer: key.address, payee: req?.payTo ?? null,

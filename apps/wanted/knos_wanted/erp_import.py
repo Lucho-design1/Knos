@@ -6,7 +6,7 @@ ERPs through their own APIs, then read the entries back and compare them with th
   ERPNext          Frappe REST (/api/resource): Account per Knos account under the company's tree, one submitted Journal
                    Entry per order, read back from GL Entry.
 
-Both are run against local containers (the private kit's G-INFRA scripts); the recorded results are what the app's Teams
+Both are run against local containers; the recorded results are what the app's Teams
 page shows (proofs.py). Every line of the file says TEST MONEY: devnet test units, never real money."""
 from __future__ import annotations
 

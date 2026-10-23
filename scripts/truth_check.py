@@ -341,7 +341,8 @@ PRICES: tuple[tuple[str, str, str], ...] = (
     ("record", rf"{MONEY} USD (?:a|per) lookup", "a Record lookup"),
     ("meter", rf"{MONEY} USD (?:an|per) evaluation|free per organisation, then {MONEY} USD|evaluations a month free, then {MONEY} USD", "a Meter evaluation"),
     ("meter_free", rf"\b{MONEY} evaluations a month free\b|\b{MONEY} (?:evaluations )?a month free per organisation", "the Meter's free evaluations a month"),
-    ("team", rf"\bTeam:? {THOUSANDS}(?! evaluations)\b", "Control, Team, a year"),
+    # not GitHub's own plans (Free, Pro, Team, Enterprise Cloud: minutes a month), which a document may quote
+    ("team", rf"\bTeam:? {THOUSANDS}(?! evaluations)(?!, Enterprise Cloud)\b", "Control, Team, a year"),
     ("business", rf"\bBusiness:? {THOUSANDS}\b", "Control, Business, a year"),
     ("enterprise", rf"\bEnterprise:? from {THOUSANDS}\b", "Control, Enterprise, a year"),
     ("pilot", rf"{MONEY} USD, credited against year one", "a Pilot"),

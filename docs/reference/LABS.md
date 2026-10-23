@@ -15,7 +15,7 @@ placed, no real money moved, and no lab account was opened.
 
 ```text
 quote(spec)            -> price, currency, turnaround
-order(spec, escrow)    -> the lab's order id, bound to the Knos escrow that pays it
+order(spec, escrow)    -> the lab's order id, bound to the Knos order that holds the money and pays it
 status(order)          -> draft | quoted | submitted | in_progress | qc | completed | failed | cancelled
 results(order)         -> runs (failed runs included, each with why), QC, raw file hashes
 ```
@@ -34,13 +34,13 @@ own key). Knos never resells a lab's service. A live call that spends money also
 | electronics | `jlcpcb` | stub (access by application) | `JLCPCB_APP_KEY` | api.jlcpcb.com |
 | mechanical | `xometry` | stub: its API is for manufacturing partners, not buyers | none | developer.xometry.com/llms.txt |
 | robotics | `pylabrobot` (simulation as sealed tests, re-runs) | runs locally, no key | none | docs.pylabrobot.org; PyPI `pylabrobot` |
-| any | `manual` | Knos holds the escrow; a person orders and brings the files back | none | |
+| any | `manual` | Knos holds the money; a person orders and brings the files back | none | |
 
 These are examples, not the plan: any lab plugs in as one more adapter.
 
 The plain contract over them (`knos.labs.ADAPTERS`, `settle`, `public_view`, `knos.leitner.step`) takes and returns
 dicts. Each adapter carries an `example` spec its fixtures answer, and `order(spec, None)` raises: there is no order
-without money in escrow. A free service (computed data, simulation) is quoted at the Knos check price, and the quote
+without held money. A free service (computed data, simulation) is quoted at the Knos check price, and the quote
 says so in `price_basis`.
 
 What each lab's docs say that shaped its adapter:
@@ -126,7 +126,7 @@ It writes its output after every field, so a field that fails never loses the on
 The fee comes from `config/fees.yaml` (`fees.lab_order`, decided 14 Oct 2026: 300 bps). The decision does not say who
 bears it. The demo charges it to the funder on top of the price.
 
-## The escrow on devnet, and its limits
+## The payment program on devnet, and its limits
 
 Each order has two pots: SPL token accounts owned by an **SPL Token multisig of the referee keys (2 of 3)**. No single
 key can move them, the funder's included. A release is a token transfer that two referees co-sign.
@@ -135,7 +135,7 @@ It sits in one transaction with a Memo holding the signed verdict's digest, so t
 verdict.
 
 Limits: the chain does not read the verdict's fields, and it does not refund by itself after a deadline (the referees
-sign the refund). The production path is knos_pay's m-of-n referee-verdict release (TASK-V0334), which checks expiry and
+sign the refund). The production path is knos_pay's m-of-n referee-verdict release, which checks expiry and
 replay on chain. Once it is deployed, the same verdict messages release a knos_pay order.
 
 The fee then follows knos_pay: 0.30% on chain, with the rest of the 3% invoiced (`cfg.platform("lab_order", amount)`).
@@ -154,7 +154,7 @@ Balances read after the runs (test units): the proteins lab got 1,060.00, the el
 
 In electronics, the release went to a one-time payment wallet. That wallet then paid the lab stand-in's 402 through
 the facilitator, because x402 `exact` needs a single-key payer and the pot is a multisig. With knos_pay's verdict path,
-the escrow pays `payTo` directly.
+the payment program pays `payTo` directly.
 
 ## x402 on both chains (`knos.labs.x402pay`)
 
@@ -181,8 +181,7 @@ Labs and pharma refuse crypto-only settlement. The design: the same two pots, he
 or invoice in; payout to the lab's bank). The verdict messages are unchanged, and the provider releases on the same
 2-of-3 signed verdict. Adaptyv already settles by Stripe hosted invoice and Stripe SPT.
 
-PCBWay bills a partner account monthly. **Founder decision:** which provider holds fiat escrow and pays out (for
-example Stripe Connect, or Airwallex through the US entity). Nothing here is built against a provider.
+PCBWay bills a partner account monthly. No provider is chosen, and nothing here is built against one.
 
 ## Leitner re-verification (`src/knos/leitner/`, `config/leitner.yaml`)
 
@@ -192,7 +191,7 @@ Every verified claim, product, lab, agent and sealed test sits in a box. The box
 Any failure drops it to box 1 and **pauses its payouts and graduation** (`can_pay`) until it passes again. Sealed
 tests that nobody fails in 20 runs rotate out. A test that caught a cheat stays hot for 10 more runs.
 
-The money dashboard (`web/revenue/`) shows cost per verification before and after on a **SYNTHETIC** history. That
+The Leitner simulation shows cost per verification before and after on a **SYNTHETIC** history. That
 history has 60 items over 120 days, a seeded 15% that break once, and costs counted in re-runs. Re-checking everything
 daily costs 1 re-run per item-day.
 
@@ -201,26 +200,5 @@ item-days in which a broken item could still have been paid. That is the trade-o
 boxes buy faster catches with more re-runs.
 
 The price of a re-run in USD has not been measured, so none is shown.
-
-## What the founder does (Knos cannot: keys, accounts, applications)
-
-1. **Adaptyv Partner Program** (Knos has not applied; this is the founder's step). Knos routes users' orders, so it is
-   a platform. Apply at https://www.adaptyvbio.com/api/apply. The form asks for name, e-mail, role, company, website, team size, what the
-   product does, modalities, monthly protein volume and assays. Suggested answers: "Knos holds each order's payment in
-   escrow and releases it to the lab when the protocol and QC pass (a LAB verdict), independently of whether the design
-   works; researchers keep their own key (BYOK)". Ask three questions:
-   (a) can a machine-payment invoice be paid on delivery, so the LAB verdict releases it;
-   (b) does the sandbox's x402 rail use Base Sepolia;
-   (c) does `POST /api/v1/partners/mint-token` fit users who sign up through Knos.
-   Until then, users bring their own token (portal: Organization, Settings, Tokens).
-2. **Keys to make each adapter live** (none exists today): `ADAPTYV_API_KEY` (sandbox token from
-   foundry.testing.adaptyvbio.com first), `MP_API_KEY` (free sign-in at next-gen.materialsproject.org, then the
-   dashboard), `PCBWAY_API_KEY` (a partner key: e-mail anson@pcbway.com, per pcbway.com/api_cooperation.html; approval
-   depends on "your company & business situation"; ask for the production host too), `B12_API_KEY` and the Selenium
-   base URL (app.b12-labs.com), and a JLCPCB application at api.jlcpcb.com ("not all applications will be approved";
-   support@jlcpcb.com).
-3. **Fiat provider** for lab escrow (above).
-4. **knos_pay verdict path**: once its upgrade is signed through the Squads vault (TASK-V0334), lab pots move from the
-   referee multisig to knos_pay orders.
 
 Sources were read on 14 Oct 2026 and are cited inline above and in each adapter's docstring.

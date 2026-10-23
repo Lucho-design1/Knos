@@ -1,13 +1,11 @@
-"""Pages added to the site by name (web/views.js ADDED), and the file the "Check every claim yourself" page is drawn from.
+"""Pages added to the site by name (web/views.js ADDED).
 
 tests/web/added.mjs drives the mount in headless Chromium on a build of web/: the link in the menu, the grey bars at
-the press, the module's drawing, the enforcement matrix and the judges' rows on data of the documented shapes, and the
-width of each. No node, no `playwright` package or no browser: that part is skipped, with the reason.
-scripts/judges.py `read` is held here without a browser: the rows of a JUDGES.md, cell for cell.
+the press, the module's drawing, the enforcement matrix on data of the documented shape, and the width of each.
+No node, no `playwright` package or no browser: that part is skipped, with the reason.
 """
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import shutil
@@ -20,55 +18,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 BROWSERS = "/opt/pw-browsers"          # where this project's machines keep Chromium; anywhere else playwright's default holds
-
-PAGE = """# For judges
-
-One page.
-
-| Judged | What exists | Evidence |
-| --- | --- | --- |
-| How well it works | A payment **ran** on the public program ids. | [the transaction](https://explorer.solana.com/tx/abc?cluster=devnet) |
-| Potential impact | One count both sides compute. | [docs/reference/WHY.md](reference/WHY.md#the-buyer) |
-| Open source | Every test is in the tree. | [`tests/`](../tests/test_ledger.py) |
-
-## What is not real yet
-
-- Outside funders: 0.
-- Interviews: 0.
-
-## After
-
-- not this
-"""
-
-
-def _script():
-    spec = importlib.util.spec_from_file_location("judges_rows", ROOT / "scripts" / "judges.py")
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-def test_the_judges_file_is_the_documents_rows_cell_for_cell():
-    got = _script().read(PAGE)
-    assert got["columns"] == ["Judged", "What exists", "Evidence"]
-    assert [r["thing"] for r in got["rows"]] == ["How well it works", "Potential impact", "Open source"]
-    assert got["rows"][0] == {"thing": "How well it works", "sentence": "A payment ran on the public program ids.",
-                              "link": "https://explorer.solana.com/tx/abc?cluster=devnet", "label": "the transaction"}
-    # a link inside docs/ and one that climbs out of it both become addresses of the repository
-    assert got["rows"][1]["link"] == "https://github.com/drexthealpha/Knos/blob/main/docs/reference/WHY.md#the-buyer"
-    assert got["rows"][2]["link"] == "https://github.com/drexthealpha/Knos/blob/main/tests/test_ledger.py" and got["rows"][2]["label"] == "`tests/`"
-    assert got["not_real"] == ["Outside funders: 0.", "Interviews: 0."]
-
-
-def test_a_page_with_no_table_has_no_rows_and_the_build_carries_the_committed_file(tmp_path: Path):
-    assert _script().read("# For judges\n\nNo table here.\n")["rows"] == []
-    # one file, one shape: what the build hands the page is docs/judges.json, which scripts/judges.py holds to the page
-    data = json.loads((ROOT / "docs" / "judges.json").read_text(encoding="utf-8"))
-    assert _script().problems() == [] and data == _script().build()
-    assert all(set(r) == {"id", "thing", "sentence", "link", "label"} for r in data["rows"]) and data["not_real"]
-    assert not (ROOT / "scripts" / "judges_json.py").exists()
 
 
 def test_the_build_offers_only_the_pages_it_holds(tmp_path: Path):

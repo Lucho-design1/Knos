@@ -1,11 +1,11 @@
-"""The seven product-value vectors, measured (TASK-CHAMPION T2), and the proof shown first (T3).
+"""The seven product-value vectors, measured, and the proof shown first.
 
     note(kind, ms, rep)   after each demand check or crossing: how long it took, how many Qloo calls it made
     vectors()             GET /api/vectors: cost, speed, friction, trust, capability, access, status, each measured
     proof()               GET /api/proof: the latest real verdict, as the front doors draw it at load
 
 Speed is the median of the checks this server ran (cached answers included, and said so); cost is the API spend of a
-check (the Qloo hackathon key and the free hosting cost nothing per call) and the measured cost of a Ready brief (the
+check (the Qloo key and the free hosting cost nothing per call) and the measured cost of a Ready brief (the
 IDT benchmark, docs/idt/summary.json). Nothing is estimated: a vector with no measurement yet says so.
 """
 from __future__ import annotations
@@ -129,7 +129,7 @@ def vectors() -> dict:
     tasks = idt.get("tasks") or 0
     from . import escrow, track
     return {
-        "cost": {"api_usd_per_check": 0.0, "why": "the Qloo hackathon key and the free hosting cost nothing per call",
+        "cost": {"api_usd_per_check": 0.0, "why": "the Qloo key and the free hosting cost nothing per call",
                  "qloo_calls_per_check": round(statistics.median([r["calls"] for r in checks])) if checks else None,
                  "usd_per_ready_brief": round(idt["ready_cost_usd"] / tasks, 4) if tasks else None,
                  "brief_source": "docs/idt/summary.json (measured agent runs)"},
@@ -159,7 +159,7 @@ STATUS = '<li data-v="status"><b>Ready cards</b></li>'
 COST = '<li data-v="cost"><b>$0</b> per check</li>'
 
 
-TRUST = '<li data-v="trust"><b>Escrow</b> on devnet</li>'
+TRUST = '<li data-v="trust"><b>Held</b> until proof, on devnet</li>'
 
 
 def fill(html: str, v: dict, base: str = "") -> str:
@@ -170,7 +170,7 @@ def fill(html: str, v: dict, base: str = "") -> str:
     t = (v.get("trust") or {}).get("escrow_program")
     if t:
         html = html.replace(TRUST, f'<li data-v="trust"><a href="https://explorer.solana.com/address/{escape(str(t))}?cluster=devnet" '
-                                   'rel="noopener"><b>Escrow</b> on devnet</a></li>')
+                                   'rel="noopener"><b>Held</b> until proof, on devnet</a></li>')
     s = (v.get("speed") or {}).get("median_s")
     if isinstance(s, (int, float)):
         html = html.replace(SPEED, f'<li data-v="speed"><b>{s:g} s</b> median to verdict</li>')

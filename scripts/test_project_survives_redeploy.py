@@ -1,4 +1,4 @@
-"""M1 test_project_survives_redeploy, live: a project opened on the hosted app returns HTTP 200 with the same criteria
+"""test_project_survives_redeploy, live: a project opened on the hosted app returns HTTP 200 with the same criteria
 hash after the app is redeployed by commit id.
 
     RENDER_API_KEY=... python scripts/test_project_survives_redeploy.py <render service id> <commit sha>

@@ -60,7 +60,7 @@ ENFORCED = (
                  "and the supplier"),
     ("on chain", "the root: knos_meter keeps the buyer's batch and the supplier's claim in two accounts; the same running hash in both means the same root"),
     ("on chain", "the fee: 0.30% of the net, at least 0.05, once, taken when the order is funded"),
-    ("off chain", "each line: committed by the batch root, not escrowed one by one; no program reads a line"),
+    ("off chain", "each line: committed by the batch root, not held one by one; no program reads a line"),
     ("off chain", "the link from the release to the batch: the terms name the root and the program stores their hash; a reader compares, the program does not"),
     ("off chain", "that the buyer funds the release of an unsecured period: until it does, the supplier carries the buyer's credit risk, up to the "
                   "period's exposure limit"),

@@ -15,7 +15,7 @@ no single key, the funder's included, can move them; a release is a token transf
 transaction with a Memo carrying the signed verdict's digest, so the chain binds each release to its verdict. What
 it does NOT do on chain: read the verdict's fields or refund by itself after a deadline (the referees sign the
 refund). knos_pay's verdict release path (an m-of-n referee verdict checked by the ed25519 precompile, with expiry and
-replay protection on chain: TASK-V0334) is the production path; when it is deployed the same verdict messages
+replay protection on chain) is the production path; when it is deployed the same verdict messages
 (knos.labs.verdicts.message) release a knos_pay order instead. The fee then follows knos_pay (0.30% on chain, the rest
 of the 3% invoiced: `cfg.platform("lab_order", amount)`).
 """
@@ -46,7 +46,7 @@ class Plan:
     reward: int                  # the researcher's reward
     fee_rate_bps: int
     fee_status: str
-    fee_bearer: str = "funder, on top of the price (the decision leaves who bears it open; this demo charges the funder)"
+    fee_bearer: str = "funder, on top of the price"
 
     @property
     def lab_pot(self) -> int:

@@ -447,7 +447,7 @@ def _lender_rec(h: dict, rp_id: str) -> dict:
 
 
 def receivables() -> list[dict]:
-    """Every pre-order paid to a maker's receivable wallet, as a lender sees it (Huma-style PayFi receivable)."""
+    """Every pre-order paid to a maker's receivable wallet, as a lender sees it (a PayFi receivable)."""
     out = []
     for rec in preorder_records():
         if not rec.get("receivable"):

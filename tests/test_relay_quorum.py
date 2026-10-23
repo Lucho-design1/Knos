@@ -154,7 +154,7 @@ def test_a_judges_word_recorded_before_the_upgrade_counts_for_nothing_and_the_re
         assert r["ok"] and r["paid"] == [] and r["quorum"] == {"have": 1, "of": 2, "again": ["the order's own repository"]}, r
         assert c.order(order).state == "open" and c.data(pay.ata(wallet, c.usdc)) is None and len(c.data(marker)) == order_auto.Q_LEN_21
         text = the_comment(tmp_path, 2, r)
-        assert ("The order's own repository passed this commit before the escrow's upgrade to knos_pay 2.2, and a word recorded before it names "
+        assert ("The order's own repository passed this commit before the payment program's upgrade to knos_pay 2.2, and a word recorded before it names "
                 "no run, so it counts for nothing now: that judge signs again (run its workflow once more) and is counted then.") in text, text
         assert text.startswith("Knos: not paid yet. ") and "1 of the 2 different judges" in text
         # it signs again: a new run, a new token. Now two owners have passed the same commit, and the order pays
@@ -212,7 +212,7 @@ def test_an_order_with_the_grace_takes_a_token_issued_by_its_deadline_and_is_not
     if not build.new:       # 2.1 refuses the byte (the program: E_TERMS); the relay says so before any fee
         txs = net.txs
         r = carry(env, order_fund_jwt(c, issue(), options=graced, work=600), relay2_terms())
-        assert not r["ok"] and "which the escrow on this cluster does not have yet: it comes with the announced upgrade to knos_pay 2.2" in r["why"], r
+        assert not r["ok"] and "which the payment program on this cluster does not have yet: it comes with the announced upgrade to knos_pay 2.2" in r["why"], r
         assert net.txs == txs
         return
     terms = relay2_terms()

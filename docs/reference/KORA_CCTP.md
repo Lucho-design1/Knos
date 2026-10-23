@@ -24,7 +24,7 @@ The node is the operator's (`KORA_RPC_URL`, optional `KORA_API_KEY`). **No Kora 
 GitHub releases carry no binaries (14 Oct 2026) and building one means downloading its crates, which this build does
 not do unasked. The tests use a synthetic node whose answers have the OpenAPI document's shapes.
 
-## CCTP V2 into a Knos escrow (design, with its code)
+## CCTP V2 into money held by Knos (design, with its code)
 
 Most institutional USDC sits on EVM chains. CCTP V2 burns it there and mints it on Solana (domain 5; Ethereum 0,
 Arbitrum 3, Base 6; Fast Transfer supported with Solana as source and destination). On Solana, `MessageTransmitterV2`
@@ -46,7 +46,7 @@ The flow, in `knos.money.cctp`:
    another account, for less, or for another order. The Iris reference page says "API key required"; the sandbox host
    answered without one on 14 Oct 2026 (a made-up hash got 404 "Message not found", not 401).
 4. `receiveMessage` mints into the funder's account (anyone may submit it); the funder's `FundOrderWallet`, signed in
-   advance with a durable nonce ([DURABLE_NONCES.md](DURABLE_NONCES.md)), moves it into escrow.
+   advance with a durable nonce ([DURABLE_NONCES.md](DURABLE_NONCES.md)), moves it into an order that holds it until the proof passes.
 
 Not built yet: the Solana `receiveMessage` instruction itself (Anchor, with the token messenger's remaining accounts),
 and no transfer was run: the EVM leg needs testnet ETH and testnet USDC, which Knos does not hold.

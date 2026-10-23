@@ -46,7 +46,7 @@ export function drawLive(dl, live, esc = (t) => String(t)) {
 }
 
 // ---- the calculator ---------------------------------------------------------------------------------------------------
-export const BILLING_DOC = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/MARKET.md#3-the-price-book";
+export const BILLING_DOC = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/MARKET.md#the-price-book";
 // where each slider stops: [least, most, step]
 export const RANGES = Object.freeze({ evaluations: [0, 2_000_000, 10_000], accepted: [0, 30_000_000, 50_000], onchain: [0, 100, 5], lookups: [0, 5_000, 10] });
 // the worked customer of docs/reference/MARKET.md: Business, 110,000 evaluations a month, 10 million accepted a year

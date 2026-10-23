@@ -213,11 +213,11 @@ export async function quote(connection, repo, issue) {
   }
   items.sort((a, b) => Number(b.payable) - Number(a.payable) || (b.authorReceives > a.authorReceives ? 1 : b.authorReceives < a.authorReceives ? -1 : 0) || (a.address < b.address ? -1 : 1));
   for (const item of items) for (const why of item.why) missing.push(`the ${item.kind} ${item.address} (${item.money}): ${why}`);
-  if (!items.length) missing.push("no work order or job is in escrow for this issue (a private order would not show here)");
+  if (!items.length) missing.push("no work order or job is held for this issue (a private order would not show here)");
   const totals = new Map();
   for (const i of items.filter((x) => x.payable)) totals.set(i.mint, [(totals.get(i.mint)?.[0] ?? 0n) + BigInt(i.authorReceives), i.decimals]);
   const sum = [...totals].map(([mint, [amount, decimals]]) => money(amount, decimals, mint, names)).join(" and ");
-  const text = (sum ? `Issue ${n} of repository ${repoId}: ${sum} in escrow for the author of the pull request that meets the terms, after the fee.` : `Issue ${n} of repository ${repoId}: nothing payable in escrow.`)
+  const text = (sum ? `Issue ${n} of repository ${repoId}: ${sum} held for the author of the pull request that meets the terms, after the fee.` : `Issue ${n} of repository ${repoId}: nothing payable is held.`)
     + (missing.length ? ` Standing in the way: ${missing.join("; ")}.` : " Nothing certain stands in the way.") + (unread.length ? ` Could not be read: ${unread.join("; ")}.` : "");
   return { repoId: Number(repoId), issue: Number(n), at: now, items, said: text, missing, unread, note: UNTRUSTED };
 }
@@ -303,10 +303,10 @@ export async function statement(connection, seller, month, { most = 1000 } = {})
   }
   escrow.complete = reached || escrow.scanned < most;
   const notes = [...buyers.filter((b) => !b.agrees).map((b) => `For buyer ${b.buyerId} the meter's log in this node's history differs from its month account: the node's history is cut short, and the account is the count.`),
-    ...(escrow.complete ? [] : [`Only the newest ${escrow.scanned} transactions of the escrow were read, so payments earlier in the month may be missing.`]),
-    ...(escrow.unread ? [`${escrow.unread} transactions of the escrow could not be read: the payments are a lower bound.`] : []),
+    ...(escrow.complete ? [] : [`Only the newest ${escrow.scanned} transactions of the payment program were read, so payments earlier in the month may be missing.`]),
+    ...(escrow.unread ? [`${escrow.unread} transactions of the payment program could not be read: the payments are a lower bound.`] : []),
     "Amounts are in the smallest units of the mint, as the programs logged them: USDC has six decimals."];
   const text = `Seller ${sellerId}, ${when.label}: ${sums.evaluations} billable evaluation${sums.evaluations === 1 ? "" : "s"} (${sums.accepted} accepted, ${sums.rejected} rejected) across ${buyers.length} buyer${buyers.length === 1 ? "" : "s"}, `
-    + `and ${payments.length} payment${payments.length === 1 ? "" : "s"} from the escrow.`;
+    + `and ${payments.length} payment${payments.length === 1 ? "" : "s"} from the payment program.`;
   return { seller: Number(sellerId), month: when.label, from: when.from, to: when.to, meter: { buyers, ...sums }, escrow, said: text, notes };
 }

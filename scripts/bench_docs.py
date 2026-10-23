@@ -32,14 +32,14 @@ A block is `<!-- bench:NAME -->` ... `<!-- /bench:NAME -->` in README.md or docs
     market        the index: a failed check of any kind, per agent
     market-tests  the same pull requests, counting only failed tests and builds
     backtest      the merged ones
-    verify2 pay2  the second deployment's compute units (programs-v2): verifying a token, the escrow's instructions
+    verify2 pay2  the second deployment's compute units (programs-v2): verifying a token, the payment program's instructions
     verify1 pay1  the first deployment's (programs)
-    walk2 walk1   the escrows' last random walks
+    walk2 walk1   the payment programs' last random walks
     devnet        the second deployment on devnet. A number nobody has measured yet reads "measured at release"
     devnet1       the first deployment's record on devnet
 
 A slot is `[[stat: name]]` in one of SLOTTED (README.md, CHANGELOG.md and the
-documents a judge opens): a number that only the release run can measure. SLOTS names every slot and says what it
+documents a reader opens first): a number that only the release run can measure. SLOTS names every slot and says what it
 counts. `--stats` fills the ones stats.json has, `--set` fills one of the others. Filling a slot does three things: the
 number replaces the slot in the text, in every file that carries it; it is kept in docs/bench.json (`devnet.stats`, at
 the same path as in stats.json, or `release.<name>` with its source); and a fact in docs/facts.json points at it, so
@@ -68,13 +68,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ["README.md", "docs/reference/BENCH.md", "docs/NUMBERS.md"]
-# The pitch-facing text (scripts/claims_check.py reads the same list): every number in it needs a fact.
+# The front-facing text (scripts/claims_check.py reads the same list): every number in it needs a fact.
 PITCH = ["README.md", "web/index.html"]
-# The other files that may carry slots. Everything a judge opens states a release-measured fact through one, so that the
+# The other files that may carry slots. Everything a reader opens first states a release-measured fact through one, so that the
 # release fills them all in one run and no document is left with an older number.
-SLOTTED = ["README.md", "CHANGELOG.md", "docs/reference/DISCLOSURE.md", "docs/reference/WHY.md", "docs/reference/COMPARE.md", "docs/reference/MARKET.md",
+SLOTTED = ["README.md", "CHANGELOG.md", "docs/reference/DISCLOSURE.md", "docs/reference/WHY.md", "docs/reference/MARKET.md",
            "docs/reference/SECURITY.md", "docs/reference/ASSURANCE.md", "docs/reference/BENCH.md", "docs/reference/RELAY.md", "docs/NUMBERS.md", "docs/TRANSACTION.md",
-           "docs/reference/FLOWS.md", "docs/reference/MARKET_SIZE.md", "docs/reference/DEPENDENCY.md"]
+           "docs/reference/FLOWS.md", "docs/reference/DEPENDENCY.md"]
 UNMEASURED = "measured at release"
 SLOT = re.compile(r"(?<!`)\[\[stat: ([a-z][a-z_]*)\]\]")      # not one quoted as code: that is the docs naming the syntax
 # The rows of the `devnet` block: (what was measured, its path in stats.json).
@@ -92,8 +92,8 @@ DEVNET = [
     ("seconds from the merge to the payment, 95th percentile (p95)", "latency.merge_to_paid.p95"),
     ("the day of the oldest of those payments (UTC)", "latency.merge_to_paid.window.from"),
     ("the day of the newest", "latency.merge_to_paid.window.to"),
-    ("of those payments, made by the first deployment's escrow", "latency.merge_to_paid.deployment.first"),
-    ("of those payments, made by the second deployment's escrow", "latency.merge_to_paid.deployment.second"),
+    ("of those payments, made by the first deployment's payment program", "latency.merge_to_paid.deployment.first"),
+    ("of those payments, made by the second deployment's payment program", "latency.merge_to_paid.deployment.second"),
     ("seconds from the funding comment to the funded task, median", "latency.comment_to_funded.median"),
 ]
 # Kept beside the rows, and printed under the table: what the merge-to-paid number is, in the words of the one function
@@ -116,7 +116,7 @@ SLOTS = {
     "payments_timed": ("the payments that median is over", "latency.merge_to_paid.count"),
     "payments_between_unrelated_accounts": (
         "payments on devnet, both deployments, whose payee is another GitHub account than the one that funded the task: "
-        "the `knos:paid` and `knos2:paid` lines of the escrows' logs whose payee is not the task's funder", None),
+        "the `knos:paid` and `knos2:paid` lines of the payment programs' logs whose payee is not the task's funder", None),
     "outside_prs_merged_and_paid": ("of the pull requests #32, #33 and #34 by jaystay-bot, the ones that were merged and "
                                     "paid on devnet when the release ran", None),
     "tests_passing": ("tests that passed in the release's own run of the suite (`pytest -q` on the release commit)", None),
@@ -245,7 +245,7 @@ def outside_rows(src: dict, repo: dict) -> list[tuple[str, object, str]]:
         ("Outside repositories: repositories not owned by Knos in which a task was funded", repositories, where_r),
         ("Outside payees: GitHub accounts other than the funder's that were paid", payees, where_p),
         ("Payments between unrelated accounts: payments whose payee is another GitHub account than the funder", between.get("value"),
-         "`docs/bench.json`, `release.payments_between_unrelated_accounts`, read from the escrows' logs"),
+         "`docs/bench.json`, `release.payments_between_unrelated_accounts`, read from the payment programs' logs"),
         ("Buyer interviews held", (repo.get("buyer_interviews_held") or [None])[0], by_hand),
         ("Letters of intent", (repo.get("letters_of_intent") or [None])[0], by_hand),
         ("Reproductions signed by GitHub: files in `reproductions/` from a run in someone else's repository",
@@ -511,7 +511,7 @@ def verify(chain: dict, which: str) -> str:
 
 
 def pay_second(chain: dict) -> str:
-    """The second deployment's escrow: Pay over many payments (its cost moves with the addresses it derives), and the
+    """The second deployment's payment program: Pay over many payments (its cost moves with the addresses it derives), and the
     highest seen of every other instruction."""
     p, d = chain["second"]["pay"], chain["second"]
     lines = ["| instruction | lowest | median | highest |", "|---|---|---|---|"]
@@ -544,7 +544,7 @@ def _money(units: float) -> str:
 
 
 def walk_second(walks: dict) -> str:
-    """The second escrow's last random walks: what the test printed for each seed (docs/bench.json, chain.second.walks)."""
+    """The second payment program's last random walks: what the test printed for each seed (docs/bench.json, chain.second.walks)."""
     runs = walks["runs"]
     steps = sum(r["steps"] for r in runs)
     total = {k: sum(r[k] for r in runs) for k in ("funded", "paid", "fees", "refunded")}
@@ -555,7 +555,7 @@ def walk_second(walks: dict) -> str:
 
 
 def walk_first(walk: dict) -> str:
-    """The first escrow's last random walk, as the test printed it (docs/bench.json, chain.first.walk)."""
+    """The first payment program's last random walk, as the test printed it (docs/bench.json, chain.first.walk)."""
     return (f"Last {walk['steps']:,}-step run: 0 violations. Seed {walk['seed']}, {walk['measured']}: funded "
             f"{walk['funded']}, claimed {walk['claimed']}, fees {walk['fees']}, refunded {walk['refunded']}; the rest was "
             f"still in the vault, in open jobs and in money not yet claimed, when the walk ended.")
@@ -612,7 +612,7 @@ def _first_ids() -> dict:
 
 def devnet_first(f: dict) -> str:
     """The first deployment's record on devnet, as read from the chain (docs/bench.json, devnet.first)."""
-    return (f"Read from the escrow's own logs on devnet on {f['read']}: {f['transactions']} transactions in all, the last "
+    return (f"Read from the payment program's own logs on devnet on {f['read']}: {f['transactions']} transactions in all, the last "
             f"at {f['last']}. {f['funded']:,} bounties funded, {f['paid']:,} paid, {f['vetoed']:,} vetoed, {f['claimed']:,} "
             f"claims, {f['refunded']:,} refunded, {f['open']:,} still open. Every one of the {f['paid']:,} payments was Knos's "
             f"own account paying itself to prove the path; {f['outside_paid']:,} went to anyone else. The median from the "
@@ -812,8 +812,8 @@ def fill(stats_path: str | None = None, given: dict | None = None, root: Path = 
         new = SLOT.sub(number, text)
         if new != text:
             doc.write_text(new, encoding="utf-8")
-    # A number said only in documents that are not pitch-facing (docs/reference/ASSURANCE.md, ...) is a "doc" fact: claims_check.py
-    # then holds those documents to it, instead of looking for it in the pitch-facing text, which does not say it.
+    # A number said only in documents that are not front-facing (docs/reference/ASSURANCE.md, ...) is a "doc" fact: claims_check.py
+    # then holds those documents to it, instead of looking for it in the front-facing text, which does not say it.
     for f in facts["facts"]:
         docs = where_said.get(f.get("path"), set())
         if docs and f["say"] and not docs & set(PITCH):

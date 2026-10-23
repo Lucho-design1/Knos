@@ -1,6 +1,6 @@
 # The referee panel as one FROST threshold key
 
-A milestone's escrow on knos_pay is released by a referee PANEL: the order pins m of n Ed25519 keys and the program
+A milestone's held money on knos_pay is released by a referee PANEL: the order pins m of n Ed25519 keys and the program
 counts their signatures through Solana's Ed25519 precompile (PAY_ON_PROOF.md). Until now Knos's devnet panel was three
 keys on one server.
 

@@ -266,7 +266,7 @@ def check_brief(brief: dict) -> dict:
 
 
 def patterns() -> dict:
-    """Resolved ambiguity patterns (I7): the reading a buyer tapped for a vague word, offered first next time."""
+    """Resolved ambiguity patterns: the reading a buyer tapped for a vague word, offered first next time."""
     f = _dir("patterns") / "resolved.json"
     try:
         return json.loads(f.read_text(encoding="utf-8"))
@@ -555,7 +555,7 @@ def unlist(pid: str, user: dict | None = None, admin: bool = False, why: str = "
     return {"project": pid, "archived": p["unlisted"], "listed": False, "readable_at": f"/api/project?id={pid}"}
 
 
-# ---- routing to existing capacity (B2) -------------------------------------------------------------------------------
+# ---- routing to existing capacity ---- -------------------------------------------------------------------------------
 def route(m: dict) -> dict:
     """Where this milestone's work can be bought: the knos.labs adapters (live with the maker's own key, else a labelled
     fixture quote), knos.game for code-scored work, or the maker's own shop. Work is routed only once committed money
@@ -573,7 +573,7 @@ def route(m: dict) -> dict:
                 row["quote"] = {"error": f"{type(why).__name__}: {str(why)[:120]}"}
         out.append(row)
     return {"kind": m.get("route") or "none", "capacity": out,
-            "rule": "work is ordered from a lab only when escrow + AMC commitments cover its quote; a fixture quote is labelled and never ordered"}
+            "rule": "work is ordered from a lab only when held money + AMC commitments cover its quote; a fixture quote is labelled and never ordered"}
 
 
 # ---- funding: a funder's escrow, a grant, a pool (the funder's wallet signs) ---------------------------------------
@@ -805,7 +805,7 @@ def pool_txs(allocations: list[dict], units: int, account: str, ref: str | None 
     return {"pool": pool, "transactions": txs, "units": sum(share)}
 
 
-# ---- referrals (B4) --------------------------------------------------------------------------------------------------
+# ---- referrals ---- --------------------------------------------------------------------------------------------------
 def make_referral(user: dict, wallet: str, target: str) -> dict:
     from solders.pubkey import Pubkey
     try:
@@ -841,20 +841,44 @@ def split_payee(maker_wallet: str, referral: dict | None, maker_payee: dict | No
                               {"payee_id": ref["payee_id"], "bps": REFERRAL_BPS, "wallet": ref["wallet"]}]}
 
 
-# ---- attempts: claim, result, independent check, release (B1) -------------------------------------------------------
+# ---- attempts: claim, result, independent check, release ---- -------------------------------------------------------
 def claim(pid: str, key: str, user: dict, wallet: str) -> dict:
-    """A maker takes the milestone (parallel attempts allowed) and binds the wallet it is paid at."""
+    """A maker takes the milestone (parallel attempts allowed) and binds the wallet it is paid at. An agent key's claim
+    is paid only at the key's payout wallet and counts against its claim cap (knos_wanted.agentkeys)."""
     from solders.pubkey import Pubkey
+    kid = user.get("agent_key") if user.get("kind") == "agent" else None
+    if kid:
+        if wallet and wallet != user.get("payout_wallet"):
+            raise Refused("an agent key is paid only at its payout wallet: leave wallet out")
+        wallet = str(user.get("payout_wallet") or "")
     try:
         Pubkey.from_string(str(wallet))
     except ValueError:
         raise Refused("wallet: your Solana wallet (the payee bound at claim)") from None
+    if kid:
+        from . import agentkeys
+        agentkeys.take_claim(kid)                   # counted first, given back below when the claim is refused
+        try:
+            a = _claim(pid, key, user, wallet)
+        except Exception:
+            agentkeys.give_back(kid)
+            raise
+        agentkeys.note_attempt(kid, pid, key, a["id"])
+        return a
+    return _claim(pid, key, user, wallet)
+
+
+def _claim(pid: str, key: str, user: dict, wallet: str) -> dict:
     who = _user_key(user)
+    kid = user.get("agent_key") if user.get("kind") == "agent" else None
     with _lock:
         p = project(pid)
         m = _milestone(p, key)
         if m["status"] == "released":
             raise Refused("this milestone is already released")
+        if kid:                                     # a payout the key could never take is refused now, not at release
+            from . import agentkeys
+            agentkeys.can_spend(kid, _payout_units(p, m))
         if who in m["excluded"]:
             raise Refused("you missed this milestone's deadline once: it is reopened to other makers")
         live = [a for a in m["attempts"] if a["status"] in ("working", "result posted")]
@@ -866,7 +890,7 @@ def claim(pid: str, key: str, user: dict, wallet: str) -> dict:
         if wallet in refs:
             raise Refused("a referee's key cannot be a payee")
         a = {"id": _id("attempt", who, key)[:10], "maker_sub": who, "maker": str(user.get("label") or "maker")[:80], "wallet": str(wallet),
-             "status": "working", "claimed": _now(), "result": None, "check": None}
+             "status": "working", "claimed": _now(), "result": None, "check": None, **({"agent_key": kid} if kid else {})}
         m["attempts"].append(a)
         if m["status"] in ("open", "funded", "reopened"):
             m["status"] = "claimed" if m["fundings"] else m["status"]
@@ -905,6 +929,19 @@ def project_evidence(eid: str) -> bytes | None:
 
 def _claim_ids(p: dict, m: dict) -> list[str]:
     return [o["claim_id"] for o in (_safe_order(x) for x in m["fundings"]) if o and o["status"] == "locked"]
+
+
+def _payout_units(p: dict, m: dict) -> int:
+    """The test units a release of this milestone pays: its locked orders and its approved AMC allowances (an agent key's
+    spend cap is checked against this before any money moves)."""
+    locked = sum(o["units"] * o.get("unit_price", 1) for o in (_safe_order(x) for x in m["fundings"]) if o and o["status"] == "locked")
+    return locked + sum(int(a["units"]) for a in amc_of(p["id"], m["key"]) if a["status"] == "approved")
+
+
+def _paid_units(pid: str, key: str, paid: list[dict], collected: list[dict]) -> int:
+    got = sum(o["units"] * o.get("unit_price", 1) for o in (_safe_order(x.get("order")) for x in paid if x.get("status") == "released") if o)
+    ids = {c["amc"] for c in collected if c.get("status") == "collected"}
+    return int(got + sum(float(a.get("collected_units") or 0) for a in amc_of(pid, key) if a["id"] in ids))
 
 
 def post(pid: str, key: str, attempt: str, user: dict, url: str, role: str, fetch=None) -> dict:
@@ -1044,6 +1081,9 @@ def release(pid: str, key: str, attempt: str, led=None, sign=None, release_fn=No
     a = next(x for x in m["attempts"] if x["id"] == attempt)
     if a["status"] != "checked":
         raise Refused("release needs the result and its independent check")
+    if a.get("agent_key"):                             # an agent key's spend cap, before any money moves
+        from . import agentkeys
+        agentkeys.can_spend(a["agent_key"], _payout_units(p, m))
     review = _dir("evidence") / f"{pid}-{key}-{a['id']}-review.json"
     rv = {"project": pid, "milestone": key, "attempt": a["id"], "result": a["result"], "check": a["check"],
           "rule": "result + independent check, two people, two sites"}
@@ -1167,6 +1207,9 @@ def _settle(pid: str, key: str, attempt: str, paid: list[dict], led, review) -> 
             m["status"] = "released"
         m["history"].append({"at": _now(), "what": f"released to attempt {attempt}", "orders": paid, "amc": collected})
         _save("projects", pid, p)
+    if aa.get("agent_key") and aa["status"] == "paid":
+        from . import agentkeys
+        agentkeys.spent(aa["agent_key"], _paid_units(pid, key, paid, collected))
     _journal("payout", {"project": pid, "milestone": key, "attempt": attempt, "orders": paid, "amc": collected,
                         "evidence_sha256": [a["result"]["sha256"], a["check"]["sha256"]]}, tenant_of(p))
     att = _attest(p, key, aa, paid, led) if m["status"] == "released" else []
@@ -1224,7 +1267,7 @@ def _onchain(p: dict, key: str, a: dict, rows: list[dict], release_sig: str, led
     return out
 
 
-# ---- the sweeper: missed deadlines refund and reopen (B3) ------------------------------------------------------------
+# ---- the sweeper: missed deadlines refund and reopen ---- ------------------------------------------------------------
 def sweep(led=None, refund_fn=None) -> dict:
     """Every locked order past its on-chain deadline is refunded (knos_pay RefundOrder) and its milestone reopened to
     other makers: the makers whose attempts missed it are excluded from it. Runs in the server every SWEEP_S."""
@@ -1311,7 +1354,7 @@ def start_sweeper() -> None:
     threading.Thread(target=loop, daemon=True, name="knos-valley-sweeper").start()
 
 
-# ---- AMC commitments: fund only when the milestone verifies (B2) ----------------------------------------------------
+# ---- AMC commitments: fund only when the milestone verifies ---- ----------------------------------------------------
 def _approve_ix(source, delegate, owner, amount: int):
     from solders.instruction import AccountMeta, Instruction
     return Instruction(_token(), bytes([4]) + struct.pack("<Q", amount),
@@ -1363,7 +1406,7 @@ def amc_tx(pid: str, key: str, units: int, account: str, led=None) -> dict:
                        "delegate": str(relayer.pubkey()), "status": "pending", "made": _now(), "signatures": {}})
     return {"transaction": base64.b64encode(bytes(tx)).decode(), "amc": aid,
             "message": f"Commits {units} test units to '{m['name']}': an allowance from your wallet, collected only when the milestone "
-                       "verifies. You can revoke it until then (an AMC is a promise, weaker than escrow)."}
+                       "verifies. You can revoke it until then (an AMC is a promise, weaker than held money)."}
 
 
 def amc_confirm(aid: str, signature: str | None = None, led=None) -> dict:
@@ -1566,3 +1609,162 @@ def ci_release(pid: str, key: str, sha: str, get=None, led=None, base: str | Non
         _save("projects", pid, p)
     _journal("experiment", {"project": pid, "milestone": key, "what": "CI-verified", "attempt": a["id"], **ci}, tenant_of(p))
     return {**release(pid, key, a["id"], led=led, base=base), "ci": ci}
+
+
+# Paid with no human step: a milestone whose verifier is the sealed referee of an open knos.game round
+# ("knos-referee:<round>"). The maker's code goes to the round as knos_task_submit's does; when the verdict meets the
+# milestone's margin over the baseline, the verdict is the result, this server's published re-reading of it (with the
+# orders' claim ids) is the check the referee hosts fetch, and the milestone releases, as ci_release does for CI.
+REFEREE_CHECK = re.compile(r"knos-referee:([A-Za-z0-9_.-]{3,80})")
+_MARGIN = re.compile(r"(\d+(?:\.\d+)?)\s*percentage points?", re.I)
+
+
+def referee_round(m: dict) -> str | None:
+    """The round a milestone's machine verifier names (knos-referee:<round>), else None."""
+    v = m.get("verifier") or {}
+    got = REFEREE_CHECK.fullmatch(str(v.get("check") or "")) if v.get("kind") == "machine" else None
+    return got.group(1) if got else None
+
+
+def min_margin(m: dict) -> float | None:
+    """The lift over the baseline the verdict must reach, read from the target (so it is in the criteria hash):
+    "0.5 percentage points" is 0.005 of accuracy."""
+    got = _MARGIN.search(str(m.get("target") or ""))
+    return float(got.group(1)) / 100 if got else None
+
+
+def referee_release(pid: str, key: str, attempt: str, submission: str, user: dict, led=None, base: str | None = None) -> dict:
+    """Submit the attempt's code to the milestone's round and release on a verdict that meets the target. The attempt
+    plays as its own player in the round, so its shown score is this attempt's own, and it passes only when this
+    submission moved that score to at least the baseline's shown score plus the margin (the Ladder rounds both down)."""
+    from urllib.parse import urlparse
+
+    from . import preorder, tasks
+    p = project(pid)
+    m = _milestone(p, key)
+    rnd, margin = referee_round(m), min_margin(m)
+    if rnd is None:
+        raise Refused("this milestone is not judged by a referee round (verifier knos-referee:<round>)")
+    if margin is None:
+        raise Refused("this milestone's target names no margin over the baseline (percentage points)")
+    a = next((x for x in m["attempts"] if x["id"] == attempt), None)
+    if a is None:
+        raise Refused("attempt: not on this milestone")
+    if a["maker_sub"] != _user_key(user):
+        raise Refused("only the maker of this attempt submits to its round")
+    if m["status"] == "released":
+        return {"milestone": key, "status": "released", "referee": a.get("referee")}
+    if a["status"] == "checked":                       # verified before and the release did not finish: send it again
+        return {**release(pid, key, a["id"], led=led, base=base), "referee": a.get("referee")}
+    if a["status"] != "working":
+        raise Refused(f"the attempt is {a['status']}")
+    ids = _claim_ids(p, m)
+    if not ids:
+        raise Refused("this milestone has no locked funding yet: nothing to release")
+    st = tasks.round_state()
+    if st["id"] != rnd:
+        raise Refused(f"this milestone is judged by round {rnd}, which is not the open round ({st['id']}): it cannot be verified now")
+    kind = "agent" if user.get("kind") == "agent" else "human"
+    name = re.sub(r"[^A-Za-z0-9 _.-]", "", str(user.get("label") or "")).strip()[:40] or "maker"    # the board's name rule
+    got = tasks.submit(rnd, name, submission, f"{kind}: {user.get('label')}",
+                       sub=f"{a['maker_sub']}|{pid}|{key}|{a['id']}", wallet=None, base=base)
+    r = got["result"]
+    shown, floor = r.get("shown"), st.get("baseline_shown")
+    sign = -1 if st.get("direction") == "min" else 1
+    lift = round(sign * (shown - floor), 10) if r.get("decision") == "scored" and isinstance(shown, (int, float)) and isinstance(floor, (int, float)) else None
+    passed = lift is not None and bool(r.get("moved")) and lift >= margin - 1e-9
+    verdict = {"round": rnd, "decision": r.get("decision"), "shown": shown, "baseline_shown": floor, "lift": lift, "min_margin": margin,
+               "moved": r.get("moved"), "attempt_n": r.get("n"), "referee_sha256": r.get("sha256"), "submitted_sha256": got["submitted_sha256"],
+               "rules": r.get("rules"), "reasons": r.get("reasons"), "eta": st.get("eta"), "at": _now(), "pass": passed}
+    if not passed:
+        with _lock:
+            p = project(pid)
+            aa = next(x for x in _milestone(p, key)["attempts"] if x["id"] == a["id"])
+            aa.setdefault("referee_tries", []).append(verdict)
+            _milestone(p, key)["history"].append({"at": _now(), "what": f"attempt {a['id']}: the referee's verdict did not meet the target",
+                                                  "decision": r.get("decision"), "lift": lift})
+            _save("projects", pid, p)
+        raise preorder.NotVerified(f"round {rnd}: {r.get('decision')}, shown {shown} against the baseline's {floor} (lift {lift}); "
+                                   f"the target needs a lift of {margin} moved by this submission" + (f"; {'; '.join(r.get('reasons') or [])}" if r.get("reasons") else ""))
+    eid = _evidence_id(pid, key, a["id"])
+    page = {"kind": "knos-referee-verified-milestone", "project": pid, "milestone": key, "target": m.get("target"), "claims": ids,
+            "verdict": verdict, "rule": "the round's sealed referee scored this submission; its shown score is at least the baseline's plus the margin"}
+    f = _dir("evidence") / f"{eid}.public.json"
+    f.write_text(json.dumps(page, sort_keys=True, indent=1), encoding="utf-8")
+    body, url = f.read_bytes(), f"{tasks.public_base(base)}/api/project/evidence?id={eid}"
+    raw = json.dumps(verdict, sort_keys=True).encode()
+    host = (urlparse(url).hostname or "").lower()
+    with _lock:
+        p = project(pid)
+        m = _milestone(p, key)
+        a = next(x for x in m["attempts"] if x["id"] == a["id"])
+        if a["status"] != "working":
+            raise Refused(f"the attempt is {a['status']}")
+        a["result"] = {"url": url + "#verdict", "host": host, "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
+                       "by": f"the sealed referee of round {rnd}", "at": _now()}
+        a["check"] = {"url": url, "host": host, "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body),
+                      "by": "Knos, re-reading the referee's verdict against the milestone's target", "at": _now()}
+        a["referee"], a["status"] = verdict, "checked"
+        m["history"].append({"at": _now(), "what": f"the referee of round {rnd} verified attempt {a['id']} (lift {lift}): releasing"})
+        _save("projects", pid, p)
+    _journal("experiment", {"project": pid, "milestone": key, "what": "referee-verified", "attempt": a["id"], "round": rnd, "lift": lift,
+                            "submitted_sha256": verdict["submitted_sha256"]}, tenant_of(p))
+    return {**release(pid, key, a["id"], led=led, base=base), "referee": verdict, "evidence": url}
+
+
+def solve(pid: str, key: str, code: str, user: dict, wallet: str = "", led=None, base: str | None = None) -> dict:
+    """knos_milestone_submit: claim the referee-judged milestone when the caller has no attempt on it yet (an agent key:
+    paid at its payout wallet, one claim of its cap), then submit to its round and release on a passing verdict."""
+    m = _milestone(project(pid), key)
+    if referee_round(m) is None:
+        raise Refused("this milestone is not judged by a referee round: claim it and post a result instead")
+    who = _user_key(user)
+    a = next((x for x in m["attempts"] if x["maker_sub"] == who and x["status"] in ("working", "checked")), None)
+    claimed = claim(pid, key, user, wallet) if a is None else None
+    aid = (claimed or a or {})["id"]
+    return {"attempt": aid, "claimed": claimed is not None, **referee_release(pid, key, aid, code, user, led=led, base=base)}
+
+
+# The three open, computer-checkable briefs an AI scientist can win (knos_wanted.solver_briefs): the operator opens
+# them as projects through the custom-brief path and funds them from the app's devnet test wallet, as the champion
+# project is.
+def solver_briefs(round_id: str | None = None) -> list[dict]:
+    """The briefs as data; `round_id` fills the referee round of the one judged by the sealed referee."""
+    import copy
+
+    from .solver_briefs import BRIEFS
+    rows = copy.deepcopy(BRIEFS["briefs"])
+    for b in rows:
+        for m in b["brief"]["milestones"]:
+            if round_id and "{round}" in m["verifier"].get("check", ""):
+                m["verifier"]["check"] = m["verifier"]["check"].replace("{round}", round_id)
+    return rows
+
+
+def open_solver_briefs(which: list[str] | None = None, round_id: str | None = None) -> list[dict]:
+    """The operator opens the solver briefs as projects (each Ready first). The referee one is bound to the open round."""
+    rows = [b for b in solver_briefs() if not which or b["id"] in which]
+    if any("{round}" in m["verifier"].get("check", "") for b in rows for m in b["brief"]["milestones"]) and not round_id:
+        from . import tasks
+        round_id = tasks.round_state()["id"]
+    out = []
+    for b in solver_briefs(round_id):
+        if which and b["id"] not in which:
+            continue
+        if not _ready().check(b["brief"])["ready"]:
+            raise Refused(f"solver brief {b['id']} is not Ready: POST /api/ready says what is missing")
+        got = create_project(OPERATOR, "custom", b["title"], brief=b["brief"])
+        with _lock:
+            p = project(got["id"])
+            p.update(solver_brief=b["id"], release_rule=b["release"], note=b["note"])
+            _save("projects", p["id"], p)
+        out.append(public_project(project(got["id"])))
+    return out
+
+
+def operator_fund_solver(pid: str, units: int = 5, led=None, wait_s: float = 60) -> dict:
+    """Fund the referee-judged milestone of a solver project from the app's devnet test wallet (operator_fund)."""
+    m = next((m for m in project(pid)["milestones"] if referee_round(m)), None)
+    if m is None:
+        raise Refused("this project has no referee-judged milestone")
+    return operator_fund(pid, m["key"], units, led=led, wait_s=wait_s)

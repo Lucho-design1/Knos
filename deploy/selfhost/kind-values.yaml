@@ -3,7 +3,7 @@
 #   kind create cluster --name knos-selfhost && kind load docker-image knos:local --name knos-selfhost
 #   helm install knos deploy/selfhost/knos -f deploy/selfhost/kind-values.yaml --wait
 #   kubectl port-forward svc/knos-knos 8080:80   # then http://localhost:8080/healthz
-# No secrets are needed for a trial: without devnet test keys the app runs, and escrow says it has no key.
+# No secrets are needed for a trial: without devnet test keys the app runs, and the money-holding step says it has no key.
 image:
   repository: knos
   tag: local

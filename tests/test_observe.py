@@ -259,7 +259,7 @@ def test_the_graph_of_three_orders_names_both_counterparties_what_each_was_paid_
     assert json.loads(json.dumps(g)) == g
     said = "\n".join(observe.graph_text(g))
     assert f"It pays {AUTHOR} (mona): 60.000000 in 2 payments on 2 orders (20.000000, 40.000000)" in said and f"It pays {OTHER} (hubot): 35.000000" in said
-    assert observe.graph_text(observe.graph(events, 5))[1] == "The escrow's history that was read shows no payment from or to this id."
+    assert observe.graph_text(observe.graph(events, 5))[1] == "The payment program's history that was read shows no payment from or to this id."
 
 
 def shape(fixture: dict) -> list:

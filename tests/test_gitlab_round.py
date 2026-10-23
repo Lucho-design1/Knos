@@ -54,7 +54,7 @@ def test_a_token_signed_for_a_pipeline_run_by_hand_is_refused_before_any_fee(wor
     ev, st, book = _round(w, forge, [])
     forge.source = "web"
     try:
-        with pytest.raises(ep.Failed, match="`pipeline_source` is 'web'; the escrow takes only 'pipeline'.*No fee was spent"):
+        with pytest.raises(ep.Failed, match="`pipeline_source` is 'web'; the payment program takes only 'pipeline'.*No fee was spent"):
             gr.round_gitlab(book, st, ep, forge=forge)
     finally:
         forge.source = "pipeline"

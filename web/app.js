@@ -314,7 +314,7 @@ async function jobHtml(address, j, now) {
     : `<strong class="status ok">open</strong>: ${j.mode === knos.MERGE ? "paid when a maintainer merges the pull request that closes the issue" : "paid without a merge, when its black-box check passes"}`;
   const left = Math.max(0, j.deadline - now);
   return `<dl class="facts">
-    <dt>In escrow</dt><dd><strong>${money(j.amount, d, d)} ${esc(words)}</strong> (fee when paid: ${money(fee, d, d)})</dd>
+    <dt>Held now</dt><dd><strong>${money(j.amount, d, d)} ${esc(words)}</strong> (fee when paid: ${money(fee, d, d)})</dd>
     <dt>State</dt><dd>${state}</dd>
     <dt>Funded by</dt><dd>${j.fromBalance ? `the Balance of GitHub owner ${j.ownerId}${j.faucet ? ", free faucet money" : ""}, by GitHub user ${j.funderId}` : `wallet <span class="mono">${esc(j.source)}</span>`}</dd>
     <dt>If unpaid</dt><dd>${j.state === "open" ? `goes back to where it came from ${left ? `in ${Math.ceil(left / 3600)} h` : "now (anyone may send it)"}` : `held until ${when(j.holdUntil)}`}</dd>
@@ -333,7 +333,7 @@ async function readEscrow(ev) {
     const found = (await knos.programAccounts(RPC, k.ids.knos_pay, knos.v2.JOB_LEN, 8, le(repo.id, ref.number)))
       .map((f) => ({ address: f.address, job: knos.v2.readJob(f.data) })).filter((f) => f.job);
     if (!found.length) {
-      out.innerHTML = `<p class="status">Nothing is in escrow for ${esc(ref.owner)}/${esc(ref.repo)}#${ref.number}.</p>
+      out.innerHTML = `<p class="status">Nothing is held for ${esc(ref.owner)}/${esc(ref.repo)}#${ref.number}.</p>
         <p class="fine">The repository's owner funds it by commenting <code>/knos fund 20</code> on the issue.</p>`;
       return;
     }
@@ -406,7 +406,7 @@ function numbersHtml(s) {
       ${stat(o.repositories, "repositories")}${stat(o.repeat_funders, "funders who funded again")}${stat(money(o.paid_amount), "test USDC paid out")}${stat(money(o.fees), "test USDC in fees")}</div>
     <h3>Everything counted, kept apart</h3>
     <p class="fine">Knos's own accounts: the funder, the person paid or the wallet is one of Knos's own. Paid to themselves: the funder and the person paid are the same.
-      Free faucet money: test USDC the escrow's faucet minted. Each task is in exactly one row, and the rows are never added to outside use.</p>
+      Free faucet money: test USDC the payment program's faucet minted. Each task is in exactly one row, and the rows are never added to outside use.</p>
     <div class="table-wrap"><table id="network-kinds"><tr><th></th><th>Funded</th><th>Paid</th><th>Funders</th><th>People paid</th><th>Test USDC paid out</th></tr>
       ${KINDS.map(([k, name]) => `<tr><th>${esc(name)}</th><td>${side(k).funded}</td><td>${side(k).completed}</td><td>${side(k).funders}</td><td>${side(k).payees}</td><td>${money(side(k).paid_amount)}</td></tr>`).join("")}</table></div>
     <h3>The funnel</h3>
@@ -527,7 +527,7 @@ async function loadNetwork() {
   }
   box.innerHTML = numbersHtml(s);
   drawn();
-  $("network-note").textContent = `Counted ${s.updated} by scripts/network_stats.py from the transaction history of both escrow programs.${s.error ? ` Not everything could be read: ${s.error}.` : ""}`;
+  $("network-note").textContent = `Counted ${s.updated} by scripts/network_stats.py from the transaction history of both payment programs.${s.error ? ` Not everything could be read: ${s.error}.` : ""}`;
 }
 
 

@@ -30,7 +30,7 @@ Read from devnet's feature accounts; the AUDIT table in the release notes has th
 
 `bash scripts/build_sbf.sh v3 deploy` builds the four programs with a pinned toolchain (cargo-build-sbf 4.4.0 from the Agave 4.4.0-beta.0
 release, platform-tools v1.57, `--locked`, file paths remapped so the bytes do not depend on where the checkout is) and writes their hashes to
-[`deploy/upgrade-0329/HASHES-v3.txt`](../../deploy/upgrade-0329/HASHES-v3.txt).
+`deploy/upgrade-0329/HASHES-v3.txt`.
 
 The ELF header's `e_flags` is the sBPF version; the script refuses a file whose version is not the one asked for.
 
@@ -60,9 +60,7 @@ bytes), so no ExtendProgram is needed:
 | knos_passkey | 3 | 108,232 | `d5a5db160eab9fbfdd70712f14898b06daeb1b068eaa1f442f82fe492e5b1c73` |
 
 These are built from this release's source with the PLATFORM changes uncommitted; the hashes change if anything in
-programs-v2 changes before the commit. Rebuild at the release commit and compare before proposing (STEPS.md, step 0).
-`deploy/upgrade-0329/HASHES-v3-agave23-REFUSED.txt` keeps the hashes of the v3 builds of the 2.3 toolchain, which
-Agave 4.4 refuses, as evidence.
+programs-v2 changes before the commit. Rebuild at the release commit and compare before proposing. Agave 4.4 refuses the v3 builds of the 2.3 toolchain.
 
 ## 3. One-transaction RS256 verification
 
@@ -138,7 +136,7 @@ KeyParams `4idQiQZmHtM7Rp8zxmWTgZfWgEi4aPNynsM7BfCVcPoLtmESZ5fSz1JHrE9SwkZmPXHhU
 
 **All three formats side by side** in `solana-test-validator` 4.4.0-beta.0 (the release devnet runs, every feature
 active, including SIMD-0500 and SIMD-0385), each test build at its own program id, the same 1,921-byte token
-(`v0329/agents/PLATFORM/val.sh` drives `val_cu.py`; compute units from `getTransaction`):
+(compute units from `getTransaction`):
 
 | build | Step(8) + Step(8) | Step(16), one transaction | Write + Step(16), one v1 transaction |
 |---|---|---|---|
@@ -149,8 +147,7 @@ active, including SIMD-0500 and SIMD-0385), each test build at its own program i
 | **sBPF v3, 64-bit limbs, products from 32-bit halves (v0.3.30)** | 631,262 + 691,200 | **1,291,845** (1,952-byte token) | **1,301,807** (2,308 bytes) |
 
 **sBPF v3, v0.3.30, by token size** (local `solana-test-validator` 4.4.0-beta.0 from the Agave 4.4 release, nothing
-on devnet; the knos_oidc v3 test build at a fresh program id; `v0329/agents/V30PLAT/val.sh` drives `val_v3.py`;
-synthetic tokens signed by the tests' seed keys; 14 Oct 2026):
+on devnet; the knos_oidc v3 test build at a fresh program id; synthetic tokens signed by the tests' seed keys; 14 Oct 2026):
 
 | 2048-bit key, Step(16) in one transaction | 1,952 bytes | 3,500 | 4,000 | 4,500 | 5,000 | 5,500 | 8,192 (MAX_JWT) |
 |---|---|---|---|---|---|---|---|
@@ -166,7 +163,7 @@ the token.
 Step(4) runs out.
 
 A forged signature is refused (1,237,747 consumed, error, nothing verified). The v3 deploy build of knos_oidc is now
-`deploy/upgrade-0329/HASHES-v3.txt`'s line (executable hash `d565487f…`): the v3 buffer written on 13-14 Oct for the
+the line `scripts/build_sbf.sh v3 deploy` writes for it (executable hash `d565487f…`): the v3 buffer written on 13-14 Oct for the
 old build no longer matches it.
 
 So: **before** 761,637 + 826,670 = 1,588,307 compute units in two transactions (LiteSVM, today's v0 test build,
@@ -224,10 +221,8 @@ transaction does not run.
 
 ## 7. The upgrade
 
-[`deploy/upgrade-0329/STEPS.md`](../../deploy/upgrade-0329/STEPS.md) is the founder's page: the buffers on devnet (written by
-the PLATFORM wallet and handed to the upgrade vault `CKCrTB…`), how to check their bytes, the Squads proposal commands
-(multisig `9HcsMEo2…`, time lock 691,200 s), and the decision between a v3 and a v2 knos_oidc. Nothing was proposed, approved
-or executed, and no founder key signed anything.
+The buffers are on devnet, handed to the upgrade vault `CKCrTB…` (multisig `9HcsMEo2…`, time lock 691,200 s); a v3
+or a v2 knos_oidc is still to be chosen. Nothing was proposed, approved or executed, and no key signed anything.
 
 SIMD-0500 (`B8JJXC…`, not active on devnet on 13 Oct 2026) will refuse v0, v1 and v2 deployments once active; programs
 already deployed keep running.
@@ -235,7 +230,7 @@ already deployed keep running.
 ## 8. What is not done
 
 - The verified (docker) build of the v3 programs: no docker on this machine. The program.yml change (`--arch v3`, a
-  4.4 toolchain image) is a change outside PLATFORM's paths: REQ INTEG / founder.
+  4.4 toolchain image) is not made yet.
 - One-transaction RSA on sBPF v3 (v0.3.30): measured on a local validator only, not on devnet. It does not cover a
   2048-bit token over 5,000 bytes nor a 4096-bit key in four Steps; those keep more Steps. More room would come from
   limbs below 32 bits (e.g. 28-bit, so products are summed without carries) or a hand-scheduled row loop; not attempted.

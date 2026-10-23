@@ -1,7 +1,6 @@
 # Knos on Nemotron: a coding agent writes the code, Knos decides if it counts, and the agent gets paid
 
-**Track: Coding and Agentic Engineering** (agents that write, run and test code in Token Factory). Knos is the whole
-product here: the referee, the escrow, the meter and the invoice that a team running coding agents pays for.
+Agents write, run and test code in Token Factory. Knos is the whole product here: the referee, the payment program, the meter and the invoice that a team running coding agents pays for.
 
 The problem, measured: in the public AIDev dataset, **1,119 of 3,736** agent pull requests (30%) that said tests pass
 had a failing check at their head commit, and **6,059 of 8,954** agent pull requests that fail a measured Knos check
@@ -18,7 +17,7 @@ python -m knos.nebius flow --out /tmp/knos-flow
 
 | step | what happens | where |
 |---|---|---|
-| 1 post | a team posts the task in [task/TASK.md](task/TASK.md). Knos SEALS its hidden acceptance tests ([task/hidden/](task/hidden/)): the spec hash and the hash of the judging code are fixed before any work starts. With `--wallets DIR` the team funds the bounty into `knos_pay` escrow on Solana devnet; the escrow's terms carry the seal hash. | `knos.referee.seal`, `knos.nebius.onchain` |
+| 1 post | a team posts the task in [task/TASK.md](task/TASK.md). Knos SEALS its hidden acceptance tests ([task/hidden/](task/hidden/)): the spec hash and the hash of the judging code are fixed before any work starts. With `--wallets DIR` the team funds the bounty, held by `knos_pay` on Solana devnet; the payment program's terms carry the seal hash. | `knos.referee.seal`, `knos.nebius.onchain` |
 | 2 code | **Nemotron 3 Super on Token Factory writes `duration.py` and its own pytest tests.** The agent writes the files into the task's repository, **runs** `python -m pytest` there (no key in the environment, a timeout), and sends the failures back to the model, until its own tests pass. | `knos.nebius.agent` |
 | 3 pay per check | with `--wallets` the agent pays for one raw Knos check itself: 0.02 test USDC over **x402 v2 `exact`** through the public x402.org facilitator, to Knos's treasury, on devnet | `knos.nebius.onchain`, `knos.money.x402_exact` |
 | 4 provenance | **Tavily** searches the agent's most distinctive lines for a public copy (advisory) | `knos.nebius.tavily` |
@@ -28,7 +27,7 @@ python -m knos.nebius flow --out /tmp/knos-flow
 
 A committed devnet run is in [flow-run/](flow-run/): [flow.json](flow-run/flow.json), [flow.html](flow-run/flow.html)
 and the team's usage record [usage.jsonl](flow-run/usage.jsonl) (two runs, labelled internal dogfooding). Its devnet
-transactions (escrow funding and the x402 check, each finalized; the cluster answered `getAgGenesisCert` with a
+transactions (the funding of the held money and the x402 check, each finalized; the cluster answered `getAgGenesisCert` with a
 certificate, so Alpenglow) are listed in [docs/reference/TEAMS.md](../../docs/reference/TEAMS.md). The model replies in
 that run are MOCK (no key on the build machine), and the payout is LiteSVM; both are labelled in the files.
 
@@ -71,8 +70,7 @@ search, USD 0.008 per credit on pay-as-you-go. Every source and its date is in
 Starting prices from [config/fees.yaml](../../config/fees.yaml) (decided 14 Oct 2026; nobody pays them yet, devnet
 revenue is 0): **1.00 USD per verified merge** for a team (the first verification free), **0.02 USD per raw agent
 check** over x402, **5% bounty fee**, verified task packages for labs split **maintainer 90 / Knos 10**. Paid in USDC
-on Solana; card and bank through Airwallex later. The prices, the revenue model (labelled a model) and the sourced
-1B USD arithmetic: [docs/reference/TEAMS.md](../../docs/reference/TEAMS.md) and the page `web/teams/`.
+on Solana. The prices and the revenue model (labelled a model): [docs/reference/TEAMS.md](../../docs/reference/TEAMS.md).
 
 ## The other demo: Knos builds Knos on Nemotron
 
@@ -88,7 +86,7 @@ project id, which this machine does not have; `python -m knos.nebius status` say
 ## Deploy as a Nebius Serverless Endpoint
 
 [Dockerfile](Dockerfile) builds an image that runs the flow and the demo once at start and serves them on port 8080
-(the flow's page is the index). The founder's steps are in docs/reference/NEBIUS.md ("Demo URL").
+(the flow's page is the index).
 
 ## Licence
 

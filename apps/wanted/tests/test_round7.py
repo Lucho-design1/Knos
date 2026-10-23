@@ -38,7 +38,7 @@ def test_the_crossing_streams_steps_sets_the_plan_and_remembers(st):
     assert plan["tier"] in ("budget", "mid", "premium") and plan["unit_price"] in (1, 2, 4) and plan["where"] and plan["who"]["age"]
     assert plan["escrow_target"] == plan["target_units"] * plan["unit_price"]
     titles = [s["title"] for s in job["steps"]]
-    assert "WHO: the target audience" in titles and "PRICE: the tier" in titles and "ESCROW: target and reserve" in titles
+    assert "WHO: the target audience" in titles and "PRICE: the tier" in titles and "HELD: target and reserve" in titles
     again = agent.start(st, ref="10.0/x", place="Lagos", wait=True)                 # Sibyl: the agent's memory of this paper
     remembered = next(s for s in again["steps"] if s["title"] == "the agent remembers this paper")   # after the HOT plan step (round 9B)
     assert "decision OPEN" in remembered["output"]
@@ -87,7 +87,11 @@ def test_mcp_over_http_lists_and_calls(http):
     c, lst, _ = post(base, "/mcp", {"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     names = [t["name"] for t in lst["result"]["tools"]]
     assert names[:3] == ["knos_cross", "knos_research_card", "knos_demand_check"] and len(names) >= 10   # roles 1-5 covered (round 9)
-    c, x, _ = post(base, "/mcp", {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "knos_cross", "arguments": {"ref": "10.0/x"}}})
+    call = {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "knos_cross", "arguments": {"ref": "10.0/x"}}}
+    c, no, h = post(base, "/mcp", call)                      # a crossing writes: it needs a credential in the header (T12)
+    assert no["result"]["isError"] and "resource_metadata" in h["WWW-Authenticate"]
+    tok = auth.guest("tester")["token"]
+    c, x, _ = post(base, "/mcp", call, {"Authorization": "Bearer " + tok})
     sc = x["result"]["structuredContent"]
     assert sc["status"] == "done" and sc["decision"]["verdict"] == "OPEN" and len(sc["steps"]) > 10
     assert get(base, "/mcp")[0] == 405
@@ -115,7 +119,7 @@ def test_the_blink(http):
     assert c == 200 and a["type"] == "action" and a["links"]["actions"][0]["href"].endswith("&units=5") and h["X-Action-Version"]
     assert "set by Qloo" in a["description"] and h["X-Blockchain-Ids"].startswith("solana:")
     c, e, _ = post(base, f"/api/actions/preorder?report={job['report']}&units=5", {"account": "So11111111111111111111111111111111111111112"})
-    assert c == 400 and "escrow unavailable" in e["message"]                          # no escrow keys in tests: refused plainly
+    assert c == 400 and "holding money is unavailable" in e["message"]                          # no escrow keys in tests: refused plainly
 
 
 def test_solana_pay_funds_a_milestone_from_any_wallet(http):

@@ -94,7 +94,7 @@ Two rules of the programs rest on that: the neutral judge (section 2, b) and Ref
 ([section 5](#5-signing-keys-any-issuer-refresh-by-anyone-private-keys)). If GitHub changes this, both rules
 become unsafe and need an upgrade.
 
-**GitLab.** The verifier checks gitlab.com's signature, and the escrow reads GitLab's
+**GitLab.** The verifier checks gitlab.com's signature, and the payment program reads GitLab's
 claims too, so a GitLab project can fund an order and be paid on a merge to a protected branch.
 
 The claims it
@@ -353,7 +353,7 @@ Balance that the same wallet opened. The token is then the word of the wallet wh
 `test_what_a_token_under_a_key_that_is_not_githubs_cannot_do`).
 
 **When keys run out.** If no usable key of GitHub's is left, nothing can be verified and nothing can be attested.
-The escrow is then refund-only. Getting out takes an upgrade of the verifier. [GOVERNANCE.md](GOVERNANCE.md),
+The payment program is then refund-only. Getting out takes an upgrade of the verifier. [GOVERNANCE.md](GOVERNANCE.md),
 section 8, says who refreshes, how anyone can, and what follows if nobody does; [DRILLS.md](DRILLS.md) has the
 funder's steps.
 
@@ -438,8 +438,8 @@ The upgrade keeps every 2.0 instruction's bytes and behaviour, except these fixe
 too: whole-unit limits, the extension list, the Balance's side account, and the single-use rule for every token.
 Audiences of the new paths start `knos3:`, so no token of one generation is good for the other.
 
-`knos-meter` and `knos-passkey` are programs at their own addresses. The meter never calls the escrow, and a
-passkey wallet's withdrawal does not either. A passkey wallet's `Fund` calls the escrow's `FundOrderWallet`.
+`knos-meter` and `knos-passkey` are programs at their own addresses. The meter never calls the payment program, and a
+passkey wallet's withdrawal does not either. A passkey wallet's `Fund` calls the payment program's `FundOrderWallet`.
 
 Mainnet will be different program ids and Circle's mint. Nothing is deployed there.
 
@@ -449,7 +449,7 @@ Mainnet will be different program ids and Circle's mint. Nothing is deployed the
 |---|---|---|
 | One of GitHub's signing keys leaks | the guardian revokes it. Tokens it verified stop at once. An order waits for a token under a good key | everything else |
 | GitHub is down, or changes its tokens | tokens wait. Nothing is paid | refunds at the deadline, withdrawals, releases of a holdback |
-| No key is attested for 30 days | every key expires. The escrow is refund-only. Anyone can prevent this for the keys GitHub still publishes (section 5) | refunds, withdrawals, held orders whose payee has a bound wallet |
+| No key is attested for 30 days | every key expires. The payment program is refund-only. Anyone can prevent this for the keys GitHub still publishes (section 5) | refunds, withdrawals, held orders whose payee has a bound wallet |
 | A fault is found in a program | the guardian can refuse new funding, 7 days at a time. A fix is an upgrade: public, and 8 days away | payments, refunds, withdrawals, bindings |
 | The upgrade keys are stolen | a hostile upgrade is public for 8 days before it can run. The members can cancel it | withdrawals of Balances at once; orders as section 7 says |
 | The buyer's repository deletes its workflow after a merge | nothing, by itself. In a public repository the seller starts the neutral run (section 2) | the payment |
@@ -692,8 +692,8 @@ names the mint, the destination, the amount and a number used once. Solana's own
 signature; the program checks what was signed.
 
 Nobody signs the transaction but its fee payer, so a relay can carry it. No key of Knos's is named in the program. A
-withdrawal never calls the escrow, so the public relay carries one from the moment `knos-passkey` is deployed, whatever
-the escrow's version, and refuses one only on a cluster where the program is not deployed
+withdrawal never calls the payment program, so the public relay carries one from the moment `knos-passkey` is deployed, whatever
+its version, and refuses one only on a cluster where the program is not deployed
 (`test_a_passkey_withdrawal_request_is_simulated_then_sent_at_the_relays_cost`).
 
 **Funding with a passkey (1.1).** A funder who has only a passkey can fund an order: `Fund` moves test USDC from
@@ -737,8 +737,8 @@ somebody prepaid ([`programs-v2/knos_meter`](../../programs-v2/knos_meter)).
   "knos tokens" issue of the run's repository, where the relay finds it
   (`test_attest_eval_signs_one_evaluation_for_the_meter_from_the_buyers_own_record_and_posts_it_as_knos_eval`).
   `prove.yml` signs no evaluation in this release: the program accepts it, and nothing published asks it to.
-- The relay carries an evaluation from the moment `knos-meter` is deployed. The meter never calls the escrow, so it
-  does not wait for the escrow's upgrade (`test_an_evaluation_is_recorded_by_the_meter_once_and_what_it_would_refuse_costs_nothing`).
+- The relay carries an evaluation from the moment `knos-meter` is deployed. The meter never calls the payment program, so it
+  does not wait for the payment program's upgrade (`test_an_evaluation_is_recorded_by_the_meter_once_and_what_it_would_refuse_costs_nothing`).
   It reads tokens verified by the verifier at the address in its own source, the deployed one.
 - A billable evaluation is one work order, artifact, policy and milestone. A retry or a duplicate is free. A
   rejection is billed (`test_an_evaluation_is_billed_and_counted_once_and_a_retry_is_free`,
@@ -1138,7 +1138,7 @@ this tree. [INVARIANTS.md](INVARIANTS.md) lists them with the other adversarial 
   review of the bytes on chain, fails today, on purpose.
 - **Different program ids, Circle's mint, no faucet.** The released programs are devnet builds.
 - **The cap** is 100,000 per order on devnet. A mainnet build decides its own; none is decided.
-- **After the review** the verifier, `knos-oidc`, is frozen: its upgrade authority is removed. The escrow,
+- **After the review** the verifier, `knos-oidc`, is frozen: its upgrade authority is removed. The payment program,
   `knos-pay`, stays upgradeable only through the multisig with its public 8-day delay, so that a defect in the
   program that holds money can be fixed in place. [GOVERNANCE.md](GOVERNANCE.md), section 7, says what that costs.
 
@@ -1160,7 +1160,7 @@ The first three cannot be removed. They come with the design.
    repositories with open orders (section 7).
 7. **New keys need one account and the guardian.** Keys GitHub still publishes can be kept alive by anyone. A key
    GitHub adds later, and every other issuer's key, needs Knos's account and the guardian's approval. If GitHub
-   replaced all four keys at once and Knos were gone, the escrow would become refund-only.
+   replaced all four keys at once and Knos were gone, the payment program would become refund-only.
 8. **The neutral judge rests on a rule of GitHub's:** that a personal account's hosted runner is GitHub's own
    image. It also rests on the pinned code being right, with the party that gains free to try it.
 9. **The buyer's own repository can pay someone else first** (section 2).
@@ -1180,11 +1180,11 @@ The first three cannot be removed. They come with the design.
 19. **A private order still shows who paid whom, and how much** (section 12).
 20. **A passkey wallet trusts the page that asks for the signature, and has no recovery** (section 17).
 21. **The meter counts what the buyer's repository ran** (section 18).
-22. **The paid token's issuer keeps its powers.** A freeze authority can freeze what is in escrow.
+22. **The paid token's issuer keeps its powers.** A freeze authority can freeze what is held.
 23. **An order holds between 5 and 100,000 units on devnet.** A 0.3.12 bounty has no early exit.
 24. **Several people can do the same work.** One pull request is merged and paid. `/knos take` reserves an order
     for one person for its `reserve` days, and several accounts can take turns.
-25. **GitLab is paid; other issuers are verified, not paid.** The escrow takes GitHub's and gitlab.com's tokens, and
+25. **GitLab is paid; other issuers are verified, not paid.** The payment program takes GitHub's and gitlab.com's tokens, and
     a private key's for its registrant's own private orders. The neutral judge is GitHub-only (section 1).
 26. **Not run on the deployed programs yet:** [DRILLS.md](DRILLS.md) runs the safety paths on the deployed bytes in a
     simulator, and lists the rows that need real GitHub tokens and were not run. What has run on devnet, and on which

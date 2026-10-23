@@ -1,4 +1,4 @@
-"""README.md is written for a reader who has never heard of GitHub Actions, Solana, escrow or a hash.
+"""README.md is written for a reader who has never heard of GitHub Actions, Solana, held money or a hash.
 
 Its prose from the first heading through "Is it real?" is measured with the Flesch-Kincaid grade level:
 
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORD = re.compile(r"[A-Za-z0-9][\w'%.,-]*")
 MERMAID = re.compile(r"(?ms)^```mermaid\n(.*?)^```\n")
 TERMS = ["AI agent", "Pull request", "Merge", "Checks (CI)", "GitHub Actions", "Signed", "Token (OIDC)", "Solana", "Devnet", "USDC",
-         "Test USDC", "Escrow", "Wallet", "Passkey", "Hash", "Invoice", "Ledger", "Reconcile", "Statement", "Holdback", "Warranty",
+         "Test USDC", "Money held until the proof passes", "Wallet", "Passkey", "Hash", "Invoice", "Ledger", "Reconcile", "Statement", "Holdback", "Warranty",
          "Refund", "Program", "Program id", "Upgrade", "Multisig", "Time lock", "Relay", "Meter", "Evaluation", "Assurance level"]
 
 

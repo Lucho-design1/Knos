@@ -1,6 +1,6 @@
 # Knos for Claude Code
 
-Knos is one product: idea or paper -> Ready brief -> milestones -> escrow -> paid only on verified proof.
+Knos is one product: idea or paper -> Ready brief -> milestones -> money held until the proof passes -> paid only on verified proof.
 Solana devnet only; test units, never real money.
 
 ## Layout

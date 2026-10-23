@@ -15,7 +15,6 @@ from knos import billing as b
 
 ROOT = Path(__file__).resolve().parents[1]
 VECTORS = json.loads((ROOT / "tests" / "data" / "billing_vectors.json").read_text(encoding="utf-8"))
-COSTS = json.loads((ROOT / "docs" / "unit_costs.json").read_text(encoding="utf-8"))
 D = Decimal
 
 
@@ -206,21 +205,6 @@ def test_every_line_names_the_rule_that_produced_it():
     assert "rule: By contract the month's value above 1,000,000 pays 0.20%" in text and "Total" in text and "Connecting a supplier costs nothing." in text
 
 
-def test_gross_margin_per_line_from_a_unit_cost_file():
-    want = VECTORS["margin"]["out"]
-    got = b.margin(month_of(VECTORS["months"][VECTORS["margin"]["month"]]["in"]), COSTS)
-    assert {row["line"]: [row["revenue"], row["direct_cost"], row["margin"]] for row in got["lines"]} == {k: v for k, v in want.items() if k != "all"}
-    assert [got["revenue"], got["direct_cost"], got["margin"]] == want["all"]
-    assert b.margin({"plan": "none"}, {"evaluation": "0.0002", "accepted_deliverable": "0.10", "record_lookup": "0.01", "control_year": "0"})["margin"] == "none: no revenue"
-    with pytest.raises(b.BillingError, match="unit cost evaluation"):
-        b.margin({"plan": "none"}, {"costs": {"evaluation": 0.0002}})
-    assert got["free_tier_year"] == VECTORS["margin"]["free_tier_year"]                # what the free evaluations cost at most: acquisition cost
-    assert set(COSTS["costs"]) == set(b.COST_FIELDS) | set(b.MORE_COSTS)
-    assert all(row["kind"] in ("budget, not measured", "measured") for row in COSTS["costs"].values())      # two labels, and nothing in between
-    text = "\n".join(b.margin_lines(got))
-    assert "Gross margin" in text and "acquisition cost" in text and "knos_pay 2.1" in text and "knos_pay 2.2" in text and "Netting:" in text
-
-
 def test_small_tickets_are_netted_one_release_per_payee_and_the_floor_once():
     for values, fee, alone in VECTORS["netting"]["rows"]:
         got = b.netted([("acme", D(v) / 100) for v in values])
@@ -254,7 +238,12 @@ def test_who_earns_what_at_the_floor_under_both_builds():
     assert small["first_relayer_net"] == "-0.13"                            # and a relayer that opens the account is out 0.13
 
 
-def test_knos_bill_estimate_explain_and_margin(tmp_path):
+def test_netting_is_the_remedy_for_the_floor():
+    got, want = b.floor_remedy(), VECTORS["remedy"]
+    assert got["one_by_one"] == want["one_by_one"] and got["netted"] == want["netted"]
+
+
+def test_knos_bill_estimate_and_explain(tmp_path):
     import typer
     from typer.testing import CliRunner
 
@@ -270,63 +259,19 @@ def test_knos_bill_estimate_explain_and_margin(tmp_path):
     month.write_text(json.dumps({"plan": "team", "evaluations": 300_000, "accepted": [{"deliverable": "a", "value": "60000"}]}), encoding="utf-8")
     run = CliRunner().invoke(app, ["bill", "explain", str(month)])
     assert run.exit_code == 0 and "Meter" in run.output and "rule:" in run.output and "2,663.33" in run.output       # 2,083.33 + 400.00 + 180.00
-    run = CliRunner().invoke(app, ["bill", "margin", str(month), str(ROOT / "docs" / "unit_costs.json")])
-    assert run.exit_code == 0 and "direct cost" in run.output and "All lines" in run.output and "2,663.33" in run.output
+    assert CliRunner().invoke(app, ["bill", "margin", str(month)]).exit_code != 0      # no margin command: prices only
 
 
-# ---- 0.3.20: margins said correctly, the three leaks, the second worked customer, and the rails ---------------------------
+# ---- the second worked customer, and the rails -------------------------------------------------------------------------
 
-def worked_month() -> dict:
-    return {"plan": "business", "month": 1, "evaluations": 110_000, "suppliers": 5,
-            "accepted": [{"deliverable": f"d{k}", "value": "20000.00"} for k in range(40)]}
-
-
-def test_every_margin_is_labelled_gross_and_no_operating_margin_is_printed():
-    got = b.margin(worked_month(), COSTS)
-    assert got["kind"] == "gross" and got["operating"].startswith("not computed") and got["gross_note"] == b.GROSS
-    text = "\n".join(b.margin_lines(got))
-    assert b.GROSS in text and "gross margin" in text.splitlines()[2]
-    for line in text.splitlines():                       # a percentage that is a margin says gross on its line
-        if "margin" in line.lower() and "%" in line:
-            assert "gross" in line.lower(), line
-    assert "operating margin" not in text.lower().replace("no operating margin is printed", "").replace("operating margin also subtracts", "")
-
-
-def test_the_three_leaks_each_with_its_number_and_its_design():
-    got = b.margin(worked_month(), COSTS)
-    want, leaks = VECTORS["leaks"], got["leaks"]
-    assert leaks["target"] == "95%"
-    assert {k: leaks["meter"][k] for k in want["meter"]} == want["meter"]
-    assert {k: leaks["control"][k] for k in want["control"]} == want["control"]
-    assert got["remedy"]["one_by_one"] == want["remedy"]["one_by_one"] and got["remedy"]["netted"] == want["remedy"]["netted"]
-    # the arithmetic, by hand: 20.00 x 5% = 1.00 over 110,000 delivered; the budget 110,000 x 0.00005 + 5 x 0.1393 = 6.1965
-    assert f"{D('1.00') / 110_000:.7f}" == leaks["meter"]["allowed_each"] and f"{D('6.1965') / 110_000:.7f}" == leaks["meter"]["cost_each"]
-    unit = b.unit_costs(COSTS)
-    n = leaks["meter"]["reaches_at"]                     # the first count that keeps 95%, and the one before it does not
-    cost = lambda k: k * unit["evaluation"] + 5 * unit["pair_month"]      # noqa: E731
-    assert cost(n) <= (n - b.METER_FREE) * b.METER_PRICE * D("0.05") and cost(n - 1) > (n - 1 - b.METER_FREE) * b.METER_PRICE * D("0.05")
-    assert b.meter_break_even({**unit, "evaluation": D("0.0001")}, 5) is None       # at the ceiling itself no count reaches it
-    assert b.measured_parts(COSTS)["evaluation"] == D("0.00000047") and b.measured_parts(COSTS)["pair_month"] == D("0.1393")
-    assert unit["control_year_target"] == D(7_000) and COSTS["costs"]["control_year_target"]["kind"] == "budget, not measured"
-    big = b.margin({**worked_month(), "evaluations": 1_000_000}, COSTS)["leaks"]["meter"]
-    assert big["meets"] and big["gross_margin"] == "97.2%"                           # the same costs at a million a month
-    text = "\n".join(b.margin_lines(got))
-    assert "The three leaks" in text and "does not meet it" in text and "the relayer's tip comes out of that fee" in text and "fee owner 1.45" in text
-
-
-def test_the_second_worked_customer_is_373_600_and_its_hurdle_is_not_a_claim():
-    got, want = b.second_customer(b.unit_costs(COSTS)), VECTORS["second"]
-    assert {k: got[k] for k in want["out"]} == want["out"]
+def test_the_second_worked_customer_is_373_600():
+    got, want = b.estimate("business", 1_000_000, "120000000.00"), VECTORS["second"]
+    assert (got["total"], got["benefit_to_demand"]) == (want["out"]["total"], want["out"]["hurdle"])
     assert (got["control"], got["acceptance"], got["meter"], got["records"]) == ("100,000.00", "252,000.00", "21,600.00", "0.00")
     assert 100_000 + 12 * (1_000_000 * 30 + 9_000_000 * 20) // 10_000 + 12 * 900_000 * 2 // 1_000 == 373_600 and 373_600 * 3 == 1_120_800
-    assert got["hurdle_is"] == "a hurdle to be measured in a pilot, not a claim"
-    month = b.margin(month_of({"plan": "business", "month": 1, "evaluations": 1_000_000, "suppliers": 5, "accepted_each": ["20000.00", 500]}), COSTS)
-    rows = {r["line"]: [r["revenue"], r["direct_cost"], r["margin"]] for r in month["lines"]} | {"all": [month["revenue"], month["direct_cost"], month["margin"]]}
-    assert rows == want["month"]
     year = sum((D(b.invoice(month_of({"plan": "business", "month": m, "evaluations": 1_000_000, "accepted_each": ["20000.00", 500]}))["total"].replace(",", ""))
                 for m in range(1, 13)), D(0))
     assert year == D("373600.00")                        # twelve invoices, deliverable by deliverable, add up to the estimate
-    assert b.second_customer()["total"] == "373,600.00" and "direct_cost" not in b.second_customer()
 
 
 def test_acceptance_is_charged_once_whichever_rail_pays():
@@ -354,7 +299,6 @@ def test_rail_charges_are_shown_apart_from_the_software_price():
     assert [r["rule"] for r in inv["rail_charges"]] == [b.RULES["rails"]] * 2
     text = "\n".join(b.explain(inv))
     assert text.index("Total") < text.index("Rail charges, apart from the software price:") < text.index("Payable in all")
-    assert b.margin(month, COSTS)["revenue"] == b.margin({k: v for k, v in month.items() if k != "rail_charges"}, COSTS)["revenue"]      # nor is it revenue
     for bad in ([{"amount": "1.00"}], [{"what": "wire", "amount": "-1.00"}], [{"what": "wire", "amount": 1.5}]):
         with pytest.raises(b.BillingError, match="rail_charges 1"):
             b.invoice({"plan": "none", "rail_charges": bad})
@@ -381,50 +325,10 @@ def test_a_commitment_and_its_consumption_are_never_both_counted():
     assert (amount(spent, "drawn"), spent["total"], spent["commitment_remaining"]) == ("-500.00", "2,800.00", "0.00")     # 2,000 + the 800 it does not cover
 
 
-def test_the_record_line_says_who_runs_it_and_is_budgeted_at_zero():
+def test_the_record_line_says_who_runs_it():
     row = next(r for r in b.BOOK if r[0] == "Record")
-    assert row[4] == "`knos record serve` (anyone runs it; Knos hosts none); budgeted at ZERO revenue until someone buys it"
-    assert b.second_customer()["records"] == "0.00" and (ROOT / "src" / "knos" / "record_api.py").is_file()
-
-
-# ---- 0.3.21: pricing power, and money counted once ----------------------------------------------------------------------
-
-def test_sensitivity_prints_the_worked_customers_at_30_20_10_and_5_bps_realised():
-    got = b.sensitivity(b.unit_costs(COSTS))
-    want = VECTORS["sensitivity"]
-    assert got["rates_bps"] == [30, 20, 10, 5] and got["kind"] == "gross"
-    for c, w in zip(got["customers"], want["customers"]):
-        assert (c["book_bps"], c["fixed"], c["direct_cost"], c["one_bps"]) == tuple(w["head"]), c["customer"]
-        assert [[r["bps"], r["revenue"], r["gross_margin"], r["above_book"]] for r in c["rows"]] == w["rows"], c["customer"]
-    first, second = got["customers"]
-    assert first["rows"][0]["revenue"] == "130,240.00" and b.second_customer()["total"] == "373,600.00"      # at the book's own rate, the book
-    assert D(second["book_bps"]) * 120_000_000 / 10_000 == 252_000                                           # 21 bps: 252,000 on 120 million
-    # the direct cost does not move with the rate, and every row is gross arithmetic on it
-    for c in got["customers"]:
-        cost = D(c["direct_cost"].replace(",", ""))
-        for r in c["rows"]:
-            assert D(r["revenue"].replace(",", "")) - cost == D(r["gross"].replace(",", ""))
-    assert b.second_customer(b.unit_costs(COSTS))["direct_cost"] == second["direct_cost"]
-    text = "\n".join(b.sensitivity_lines(got))
-    assert "matters more than shaving verification time" in text and "None is measured." in text and "not reached" in text
-    for line in text.splitlines():
-        if "margin" in line.lower() and "%" in line:
-            assert "gross" in line.lower(), line
-
-
-def test_knos_bill_margin_sensitivity(tmp_path):
-    import typer
-    from typer.testing import CliRunner
-
-    app = typer.Typer()
-    b.register(app)
-    costs = str(ROOT / "docs" / "unit_costs.json")
-    run = CliRunner().invoke(app, ["bill", "margin", "--sensitivity", costs])
-    assert run.exit_code == 0 and "481,600.00" in run.output and "105,240.00" in run.output and "21.0 bps" in run.output
-    as_json = json.loads(CliRunner().invoke(app, ["bill", "margin", "--sensitivity", costs, "--json"]).output)
-    assert [r["bps"] for r in as_json["customers"][0]["rows"]] == [30, 20, 10, 5]
-    assert CliRunner().invoke(app, ["bill", "margin", "--sensitivity"]).exit_code != 0
-    assert CliRunner().invoke(app, ["bill", "margin", costs]).exit_code != 0                 # a month needs its cost file too
+    assert row[4] == "`knos record serve` (anyone runs it; Knos hosts none)"
+    assert (ROOT / "src" / "knos" / "record_api.py").is_file()
 
 
 def test_a_year_under_a_commitment_is_the_larger_of_the_two_never_their_sum():
@@ -441,12 +345,10 @@ def test_a_year_under_a_commitment_is_the_larger_of_the_two_never_their_sum():
     assert year("0") == (D("15600.00"), D(0))
     assert year("24000.00") == (D("24000.00"), D("15600.00"))          # under the commitment: the commitment, not 24,000 + 15,600
     assert year("12000.00") == (D("15600.00"), D("12000.00"))          # over it: the use, of which the commitment paid 12,000
-    # and the gross margin's revenue never adds the commitment line to the use it pays for
-    assert b.margin({**use, "committed": "24000.00"}, COSTS)["revenue"] == b.margin(use, COSTS)["revenue"] == "1,300.00"
 
 
 def test_the_relayers_tip_and_chain_costs_are_counted_once():
-    unit = b.unit_costs(COSTS)
+    unit = b.MORE_COSTS
     assert unit["release_chain"] == D("0.0072") and f"{60_000 * D('120.82') / 10**9:.4f}" == "0.0072"
     for first in (False, True):
         out, mine = b.release_split(1_000_000_000, "outside", first, unit), b.release_split(1_000_000_000, "knos", first, unit)
@@ -465,10 +367,6 @@ def test_the_relayers_tip_and_chain_costs_are_counted_once():
     for bad in ((4_999_999, "outside"), (5_000_000, "anyone"), (True, "outside")):
         with pytest.raises(b.BillingError):
             b.release_split(*bad)
-    raw = (ROOT / "docs" / "reference" / "UNIT_COSTS.md").read_text(encoding="utf-8")
-    for relayer, first, label in (("outside", False, "an outside relayer"), ("knos", True, "Knos relays, a payee's first payment")):
-        r = b.release_split(1_000_000_000, relayer, first, unit)
-        assert f"| {label} | {r['fee']} | {r['tip']} | {r['revenue']} | {r['direct_cost']} | {r['relayer_revenue']} | {r['relayer_cost']} |" in raw
 
 
 def test_reserves_rent_and_principal_are_never_revenue():
@@ -479,65 +377,8 @@ def test_reserves_rent_and_principal_are_never_revenue():
     inv, bare = b.invoice({**month, "held": held}), b.invoice(month)
     assert inv["lines"] == bare["lines"] and (inv["total"], inv["payable"]) == (bare["total"], bare["payable"]) == ("2,263.33", "2,263.33")
     assert inv["held_total"] == "65,000.18" and [h["rule"] for h in inv["held"]] == [b.RULES["held"]] * 3 and bare["held"] == []
-    assert b.margin({**month, "held": held}, COSTS)["revenue"] == b.margin(month, COSTS)["revenue"]
     text = "\n".join(b.explain(inv))
     assert text.index("Total") < text.index("Held or passed on, never revenue:") and "65,000" not in text.split("Total")[0]
     for bad in ([{"kind": "fee", "amount": "1.00"}], [{"kind": "reserve", "amount": "-1.00"}], [{"kind": "rent", "amount": 0.5}]):
         with pytest.raises(b.BillingError, match="held 1"):
             b.invoice({"plan": "none", "held": bad})
-
-
-def test_the_ceilings_at_95_and_what_5000_buys_in_support_hours():
-    assert [(c["price"], c["ceiling"]) for c in b.ceilings()] == [("0.002", "0.0001"), ("20", "1"), ("100000", "5000")]
-    hours = b.support_hours()
-    assert [(h["rate"], h["hours"], h["hours_a_month"]) for h in hours] == [("75.00", "66.7", "5.6"), ("43.20", "115.7", "9.6")]
-    assert D("30.24") / D("0.700") == D("43.20")                       # the BLS median wage over wages' share of what an employer pays
-    raw = (ROOT / "docs" / "reference" / "UNIT_COSTS.md").read_text(encoding="utf-8")
-    assert "| 20.00 | 2.00 | 1.00 |" in raw and "| 75 USD, the assumption above | 66.7 | 5.6 |" in raw and "| 43.20 USD, from public wages (the inputs) | 115.7 | 9.6 |" in raw
-    assert "https://www.bls.gov/news.release/ecec.nr0.htm" in raw and "Automated onboarding\nis therefore an economic requirement" in raw
-
-
-def test_market_says_defending_the_rate_matters_more_and_that_nothing_defends_it_yet():
-    s = b.sensitivity(b.unit_costs(COSTS))
-    raw = (ROOT / "docs" / "reference" / "MARKET.md").read_text(encoding="utf-8")
-    flat = " ".join(raw.split())
-    for a, c in zip(*(x["rows"] for x in s["customers"])):
-        rev = lambda r: r["revenue"].replace(".00", "")      # noqa: E731
-        assert f"| {a['bps']} bps | {rev(a)} | {a['gross_margin']} | {rev(c)}" in raw and f"| {c['gross_margin']} |" in raw
-    assert "Defending the rate matters more than shaving verification time." in flat and "None of the three is measured." in flat
-    for kind in ("recoveries", "avoided labour", "financing benefit"):
-        assert kind in flat and kind in " ".join((ROOT / "docs" / "reference" / "PILOT.md").read_text(encoding="utf-8").split())
-    assert "costs the second customer's account 12,000 USD a year; its whole direct cost is 16,208.36" in flat
-
-
-# ---- 0.3.22: the budget today against what the price book requires; the gross fee against the cash Knos keeps -------------
-
-def test_the_budget_today_against_what_the_price_book_requires_each_with_its_design():
-    rows = {r["unit"]: r for r in b.gaps(b.unit_costs(COSTS))}
-    assert list(rows) == ["evaluation", "accepted_deliverable", "record_lookup", "control_business", "control_team", "release_at_floor"]
-    assert [(rows[k]["budget"], rows[k]["required"], rows[k]["gap"]) for k in rows] == [
-        ("0.00005", "0.0000893", "none"), ("0.10", "0.02", "0.08"), ("0.01", "0.005", "0.005"), ("15,000", "5,000", "10,000"),
-        ("not budgeted", "1,250", "unknown"), ("0.0072", "0.0025", "0.0047")]
-    assert (D(900_000) * D("0.002") * D("0.05") - 5 * D("0.1393")) / 1_000_000 >= D("0.0000893")       # the evaluation's required cost, by hand
-    assert D("133.34") * D("0.003") * D("0.05") >= D("0.02") > D("133.33") * D("0.003") * D("0.05")     # the least deliverable 0.02 keeps 95% on
-    assert "666.67" in rows["accepted_deliverable"]["how"] and "200.00 at 0.20%" in rows["accepted_deliverable"]["how"]
-    assert all(r["design"] for r in rows.values()) and rows["evaluation"]["meets"] and not rows["control_business"]["meets"]
-    text = "\n".join(b.margin_lines(b.margin(worked_month(), COSTS)))
-    assert "The budget today against what the price book requires for 95% gross" in text and "control_business" in text and "15,000        5,000" in text
-
-
-def test_the_gross_fee_is_not_the_cash_knos_keeps():
-    c = b.cash_kept("300.00", "7.50", "29.25", "3.00", "0.20")
-    assert (c["cash_kept"], c["channel"], c["fee_counter_is_cash"]) == ("208.20", "52.05", False)
-    assert D("300.00") - D("7.50") - D("29.25") - D("3.00") - D("52.05") == D("208.20") and D("260.25") * D("0.20") == D("52.05")
-    assert "not company cash" in c["rule"] and c["devnet"] == b.RULES["devnet"]
-    assert b.cash_kept("3.00")["cash_kept"] == "3.00"                                   # a relayer Knos runs takes no tip; nothing given back
-    loss = b.cash_kept("0.05", "0.05", "0", "0.10", "0.20")
-    assert loss["cash_kept"] == "-0.10" and loss["channel"] == "0.00"                   # below zero is shown, never floored
-    for bad in (("1.00", "2.00"), ("1.00", "0", "-1.00"), ("1.00", "0", "0", "0", "1.5"), ("1.00", "0", "0", "0", 0.2)):
-        with pytest.raises(b.BillingError):
-            b.cash_kept(*bad)
-    e = b.cash_example(b.unit_costs(COSTS))                                             # 100 releases of 1,000 under 2.2: 3.00 each; tips 90 x 0.05 + 10 x 0.30
-    assert (e["gross_fee"], e["relayer_tips"], e["discounts"], e["cash_kept"]) == ("300.00", "7.50", "29.25", "208.20")
-    text = "\n".join(b.margin_lines(b.margin(worked_month(), COSTS)))
-    assert "cash kept 208.20" in text and b.CASH_RULE in text

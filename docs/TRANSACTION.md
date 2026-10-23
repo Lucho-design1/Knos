@@ -36,7 +36,7 @@ line). It is checked with GitHub's recorded answers, so it runs with no network.
 
 - 0.40 is the order floor of knos_pay 2.1, the build deployed when the order was funded. Upgrade proposal 8 has
   since executed: knos_pay 2.2 charges 0.30% with a 0.05 floor, which on 5.00 is 0.05.
-  [MANIFEST.md](reference/MANIFEST.md) has both schedules; see also [the price book](reference/MARKET.md#3-the-price-book).
+  [MANIFEST.md](reference/MANIFEST.md) has both schedules; see also [the price book](reference/MARKET.md#the-price-book).
 
 ## 2. One result rejected, one accepted
 

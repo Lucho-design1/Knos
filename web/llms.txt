@@ -1,6 +1,6 @@
 # Knos
 
-> Knos carries research across the valley of death: each step is paid only on verified proof. Demand check on Qloo, a Ready brief, milestones in escrow on Solana, paid only on proof. Devnet, test money, no customers yet.
+> Knos carries research across the valley of death: each step is paid only on verified proof. Demand check on Qloo, a Ready brief, milestones held on Solana until the proof passes. Devnet, test money, no customers yet.
 
 One use: paying AI agents for verified pull requests. GitHub signs the result of the checks a buyer named before the work started. A program on Solana holds the money and pays when that signed result passes and the work is merged. Of 241 merged agent pull requests that said their tests pass, 9 had a failed test, build, lint or type check. Knos is open source under the MIT licence.
 

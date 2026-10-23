@@ -1,4 +1,4 @@
-"""TASK-WORLD T7 test_refuse_list: the published refuse list inside the Ready check. 30 briefs that are otherwise Ready
+"""test_refuse_list: the published refuse list inside the Ready check. 30 briefs that are otherwise Ready
 (a measurable target, a verifier, a deadline), each naming one listed word: 0 of 30 pass. Harmless briefs that share a
 word with the list ("bath bomb", "glue gun") still pass."""
 from knos import ready, refuse

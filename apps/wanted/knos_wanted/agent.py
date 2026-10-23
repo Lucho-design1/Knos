@@ -225,7 +225,7 @@ def run(job: dict, state) -> None:
                   out=", ".join(plan.get("where") or []) or "none returned", effect="pre-orders open first in these cities")
             _step(job, "decision", "PRICE: the tier", tool="from Qloo's spending-habit segments (urn:audience)",
                   out=f"{plan['tier']}: {plan['unit_price']} test units per unit", effect="sets the pre-order's unit price")
-            _step(job, "decision", "ESCROW: target and reserve", tool="check.RULES units_formula", inp=d.get("formula"),
+            _step(job, "decision", "HELD: target and reserve", tool="check.RULES units_formula", inp=d.get("formula"),
                   out=f"target {plan['target_units']} units ({plan['escrow_target']} test units), reserve {plan['reserve_units']} "
                       f"({plan['escrow_reserve']} test units)", effect="the maker is paid on proof once the reserve is pre-ordered")
             if plan.get("unserved_audience"):
@@ -297,8 +297,9 @@ def poll(job_id: str, since: int = 0) -> dict | None:
 
 # ---- MCP over HTTP (an optional door for other agents) ----------------------------------------------------------------
 PROTOCOL = "2025-06-18"
-CONFIRM = ("CONFIRM FIRST: this moves devnet TEST money or posts work. Ask the human you work for before calling, and "
-           "pass the session token knos_sign_in returned. Test money only; no real funds.")
+CONFIRM = ("CONFIRM FIRST: this moves devnet TEST money or posts work. Ask the human you work for before calling. Needs "
+           "Authorization: Bearer in the HTTP header (an agent key's OAuth token), or the session token knos_sign_in returned. "
+           "Test money only; no real funds.")
 DISCOVERY = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knos MCP</title><link rel="stylesheet" href="/static/style.css"></head><body><main class="wrap">
 <h1>Knos over MCP</h1>
@@ -308,12 +309,16 @@ Add it by URL in Claude, Cursor or any MCP client. Reading needs no key; money t
 Solana devnet test money.</p>
 <p>Tools: knos_cross, knos_research_card, knos_demand_check, knos_crossings, knos_milestones, knos_tasks,
 knos_memory_recall, knos_sign_in, knos_preorder, knos_evidence, knos_task_submit, knos_templates, knos_projects,
-knos_project_open, knos_project_claim, knos_project_post, knos_openapi. The same API as OpenAPI: <a href="/openapi.json">/openapi.json</a>.</p>
+knos_project_open, knos_project_claim, knos_project_post, knos_milestone_submit, knos_openapi. The same API as OpenAPI:
+<a href="/openapi.json">/openapi.json</a>.</p>
+<p>An agent with no person present: a person makes it a capped, revocable agent key; the key is an OAuth 2.0 client
+(<a href="/.well-known/oauth-authorization-server">client credentials</a>) and its token goes in the Authorization header.
+<a href="/.well-known/agent-card.json">Agent Card</a>.</p>
 <p><a href="/">The app</a> · <a href="/verify">How we verify</a></p></main></body></html>"""
 TOOLS = [
     {"name": "knos_cross", "title": "Cross a paper to a funded product",
      "description": "Paper id (DOI, arXiv, PubMed, OpenAlex) -> research card -> Qloo evidence at every decision -> who, where, price "
-                    "tier, escrow target and reserve, and OPEN or REFUSE. Returns every step with its Qloo call, input, output and effect.",
+                    "tier, held-money target and reserve, and OPEN or REFUSE. Returns every step with its Qloo call, input, output and effect.",
      "inputSchema": {"type": "object", "properties": {"ref": {"type": "string"}, "idea": {"type": "string"}, "place": {"type": "string"},
                                                        "product": {"type": "string"}, **{k: qloo_families.schema(k) for k in qloo_families.FIELDS}},
                      "additionalProperties": False}},
@@ -334,7 +339,7 @@ TOOLS = [
      "description": "Every crossing this server ran, newest first: id, paper or idea, verdict, report hash.",
      "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
     {"name": "knos_milestones", "title": "Open milestones",
-     "description": "Every commitment on this server: escrow order, units, status, claim id. A locked one needs an evidence page.",
+     "description": "Every commitment on this server: held order, units, status, claim id. A locked one needs an evidence page.",
      "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
     {"name": "knos_tasks", "title": "Open work for contributors",
      "description": "Open game rounds and milestones a person or agent can work on; judged and paid on devnet (test money).",
@@ -353,12 +358,12 @@ TOOLS = [
      "description": "Prepares a pre-order of an OPEN report: no server key buys for anyone, so it returns the page where "
                     "your human's passkey approves it (devnet test money). " + CONFIRM,
      "inputSchema": {"type": "object", "properties": {"report": {"type": "string"}, "units": {"type": "integer"},
-                                                       "session": {"type": "string"}}, "required": ["report", "units", "session"],
+                                                       "session": {"type": "string"}}, "required": ["report", "units"],
                      "additionalProperties": False}},
     {"name": "knos_evidence", "title": "Post milestone evidence",
-     "description": "Posts a milestone's public evidence page; verified evidence releases the escrow to the maker. " + CONFIRM,
+     "description": "Posts a milestone's public evidence page; verified evidence releases the held money to the maker. " + CONFIRM,
      "inputSchema": {"type": "object", "properties": {"commitment": {"type": "string"}, "evidence_url": {"type": "string"},
-                                                       "session": {"type": "string"}}, "required": ["commitment", "evidence_url", "session"],
+                                                       "session": {"type": "string"}}, "required": ["commitment", "evidence_url"],
                      "additionalProperties": False}},
     {"name": "knos_task_submit", "title": "Submit work to an open round",
      "description": "Submits the whole train.py to the open round (knos_tasks says what to change and links the task's README); "
@@ -366,17 +371,43 @@ TOOLS = [
                     "is paid a demo prize in test units. " + CONFIRM,
      "inputSchema": {"type": "object", "properties": {"round": {"type": "string"}, "name": {"type": "string"}, "code": {"type": "string"},
                                                        "wallet": {"type": "string"},
-                                                       "session": {"type": "string"}}, "required": ["round", "code", "session"],
+                                                       "session": {"type": "string"}}, "required": ["round", "code"],
                      "additionalProperties": False}},
 ]
 
 
-def _signed(args: dict) -> dict:
-    from . import auth
-    who = auth.who("Bearer " + str(args.get("session") or ""))
-    if who is None:
-        raise ValueError("session: sign in first with knos_sign_in (and confirm with your human)")
-    return who
+def _task_submit(args: dict, who: dict) -> dict:
+    """knos_task_submit. An agent key's demo prize is paid only at its payout wallet and only within its spend cap."""
+    from . import agentkeys, tasks
+    wallet = str(args.get("wallet") or "") or None
+    kid = who.get("agent_key") if who.get("kind") == "agent" else None
+    capped = None
+    if kid:
+        if wallet and wallet != who.get("payout_wallet"):
+            raise ValueError("an agent key is paid only at its payout wallet: leave wallet out")
+        try:
+            agentkeys.can_spend(kid, tasks.PRIZE_UNITS)
+            wallet = who.get("payout_wallet")
+        except ValueError as why:                    # judged all the same; no prize over the cap
+            wallet, capped = None, str(why)
+    out = tasks.submit(str(args.get("round") or ""), str(args.get("name") or ""), str(args.get("code") or ""),
+                       f"{who.get('kind')}: {who.get('label')}", sub=str(who.get("sub") or ""), wallet=wallet)
+    if kid and ((out.get("prize") or {}).get("paid") or (out.get("prize") or {}).get("status") == "signing"):   # FROST pays it later
+        agentkeys.spent(kid, tasks.PRIZE_UNITS)
+    return {**out, **({"prize": {"paid": False, "why": capped}} if capped else {})}
+
+
+OPEN = {"knos_sign_in"}              # writes nothing anyone relies on: it is how a person gets the session the others need
+
+
+def _caller(args: dict) -> dict | None:
+    """Who a write tool acts for: the Bearer credential in the HTTP header (an agent key, its OAuth access token, or a
+    person's session), else, for people for now, the `session` argument. None: no credential. A revoked or expired
+    key raises (auth.AuthError) with which it is."""
+    from . import agentkeys, auth, outside
+    headers = getattr(outside.CTX, "headers", None)
+    who = agentkeys.principal(headers.get("Authorization")) if headers is not None else None
+    return who or (auth.who("Bearer " + str(args.get("session"))) if args.get("session") else None)
 
 
 def _product_tools() -> set:
@@ -485,6 +516,17 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
             except QlooUnavailable as e:
                 return ok({"isError": True, "content": [{"type": "text", "text": str(e)[:300]}]})
             return ok({"content": [{"type": "text", "text": _json.dumps(got, default=str)[:60_000]}], "structuredContent": got})
+        who: dict = {}
+        if isinstance(name, str) and name not in READ_ONLY | OPEN and name in {t["name"] for t in TOOLS} | _product_tools():
+            from . import agentkeys, auth, tasks
+            try:
+                who = _caller(args) or {}
+            except auth.AuthError as why:                # a revoked or expired agent key, or an expired token
+                return ok({"isError": True, "content": [{"type": "text", "text": str(why)[:300]}]})
+            if not who:
+                meta = tasks.public_base() + "/.well-known/oauth-protected-resource"
+                return ok({"isError": True, "content": [{"type": "text", "text": agentkeys.needs(name, tasks.public_base())}],
+                           "structuredContent": {"needs": "authorization", "resource_metadata": meta}})
         try:
             if name == "knos_cross":
                 job = start(state, ref=args.get("ref"), idea=args.get("idea"), place=args.get("place"), product=args.get("product"), wait=True,
@@ -517,7 +559,6 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
                 from . import auth
                 out = auth.guest(str(args.get("label") or "agent") + " (via MCP)")
             elif name == "knos_preorder":
-                who = _signed(args)
                 rep = state.report(str(args.get("report") or ""))
                 if rep is None:
                     raise ValueError("unknown report: run knos_cross first")
@@ -528,18 +569,13 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
                        "units": units, "how": "open the page, sign in with a passkey, press 'Pre-order with my passkey'",
                        "money": "devnet test money", "by": f"{who.get('kind')}: {who.get('label')}"}
             elif name == "knos_evidence":
-                who = _signed(args)
                 rec = preorder.load(str(args.get("commitment") or ""))
                 out = preorder.milestone(state.report(rec["report"]) or {}, rec["order"], str(args.get("evidence_url") or ""))
             elif name == "knos_task_submit":
-                who = _signed(args)
-                from . import tasks as _tasks
-                out = _tasks.submit(str(args.get("round") or ""), str(args.get("name") or ""), str(args.get("code") or ""),
-                                    f"{who.get('kind')}: {who.get('label')}", sub=str(who.get("sub") or ""),
-                                    wallet=str(args.get("wallet") or "") or None)
+                out = _task_submit(args, who)
             elif name in _product_tools():          # every tool product_routes lists is answered by it (knos_ready, knos_usage, ...)
                 from .product_routes import mcp_call
-                out = mcp_call(name, args, _signed)
+                out = mcp_call(name, args, lambda _a: who)
             else:
                 return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": f"unknown tool {name}"}}
         except ValueError as e:

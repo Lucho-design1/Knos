@@ -39,7 +39,7 @@ Install it any of three ways:
 ```bash
 hermes skills install drexthealpha/Knos/hermes/knos                       # straight from this repository
 hermes skills install well-known:https://drexthealpha.github.io/Knos/.well-known/skills/knos   # from the site
-hermes skills tap add drexthealpha/knos-skills                            # a tap, once published (founder decision)
+hermes skills tap add drexthealpha/knos-skills                            # a tap, once published
 ```
 
 - **Well-known endpoint.** `web/.well-known/skills/index.json` and a copy of the skill's files under
@@ -186,15 +186,6 @@ above: a demo of the plumbing, not of an ungameable reward).
 A sealed task is a folder with `task.json` (with the referee's `seal`) and `base/`, the hidden bundle at
 `base/.knos/acceptance/<issue>/` (knos.verify.sealed). Demo only: no reward here is money.
 
-## Founder decisions
-
-- Publish the tap repository (`python hermes/publish.py tap OUT`, then push OUT as e.g. drexthealpha/knos-skills).
-- Publish the plugin on PyPI: it ships inside the `knos` package (the entry point above) from the next release; no
-  separate package is needed.
-- Submit the plugin to the Hermes plugin catalog (`plugin-catalog/<name>.yaml` in hermes-agent, a human-reviewed PR
-  pinned to a 40-character commit SHA).
-- Ask for `TRUSTED_REPOS` status in Hermes's Skills Guard (a Hermes core PR); until then Knos installs as community.
-
 ## A hook that stops a refused write (0.3.31)
 
 `register(ctx)` also adds a `pre_tool_call` hook when Hermes offers `register_hook`
@@ -218,5 +209,5 @@ Knos does not build or install it, so there is still one package: it imports `kn
 Knos removed in 0.3.10 (2 Oct 2026), and it asks for `knos>=0.1.1`, so next to the knos of today it reports itself
 unavailable to Hermes. What Knos gives Hermes now is the skill, the MCP server and the plugin above.
 
-PyPI shows the links of the last upload: a final `knos-hermes` upload built from that folder (or yanking 0.1.0, as
-`python scripts/public_face.py --remote` says) is the founder's decision.
+PyPI shows the links of the last upload, until a final `knos-hermes` upload built from that folder (or a yank of 0.1.0,
+as `python scripts/public_face.py --remote` says).

@@ -15,9 +15,9 @@ session versions before it ([specification](https://modelcontextprotocol.io/spec
 
 | uri template | what |
 | --- | --- |
-| `knos://bounty/{owner}/{repo}/{issue}` | the escrow on one issue (the same answer as the `knos_bounty` tool) |
+| `knos://bounty/{owner}/{repo}/{issue}` | the money held on one issue (the same answer as the `knos_bounty` tool) |
 | `knos://due/{login}` | what waits and what was paid for a GitHub account (`knos_due`) |
-| `knos://token/{address}` | whether a mint can hold an escrow, or an account receive a payout ([TOKEN_SAFETY.md](TOKEN_SAFETY.md)) |
+| `knos://token/{address}` | whether a mint's tokens can be held, or an account receive a payout ([TOKEN_SAFETY.md](TOKEN_SAFETY.md)) |
 
 `KNOS_MCP_REPOS` limits the bounty template to its repositories, as it limits the tools.
 

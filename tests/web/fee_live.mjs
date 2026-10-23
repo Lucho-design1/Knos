@@ -30,9 +30,9 @@ check("2.2 live: 50 pays 0.15, and there is no line about an upgrade", show(orde
 check("nobody answered: the next build's fee is shown, and the line says what is charged until then", unknown.fee.live === false && feeNext(unknown, u(50)).label === "Until the next upgrade" && show(feeNext(unknown, u(50)).fee) === "1.25");
 const T = 1790000000, order = { state: "open", amount: u(50), paid: 0, deadline: T, grace: false, payUntil: T };
 const graced = { ...order, grace: true, payUntil: T + knos.v2.GRACE }, when = (t) => `${new Date(t * 1000).toISOString().slice(0, 16).replace("T", " ")} UTC`;
-check("an order's refund time is its deadline", buyer.refundAt(order) === T && buyer.orderState(order, [], T - 9).words === `Funded: 50.00 is in the order's own escrow account. Unpaid by ${when(T)}, anyone can send it back.`, buyer.orderState(order, [], T - 9).words);
+check("an order's refund time is its deadline", buyer.refundAt(order) === T && buyer.orderState(order, [], T - 9).words === `Funded: 50.00 is held in the order's own account. Unpaid by ${when(T)}, anyone can send it back.`, buyer.orderState(order, [], T - 9).words);
 check("an order funded with a grace says its grace: refundable two hours after its deadline", knos.v2.GRACE === 7200 && buyer.refundAt(graced) === T + 7200
-  && buyer.orderState(graced, [], T - 9).words === `Funded: 50.00 is in the order's own escrow account. Unpaid by ${when(T + 7200)}, anyone can send it back: its deadline, ${when(T)}, and 2 hours' grace.`, buyer.orderState(graced, [], T - 9).words);
+  && buyer.orderState(graced, [], T - 9).words === `Funded: 50.00 is held in the order's own account. Unpaid by ${when(T + 7200)}, anyone can send it back: its deadline, ${when(T)}, and 2 hours' grace.`, buyer.orderState(graced, [], T - 9).words);
 const line = { order: "A", kind: "funded", repository_id: 1, issue: 7, private: 0, transaction: "" };
 const needs = (o, t) => con.exceptionsOf({ lines: [line], live: new Map([["A", o]]), now: t }).map((r) => r.kind);
 check("past its deadline an order with no grace is refundable at once", JSON.stringify(needs(order, T + 1)) === '["refundable"]', needs(order, T + 1));

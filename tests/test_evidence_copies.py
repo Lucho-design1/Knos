@@ -1,4 +1,4 @@
-"""One Knos (TASK-ONE-KNOS, docs/reference/MONOREPO.md): the evidence repositories (evidence/<repo>/), the rehearsal
+"""One Knos: the evidence repositories (evidence/<repo>/), the rehearsal
 repositories (rehearsals/<repo>/) and knos-hermes (hermes/knos-hermes/) are folders of Knos. Each folder holds the files
 of one commit of the old repository byte for byte, and its SOURCE.json names that repository, the commit, the git
 tree id and every file with its git blob id. These tests recompute the blob of every file and the git tree of the
@@ -16,7 +16,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = sorted([*ROOT.glob("evidence/*/SOURCE.json"), *ROOT.glob("rehearsals/*/SOURCE.json"), ROOT / "hermes" / "knos-hermes" / "SOURCE.json"])
 EVIDENCE = ("knos-witness", "knos-load", "knos-v0329-gate", "knos-v0329-outcomes")
-REHEARSALS = ("knos-e2e", "knos-workflows-rc", "knos-e2e-202610020250", "knos-e2e-202610020406", "knos-e2e-202610020610", "k0615")
+REHEARSALS = ("knos-e2e", "knos-e2e-202610020610")
 
 
 def _obj(kind: bytes, body: bytes) -> bytes:
@@ -85,7 +85,7 @@ def test_the_cited_witness_record_is_in_knos_and_the_documents_link_it():
     record = json.loads((ROOT / "evidence" / "knos-witness-acaa854d" / "witness.json").read_text(encoding="utf-8"))
     assert record
     rel = "evidence/knos-witness-acaa854d/witness.json"
-    for doc in ("README.md", "docs/JUDGES.md", "docs/TRANSACTION.md", "docs/judges.json", "docs/reference/FLOWS.md"):
+    for doc in ("README.md", "docs/TRANSACTION.md", "docs/reference/FLOWS.md"):
         text = (ROOT / doc).read_text(encoding="utf-8")
         assert rel in text, doc
         assert "knos-witness/blob/" not in text, doc
@@ -109,12 +109,3 @@ def test_knos_hermes_is_source_here_not_a_second_package():
     root = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     assert 'packages = ["src/knos"]' in root and "knos_hermes" not in root      # Knos builds one package
     assert "hermes/knos-hermes" in (ROOT / "docs" / "reference" / "HERMES.md").read_text(encoding="utf-8")
-
-
-def test_the_monorepo_page_has_a_row_for_each_and_links_its_folder():
-    page = (ROOT / "docs" / "reference" / "MONOREPO.md").read_text(encoding="utf-8")
-    for source in SOURCES:
-        meta = _load(source)
-        name = meta["repository"].split("/", 1)[1]
-        row = next((line for line in page.splitlines() if line.startswith(f"| {name} |")), "")
-        assert f"(../../{source.parent.relative_to(ROOT).as_posix()})" in row, name

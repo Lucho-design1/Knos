@@ -1,5 +1,5 @@
 """The Qloo trace of a demand report: every Qloo call it made, redacted, so each Qloo-derived value Knos shows can link
-to where it came from (TASK-QLOO-CHAMPION M2, M3).
+to where it came from.
 
 A trace holds, per call: the endpoint, the parameters exactly as sent (entity and tag ids included; the API key is a
 request header and never appears), when, what Knos used it for, and an excerpt of the result (a few names, as the
@@ -11,7 +11,7 @@ report's digest kept them). With it the decision the calls led to, and the limit
     /trace.html?hash=<report>          the page that draws it
 
 A trace is kept on devnet only when something links to it: a project opened on the report, or the "With and without
-Qloo" table. Kept copies are what the kit allows: "Cache only what your project needs" (qloo-hackathon-kit
+Qloo" table. Kept copies are what the kit allows: "Cache only what your project needs" (Qloo's
 docs/API_ACCESS.md).
 """
 from __future__ import annotations
@@ -22,7 +22,7 @@ import re
 from . import escrow
 
 LIMIT = ("Qloo describes aggregate cultural taste: affinities of many people, not a cause, not a forecast, and not a "
-         "statement about any one person (qloo-hackathon-kit docs/SAFE_USE.md).")
+         "statement about any one person.")
 _HASH = re.compile(r"[0-9a-f]{64}")
 
 

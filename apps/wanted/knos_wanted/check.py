@@ -273,7 +273,7 @@ class _Run:
         m = re.search(r"HTTP (\d{3})", str(err))
         code = m.group(1) if m else ""
         short = ("Qloo refused this server's API key (HTTP %s): no Qloo data was used" % code if code in ("401", "403") else
-                 "Qloo's rate limit for this event key was reached (HTTP 429, after one retry): try again in a minute" if code == "429" else
+                 "Qloo's rate limit for this key was reached (HTTP 429, after one retry): try again in a minute" if code == "429" else
                  f"Qloo could not answer this part (HTTP {code})" if code else
                  "Qloo's monthly call budget is spent" if "budget" in str(err) else "Qloo could not be reached")
         self._add({"call": f"GET {path}", "what": what, "params": params, "error": short})
@@ -451,7 +451,7 @@ def _path_words(urn) -> set[str]:
 
 def tied(row: dict, words: list[str], tags: list[dict]) -> bool:
     """A segment shown under "Who wants it" must share a word, or a Qloo tag path word, with its idea: its name's words or
-    its id's path against the idea's content words and the paths of the idea's own Qloo tags (TASK-WORLD T10)."""
+    its id's path against the idea's content words and the paths of the idea's own Qloo tags."""
     idea = set(words) | {w for t in tags for w in _path_words(t.get("id"))}
     own = {_norm(w) for w in tokens(row.get("name") or "")} | _path_words(row.get("id"))
     return bool(own & idea)
@@ -535,7 +535,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
           "filter.external.exists": "tripadvisor", **hotel, **ents_only,
           # the idea's taste tags, any of them (union), so a place matches on one: broadened away when they empty it
           **({"filter.tags": ",".join(t["id"] for t in ev["tags"][:3]), "operator.filter.tags": "union"} if ev["tags"] else {})}
-    q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **ents_only}     # the hackathon API refuses output.heatmap.boundary (400)
+    q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **ents_only}     # Qloo's API refuses output.heatmap.boundary (400)
     q11 = {"filter.type": "urn:tag", "diversify.by": "subtype", "diversify.take": "2", "take": 8, **signal}
     q6_broad = {k: v for k, v in q6.items() if not k.startswith(run.NARROWING)}            # its broadened retry, ready too
     # every question that needs only the matched products, at once: the first verdict waits on the slowest of them,

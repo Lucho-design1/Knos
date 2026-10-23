@@ -46,7 +46,7 @@ crate's version stays 0.3.14 (a crate's version is in the bytes of what depends 
 Which build is live is also in [`web/upgrades.json`](../../web/upgrades.json). A 2.2 build says so in its bytes: its
 `security.txt` carries `source_release: knos-oidc 2.2`.
 
-It charges nothing and does not know Knos's escrow exists. There are two deployments on devnet:
+It charges nothing and does not know Knos's payment program exists. There are two deployments on devnet:
 
 | | first deployment ([`programs/knos_oidc`](../../programs/knos_oidc)) | second deployment ([`programs-v2/knos_oidc`](../../programs-v2/knos_oidc)) |
 |---|---|---|
@@ -63,7 +63,7 @@ be fixed, and [SECURITY.md](SECURITY.md) says what is wrong with its key rules.
 
 ## What you can build with it
 
-- **Pay on a signed fact.** `knos-pay` in this repository: an escrow that pays the author of a pull request when
+- **Pay on a signed fact.** `knos-pay` in this repository: a payment program that pays the author of a pull request when
   the funder's workflow reads the merge and the check results from GitHub, and GitHub signs that workflow run.
 - **A release gate.** [`examples/oidc_gate`](../../examples/oidc_gate): records, per repository, the last commit for
   which GitHub signed "a workflow ran here". An upgrade multisig or a DAO can then require that the binary it is
@@ -223,7 +223,7 @@ not run against a token gitlab.com signed, and [`examples/gitlab/.gitlab-ci.yml`
 project. Running it there is [one command](#the-round-as-one-command). The claims are GitLab's own list, read on 4 Oct 2026: [OpenID Connect
 (OIDC) Authentication Using ID Tokens](https://docs.gitlab.com/ci/secrets/id_token_authentication/).
 
-| what the escrow asks | GitHub's claim | GitLab's claim | how it is read |
+| what the payment program asks | GitHub's claim | GitLab's claim | how it is read |
 |---|---|---|---|
 | which repository | `repository_id` | `project_id` | 900000000000000000 + the id |
 | whose Balance pays | `repository_owner_id` | `namespace_id` | 800000000000000000 + the id |
@@ -236,7 +236,7 @@ project. Running it there is [one command](#the-round-as-one-command). The claim
 | a first attempt | `run_attempt` 1 | none | see below |
 | the audience | `aud` | `aud` (`id_tokens: aud:`) | `knos3:fund:...` or `knos3:pay:...` only |
 
-**Ids cannot meet.** A GitLab id is read into a range of its own, and the escrow refuses a GitHub token (and a
+**Ids cannot meet.** A GitLab id is read into a range of its own, and the payment program refuses a GitHub token (and a
 token under a private key) whose repository, owner or actor id is 800000000000000000 or more. GitHub's ids are
 around ten digits today.
 
@@ -263,7 +263,7 @@ merge request from GitLab's API before it lets the token out.
 
 **What GitLab does not sign, and what follows.**
 
-- *Which branch is the default one, and that a merge request was merged.* No claim says either. The escrow asks
+- *Which branch is the default one, and that a merge request was merged.* No claim says either. The payment program asks
   for a protected branch and for a pipeline that a pipeline started; that the merge request was merged into the
   protected default branch, and by whom it was written, is read by the pinned job, as GitHub's pinned workflow
   reads it.
@@ -289,7 +289,7 @@ when the project has no CI file. It opens and merges one merge request whose des
 an order for it from the wallet `<keys>/funder.json`.
 
 It starts a pipeline on the default branch with the pay audience (its trigger job starts the pinned pipeline, which
-GitLab signs as `pipeline_source` `pipeline`). It reads the token the pinned job left, holds it to the escrow's rules
+GitLab signs as `pipeline_source` `pipeline`). It reads the token the pinned job left, holds it to the payment program's rules
 for nothing, has `knos_oidc` verify it and sends `PayOrder`.
 
 Each step is kept, so a second run takes up where the first stopped. It exits 3, having sent nothing, and says exactly
@@ -318,7 +318,7 @@ Use the devnet faucet (send test USDC to the Balance,
 or fund from a wallet). Pin a file on a self-managed GitLab (gitlab.com only). Use a runner of its own.
 
 The always-on
-relay refuses a GitLab token for the escrow, there is no `knos` command and no page: the token is carried by
+relay refuses a GitLab token for the payment program, there is no `knos` command and no page: the token is carried by
 `scripts/gitlab_round.py`, or with the client in `src/knos/settle/v2`. The example's paying job does not check the
 order's terms on Solana; it says so where it would.
 

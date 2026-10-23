@@ -24,8 +24,21 @@ the methods answered are 1.0's.
 | `GetTask`, `ListTasks`, `CancelTask` | as specified; a finished task cannot be cancelled (`-32002`) |
 | errors | `-32001` task not found, `-32004` unsupported method, `-32005` content not understood, `-32009` an `A2A-Version` this agent does not speak |
 
-Not done, and why: there is no hosted Knos A2A endpoint. Running one behind HTTPS on a domain Knos controls (and
-deciding whether `verify` is offered there) is the founder's decision; until then the card describes a local agent.
-Streaming and push notifications are declared off.
+Hosted now: the app serves an Agent Card at
+[`https://knos.onrender.com/.well-known/agent-card.json`](https://knos.onrender.com/.well-known/agent-card.json). Its one
+interface is the hosted MCP endpoint `https://knos.onrender.com/mcp` (`protocolBinding` "MCP": JSON-RPC over HTTP, MCP
+2025-06-18, not A2A's `SendMessage`). Its skills are `find-work`, `claim-milestone`, `submit-to-referee` and
+`check-brief`.
+
+Its security scheme is OAuth 2.0 client credentials at `/oauth/token` (metadata:
+`/.well-known/oauth-authorization-server`, RFC 8414; `/.well-known/oauth-protected-resource`, RFC 9728). The OAuth client is an agent key:
+a signed-in person makes it (`POST /api/agent/keys`: claim cap, spend cap in test units, days, payout wallet), it is
+shown once and stored as its sha256, and revoking it stops its tokens.
+
+Every MCP tool that writes needs `Authorization: Bearer` (the token, the key, or a person's session). Devnet test money only. Tests:
+`apps/wanted/tests/test_agent_solver.py`; the live run, for later: `scripts/test_agent_solver.py`.
+
+Not done, and why: the A2A JSON-RPC methods of `python -m knos.a2a` (`verify`, `check-pr`) are not hosted: `verify`
+runs code, so it is not offered on a public server. Streaming and push notifications are declared off.
 
 Tests: `tests/test_mcp_ext_a2a.py`.

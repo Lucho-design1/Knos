@@ -178,8 +178,8 @@ The payee is a wallet of the demo's own; ORCID's public test iD stands in for th
 | 1 | `trial_registered`: met | [tx](https://explorer.solana.com/tx/3xSno1arsASHsXMH3qvg8UkrZTLJQz6TcyuSCCpjefnk7ZxpiaPak7raDhWetZhoFYnEs1bvbgCJru4Lt1htTpav?cluster=devnet) | PASS 1 of 2 [tx](https://explorer.solana.com/tx/AqFurYcr6p5UfrLeJXELURJpjWPjK28Ycav2GPNirozX19dvPGht3D3eduMai5XcNjLHMAihhSumG8QjXLLdiPJ?cluster=devnet), PASS 2 of 2 [tx](https://explorer.solana.com/tx/3MJ9kGhWwKgkqGHDzeYRA7aycv8knci3oHHbWadvnARC5DVwj2pgbbndpWssuqjvjgKVVMFhELssGvAJ5VpCuuj8?cluster=devnet) | **released**: 8 test units to the payee `8wGdFZWAwi1N1xicR2yKPqr5K8nDcQHSarCXEEdfVLSd` |
 | 2 | `results_posted`: not met (no results posted) | [tx](https://explorer.solana.com/tx/T6BVjke1xRyG9q8B5wmJF8KfeXuMe2uUnvuvwGpCnbPcmfbDJJpvAThMJK2dvp9RdXBLQuyF1cHHGhUgMwPxbcY?cluster=devnet) | FAIL 1 of 2 [tx](https://explorer.solana.com/tx/5xhvuNBZ1p6tKs99DP3VwpUPCf5AD6AwYGeRdMiFS1BD9ybBDd34NZaNeYyPfuGhrWqAjNkTPakhM5ppGFK8BFbN?cluster=devnet), FAIL 2 of 2 [tx](https://explorer.solana.com/tx/49iYkMoQrVynhGCkuTSYvQnChrxQi1Q9W25w8aHsn6u1ntukUzr8zVifoGwsrEr9BgZJ27zouSaHtTTiDRXjCTwC?cluster=devnet) | **refunded** to the buyer, amount and fee |
 
-The test program is V34PAY's own devnet deployment of the 0.3.34 build, not the public knos_pay program: the public
-program gets the panel path through the upgrade the founder signs (deploy/upgrade-0334/STEPS.md).
+The test program is a separate devnet deployment of the 0.3.34 build, not the public knos_pay program: the public
+program gets the panel path through a signed upgrade.
 
 ### Every stage kind, two more fields: materials and biology (15 Oct 2026)
 

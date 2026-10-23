@@ -111,7 +111,7 @@ def test_sign_in_is_a_passkey_for_everyone_and_shows_only_what_works():
     page = (STATIC / "index.html").read_text(encoding="utf-8")
     sheet = page[page.index('<section id="signin"'):page.index("</section>", page.index('<section id="signin"'))]
     assert 'id="pkNew"' in sheet and 'id="pkUse"' in sheet and 'id="pkName"' in sheet
-    assert " disabled" not in sheet and "Not available" not in sheet and "soon" not in sheet       # TASK-WORLD T10: no dead buttons
+    assert " disabled" not in sheet and "Not available" not in sheet and "soon" not in sheet       # no dead buttons
     js = (STATIC / "app.js").read_text(encoding="utf-8")
     assert "accounts.google.com" not in js and "/api/auth/guest" not in js and "/api/auth/email\"" not in js
 

@@ -26,7 +26,7 @@ BOUGHT = {"accept": "", "checks": [{"app": 15368, "name": "build"}, {"app": 1536
 MONEY = "test USDC"                                          # what devnet's money is called, every time
 EXPLORER = "https://explorer.solana.com"
 
-FUNDED = f"""Knos: 20.00 {MONEY} from the devnet faucet is in escrow for issue #7 ([job on Solana]({EXPLORER}/address/{JOB}?cluster=devnet)), 38 s after the comment.
+FUNDED = f"""Knos: 20.00 {MONEY} from the devnet faucet is held for issue #7 until the proof passes ([job on Solana]({EXPLORER}/address/{JOB}?cluster=devnet)), 38 s after the comment.
 
 It is paid when a maintainer merges a pull request that closes this issue, if these checks passed at that pull request's last commit: `test` (this branch's required checks). The pull request may not change `.github/**` or `.knos/**`. If it is not paid by 2026-10-05 14:13 UTC, the money goes back to where it came from.
 
@@ -47,7 +47,7 @@ HELD = (f"Knos: held for @mona. 20.00 {MONEY} for issue #7 waits for them until 
 REFUSED = f"""Knos: not paid. This pull request does not take the bounty on issue #7 (20.00 {MONEY}) as it stands; its checks are read at its last commit (`{sha('head-12')[:7]}`).
 - `build`: passed
 - `test`: failed
-If a check that did not pass is run again on that commit and passes, comment `/knos settle`. A maintainer can pay this work anyway with `/knos tip <amount>`. The money stays in escrow until 2026-10-05 14:13 UTC, then goes back to where it came from."""
+If a check that did not pass is run again on that commit and passes, comment `/knos settle`. A maintainer can pay this work anyway with `/knos tip <amount>`. The money stays held until 2026-10-05 14:13 UTC, then goes back to where it came from."""
 
 
 def world(tmp_path, **kw) -> World:
@@ -154,8 +154,8 @@ def test_real_money_comes_from_the_largest_balance_that_lists_the_commenter_and_
     assert flow.command(w.run(w.hub.commented(7, MONA, "/knos fund 40 checks: test days 30 reserve 3"))) == 0
     said = only(w, 7)
     job = pay.job_pda(REPO_ID, 7, big)
-    assert said.startswith(f"Knos: 40.00 {MONEY} from the balance `{big}` is in escrow for issue #7 "
-                           f"([job on Solana]({EXPLORER}/address/{job}?cluster=devnet)), 30 s after the comment.")
+    assert said.startswith(f"Knos: 40.00 {MONEY} from the balance `{big}` is held for issue #7 "
+                           f"until the proof passes ([job on Solana]({EXPLORER}/address/{job}?cluster=devnet)), 30 s after the comment.")
     assert "`test` (the checks you named)" in said and "If it is not paid by 2026-10-21 14:13 UTC" in said
     assert "`/knos take` reserves the issue for 3 days." in said
     assert w.signer.asked[0].endswith(f":{30 * 86_400}:{big}") and w.chain.held(big) == 20_000_000
@@ -170,13 +170,13 @@ def test_a_strangers_balance_in_a_token_of_their_own_is_never_spent_by_a_comment
     w = world(tmp_path)
     theirs = w.chain.balance("a stranger's", 10 ** 15, mint=junk)
     assert flow.command(w.run(w.hub.commented(7, HUBOT, "/knos fund 20"))) == 0
-    assert only(w, 7).startswith(f"Knos: 20.00 {MONEY} from the devnet faucet is in escrow for issue #7 ")
+    assert only(w, 7).startswith(f"Knos: 20.00 {MONEY} from the devnet faucet is held for issue #7 ")
     assert w.signer.asked[0].endswith(f":{FAUCET}") and w.chain.held(theirs) == 10 ** 15
     # the owner's own test USDC is spent, however much more of its token the stranger's holds
     w = world(tmp_path)
     theirs, own = w.chain.balance("a stranger's", 10 ** 15, mint=junk), w.chain.balance("own", 30_000_000)
     assert flow.command(w.run(w.hub.commented(7, HUBOT, "/knos fund 20"))) == 0
-    assert only(w, 7).startswith(f"Knos: 20.00 {MONEY} from the balance `{own}` is in escrow for issue #7 ")
+    assert only(w, 7).startswith(f"Knos: 20.00 {MONEY} from the balance `{own}` is held for issue #7 ")
     assert w.chain.held(own) == 10_000_000 and w.chain.held(theirs) == 10 ** 15
     # more than the faucet gives and nothing else: nothing is funded, and the reply says why that balance is not spent
     w = world(tmp_path)
@@ -195,7 +195,7 @@ def test_a_strangers_balance_in_a_token_of_their_own_is_never_spent_by_a_comment
     mine = w.chain.balance("mine", 50_000_000, mint=junk)
     w.chain.bind(HUBOT, str(key("mine-wallet")))
     assert flow.command(w.run(w.hub.commented(7, HUBOT, "/knos fund 20"))) == 0
-    assert only(w, 7).startswith(f"Knos: 20.00 of the test token `{junk}` from the balance `{mine}` is in escrow for issue #7 ")
+    assert only(w, 7).startswith(f"Knos: 20.00 of the test token `{junk}` from the balance `{mine}` is held for issue #7 ")
 
 
 def test_with_no_money_the_reply_says_exactly_how_to_add_it(tmp_path):
@@ -245,7 +245,7 @@ def test_only_someone_with_write_access_may_fund(tmp_path):
         event = w.hub.commented(7, MONA, "/knos fund 20")
         event["comment"]["author_association"] = "OWNER"
         assert flow.command(w.run(event)) == 0
-        assert only(w, 7).startswith(f"Knos: 20.00 {MONEY} from the devnet faucet is in escrow" if allowed else "Knos: `/knos fund` is for people with write"), level
+        assert only(w, 7).startswith(f"Knos: 20.00 {MONEY} from the devnet faucet is held for issue #7" if allowed else "Knos: `/knos fund` is for people with write"), level
         assert "repos/o/r/collaborators/mona/permission" in w.hub.asked
     # a spender a Balance lists who cannot write to the repository may not fund from a comment either
     w = world(tmp_path)
@@ -266,14 +266,14 @@ def test_an_issue_that_already_has_a_job_from_that_balance_gets_no_second_one(tm
     asked = list(w.signer.asked)
     assert flow.command(w.run(w.hub.commented(7, HUBOT, "/knos fund 5"))) == 0
     first, second = w.hub.knos(7)
-    assert plain(second) == (f"Knos: nothing was added. Issue #7 already has 20.00 {MONEY} in escrow from this balance, open until "
+    assert plain(second) == (f"Knos: nothing was added. Issue #7 already has 20.00 {MONEY} held from this balance, open until "
                              f"2026-10-05 14:13 UTC ([job on Solana]({EXPLORER}/address/{JOB}?cluster=devnet)). A balance holds one "
                              "bounty on an issue at a time; `/knos status` shows it.")
     assert w.signer.asked == asked and len(w.chain.jobs(7)) == 1
     # a Balance of real money that has not funded this issue yet can add to it
     other = w.chain.balance("wallet", 50_000_000)
     assert flow.command(w.run(w.hub.commented(7, HUBOT, "/knos fund 5"))) == 0
-    assert plain(w.hub.knos(7)[-1]).startswith(f"Knos: 5.00 {MONEY} from the balance `{other}` is in escrow for issue #7")
+    assert plain(w.hub.knos(7)[-1]).startswith(f"Knos: 5.00 {MONEY} from the balance `{other}` is held for issue #7")
     assert sorted(j.amount for _a, j in w.chain.jobs(7)) == [5_000_000, 20_000_000] and str(other) in w.signer.asked[-1]
     # past its deadline a job pays nobody, and still holds its place until it is refunded. The deadline is the chain's
     # to judge: its clock, not this machine's, says whether the time has run out
@@ -313,7 +313,7 @@ def test_a_funding_the_chain_refuses_or_nobody_relays_is_said_with_what_to_do(tm
     w.relay.refusals = [{"ok": False, "kind": "fund", "why": pay.ERRORS[90], "retry": True}] * 2
     assert flow.command(w.run(w.hub.commented(7, HUBOT, "/knos fund 20"))) == 0
     assert len(w.relay.submitted) == 3 and len({jwt for jwt, _terms in w.relay.submitted}) == 1 and w.clock.slept.count(20) == 2
-    assert only(w, 7).startswith(f"Knos: 20.00 {MONEY} from the devnet faucet is in escrow for issue #7") and "130 s after the comment" in only(w, 7)
+    assert only(w, 7).startswith(f"Knos: 20.00 {MONEY} from the devnet faucet is held for issue #7") and "130 s after the comment" in only(w, 7)
     w = world(tmp_path)
     w.relay.refusals = [{"ok": False, "kind": "fund", "why": pay.ERRORS[90], "retry": True}] * 9
     assert flow.command(w.run(w.hub.commented(7, HUBOT, "/knos fund 20"))) == 1 and len(w.relay.submitted) == 4
@@ -382,7 +382,7 @@ def test_a_new_issue_with_a_fund_line_is_funded_and_acceptance_checks_on_the_def
     w.hub.issue(8, "Slugify keeps punctuation.\n\n/knos fund 12.5 checks: none paths: src/**\n", at=T0 - 3)
     assert flow.command(w.run({"action": "opened", "issue": w.hub.issues[8], "repository": w.hub.repo})) == 0
     said = only(w, 8)
-    assert said.startswith(f"Knos: 12.50 {MONEY} from the devnet faucet is in escrow for issue #8 ([job on Solana](")
+    assert said.startswith(f"Knos: 12.50 {MONEY} from the devnet faucet is held for issue #8 until the proof passes ([job on Solana](")
     assert "), 33 s after the issue was opened." in said
     assert ("It is paid when its acceptance checks (.knos/acceptance/ for this issue) pass on a pull request. The pull request may not "
             "change `.github/**` or `.knos/**`, and may only change files matching `src/**`.") in said
@@ -458,7 +458,7 @@ def test_a_tip_is_funded_on_the_merged_pull_request_and_hands_over_to_settle(tmp
     run = w.run(tipped)
     assert flow.command(run) == 0 and run.outputs == {"settle": "12"}                      # the workflow's next job pays it
     tip = pay.job_pda(REPO_ID, 12, FAUCET)
-    assert only(w, 12) == (f"Knos: a tip of 5.00 {MONEY} for this pull request is in escrow ([job on Solana]({EXPLORER}/address/{tip}"
+    assert only(w, 12) == (f"Knos: a tip of 5.00 {MONEY} for this pull request is held ([job on Solana]({EXPLORER}/address/{tip}"
                            "?cluster=devnet)), 32 s after the comment. It is paid to @mona next; the result follows here.")
     assert w.chain.logs[str(tip)] == terms.canonical(terms.tip()) and w.signer.asked[-1].split(":")[6] == "86400"     # it asks for nothing; a day
     # the second job: `knos settle` on the same comment pays the tip, and only the tip (the bounty on #7 is not tried again)
@@ -492,7 +492,7 @@ def test_a_tip_that_could_reach_nobody_or_comes_from_nobody_is_not_put_in_escrow
     assert flow.command(run) == 0 and run.outputs == {"settle": "12"} and "It is paid to @mona next" in w.hub.knos(12)[-1]
     # a second tip from the same balance while the first still waits
     assert flow.command(w.run(w.hub.commented(12, HUBOT, "/knos tip 2"))) == 0
-    assert plain(w.hub.knos(12)[-1]).startswith(f"Knos: nothing was added. This pull request already has 5.00 {MONEY} in escrow from this balance")
+    assert plain(w.hub.knos(12)[-1]).startswith(f"Knos: nothing was added. This pull request already has 5.00 {MONEY} held from this balance")
     assert w.hub.knos(12)[-1].endswith("A balance holds one tip on a pull request at a time: comment `/knos settle` to have this one paid.")
     # someone who may not spend; a pull request that is not merged; an issue
     assert flow.command(w.run(w.hub.commented(12, EVE, "/knos tip 5"))) == 0
@@ -591,26 +591,26 @@ def test_status_says_what_is_in_escrow_its_terms_and_who_holds_the_issue(tmp_pat
     def status(n: int = 7, code: int = 0) -> str:
         assert flow.command(w.run(w.hub.commented(n, EVE, "/knos status"))) == code
         return plain(w.hub.knos(n)[-1])
-    assert status() == "Knos: nothing is in escrow for issue #7. A maintainer puts a bounty on it with `/knos fund <amount>`."
+    assert status() == "Knos: nothing is held for issue #7. A maintainer puts a bounty on it with `/knos fund <amount>`."
     w.chain.fund(7, 20_000_000, BOUGHT)
     job = f"([job on Solana]({EXPLORER}/address/{JOB}?cluster=devnet))"
     told = ("It is paid when a maintainer merges a pull request that closes this issue, if these checks passed at that pull request's "
             "last commit: `build`, `test`. The pull request may not change `.github/**` or `.knos/**`. `/knos take` reserves the issue "
             "for 7 days.")
-    assert status() == f"Knos: 20.00 {MONEY} is in escrow for issue #7 until 2026-10-05 14:13 UTC {job}. {told} Nobody holds it."
+    assert status() == f"Knos: 20.00 {MONEY} is held for issue #7 until 2026-10-05 14:13 UTC {job}. {told} Nobody holds it."
     flow.command(w.run(w.hub.commented(7, MONA, "/knos take")))
     assert status().endswith(f"{told} It is assigned to @mona until 2026-09-28 14:13 UTC: only their pull request is paid for it.")
     # a second job, from a wallet's Balance; and one already proven and held for someone
     other = w.chain.fund(7, 5_000_000, {**BOUGHT, "checks": []}, source=key("wallet"), faucet=False)
-    assert status().startswith(f"Knos: 20.00 {MONEY} is in escrow for issue #7 until 2026-10-05 14:13 UTC {job}.") and \
-        f"\n\n5.00 {MONEY} is in escrow for issue #7 until 2026-10-05 14:13 UTC ([job on Solana]({EXPLORER}/address/{other}?cluster=devnet)). This repository has no checks; your merge alone is the acceptance." in w.hub.knos(7)[-1]
+    assert status().startswith(f"Knos: 20.00 {MONEY} is held for issue #7 until 2026-10-05 14:13 UTC {job}.") and \
+        f"\n\n5.00 {MONEY} is held for issue #7 until 2026-10-05 14:13 UTC ([job on Solana]({EXPLORER}/address/{other}?cluster=devnet)). This repository has no checks; your merge alone is the acceptance." in w.hub.knos(7)[-1]
     w.hub.issue(9)
     w.chain.fund(9, 20_000_000, BOUGHT, state=3, payee=MONA["id"], hold_until=int(T0) + 180 * 86_400)
     held = pay.job_pda(REPO_ID, 9, FAUCET)
     assert status(9) == (f"Knos: 20.00 {MONEY} for issue #9 is held for GitHub user id 4242 until 2027-03-20 14:13 UTC: it is paid "
                          f"when they bind a wallet ([job on Solana]({EXPLORER}/address/{held}?cluster=devnet)).")
     w.chain.down = True
-    assert status(code=1) == ("Knos: Solana could not be read just now (the cluster did not answer), so what is in escrow for issue #7 "
+    assert status(code=1) == ("Knos: Solana could not be read just now (the cluster did not answer), so what is held for issue #7 "
                               "is not known. Comment `/knos status` again.")
 
 
@@ -634,7 +634,7 @@ def test_status_on_a_merged_pull_request_says_what_a_settle_would_do_and_signs_n
                            "waits for it.")
     w.chain.down = True                                                                    # an answer Solana left incomplete fails the job
     assert flow.command(w.run(w.hub.commented(12, EVE, "/knos status"))) == 1
-    assert w.hub.knos(12)[-1] == ("Knos: Solana could not be read for issue #7, so whether anything is in escrow there is not known. "
+    assert w.hub.knos(12)[-1] == ("Knos: Solana could not be read for issue #7, so whether anything is held there is not known. "
                                   "Comment `/knos status` to try again.")
 
 
@@ -655,8 +655,8 @@ def test_a_reply_github_will_not_take_is_on_the_runs_page_and_the_job_fails(tmp_
     w = world(tmp_path)
     monkeypatch.setattr(flow, "_status", lambda *a: [][0])
     assert flow.command(w.run(w.hub.commented(7, EVE, "/knos status"))) == 1
-    assert only(w, 7) == ("Knos: this stopped before it was finished (IndexError: list index out of range). `/knos status` shows what "
-                          "is in escrow now; post the comment again to retry.")
+    assert only(w, 7) == ("Knos: this stopped before it was finished (IndexError: list index out of range). `/knos status` shows what is "
+                          "held now; post the comment again to retry.")
     w = world(tmp_path)
     w.hub.repo = {**w.hub.repo, "default_branch": None}                                    # GitHub's event without what the chain keys on
     w.hub.down = ("repos/o/r",)
@@ -874,7 +874,7 @@ def test_a_pull_request_merged_before_the_bounty_was_funded_does_not_take_it(tmp
         f"Knos: not paid. This pull request does not take the bounty on issue #7 (20.00 {MONEY}) as it stands; its checks are read at its "
         f"last commit (`{head[:7]}`).\n- `build`: passed\n- `test`: passed\n- it was merged on 2026-09-21 14:13 UTC, before this bounty "
         "was funded (2026-09-22 14:13 UTC): a bounty pays work merged after it was funded\nA maintainer can pay this work anyway with "
-        "`/knos tip <amount>`. The money stays in escrow until 2026-10-06 14:13 UTC, then goes back to where it came from.")
+        "`/knos tip <amount>`. The money stays held until 2026-10-06 14:13 UTC, then goes back to where it came from.")
     assert w.signer.asked == [] and len(w.chain.jobs(7)) == 1
     # a job someone adds with the same terms after a merge cannot hold back the bounty that was there before it
     w = bounty(tmp_path)
@@ -901,7 +901,7 @@ def test_a_description_edited_after_the_merge_takes_no_bounty(tmp_path):
         f"Knos: not paid. This pull request does not take the bounty on issue #7 (20.00 {MONEY}) as it stands; its checks are read at its "
         f"last commit (`{head[:7]}`).\n- `build`: passed\n- `test`: passed\n- its description was edited on 2026-09-21 15:23 UTC, after "
         "it was merged, so what it says it closes no longer counts (anyone who can edit it could add `Fixes #7` later)\nA maintainer can "
-        "pay this work anyway with `/knos tip <amount>`. The money stays in escrow until 2026-10-05 14:13 UTC, then goes back to where it "
+        "pay this work anyway with `/knos tip <amount>`. The money stays held until 2026-10-05 14:13 UTC, then goes back to where it "
         "came from.")
     assert w.signer.asked == [] and len(w.chain.jobs(7)) == 1
     # GitHub's own list of what it closes follows the description, so it does not count either; `/knos status` says the same
@@ -1004,9 +1004,9 @@ def test_a_proof_the_chain_refuses_or_nobody_relays_is_said_with_what_to_do(tmp_
     # a refusal of the asker's own (knos.ghwords.RELAY): the reply says what to do instead, and the job does not fail for it
     w = bounty(tmp_path, relay_key=False)
     w.chain.bind(MONA)
-    w.relay.refusals = [{"ok": False, "kind": "pay", "why": "no bounty is in escrow for this issue (never funded, or already paid or refunded)"}]
+    w.relay.refusals = [{"ok": False, "kind": "pay", "why": "no bounty is held for this issue (never funded, or already paid or refunded)"}]
     assert flow.settle(w.run(w.hub.merge(12))) == 0
-    assert only(w, 12).endswith("already paid or refunded). Nothing is in escrow for this issue; a maintainer funds it with `/knos fund <amount>` first.")
+    assert only(w, 12).endswith("already paid or refunded). Nothing is held for this issue; a maintainer funds it with `/knos fund <amount>` first.")
 
 
 def test_a_push_says_nothing_about_a_pull_request_with_nothing_in_escrow_and_a_person_who_asks_is_answered(tmp_path, capsys):
@@ -1014,7 +1014,7 @@ def test_a_push_says_nothing_about_a_pull_request_with_nothing_in_escrow_and_a_p
     w.hub.pull(12, MONA, "Fixes #7")
     push = w.hub.merge(12)
     assert flow.settle(w.run(push)) == 0 and w.hub.knos(12) == [] and w.hub.wrote == []
-    assert "Knos settle: nothing is in escrow for pull request #12, so there is nothing to pay." in capsys.readouterr().out
+    assert "Knos settle: nothing is held for pull request #12, so there is nothing to pay." in capsys.readouterr().out
     assert flow.settle(w.run(w.hub.commented(12, EVE, "/knos settle"))) == 0
     assert only(w, 12) == "Knos: nothing to pay: no bounty is open on the issue this pull request closes (#7), and no tip waits for it."
     # a workflow_dispatch that names the pull request replays it
@@ -1114,10 +1114,10 @@ def test_what_stands_in_the_way_is_said_with_what_would_change_it(tmp_path, monk
     w, said = settled(lambda w: setattr(w.signer, "down", True), 1)
     assert "\n- GitHub did not sign the token (GitHub's token endpoint did not answer)\nNothing was paid. Comment `/knos settle` to try again." in said
     w, said = settled(lambda w: w.clock.sleep(15 * 86_400))
-    assert "\n- its time ran out on 2026-10-05 14:13 UTC: the money goes back to where it came from\n" in said and "stays in escrow" not in said
+    assert "\n- its time ran out on 2026-10-05 14:13 UTC: the money goes back to where it came from\n" in said and "stays held" not in said
     # a chain that does not answer: said on a pull request that closes an issue, and the job fails
     w, said = settled(lambda w: setattr(w.chain, "down", True), 1)
-    assert said == ("Knos: Solana could not be read for issue #7, so whether anything is in escrow there is not known. Comment `/knos "
+    assert said == ("Knos: Solana could not be read for issue #7, so whether anything is held there is not known. Comment `/knos "
                     "settle` to try again.")
     # anything unforeseen after a person asked is told on the pull request
     w = bounty(tmp_path)
@@ -1189,7 +1189,7 @@ def test_a_crowd_of_jobs_from_strangers_wallets_neither_hides_nor_holds_up_the_b
         w.chain.fund(7, 30_000_000 + i, {**BOUGHT, "checks": []}, source=key(f"stranger {i}"), faucet=False, kind=0)
     assert flow.command(w.run(w.hub.commented(7, EVE, "/knos status"))) == 0
     parts = plain(w.hub.knos(7)[0], 9000).split("\n\n")
-    assert parts[0].startswith(f"Knos: 20.00 {MONEY} is in escrow for issue #7 until ") and len(parts) == 13
+    assert parts[0].startswith(f"Knos: 20.00 {MONEY} is held for issue #7 until ") and len(parts) == 13
     assert parts[12] == "19 more jobs on this issue are not listed: the smallest, each funded straight from a wallet."
     # and of the Balances any wallet can open for an owner, a bounded number is read: those already used first
     w = world(tmp_path)
@@ -1199,7 +1199,7 @@ def test_a_crowd_of_jobs_from_strangers_wallets_neither_hides_nor_holds_up_the_b
     looked, real = [], w.chain.account
     w.chain.account = lambda address: looked.append(str(address)) or real(address)
     assert flow.command(w.run(w.hub.commented(7, HUBOT, "/knos fund 40 checks: none"))) == 0
-    assert only(w, 7).startswith(f"Knos: 40.00 {MONEY} from the balance `{used}` is in escrow") and len(looked) <= flow.MAX_BALANCES + 2
+    assert only(w, 7).startswith(f"Knos: 40.00 {MONEY} from the balance `{used}` is held for issue #7") and len(looked) <= flow.MAX_BALANCES + 2
 
 
 def accept_of(files: dict) -> str:
@@ -1267,7 +1267,7 @@ def test_the_job_after_the_judge_signs_nothing_it_has_not_read_again_itself(tmp_
         f"Knos: not paid. This pull request does not take the bounty on issue #7 (20.00 {MONEY}) as it stands; its checks are read at its "
         f"last commit (`{sha('head-12')[:7]}`).\n- `build`: passed\n- `test`: passed\n- the acceptance checks in .knos/acceptance/7/ on the "
         "default branch are not the ones this bounty was funded with\nA maintainer can pay this work anyway with `/knos tip <amount>` once "
-        "it is merged. The money stays in escrow until 2026-10-05 14:13 UTC, then goes back to where it came from.")
+        "it is merged. The money stays held until 2026-10-05 14:13 UTC, then goes back to where it came from.")
     w, said = attest(lambda w: w.hub.bundles.clear())
     assert "\n- the acceptance checks in .knos/acceptance/7/ on the default branch are not the ones this bounty was funded with\n" in said[0]
     # the funded checks, unchanged, but not black-box (a job funded before that was asked, or a proof.toml that now
@@ -1282,7 +1282,7 @@ def test_the_job_after_the_judge_signs_nothing_it_has_not_read_again_itself(tmp_
         f"Knos: not paid. This pull request does not take the bounty on issue #7 (20.00 {MONEY}) as it stands; its checks are read at its "
         f"last commit (`{sha('head-12')[:7]}`).\n- `build`: passed\n- `test`: passed\n- the acceptance checks in .knos/acceptance/7/ are "
         "not black-box (they load the pull request's code into the process that judges it), and a bounty is paid without a merge only by "
-        "black-box checks\nA maintainer can pay this work anyway with `/knos tip <amount>` once it is merged. The money stays in escrow "
+        "black-box checks\nA maintainer can pay this work anyway with `/knos tip <amount>` once it is merged. The money stays held "
         "until 2026-10-05 14:13 UTC, then goes back to where it came from.")
     w, said = attest(lambda w: w.hub.contents.update({".knos/proof.toml": 'runner = "python"\n'}))
     assert ("\n- the acceptance checks in .knos/acceptance/7/ are not black-box (they share a process with the pull request's code "
@@ -1532,7 +1532,7 @@ def test_the_check_fails_only_for_a_false_claim_or_a_broken_rule(tmp_path, monke
     w = world_with([check("build"), check("test")])
     w.chain.down = True
     code, summary = checked(w)
-    assert code == 0 and "Solana could not be read for issue #7, so whether anything is in escrow there is not known." in summary
+    assert code == 0 and "Solana could not be read for issue #7, so whether anything is held there is not known." in summary
     # a false claim fails it: the description says what a finished check contradicts, whatever the bounty requires
     w = world_with([check("build"), check("test"), check("lint", "failure")], body="Fixes #7. CI is green.")
     code, summary = checked(w)

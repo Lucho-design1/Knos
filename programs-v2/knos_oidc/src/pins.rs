@@ -63,8 +63,8 @@ pub const GENESIS: &[(u8, [u8; 32])] = &[
 /// A commit sha fixes the workflow file's content, so its repository's owner cannot change what runs under this pin.
 pub const ROTATE_REF: &[u8] = b"drexthealpha/knos-oidc-rotate/.github/workflows/rotate.yml@";
 /// The same workflow at its home in Knos (branch `oidc-rotate`: the same commits, so the same ROTATE_SHA/ROTATE_SHA2),
-/// accepted beside ROTATE_REF so that keys keep being attested while callers move (docs/reference/CUTOVER-0331.md,
-/// section 2). An exact prefix: `someone/Knos/...`, `drexthealpha/Knos-x/...` and `drexthealpha/knos/...` are not it.
+/// accepted beside ROTATE_REF so that keys keep being attested while callers move
+/// (both homes are read). An exact prefix: `someone/Knos/...`, `drexthealpha/Knos-x/...` and `drexthealpha/knos/...` are not it.
 pub const ROTATE_REF_KNOS: &[u8] = b"drexthealpha/Knos/.github/workflows/rotate.yml@";
 /// Whether `job_workflow_ref` names the pinned rotate workflow in one of its two homes. The commit is checked apart.
 pub fn rotate_ref(wref: &[u8]) -> bool { wref.starts_with(ROTATE_REF) || wref.starts_with(ROTATE_REF_KNOS) }

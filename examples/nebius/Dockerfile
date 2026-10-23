@@ -3,7 +3,7 @@
 # At start it runs the one flow (post -> agent codes on Nemotron -> referee -> paid in LiteSVM -> metered) and the
 # "Knos builds Knos" demo once, live when NEBIUS_API_KEY / TAVILY_API_KEY are set in the container's environment, MOCK
 # otherwise (labelled on the pages), then serves /out: index.html is the flow, panel.html the demo, devnet-run.html the
-# committed devnet run. No key and no wallet is baked into the image (the container funds no devnet escrow).
+# committed devnet run. No key and no wallet is baked into the image (the container holds no devnet money).
 FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
 WORKDIR /knos

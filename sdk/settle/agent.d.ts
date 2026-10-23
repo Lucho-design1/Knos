@@ -139,7 +139,7 @@ export interface Payment {
   repo?: number;
   issue?: number;
   pull?: number;
-  /** In the mint's smallest units, as the escrow logged it. */
+  /** In the mint's smallest units, as the payment program logged it. */
   amount: number;
   to: string;
 }
@@ -157,5 +157,5 @@ export interface Statement {
   notes: string[];
 }
 
-/** One seller's month, from the meter's and the escrow's own log lines. `most` caps the transactions read per history (default 1000). */
+/** One seller's month, from the meter's and the payment program's own log lines. `most` caps the transactions read per history (default 1000). */
 export function statement(connection: Connection, seller: number | bigint | string, month: string | number, options?: { most?: number }): Promise<Statement>;

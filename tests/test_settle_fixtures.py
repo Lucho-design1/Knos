@@ -450,11 +450,12 @@ def test_the_site_says_nothing_it_may_not():
     # stands is the name of the state the page shows for a program whose upgrade authority the chain says is gone.
     assert "immutable" not in words.lower() and "immutable" not in app.replace('data-state="immutable"', "").replace('"immutable"', "")
     # Every "USDC" on the page is "test USDC", but for one name: the record counts as real money only what was paid in
-    # Circle's mint, and the ranks have to say which mint that is. "Circle's USDC" names the mint; it is not an amount
-    # anyone is paid or puts in on this page.
+    # Circle's mint, and the ranks have to say which mint that is; the price list says a larger milestone may be paid in
+    # it once the company exists. "Circle's USDC" names the mint; it is not an amount anyone is paid or puts in on this page.
     usdc = r"(?<!test )(?<!Test )(?<!Circle's )USDC"
     assert not re.search(usdc, words), re.search(r".{20}" + usdc, words).group(0)
-    assert words.count("Circle's USDC") == words.count("real money (Circle's USDC)") == 2 and "real USDC" not in words
+    assert words.count("Circle's USDC") == words.count("real money (Circle's USDC)") == 3 and "real USDC" not in words
+    assert words.count("larger milestones by bank transfer or in real money (Circle's USDC), held until the proof passes") == 1
     # devnet money is called test USDC wherever the page says what a person is paid or puts in
     assert "test USDC" in words and "mainnet" not in words.lower()
 

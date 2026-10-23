@@ -441,7 +441,7 @@ def after_chain(d: Mapping[str, Any], seen: Mapping[str, Any], jwt: str | None =
     if d.get("kind") == "fund" and now < int(seen.get("paused_until") or 0):
         return {**out, "decision": "insufficient_evidence", "why": "not decided yet, and it may clear: new funding is paused"}
     if o is not None and not o["found"]:
-        return {**out, "decision": "rejected", "why": f"nothing is in escrow at {o['address']} (never funded, or already paid or refunded)"}
+        return {**out, "decision": "rejected", "why": f"nothing is held at {o['address']} (never funded, or already paid or refunded)"}
     if o is not None and o["state"] != "open":
         return {**out, "decision": "insufficient_evidence", "why": f"the order at {o['address']} is {o['state']}, not open"}
     if o is not None and now > int(o["deadline"]):

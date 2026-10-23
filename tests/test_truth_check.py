@@ -214,7 +214,7 @@ def test_none_published_and_neither_has_been_published_are_found_too(tmp_path):
 
 
 def test_an_old_meter_price_in_a_comparison_table_is_found_cell_by_cell(tmp_path):
-    """COMPARE.md printed the earlier price book in one cell of a row whose other cell said "before the work"."""
+    """A comparison table printed the earlier price book in one cell of a row whose other cell said "before the work"."""
     root = _tree(tmp_path, compare="| | terms | fee |\n|---|---|---|\n| **Knos** | hashed before the work | 10,000 evaluations a month free, then 0.05 USD; "
                                    "or 0.5% of the reconciled accepted invoice value, capped at 250 USD per deliverable |\n"
                                    "| Margin | Acceptance 99.8% gross margin | |\n")

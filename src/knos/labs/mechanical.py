@@ -26,6 +26,6 @@ class Xometry(Adapter):
 
     def _stub(self, *a, **k):
         raise LabError("xometry: its API serves manufacturing partners, not buyers; order on xometry.com and use "
-                       "knos.labs.manual (Knos holds the escrow and judges the inspection report)")
+                       "knos.labs.manual (Knos holds the money until the proof passes and judges the inspection report)")
 
     quote = order = status = results = _stub

@@ -32,13 +32,13 @@ TOOLS = [
     _tool("knos_fees", "Knos fees",
           "The fee Knos charges, from its one fee config: for `kind` (payout, bounty, funding, graduation, task_package, "
           "verification, x402_check) and an amount (or a count, for verification and x402_check), or the whole schedule "
-          "with each line's status (live on devnet, proposed, or a placeholder the founder has not set). Test money on devnet.",
+          "with each line's status (live on devnet, proposed, or a placeholder not set yet). Test money on devnet.",
           {"kind": {"type": "string", "enum": list(fees_config.KINDS)}, "amount": _AMOUNT,
            "count": {"type": "integer", "minimum": 0}, "used": {"type": "integer", "minimum": 0}}, []),
     _tool("knos_graduate", "Graduate a verified claim",
-          "Given a Knos verdict that passed (works, wanted, makeable), the milestone escrow and the pre-order pool it opens "
+          "Given a Knos verdict that passed (works, wanted, makeable), the milestone's held money and the pre-order pool it opens "
           "on Solana devnet (knos_pay work orders), the contributor split each payout follows, and, with `funder` and "
-          "`funder_token`, the unsigned instruction that funds the escrow. Refused unless the verdict passed. Signs nothing.",
+          "`funder_token`, the unsigned instruction that funds the milestone hold. Refused unless the verdict passed. Signs nothing.",
           {"verdict": {"type": "object", "description": "knos.referee.verdict(...) output: {passed, spec_hash, checks}"},
            "claim_id": {"type": "string"}, "repo_id": {"type": "integer", "minimum": 1, "description": "the research repository's GitHub id: its prove.yml is the judge"},
            "amount": _AMOUNT, "contributors": {"type": "array", "maxItems": 4, "items": {"type": "object"},
@@ -111,7 +111,7 @@ def _graduate(a: dict, _ledger, cfg: fees_config.FeeConfig) -> dict:
     p = graduation.plan(a.get("verdict"), claim_id=a.get("claim_id"), repo_id=a.get("repo_id"), amount=a.get("amount"),  # type: ignore[arg-type]  # JSON tool arguments: plan() checks each one and refuses a wrong type
                         contributors=a.get("contributors"), milestone=a.get("milestone", 1), min_buyers=a.get("min_buyers", 1),  # type: ignore[arg-type]  # as above
                         min_locked=a.get("min_locked", 0), cfg=cfg)
-    out: dict = {"plan": p, "said": (f"Graduates: a milestone escrow of {p['escrow']['amount'] / 1e6:,.2f} (the funder pays "
+    out: dict = {"plan": p, "said": (f"Graduates: a milestone hold of {p['escrow']['amount'] / 1e6:,.2f} (the funder pays "
                                      f"{p['escrow']['funder_pays'] / 1e6:,.2f} with the fee) and a pre-order pool. Nothing was sent.")}
     if a.get("funder") and a.get("funder_token") and a.get("mint"):
         funder = _pk(a["funder"], "funder")

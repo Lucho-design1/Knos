@@ -13,7 +13,7 @@ paid through `knos-order`, Knos's proposed scheme for x402 (paying over HTTP wit
 The second line is `knos record serve`. It reads the chain from the RPC URL every Knos command uses. It has been run
 against devnet once, by Knos on its own machine while releasing version 0.3.19: a wallet of that run [funded a pack](https://explorer.solana.com/tx/2Z9NtBn78XRfLaY928d34qZQxTFxZrGDxcEbBjwpWm9bqjTjcNgPtSrtFZDC3snMCvuWpWWPWqYnVWRkjZSj5rrd?cluster=devnet)
 at the public knos_pay and got lookup 0 of 50; the same call again and another wallet's call got `402`. The order
-stays in escrow until its deadline, because no judge for lookups exists.
+stays held until its deadline, because no judge for lookups exists.
 
 | path | price | answer |
 |---|---|---|
@@ -41,7 +41,7 @@ The paid answer has been tested in the simulator; the one devnet run above was b
 1. The caller asks with `Attested-Payer: <its wallet>` and gets `402` with a `PAYMENT-REQUIRED` header: the
    `knos-order` requirement, and beside it `extra.record` (the price, the lookups in a pack, the words to sign).
 2. The caller checks it against its own limits (the program, the token, the most it pays, the terms' hash, the fee)
-   and funds the order (`FundOrderWallet`). The money is in escrow.
+   and funds the order (`FundOrderWallet`). The money is held.
 3. The caller signs `knos-record:<order>:<n>:<slug>` with the wallet that funded the order, `n` counting that
    order's lookups from 0, and asks again with `PAYMENT-SIGNATURE`. It gets the JSON.
 
@@ -59,7 +59,7 @@ live on devnet since 9 October 2026).
 
 ## When the seller is paid
 
-The escrow pays the seller when the order's pinned judge signs an acceptance (`PayOrder`), the pack whole, and
+The payment program pays the seller when the order's pinned judge signs an acceptance (`PayOrder`), the pack whole, and
 returns everything to the caller after the deadline when none arrives (`RefundOrder`). The test runs both.
 
 ## What is not built

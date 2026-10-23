@@ -534,7 +534,7 @@ def block_times(rpc: str) -> Callable[[str], int | None]:
 def main(argv: list[str] | None = None, say: Callable[[str], None] = print) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--log", type=Path, help="the relay log's comments as GitHub returns them (JSON); default: read from --repo")
-    ap.add_argument("--events", type=Path, help="the escrows' history, as scripts/network_stats.py --events-out wrote it; default: read from the chain")
+    ap.add_argument("--events", type=Path, help="the payment programs' history, as scripts/network_stats.py --events-out wrote it; default: read from the chain")
     ap.add_argument("--repo", default=ns.RELAY_LOG_REPO, help="the repository whose relay log is read")
     ap.add_argument("--rpc", default=os.environ.get("KNOS_RPC", ""), help="a cluster to read block times (and, without --events, the history) from")
     ap.add_argument("--offline", action="store_true", help="ask GitHub nothing: only lines that carry their own start are timed")

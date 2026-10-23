@@ -289,7 +289,7 @@ function evidenceOf(row, key, st, limit = null) {
   if (key === "exception") return { title: row.kind ? `Exception: ${WORDS[row.kind]}` : "No exception", facts: row.kind ? [["reason", row.reason], ["what settles it", REMEDY[row.kind]],
     ["decided by", row.kind === "over_po" ? "this page, from the limit the invoice file states" : row.kind === "over_limit" ? "this page, from the limit you typed" : st ? "the statement" : "nothing yet: no statement was given"]] : [["state", "agreed"]] };
   return { title: "What happened to the money", facts: [["payment", row.payment], ["approved by", row.approved || "nobody yet"], ["settlement", ln.settlement || "none recorded"],
-    ["how it is paid", "outside this page: a bank file, or the escrow on devnet (test USDC)"]] };
+    ["how it is paid", "outside this page: a bank file, or money held on devnet until the proof passes (test USDC)"]] };
 }
 
 /** Draw the approver's screen in `el`. */

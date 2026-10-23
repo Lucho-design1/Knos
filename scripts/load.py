@@ -1057,7 +1057,7 @@ def render_relay(rel: dict) -> list[str]:
         n = [row["n"] for row in st["six"]]
         out += ["### The stages of a payment (recorded on devnet)", "",
                 f"From {st['source']}. Every payment in it was made by the public program ids (the relay log's payments, read from their "
-                f"escrows' history).", "",
+                f"payment programs' history).", "",
                 f"Each stage is timed only for the payments whose log line recorded it, so each row has its own n; "
                 f"a stage no line recorded says \"{latency_stages.NOT_RECORDED}\", and no figure here is derived from another row.", "",
                 *latency_stages.table(st["six"], st["whole"]), "",

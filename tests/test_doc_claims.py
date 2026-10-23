@@ -123,12 +123,12 @@ def test_a_count_or_a_stage_that_is_not_the_manifests_fails(tree):
     _add(tree, "docs/reference/MARKET.md", "What this release adds is tested locally and is not on devnet yet.")
     _found(tree, "docs/reference/MARKET.md", "gives a whole release one stage")
     # which ids they ran on is the manifest's too: a run is never said to be a staging one when it was public, nor the other way
-    _add(tree, "docs/reference/COMPARE.md", f"Of the {n} capabilities exercised on devnet, {n} ran on the public program ids.")
-    assert not any("docs/reference/COMPARE.md" in line for line in dc.problems(tree))
-    _add(tree, "docs/reference/COMPARE.md", f"Of the {n} capabilities exercised on devnet, {n} ran on the staging program ids.")
-    _found(tree, "docs/reference/COMPARE.md", f"says {n} exercised on staging ids", "has 0")
-    _add(tree, "docs/reference/COMPARE.md", f"Of the {n} capabilities exercised on devnet, {n - 1} ran on the public program ids.")
-    _found(tree, "docs/reference/COMPARE.md", f"says {n - 1} exercised on public ids", f"has {n}")
+    _add(tree, "docs/reference/SECURITY.md", f"Of the {n} capabilities exercised on devnet, {n} ran on the public program ids.")
+    assert not any("docs/reference/SECURITY.md" in line for line in dc.problems(tree))
+    _add(tree, "docs/reference/SECURITY.md", f"Of the {n} capabilities exercised on devnet, {n} ran on the staging program ids.")
+    _found(tree, "docs/reference/SECURITY.md", f"says {n} exercised on staging ids", "has 0")
+    _add(tree, "docs/reference/SECURITY.md", f"Of the {n} capabilities exercised on devnet, {n - 1} ran on the public program ids.")
+    _found(tree, "docs/reference/SECURITY.md", f"says {n - 1} exercised on public ids", f"has {n}")
     _add(tree, "docs/reference/METER.md", "Knos is seven programs on Solana devnet.")
     _found(tree, "docs/reference/METER.md", "counts seven programs")
 
@@ -157,7 +157,7 @@ def test_a_stage_cell_is_the_manifests_words_and_follows_the_manifest(tree):
     data["programs"]["knos_pay"]["on_chain"] = other
     (tree / dc.MANIFEST).write_text(json.dumps(data), encoding="utf-8")
     _found(tree, "README.md", "the table of programs is not what the manifest says")
-    assert "README.md" in dc.write(tree) and f"`knos-pay`, the escrow | `5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k` | runs `{other}`" in (tree / "README.md").read_text(encoding="utf-8")
+    assert "README.md" in dc.write(tree) and f"`knos-pay`, the payment program | `5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k` | runs `{other}`" in (tree / "README.md").read_text(encoding="utf-8")
 
 
 def test_no_document_names_a_time_for_the_pending_upgrade_that_the_upgrade_record_does_not_have(tree):
@@ -189,8 +189,8 @@ def test_no_document_names_a_time_for_the_pending_upgrade_that_the_upgrade_recor
     assert not [line for line in dc.problems(tree) if line.startswith(("CHANGELOG.md", "docs/reference/GOVERNANCE.md"))]
     _add(tree, "CHANGELOG.md", "The upgrade can execute from 2026-10-06 07:17 UTC.")
     _found(tree, "CHANGELOG.md", "names 2026-10-06 07:17 UTC", "in a sentence that says it was withdrawn")
-    _add(tree, "docs/reference/COMPARE.md", said)
-    _found(tree, "docs/reference/COMPARE.md", "names 2026-10-06 07:17 UTC")
+    _add(tree, "docs/reference/SECURITY.md", said)
+    _found(tree, "docs/reference/SECURITY.md", "names 2026-10-06 07:17 UTC")
     # the pending proposal's own time is the record's, so a document that gives it agrees with the record
     _add(tree, "docs/reference/METER.md", "The pending upgrade can execute from 2026-10-06 22:00 UTC.")
     assert not [line for line in dc.problems(tree) if line.startswith("docs/reference/METER.md")]
@@ -215,8 +215,8 @@ def test_a_fee_maximum_or_the_old_limit_said_as_current_fails(tree):
     _found(tree, "docs/reference/MARKET.md", "gives the fee a maximum")
     _add(tree, "docs/reference/METER.md", "An order holds between 5 and 500 USDC.")
     _found(tree, "docs/reference/METER.md", "gives the old limit of 500 as current")
-    _add(tree, "docs/reference/COMPARE.md", "The fee is at least 0.40 and has no maximum. An order holds at most 100,000 on devnet (it was 500 before 0.3.14).")
-    assert not [line for line in dc.problems(tree) if line.startswith("docs/reference/COMPARE.md")]
+    _add(tree, "docs/reference/SECURITY.md", "The fee is at least 0.40 and has no maximum. An order holds at most 100,000 on devnet (it was 500 before 0.3.14).")
+    assert not [line for line in dc.problems(tree) if line.startswith("docs/reference/SECURITY.md")]
     # a rate is not an order's limit: GitHub's "500 an hour" stands
     _add(tree, "docs/reference/LOAD.md", "GitHub's secondary limits: 80 content-generating requests a minute and 500 an hour; at most 500 requests in a burst.")
     assert not [line for line in dc.problems(tree) if line.startswith("docs/reference/LOAD.md")]
@@ -230,19 +230,19 @@ def test_an_unfilled_slot_two_values_for_one_fact_and_an_undated_total_fail(tree
     bench = json.loads((tree / "docs" / "bench.json").read_text(encoding="utf-8"))
     passing, paid = bench["release"]["tests_passing"]["value"], bench["devnet"]["stats"]["by_deployment"]["second"]["completed"]
     _add(tree, "docs/reference/DISCLOSURE.md", "[[stat: tests_passing]] tests pass.")
-    _add(tree, "docs/reference/COMPARE.md", f"{passing:,} tests pass.")       # the value a document states beside the slot
+    _add(tree, "docs/reference/SECURITY.md", f"{passing:,} tests pass.")       # the value a document states beside the slot
     _found(tree, "docs/reference/DISCLOSURE.md", "the slot [[stat: tests_passing]] is not filled")
     _found(tree, "one fact, one value", "tests_passing has 2 values")
     _swap(tree, "docs/reference/DISCLOSURE.md", "\n[[stat: tests_passing]] tests pass.\n", "")
-    _swap(tree, "docs/reference/COMPARE.md", f"\n{passing:,} tests pass.\n", "")
+    _swap(tree, "docs/reference/SECURITY.md", f"\n{passing:,} tests pass.\n", "")
     _add(tree, WHY, "From merge to paid took 57 seconds at the median.")
     _found(tree, "one fact, one value", "seconds_from_merge_to_paid has 2 values", "57 in docs/reference/WHY.md")
     _swap(tree, WHY, "\nFrom merge to paid took 57 seconds at the median.\n", "")
-    _add(tree, "docs/reference/COMPARE.md", f"{paid:,} tasks had been paid on the second deployment.")
+    _add(tree, "docs/reference/SECURITY.md", f"{paid:,} tasks had been paid on the second deployment.")
     _add(tree, WHY, "9 tasks had been paid on the second deployment.")
     _found(tree, "one fact, one value", "tasks_paid_on_the_second_deployment has 2 values")
     _swap(tree, WHY, "\n9 tasks had been paid on the second deployment.\n", "")
-    _swap(tree, "docs/reference/COMPARE.md", f"\n{paid:,} tasks had been paid on the second deployment.\n", "")
+    _swap(tree, "docs/reference/SECURITY.md", f"\n{paid:,} tasks had been paid on the second deployment.\n", "")
     assert dc.problems(tree) == []
     # a total of payments is a reading of one day: it says the day, and two documents do not give two totals
     _add(tree, "docs/reference/MARKET.md", "Knos's two deployments show 15 payments on devnet.")

@@ -1,4 +1,4 @@
-"""TASK-WORLD T11 test_science_briefs, live: each research brief passes the hosted knos_ready (POST /mcp) unchanged, or
+"""test_science_briefs, live: each research brief passes the hosted knos_ready (POST /mcp) unchanged, or
 after the one rewrite knos_ready itself proposes; prints each brief's label and criteria hash.
 
     python scripts/test_science_briefs.py <briefs.json>        (a JSON list of briefs)

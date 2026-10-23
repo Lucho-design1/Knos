@@ -68,7 +68,8 @@ class Page(HTMLParser):
             self.hrefs.append(a["href"])
         if tag in ("script", "img", "source", "video", "audio", "iframe") and a.get("src"):
             self.loads.append(a["src"])
-        if tag == "link" and a.get("rel") not in ("canonical", "alternate"):
+        # a preconnect to the site's own host downloads nothing (scripts/sync_brand.py PRECONNECT: the fonts' CORS connection)
+        if tag == "link" and a.get("rel") not in ("canonical", "alternate") and not (a.get("rel") == "preconnect" and a.get("href") == "https://drexthealpha.github.io"):
             self.loads.append(a.get("href", ""))
         self.h1 += tag == "h1"
         if tag == "details":

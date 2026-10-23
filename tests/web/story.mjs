@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url)), root = join(here, "../.."), web = join(root, "web");
 globalThis.matchMedia = () => ({ matches: false });
-const { STEPS, ASK, MERGED, FAILED, SENTENCE, REPO, FRONT, NEXT, STAGING, storyHtml, play, linkOf, renderStory } = await import(pathToFileURL(join(web, "story.js")).href);
+const { STEPS, MERGED, FAILED, SENTENCE, REPO, FRONT, NEXT, STAGING, storyHtml, play, linkOf, renderStory } = await import(pathToFileURL(join(web, "story.js")).href);
 
 let failed = 0;
 const ok = (what, cond, detail) => { if (!cond) failed++; console.log(`${cond ? "ok  " : "FAIL"} ${what}${cond || detail === undefined ? "" : `: ${JSON.stringify(detail)}`}`); };
@@ -30,7 +30,7 @@ const round = JSON.parse(readFileSync(join(web, "demo_data.json"), "utf8"));
 ok("the three transactions are the public round's, as the demo's data file has them", round.ids === "public" && [[0, round.fund.tx], [5, round.paid.tx], [4, round.replay.tx]].every(([n, tx]) => STEPS[n].url === `https://explorer.solana.com/tx/${tx}?cluster=devnet` && /public program ids/.test(STEPS[n].evidence)), round.ids);
 ok("the refusal is step two, and the last step is the deployment identity", STEPS[1].ends === "bad" && STEPS.filter((s) => s.ends === "bad").length === 1 && STEPS[6].path === "docs/reference/MANIFEST.md");
 ok("after the last beat: the reader's invoice at the front door, and no customer is quoted", NEXT === "Check your own invoice" && storyHtml().includes(`<a class="k-btn story-next" href="${FRONT}">${NEXT}</a>`) && story.includes(`[check it](${FRONT}). Nobody has paid for this yet.`) && STEPS.every((s) => !/customer|pilot|"/i.test(s.says)));
-ok("the ask is three needs, 12 words at most each, and the document's", ASK.length === 3 && ASK.every((a) => a.startsWith("Needed: ") && words(a) <= 12 && story.includes(a)), ASK.map(words));
+ok("no list of what the project still needs is on the page", !storyHtml().includes("story-ask") && !storyHtml().includes("Needed: "));
 ok("the document opens with the sentence and the number", story.includes(`**${SENTENCE}**`) && story.includes(`Of ${MERGED} merged agent pull requests claiming passing tests, ${FAILED} failed a test, build, lint or type check.`));
 
 const html = storyHtml();

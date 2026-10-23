@@ -53,16 +53,6 @@ def test_the_links_no_chain_shows_come_from_files(tmp_path):
     assert nl.from_repository(tmp_path) == {"receipt_implementations": 2, "decisions_from_record": 0, "reproductions_signed": 1}
 
 
-def test_market_prints_each_link_with_its_counter_and_reads_zero():
-    market = (ROOT / "docs" / "reference" / "MARKET.md").read_text(encoding="utf-8")
-    table = market.split("### The loop, link by link, as it is measured today")[1].split("\n## ")[0]
-    here = nl.from_repository(ROOT)
-    for name in nl.DEFINITIONS:
-        row = next(line for line in table.splitlines() if f"`{name}`" in line)
-        assert row.rstrip().endswith(f"| {here.get(name, 0)} |"), name
-    assert "scripts/network_loop.py" in table and "A larger log of events is not a network effect." in table
-
-
 def test_nothing_read_counts_no_reuse_and_no_saving():
     got = nl.rows(None, ROOT)["reuse"]
     assert (got["suppliers_reused"], got["onboarding_pairs"], got["onboarding_saved_s"]) == (0, 0, None)

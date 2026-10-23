@@ -48,7 +48,7 @@ def test_the_supplier_is_paid_on_the_forges_signature_while_the_buyer_does_nothi
     a = appeal.open_(repo="acme/app", pull=41, supplier="dana", by="dana", reason="the suite's fixture is stale", at=NOW, scope=str(job), key=n,
                      artifact=P.HEAD, evaluator="knos", run=7, terms_hash=j.terms.hex(), mode="tests", order_state="open")
     assert (a["verdict"], a["was"], a["state"], a["cost"]["supplier"]) == ("disputed", "rejected", "open", 0) and a["verdict"] in ids.VERDICTS
-    assert "stays in escrow" in a["money"] and "before the order's deadline" in a["money"] and c.balance(vault) == 100 * USDC
+    assert "stays held" in a["money"] and "before the order's deadline" in a["money"] and c.balance(vault) == 100 * USDC
     assert not c.send([back], buyer) and P.code(c) == 83                       # an open appeal gives the buyer no way out either
     with pytest.raises(appeal.Refused):                                          # only the supplier appeals its own rejection
         appeal.open_(repo="acme/app", pull=41, supplier="dana", by="the-buyer", reason="no", at=NOW, scope=str(job), key=n, terms_hash=j.terms.hex())

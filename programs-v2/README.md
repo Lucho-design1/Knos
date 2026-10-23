@@ -15,7 +15,7 @@ anyone can rebuild either one and compare it with the chain. Build on this folde
 | folder | what it does | devnet address | runs | build hash | built from commit | live since |
 |---|---|---|---|---|---|---|
 | `knos_oidc` | the verifier: checks on chain that a CI login token ([OIDC](../docs/WORDS.md#token-oidc)) was signed by its issuer, RS256 or ES256 | `FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W` | 2.2 | `a2df952d…f34e632` | `f03ec515d866` | 9 Oct 2026 (proposal 7) |
-| `knos_pay` | the [escrow](../docs/WORDS.md#escrow): holds money for a task and pays when a GitHub-signed token proves the work | `5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k` | 2.2 | `8b3c0440…f99867c` | `f8bcd9d51eda` | 9 Oct 2026 (proposal 8) |
+| `knos_pay` | the [payment program](../docs/WORDS.md#money-held-until-the-proof-passes): holds money for a task and pays when a GitHub-signed token proves the work | `5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k` | 2.2 | `8b3c0440…f99867c` | `f8bcd9d51eda` | 9 Oct 2026 (proposal 8) |
 | `knos_meter` | the [meter](../docs/WORDS.md#meter): counts each GitHub-signed check and charges it from prepaid credits | `FUMKkcE95x2kZUj1zZTCbgcYBmJ3WXPHL8pyA8J6anX` | 1.1 | `10f2b6cb…1a5e995e4` | `6eb81dd152bd` | 7 Oct 2026 (proposal 5) |
 | `knos_passkey` | a [wallet](../docs/WORDS.md#wallet) that only a [passkey](../docs/WORDS.md#passkey) can spend from | `FQPX9i5kQxLYKZyyPgM2fVK9am3w1LSk1Cuoer1sSY85` | 1.1 | `a9ce7a06…cac7cf81` | `6eb81dd152bd` | 7 Oct 2026 (proposal 6) |
 
@@ -85,7 +85,7 @@ can never get new code. So the fixes and new features went into a second set of 
 | program | what it does | devnet address | can it change? |
 |---|---|---|---|
 | `knos_oidc` | checks that a login token from GitHub Actions or GitLab CI ([OIDC](../docs/WORDS.md#token-oidc)) is really signed by them | `vpWym9azbPU5f2PH2a6n8c4RfmsyUeW2dMuWr1DSHcE` | no: it has no upgrade authority |
-| `knos_pay` | an [escrow](../docs/WORDS.md#escrow): holds money for a GitHub issue and pays when a token signed by GitHub proves the work | `9UzPFbh2A4e4sEPgngKG523FfYLnQ3qPfFVfFTTAdfDi` | no: it has no upgrade authority |
+| `knos_pay` | a [payment program](../docs/WORDS.md#money-held-until-the-proof-passes): holds money for a GitHub issue and pays when a token signed by GitHub proves the work | `9UzPFbh2A4e4sEPgngKG523FfYLnQ3qPfFVfFTTAdfDi` | no: it has no upgrade authority |
 
 These two have no version number of their own. The addresses are in [`program_ids.json`](program_ids.json).
 

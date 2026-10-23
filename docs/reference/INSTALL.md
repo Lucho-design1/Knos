@@ -519,7 +519,7 @@ in a public repository, `knos settle --neutral <pull request URL>` starts it by 
 start it from the Actions tab.
 
 It reads GitHub's public record of the pull request and the work order on Solana, and asks GitHub to sign only what
-that record supports. The escrow pays on that run when the order allows it, which is the default; an order funded
+that record supports. The payment program pays on that run when the order allows it, which is the default; an order funded
 with `neutral off` does not. This works with the live `knos_pay` (2.1 and later).
 
 ## The JavaScript client

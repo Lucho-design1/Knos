@@ -48,7 +48,7 @@ from typing import Any, Callable
 SITE = "https://drexthealpha.github.io/Knos"
 BOARD = SITE + "/tasks.json"
 FIRST = "Test USDC, no monetary value."
-# The published workflows' home since the 0.3.34 cutover: the `workflows-<sha12>` tags of the monorepo (docs/reference/MONOREPO.md),
+# The published workflows' home since the 0.3.34 cutover: the `workflows-<sha12>` tags of the monorepo,
 # the same commits as drexthealpha/knos-workflows. An order funded through drexthealpha/Knos/.github/workflows/<file>@<sha>
 # pins that name; one pinned to the old home before the cutover is as public, and keeps being paid.
 PUBLIC_WORKFLOWS = "drexthealpha/Knos"                 # where new tasks are funded through
@@ -98,7 +98,7 @@ def fetch(source: str = BOARD, get: Callable[[str], bytes] | None = None) -> dic
             raw = Path(source).read_bytes()
         doc = json.loads(raw.decode("utf-8"))
     except (OSError, ValueError) as why:
-        raise Stop(f"the task board at {source} could not be read: {' '.join(str(why).split())[:160]}. The escrow itself is on "
+        raise Stop(f"the task board at {source} could not be read: {' '.join(str(why).split())[:160]}. The held money itself is on "
                    "Solana: `knos bounty OWNER/REPO#ISSUE` reads what is funded on an issue without the board (a task "
                    "funded since the site was last built is not on the board yet)") from None
     if not isinstance(doc, dict) or doc.get("v") != 1 or not isinstance(doc.get("tasks"), list):
@@ -217,7 +217,7 @@ def explain(f: dict) -> dict:
         return out("held", f"The payment for {where} is held for {who}: no wallet is bound to that account and no address comment counted.",
                    f"{who} comments `{ADDRESS_LINE}` on {the}, or binds a wallet with `knos claim <address>`; then anyone comments `/knos settle`.")
     if not orders:
-        return out("unfunded", f"Nothing is in escrow for {where}, so a merge had nothing to pay.", f"{tip}: a tip is funded and paid after the merge.")
+        return out("unfunded", f"Nothing is held for {where}, so a merge had nothing to pay.", f"{tip}: a tip is funded and paid after the merge.")
     live = [o for o in orders if o.get("state") == "open"]
     if not live:
         states = ", ".join(sorted({str(o.get("state")) for o in orders}))
@@ -457,7 +457,7 @@ def register(app, help_lines: list | None = None) -> None:
               days: int = typer.Option(14, "--days", help="days until unpaid money goes back to the wallet (1 to 90)"),
               mint: str = typer.Option("", "--mint", help="the token's mint (default: test USDC)"),
               keypair: str = typer.Option("", "--keypair", help="the funding wallet's keypair file"),
-              checks: str = typer.Option("none", "--checks", help="GitHub checks the escrow also requires, comma-separated, or none"),
+              checks: str = typer.Option("none", "--checks", help="GitHub checks the payment program also requires, comma-separated, or none"),
               reruns: int = typer.Option(1, "--reruns", help="how many times the referee judges again before a verdict stands"),
               send: bool = typer.Option(False, "--send", help="open the issue and post the seal with gh, as you (money is never moved here)"),
               as_json: bool = typer.Option(False, "--json")) -> None:

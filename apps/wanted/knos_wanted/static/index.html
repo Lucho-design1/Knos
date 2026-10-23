@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knos. Check demand</title>
-<meta name="description" content="Paste a paper or an idea: Qloo's demand verdict, then pre-orders, milestones in escrow on Solana devnet, paid only on proof.">
+<meta name="description" content="Paste a paper or an idea: Qloo's demand verdict, then pre-orders, milestones held on Solana devnet until the proof passes.">
 <link rel="stylesheet" href="/static/brand/tokens.css">
 <link rel="stylesheet" href="/static/style.css">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -46,7 +46,6 @@
         <a href="https://drexthealpha.github.io/Knos/#install">Install</a>
         <a href="https://drexthealpha.github.io/Knos/#records">Records</a>
         <a href="https://drexthealpha.github.io/Knos/#network">Numbers</a>
-        <a href="https://drexthealpha.github.io/Knos/#judges">Check every claim yourself</a>
         <a href="https://drexthealpha.github.io/Knos/faq.html">Questions</a>
       </div>
     </div>
@@ -228,7 +227,7 @@ ${src(h, price.src)}</section>
   // a link that names an idea (?q=, from the fields page) runs its check at once: one press, already pressed
   const asked = new URLSearchParams(location.search).get("q");
   if (asked) { q.value = asked.slice(0, 500); ask(q.value); }
-  // proof first: the latest real verdict this server reached, drawn at load and labelled as a past check (T3);
+  // proof first: the latest real verdict this server reached, drawn at load and labelled as a past check;
   // the visitor's own check replaces it
   const seen = (el, then) => {
     if (!("IntersectionObserver" in window)) return then();
@@ -273,7 +272,7 @@ ${src(h, price.src)}</section>
   <li data-v="cost"><b>$0</b> per check</li>
   <li data-v="speed"><b>…</b> median to verdict</li>
   <li data-v="friction"><b>2 steps</b>, no sign-up</li>
-  <li data-v="trust"><b>Escrow</b> on devnet</li>
+  <li data-v="trust"><b>Held</b> until proof, on devnet</li>
   <li data-v="capability"><b>2.08x</b> fewer tokens, <b>70% vs 5%</b> pass</li>
   <li data-v="access"><b>7 fields</b>, any country, phone</li>
   <li data-v="status"><b>Ready cards</b></li>
@@ -342,7 +341,7 @@ ${src(h, price.src)}</section>
   <!-- FUNDER -->
   <section id="v-fund" class="view" hidden>
     <div class="row spread"><h1 data-i18n="fund_t">Back a milestone</h1><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
-    <p data-i18n="fund_p">Your money waits in escrow. The maker is paid only on proof.</p>
+    <p data-i18n="fund_p">Your money is held until the proof passes. The maker is paid only on proof.</p>
     <ul id="fundList" class="list"></ul>
     <h2 data-i18n="lend_t">Lend against pre-orders</h2>
     <p class="small muted" data-i18n="lend_p">Advance a maker cash now. The release repays you.</p>
@@ -361,7 +360,7 @@ ${src(h, price.src)}</section>
   <!-- MAKER -->
   <section id="v-make" class="view" hidden>
     <div class="row spread"><h1 data-i18n="make_t">Milestones and payouts</h1><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
-    <p class="small muted" data-i18n="make_p">Post a public page with the claim id. Referees check it; escrow releases.</p>
+    <p class="small muted" data-i18n="make_p">Post a public page with the claim id. Referees check it; the held money is released.</p>
     <ul id="makeList" class="list"></ul>
   </section>
 
@@ -372,7 +371,7 @@ ${src(h, price.src)}</section>
       <p>A product's road, milestone by milestone. Each is paid only on proof.</p>
       <ul id="projList" class="plist"></ul>
       <section id="poolBox" class="card" hidden aria-labelledby="poolH"><h2 id="poolH">Pool across milestones</h2>
-        <p class="small">One amount over several milestones. Each gets its own escrow.</p>
+        <p class="small">One amount over several milestones. Each is held on its own.</p>
         <div id="poolPick"></div>
         <label for="poolUnits">Test units in total</label><input id="poolUnits" type="number" min="10" value="20" inputmode="numeric">
         <button type="button" id="poolBtn">Pool with my passkey</button><p id="poolOut" class="small" aria-live="polite"></p></section>
@@ -438,7 +437,7 @@ ${src(h, price.src)}</section>
     <select id="lang" class="lang" aria-label="Language"></select>
     <button id="ux-help-btn" class="quiet ux-help-btn" type="button" aria-label="Help for this page" aria-controls="ux-help">?</button>
   </div>
-  <p data-i18n="footer">Qloo taste data is read on the server only. Escrow on Solana devnet with test units: no real money. MIT licensed.</p>
+  <p data-i18n="footer">Qloo taste data is read on the server only. Money is held on Solana devnet in test units: no real money. MIT licensed.</p>
   <p><a href="/verify" data-i18n="verify_link">How we verify</a> · <a href="https://github.com/drexthealpha/Knos" rel="noopener">GitHub</a></p>
 </footer>
 <script src="/static/ux.js" defer></script>

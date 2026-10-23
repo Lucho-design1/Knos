@@ -14,8 +14,8 @@ Fees: from config/fees.yaml through knos.money.fees_config, nothing typed here:
   funding     0 when the pre-order is locked (knos_pay holds the payout fee with the money)
   payout      the on-chain fee, taken by knos_pay at release to the maker (live)
   graduation  Knos's fee on a pre-order pool released after the product graduates (decided, collected off chain)
-  demand_check   10 a month free (decided 23 Oct 2026); a deep demand check 500 USD by card once the company exists
-  release        the 1% release fee (decided 23 Oct 2026); knos_pay charges the payout fee until a timelocked upgrade
+  demand_check   10 a month free; a deep demand check 500 USD by card once the company exists
+  release        the 1% release fee; knos_pay charges the payout fee until a timelocked upgrade
 """
 from __future__ import annotations
 

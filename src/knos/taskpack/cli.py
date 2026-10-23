@@ -61,7 +61,7 @@ def register(app, help_lines: list | None = None) -> None:
                    issue_body: str = typer.Option("", "--issue-body"),
                    test_cmd: str = typer.Option("", "--test-cmd", help="the command that runs the hidden tests; {tests} is their paths, {python} this Python"),
                    encrypt: bool = typer.Option(False, "--encrypt", help="encrypt the sealed files; the key is written beside the package (<out>/<task id>.key), never inside it, and never printed"),
-                   price: int = typer.Option(-1, "--price", help="a sale price in millionths of USDC, to show the fee split (prices are a founder decision)")) -> None:
+                   price: int = typer.Option(-1, "--price", help="a sale price in millionths of USDC, to show the fee split")) -> None:
         """Export a merged pull request and its issue as a sealed task package, after checking that its tests fail before the fix and pass after it."""
         try:
             if merge:

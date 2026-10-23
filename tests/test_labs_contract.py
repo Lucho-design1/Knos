@@ -42,7 +42,7 @@ def test_every_example_is_quoted_from_fixtures_with_a_positive_price():
 @pytest.mark.parametrize("ref", [None, ""])
 def test_no_order_without_money_in_escrow(ref):
     for a in labs.ADAPTERS.values():
-        with pytest.raises(ValueError, match="escrow"):
+        with pytest.raises(ValueError, match="no order without held money"):
             a.order(a.example, ref)
 
 
@@ -86,12 +86,6 @@ def test_public_view_shows_only_hashes_timing_and_verdicts():
                                                 (30, True, (30, False)), (30, False, (1, True)), (3, False, (1, True))])
 def test_leitner_step(days, passed, want):
     assert leitner.step(days, passed) == want
-
-
-def test_the_adaptyv_partner_program_steps_are_written_for_the_founder():
-    page = (ROOT / "docs" / "reference" / "LABS.md").read_text(encoding="utf-8")
-    assert "Adaptyv Partner Program" in page and "adaptyvbio.com/api/apply" in page and "What the founder does" in page
-    assert "Knos has not applied" in page
 
 
 def test_the_robotics_example_runs_its_sealed_test_on_the_recorded_runs():

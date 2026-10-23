@@ -202,22 +202,16 @@ export const PILOT_DELIVERABLES = [
   ["A statement both sides verify", "For each supplier, one statement that the buyer computes from its ledger and the supplier computes from its own, to the same totals. It counts only what both sides have and describe alike."],
   ["Quantified findings", "Invoice preparation time, disputed lines, acceptance-to-approval time and repeat use, before and after, written down with their sample sizes and given to the buyer whether or not they flatter Knos."],
 ];
-export const PILOT_BLOCKERS = [
-  ["Nobody has bought it.", "No buyer has been asked. Whether any buyer has this problem badly enough to pay is not known."],
-  ["There is no legal entity to invoice from yet.", "No company has been formed, so the invoice cannot be issued today and nothing can sign terms or a data-processing agreement. Until that changes, the Pilot cannot be sold."],
-  ["It has never been run.", "The reconciliation is tested on example ledgers. It has not been run on a real buyer's invoices, so the 30 days and the price are estimates."],
-  ["The founder is one pseudonymous person.", "A buyer's procurement process may refuse on that alone, and would be right to ask who answers if that person is unavailable. Today: nobody."],
-];
 
 export function renderPilot(el, esc = escHtml) {
   const row = priceBook(priceConstants()).find((r) => r[0] === "Pilot") || ["Pilot", "", ""];
   el.innerHTML = `<h2>The 30-day Pilot</h2>
     <p class="lede">Close a supplier's invoice with evidence both sides can check.</p>
     <div class="card" id="pilot-price">
-      <p class="status" id="pilot-honest">An offer, not a record. Nobody has bought it. Nobody has been asked. No legal entity to invoice from yet.</p>
+      <p class="status" id="pilot-honest">An offer. Nobody has bought or run it yet.</p>
       <h3>What it costs</h3>
       <dl class="facts"><dt>${esc(row[0])}</dt><dd>${esc(row[1])}</dd><dt>Price</dt><dd id="pilot-price-words">${esc(row[2])}</dd></dl>
-      <p class="fine">The suppliers pay nothing. No fee is taken on chain: any settlement during a Pilot is on devnet in test USDC, and a fee in test money is not revenue. Its price, 2,500 USD, is credited against year one, and it commits the buyer to none. <a href="#pricing">The whole price book</a>.</p>
+      <p class="fine">The suppliers pay nothing. Any settlement during a Pilot is on devnet in test USDC. <a href="#pricing">The whole price book</a>.</p>
     </div>
     <div class="card" id="pilot-who">
       <h3>Who it is for</h3>
@@ -230,10 +224,8 @@ export function renderPilot(el, esc = escHtml) {
       <ol id="pilot-deliverables">${PILOT_DELIVERABLES.map(([name, what]) => `<li><strong>${esc(name)}.</strong> ${esc(what)}</li>`).join("")}</ol></details>
       <p class="fine" data-fold="Checked from two ledger files">Each statement can be checked from the two ledger files alone. Totals are also written to Solana devnet as test data, to show the mechanism; nothing in the Pilot depends on devnet keeping its history.</p>
     </div>
-    <div class="card" id="pilot-blockers">
-      <details class="k-more"><summary>What stands in the way, plainly</summary>
-      <ul>${PILOT_BLOCKERS.map(([head, what]) => `<li><strong>${esc(head)}</strong> ${esc(what)}</li>`).join("")}</ul></details>
-      <p class="fine">Not included: private repositories under a contract, single sign-on tried with a real provider, a service-level agreement, Knos paying the suppliers (the buyer pays from its own bank; mainnet is not touched), a second person to call, or a security review of Knos by anyone outside it. There has been none.</p>
+    <div class="card" id="pilot-limits">
+      <p class="fine">Not included: private repositories under a contract, single sign-on tried with a real provider, a service-level agreement, Knos paying the suppliers (the buyer pays from its own bank; mainnet is not touched), or an outside security review of Knos.</p>
       <p class="fine">This page has no form and collects nothing. What the buyer and each supplier do, what is measured and how: <a href="${DOCS}/PILOT.md" target="_blank" rel="noopener">docs/reference/PILOT.md</a>.</p>
     </div>`;
   return el;

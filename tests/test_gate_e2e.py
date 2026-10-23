@@ -1,4 +1,4 @@
-"""Knos Gate end to end on a small repository made here (synthetic, no network): the five cases TASK-ADOPTION names.
+"""Knos Gate end to end on a small repository made here (synthetic, no network): its five cases.
 
     a pull request that edits tests is refused (and no test runs)
     a pull request outside scope is refused

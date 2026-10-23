@@ -595,7 +595,7 @@ FUND_REFUSALS = {
     "a token dated ahead of the chain": (lambda c, n: fund_jwt(c, n, iat=c.now() + 302, exp=c.now() + 602), TERMS, "the token's times are not GitHub's"),
     "a token that claims to live for hours": (lambda c, n: fund_jwt(c, n, exp=c.now() + 3602), TERMS, "the token's times are not GitHub's"),
     "an expired token": (lambda c, n: fund_jwt(c, n, iat=c.now() - 4000, exp=c.now() - 3700), TERMS, "token expired"),
-    "a GitLab token": (_gitlab, TERMS, "the escrow takes GitHub's tokens only"),
+    "a GitLab token": (_gitlab, TERMS, "the payment program takes GitHub's tokens only"),
     "a signature that is not GitHub's": (_forged, TERMS, "the signature is not the issuer's"),
     "a key id GitHub does not publish": (lambda c, n: sign_jwt(signing_key(), github_claims(aud=pay.fund_audience(n, 5 * USDC, 0, TH, c.bal)), header={"alg": "RS256", "kid": "gone"}),
                                          TERMS, "the issuer's key set has no key 'gone'"),
@@ -738,7 +738,7 @@ def _job(env, **kw) -> tuple[int, Pubkey]:
 PAY_REFUSALS = {
     "a fund.yml token": (lambda c, n: pay_jwt(c, REPO, n, 77, file="fund.yml"), "not from the workflow or the repository the audience names"),
     "a run in another repository": (lambda c, n: token(c, pay.pay_audience(REPO, n, 77, "a" * 40, TH, 0), repository_id=111), "not from the workflow or the repository the audience names"),
-    "an issue with no bounty": (lambda c, n: pay_jwt(c, REPO, n + 100_000, 77), "no bounty is in escrow for this issue (never funded, or already paid or refunded)"),
+    "an issue with no bounty": (lambda c, n: pay_jwt(c, REPO, n + 100_000, 77), "no bounty is held for this issue (never funded, or already paid or refunded)"),
     "prove.yml of another repository": (lambda c, n: pay_jwt(c, REPO, n, 77, wf_repo="evil/Knos"), "no open bounty on this issue pins this workflow at this commit"),
     "prove.yml at another commit": (lambda c, n: pay_jwt(c, REPO, n, 77, wf_sha="d" * 40), "no open bounty on this issue pins this workflow at this commit"),
     "other terms": (lambda c, n: pay_jwt(c, REPO, n, 77, terms=_OTHER), "the open bounty on this issue has other terms than the ones this token was made for"),
@@ -747,7 +747,7 @@ PAY_REFUSALS = {
     "payee 0": (lambda c, n: pay_jwt(c, REPO, n, 0), "malformed audience or claims"),
     "a head that is not a commit": (lambda c, n: token(c, pay.pay_audience(REPO, n, 77, "main", TH, 0)), "malformed audience or claims"),
     "an address that is not a key": (lambda c, n: token(c, pay.pay_audience(REPO, n, 77, "a" * 40, TH, 0)[:-1] + "0OIl"), "malformed audience or claims"),
-    "the escrow's own account as the address": (lambda c, n: pay_jwt(c, REPO, n, 77, pay.auth_pda()), "the address this token names is the escrow's own account"),
+    "the escrow's own account as the address": (lambda c, n: pay_jwt(c, REPO, n, 77, pay.auth_pda()), "the address this token names is the payment program's own account"),
     "a self-hosted runner": (lambda c, n: pay_jwt(c, REPO, n, 77, runner_environment="self-hosted"), "not from a GitHub-hosted runner"),
 }
 
@@ -952,7 +952,7 @@ def test_a_token_relayed_twice_or_by_two_relayers_is_done_once(env):
                      "paid": [{"job": "", "amount": 5 * USDC, "fee": P(125_000, 50_000), "mint": "", "to": str(wallet), "held_until": None}]}, again
     assert net.txs == n3 and relay.precheck(net, other, proof, None, JWKS, now=c.now()) == again
     # a proof for someone who was never paid for that issue is still what it was
-    assert refused(env, pay_jwt(c, repo, n, user()), None, "no bounty is in escrow for this issue")
+    assert refused(env, pay_jwt(c, repo, n, user()), None, "no bounty is held for this issue")
 
 
 def test_a_token_carried_before_is_known_by_what_it_left_on_chain_and_by_nothing_else(env):
@@ -1542,12 +1542,12 @@ ORDER_PAY_REFUSALS = {
     "a re-run": (lambda c, o: order_pay_jwt(c, o, [(77, 10_000, None)], run_attempt=2), "only a run's first attempt can pay an order"),
     "other terms": (lambda c, o: order_pay_jwt(c, o, [(77, 10_000, None)], terms=_OTHER), "the order has other terms than the ones this token was made for"),
     "a proof made before the funding": (lambda c, o: order_pay_jwt(c, o, [(77, 10_000, None)], iat=c.now() - 1800, exp=c.now() - 1500), "this token is older than the order"),
-    "an order that does not exist": (lambda c, o: order_pay_jwt(c, Keypair().pubkey(), [(77, 10_000, None)]), "no such order is in escrow"),
+    "an order that does not exist": (lambda c, o: order_pay_jwt(c, Keypair().pubkey(), [(77, 10_000, None)]), "no such order is held"),
     "shares that do not add up": (lambda c, o: order_pay_jwt(c, o, [(77, 6000, None), (78, 3000, None)]), "malformed audience or claims"),
     "five payees": (lambda c, o: order_pay_jwt(c, o, [(70 + k, 2000, None) for k in range(5)]), "malformed audience or claims"),
     "a payee named twice": (lambda c, o: order_pay_jwt(c, o, [(77, 5000, None), (77, 5000, None)]), "malformed audience or claims"),
     "a split with a payee nobody can pay yet": (lambda c, o: order_pay_jwt(c, o, [(user(), 5000, Keypair().pubkey()), (user(), 5000, None)]), "a split is paid whole or not at all"),
-    "the escrow's own account as an address": (lambda c, o: order_pay_jwt(c, o, [(77, 10_000, pay.auth_pda())]), "is the escrow's own account"),
+    "the escrow's own account as an address": (lambda c, o: order_pay_jwt(c, o, [(77, 10_000, pay.auth_pda())]), "is the payment program's own account"),
     "a standing order's payee with no wallet": (lambda c, o: order_pay_jwt(c, _standing(c), [(77, 10_000, None)], terms=__import__("_order").TERMS), "a standing order, and one with a holdback, is never held"),
     "a self-hosted runner": (lambda c, o: order_pay_jwt(c, o, [(77, 10_000, None)], runner_environment="self-hosted"), "not from a GitHub-hosted runner"),
     # the words of error 103, as the client has them
@@ -1621,7 +1621,7 @@ def test_an_orders_fund_token_is_refused_before_any_fee_and_the_faucet_funds_one
     # the deployed 2.0 escrow knows no order: its relay says so, and spends nothing
     monkeypatch.setattr(relay, "_VERSION", {("litesvm", pay.PAY_ID): 0})
     for jwt in (order_fund_jwt(c, issue()), order_pay_jwt(c, first, [(77, 10_000, None)])):
-        assert refused(oenv, jwt, TERMS, "the escrow on this cluster is version 2.0, which takes no such token yet")
+        assert refused(oenv, jwt, TERMS, "the payment program on this cluster is version 2.0, which takes no such token yet")
     assert relay.refund_orders_due(net, c.payer, c.now()) == [] and relay.settle_orders_held(net, c.payer) == []
 
 
@@ -1755,8 +1755,8 @@ def test_a_comment_in_its_judge_repository_funds_a_private_order_and_its_wallets
             (ghe(pay.order_pay_audience(public, "a" * 40, TH, pay.MERGE, 7, payees)), None, only, "pay"),
             (ghe(pay.order_pay_audience(of_wallet, "a" * 40, TH, pay.MERGE, 7, payees)), None, only, "pay"),
             (proof(second, key=thief), None, only, "pay"),
-            (ghe(pay.rule_audience(second, payees), **by_hand(seller)), None, "the escrow takes GitHub's tokens only", "rule"),
-            (private_fund_jwt(c, scope, judge_repo, seq=2, key=company, iss=GHE), beside, "the escrow takes GitHub's tokens only", "fund"),
+            (ghe(pay.rule_audience(second, payees), **by_hand(seller)), None, "the payment program takes GitHub's tokens only", "rule"),
+            (private_fund_jwt(c, scope, judge_repo, seq=2, key=company, iss=GHE), beside, "the payment program takes GitHub's tokens only", "fund"),
             (proof(second, iss="https://ci.nobody.example"), None, "the verifier holds no key of its issuer that signed it", "pay"),
             (proof(second, key=_STRANGER), None, "the verifier holds no key of its issuer that signed it", "pay")):
         assert refused(oenv, jwt, terms, want)["kind"] == kind
@@ -1785,7 +1785,7 @@ def test_a_comment_in_its_judge_repository_funds_a_private_order_and_its_wallets
     # the escrow takes nothing a registered issuer signed, and the relay says so for nothing
     _n, third = ordered(oenv, options=pay.opts(judge_repo_id=judge_repo))
     theirs = token(c, pay.order_pay_audience(third, "a" * 40, TH, pay.MERGE, 7, payees), key=ci, iss=url, repository_id=judge_repo)
-    assert "a token of another issuer is verified for other programs to read" in refused(oenv, theirs, None, "the escrow takes GitHub's tokens only")["why"]
+    assert "a token of another issuer is verified for other programs to read" in refused(oenv, theirs, None, "the payment program takes GitHub's tokens only")["why"]
 
 
 # -- a command (Reserve, Cancel) and a revert: the relay refuses what the escrow refuses, and carries what it takes ------------------
@@ -2018,7 +2018,7 @@ def test_an_order_is_reserved_then_cancelled_and_its_taker_gets_the_kill_fee(oen
     assert go(oenv, take, None, c.fund()) == {**r, "sigs": r["sigs"][-1:], "already": True}
     other = user()
     assert refused(oenv, token(c, pay.take_audience(order, other, 5), actor_id=other), None, f"the order is reserved for GitHub user id {taker}")["kind"] == "take"
-    for aud, want in ((pay.take_audience(Keypair().pubkey(), taker, 5), "no such order is in escrow"), (f"knos3:take:{order}:{taker}", "malformed audience or claims")):
+    for aud, want in ((pay.take_audience(Keypair().pubkey(), taker, 5), "no such order is held"), (f"knos3:take:{order}:{taker}", "malformed audience or claims")):
         assert refused(oenv, token(c, aud, actor_id=taker), None, want)["kind"] == "take"
     # the commenter who funded it gives notice: seven days, or the order's own deadline if that is sooner
     cancel = token(c, pay.cancel_audience(order), actor_id=MAINT, **COMMENT)

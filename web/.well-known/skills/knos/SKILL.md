@@ -26,7 +26,7 @@ signed receipt to attach to it. Use it every time you are about to open a pull r
 ## When to Use
 
 - You committed a change and are about to open a pull request (or push to one).
-- You are claiming a Knos bounty (a GitHub issue with test USDC in escrow on Solana devnet).
+- You are claiming a Knos bounty (a GitHub issue with test USDC held on Solana devnet).
 - A person asks whether a change is ready to submit.
 
 ## Procedure

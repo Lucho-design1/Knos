@@ -55,7 +55,7 @@ async function loadProjects() {
     const done = p.milestones.filter((m) => m.status === "released").length;
     return `<li class="card pcard"><a href="#projects=${p.id}"><strong>${esc(p.title)}</strong></a>
       <p class="small muted">${esc(p.template_name)}${p.regulatory.length ? " · regulated (" + esc(p.regulatory.join(", ").toUpperCase()) + ")" : ""}${p.sandbox ? " · one-day sandbox" : ""}</p>
-      <p class="small">${done} of ${p.milestones.length} milestones released · ${locked} test units in escrow</p></li>`;
+      <p class="small">${done} of ${p.milestones.length} milestones released · ${locked} test units held</p></li>`;
   }).join("") : `<li class="muted">No projects yet. Open the first one above.</li>`;
   renderPool(got.projects);
 }
@@ -93,7 +93,7 @@ function groundingLine(p) {
 // the project's credits (Token-2022 with the knos_hook transfer hook): they move only into this project's escrow
 function creditsLine(p) {
   const c = p.credits;
-  return c && c.mint ? `<p class="small" id="credits">Project credits: <a class="mono" href="https://explorer.solana.com/address/${esc(c.mint)}?cluster=devnet" rel="noopener">${esc(c.mint.slice(0, 8))}…</a>, held only in escrow (a transfer hook refuses any other account).</p>` : "";
+  return c && c.mint ? `<p class="small" id="credits">Project credits: <a class="mono" href="https://explorer.solana.com/address/${esc(c.mint)}?cluster=devnet" rel="noopener">${esc(c.mint.slice(0, 8))}…</a>, held only in the project's own account (a transfer hook refuses any other account).</p>` : "";
 }
 // who is working on this project, each a separate role you can see: the researcher (what an agent on a milestone is
 // handed: the locked intent), the referee (the latest attempt's verdict), the funder (what escrow holds and the rule)
@@ -104,7 +104,7 @@ function agents(p) {
   return `<ul class="list small" id="agents-strip" aria-label="Who is working on this">
     <li><strong>Researcher</strong>: <a href="/api/project/prompt?project=${esc(p.id)}&milestone=${esc(m.key)}" rel="noopener">what an agent on "${esc(m.name)}" is handed</a></li>
     <li><strong>Referee</strong>: ${a ? `attempt ${esc(a.id)}, ${esc(a.status)}` : "waiting for an attempt"}</li>
-    <li><strong>Funder</strong>: ${m.locked_units} test units in escrow; paid only on a result and an independent check</li></ul>`;
+    <li><strong>Funder</strong>: ${m.locked_units} test units held; paid only on a result and an independent check</li></ul>`;
 }
 const KEPT = {};          // "project:milestone index" -> the milestone's last answer, kept across loadProject's redraw
 // every decision on the project in plain words, newest first: each brief version (Ready or not, and why), and each
@@ -123,7 +123,7 @@ async function loadProject(id) {
   const p = V.project = await api("/api/project?id=" + id);
   $("projHead").innerHTML = `<p class="small"><a href="#projects">← All projects</a></p><h2>${esc(p.title)}</h2>
     <p class="small muted">${esc(p.template_name)} · opened by ${esc(p.owner_label || "a signed-in user")}${p.team ? " for " + esc(p.team) : ""} · ${esc(p.money)}</p>
-    <p class="small">Each milestone has its own escrow. It pays on a result plus an independent check. A missed deadline refunds and reopens it.</p>
+    <p class="small">Each milestone's money is held on its own. It pays on a result plus an independent check. A missed deadline refunds and reopens it.</p>
     <div class="row"><button type="button" class="quiet" id="refBtn">Get my referral link</button>
       <a class="button ghost small" href="/api/company/export?project=${p.id}&format=journal">Ledger CSV</a></div><p id="refOut" class="small"></p>
     ${readyLine(p)}${groundingLine(p)}${creditsLine(p)}${changesBlock(p)}${agents(p)}${decisions(p)}
@@ -199,13 +199,13 @@ function msCard(p, m, i) {
   const orders = m.orders.map((o) => `<li class="small"><a href="${o.explorer}" rel="noopener">${short(o.order)}</a> <span class="muted" data-order="${esc(o.order)}"></span>${o.receipt && o.receipt.pledge && o.receipt.pledge.signature ? ` · <a href="${X(o.receipt.pledge.signature)}" rel="noopener">pledge receipt</a>` : ""}${o.finality && o.finality.seconds ? ` · release finalized in ${o.finality.seconds} s (${esc(o.finality.via)})` : ""}${o.receipt && o.receipt.refund && o.receipt.refund.burned ? ` · <a href="${X(o.receipt.refund.burned)}" rel="noopener">receipt burned on refund</a>` : ""} ${o.private ? (o.receipt && o.receipt.private && o.receipt.private.range_signature ? `amount private (<a href="${X(o.receipt.private.range_signature)}" rel="noopener">range proof</a>)` : "amount private") : o.units + " units"} · ${esc(o.kind)}${o.grant ? " (" + esc(o.grant.agency) + " " + esc(o.grant.id) + ")" : ""} · <strong>${esc(o.status)}</strong>${o.signatures && o.signatures.refund ? ` · <a href="${X(o.signatures.refund)}" rel="noopener">refund</a>` : ""}${o.signatures && (o.signatures.referee_2_pass || o.signatures.referee_group_pass) ? ` · <a href="${X(o.signatures.referee_2_pass || o.signatures.referee_group_pass)}" rel="noopener">release</a>` : ""}${trustLine(o.trust)}</li>`).join("");
   const atts = m.attempts.map((a) => `<li class="small">${esc(a.maker)} · <strong>${esc(a.status)}</strong>${a.result ? ` · <a href="${esc(a.result.url)}" rel="noopener nofollow">result</a>` : ""}${a.check ? ` · <a href="${esc(a.check.url)}" rel="noopener nofollow">check</a> by ${esc(a.check.by)}` : ""}${a.result ? ` · <a href="/api/attest?project=${p.id}&milestone=${m.key}&attempt=${a.id}" rel="noopener">in-toto attestation</a>` : ""} <span class="mono muted">${esc(a.id)}</span>${a.verdict && a.status === "verdict posted" ? ` · <span id="verdict-${esc(a.id)}">verdict: pass, releases ${new Date(a.verdict.ends_s * 1000).toLocaleTimeString()} unless disputed</span> <button type="button" class="quiet" data-dispute="${esc(a.id)}">Dispute</button>` : ""}${a.status === "disputed" ? " · money stays locked" : ""}${(a.attestations || []).map((t) => ` · <a href="/api/track?wallet=${esc(t.wallet)}" rel="noopener" class="track">${esc(t.role)} track record</a>`).join("")}${onchainLine(a.onchain)}</li>`).join("");
   return `<li class="card ms" id="ms${i}"><div class="row spread"><h3>${esc(m.name)}</h3><span class="chip st-${esc(m.status)}">${esc(STATUS[m.status] || m.status)}</span></div>
-    ${reg}<p class="small muted">Deadline ${dur(m.deadline_s)} after funding · ${m.locked_units} test units in escrow · ${m.amc_units} committed (AMC)${m.excluded_makers ? ` · ${m.excluded_makers} maker(s) missed it` : ""}</p>
+    ${reg}<p class="small muted">Deadline ${dur(m.deadline_s)} after funding · ${m.locked_units} test units held · ${m.amc_units} committed (AMC)${m.excluded_makers ? ` · ${m.excluded_makers} maker(s) missed it` : ""}</p>
     ${orders ? `<ul class="list">${orders}</ul>` : ""}${atts ? `<p class="small"><strong>Attempts</strong> (up to 3 in parallel)</p><ul class="list">${atts}</ul>` : ""}
     ${cap ? `<details><summary class="small">Where this work can be bought</summary><ul class="list small">${cap}</ul><p class="small muted">${esc(m.route.rule)}</p></details>` : ""}
     ${m.game ? `<p class="small">Code-scored: attempts also run as a <a href="#contribute">knos.game round</a>.</p>` : ""}
     ${m.status === "released" ? "" : `<details><summary>Fund or commit</summary>
       <label for="u${i}">Test units</label><input id="u${i}" type="number" min="5" max="1000" value="10" inputmode="numeric">
-      <label for="k${i}">As</label><select id="k${i}" class="field"><option value="funder">a funder (escrow now)</option><option value="grant">a grant (escrow now, labelled)</option><option value="amc">a buyer commitment (pays only when it verifies)</option></select>
+      <label for="k${i}">As</label><select id="k${i}" class="field"><option value="funder">a funder (held now)</option><option value="grant">a grant (held now, labelled)</option><option value="amc">a buyer commitment (pays only when it verifies)</option></select>
       <label class="small"><input type="checkbox" id="pv${i}"> Keep the amount private (encrypted, proven on devnet)</label>
       <div id="g${i}" hidden><label for="ga${i}">Grant agency</label><input id="ga${i}" maxlength="120"><label for="gi${i}">Grant id</label><input id="gi${i}" maxlength="120"></div>
       <button type="button" id="f${i}" ${p.ready && p.ready.ready && p.status !== "cancelled" ? "" : "disabled"}>Approve with my passkey</button><p class="small muted">${p.ready && p.ready.ready ? "Test units. Refunds go back to your passkey wallet." : "Locked until the brief is Ready to fund."}</p>${p.ready && p.ready.ready && p.status !== "cancelled"
@@ -241,7 +241,7 @@ function wire(p, m, i) {
       const priv = $("pv" + i) && $("pv" + i).checked;
       const f = await KnosPasskey.approve(await api("/api/project/fund", { passkey: true, project: p.id, milestone: m.key, units, kind: k.value, grant, ref: ref(), private: priv }), api);
       const sig = (f.signatures || {}).lock;
-      out(`Locked in escrow.${sig ? ` <a href="${X(sig)}" rel="noopener">On devnet</a>.` : ""} <span id="fin${i}">Waiting for finality…</span> <span id="pz${i}"></span>`);
+      out(`Held until the proof passes.${sig ? ` <a href="${X(sig)}" rel="noopener">On devnet</a>.` : ""} <span id="fin${i}">Waiting for finality…</span> <span id="pz${i}"></span>`);
       if (priv && window.Knos && Knos.privatePledge) {
         $("pz" + i).textContent = "Encrypting the amount and proving it…";
         Knos.privatePledge(f.order, units, api).then((r) => { const e = $("pz" + i), z = (r.receipt || {}).private || {};
@@ -336,7 +336,7 @@ async function checkBrief() {
     const x = t.interpretations[+b.dataset.reading];
     $("bTarget").value = x.target;
     (window.Knos ? Knos.queue("/api/ready/resolve", { word: x.word, reading: x.reading, target: x.target })
-      : api("/api/ready/resolve", { word: x.word, reading: x.reading, target: x.target })).catch(() => {});      // offered first next time (I7)
+      : api("/api/ready/resolve", { word: x.word, reading: x.reading, target: x.target })).catch(() => {});      // offered first next time
     checkBrief().catch(err);
   };
   return r;

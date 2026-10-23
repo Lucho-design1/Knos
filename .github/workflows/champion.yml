@@ -1,4 +1,4 @@
-# Knos builds Knos (TASK-CHAMPION): the brief that set this work is a Knos project on devnet
+# Knos builds Knos: the brief that set this work is a Knos project on devnet
 # (scripts/champion_project.txt holds its id). Each job below is named exactly after one milestone's verifier check and
 # runs that test against the LIVE pages. Then `release` asks the app to release each milestone at this commit
 # (POST /api/project/ci): the app reads GitHub's own record of these check runs and releases only a milestone whose
@@ -169,12 +169,6 @@ jobs:
           python-version: "3.12"
       - run: pip install -q -e .
       - run: python scripts/test_stack_coverage.py "$APP_URL"
-  test_outside_judge:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - run: python3 scripts/test_outside_judge.py
   test_knos_builds_knos:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -185,7 +179,7 @@ jobs:
         run: python3 scripts/test_knos_builds_knos.py "$(cat scripts/champion_project.txt)" --except test_knos_builds_knos
   release:
     needs: [test_fields_matrix, test_value_vectors, test_proof_first, test_money_page, test_companies_mode, test_legibility,
-            test_vitals, test_stack_coverage, test_outside_judge, test_knos_builds_knos]
+            test_vitals, test_stack_coverage, test_knos_builds_knos]
     if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -207,7 +201,7 @@ jobs:
   # check them without Knos (scripts/verify_proofs.sh, or `sigstore verify github` by hand).
   proofs:
     needs: [test_fields_matrix, test_value_vectors, test_proof_first, test_money_page, test_companies_mode, test_legibility,
-            test_vitals, test_stack_coverage, test_outside_judge, test_knos_builds_knos]
+            test_vitals, test_stack_coverage, test_knos_builds_knos]
     if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15

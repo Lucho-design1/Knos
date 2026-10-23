@@ -36,7 +36,7 @@ session that Knos refuses pays nothing. The sealed checks never enter the sessio
 the fields a model may decide (title, metric name, formula, direction, lift, id and time columns, the tiers'
 thresholds).
 
-The parties, the escrow, the control group's salt, the bootstrap and the price cannot come back changed, because they
+The parties, the payment program, the control group's salt, the bootstrap and the price cannot come back changed, because they
 are not in the answer. The fixed instructions are the cached prefix (`cache_control: {type: ephemeral}` on the system
 block); the goal and the buyer's rows come after it.
 

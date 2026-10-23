@@ -45,13 +45,6 @@ export const STEPS = [
 ];
 export const NEXT = "Check your own invoice";      // after the last beat: the reader's own invoice, at the front door
 
-// What the project needs next. Each is a need: none of the three exists.
-export const ASK = [
-  "Needed: an outside key holder for both multisigs. Nobody has been asked.",
-  "Needed: first buyers to run a shadow count. None has run.",
-  "Needed: an outside review of the programs. None is commissioned.",
-];
-
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const linkOf = (step, ctx = {}) => step.url || (ctx.repo || REPO) + step.path;
 
@@ -66,8 +59,7 @@ export function storyHtml(ctx = {}) {
     + `<h2>One task, seven steps</h2>`
     + `<p class="story-number">Of <strong class="k-num">${esc(merged)}</strong> merged agent “tests pass” pull requests: <strong class="k-num">${esc(failed)}</strong> failed a test, build, lint or type check.</p>`
     + `<ol class="story-steps k-stage" aria-label="The demonstration in seven steps" data-not-prose data-keep>${steps}</ol>`
-    + `<p><a class="k-btn story-next" href="${esc(ctx.front || FRONT)}">${esc(NEXT)}</a> <button type="button" class="k-btn quiet story-play"${ctx.reduced ? " hidden" : ""}>Play again</button></p>`
-    + `<details class="k-more story-ask-fold"><summary>What Knos still needs</summary><ol class="story-ask" data-keep>${ASK.map((a) => `<li>${esc(a)}</li>`).join("")}</ol></details>`;
+    + `<p><a class="k-btn story-next" href="${esc(ctx.front || FRONT)}">${esc(NEXT)}</a> <button type="button" class="k-btn quiet story-play"${ctx.reduced ? " hidden" : ""}>Play again</button></p>`;
 }
 
 /** Plays the steps under `root` in order. `wait(ms)` is the clock (a test passes its own). Resolves when the last step
@@ -107,7 +99,6 @@ font-variant-numeric: tabular-nums; }
 .story-steps > .k-step[data-state="bad"] { border-color: color-mix(in srgb, var(--bad) 60%, var(--line)); }
 .story-steps > .k-step[data-state="bad"] strong { color: var(--bad); }
 .story-steps > .k-step[data-state="bad"]::before { color: var(--paper); }
-.story-ask { margin: 4px 0 0; padding-left: 1.3em; }
 @media (prefers-reduced-motion: reduce) { .story-steps > .k-step { transition: none; } }`;
 
 /** Draws the story into `el`. It plays once when it comes into view, and again when the reader asks. */

@@ -415,7 +415,7 @@ await reset();
     check("  the card of a shared link is this site's own file, 1200 by 630", card === "https://drexthealpha.github.io/Knos/brand/card.png" && existsSync(join(root, "brand", "card.png"))
       && readFileSync(join(root, "brand", "card.png")).readUInt32BE(16) === 1200 && readFileSync(join(root, "brand", "card.png")).readUInt32BE(20) === 630);
     // the canonical link names the site's own address and nothing fetches it (tests/test_site_launch.py holds its tags)
-    const tags = await page.$$eval('head link[href]:not([rel="canonical"]), head script[src], head meta[content]', (l) => l.map((x) => x.getAttribute("href") || x.getAttribute("src") || "").filter((h) => /^(https?:)?\/\//.test(h)));
+    const tags = await page.$$eval('head link[href]:not([rel="canonical"]):not([rel="preconnect"][href="https://drexthealpha.github.io"]), head script[src], head meta[content]', (l) => l.map((x) => x.getAttribute("href") || x.getAttribute("src") || "").filter((h) => /^(https?:)?\/\//.test(h)));
     const canonical = await page.$$eval('head link[rel="canonical"]', (l) => l.map((x) => x.getAttribute("href")));
     check("  the head asks no other host for anything", tags.length === 0 && strangers.length === 0 && JSON.stringify(canonical) === JSON.stringify(["https://drexthealpha.github.io/Knos/"]), [tags, strangers, canonical]);
     for (const [scheme, ink] of [["light", "rgb(21, 23, 28)"], ["dark", "rgb(233, 235, 239)"]]) {
@@ -1077,7 +1077,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("  who funded it: the Balance of the owner, and the person who commented", got.includes("the Balance of GitHub owner 424242, by GitHub user 583231"));
   check("  when it goes back if nobody is paid", got.includes("goes back to where it came from in 336 h"));
   check("  the terms' hash, and the account on the explorer", got.includes("ab".repeat(32)) && (await page.getAttribute("#st-result a", "href")) === `https://explorer.solana.com/address/${J7}?cluster=devnet`);
-  check("  only this repository's issue 7, not another's", got.split("In escrow").length === 2 && !got.includes("7.00 test USDC"));
+  check("  only this repository's issue 7, not another's", got.split("Held now").length === 2 && !got.includes("7.00 test USDC"));
   got = await ask("https://github.com/octo/widgets/issues/7");
   check("escrow: the issue's web address is as good as owner/repo#7", got.includes("20.00 test USDC"));
   got = await ask("octo/widgets#8");
@@ -1091,7 +1091,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   got = await ask("octo/widgets#13");
   check("escrow: a job paid without a merge says so, and that its check is black-box", got.includes("open: paid without a merge, when its black-box check passes") && !got.includes("any test"), got);
   got = await ask("octo/widgets#12");
-  check("escrow: nothing there says so, and who funds it, and how", got.includes("Nothing is in escrow for octo/widgets#12.") && got.includes("/knos fund 20"));
+  check("escrow: nothing there says so, and who funds it, and how", got.includes("Nothing is held for octo/widgets#12.") && got.includes("/knos fund 20"));
   check("  a sentence for something that is not an issue", (await ask("hello")).includes("Enter the issue as owner/repo#7."));
   check("  a sentence for a repository GitHub does not have", (await ask("octo/nothing#1")).includes("GitHub has no such public repository, issue or user."));
   check("  a sentence for GitHub's rate limit", (await ask("limited/repo#1")).includes("GitHub's free limit for your connection is used up"));
@@ -1223,7 +1223,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
     === JSON.stringify(recent.map((p) => [p.kind, fmt(p.amount), `repository ${p.repo}, issue #${p.issue}`, `GitHub user ${p.payee}`, took(p.seconds), p.deployment === 1 ? "first" : "second"])));
   check("  and each amount links to its transaction on devnet", JSON.stringify(await page.$$eval("#network-recent tr td:nth-child(2) a", (a) => a.map((x) => x.getAttribute("href"))))
     === JSON.stringify(recent.map((p) => `https://explorer.solana.com/tx/${p.tx}?cluster=devnet`)));
-  check("  the note says when and by what it was counted", (await text(page, "#network-note")) === "Counted 2026-10-03 04:00 UTC by scripts/network_stats.py from the transaction history of both escrow programs.");
+  check("  the note says when and by what it was counted", (await text(page, "#network-note")) === "Counted 2026-10-03 04:00 UTC by scripts/network_stats.py from the transaction history of both payment programs.");
 
   // the programs: what Solana says now
   check("numbers: a second deployment that is not on devnet yet is said so, not guessed", JSON.stringify(await states(page, "#programs-now")) === JSON.stringify(["missing", "missing"])
@@ -1440,7 +1440,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   const paidText = await text(page, "#pr-result");
   check("  the paid example answers from the transaction: amount, task, payee, fee, link to devnet", paidText.includes("Paid: 9.75 test USDC") && paidText.includes("issue #17 of octo/recorded") && paidText.includes("GitHub user 142920951")
     && paidText.includes("0.25 test USDC") && paidText.includes("first deployment") && (await page.getAttribute('#pr-result a[href*="explorer.solana.com"]', "href")) === `https://explorer.solana.com/tx/${paid.input}?cluster=devnet`, paidText);
-  check("  and says the money is test USDC and where the line was read", paidText.includes("test USDC: devnet money is worth nothing") && paidText.includes("escrow's own log line"));
+  check("  and says the money is test USDC and where the line was read", paidText.includes("test USDC: devnet money is worth nothing") && paidText.includes("payment program's own log line"));
 
   // the same by hand, in the one box: a link to the transaction, a transaction that paid nothing, one devnet does not have, another cluster
   await page.fill("#fd-in", `https://explorer.solana.com/tx/${paid.input}?cluster=devnet`);
@@ -1450,7 +1450,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await page.fill("#fd-in", other.signature);
   await page.click('#front-door [data-fd="run"]');
   await page.waitForFunction(() => document.getElementById("verdict")?.dataset.verdict === "not a payment");
-  check("a transaction with no payment in it says so", (await text(page, "#pr-result")).includes("no payment line from either escrow program"));
+  check("a transaction with no payment in it says so", (await text(page, "#pr-result")).includes("no payment line from either payment program"));
   await page.fill("#fd-in", relayed.signature);
   await page.click('#front-door [data-fd="run"]');
   await page.waitForFunction(() => document.getElementById("verdict")?.dataset.verdict === "paid" || document.querySelector("#pr-result .status.bad"));
@@ -2540,7 +2540,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
       && called("simulateTransaction").at(-1).params[0] === expect(0) && JSON.stringify(called("simulateTransaction").at(-1).params[1]) === JSON.stringify({ encoding: "base64", sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed" })
       && chain.sent.length === 0 && (await page.evaluate(() => window.__wallet.sent.length)) === 0);
     const stepsText = await text(page, "#any-steps");
-    check("  what you would sign: the order, the amount and the fee, from your token account into the order's own account, with the terms hash", stepsText.startsWith("Fund the order for octo/widgets#7: 20.00 test USDC for the person who does the work and 0.50 fee, 20.50 in all, from your token account into the order's own escrow account.")
+    check("  what you would sign: the order, the amount and the fee, from your token account into the order's own account, with the terms hash", stepsText.startsWith("Fund the order for octo/widgets#7: 20.00 test USDC for the person who does the work and 0.50 fee, 20.50 in all, from your token account into the order's own account, held until the proof passes.")
       && stepsText.includes(`Its terms hash is ${fa.order.terms_sha256.slice(0, 16)}…`), stepsText);
     const accountLines = await page.$$eval("#any-steps details li", (l) => l.map((x) => x.textContent));
     const flags = (a) => (a.signer ? " (signs)" : "") + (a.writable ? " (changes)" : "");
@@ -2812,8 +2812,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   check("pilot: who it is for, four deliverables, and the price in the price book's own words", (await text(page, "#pilot > h2")) === "The 30-day Pilot" && (await text(page, "#pilot-who")).includes("two or more suppliers")
     && (await page.$$eval("#pilot-deliverables li strong", (l) => l.map((x) => x.textContent))).join("|") === "One reconciled invoice.|A mismatch list.|A statement both sides verify.|Quantified findings."
     && (await text(page, "#pilot-price-words")) === bookRow[2] && bookRow[2].startsWith("2,500 USD, credited against year one") && (await text(page, "#pilot-price dd")) === "one buyer, two suppliers, 30 days, one reconciled invoice");
-  check("  it says plainly that nobody has bought it and that there is no legal entity to invoice from", (await text(page, "#pilot-honest")) === "An offer, not a record. Nobody has bought it. Nobody has been asked. No legal entity to invoice from yet."
-    && (await text(page, "#pilot-blockers")).includes("Nobody has bought it.") && (await text(page, "#pilot-blockers")).includes("There is no legal entity to invoice from yet.") && (await text(page, "#pilot-blockers")).includes("It has never been run."));
+  check("  it says plainly that nobody has bought or run it", (await text(page, "#pilot-honest")) === "An offer. Nobody has bought or run it yet." && (await text(page, "#pilot-limits")).includes("Not included:"));
   check("  no form and nothing to type into: the page collects nothing", (await page.$$eval("#pilot form, #pilot input, #pilot textarea, #pilot select, #pilot button:not(.copy)", (l) => l.length)) === 0 && !/customer|pilot is running|signed up/i.test(await text(page, "#pilot")));
   const pilotDoc = readFileSync(join(here, "..", "..", "docs", "reference", "PILOT.md"), "utf8").replace(/\s+/g, " ");
   check("  its deliverables are the four of docs/reference/PILOT.md, by name", lib.PILOT_DELIVERABLES.every(([name]) => pilotDoc.includes(`**${name}**`)) && pilotDoc.includes("2,500 USD for one buyer and two suppliers, for 30 days"));

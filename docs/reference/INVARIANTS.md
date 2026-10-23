@@ -416,7 +416,7 @@ A bank that pays a transfer it first reported as rejected is detected and said (
 
 ## An upgrade and an order already funded
 
-An order's account holds its own schedule: the amount, the fee it was funded with (`fee`, escrowed on top of the amount), the rate
+An order's account holds its own schedule: the amount, the fee it was funded with (`fee`, held on top of the amount), the rate
 fixed at funding (`fee_bps`), the deadline, the terms hash, the workflow commit and whether it has the presentation grace.
 
 The build that funded it is read from its incarnation number (explained below, "A marker does not outlive its order"; 0 means funded

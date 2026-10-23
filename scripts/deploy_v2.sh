@@ -388,7 +388,7 @@ rc_deploy() {
   if [ -z "${KNOS_RC_SO_DIR:-}" ] && [ -n "$trusts" ]; then
     echo "NOTE: this build of knos_pay accepts tokens verified by knos_oidc $trusts (OIDC_ID in its source), NOT by the staging verifier."
     echo "      What needs no token (Version, FundOrderWallet, SetBalanceX, SetPlan, TopUp, Cancel by the funder, RefundOrder, Assign) and the"
-    echo "      staging verifier's own instructions run as they are; a token path of the staging escrow runs against the verifier at"
+    echo "      staging verifier's own instructions run as they are; a token path of the staging payment program runs against the verifier at"
     echo "      $trusts as it is deployed now. To stage those too, build knos_pay with OIDC_ID set to the staging verifier and name the"
     echo "      folder with KNOS_RC_SO_DIR."
   fi

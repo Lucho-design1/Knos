@@ -26,7 +26,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z"
   },
@@ -55,7 +55,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z"
   },
@@ -84,7 +84,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z"
   },
@@ -113,7 +113,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z"
   },
@@ -142,7 +142,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z"
   },
@@ -171,7 +171,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z"
   },
@@ -200,7 +200,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z"
   },
@@ -224,7 +224,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "repository": "acme/gadgets",
@@ -364,7 +364,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "repository": "octo/widgets",
@@ -518,7 +518,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "month": "2026-10",
@@ -630,7 +630,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "entries": [
@@ -681,7 +681,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "entries": [
@@ -752,7 +752,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "accounts": [
@@ -790,7 +790,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "login": "alice",
@@ -890,7 +890,7 @@
     }
    ],
    "as_owner": [],
-   "note": "Every payment the escrows' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."
+   "note": "Every payment the payment programs' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."
   },
   "statements/carol.json": {
    "source": {
@@ -912,7 +912,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "login": "carol",
@@ -966,7 +966,7 @@
     }
    ],
    "as_owner": [],
-   "note": "Every payment the escrows' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."
+   "note": "Every payment the payment programs' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."
   },
   "statements/funder-one.json": {
    "source": {
@@ -988,7 +988,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "login": "funder-one",
@@ -1112,7 +1112,7 @@
      "transaction": "pay4"
     }
    ],
-   "note": "Every payment the escrows' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."
+   "note": "Every payment the payment programs' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."
   },
   "statements/funder-two.json": {
    "source": {
@@ -1134,7 +1134,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "login": "funder-two",
@@ -1188,7 +1188,7 @@
      "transaction": "pay6"
     }
    ],
-   "note": "Every payment the escrows' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."
+   "note": "Every payment the payment programs' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."
   },
   "statements/knos-team.json": {
    "source": {
@@ -1210,7 +1210,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "login": "knos-team",
@@ -1264,7 +1264,7 @@
      "transaction": "pay5"
     }
    ],
-   "note": "Every payment the escrows' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."
+   "note": "Every payment the payment programs' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."
   },
   "u/alice.json": {
    "source": {
@@ -1286,7 +1286,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "login": "alice",
@@ -1423,7 +1423,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "login": "carol",
@@ -1560,7 +1560,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "login": "funder-one",
@@ -1714,7 +1714,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "login": "funder-two",
@@ -1854,7 +1854,7 @@
      "root": "00fa1be4192f450b0eebf625c5c1788150731812ef84f1b12d1825b7c840b304"
     },
     "recompute": "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json",
-    "summary": "20 log lines of the escrows' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
+    "summary": "20 log lines of the payment programs' history on devnet, 2 lines of the relay log, GitHub, the Agent PR Index of 2026-10-02 (root 00fa1be4192f)"
    },
    "generated": "2026-09-21T17:00:00Z",
    "login": "knos-team",

@@ -1,16 +1,15 @@
-"""The revenue dashboard's data (web/revenue/): the fee config, what the chain holds, and a model that says it is one.
+"""The revenue data: the fee config, what the chain holds, and a model that says it is one.
 
-    python -m knos.money.revenue --out web/revenue_data.json [--offline] [--demo web/revenue_devnet.json]
+    python -m knos.money.revenue --out <file> [--offline] [--demo <graduation demo file>]
 
 Three parts, kept apart on the page and here:
 
   measured   read from devnet when the file was written (`read`): the treasury's fee accounts (test money), and the
-             graduation demo's escrow and pool (web/revenue_devnet.json, SYNTHETIC claims). Knos's revenue is 0:
+             graduation demo's held money and pool (python -m knos.graduation.devnet, SYNTHETIC claims). Knos's revenue is 0:
              every unit on devnet is test money. A part that was not read says null, never a guess.
   schedule   config/fees.yaml as knos.money.fees_config validated it, each line with its status.
   model      `model(inputs)`: revenue per line for volumes a reader types. Its inputs are all 0 by default, it is
-             labelled a MODEL everywhere, and `one_billion` is arithmetic on the config's rates (what volume a rate
-             needs to make 1B USD of fees), not a forecast.
+             labelled a MODEL everywhere, and it is not a forecast.
 """
 from __future__ import annotations
 
@@ -26,15 +25,14 @@ from . import fees_config
 
 MODEL_INPUTS = {        # volumes a month; every default is 0: a model with no inputs says 0
     "verifications": 0,          # hosted verifications (the month's free ones are taken first)
-    "payout_volume_usd": 0,      # value released from escrow (bounties and lab orders included)
+    "payout_volume_usd": 0,      # value released on proof (bounties and lab orders included)
     "payouts": 0,                # how many releases (each pays at least the floor)
     "bounty_volume_usd": 0,      # bounties paid (also in payout_volume_usd): the 5% bounty fee's off-chain rest
     "lab_order_volume_usd": 0,   # lab orders paid (also in payout_volume_usd): the 3% lab order fee's off-chain rest
-    "graduation_volume_usd": 0,  # escrow + pre-order value released after graduation
+    "graduation_volume_usd": 0,  # held + pre-order value released after graduation
     "task_package_sales_usd": 0,
     "cloud_subscribers": {},     # {tier name: subscribers}
 }
-TARGET = Decimal(1_000_000_000)
 MODEL_LABEL = ("MODEL: revenue for the volumes typed in, at the fee config's rates. Not a forecast; no volume here is measured. "
                "The payout line is a lower bound: the floor is charged per release, and the model knows only the month's total and count.")
 
@@ -75,30 +73,6 @@ def model(inputs: dict | None = None, cfg: fees_config.FeeConfig | None = None) 
     return {"label": MODEL_LABEL, "inputs": x, "month": cents, "month_total": str(total), "year_total": str(total * 12), "status": status}
 
 
-def one_billion(cfg: fees_config.FeeConfig | None = None) -> dict:
-    """Arithmetic, not a forecast: the yearly volume each line alone would need for 1B USD of fees at the config's rates."""
-    cfg = cfg or fees_config.load()
-    f = cfg.doc["fees"]
-    out: dict[str, Any] = {"label": "DERIVED: 1,000,000,000 USD divided by each rate in config/fees.yaml. Arithmetic on the rates, not a forecast, not a plan.",
-                       "fees_usd": str(TARGET)}
-    out["payout_volume_usd_year"] = str((TARGET * 10_000 / f["payout"]["rate_bps"]).quantize(Decimal(1)))
-    out["verifications_year"] = str((TARGET / _d(f["verification"]["usd_each"])).quantize(Decimal(1)))
-    for kind, key in (("bounty_platform", "bounty_volume_usd_year"), ("lab_order", "lab_order_volume_usd_year")):
-        if f[kind]["rate_bps"]:
-            out[key] = str((TARGET * 10_000 / f[kind]["rate_bps"]).quantize(Decimal(1)))
-    if f["graduation"]["rate_bps"]:
-        out["graduation_volume_usd_year"] = str((TARGET * 10_000 / f["graduation"]["rate_bps"]).quantize(Decimal(1)))
-    if f["task_package"]["knos_bps"]:
-        out["task_package_sales_usd_year"] = str((TARGET * 10_000 / f["task_package"]["knos_bps"]).quantize(Decimal(1)))
-    top = max(cfg.credit_tiers, key=lambda t: _d(t["usd_month"]))
-    out["cloud_subscribers_at_top_tier"] = str((TARGET / (_d(top["usd_month"]) * 12)).quantize(Decimal(1)))
-    out["cloud_top_tier"] = top["name"]
-    used = ("fees.bounty_platform", "fees.lab_order", "fees.graduation", "fees.task_package")
-    out["placeholders_used"] = [p for p in cfg.placeholders() if p.startswith(used) or (p.startswith("cloud.tiers") and "credits" not in p)]
-    out["decided_used"] = [p for p in cfg.decided() if p.startswith(used + ("cloud.tiers",))]
-    return out
-
-
 def treasury(ledger, cfg: fees_config.FeeConfig) -> dict:
     """The fee owner's token accounts for the counted mints and the faucet's test USDC, read now (test money)."""
     from ..settle.v2 import pay
@@ -130,7 +104,7 @@ def build(ledger=None, demo_file: Path | None = None, cfg: fees_config.FeeConfig
     return {"generated": (now or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "revenue": {"usd": "0", "why": "Knos runs on Solana devnet only: every fee taken is test money. Nothing has been sold."},
             "schedule": cfg.public(), "treasury": treasury(ledger, cfg), "graduation_demo": demo(demo_file),
-            "model": model({}, cfg), "one_billion": one_billion(cfg), "verification_cost": _verification_cost()}
+            "model": model({}, cfg), "verification_cost": _verification_cost()}
 
 
 def _verification_cost() -> dict | None:
@@ -145,7 +119,7 @@ def _verification_cost() -> dict | None:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m knos.money.revenue")
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--demo", type=Path, default=Path("web/revenue_devnet.json"))
+    ap.add_argument("--demo", type=Path, default=None, help="the graduation demo's JSON (python -m knos.graduation.devnet --out)")
     ap.add_argument("--offline", action="store_true", help="read no chain: the treasury's balances say null")
     a = ap.parse_args(argv)
     led = None

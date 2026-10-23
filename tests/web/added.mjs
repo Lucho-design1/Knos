@@ -2,15 +2,14 @@
 // A page added by name (web/views.js ADDED; how: the head of web/mounts.js), held on a build of web/ in headless Chromium.
 // The build keeps only the lines of ADDED whose module and data it has, so this script serves that build with the
 // repository's whole list and STAND-INS for whatever the build lacks (a module that draws one heading, an
-// enforce.json and a judges.json of the documented shapes): what is held is the mount itself, and the two views this
-// release adds (web/enforce_view.js, web/judges.js) on data of the shape their sources promise.
+// enforce.json of the documented shape): what is held is the mount itself, and the view this release adds
+// (web/enforce_view.js) on data of the shape its source promises.
 //   list      the build's views.js names no page whose module or data is not in the build
 //   menu      each page has one link: in the bar where its line says so, under "More" otherwise; no link without it
 //   mount     the press shows the page's section at once with grey bars, then the module's drawing; the title is the
 //             page's own; the hash opens it directly; a page opened twice is drawn once
 //   matrix    #enforcement: one row a route, one column a restriction, every cell one of the four classes; a cell
 //             pressed with the keyboard says what holds it and names its bypass test; a class filters
-//   judges    #judges: the rows of judges.json, one link each, and what is not real yet
 //   width     none of the three scrolls sideways at 320, 390, 768 and 1280
 // No browser: a failure in CI, a skip elsewhere (tests/web/overflow.mjs, `owed`).
 import { createServer } from "node:http";
@@ -37,13 +36,11 @@ const ENFORCE = { routes: [{ id: "comment", name: "Funding by comment" }, { id: 
     wallet: { who: { class: "outside", by: "a wallet is its owner's", test: "" }, limit: { class: "outside", by: "a wallet is its owner's", test: "" }, deadline: { class: "program", by: "knos_pay FundOrder", test: "tests/test_enforcement.py::test_deadline" } },
     netted_release: { who: { class: "workflow", by: "release job", test: "t::a" } },
     squads_vault: { who: { class: "program", by: "Squads v4: threshold of the vault's members", test: "tests/test_boundary.py::t" }, limit: { class: "program", by: "Squads v4 spending limit", test: "tests/test_boundary.py::t" } } } };
-const JUDGES = { source: "docs/JUDGES.md", columns: ["Judged", "What exists", "Evidence"], not_real: ["Outside funders: 0.", "Interviews: 0."],
-  rows: ["How well it works", "Potential impact", "Novelty", "User experience", "Open source", "Business plan"].map((thing, i) => ({ thing, sentence: `Sentence ${i + 1}.`, link: i ? `https://github.com/drexthealpha/Knos/blob/main/docs/E${i}.md` : "https://explorer.solana.com/tx/abc?cluster=devnet", label: `evidence ${i + 1}` })) };
 const standIn = (a) => `export const ${a.draw} = (el, ctx) => { window.__drawn = (window.__drawn || 0) + 1; el.innerHTML = '<h2>${a.nav} stands in here</h2><p class="lede">A stand-in page.</p><div class="card"><button type="button">One control</button></div>'; };\n`;
 const over = { "/views.js": [whole, ".js"] };
 for (const a of LIST) {
   if (!existsSync(join(root, a.file))) over[`/${a.file}`] = [standIn(a), ".js"];
-  if (a.json && !existsSync(join(root, a.json))) over[`/${a.json}`] = [JSON.stringify(a.json === "enforce.json" ? ENFORCE : JUDGES), ".json"];
+  if (a.json && !existsSync(join(root, a.json))) over[`/${a.json}`] = [JSON.stringify(ENFORCE), ".json"];
 }
 const real = (a) => !(`/${a.file}` in over), realData = (a) => !a.json || !(`/${a.json}` in over);
 
@@ -112,7 +109,7 @@ if (!real(one)) {
   check("mount: a page opened twice is drawn once", (await page.evaluate(() => window.__drawn)) === 1);
 }
 
-const enforcement = LIST.find((a) => a.name === "enforcement"), judges = LIST.find((a) => a.name === "judges");
+const enforcement = LIST.find((a) => a.name === "enforcement");
 if (enforcement) {
   await page.goto(`${base}#enforcement`, { waitUntil: "load" }); await ready("enforcement");
   const data = realData(enforcement) ? JSON.parse(readFileSync(join(root, "enforce.json"), "utf8")) : ENFORCE;
@@ -142,23 +139,9 @@ if (enforcement) {
   check("matrix: a class pressed marks its cells and no others; pressed again, none", only.only === "program" && only.pressed === "true" && only.on.length === cells.filter((c) => c.class === "program").length && only.on.every((c) => c === "program")
     && await page.evaluate(() => { document.querySelector('#enforcement [data-only="program"]').click(); const el = document.querySelector("#enforcement .ke"); return el.dataset.show === undefined && !el.querySelector(".ke-cell[data-on]"); }), only);
 }
-if (judges) {
-  await page.goto(`${base}#judges`, { waitUntil: "load" }); await ready("judges");
-  const data = realData(judges) ? JSON.parse(readFileSync(join(root, "judges.json"), "utf8")) : JUDGES;
-  const got = await page.evaluate(() => { const el = document.getElementById("judges"); return { title: el.querySelector("h2").textContent, rows: [...el.querySelectorAll("table")[0].querySelectorAll("tbody tr")].map((r) => [r.cells[0].textContent, r.cells[1].textContent.trim(), r.querySelector("a")?.getAttribute("href") || "", r.querySelectorAll("a").length]),
-    zeros: [...el.querySelectorAll("#judges-zeros + .k-table td")].map((t) => t.textContent), doc: el.querySelector("#judges-doc")?.getAttribute("href") }; });
-  check("judges: the hash opens it: the file's rows, word for word, one link each", got.rows.length === data.rows.length && data.rows.every((r, i) => got.rows[i][0] === r.thing && got.rows[i][1] === r.sentence && got.rows[i][2] === (r.link || "") && got.rows[i][3] === (r.link ? 1 : 0)), got.rows);
-  check("judges: then what is not real yet, as the file lists it, and the document itself", got.zeros.join("|") === (data.not_real || []).join("|") && got.doc === "https://github.com/drexthealpha/Knos/blob/main/docs/JUDGES.md" && got.title === "Check every claim yourself (for judges and buyers)", got);
-  if (data.entry) {      // the entry first: the manifest, then the witnessed transaction's links, above the table
-    const first = await page.evaluate(() => { const el = document.getElementById("judges"), e = el.querySelector("#judges-entry"), t = el.querySelector("table");
-      return e ? { before: !!(e.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING), links: [...e.querySelectorAll("a")].map((a) => a.getAttribute("href")) } : null; });
-    const want = [data.entry.manifest, ...(data.entry.witnessed || []).map((w) => w.link), data.entry.yourself].filter(Boolean);
-    check("judges: the entry comes first: the manifest, then the witnessed transaction", !!first && first.before && first.links.join("|") === want.join("|"), first);
-  }
-}
 // ON A PHONE (390 x 640): the matrix scrolls sideways under a sticky first column. A cell reached with Tab is wholly in
 // the visible part, clear of that column and of the edge, row after row; the answer, drawn under the table, is in view
-// once a cell is pressed. For judges draws a row as a block: the sentence has the table's width, not a third of it.
+// once a cell is pressed.
 if (enforcement) {
   await page.setViewportSize({ width: 390, height: 640 });
   await page.goto(`${base}#enforcement`, { waitUntil: "load" }); await ready("enforcement");
@@ -181,14 +164,6 @@ if (enforcement) {
       return { x, left: r.left, right: r.right, from: wr.left + w.clientLeft, to: wr.left + w.clientLeft + w.clientWidth }; };
     return [await at(0), await at(w.scrollWidth)]; });
   check("phone: the set's name is wholly inside the table's visible part, at the start and scrolled to the end", label.length === 2 && label.every((g) => g.left >= g.from - 0.5 && g.right <= g.to + 0.5), label);
-}
-if (judges) {
-  for (const width of [390, 1280]) {
-    await page.setViewportSize({ width, height: 800 });
-    await page.goto(`${base}#judges`, { waitUntil: "load" }); await ready("judges");
-    const g = await page.evaluate(() => { const t = document.querySelector("#judges table"), c = t.querySelector("tbody td"); return { cell: c.getBoundingClientRect().width, table: t.getBoundingClientRect().width, head: t.tHead.getBoundingClientRect().height }; });
-    check(`judges at ${width}: ${width < 560 ? "each row a block, the sentence as wide as the table" : "three columns under their heads"}`, width < 560 ? g.cell >= g.table * 0.9 && g.head <= 1 : g.cell < g.table * 0.7 && g.head > 10, g);
-  }
 }
 for (const width of [320, 390, 768, 1280]) {
   await page.setViewportSize({ width, height: 800 });

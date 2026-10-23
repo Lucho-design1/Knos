@@ -178,7 +178,7 @@ def precheck(ledger, c: dict, kind: str, aud: str, now: float) -> dict | None:
                                    repo_id=repo_id, issue=issue, author_id=int(p[4]), head=p[5])
             if not any(j.state == want and j.wf_repo_hash == wf_repo and j.wf_sha == wf_sha for _a, j in jobs):
                 return no(f"no {want} bounty on this issue pins this workflow at this commit" if jobs else
-                          "no bounty is in escrow for this issue (never funded, or already paid or refunded)")
+                          "no bounty is held for this issue (never funded, or already paid or refunded)")
         elif kind == "claim":
             if c.get("event_name") != "workflow_dispatch" or not c.get("actor_id") or c.get("actor_id") != c.get("repository_owner_id"):
                 return no("a claim must be run by hand (workflow_dispatch) by the owner of the repository it runs in")

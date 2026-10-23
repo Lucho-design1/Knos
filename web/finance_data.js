@@ -227,7 +227,7 @@ export function record(given, ref = null, receipt = null, approval = null) {
   else if (waiting) [status, why] = [PAYABLE, `Accepted, and ${unitsOf(still, cur)} is owed. Held for the supplier's wallet${until}: the supplier binds a wallet, then anyone settles.`];
   else if (paid) [status, why] = [PAID, `${unitsOf(paid, cur)} reached the supplier on ${rows.find((r) => r.kind === "paid" || r.kind === "released").date}.${still ? ` ${unitsOf(still, cur)} is held back in a review window${until}.` : ""}`];
   else if (refunded) [status, why] = [REFUNDED, `${unitsOf(refunded, cur)} went back to the funder on ${last.date}. Nothing was accepted.`];
-  else [status, why] = [HELD, `Funded, and nothing is accepted yet. The escrow holds ${unitsOf(still, cur)}${until}.`];
+  else [status, why] = [HELD, `Funded, and nothing is accepted yet. Held until the proof passes: ${unitsOf(still, cur)}${until}.`];
   const id = deliverableOf(first), fee = total("fee_units");
   const artifact = [...rows].reverse().find((r) => r.artifact && r.kind !== "reverted")?.artifact || null;
   return {

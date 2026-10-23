@@ -34,7 +34,7 @@ An agent asks the same question through the MCP server: the tool `knos_preflight
 ### What you are owed before you start
 
 Preflight also reads the terms for four things a supplier is owed, and prints each as held, LACKED or not checked,
-with how it is enforced. `program` means a check inside the escrow program; `workflow` means a job of the pinned
+with how it is enforced. `program` means a check inside the payment program; `workflow` means a job of the pinned
 workflow; `advisory` means a file or a command says so and nothing stops the other side.
 
 <!-- protections: begin (scripts/supplier_docs.py) -->
@@ -250,7 +250,7 @@ said as `unknown`, never guessed.
 Comment it on your pull request, or run `knos appeal "<reason>" --repo owner/name --pull N --by <your login>`.
 
 1. The verdict becomes **disputed**. Who appealed, when and why are recorded.
-2. The money stays where the order's terms put it: in escrow, until the appeal ends or the order's deadline.
+2. The money stays where the order's terms put it: held, until the appeal ends or the order's deadline.
 3. The neutral judge runs the funded acceptance checks again, itself, on a runner the buyer does not configure
    (`knos settle --neutral <pull request URL>`, or knos-attest.yml by hand with kind `pay`).
 4. The appeal ends **accepted** (the rejection is overturned) or **rejected** (it stands), with the reason in the

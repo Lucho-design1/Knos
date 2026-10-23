@@ -11,7 +11,6 @@ final "e" and a silent "-ed"; a number counts as two; a word in capitals (USDC) 
 
 from __future__ import annotations
 
-import importlib.util
 import re
 from pathlib import Path
 
@@ -20,9 +19,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 PLAIN = "**In plain words.**"
 # each document, and the kind of diagram it holds (None: none)
-DOCS = {"docs/README.md": "flowchart", "docs/STORY.md": "flowchart", "docs/JUDGES.md": "flowchart",
+DOCS = {"docs/README.md": "flowchart", "docs/STORY.md": "flowchart",
         "docs/reference/GOVERNANCE.md": "flowchart", "docs/reference/METER.md": "flowchart", "docs/reference/FINANCE.md": None,
-        "docs/TRANSACTION.md": "flowchart", "docs/reference/MARKET_SIZE.md": "flowchart",
+        "docs/TRANSACTION.md": "flowchart",
         "docs/reference/FLOWS.md": "flowchart"}
 MERMAID = re.compile(r"(?ms)^```mermaid\n(.*?)^```[ \t]*\n(.*?)$")
 WORD = re.compile(r"[A-Za-z]+(?:['’][A-Za-z]+)*|\d[\d,.]*\d|\d")
@@ -105,17 +104,6 @@ def test_the_map_lists_the_new_documents_and_draws_the_six_questions():
         assert f"{n}. {question}" in body and f"\n## {n}. {question}\n" in page, question
     assert "](../WORDS.md)" in next(p for p in page.split("\n\n") if p.startswith(PLAIN))
     assert "](WORDS.md)" in next(p for p in read("docs/README.md").split("\n\n") if p.startswith(PLAIN))
-
-
-def test_the_judges_page_counts_what_a_reader_reads(tmp_path):
-    spec = importlib.util.spec_from_file_location("judges_script", ROOT / "scripts" / "judges.py")
-    j = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(j)
-    page = ('<img src="../web/brand/mark.svg" height="40" alt="Knos">\n\n# Title\n\n**In plain words.** One. Two. Three.\n\n'
-            "```mermaid\nflowchart TB\n    a[\"many words that a diagram draws\"] --> b\n```\n*A caption.*\n")
-    counted = j.WORD.findall(j.prose(page))
-    assert counted == ["Title", "In", "plain", "words.", "One.", "Two.", "Three.", "A", "caption."]
-    assert j.head(page)[0] == "# Title"                                              # the mark and the summary are not the title
 
 
 def test_the_release_entry_counts_the_words_that_docs_words_explains():

@@ -16,7 +16,7 @@ flowchart TB
 
 Some words are about the code: [AI agent](#ai-agent), [pull request](#pull-request), [checks](#checks-ci) and [merge](#merge).
 
-Some are about the money: [Solana](#solana), [devnet](#devnet), [test USDC](#test-usdc) and [escrow](#escrow).
+Some are about the money: [Solana](#solana), [devnet](#devnet), [test USDC](#test-usdc) and [money held until the proof passes](#money-held-until-the-proof-passes).
 
 Some are about trust: [signed](#signed), [program](#program), [upgrade](#upgrade) and [multisig](#multisig).
 
@@ -47,10 +47,6 @@ A company or person that holds your money for you.
 ### Devnet
 
 Solana's practice network. Its money is not real. Knos runs only here today.
-
-### Escrow
-
-Money held by a third party until the agreed work is done. In Knos, a program holds it.
 
 ### Evaluation
 
@@ -99,6 +95,10 @@ To accept a pull request. Its change joins the main code.
 ### Meter
 
 What counts the work both sides agree on. Neither side keeps that count alone.
+
+### Money held until the proof passes
+
+Money a program on Solana keeps for a task. It pays when the proof passes, or goes back.
 
 ### Multisig
 

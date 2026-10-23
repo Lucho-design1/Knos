@@ -419,7 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     except (chain.RpcError, OSError) as why:          # a refused connection, a timeout, an answer that is an error
         print(f"\nSTOPPED at step {r.n} of {STEPS}: {type(why).__name__}: {why} (the fork is at {a.rpc}: is it running?)", file=sys.stderr)
         return 1
-    print(f"\nall {STEPS} steps passed in {time.monotonic() - started:.0f} s. This proves the escrow's money flows on mainnet's USDC and clock, "
+    print(f"\nall {STEPS} steps passed in {time.monotonic() - started:.0f} s. This proves the payment program's money flows on mainnet's USDC and clock, "
           "with a test key playing GitHub and no key of GitHub's or ours involved; it does not prove GitHub's signatures "
           "(the released build trusts GitHub's keys only) or the guardian and upgrade multisigs (scripts/deploy_v2.sh --localnet and scripts/governance.mjs do).")
     return 0

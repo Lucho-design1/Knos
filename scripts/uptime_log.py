@@ -1,12 +1,11 @@
-"""The uptime log of the hosted app (TASK-QLOO-CHAMPION M7), read from GitHub's own record of the keep-warm pings.
+"""The uptime log of the hosted app, read from GitHub's own record of the keep-warm pings.
 
-    python scripts/uptime_log.py [--from 2026-11-02] [--to 2026-11-16] [--markdown]
+    python scripts/uptime_log.py [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--markdown]     (default: the last 14 days)
 
 .github/workflows/keepalive.yml pings https://knos.onrender.com/healthz every 5 minutes, and every run of the always-on
 worker (worker.yml) pings it before it relays (docs/reference/KEEPALIVE.md). A green run is a ping the app answered. This
 script lists those runs for the window, from the GitHub API (`gh api`), and says: how many ran, how many answered,
-and the longest stretch with no green ping, which is the longest the app may have slept. Nothing is written by hand;
-the judging period is 2 to 16 November 2026, and the log for it is this script run over that window.
+and the longest stretch with no green ping, which is the longest the app may have slept. Nothing is written by hand.
 """
 from __future__ import annotations
 
@@ -51,8 +50,9 @@ def summary(rows: list[dict], since: str, until: str) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--from", dest="since", default="2026-11-02")
-    ap.add_argument("--to", dest="until", default="2026-11-16")
+    today = dt.datetime.now(dt.timezone.utc).date()
+    ap.add_argument("--from", dest="since", default=str(today - dt.timedelta(days=14)))
+    ap.add_argument("--to", dest="until", default=str(today))
     ap.add_argument("--markdown", action="store_true")
     a = ap.parse_args(argv)
     rows = runs(a.since, a.until)

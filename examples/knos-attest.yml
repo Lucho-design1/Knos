@@ -33,7 +33,7 @@
 # text and checks it against the order. The first job uses minutes of this repository's Actions; the verdict is kept
 # as the run's artifact `knos-verdict-<attempt>`. An order paid on the merge has no suite to run, and the verdict says so.
 #
-# Why a run started by hand in your own repository is trusted. The escrow does not take your word, and it does not take
+# Why a run started by hand in your own repository is trusted. The payment program does not take your word, and it does not take
 # this file's. It takes GitHub's signature, which says which workflow ran, at which commit, in which repository,
 # who started it, how, and on what kind of machine. It accepts the statement only when
 #   - the workflow is Knos's attest.yml at the commit the order recorded when it was funded. This file chooses when that

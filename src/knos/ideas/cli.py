@@ -204,7 +204,7 @@ def register(app, help_lines: list | None = None) -> None:
                    price: int = typer.Option(..., PRICE, min=1), stages: str = typer.Option(None, STAGES),
                    payee: str = typer.Option(..., "--payee", help="who is paid when a stage is released: github:<id>@<wallet>, orcid:<iD>@<wallet> or a wallet address (required; nothing is assumed)"),
                    panel: str = typer.Option(None, "--panel", help="M:key1,key2,key3: the referee panel that releases each stage (M of the keys; never the funder's)"),
-                   program: str = typer.Option(None, "--program", help="with --panel: the knos_pay build with the panel path (0.3.34; on devnet V34PAY's test id)"),
+                   program: str = typer.Option(None, "--program", help="with --panel: the knos_pay build with the panel path (0.3.34; on devnet its test id)"),
                    wallet: Path = typer.Option(..., WALLET, help="the buyer's devnet keypair file (signs)"),
                    mint: str = typer.Option(..., MINT, help="the 6-decimal test mint the stages are paid in"),
                    stage_seconds: str = typer.Option(None, "--stage-seconds", help="one deadline per stage in seconds, comma separated (min 60)"),

@@ -14,7 +14,7 @@ import os
 import re
 import urllib.request
 
-# Qloo /v2/insights filter.type values in both the hackathon guide and the Insights API reference (QLOO_SOURCES.md)
+# Qloo /v2/insights filter.type values in both Qloo's guide and the Insights API reference (QLOO_SOURCES.md)
 CATEGORIES = ["urn:entity:brand", "urn:entity:place", "urn:entity:artist", "urn:entity:book", "urn:entity:movie",
               "urn:entity:podcast", "urn:entity:tv_show", "urn:entity:person", "urn:entity:destination"]
 AGES = ["24_and_younger", "25_to_29", "30_to_34", "35_to_44", "45_to_54", "55_and_older"]

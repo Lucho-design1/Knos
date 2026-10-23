@@ -207,7 +207,7 @@ shows that the cases someone thought of are refused.
 None of them shows the absence of a fault nobody thought of.
 This is testing, not an outside review. There has been none; `knos mainnet-check` fails on that line on purpose.
 
-## The escrow (knos-pay)
+## The payment program (knos-pay)
 
 ### Second deployment (`programs-v2`)
 
@@ -287,7 +287,7 @@ there is no claim. A person who gives no address binds a wallet once, with a thi
 **Two transactions per token.** Measured in LiteSVM on 3 Oct 2026, with the test builds
 (`pytest -q -s tests/test_relay2.py -k transactions_waits`). Where the cluster takes 4,096-byte transactions and
 `knos-pay` 2.1 answers, the relay sends a token in two: the whole token and the first `Step`, then the last `Step`,
-the escrow's instruction and `Close`.
+the payment program's instruction and `Close`.
 
 Not measured on devnet: no 2.1 instruction had run there when this was written.
 
@@ -364,8 +364,8 @@ refused token only when it takes the signature check on chain to tell. The token
 | seconds from the merge to the payment, 95th percentile (p95) | 164 |
 | the day of the oldest of those payments (UTC) | 2026-10-02 |
 | the day of the newest | 2026-10-10 |
-| of those payments, made by the first deployment's escrow | 2 |
-| of those payments, made by the second deployment's escrow | 54 |
+| of those payments, made by the first deployment's payment program | 2 |
+| of those payments, made by the second deployment's payment program | 54 |
 | seconds from the funding comment to the funded task, median | 36 |
 
 Merge to paid is defined as:
@@ -378,17 +378,17 @@ Read from the site's `stats.json` of 2026-10-10 12:54 UTC (`python scripts/bench
 <!-- /bench:devnet -->
 
 The site's [Numbers section](https://drexthealpha.github.io/Knos/#network) shows today's count, read from the
-escrows' own logs, with Knos's own accounts kept apart from everyone else's.
+payment programs' own logs, with Knos's own accounts kept apart from everyone else's.
 
 ### First deployment
 
 <!-- bench:devnet1 -->
-Read from the escrow's own logs on devnet on 3 Oct 2026: 23 transactions in all, the last at 14:19 UTC on 2 Oct 2026. 11 bounties funded, 6 paid, 1 vetoed, 2 claims, 0 refunded, 5 still open. Every one of the 6 payments was Knos's own account paying itself to prove the path; 0 went to anyone else. The median from the funding transaction to the paying one was 159 seconds over those 6 payments (the first deployment's public program ids, knos_pay `9UzPFbh2A4e4sEPgngKG523FfYLnQ3qPfFVfFTTAdfDi` and knos_oidc `vpWym9azbPU5f2PH2a6n8c4RfmsyUeW2dMuWr1DSHcE`, programs/program_ids.json; read 3 Oct 2026). 3 of the open bounties are the ones another account's pull requests answer (issues #29, #30 and #31 of this repository, 25, 10 and 15 test USDC; pull requests #32, #33 and #34); they had not been merged when this was read.
+Read from the payment program's own logs on devnet on 3 Oct 2026: 23 transactions in all, the last at 14:19 UTC on 2 Oct 2026. 11 bounties funded, 6 paid, 1 vetoed, 2 claims, 0 refunded, 5 still open. Every one of the 6 payments was Knos's own account paying itself to prove the path; 0 went to anyone else. The median from the funding transaction to the paying one was 159 seconds over those 6 payments (the first deployment's public program ids, knos_pay `9UzPFbh2A4e4sEPgngKG523FfYLnQ3qPfFVfFTTAdfDi` and knos_oidc `vpWym9azbPU5f2PH2a6n8c4RfmsyUeW2dMuWr1DSHcE`, programs/program_ids.json; read 3 Oct 2026). 3 of the open bounties are the ones another account's pull requests answer (issues #29, #30 and #31 of this repository, 25, 10 and 15 test USDC; pull requests #32, #33 and #34); they had not been merged when this was read.
 <!-- /bench:devnet1 -->
 
 That block is the reading before the three pull requests were merged. They were merged later on 3 Oct 2026 and the
 first deployment paid them (`release.outside_prs_merged_and_paid` in [`bench.json`](../bench.json)); with those, the two
-deployments had made 15 payments when their logs were read at 16:04 UTC that day ([COMPARE.md](COMPARE.md)).
+deployments had made 15 payments when their logs were read at 16:04 UTC that day.
 
 Both programs of the first deployment had no upgrade authority when their program data was read on 3 Oct 2026.
 `python scripts/claims_check.py` reads it again.
@@ -424,7 +424,7 @@ Measured on 2026-10-07 by `python scripts/decide_bench.py --write` on this machi
 | decision | what is timed | n | p50 | p95 | slowest | every sample said | target at p95 (a target, not a measurement) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | fresh, accepted | a fund token never seen: signature checked, chain read | 40 | 3.0 ms | 5.1 ms | 67.4 ms | accepted | under 2000 ms |
-| fresh, rejected | a pay token for an issue with nothing in escrow: signature checked, chain read | 40 | 1.7 ms | 3.9 ms | 5.8 ms | rejected | under 2000 ms |
+| fresh, rejected | a pay token for an issue with nothing held: signature checked, chain read | 40 | 1.7 ms | 3.9 ms | 5.8 ms | rejected | under 2000 ms |
 | cached, accepted | the same fund token again, the chain's answers kept (`knos.decide.Cached`) | 40 | 2.5 ms | 4.0 ms | 5.3 ms | accepted | under 200 ms |
 | no chain | the token alone, `ledger=None`: insufficient evidence, or rejected | 40 | 1.1 ms | 1.8 ms | 2.6 ms | insufficient evidence | under 200 ms |
 | free check | the conclusions of three named checks, no token | 40 | 0.1 ms | 0.2 ms | 0.2 ms | accepted | under 200 ms |

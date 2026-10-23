@@ -1,4 +1,4 @@
-"""docs/README.md is the front map: the eight pages a stranger reads first, each on it once, and nothing else in docs/*.md.
+"""docs/README.md is the front map: the seven pages a stranger reads first, each on it once, and nothing else in docs/*.md.
 docs/reference/README.md is the map of every other document: every file in docs/reference/*.md is on it once, under one
 of six questions, and every link on either map leads to a file. docs/STORY.md and web/story.js tell the three-minute
 demonstration in seven beats, each with evidence that exists in the repository; what follows the last beat is an
@@ -17,8 +17,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 REFERENCE = DOCS / "reference"
-# the front of docs/: the map itself and these eight pages; every other document is in docs/reference/
-FRONT = ["STORY.md", "START.md", "PRICING.md", "TRUST.md", "JUDGES.md", "NUMBERS.md", "TRANSACTION.md", "WORDS.md"]
+# the front of docs/: the map itself and these seven pages; every other document is in docs/reference/
+FRONT = ["STORY.md", "START.md", "PRICING.md", "TRUST.md", "NUMBERS.md", "TRANSACTION.md", "WORDS.md"]
 # the one other file that stays in docs/, and the words the front map says it with: scripts/backtest.py publishes its sha256
 FIXED = {"INDEX_METHOD.md": "the Agent PR Index method, fixed in advance (its hash is published), so it does not move"}
 QUESTIONS = ["Does it work?", "Why does it matter?", "What is new?", "How do I use it?", "How do I build on it?", "How is it run and paid for?"]
@@ -37,12 +37,12 @@ def links(text: str) -> list[str]:
 ROW = re.compile(r"(?m)^\| \[([^\]]+)\]\(([^)]+)\) \| (.+) \|$")
 
 
-def test_the_front_map_lists_the_eight_front_pages_once_and_docs_holds_nothing_else():
+def test_the_front_map_lists_the_seven_front_pages_once_and_docs_holds_nothing_else():
     page = read("docs/README.md")
     rows = ROW.findall(page.split("\n## Reference\n")[0])
     assert [target for _name, target, _what in rows] == FRONT and [name for name, _t, _w in rows] == FRONT
     here = sorted(p.name for p in DOCS.glob("*.md") if p.name != "README.md")
-    assert here == sorted(FRONT + list(FIXED)), "only the eight front pages stay in docs/: move every other document to docs/reference/"
+    assert here == sorted(FRONT + list(FIXED)), "only the seven front pages stay in docs/: move every other document to docs/reference/"
     for name, why in FIXED.items():                                                         # the one exception, said once on the map
         assert page.count(f"]({name})") == 1 and f"[{name}]({name}), {why}." in page.split("\n## Reference\n")[1], name
     assert all(len(WORDS.findall(what)) <= 22 for _n, _t, what in rows), [w for _n, _t, w in rows if len(WORDS.findall(w)) > 22]
@@ -73,13 +73,13 @@ def test_the_front_page_has_ten_parts_above_the_line_and_three_links_onward():
     above, below = readme.split("\n---\n", 1)
     # in plain words: how it works (the valley: demand, Ready, escrow, proof), one use of it (paying AI agents for
     # verified pull requests; the bounty is the smallest example), the ten-second check, why nobody can fudge the
-    # count, whether it is real (the table of today's numbers); where to check every claim (tests/test_judges.py), the number, words,
+    # count, whether it is real (the table of today's numbers); where to check every claim (the release page), the number, words,
     # the questions people search (tests/test_seo.py)
     assert re.findall(r"(?m)^## (.+)$", above) == ["How it works", "One use: paying AI agents for verified pull requests", "Try it in ten seconds",
                                                     "Why nobody can fudge the count", "Is it real?",
                                                     "Check every claim yourself", "The number", "Words", "Questions", "Read more"]
     more = above.split("## Read more")[1]
-    assert links(more) == ["docs/START.md", "docs/PRICING.md", "docs/TRUST.md", "docs/STORY.md", "docs/JUDGES.md", "docs/README.md"]
+    assert links(more) == ["docs/START.md", "docs/PRICING.md", "docs/TRUST.md", "docs/STORY.md", "docs/README.md"]
     real = [line for line in above.split("## Is it real?")[1].split("<!-- bench:today -->")[0].splitlines() if line.strip()]
     assert len(real) == 3 and [links(line) for line in real].count(["docs/reference/DISCLOSURE.md"]) == 1      # three plain lines, one link to the limits
     for said in ("devnet", "test USDC", "test money only", "no customers yet", "One person holds every key today"):

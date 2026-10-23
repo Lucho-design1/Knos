@@ -97,5 +97,5 @@ Other agents and editors, one line each, are in [the install guide](reference/IN
 - [What Knos costs](PRICING.md): demand checks, Ready briefs and proof pages are free; a company pays on releases.
 - [Trust](TRUST.md): who holds the keys, and what is tested.
 - [The story](STORY.md): one task in seven steps, each with its proof.
-- [Check every claim yourself](JUDGES.md): each claim, one click from its source.
+- [Check every claim yourself](reference/MANIFEST.md): the release page, with the evidence for each capability.
 - [Words](WORDS.md): pull request, devnet, multisig and more, in plain words.

@@ -262,7 +262,7 @@ The findings report three kinds apart and never add one into another: **recoveri
 **avoided labour** (hours, as above) and **financing benefit** (days of payment brought forward, valued at the supplier's own cost of money).
 
 A disputed dollar is not a saved dollar, and a faster payment is not new profit. The price is not the buyer's whole cost either: its own compute, the integration and the
-exceptions its people still handle are beside it ([UNIT_COSTS.md](UNIT_COSTS.md)).
+exceptions its people still handle are beside it.
 
 `knos bill estimate` prints the price and the benefit to demand for any plan and volume. **Knos has not shown this benefit for anyone.** Nobody has measured it, and a Pilot that
 finds less will say how much less, and that the buyer should not buy.

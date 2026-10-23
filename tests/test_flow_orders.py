@@ -69,7 +69,7 @@ def test_a_funding_comment_opens_a_work_order_and_the_reply_says_the_fee_the_war
     (address, o), = w.chain.orders(7)
     assert address == str(ORDER) and (o.amount, o.fee, o.holdback_bps, o.warranty_s, o.arbiter_id, o.reserve_days) == (20_000_000, P(500_000, 60_000), 2000, 14 * 86_400, 77, 7)
     assert not o.flags & pay.F_NEUTRAL and w.chain.jobs() == []
-    assert got.startswith(f"Knos: 20.00 {MONEY} from the devnet faucet is in escrow for issue #7 as a work order ({LINK}), 30 s after the comment. "
+    assert got.startswith(f"Knos: 20.00 {MONEY} from the devnet faucet is held for issue #7 as a work order until the proof passes ({LINK}), 30 s after the comment. "
                           f"The funder pays Knos's fee of {P('0.50', '0.06')} on top, so whoever is paid receives the full amount.\n\n")
     assert ("Warranty: 20% of each payment is held back for 14 days after it is paid; if the work is reverted in that time, that part goes "
             "back to the funder. Arbiter: @erin rules if a payment is disputed. If it is not paid by 2026-10-05 14:13 UTC, the money and the "
@@ -201,7 +201,7 @@ def test_a_policy_that_names_payees_is_enforced_and_every_address_is_screened_be
         w.screen = lambda address: (False, f"{address} is on the US Treasury's sanctions list (OFAC SDN, digital currency addresses as of 2026-09-20): the payout is refused and held, not sent.")
         got = settled(w)
         assert got.startswith("Knos: held, not paid. The ") and f"met its terms, but {WALLET} is on the US Treasury's sanctions list" in got
-        assert "the payout is refused and held, not sent. The money stays in escrow until 2026-10-05 14:13 UTC" in got and w.signer.asked == []
+        assert "the payout is refused and held, not sent. The money stays held until 2026-10-05 14:13 UTC" in got and w.signer.asked == []
         # not screened: it pays, and says so
         w.screen = lambda address: (None, "not screened: the Treasury's list could not be had (502).")
         assert flow.command(w.run(w.hub.commented(12, EVE, "/knos settle"))) == 0
@@ -217,7 +217,7 @@ def test_a_standing_offer_pays_its_vendor_for_each_accepted_change_until_its_bud
     (address, o), = w.chain.orders(7)
     assert o.flags & pay.F_STANDING and (o.rate, o.amount) == (12_000_000, 30_000_000) and terms.parse(w.chain.logs[address])["vendor"] == MONA["id"]
     assert w.signer.asked[-1].split(":")[9] == pay.opts(pay.F_NEUTRAL | pay.F_STANDING, rate=12_000_000).hex()
-    assert got.startswith(f"Knos: a standing offer for @mona is in escrow on issue #7: 30.00 {MONEY} from the devnet faucet (")
+    assert got.startswith(f"Knos: a standing offer for @mona is held on issue #7: 30.00 {MONEY} from the devnet faucet (")
     assert "Each pull request of @mona's that says `Fixes #7` and is accepted is paid 12.00 in full, until the 30.00 is spent." in got and NEUTRAL in got
     w.clock.sleep(3600)
     w.hub.checks[w.hub.pull(12, MONA, "Fixes #7")["head"]["sha"]] = [check("test")]
@@ -234,7 +234,7 @@ def test_a_standing_offer_pays_its_vendor_for_each_accepted_change_until_its_bud
         "Knos: nothing was funded. A work order holds from 5 to 100000, and this one asks for 100001. Comment `/knos offer @mona rate 12 budget 100000` instead.")
     w.version, w.runs = 0, w.runs
     w2 = world(tmp_path / "v0", version=0)
-    assert "A standing offer is a work order, and the escrow on this cluster does not hold work orders yet" in said(w2, 7, HUBOT, "/knos offer @mona rate 12 budget 30")
+    assert "A standing offer is a work order, and the payment program on this cluster does not hold work orders yet" in said(w2, 7, HUBOT, "/knos offer @mona rate 12 budget 30")
     w.hub.contents[".knos/policy.yml"] = "version: 1\nvendors: [acme]\n"
     w3 = world(tmp_path / "vendors")
     w3.hub.contents[".knos/policy.yml"] = "version: 1\nvendors: [acme]\n"
@@ -274,8 +274,8 @@ def test_raise_says_how_cancel_gives_notice_and_take_reserves_the_order_too(tmp_
 def test_without_a_relay_key_an_orders_tokens_travel_as_comments_and_status_shows_the_order(tmp_path):
     w = world(tmp_path, relay_key=False)
     got = said(w, 7, HUBOT, "/knos fund 20")
-    assert f"as a work order ({LINK})" in got and f"Knos's fee of {P('0.50', '0.06')} on top" in got and [x[1] for x in w.worker.posted()] == ["fund"]
-    assert f"20.00 {MONEY} is in escrow for issue #7 as a work order until 2026-10-05" in said(w, 7, EVE, "/knos status")
+    assert f"as a work order until the proof passes ({LINK})" in got and f"Knos's fee of {P('0.50', '0.06')} on top" in got and [x[1] for x in w.worker.posted()] == ["fund"]
+    assert f"20.00 {MONEY} is held for issue #7 as a work order until 2026-10-05" in said(w, 7, EVE, "/knos status")
     w.clock.sleep(3600)
     w.hub.checks[w.hub.pull(12, MONA, "Fixes #7")["head"]["sha"]] = [check("test")]
     w.chain.bind(MONA)
@@ -858,7 +858,7 @@ def test_a_stranger_funds_a_playground_task_from_the_faucet_three_times_a_day_an
     assert opened(w, 61).startswith(refused)                                                            # the name alone is not it: the owner's id too
     monkeypatch.setattr(playground, "OWNER_ID", HUBOT["id"])
     said = opened(w, 62)
-    assert said.startswith(f"Knos: 5.00 {MONEY} from the devnet faucet is in escrow for issue #62 as a work order") and "auto" in playground.FUND
+    assert said.startswith(f"Knos: 5.00 {MONEY} from the devnet faucet is held for issue #62 as a work order") and "auto" in playground.FUND
     (_address, order), = w.chain.orders(62)
     assert (order.amount, order.state) == (playground.MOST, "open") and len(w.signer.asked) == 1
     # only as the issue is opened: a comment from the same account is refused, and so is more than the playground holds
@@ -871,7 +871,7 @@ def test_a_stranger_funds_a_playground_task_from_the_faucet_three_times_a_day_an
     w.clock.sleep(86_400)
     for n in (70, 71, 72):
         w.clock.sleep(61)
-        assert opened(w, n).startswith(f"Knos: 5.00 {MONEY} from the devnet faucet is in escrow for issue #{n}"), n
+        assert opened(w, n).startswith(f"Knos: 5.00 {MONEY} from the devnet faucet is held for issue #{n}"), n
     w.clock.sleep(61)
     assert opened(w, 73) == ("Knos: nothing was funded. One account funds at most 3 playground tasks in a day (UTC), and this is @eve's issue "
                              "number 4 today. Take one of the open tasks instead, or come back tomorrow.")

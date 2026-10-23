@@ -40,7 +40,7 @@ Who keeps what:
 | --- | --- | --- |
 | the buyer | the archive, and its own ledger | it pays on this evidence |
 | the supplier | the archive, and its own ledger | it is paid on this evidence, and must be able to show it |
-| a third holder, if the two name one (an auditor, an escrow agent) | the archive | so that neither side's copy is the only other one |
+| a third holder, if the two name one (an auditor, or an agent that holds money for both) | the archive | so that neither side's copy is the only other one |
 | the chain | each batch's root and running hash | so that a ledger cannot be swapped for another afterwards |
 | Knos | nothing that the others lack | it hosts no copy that anyone depends on |
 

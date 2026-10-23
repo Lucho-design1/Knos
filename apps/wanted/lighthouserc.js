@@ -8,7 +8,7 @@ const APP = "http://127.0.0.1:8080/";
 const site = ["", "#verify", "#check", "#protect", "#fund", "#claim", "#pricing", "#records", "#network", "#build",
   "#buy", "#install", "#capabilities", "#status", "#index", "#pilot", "#reproduce", "#shadow", "#verifier", "#playground", "#terms",
   "#supplier", "#invoice-statement", "#story", "#keyholder", "#record",
-  "#approve", "#rails", "#enforcement", "#judges", "#finance", "#payee", "#vendor", "#apps", "#demand",
+  "#approve", "#rails", "#enforcement","#finance", "#payee", "#vendor", "#apps", "#demand",
   "faq.html", "check/", "privacy.html", "wanted.html"];
 const app = ["", "#buy", "#fund", "#contribute", "#make", "#research", "#projects", "#teams", "#agents", "verify"];
 module.exports = {

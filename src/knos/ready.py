@@ -35,7 +35,7 @@ UNITS = ("%", "ms", "s", "sec", "secs", "second", "seconds", "min", "mins", "min
          "commits", "prs", "accuracy", "auc", "f1", "rmse", "mae", "iops", "ops", "cycles", "boards", "parts", "batches",
          "percent", "trials", "trial", "prototype", "prototypes", "features", "feature", "patches", "arrays", "copies",
          "reports", "screens", "endpoints", "steps", "participants", "patients", "litres", "liters", "mah", "wh",
-         # physical work: pressure, force, mass, carbon, energy, area, volume, and what is built (TASK-WORLD T4)
+         # physical work: pressure, force, mass, carbon, energy, area, volume, and what is built
          "pa", "kpa", "mpa", "gpa", "psi", "bar", "n", "kn", "n/mm2", "n/mm²", "t", "tonne", "tonnes", "co2e", "kgco2e",
          "kwh", "mwh", "gwh", "gw", "m2", "m²", "m3", "m³", "lux", "cubes", "blocks", "homes", "houses", "panels", "years")
 MIN_DEADLINE_S, MAX_DEADLINE_S = 60, 90 * 86_400
@@ -113,7 +113,7 @@ def tranches(deadline: int) -> list[int]:
 def clean(brief) -> dict:
     """A brief in the shape every check reads: an object whose milestones are a list of objects, each verifier an
     object. Anything else (a list, a string, a number) is dropped here, so a malformed brief is answered Not ready,
-    naming its fields, and never reaches code that would fail on it (TASK-QLOO-CHAMPION M10)."""
+    naming its fields, and never reaches code that would fail on it."""
     b = dict(brief) if isinstance(brief, dict) else {}
     ms = b.get("milestones")
     b["milestones"] = [{**m, "verifier": m["verifier"] if isinstance(m.get("verifier"), dict) else {}} if isinstance(m, dict) else {}

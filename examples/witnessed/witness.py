@@ -25,7 +25,7 @@ key). The steps:
               funded with `/knos fund 5 checks: none auto`: the terms are fixed then, and the checks alone pay
     fail      a pull request whose work is wrong, on a branch of its own (witness-work-<issue>); the judge job of the `knos
               review` run refuses it and says why
-    pass      the corrected work on the same pull request; the judge passes, GitHub signs, the escrow pays, no merge
+    pass      the corrected work on the same pull request; the judge passes, GitHub signs, the payment program pays, no merge
     replay    `/knos settle` again on the paid pull request: nothing more is paid
     buyer     the buyer's statement: the chain's paid line (knos audit export), the judge's verdict and the supplier's
               invoice line for it taken into a log of events, and the statement of that log (one line, its policy met),
@@ -73,7 +73,7 @@ TOP_UP = 10_000_000                 # test USDC (millionths) moved from --fund-f
 # order's address, so every funding would read as "nothing was funded".
 FAUCET_SENT = re.compile(r"^Knos: [\d.]+ test USDC sent to `(?P<to>[1-9A-HJ-NP-Za-km-z]{32,44})`")
 FAUCET_NO = re.compile(r"^Knos: nothing was sent\. (?P<why>.*)", re.S)
-FUNDED = re.compile(r"^Knos: (?P<money>[\d.]+ .+?) from (?P<source>.+?) is in escrow for issue #(?P<issue>\d+)(?: as a (?:private )?work order)? "
+FUNDED = re.compile(r"^Knos: (?P<money>[\d.]+ .+?) from (?P<source>.+?) is (?:held|in escrow) for issue #(?P<issue>\d+)(?: as a (?:private )?work order)?(?: until the proof passes)? "
                     r"\(\[[^\]]*\]\(https://explorer\.solana\.com/address/(?P<order>[1-9A-HJ-NP-Za-km-z]{32,44})")
 NOT_FUNDED = ("nothing was funded", "Knos: not confirmed yet.")      # every refusal of `_fund`, and the relay's time out
 # Which comment on the issue is the funding's reply. The workflow posts two, as the same account (github-actions[bot]):
@@ -268,7 +268,7 @@ def terms(s: dict, sh: Shell) -> dict:
 
 
 def funding(body: str, issue: int, url: str = "") -> str:
-    """The order's address in a funding reply that says the money is in escrow for `issue`; Stop with the reply's own
+    """The order's address in a funding reply that says the money is held for `issue`; Stop with the reply's own
     words for any other (a refusal, the relay's time out, the grammar's). The funding transaction is read from the
     chain at the buyer step (the reply links the order, not the transaction)."""
     got = FUNDED.match(body.strip())
@@ -277,7 +277,7 @@ def funding(body: str, issue: int, url: str = "") -> str:
     said = " ".join(body.split())[:300]
     if any(x in body for x in NOT_FUNDED):
         raise Stop(f"nothing was funded: {said} ({url})")
-    raise Stop(f"nothing was funded: the reply does not say the money is in escrow for #{issue}: {said} ({url})")
+    raise Stop(f"nothing was funded: the reply does not say the money is held for #{issue}: {said} ({url})")
 
 
 def _checks(sh: Shell, s: dict) -> Callable[[], str | None]:

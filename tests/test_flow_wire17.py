@@ -240,7 +240,7 @@ def test_a_standing_offer_funds_only_when_the_buyers_procurement_files_approve_i
              f"{root}/offers/{offer['name']}.yaml": controls.dump_yaml(offer), f"{root}/policy.yaml": controls.dump_yaml(policy)}
     # no file under .knos/procurement/: the offer is funded exactly as it was
     plainly = _offer(w, None)
-    assert plainly.startswith("Knos: a standing offer for @mona is in escrow on issue #7: 30.00") and len(w.chain.orders(7)) == 1
+    assert plainly.startswith("Knos: a standing offer for @mona is held on issue #7: 30.00") and len(w.chain.orders(7)) == 1
     assert not any(".knos/procurement/" in p for p in w.hub.asked)                    # one question, answered no, and nothing more is read
     # the files are there and nobody approved the offer: nothing is funded, and the reply says what waits
     refused = _offer(w, files)
@@ -256,7 +256,7 @@ def test_a_standing_offer_funds_only_when_the_buyers_procurement_files_approve_i
     e, why = approvals.from_comment(policy, c, policy_text=files[f"{root}/policy.yaml"], **req)
     assert e is not None, why
     signed = {**files, f"{root}/{approvals.LOG}": json.dumps(e) + "\n"}
-    assert _offer(w, signed).startswith("Knos: a standing offer for @mona is in escrow on issue #7: 30.00") and len(w.chain.orders(7)) == 2
+    assert _offer(w, signed).startswith("Knos: a standing offer for @mona is held on issue #7: 30.00") and len(w.chain.orders(7)) == 2
     # an approval typed into the log that the forge does not have is not counted
     forged = {**signed, f"{root}/{approvals.LOG}": json.dumps({**e, "source": {**e["source"], "comment_id": 999_999}}) + "\n"}
     assert "is not approved. Waits for 1 approver" in _offer(w, forged) and len(w.chain.orders(7)) == 2

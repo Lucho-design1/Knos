@@ -364,7 +364,7 @@ The fifth part of the first version 3 vector (digest `sha256:b5e2275e4ed2a1b19ca
 | `limit` | the limit that funding passed under: the Balance's cap for one order, its daily and total limits (`"0"`: none of that kind) and its repository allow-list. `"no limit set"` when none is set, and for a wallet; `null` when the Balance was opened before the history read | the Balance's opening instruction (the cap); the `knos2:balancex` line and its instruction (the `balx` side account: daily, total, repositories), as last set before the funding |
 | `role` | `owner` when the funder is the Balance's owner, `spender` when the Balance lists it as one, `wallet` or `passkey` when the money's own key signed | computed: the program lets only the owner or a listed spender spend a Balance |
 | `deliverable` | what was bought: the `order` and its `milestone` (0, or the pull request of a standing order's payment). One identity, however many pull requests carried the work | the order; the token's audience |
-| `billed_before` | `false`, or the transaction of an earlier payment of this order and milestone | the escrow's history. The program pays an order's milestone once, so anything but `false` is a finding |
+| `billed_before` | `false`, or the transaction of an earlier payment of this order and milestone | the payment program's history. The program pays an order's milestone once, so anything but `false` is a finding |
 | `funded` | the funding transaction, `null` when the history read does not reach it | the `knos3:funded` line |
 
 What this part does not show, said plainly. The cap is the one the Balance was opened with: the instruction that
@@ -559,7 +559,7 @@ commit).
 Also not built: a receipt for a holdback released after its warranty (it has no token of its own), and for an AUTO order's payment of an open pull request (no receipt
 version covers that kind of payment yet).
 
-`knos receipt verify` reads, of the escrow's newest transactions, only the ones a receipt is built from: the order's own, its Balance's opening and side account, and its
+`knos receipt verify` reads, of the payment program's newest transactions, only the ones a receipt is built from: the order's own, its Balance's opening and side account, and its
 owner's plan. A version 1 receipt still checks, and `knos.receipt.upgrade` writes it as version 2.
 
 ## The evidence bundle
@@ -627,7 +627,7 @@ knos bundle verify FILE --mirror DIR   # DIR, or the https URL a mirror is serve
 
 - `--rpc URL` reads the key's account on that cluster and refuses a key that is missing, revoked or another key,
   then reads the paying transaction and refuses a receipt whose wallets, amounts, fee or tip are not the ones the
-  escrow logged. When the cluster no longer has the transaction the command refuses and says that; `--mirror` is then what is left.
+  payment program logged. When the cluster no longer has the transaction the command refuses and says that; `--mirror` is then what is left.
 - `--mirror DIR` compares the receipt with the one the mirror holds for the paying transaction, by digest, and
   refuses a bundle whose receipt the mirror does not hold. This uses the network only when the mirror is a URL. It
   shows that the bundle and the mirror agree, on the word of whoever serves the mirror; it does not ask the chain.
@@ -788,7 +788,7 @@ Example values from the test vectors: the fee shown is 1%. Today's fee is 0.30%,
 | field | what it is | where it comes from |
 |---|---|---|
 | `type`, `version` | `knos.acceptance-receipt`, `1`. A reader still accepts it | |
-| `cluster`, `program` | which chain, and the `knos_pay` program that held the escrow | the transaction |
+| `cluster`, `program` | which chain, and the `knos_pay` program that held the money | the transaction |
 | `order` | the order's address | the pay token's audience, the `knos3:paid` log line |
 | `scope` | the order's scope, 64 hex characters | the Order account |
 | `repository` | `{id, issue}` of the issue the order was for, by GitHub's ids; `null` for a private order, whose scope hides them | the Order account |
@@ -913,4 +913,4 @@ instructions have not been accepted by the deployed program.
 
 `expiry` is sent as 0 on the assumption that 0 means "does not expire". The attestation is the word of the credential's authority, not of a program.
 
-Having the escrow itself attest by CPI (a program address among the credential's signers) is described by the service and is not built here.
+Having the payment program itself attest by CPI (a program address among the credential's signers) is described by the service and is not built here.

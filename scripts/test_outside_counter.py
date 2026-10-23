@@ -1,4 +1,4 @@
-"""M8 test_outside_counter, live: the invite page and its share link exist; the counter equals the store it sums; a
+"""test_outside_counter, live: the invite page and its share link exist; the counter equals the store it sums; a
 run by an automated client (this script) is not counted; the open call is in Knos's own README and in one
 Discussions post, nowhere else posted by Knos.
 

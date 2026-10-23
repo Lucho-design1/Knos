@@ -381,7 +381,7 @@ pub const GUARDIAN: Pubkey = pubkey!("AT1aKj1DpgaWerxmS4YjDkNpWPNUtCCKVDvxLhFxg5
 pub const CLAIM_REF: &[u8] = b"drexthealpha/knos-oidc-rotate/.github/workflows/claim.yml@";
 /// The same workflow at its home in Knos (branch `oidc-rotate`: the same commits, so the same CLAIM_SHA and
 /// order_judge::CLAIM_SHA_ORG), accepted beside CLAIM_REF by Bind and BindOrg while callers move
-/// (docs/reference/CUTOVER-0331.md, section 2). An exact prefix: `someone/Knos/...` and `drexthealpha/knos/...` are not it.
+/// (both homes are read). An exact prefix: `someone/Knos/...` and `drexthealpha/knos/...` are not it.
 pub const CLAIM_REF_KNOS: &[u8] = b"drexthealpha/Knos/.github/workflows/claim.yml@";
 /// Whether `job_workflow_ref` names the pinned claim workflow in one of its two homes. The commit is checked apart.
 pub fn claim_ref(wref: &[u8]) -> bool { wref.starts_with(CLAIM_REF) || wref.starts_with(CLAIM_REF_KNOS) }

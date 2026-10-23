@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/drexthealpha/Knos/schemas/outcome.schema.json",
   "title": "Knos outcome spec (outcome.yaml), version 1",
-  "description": "A result measured from data that a Knos order pays for: the metric, the data, the window, a randomized control group, the bar (minimum lift at a confidence), the price in tiers under a hard cap, and the devnet escrow. knos.outcomes.spec.validate applies these rules and a few that JSON Schema cannot say (tiers rising, tier amounts adding up to the cap, the window's end after its start); tests/test_outcome_spec.py holds the two to the same fields.",
+  "description": "A result measured from data that a Knos order pays for: the metric, the data, the window, a randomized control group, the bar (minimum lift at a confidence), the price in tiers under a hard cap, and the money held on devnet until the proof passes. knos.outcomes.spec.validate applies these rules and a few that JSON Schema cannot say (tiers rising, tier amounts adding up to the cap, the window's end after its start); tests/test_outcome_spec.py holds the two to the same fields.",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "title", "synthetic", "parties", "metric", "data", "window", "control", "success", "bootstrap", "price", "tiers", "dispute_window_days", "escrow"],
@@ -75,7 +75,7 @@
       "properties": {
         "currency": {"enum": ["USDC", "test-USDC"]},
         "unit_price": {"type": "number", "minimum": 0, "description": "what one point (0.01) of lift is worth; informational once tiers are fixed"},
-        "cap": {"type": "number", "minimum": 5, "description": "the hard cap: the most the buyer can pay, the total escrowed, the sum of the tiers' amounts"}
+        "cap": {"type": "number", "minimum": 5, "description": "the hard cap: the most the buyer can pay, the total held, the sum of the tiers' amounts"}
       }
     },
     "tiers": {

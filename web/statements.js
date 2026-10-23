@@ -58,11 +58,11 @@ export function initStatements(ctx) {
     const sum = totals(mine).map((t) => [esc(`${KIND_WORDS[t.kind]}`), esc(t.payments), esc(show(t.amount_units)), esc(show(t.fee_units)), esc(show(t.total_units)), esc(t.currency)]);
     $("stm-result").innerHTML = `<div id="stm-statement" data-role="${esc(role)}" data-month="${esc(month)}">
       <h4>${esc(login)}, ${esc(month)}: ${seller ? "paid to this account" : "paid out by this account"}</h4>
-      <p class="fine" data-fold="Where the days and the amounts come from">UTC days of the month, from the escrows' log lines on Solana devnet as the file lists them. ${seller ? "Amount is what reached the account; fee is what the escrow kept; total is what left escrow." : "Amount is what reached the people who did the work; fee is what the escrow kept; total is what left escrow."}</p>
+      <p class="fine" data-fold="Where the days and the amounts come from">UTC days of the month, from the payment programs' log lines on Solana devnet as the file lists them. ${seller ? "Amount is what reached the account; fee is what the program kept; total is what was paid out of the held money." : "Amount is what reached the people who did the work; fee is what the program kept; total is what was paid out of the held money."}</p>
       <div id="stm-table-box">${tableHtml(esc, ["date", "task", "pull request", other, "amount", "fee", "total", "currency", "transaction"], mine.map((r) => [esc(r.date), repo(r), esc(r.pull_request ?? ""), esc(seller ? r.funder ?? "" : r.payee ?? `id ${r.payee_id}`),
         esc(show(r.amount_units)), esc(show(r.fee_units)), esc(show(r.total_units)), esc(r.currency + (r.kind === "self" || r.kind === "own" ? ` (${KIND_WORDS[r.kind]})` : "")), tx(r)]))}</div>
       <h4>Totals</h4>
-      <div id="stm-totals">${tableHtml(esc, ["counted as", "payments", seller ? "received" : "to the payees", "fees", "total out of escrow", "currency"], sum)}</div>
+      <div id="stm-totals">${tableHtml(esc, ["counted as", "payments", seller ? "received" : "to the payees", "fees", "total paid out", "currency"], sum)}</div>
       <p><button type="button" id="stm-csv" class="ghost small"${mine.length ? "" : " disabled"}>Download the CSV</button> <span class="fine">Made here, from these rows, in your browser.</span></p>
       ${sourceHtml(esc, loaded.file, `statements/${loaded.login}.json`, "stm-source")}</div>`;
     const csv = $("stm-csv");
@@ -216,7 +216,7 @@ export function renderOrderStatement(el, env = {}) {
     const command = `knos audit export --owner ${s.owner_id} --from ${s.from} --to ${s.to} --format csv`;
     out.innerHTML = `<div id="ost-statement" data-owner="${esc(s.owner_id)}" data-month="${esc(month)}">
       <h4>${esc(loaded.name)}, ${esc(month)}: every work order</h4>
-      <p class="fine" data-fold="What each line is, and where it is read from">One line per payment, refund, revert, or order still open at the end of ${esc(s.to)} (UTC), from the escrow's own log lines on Solana devnet. The fee is paid by the funder on top of the amount.${s.partial ? " The cluster did not give the whole history when this file was made: it is partial, and its head is not one to compare." : ""}</p>
+      <p class="fine" data-fold="What each line is, and where it is read from">One line per payment, refund, revert, or order still open at the end of ${esc(s.to)} (UTC), from the payment program's own log lines on Solana devnet. The fee is paid by the funder on top of the amount.${s.partial ? " The cluster did not give the whole history when this file was made: it is partial, and its head is not one to compare." : ""}</p>
       <div id="ost-table">${tableHtml(esc, ["date", "order", "what was bought", ...(said ? ["authorised by"] : []), "amount", "state", "paid", "fee", "sent back", "held", "currency", "transaction"],
         rows.map((r) => [esc(r.date), order(r.order), esc(what(r)), ...(said ? [esc(r[AUTHORISED])] : []), esc(money(r.price_units)), esc(STATE_WORDS[r.kind] || r.kind) + (r.exception ? `<br><span class="fine">${esc(r.exception)}</span>` : ""),
           esc(money(r.paid_units)), esc(money(r.fee_units)), esc(back(r)), esc(money(r.held_units)), esc(r.currency), tx(r.transaction)]))}</div>

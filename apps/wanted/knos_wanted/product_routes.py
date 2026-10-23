@@ -70,6 +70,12 @@ ROUTES = [
       "units": "integer", "wallet": "string"}),
     ("POST", "/api/project/ci", False, "Release a milestone whose check passed in CI: GitHub's record of the commit decides it",
      {"project": "string", "milestone": "string", "sha": "string"}),
+    ("POST", "/api/project/solve", True, "A referee-judged milestone (knos-referee:<round>): claim it if needed, submit code to its round, released on a passing verdict "
+     "(an agent key or its OAuth token is enough)", {"project": "string", "milestone": "string", "code": "string", "wallet": "string"}),
+    ("GET", "/api/agent/keys", True, "Your agent keys: caps, counters and state (never a secret)", {}),
+    ("POST", "/api/agent/keys", True, "Make a capped, revocable agent key (shown once): an OAuth 2.0 client for /oauth/token",
+     {"label": "string", "max_claims": "integer", "max_spend_units": "integer", "days": "integer", "payout_wallet": "string"}),
+    ("POST", "/api/agent/keys/revoke", True, "Revoke one of your agent keys: it and its access tokens stop at once", {"id": "string"}),
     ("POST", "/api/project/sweep", True, "Run the deadline sweeper now (it also runs every minute)", {}),
     ("POST", "/api/referral", True, "A referral link; the referrer's share is a knos_pay payee on release (passkey=true: paid to your passkey wallet)", {"target": "string", "wallet": "string", "passkey": "boolean"}),
     ("GET", "/r/{code}", False, "Follow a referral link", {}),
@@ -112,6 +118,12 @@ def handle_get(h, state, u, qs) -> bool:
             return h._send(200, valley.public_project(valley.project(q("id")))) or True
         if p == "/api/project/prompt":
             return h._send(200, valley.milestone_prompt(q("project"), q("milestone"))) or True
+        if p == "/api/agent/keys":
+            from . import agentkeys, auth
+            try:
+                return h._send(200, {"keys": agentkeys.keys(auth.who(h.headers.get("Authorization")))}) or True
+            except auth.AuthError as why:
+                return h._send(401, {"error": str(why)}) or True
         if p == "/api/cross/stream":
             from . import live
             live.stream(h, q("id"), int(q("since", "0") or 0))
@@ -189,6 +201,7 @@ def _raw(h) -> bytes:
 POSTS = {r[1] for r in ROUTES if r[0] == "POST"}
 LIVE_PATHS = ("/api/presence", "/api/draft", "/api/draft/get")
 SIGNED = {r[1] for r in ROUTES if r[0] == "POST" and r[2]}
+AGENT_PATHS = ("/api/project", "/api/project/claim", "/api/project/post", "/api/project/solve")   # knos_project_open, _claim, _post, knos_milestone_submit
 
 
 def _admin(given) -> bool:
@@ -207,9 +220,24 @@ def handle_post(h, state, path: str) -> bool:
     if not state.allow(h._client(), "live" if path in LIVE_PATHS else "product"):
         return h._send(429, {"error": "too many requests from this address; try again in a few minutes"}) or True
     try:
-        user = auth.who(h.headers.get("Authorization"))
+        from . import agentkeys
+        try:                                        # the routes the write tools call also take an agent key or its token
+            user = agentkeys.principal(h.headers.get("Authorization")) if path in AGENT_PATHS else auth.who(h.headers.get("Authorization"))
+        except auth.AuthError as why:
+            return h._send(401, {"error": str(why)[:300]}) or True
         if path in SIGNED and user is None:
-            return h._send(401, {"error": "sign in first (passkey, SSO, Google or a guest label)"}) or True
+            return h._send(401, {"error": "sign in first (passkey, SSO, Google or a guest label)"
+                                 + ("; an agent: Authorization: Bearer <agent key or its OAuth token> (/.well-known/oauth-protected-resource)"
+                                    if path in AGENT_PATHS else "")}) or True
+        if path.startswith("/api/agent/keys"):
+            b = h._json()
+            try:
+                if path == "/api/agent/keys/revoke":
+                    return h._send(200, agentkeys.revoke(user, str(b.get("id", "")))) or True
+                return h._send(200, agentkeys.create(user, b.get("label"), b.get("max_claims"), b.get("max_spend_units"), b.get("days"),
+                                                     str(b.get("payout_wallet", "")))) or True
+            except auth.AuthError as why:
+                return h._send(401, {"error": str(why)[:300]}) or True
         if path == "/api/evidence/c2pa":
             if not provenance.c2pa_available():
                 return h._send(503, {"error": "C2PA signing is not installed on this server (c2pa-python)"}) or True
@@ -299,7 +327,12 @@ def _operator(b: dict) -> dict:
         return valley.operator_fund(pid, key, b.get("units", 5))
     if act == "claim":
         return valley.operator_claim(pid, key, str(b.get("wallet", "")))
-    raise ValueError("action: open, fund or claim")
+    if act == "solver_open":                    # the three solver briefs (knos_wanted.solver_briefs), or the ids named
+        which = b.get("which") if isinstance(b.get("which"), list) else None
+        return {"projects": valley.open_solver_briefs(which, _s(b.get("round"), 80))}
+    if act == "solver_fund":                    # the referee-judged milestone, from the app's devnet test wallet
+        return valley.operator_fund_solver(pid, b.get("units", 5))
+    raise ValueError("action: open, fund, claim, solver_open or solver_fund")
 
 
 def _post(path: str, b: dict, user: dict, h) -> dict:
@@ -363,6 +396,9 @@ def _post(path: str, b: dict, user: dict, h) -> dict:
                            str(b.get("url", "")), str(b.get("role", "")))
     if path == "/api/project/ci":
         return valley.ci_release(str(b.get("project", "")), str(b.get("milestone", "")), str(b.get("sha", "")), base=h._base())
+    if path == "/api/project/solve":
+        return valley.solve(str(b.get("project", "")), str(b.get("milestone", "")), str(b.get("code", "")), user, str(b.get("wallet", "")),
+                            base=h._base())
     if path == "/api/project/sweep":
         return valley.sweep()
     if path == "/api/referral":
@@ -378,7 +414,7 @@ def _post(path: str, b: dict, user: dict, h) -> dict:
 
 
 _CONFIRM = ("CONFIRM FIRST: this opens or changes work that devnet TEST money depends on. Ask the human you work for before "
-            "calling, and say what it does.")
+            "calling, and say what it does. Needs Authorization: Bearer (an agent key's OAuth token, or a session).")
 _obj = lambda props, req=(): {"type": "object", "properties": props, "required": list(req), "additionalProperties": False}  # noqa: E731
 _S, _I = {"type": "string"}, {"type": "integer"}
 MCP_TOOLS = [
@@ -387,18 +423,25 @@ MCP_TOOLS = [
                     "regulatory milestones from OpenRegulatory's open templates (with attribution and licence).",
      "inputSchema": _obj({})},
     {"name": "knos_projects", "title": "Projects and their milestones",
-     "description": "Every project: milestones (tranches), their escrow orders, AMC commitments, attempts and where the work can be bought.",
+     "description": "Every project: milestones (tranches), their held orders, AMC commitments, attempts and where the work can be bought.",
      "inputSchema": _obj({"id": _S})},
     {"name": "knos_project_open", "title": "Open a project from a template", "description": "Opens a project; each milestone is its own "
      "tranche, released only on a result plus an independent check. " + _CONFIRM,
-     "inputSchema": _obj({"template": _S, "title": _S, "regulatory": {"type": "array", "items": _S}, "session": _S}, ("template", "title", "session"))},
+     "inputSchema": _obj({"template": _S, "title": _S, "regulatory": {"type": "array", "items": _S}, "session": _S}, ("template", "title"))},
     {"name": "knos_project_claim", "title": "Attempt a milestone", "description": "Takes a milestone as a maker (parallel attempts allowed) "
-     "and binds the wallet it pays. A missed deadline refunds the funders and reopens it to others. " + _CONFIRM,
-     "inputSchema": _obj({"project": _S, "milestone": _S, "wallet": _S, "session": _S}, ("project", "milestone", "wallet", "session"))},
+     "and binds the wallet it pays (an agent key: its payout wallet, leave wallet out). A missed deadline refunds the funders and "
+     "reopens it to others. " + _CONFIRM,
+     "inputSchema": _obj({"project": _S, "milestone": _S, "wallet": _S, "session": _S}, ("project", "milestone"))},
     {"name": "knos_project_post", "title": "Post a result or an independent check", "description": "role=result (the maker) or check (someone "
      "else, another site): a public https page containing the milestone's claim id. Both in: the referee panel releases (the FROST group: 2 of 3 independent hosts re-check and sign). " + _CONFIRM,
      "inputSchema": _obj({"project": _S, "milestone": _S, "attempt": _S, "url": _S, "role": _S, "session": _S},
-                         ("project", "milestone", "attempt", "url", "role", "session"))},
+                         ("project", "milestone", "attempt", "url", "role"))},
+    {"name": "knos_milestone_submit", "title": "Submit to a referee-judged milestone",
+     "description": "For a milestone whose verifier is knos-referee:<round>: claims it for you if you have no attempt yet (an agent key: "
+     "paid at its payout wallet, one claim of its cap), sends your whole train.py to that round's sealed referee, and when the "
+     "verdict meets the target the held money is released to you with no human step. knos_tasks links the round's README. " + _CONFIRM,
+     "inputSchema": _obj({"project": _S, "milestone": _S, "code": {"type": "string", "description": "the whole train.py"},
+                          "wallet": _S, "session": _S}, ("project", "milestone", "code"))},
     {"name": "knos_openapi", "title": "This server's OpenAPI document", "description": "The same API as REST: /openapi.json.",
      "inputSchema": _obj({})},
     {"name": "knos_ready", "title": "Ready to fund", "description": "Free check of a brief before any money locks: each milestone needs a "
@@ -479,6 +522,9 @@ def _mcp_call(name: str, args: dict, signed) -> dict:
         if name == "knos_project_post":
             return valley.post(str(args.get("project", "")), str(args.get("milestone", "")), str(args.get("attempt", "")), who,
                                str(args.get("url", "")), str(args.get("role", "")))
+        if name == "knos_milestone_submit":
+            return valley.solve(str(args.get("project", "")), str(args.get("milestone", "")), str(args.get("code", "")), who,
+                                str(args.get("wallet", "")))
     except valley.Refused as why:
         raise ValueError(str(why)) from None
     raise ValueError(f"unknown tool {name}")

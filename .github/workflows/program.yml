@@ -283,7 +283,7 @@ jobs:
         run: |
           python scripts/interface_fixture.py --check
           # test_pay_interface.py: the crate another program funds an order with (crates/knos-pay-interface): its fixture
-          # is what the client and the escrow write, and its own `cargo test` passes against it
+          # is what the client and the payment program write, and its own `cargo test` passes against it
           pytest -q tests/test_idl.py tests/test_packages.py tests/test_pay_interface.py
 
   # Clippy with every warning an error: the second deployment's two programs and the interface crate, with their tests.
@@ -490,7 +490,7 @@ jobs:
           path: ${{ matrix.workspace }}/target/deploy/${{ matrix.program }}.so
 
   # The sBPF v3 deploy builds (Agave 4.4 refuses an sBPF v3 file of cargo-build-sbf 2.3.13, so solana-verify's 2.3 image
-  # above cannot make them): scripts/build_sbf.sh, the one command deploy/upgrade-0335/STEPS.md step 1 gives the members,
+  # above cannot make them): scripts/build_sbf.sh, the one command the multisig's members run to build the upgrade,
   # on a GitHub-hosted runner. The toolchain is named and each archive is held to the sha256 GitHub publishes for it
   # (the release assets' digests); the panic paths are remapped (--remap-path-prefix: this checkout is /build, the
   # cargo home /cargo), so the bytes do not depend on where the runner checks out. No Rust cache: the build starts from

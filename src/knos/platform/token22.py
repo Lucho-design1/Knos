@@ -55,19 +55,19 @@ def _risk(ext: str, severity: str, why: str) -> dict:
 
 
 def mint_risks(data: bytes) -> list[dict]:
-    """What a mint's extensions mean for money held in escrow in it."""
+    """What a mint's extensions mean for money held in it until the proof passes."""
     ext, out = extensions(data), []
     pd = ext.get("PermanentDelegate")
     if pd is not None and bytes(pd[:32]) != ZERO:
-        out.append(_risk("PermanentDelegate", "refuse", "its permanent delegate can move or burn the tokens in any account, the escrow's included"))
+        out.append(_risk("PermanentDelegate", "refuse", "its permanent delegate can move or burn the tokens in any account, the held money's included"))
     if "Pausable" in ext:
         out.append(_risk("Pausable", "refuse", "its pause authority can stop every transfer, the payout included" +
                          (" (it is paused now)" if len(ext["Pausable"]) >= 33 and ext["Pausable"][32] else "")))
     th = ext.get("TransferHook")
     if th is not None and bytes(th[32:64]) != ZERO:
-        out.append(_risk("TransferHook", "refuse", "every transfer runs another program with accounts the escrow's payout does not pass, so the payout would fail"))
+        out.append(_risk("TransferHook", "refuse", "every transfer runs another program with accounts the payment program's payout does not pass, so the payout would fail"))
     if "NonTransferable" in ext:
-        out.append(_risk("NonTransferable", "refuse", "its tokens cannot be transferred, so the escrow could never pay"))
+        out.append(_risk("NonTransferable", "refuse", "its tokens cannot be transferred, so the held money could never be paid"))
     tf = ext.get("TransferFeeConfig")
     # authorities 0..64, withheld 64..72, older {epoch, maximum_fee, bps} 72..90, newer 90..108: either fee's bps
     if tf is not None and len(tf) >= 108 and (int.from_bytes(tf[88:90], "little") or int.from_bytes(tf[106:108], "little")):
@@ -76,7 +76,7 @@ def mint_risks(data: bytes) -> list[dict]:
     if das is not None and das[:1] == b"\x02":
         out.append(_risk("DefaultAccountState", "refuse", "new token accounts start frozen, so a payee's new account could not receive"))
     if "ConfidentialTransferMint" in ext:
-        out.append(_risk("ConfidentialTransferMint", "warn", "balances can move encrypted; the escrow pays in the clear, but what a payee does next is not visible"))
+        out.append(_risk("ConfidentialTransferMint", "warn", "balances can move encrypted; the payment program pays in the clear, but what a payee does next is not visible"))
     if "MintCloseAuthority" in ext:
         out.append(_risk("MintCloseAuthority", "warn", "the mint can be closed once its supply is zero"))
     for name in ("InterestBearingConfig", "ScaledUiAmount"):
@@ -92,7 +92,7 @@ def account_risks(data: bytes) -> list[dict]:
         out.append(_risk("frozen", "refuse", "the account is frozen and receives nothing"))
     mt = extensions(data).get("MemoTransfer")
     if mt is not None and mt[:1] == b"\x01":
-        out.append(_risk("MemoTransfer", "refuse", "the account requires a memo on every incoming transfer; the escrow's payout carries none, so it would fail. "
+        out.append(_risk("MemoTransfer", "refuse", "the account requires a memo on every incoming transfer; the payment program's payout carries none, so it would fail. "
                          "Turn it off (spl-token disable-required-transfer-memos) or name another account"))
     return out
 
@@ -115,11 +115,11 @@ def check(owner: str, data: bytes) -> dict:
     kind = "mint" if len(data) == MINT_SIZE or (t22 and len(data) > ACCOUNT_TYPE_AT and data[ACCOUNT_TYPE_AT] == 1) else "account"
     risks = (mint_risks(data) if kind == "mint" else account_risks(data)) if t22 or kind == "account" else []
     return {"kind": kind, "token_2022": t22, "risks": risks, "ok": not refused(risks),
-            "said": words(risks) or ("no extension that changes what an escrow in it pays" if kind == "mint" else "it can receive a payout")}
+            "said": words(risks) or ("no extension that changes what money held in it pays" if kind == "mint" else "it can receive a payout")}
 
 
 def main(argv: list[str] | None = None) -> int:
-    """python -m knos.platform.token22 ADDRESS [...]: whether a mint can hold an escrow, or an account receive a payout."""
+    """python -m knos.platform.token22 ADDRESS [...]: whether a mint can hold money until the proof passes, or an account receive a payout."""
     import json
     import sys
     from solders.pubkey import Pubkey

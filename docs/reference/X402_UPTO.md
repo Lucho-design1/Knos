@@ -13,8 +13,8 @@ read 14 Oct 2026).
 - The specification repository has only `scheme_upto.md` and `scheme_upto_evm.md` (Permit2); there is no
   `scheme_upto_svm.md` on `main` (14 Oct 2026).
 - The x402 docs say SVM is supported through Solana's
-  [payment-channels program](https://github.com/solana-foundation/payment-channels): "The client escrows the ceiling
-  amount in an onchain channel (`open`)" and the server settles "with a signed voucher (`settle_and_seal` +
+  [payment-channels program](https://github.com/solana-foundation/payment-channels): the client locks the ceiling
+  amount in an onchain channel (`open`) and the server settles "with a signed voucher (`settle_and_seal` +
   `distribute`)" ([docs.x402.org/schemes/upto](https://docs.x402.org/schemes/upto.md)).
 - The public facilitator lists `upto` only for `eip155:84532` (Base Sepolia), not for Solana devnet
   ([x402.org/facilitator/supported](https://x402.org/facilitator/supported), read live the same day).
@@ -29,7 +29,7 @@ Read from its source (`program/payment_channels/src`, `docs/003-program-instruct
 
 | step | instruction | Knos code |
 |---|---|---|
-| the agent escrows the ceiling | `open` (1): channel PDA `["channel", payer, payee, mint, authorized_signer, salt, open_slot]`, escrow in its token account, the payout splits' sha256 | `x402_upto.open_ix` |
+| the agent holds the ceiling | `open` (1): channel PDA `["channel", payer, payee, mint, authorized_signer, salt, open_slot]`, held money in its token account, the payout splits' sha256 | `x402_upto.open_ix` |
 | Knos checks the open before relying on it | decoded fields against the 402: payee, mint, signer, grace, splits, deposit, PDA | `read_open`, `check_open` |
 | Knos settles what was used | Ed25519 precompile over the 50-byte voucher `[0x56,0x01] ‖ channel ‖ cumulative ‖ expires_at`, then `settleAndSeal` (4), then `distribute` (7): splits paid, the rest refunded, dust to the deployment's treasury | `settle_ixs`, one v1 transaction |
 | the agent's own escape route | `withdrawPayer` (8) after a seal | `withdraw_payer_ix` |

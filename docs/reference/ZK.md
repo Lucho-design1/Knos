@@ -136,7 +136,7 @@ once its proof is wrapped to Groth16 over BN254 (a new verifying key, a new `vk.
 
 The design: a funder pays into a Token-2022 mint with the confidential-transfer extension and an **auditor ElGamal
 key** held by Knos's compliance role, so amounts are hidden from the public but readable by the auditor; the payout
-side stays the existing public USDC escrow (the non-private fallback, the default).
+side stays the existing public USDC payment program (the non-private fallback, the default).
 
 It would sit behind a flag (`private_funding: true` in the funding config) and fall back to the public path
 whenever the flag is off or the cluster refuses the proof instructions.

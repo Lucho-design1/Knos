@@ -1,4 +1,4 @@
-"""One repository (docs/reference/MONOREPO.md): the template repositories' files live in templates/<name>/, byte for byte
+"""One repository: the template repositories' files live in templates/<name>/, byte for byte
 what scripts/small_repos.py writes from this tree's sources; nothing the site or the package hands out makes a
 repository from a GitHub template any more; and the page that says what was folded names every repository it decided."""
 from __future__ import annotations
@@ -54,17 +54,3 @@ def test_nothing_handed_out_makes_a_repository_from_a_template():
         assert not re.search(r"repo\"?,? \"?create\"?.{0,80}--template", text), rel
     claim = (ROOT / "src" / "knos" / "claim.py").read_text(encoding="utf-8")
     assert '"repo", "create", repo, "--public", "--description", about' in claim and "TEMPLATE_REPO" not in claim
-
-
-def test_the_page_names_every_repository_it_decided_and_the_map_lists_it():
-    page = (ROOT / "docs" / "reference" / "MONOREPO.md").read_text(encoding="utf-8")
-    for name in ("knos-wanted", "knos-task", "knos-attest", "knos-claim", "knos-claim-org", "knos-workflows", "knos-workflows-rc",
-                 "knos-playground", "knos-rc", "knos-labs", "knos-oidc-rotate"):
-        assert f"| {name} |" in page or name == "knos-oidc-rotate" and name in page, name
-    cutover = (ROOT / "docs" / "reference" / "CUTOVER-0331.md").read_text(encoding="utf-8")
-    pub = _script("pinned_workflows")
-    for line in pub.branch_commands(pub.pin())[:5]:                  # the founder's commands are the ones the script prints
-        assert line.split("   ")[0].split("        #")[0].rstrip() in cutover, line
-    assert "[CUTOVER-0331.md](CUTOVER-0331.md)" in page
-    assert "| [MONOREPO.md](MONOREPO.md) |" in (ROOT / "docs" / "reference" / "README.md").read_text(encoding="utf-8")
-    assert (ROOT / "apps" / "wanted" / "knos_wanted" / "__init__.py").is_file()

@@ -83,9 +83,12 @@ fees:
     source: "founder decision 23 Oct 2026"
   release:
     status: "decided"
-    what: "the release fee: 1% of the money released from escrow on verified proof, paid by the company (the funder) on top; the solver keeps 100% of what they are paid"
+    what: "the release fee: 1% of the money held until the proof passes and then released, paid by the company (the funder) on top; the solver keeps 100% of what they are paid"
     rate_bps: 100
     payer: "the company (the funder), on top of the amount"
+    payment_costs: "the company pays the card, bank or network costs of paying in, on top of the 1%; the solver keeps 100%"
+    card_max_usd: "500"
+    above_card: "a milestone above 500 USD is paid in by bank transfer or USDC"
     today: "the deployed knos_pay charges its live payout fee, 0.30% (at least 0.05), in test money on devnet"
     collected: "on chain by knos_pay once the timelocked program upgrade through the Squads vault carries it; no company is formed yet, so nobody is charged today"
     decided: "23 Oct 2026"
@@ -93,7 +96,7 @@ fees:
     source: "founder decision 23 Oct 2026"
   payout:
     status: "live"
-    what: "the fee on every release from escrow to a payee (the Acceptance line): the funder pays it on top of the amount"
+    what: "the fee on every release of held money to a payee (the Acceptance line): the funder pays it on top of the amount"
     rate_bps: 30
     floor_usd: "0.05"
     payer: "funder, on top of the amount"
@@ -115,20 +118,20 @@ fees:
     source: "founder decision 14 Oct 2026 (DECISIONS.md item 2). The comparison with Algora's fee to organisations is the founder's; Algora's pricing page (algora.io/pricing) answered 404 on 14 Oct 2026, so no Algora figure is stated here"
   lab_order:
     status: "decided"
-    what: "the Knos fee on a lab order paid through a Knos escrow (the lab is paid when its protocol and QC verdict passes): 3% of the order; the on-chain payout fee (0.30%, at least 0.05) is part of it, not added to it"
+    what: "the Knos fee on a lab order paid through Knos, the money held until the proof passes (the lab is paid when its protocol and QC verdict passes): 3% of the order; the on-chain payout fee (0.30%, at least 0.05) is part of it, not added to it"
     rate_bps: 300
     onchain_line: "payout"
     collected: "the program takes the payout fee at release; the rest (3% minus that fee) is invoiced off chain until a program upgrade carries it. Who bears it (the buyer on top, or deducted from the lab's payment) is not set by the decision"
     decided: "14 Oct 2026"
-    rationale: "labs already pay 2% to 3% of an invoice just to be paid sooner; Knos's 3% buys payment from escrow on a verdict"
+    rationale: "labs already pay 2% to 3% of an invoice just to be paid sooner; Knos's 3% buys payment of the held money on a verdict"
     source: "founder decision 14 Oct 2026 (DECISIONS.md item 2). Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45), 2.00% (NET60), https://www.scientist.com/scipay/ (read 14 Oct 2026)"
   funding:
     status: "live"
-    what: "opening an escrow (a graduation milestone or a pre-order): the program holds the payout fee with the money and takes it only at release"
+    what: "holding money until the proof passes (a graduation milestone or a pre-order): the program holds the payout fee with the money and takes it only at release"
     rate_bps: 0
   graduation:
     status: "decided"
-    what: "a fee on the value of the milestone escrow and the pre-order pool released after a claim graduates, above the payout fee"
+    what: "a fee on the value of the milestone's held money and the pre-order pool released after a claim graduates, above the payout fee"
     rate_bps: 50
     collected: "by contract, off chain, until a knos_pay build carries it (a program upgrade); on chain today only the payout fee is taken"
     decided: "14 Oct 2026"

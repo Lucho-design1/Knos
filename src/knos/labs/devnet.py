@@ -323,8 +323,9 @@ def main(argv: list[str] | None = None) -> int:
     failed: list[dict] = []
 
     def write() -> None:            # after every field: what ran is never lost when a later field fails
-        out = {"what": "the Knos lab escrow on Solana devnet: real transactions, TEST money (the demo's own mint), lab replies from FIXTURES; "
-                       "the LAB verdict pays the lab even when the science failed, the OUTCOME verdict pays the researcher only when the claim held",
+        out = {"what": "the Knos lab's money, held on Solana devnet until the proof passes: real transactions, TEST money (the demo's own mint), "
+                       "lab replies from FIXTURES; the LAB verdict pays the lab even though the science failed, the OUTCOME verdict does not pay "
+                       "the researcher",
                "synthetic": True, "cluster": "devnet", "mint": str(d.mint), "multisig": str(d.ms), "m": M,
                "referees": [str(k.pubkey()) for k in d.referees],
                "referees_note": "kept outside the funder's folder; in this demo all three are on one machine, so they are not independent re-runners",

@@ -36,7 +36,7 @@ def _options(kind: str, raw: bytes, amount: int, actor: int = 0, owner: int = 0,
                         "(.knos/acceptance/<issue>/ with a `blackbox.sh`), and without one only a merge pays")
     if raw[33] == 1 and not any(raw[34:]) and v < fees.NEW_VERSION:
         raise _no(kind, "this order asks for the presentation grace (a token issued by the deadline is still taken for two hours after it), which "
-                        "the escrow on this cluster does not have yet: it comes with the announced upgrade to knos_pay 2.2. Fund without it until then")
+                        "the payment program on this cluster does not have yet: it comes with the announced upgrade to knos_pay 2.2. Fund without it until then")
     if quorum and not 2 <= quorum <= judges:
         raise _no(kind, f"`quorum {quorum}` needs that many judges this order can have, and it has {judges}: its own repository, a neutral "
                         "run unless `neutral off`, and a judge repository if it names one")
@@ -347,7 +347,7 @@ def _plan_order_pay(a: _Ask, rule: bool = False, auto: bool = False) -> _Plan:
     if o is None:
         if rows := before():        # the order was paid and is gone
             raise already(rows)
-        raise _no(kind, "no such order is in escrow (never funded, or already paid or refunded)")
+        raise _no(kind, "no such order is held (never funded, or already paid or refunded)")
     result.update(repo_id=o.repo_id, issue=o.issue, mint=str(o.mint))
     judge = _judge(kind, o, t, rule, auto)
     if auto and (len(payees) != 1 or p[5] != "1"):
@@ -388,7 +388,7 @@ def _plan_order_pay(a: _Ask, rule: bool = False, auto: bool = False) -> _Plan:
         raise _no(kind, "less than one payment is left in this standing order; the rest goes back to its funder")
     wallets = [(i, _routed(got, order, o, i, w)) for i, _b, w in payees]
     if any(w == pay.auth_pda() for _i, w in wallets):
-        raise _no(kind, "an address this token names is the escrow's own account")
+        raise _no(kind, "an address this token names is the payment program's own account")
     held = any(w is None for _i, w in wallets)
     if held and (standing or o.holdback_bps):
         raise _no(kind, "a standing order, and one with a holdback, is never held: every payee needs an address in the token or a bound wallet; "
@@ -473,7 +473,7 @@ def _plan_take(a: _Ask) -> _Plan:
     if not taker or days is None:
         raise _no(kind, "malformed audience or claims")
     if o is None:
-        raise _no(kind, "no such order is in escrow (never funded, or already paid or refunded)")
+        raise _no(kind, "no such order is held (never funded, or already paid or refunded)")
     result = dict(kind=kind, order=str(order), repo_id=o.repo_id, issue=o.issue, taker_id=taker, days=days)
     _which, actor = _command(kind, o, t)
     if actor != taker:
@@ -508,7 +508,7 @@ def _plan_cancel(a: _Ask) -> _Plan:
     kind, ledger, me, t, now = "cancel", a.ledger, a.me, a.t, a.now
     order, o, _p, iat = _order_token(a, kind, 3)
     if o is None:
-        raise _no(kind, "no such order is in escrow (never funded, or already paid or refunded)")
+        raise _no(kind, "no such order is held (never funded, or already paid or refunded)")
     result = dict(kind=kind, order=str(order), repo_id=o.repo_id, issue=o.issue)
     if not o.from_balance:
         raise _no(kind, "this order was funded from a wallet, and only that wallet's own signature cancels it (knos_pay Cancel); no token does")
@@ -549,7 +549,7 @@ def _plan_revert(a: _Ask) -> _Plan:
         was = _said_since(ledger, order, rf"knos3:reverted order={order} amount=(\d+) head={p[3]}", iat - pay.TOKEN_AHEAD)
         if was:         # another relayer carried this token: the holdback went back and the order is gone
             raise _Stop({"ok": True, **result, "sigs": [was[1]], "already": True, "amount": int(was[0].group(1))})
-        raise _no(kind, "no such order is in escrow (never funded, or already paid or refunded)")
+        raise _no(kind, "no such order is held (never funded, or already paid or refunded)")
     result.update(repo_id=o.repo_id, issue=o.issue, mint=str(o.mint))
     _judge(kind, o, t)          # a, b or c, or refused: only the audience of a ruling makes anyone the arbiter
     if o.state != "warranty":

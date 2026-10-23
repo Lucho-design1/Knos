@@ -302,7 +302,7 @@ def spend_checks(c: dict, project: dict, pinned_sha: str, aud: str, now: int) ->
     """The claims of a pay token held to what knos_pay asks of a GitLab token (gl.rs `read`, then the order's pin), in
     its order. Refused names the claim: a token that fails here would cost its fee and pay nothing."""
     def no(claim: str, want: object) -> Refused:
-        return Refused(f"the token's `{claim}` is {c.get(claim)!r}; the escrow takes only {want!r}")
+        return Refused(f"the token's `{claim}` is {c.get(claim)!r}; the payment program takes only {want!r}")
     if c.get("iss") != oidc.ISSUERS[oidc.GITLAB]:
         raise no("iss", oidc.ISSUERS[oidc.GITLAB])
     if int(c.get("exp", 0)) - int(c.get("iat", 0)) > TOKEN_LIFE:
@@ -375,7 +375,7 @@ def round_gitlab(book: Any, st: dict, ep: Any, forge: Any = None, env: Mapping[s
         raise ep.Need("the GitLab round", "GitLab has no such project for this token: check KNOS_GITLAB_PROJECT and the token's scope `api`")
     if project["visibility"] != "public" or not project["runners"] or not project["default_branch"]:
         raise ep.Need("the GitLab round", f"{project['path']} must be public (the pinned job reads GitLab's API with no token), have instance runners on "
-                                          "(the escrow takes only a GitLab-hosted runner) and have a default branch with one commit")
+                                          "(the payment program takes only a GitLab-hosted runner) and have a default branch with one commit")
     good, bad = keys_state(w, w.jwks)
     if not good:
         raise ep.Cannot("the public knos_oidc holds no usable key of gitlab.com (" + "; ".join(bad) + "). A GitLab key is named by a run of the rotate workflow, "

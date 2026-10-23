@@ -344,7 +344,7 @@ def test_a_bundle_made_on_another_deployment_is_refused_as_that_and_not_as_a_cha
     r, _files, blob = built
     assert bundle.verify(blob, net.call)[0]["program"] == PAY
     monkeypatch.setattr(records, "PROGRAMS", {_addr(98): 2})        # this knos reads another deployment's escrow
-    with pytest.raises(ValueError, match="the receipt names the escrow program .* made on another deployment") as why:
+    with pytest.raises(ValueError, match="the receipt names the payment program .* made on another deployment") as why:
         bundle.verify(blob, net.call)
     assert "was changed" not in str(why.value) and r["program"] in str(why.value) and "KNOS_PROGRAM_IDS" in str(why.value)
 

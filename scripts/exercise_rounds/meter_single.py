@@ -1,4 +1,4 @@
-"""The round `meter-single`: one attested evaluation counted once by knos_meter, with no escrow, and a retry of the same
+"""The round `meter-single`: one attested evaluation counted once by knos_meter, with no money held, and a retry of the same
 token free. The token is the one attest.yml posts for an evaluation (audience `knosm:eval:...`), in a repository of the
 buyer whose credits are open.
 
@@ -22,7 +22,7 @@ def _xp() -> Any:
 
 
 def run(book, st: dict) -> None:
-    """One attested evaluation is counted once on chain, with no escrow; the same token again costs nothing."""
+    """One attested evaluation is counted once on chain, with no money held; the same token again costs nothing."""
     x, w = _xp(), book.w
     if "retry" in st:
         return

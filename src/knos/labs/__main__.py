@@ -20,7 +20,7 @@ def _try(name: str, live: bool) -> int:
         return 2
     lab = labs[name]
     q = lab.quote(lab.example)
-    o = lab.order(lab.example, "no-escrow (fixture try)")
+    o = lab.order(lab.example, "no-held-money (fixture try)")
     out = {"lab": name, "field": lab.field, "quote": q, "order": o["order_id"]}
     if name in ("xometry", "b12_foundry"):
         out["manual"] = ("ordered by a person: the request below goes to the lab by its own channel, and its files come back "
@@ -32,7 +32,7 @@ def _try(name: str, live: bool) -> int:
         from . import robotics, verdicts
         a = robotics.PyLabRobot("live")
         try:
-            r = a.results(a.order(lab.example, "no-escrow (live try)"), lab.example)
+            r = a.results(a.order(lab.example, "no-held-money (live try)"), lab.example)
         except LabError as why:
             print(f"{why}\nInstall it once with: sh scripts/install_pylabrobot.sh", file=sys.stderr)
             return 2

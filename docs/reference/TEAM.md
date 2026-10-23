@@ -1,4 +1,4 @@
-# Who builds Knos, and who it needs
+# Who builds Knos
 
 Knos carries research across the valley of death: each step is paid only on verified proof.
 
@@ -20,97 +20,6 @@ Each line is said once here, with what would change it.
 
 He reviews, commits and answers for every change. [DISCLOSURE.md](DISCLOSURE.md), "How the code is written", lists
 the tools he uses.
-
-### Track record before Knos
-
-From 1 to 10 Sep 2026, the founder built Knos's earlier product:
-a shared memory for coding agents, on Sibyl Labs' memory engine. It took first place of 92 teams in the Sibyl Labs
-hackathon, with 126.9 points ([the leaderboard](https://hack.sibyllabs.org/leaderboard)). That hackathon's gate was
-that the memory must be load-bearing: remove it and the product must behave differently.
-
-The same engine is load-bearing in Knos today. Knos keeps its memory in that engine and nowhere else
-(`knos.proof.history`): every verdict, the checks a caught cheat makes required later, the refusals a preflight
-recalls, and each supplier's record. That earlier
-product is not what is entered here; [DISCLOSURE.md](DISCLOSURE.md) says what of it remains.
-
-### What he has shipped
-
-Dates are the release commits' dates in UTC (`git log`) and the dates [CHANGELOG.md](../../CHANGELOG.md) prints.
-
-| when | release | what it was |
-|---|---|---|
-| 1 to 7 Sep 2026 | Knos 0.1.0 to 0.1.8 | a shared local memory for coding agents, a different product ([DISCLOSURE.md](DISCLOSURE.md) has what of it remains) |
-| 30 Sep 2026 | 0.2.0, 0.2.1, 0.3.0 | claims enforced at edit time; the first turn toward paid work |
-| 1 Oct 2026 | 0.3.1 to 0.3.7 | several products tried in one day around one measured fact, that an agent's "tests pass" is often false; the first on-chain check of GitHub's signature |
-| 2 Oct 2026 | 0.3.9, 0.3.10, 0.3.11 | one product kept: two programs on devnet, payment on a merge that GitHub signs, the free check, the site |
-| 3 Oct 2026 | 0.3.12 | the second deployment, upgradeable only through a multisig with a public 48-hour delay |
-| 4 Oct 2026 | 0.3.13, 0.3.14 | work orders, the meter, the passkey wallet; then a defect of his own found during the upgrade delay, before the build ran, and corrected |
-| 5 Oct 2026 | 0.3.15 | a console for whoever approves the invoice, billing by deliverable, and evidence that verifies without devnet |
-| 5 to 10 Oct 2026 | 0.3.16 to 0.3.26 | the knos_pay 2.2 and knos_oidc 2.2 upgrades, live on devnet since 9 Oct 2026 (one 0.30% fee, ES256 tokens, a strict JSON reader); each release is in [CHANGELOG.md](../../CHANGELOG.md) |
-
-What that history shows: he ships quickly, writes down what is not done, and found and disclosed his own
-double-payment defect. What it does not show: that he has sold anything to anyone, run a security review, or
-kept a service running for a customer. He has done none of those for Knos.
-
-[CAPABILITIES.md](CAPABILITIES.md) says how far each thing shipped has got.
-
-## The three roles the plan needs first
-
-**None of the three is hired, engaged, committed or in conversation.** These are descriptions of gaps, in the
-order the plan needs them filled.
-
-### 1. Someone who has sold to engineering or finance leaders
-
-The buyer is the person who authorises a supplier's invoice. The founder has never sold to that person.
-
-First 90 days, this person would own:
-
-- Ten conversations with buyers, and the published
-  count of who said yes, no, and why.
-- The first [Pilot](PILOT.md) sold and run, and its four before-and-after measurements.
-- The decision, from those results, on whether the price book survives contact with buyers
-  ([MARKET.md](MARKET.md), section 3).
-- With the founder: forming the legal entity that a Pilot's invoice needs.
-
-### 2. A security lead, to run an outside review
-
-The founder cannot review his own work independently.
-
-First 90 days, this person would own:
-
-- Choosing an outside firm, scoping the review from [ASSURANCE.md](ASSURANCE.md) and
-  [INVARIANTS.md](INVARIANTS.md), and publishing its findings and the fixes.
-- Holding one key of each multisig, so that no single person can approve an upgrade
-  ([GOVERNANCE.md](GOVERNANCE.md)).
-- The reporting address, and a rehearsed answer to a report when the founder is away
-  ([DRILLS.md](DRILLS.md)).
-
-### 3. Agent-vendor partnerships
-
-The suppliers are agent vendors and agencies that bill per accepted outcome. A supplier that integrates once and
-is reused by unrelated buyers is the first advantage that could be earned ([MARKET.md](MARKET.md), section 7).
-
-First 90 days, this person would own:
-
-- One vendor or agency running the count beside its own invoices for a month, and a published comparison of the
-  two counts.
-- The supplier's side of the first Pilot: the ledger each supplier keeps, and what made it hard to keep.
-- The first measurement of supplier reuse: whether any supplier serves a second, unrelated buyer in the same
-  format.
-
-## Founder and market: what fits, and what does not
-
-For: he has won before with the memory engine Knos still runs on (first of 92 at the Sibyl Labs hackathon, above).
-He works with coding agents every day, and the problem is his own, since his agents reported passing tests that had
-not passed. He measured it on public data before building for it ([BENCH.md](BENCH.md)).
-
-He ships, in public, and writes down what is not done.
-
-Against: the buyer is the person who approves a supplier's invoice, and he has never sold to that person, has
-not spoken to one about this, and has never worked in procurement or finance. A procurement process may refuse
-a pseudonym. So the fit is with the supplier's side and with the engineering.
-
-The buyer's side is the first role above, and it is empty.
 
 ## What an outside key holder would do
 

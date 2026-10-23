@@ -59,7 +59,7 @@ and all three member keys (section 6).
 |---|---|---|
 | An outside key holder on each multisig: what they would check before every vote | sections 4 and 5; [KEYHOLDER.md](KEYHOLDER.md) | nothing: nobody has been asked. The page they would read and the command that adds their key are written and tested |
 | A two-owner organisation for the pinned workflows and the relay | section 9 | nothing: the organisation does not exist |
-| The verifier frozen after an outside review; the escrow kept upgradeable behind the delay | section 7 | nothing: no review has been done or commissioned |
+| The verifier frozen after an outside review; the payment program kept upgradeable behind the delay | section 7 | nothing: no review has been done or commissioned |
 
 ## 1. Who can change what
 
@@ -298,7 +298,7 @@ This is a decision, with its cost stated.
 - **`knos_oidc`, the verifier, is frozen after an outside review, and not before:** its upgrade authority is removed, and from
   then nobody can change which signatures it accepts or how it checks them. The verifier is small, does one thing,
   and is what every other program relies on.
-- **`knos_pay`, the escrow, stays upgradeable behind the public 8-day delay.** It holds the money and has the
+- **`knos_pay`, the payment program, stays upgradeable behind the public 8-day delay.** It holds the money and has the
   most code, and a defect in it must be fixable in place. The one in section 3 is the example.
 - **`knos_meter` and `knos_passkey`:** not decided. They stay behind the same delay until it is.
 
@@ -363,10 +363,10 @@ attested.
 - **If nobody does.** Keys expire one by one, 30 days after each one's last attestation. A token under an expired
   key is refused. An expired key comes back when it is attested again, as long as the attestation is verified under
   some other key that is still usable. When the last usable key of GitHub's expires, nothing can be verified and
-  nothing can be attested: no order can be funded by comment or paid, and the escrow is refund-only
+  nothing can be attested: no order can be funded by comment or paid, and the payment program is refund-only
   ([DRILLS.md](DRILLS.md) has the funder's steps). From there the only way back is an upgrade of the verifier
   through the multisig, 8 days away, and after the verifier is frozen, a new verifier and an upgrade of the
-  escrow.
+  payment program.
 
 ## 9. The dependency on one personal GitHub account
 

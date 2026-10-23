@@ -1071,7 +1071,7 @@ def _after(run: Run, c: Case, pull: dict, after: str, tests: bool = False) -> st
     states = set(c.checks.values())
     if c.listed and not (c.scope or c.why):
         until = min(j.deadline for _a, j in c.jobs)
-        return (f"held, not paid. {name[0].upper()}{name[1:]} met its terms, but {c.listed} The money stays in escrow until "
+        return (f"held, not paid. {name[0].upper()}{name[1:]} met its terms, but {c.listed} The money stays held until "
                 f"{who.when(until)}, then goes back to where it came from. If the payee binds another wallet ({BIND}), {how} to try again.")
     if v == "yes":
         return f"everything {name} asks for holds.{_rows(c)}{_pays(c, 'pays')}\n{how[0].upper()}{how[1:]} to have it paid."
@@ -1087,7 +1087,7 @@ def _after(run: Run, c: Case, pull: dict, after: str, tests: bool = False) -> st
     if not c.tip and run.att is None:
         fixes.append("A maintainer can pay this work anyway with `/knos tip <amount>`" + (" once it is merged." if tests else "."))
     until = min(j.deadline for _a, j in c.jobs)
-    stays = f" The money stays in escrow until {who.when(until)}, then goes back to where it came from." if run.now() <= until else ""
+    stays = f" The money stays held until {who.when(until)}, then goes back to where it came from." if run.now() <= until else ""
     return (f"not paid. This pull request does not take {name} as it stands; its checks are read at its last commit ({sha})."
             f"{_rows(c)}\n{' '.join(fixes)}{stays}")
 
@@ -1111,7 +1111,7 @@ def _relayed(run: Run, c: Case, r: dict, after: str, how: str) -> str:
         q = r["quorum"]
         # why a judge who spoke is not one more (knos_pay 2.2 counts owners), and whose word of before the upgrade has to be given again
         same = "".join(f" It counts {q.get('have')} because {_short(w).rstrip('. ')}." for w in q.get("uncounted") or [])
-        again = (f" {' and '.join(q['again'])[0].upper()}{' and '.join(q['again'])[1:]} passed this commit before the escrow's upgrade to knos_pay 2.2, and "
+        again = (f" {' and '.join(q['again'])[0].upper()}{' and '.join(q['again'])[1:]} passed this commit before the payment program's upgrade to knos_pay 2.2, and "
                  "a word recorded before it names no run, so it counts for nothing now: that judge signs again (run its workflow once more) and is "
                  "counted then.") if q.get("again") else ""
         return (f"not paid yet. {name[0].upper()}{name[1:]} met its terms for {payee}, and Solana recorded this judge's word ({tx}, {took}): "
@@ -1144,11 +1144,11 @@ def _relayed(run: Run, c: Case, r: dict, after: str, how: str) -> str:
                        f"after that date it goes back to where it came from ({tx}, {took}).")
     if not out:
         return (f"the signed token for {name} was relayed ({tx}, {took}), but Solana does not show the payment yet. `/knos status` shows "
-                "what is in escrow.")
+                "what is held.")
     left = len(c.jobs) - len(r.get("paid") or [])
     if left > 0:
         out.append(f"{left} other job{'s' if left > 1 else ''} on this issue did not take this token (funded through another commit "
-                   "of Knos's workflows); `/knos status` shows what is still in escrow.")
+                   "of Knos's workflows); `/knos status` shows what is still held.")
     return " ".join([*out, *c.said])
 
 
@@ -1277,8 +1277,8 @@ def command(run: Run) -> int:
         reply = cmd if isinstance(cmd, str) else _act(run, cmd, said, on, on_pull)
     except Exception as why:  # noqa: BLE001 - whatever it was, the commenter is told
         run.failed = True
-        reply = (f"Knos: this stopped before it was finished ({type(why).__name__}: {_short(why)}). `/knos status` shows what is in "
-                 "escrow now; post the comment again to retry.")
+        reply = (f"Knos: this stopped before it was finished ({type(why).__name__}: {_short(why)}). `/knos status` shows what is "
+                 "held now; post the comment again to retry.")
     run.say(on["number"], reply)
     return 1 if run.failed else 0
 
@@ -1531,10 +1531,10 @@ def _fund(run: Run, cmd, said: dict, on: dict, pull: dict | None, att=None) -> s
         plan = planned
         cmd = plan["cmd"]
     elif getattr(cmd, "auto", False) or getattr(cmd, "quorum", None) or getattr(cmd, "judge", None):
-        return ("Knos: nothing was funded. `auto`, `quorum` and `judge` are options of a work order, and the escrow on this cluster does not hold "
+        return ("Knos: nothing was funded. `auto`, `quorum` and `judge` are options of a work order, and the payment program on this cluster does not hold "
                 f"work orders yet (knos_pay 2.1 is not live here). Leave them out, then {again}.")
     elif getattr(cmd, "grace", False):
-        return ("Knos: nothing was funded. `grace` is an option of a work order, and the escrow on this cluster does not hold work orders yet "
+        return ("Knos: nothing was funded. `grace` is an option of a work order, and the payment program on this cluster does not hold work orders yet "
                 f"(knos_pay 2.2 is not live here). Leave it out, then {again}.")
     try:
         paused = pay.read_pause(run.ledger.account(pay.pause_pda()))
@@ -1592,7 +1592,7 @@ def _fund(run: Run, cmd, said: dict, on: dict, pull: dict | None, att=None) -> s
                 f"`{TERMS3}` on the default branch. `knos terms propose` writes one from the repository's own checks; or comment "
                 "`/knos fund <amount>`.")
     if doc is not None and not run.version():
-        return (f"Knos: nothing was funded. This repository's terms (`{TERMS3}`, Knos Terms 3) describe a work order, and the escrow on this "
+        return (f"Knos: nothing was funded. This repository's terms (`{TERMS3}`, Knos Terms 3) describe a work order, and the payment program on this "
                 "cluster does not hold work orders yet (knos_pay 2.1 is not live here).")
     if doc is not None and plan is not None:        # terms 3, enforced: an order that says anything the document does not is not funded
         built, differs = _terms3_order(doc, cmd, plan, built)
@@ -1674,13 +1674,13 @@ def _fund(run: Run, cmd, said: dict, on: dict, pull: dict | None, att=None) -> s
     job = _link(run, "job on Solana", "address", r.get("job") or pay.job_pda(rp["id"], number, balance))
     if tip:
         run.output("settle", number)
-        return (f"Knos: a tip of {money} for this pull request is in escrow ({job}), {took}. It is paid to @{payee} next; the "
+        return (f"Knos: a tip of {money} for this pull request is held ({job}), {took}. It is paid to @{payee} next; the "
                 "result follows here.")
     told = _told(built)
     deadline = who.when(r.get("deadline") or run.now() + work)
     source = "the devnet faucet" if r.get("faucet", faucet) else f"the balance `{balance}`"
     return "\n\n".join((
-        f"Knos: {money} from {source} is in escrow for issue #{number} ({job}), {took}.",
+        f"Knos: {money} from {source} is held for issue #{number} until the proof passes ({job}), {took}.",
         " ".join([*told[:-1], *built.notes, f"If it is not paid by {deadline}, the money goes back to where it came from."]),
         f"To earn it: open a pull request whose description says `Fixes #{number}`. {told[-1]} For the money to reach you when it "
         "is paid, comment `/knos address <your Solana address>` on your pull request; without an address it waits for you "
@@ -1952,7 +1952,7 @@ def _order_plan(run: Run, rp: dict, cmd, commenter: dict, again: str, att=None, 
     salted. A policy that says `private: true` funds nothing any other way."""
     offer, stop = isinstance(cmd, commands.Offer), "Knos: nothing was funded. "
     if not run.version():
-        return (stop + "A standing offer is a work order, and the escrow on this cluster does not hold work orders yet (knos_pay 2.1 "
+        return (stop + "A standing offer is a work order, and the payment program on this cluster does not hold work orders yet (knos_pay 2.1 "
                 "is not live here). `/knos fund <amount>` puts a bounty on this issue today.")
     low, high = pay.ORDER_MIN_AMOUNT, pay.MAX_AMOUNT
     if not low <= cmd.units <= high:
@@ -2013,7 +2013,7 @@ def _order_plan(run: Run, rp: dict, cmd, commenter: dict, again: str, att=None, 
     grace = bool(getattr(cmd, "grace", False))
     if grace and run.version() < fees.NEW_VERSION:      # 2.1 refuses the byte (E_TERMS): said here, before GitHub is asked to sign anything
         return (stop + f"`grace` asks that a token GitHub issued by the deadline still pays for {_days(pay.GRACE // 3600).replace('day', 'hour')} after it, and the "
-                f"escrow that is live on this cluster does not know that option yet (it comes with knos_pay 2.2). Leave out `grace`, then {again}.")
+                f"payment program that is live on this cluster does not know that option yet (it comes with knos_pay 2.2). Leave out `grace`, then {again}.")
     named = getattr(cmd, "judge", None)
     if named and att is not None:
         return stop + f"A private order's judge is its attestor repository already. Leave out `judge:`, then {again}."
@@ -2075,14 +2075,14 @@ def _funded_order(run: Run, cmd, rp: dict, number: int, balance, mint_, faucet: 
     if isinstance(cmd, commands.Offer):
         vendor = plan["vendor"]
         return "\n\n".join((
-            f"Knos: a standing offer for @{vendor} is in escrow on issue #{number}: {money} from {source} ({order}), {took}. The funder pays "
+            f"Knos: a standing offer for @{vendor} is held on issue #{number}: {money} from {source} ({order}), {took}. The funder pays "
             f"Knos's fee of {fee} on top.",
             " ".join([f"Each pull request of @{vendor}'s that says `Fixes #{number}` and is accepted is paid {_amount(cmd.rate)} in full, until "
                       f"the {_amount(cmd.units)} is spent.", *told[:-1], *built.notes, warranty, arbiter,
                       f"What is left on {deadline} goes back to where it came from."]),
             f"For the money to reach @{vendor}, they bind a wallet to their GitHub account: {BIND}. {neutral}"))
     return "\n\n".join((
-        f"Knos: {money} from {source} is in escrow for issue #{number} as a {'private ' if plan.get('attestor') else ''}work order ({order}), {took}. The funder pays Knos's fee of "
+        f"Knos: {money} from {source} is held for issue #{number} as a {'private ' if plan.get('attestor') else ''}work order until the proof passes ({order}), {took}. The funder pays Knos's fee of "
         f"{fee} on top, so whoever is paid receives the full amount.",
         " ".join([*told[:-1], *terms.describe_options(plan.get("auto", False), plan.get("quorum", 0), plan["neutral"], plan.get("judge", "")), *built.notes, warranty, arbiter, back]),
         f"To earn it: open a pull request whose description says `Fixes #{number}`. {told[-1]} For the money to reach you when it "
@@ -2139,7 +2139,7 @@ def _reserve_order(run: Run, cmd: commands.Reserve, said: dict, on: dict) -> str
     if on.get("state") == "closed":
         return stop + f"Issue #{number} is closed. Reopen it and {again}."
     if not run.version():
-        return stop + "A reserve is a standing work order, and the escrow on this cluster does not hold work orders yet (knos_pay 2.1 is not live here)."
+        return stop + "A reserve is a standing work order, and the payment program on this cluster does not hold work orders yet (knos_pay 2.1 is not live here)."
     supplier = _read(run, f"users/{cmd.supplier}")
     if not (isinstance(supplier, dict) and supplier.get("id")):
         return stop + f"GitHub gave no account named @{_plain(cmd.supplier)} (the supplier). Check the name, then {again}."
@@ -2232,7 +2232,7 @@ def _order_word(run: Run, cmd, said: dict, on: dict) -> str:
             return commands.reply("not_allowed", cmd)
     if name == "split":
         if not run.version():
-            return ("Knos: nothing was noted. A split is for a work order, and the escrow on this cluster does not hold work orders yet "
+            return ("Knos: nothing was noted. A split is for a work order, and the payment program on this cluster does not hold work orders yet "
                     "(knos_pay 2.1 is not live here). `/knos pay @login` names the one person a bounty pays.")
         pull = _pull(run, number)
         if pull is None:
@@ -2416,7 +2416,7 @@ def _balance(run: Run, rp: dict, commenter: dict, cmd, number: int, again: str, 
         state = f"open {_until(run, j)}" if j.state == "open" else f"held until {who.when(j.hold_until)}"
         where = "This pull request" if isinstance(cmd, commands.Tip) else f"Issue #{number}"
         return None, None, False, (
-            f"Knos: nothing was added. {where} already has {_sum(run, [(address, j)])} in escrow from this balance, {state} "
+            f"Knos: nothing was added. {where} already has {_sum(run, [(address, j)])} held from this balance, {state} "
             f"({_link(run, 'job on Solana', 'address', address)}). A balance holds one "
             + ("tip on a pull request at a time: comment `/knos settle` to have this one paid." if isinstance(cmd, commands.Tip) else
                "bounty on an issue at a time; `/knos status` shows it."))
@@ -2478,10 +2478,10 @@ def _escrow(run: Run, rp: dict, on: dict) -> str:
         live = sorted([*_jobs(run, rp["id"], n), *_orders(run, rp["id"], n)], key=lambda x: -x[1].amount)
     except Exception as why:  # noqa: BLE001
         run.failed = True
-        return (f"Knos: Solana could not be read just now ({_short(why)}), so what is in escrow for issue #{n} is not known. "
+        return (f"Knos: Solana could not be read just now ({_short(why)}), so what is held for issue #{n} is not known. "
                 "Comment `/knos status` again.")
     if not live:
-        return f"Knos: nothing is in escrow for issue #{n}. A maintainer puts a bounty on it with `/knos fund <amount>`."
+        return f"Knos: nothing is held for issue #{n}. A maintainer puts a bounty on it with `/knos fund <amount>`."
     parts, bought = [], None
     more, live = len(live) - MAX_CASES, sorted(live, key=lambda x: (not x[1].from_balance, -x[1].amount))[:MAX_CASES]
     for address, j in live:
@@ -2500,7 +2500,7 @@ def _escrow(run: Run, rp: dict, on: dict) -> str:
         bought = bought or c.terms
         told = " ".join(terms.describe(c.terms)) if c.terms else f"Its terms are not known here: {(c.unread or c.why)[0]}."
         as_ = (" as a standing offer" if j.flags & pay.F_STANDING else " as a work order") if order else ""
-        parts.append(f"{_sum(run, [(address, j)])} is in escrow for issue #{n}{as_} {_until(run, j)} ({job}). {told}")
+        parts.append(f"{_sum(run, [(address, j)])} is held for issue #{n}{as_} {_until(run, j)} ({job}). {told}")
     holds = [h for h in who.reservation(on, terms.pages(f"repos/{run.repo}/issues/{n}/events", run.github), bought, run.clock())
              if not h.lapsed]
     if holds:
@@ -2519,7 +2519,7 @@ def _unseen(blind: list[int], number: int, how: str = "comment `/knos settle`") 
     if not blind:
         return []
     named = ", ".join(f"issue #{n}" for n in blind if n != number) or "this pull request's tips"
-    return [f"Solana could not be read for {named}, so whether anything is in escrow there is not known. {how[0].upper()}{how[1:]} "
+    return [f"Solana could not be read for {named}, so whether anything is held there is not known. {how[0].upper()}{how[1:]} "
             "to try again."]
 
 
@@ -2879,7 +2879,7 @@ def _settle_safely(run: Run, rp: dict, pull: dict, since: float, after: str, ask
         run.failed = True
         text = (f"Knos: this pull request's payment stopped before it was finished ({type(why).__name__}: {_short(why)}). "
                 + (f"To try again, {_again(run)}." if run.att is not None else
-                   "`/knos status` shows what is in escrow" + ("." if tests is not None else "; comment `/knos settle` to try again.")))
+                   "`/knos status` shows what is held" + ("." if tests is not None else "; comment `/knos settle` to try again.")))
         if asked or run.relayed != sent or _status_of(run) is not None:      # (a comment that said "received" says how it ended)
             run.say(pull["number"], text)
         else:
@@ -2937,7 +2937,7 @@ def _settle_one(run: Run, rp: dict, pull: dict, since: float, after: str, asked:
                      "`/knos settle` on the pull request pays it." if unlisted else
                      f"Knos settle: Solana could not be read for pull request #{number}, which closes no issue. `/knos settle` on it "
                      "pays a tip that waits for it." if blind else
-                     f"Knos settle: nothing is in escrow for pull request #{number}, so there is nothing to pay.")
+                     f"Knos settle: nothing is held for pull request #{number}, so there is nothing to pay.")
             return
         parts = [_nothing(run, pull, closes, listed, held, tips_only, True)]
     _settled(run, cases)
@@ -3263,7 +3263,7 @@ def _att_open(run: Run) -> tuple:
     if not ok:
         return None, [], why
     if not run.version():
-        return None, [], "The escrow on this cluster does not hold work orders yet (knos_pay 2.1 is not live here), and a private order is one."
+        return None, [], "The payment program on this cluster does not hold work orders yet (knos_pay 2.1 is not live here), and a private order is one."
     if str(run.env.get("GITHUB_RUN_ATTEMPT") or "1") != "1":
         return None, [], "This is a re-run, and GitHub's signature counts only on a run's first attempt. Start the workflow again."
     if run._reader is None and not run.env.get("KNOS_READ_TOKEN"):
@@ -4287,7 +4287,7 @@ def canary(run: Run, api=None, amount: str = "5") -> int:
     pull request's checks to pass, merges it, and waits for Knos's comment that the payment was made. The seconds
     of each leg are printed, written to the job's outputs and summary, and logged as one `knos-canary {json}` line:
 
-        fund    the issue opened -> Knos's comment that the money is in escrow
+        fund    the issue opened -> Knos's comment that the money is held
         open    -> the pull request is open
         check   -> every check on its last commit has finished, and none failed
         merge   -> GitHub merged it
@@ -4327,9 +4327,9 @@ def canary(run: Run, api=None, amount: str = "5") -> int:
     try:
         t = run.clock()
         issue = int(api("POST", f"repos/{repo}/issues", {"title": f"knos canary {stamp}", "body": f"A timed round of Knos on test USDC.\n\n/knos fund {amount} checks: none\n"})["number"])
-        said = wait(knos_said(issue, "is in escrow", "nothing was funded", "not confirmed", "stopped"))
+        said = wait(knos_said(issue, "is held for issue", "is in escrow", "nothing was funded", "not confirmed", "stopped"))
         took["fund"] = round(run.clock() - t)
-        if not said or "is in escrow" not in said:
+        if not said or not any(m in said for m in ("is held for issue", "is in escrow")):      # today's words, or an older Knos's
             return done(False, "fund", _short(said or f"no reply from Knos on issue #{issue} within {CANARY_WAIT} s"))
         t = run.clock()
         base = api("GET", f"repos/{repo}")["default_branch"]

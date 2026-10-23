@@ -3,7 +3,7 @@
     python scripts/pages_data.py --out _site --events _events.json --index _site/index.json [--docs docs/reference/OPERATIONS.md]
     python scripts/pages_data.py --out _site --empty        # the same files with nothing measured (a local build)
 
-It counts from what scripts/network_stats.py counts from (the escrows' own log lines of both deployments, the relay
+It counts from what scripts/network_stats.py counts from (the payment programs' own log lines of both deployments, the relay
 log, GitHub when it answers) and from the Agent PR Index's published index.json. Nothing here is self-reported, and a
 number that could not be measured is null with a note, never a guess. Written under the output folder:
 
@@ -27,7 +27,7 @@ number that could not be measured is null with a note, never a guess. Written un
 Every file carries `source` (what it was counted from) and `generated` (when). Every file can be recomputed by running
 this script on the same inputs.
 
-A work order (knos_pay 2.1, the escrow's `knos3:` lines) is counted as one job for its funder and its repository. What it
+A work order (knos_pay 2.1, the payment program's `knos3:` lines) is counted as one job for its funder and its repository. What it
 paid is counted for each payee by that payee's own share (a split pays several, and a holdback released after its
 warranty adds to its payee's), and a statement has one row per payment.
 
@@ -405,7 +405,7 @@ def units_text(units: int) -> str:
 
 def payment_rows(jobs: list[dict], names: Names) -> list[dict]:
     """One row per payment, oldest first: the columns of `knos receipts` that this build knows, plus `kind` (real, test, self or own: what the
-    payment is counted as) and `month`. `amount` is what reached the payee, `fee` what the escrow kept, `total` the two together, in the mint's
+    payment is counted as) and `month`. `amount` is what reached the payee, `fee` what the payment program kept, `total` the two together, in the mint's
     six decimals; the `*_units` are the same as integers. `funder` is the funder's login (None when GitHub did not name it) or its wallet."""
     rows = []
     # a work order: one row per payee per payment (its fee is its funder's, on the first row of each paying transaction)
@@ -428,7 +428,7 @@ def statement_file(i: int, login: str, rows: list[dict]) -> dict:
     """The rows an account was paid (`as_seller`) and the rows it funded (`as_owner`): the site picks a month and adds them up in the browser."""
     return {"login": login, "github_id": i, "columns": list(STATEMENT_COLUMNS), "decimals": 6,
             "as_seller": [r for r in rows if r["payee_id"] == i], "as_owner": [r for r in rows if r["funder_id"] == i],
-            "note": "Every payment the escrows' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."}
+            "note": "Every payment the payment programs' log lines show, as paid: amounts in six decimals. A payment newer than `generated` is not in it. `kind` says what a payment is counted as (real, test, self, own); kinds are never added together."}
 
 
 # ---- badges ----------------------------------------------------------------------------------------------------------
@@ -634,7 +634,7 @@ def operations_json(get, now: float, own: frozenset, meta: dict, workflow: str =
                             "incident": "a finished canary run that did not succeed, with its run's link",
                             "response": "from an outside issue or pull request being opened to the first comment of a team member who is not its author, over the newest 200 of the repository",
                             "asked": "one funding of one issue, or one payment of one pull request, that the relay log shows a line for",
-                            "user_errors": "asked, never done, and every failed line was the asker's own (the issue is funded already, nothing is in escrow, an old workflow): the reply said what to do, and asking again the same way changes nothing",
+                            "user_errors": "asked, never done, and every failed line was the asker's own (the issue is funded already, nothing is held, an old workflow): the reply said what to do, and asking again the same way changes nothing",
                             "failures": "asked, possible, and never done: asked less completed less user_errors",
                             "completion_possible": "completed over what could have been done (asked less user_errors)"}}
 
@@ -874,7 +874,7 @@ def paid_on_proof(rec: dict, meta: dict) -> str:
 
 def audit_files(events: list[dict], partial: bool = False) -> dict[str, str]:
     """audit/<owner id>.json for every account whose Balance funded a work order or a bounty on an issue, the second
-    escrow's (an owner whose money funded only bounties has a statement too; scripts/audit_statements.py `files`):
+    payment program's (an owner whose money funded only bounties has a statement too; scripts/audit_statements.py `files`):
     the months, and for each the scope and the lines that `knos audit export --owner <id>` writes for that month, so
     the page's export is that command's bytes. Named by id: the chain holds ids, and a file needs no name from GitHub.
     `partial`: the history was not read whole, and every scope then says so. No history, no statement: and then nothing
@@ -1003,7 +1003,7 @@ def build(events: list[dict], comments: list[dict] | None, get, index: dict | No
     meta["source"].setdefault("github", get is not None)
     meta["source"].setdefault("agent_pr_index", {"date": index["date"], "root": index["root"]} if index else None)
     meta["source"].setdefault("recompute", "python scripts/network_stats.py --events-out e.json; python scripts/pages_data.py --events e.json --index index.json")
-    meta["source"].setdefault("summary", f"{len(events)} log lines of the escrows' history on devnet, {len(lines)} lines of the relay log, "
+    meta["source"].setdefault("summary", f"{len(events)} log lines of the payment programs' history on devnet, {len(lines)} lines of the relay log, "
                               + ("GitHub" if get else "no GitHub reads") + (f", the Agent PR Index of {index['date']} (root {index['root'][:12]})" if index else ", no Agent PR Index"))
     stamp = lambda d: {"source": meta["source"], "generated": gen, **d}  # noqa: E731
     files: dict[str, str] = {}

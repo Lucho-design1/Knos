@@ -1,4 +1,4 @@
-"""TASK-WORLD T5 test_mcp_store_ready, live: the hosted MCP is ready for the AI app stores.
+"""test_mcp_store_ready, live: the hosted MCP is ready for the AI app stores.
 
     python scripts/test_mcp_store.py [https://knos.onrender.com]
 

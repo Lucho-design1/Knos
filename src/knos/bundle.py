@@ -180,7 +180,7 @@ def _paid_as_recorded(r: dict, call) -> str:
     this knos does not read (a bundle made on another deployment: it is refused as that, not as a changed receipt)."""
     from . import records
     if r["program"] not in records.PROGRAMS:
-        raise ValueError(f"the receipt names the escrow program {r['program']}, and this knos reads the escrow at {' and '.join(records.PROGRAMS)}: the "
+        raise ValueError(f"the receipt names the payment program {r['program']}, and this knos reads the payment program at {' and '.join(records.PROGRAMS)}: the "
                          "bundle was made on another deployment of the programs (or its receipt was edited to name one), so its wallets cannot be "
                          "compared with that program's lines here. For a staging deployment, verify with its ids: KNOS_PROGRAM_IDS=<its ids file>")
     sig = r["transaction"]["signature"]
@@ -407,7 +407,7 @@ def _funding_as_archived(r: dict, arch: dict) -> str | None:
     if (c["funder"]["github_id"] or 0) != by or c["source"]["address"] != (passkey or source) or (c["source"]["kind"] == "passkey") != bool(passkey):
         raise ValueError("the funder or the source of the money in the receipt is not what the archived funding transaction logged: the receipt or the archive was changed")
     return (f"the archived funding transaction {f['signature']} (slot {f['slot']}) logged this funder and this source of the money; the limit, the funder's "
-            "role and billed_before are the receipt's word, from the escrow's history when the receipt was built")
+            "role and billed_before are the receipt's word, from the payment program's history when the receipt was built")
 
 
 def verify_offline(blob: bytes, live=None, mirror: str = "") -> tuple[dict, dict[str, list[str]], list[str]]:
@@ -697,7 +697,7 @@ def gather(call, events: list[dict], target: str, get, published=None, verdict: 
             raise ValueError(f"{target} is the payment of an issue's bounty (repository id {bounty['repo']}, issue {bounty['issue']}), not of a "
                              "work order: a receipt and its bundle are built from a work order's payment, whose token names the order, its "
                              "terms and the commit (docs/reference/RECEIPT.md)")
-        raise Unavailable(f"the escrow's history on this cluster shows no payment of {target}")
+        raise Unavailable(f"the payment program's history on this cluster shows no payment of {target}")
     o, sig = hit
     if o["private"] or not o["terms"]:
         raise ValueError("this is a private order: its terms and repository are not public, so no public receipt is built for it")
@@ -851,7 +851,7 @@ def register(app, help_lines: list | None = None) -> None:
                     out_dir: Path = typer.Option(None, "--out", help="for mirror: the folder to write (a GitHub Pages branch, a bucket)"),
                     mirror: str = typer.Option("", "--mirror", help="for verify: a mirror's folder or https URL, read when the chain has no record"),
                     rpc: str = typer.Option("", "--rpc", help="the cluster's JSON-RPC URL (default: KNOS_RPC, then devnet)"),
-                    limit: int = typer.Option(1000, "--limit", help="how many of the escrow's newest transactions to read"),
+                    limit: int = typer.Option(1000, "--limit", help="how many of the payment program's newest transactions to read"),
                     no_attest: bool = typer.Option(False, "--no-attest", help="for mirror: do not also publish new receipts as on-chain attestations (Solana Attestation Service)"),
                     no_chain: bool = typer.Option(False, "--no-chain", help="for verify: ask no cluster. TARGET is a bundle file, or an order or transaction read from --mirror"),
                     no_network: bool = typer.Option(False, "--no-network", help="with --no-chain: do not ask the issuer for its key list either")) -> None:
@@ -964,7 +964,7 @@ def register(app, help_lines: list | None = None) -> None:
     def make_cmd(target: str = typer.Argument(..., help="an order's address or a paying transaction's signature"),
                  out_file: Path = typer.Option(None, "--out", help="where to write the .tar (default: <order>.bundle.tar)"),
                  rpc: str = typer.Option("", "--rpc", help="the cluster's JSON-RPC URL (default: KNOS_RPC, then devnet)"),
-                 limit: int = typer.Option(1000, "--limit", help="how many of the escrow's newest transactions to read"),
+                 limit: int = typer.Option(1000, "--limit", help="how many of the payment program's newest transactions to read"),
                  verdict: Path = typer.Option(None, "--verdict", help="tests mode: the judge's verdict file (knos proof judge --evidence), kept as verdict.json"),
                  rerun: Path = typer.Option(None, "--reexecution", help="a neutral judge's own verdict (the `knos-verdict:` line of its comment, or its run's verdict.json): "
                                                                         "recorded in the receipt's entry for that judge. Without it, the comment is looked for"),

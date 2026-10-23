@@ -3,7 +3,7 @@
     Python service  --JSON lines-->  bridge/qloo_bridge.mjs (official MCP SDK 1.30.1)  --MCP stdio-->  `qloo mcp`
 
 Why a Node sidecar and not a Python MCP client: it is the exact SDK and version Qloo's starter pins
-(qloo-hackathon-kit starter/mcp-client), the harness already needs Node 22.19+, and the Python service stays on the
+(starter/mcp-client), the harness already needs Node 22.19+, and the Python service stays on the
 standard library. This flow does not use `qloo api` (raw endpoints; the decision check does, qloo_harness.py): the
 nine workflows cover every question the demand check
 asks (docs/reference/DEMAND_CHECK.md, "Tools used and why").

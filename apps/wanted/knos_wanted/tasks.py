@@ -143,6 +143,18 @@ def rounds() -> list[dict]:
                         "prize": f"{PRIZE_UNITS} test units on devnet for a scored attempt, when you give a devnet wallet"}}]
 
 
+def round_state() -> dict:
+    """The open round as its public state says it: id, status, metric direction, the Ladder step and the baseline's
+    shown score (what a referee-judged milestone's margin is measured from). Never a hidden score."""
+    ok, why = available()
+    if not ok:
+        raise ValueError(why)
+    st = _tools().call("knos_game_state", {})
+    g = st.get("game") or st
+    return {"id": g.get("id"), "status": g.get("status"), "direction": g.get("direction"), "metric": g.get("metric"),
+            "eta": float((g.get("rules") or {}).get("ladder_eta") or 0.01), "baseline_shown": g.get("baseline_shown")}
+
+
 def listing() -> dict:
     ok, why = available()
     ms = [{"claim_id": r.get("claim_id"), "idea": r.get("idea"), "commitment": r.get("commitment"), "units": r.get("units")}

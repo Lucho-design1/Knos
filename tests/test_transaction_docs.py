@@ -1,5 +1,5 @@
 """The one transaction (docs/TRANSACTION.md): every link leads to a file, the invoice figures are what
-`knos shadow` gives on the sample, and the witnessed links are the ones the README and the judges' page give."""
+`knos shadow` gives on the sample, and the witnessed links are the ones the README gives."""
 from __future__ import annotations
 
 import json
@@ -38,10 +38,10 @@ def test_the_invoice_figures_are_what_shadow_gives_on_the_sample():
     assert "In dispute: 1750.00 of 2900.00" in out and "In dispute: 1,750.00 of 2,900.00" in text
 
 
-def test_the_witnessed_links_agree_with_the_readme_and_the_judges_page():
+def test_the_witnessed_links_agree_with_the_readme():
     links = set(re.findall(r"https://(?:explorer\.solana\.com/tx|github\.com/drexthealpha/knos-witness|raw\.githubusercontent\.com/drexthealpha/Knos/knos-0\.3\.34/evidence)/[^)\s]+",
                             _read(ROOT / "README.md")))
-    assert links and links <= set(re.findall(r"https://[^)\s]+", _read(ROOT / "docs" / "JUDGES.md")))
+    assert links
     text = _read(DOCS / "TRANSACTION.md")
     for link in links:
         assert link in text, link

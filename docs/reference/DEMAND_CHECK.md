@@ -5,7 +5,7 @@ wants the thing at all.
 
 Knos's demand check asks Qloo's taste data (who, where, rising or not, against which
 rivals), makes the maker confirm every match Qloo proposes, writes the demand report into the Knos Record, and lets
-buyers lock pre-orders for that exact report in a Knos escrow on Solana devnet.
+buyers lock pre-orders for that exact report, held on Solana devnet until the proof passes.
 
 A buyer agent ranks the products that
 are not built yet against tastes the buyer chooses. The code is [`apps/wanted/`](../../apps/wanted).
@@ -62,7 +62,7 @@ Why: single-word name hits were namesakes ("Swimsuits For All" for "all", "Road 
 No
   comparison possible: REFUSE ("an existing product already owns this" when the leader's popularity is >= 0.9, else
   "no leader comparison possible"). Overlap >= 85%: REFUSE "the incumbent already serves this taste", whatever the
-  leader's popularity (a round-2 judge saw a Korean BBQ idea open at 96% overlap with a 0.85-popularity incumbent).
+  leader's popularity (a Korean BBQ idea once opened at 96% overlap with a 0.85-popularity incumbent).
 
 Overlap 60-85% with a leader of popularity >= 0.95: REFUSE (owned). Why: matched
   leaders' popularity ran 0.43-1.0 (median about 0.95); compare returned <= 1 tag on one side for most brands.
@@ -155,7 +155,7 @@ On OPEN the report's `decision.plan` holds what Qloo's evidence SET:
   Collecting, Art Collectibles, Angel Start Up Investing, Wine Enthusiast, Real Estate) minus Discount Shoppers, each
   absent one counted at Qloo's neutral 0.5. Above +0.05 is premium, below -0.05 is budget, otherwise mid. The unit price
   is 4 / 2 / 1 test units: a scale, not a price recommendation;
-- **escrow target and reserve**: in units and in test units (units x unit price);
+- **held money target and reserve**: in units and in test units (units x unit price);
 - **unserved audience**: what the idea's side has and the leader's does not.
 
 The tag step is one `/v2/tags` call with `feature.semantic_search=true` on the product phrase.
@@ -181,12 +181,12 @@ reusing the product phrase the maker settled on.
 Each decision, lock and release is also written to the Knos Record (`company.record_check`, `record_lock`,
 `record_release`).
 
-Memory never moves or blocks money. A double release is refused by the on-chain escrow: before any release the server
+Memory never moves or blocks money. A double release is refused by the on-chain payment program: before any release the server
 reads the order account on devnet (`preorder.chain_gate`).
 
-Once knos_pay has paid or refunded an order, the account is closed, and the server answers HTTP 409 "refused: the escrow
-order ... is closed on devnet (already released or refunded); knos_pay pays a stage once", with `refused_by: the escrow
-order on devnet (read from the chain)`. The program would refuse it too, because the order account no longer exists.
+Once knos_pay has paid or refunded an order, the account is closed, and the server answers HTTP 409 "refused: the order
+... is closed on devnet (already released or refunded); knos_pay pays a stage once", with `refused_by: the order
+on devnet (read from the chain)`. The program would refuse it too, because the order account no longer exists.
 
 **Pre-orders are reported available only when they work.** At start and every 10 minutes the server builds the
 transaction a 5-unit pre-order sends (test-mint top-up and the stage's PANEL order with its three referee keys, through

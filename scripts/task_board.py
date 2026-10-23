@@ -649,7 +649,7 @@ def plan(state: dict, now: float, target: int = TARGET, budget: int = BUDGET, re
         if t["slug"] in taken:
             continue
         if t["amount"] < least:
-            said.append(f"{t['slug']} pays {_usdc(t['amount'])} and the escrow holds a work order from {_usdc(least)}: it is passed over")
+            said.append(f"{t['slug']} pays {_usdc(t['amount'])} and the payment program holds a work order from {_usdc(least)}: it is passed over")
             continue
         price = cost(t)
         if price > left:

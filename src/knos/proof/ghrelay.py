@@ -148,7 +148,7 @@ ISSUER = re.compile(r"^knos-issuer:[ \t]*(https://[!-~]{1,192})[ \t\r]*$", re.M)
 MARK = "knosrelay"   # one word every token comment carries, so one search finds them all
 ROTATE_REPO = "drexthealpha/knos-oidc-rotate"
 # the rotate workflow's two homes, whose issues always carry key tokens: the old repository and Knos (branch oidc-rotate,
-# docs/reference/CUTOVER-0331.md section 2); both are read every pass
+# the same commits); both are read every pass
 ROTATE_REPOS = (ROTATE_REPO, "drexthealpha/Knos")
 RELAY_KIND = {"proof": "pay"}   # the comment marker says proof; the relays call that audience pay
 # knos_meter's three audiences are all posted as knos-eval: (knos attest --kind eval|batch|claim): one evaluation, the
@@ -492,10 +492,10 @@ def _note2(r: dict) -> str | None:
                 else "the issue's acceptance checks pass on a pull request that meets the order's terms")
         money = "test USDC" if r["faucet"] else f"from balance {r['balance']}"
         if r.get("private"):        # nothing of the repository, the issue or the terms is on chain, and nothing of them is said here
-            return (f"{_usdc(r['amount'])} {money} is in escrow as a private work order (its funder paid a fee of {_usdc(r['fee'])} on top), paid when a run "
+            return (f"{_usdc(r['amount'])} {money} is held as a private work order (its funder paid a fee of {_usdc(r['fee'])} on top), paid when a run "
                     f"in its judge repository (id {r['repo_id']}) attests that its terms were met. Unpaid by {_day(r['deadline'])}, it goes back to its funder. "
                     f"Order {r['order']}.")
-        return (f"{_usdc(r['amount'])} {money} is in escrow as a work order for issue #{r['issue']} (its funder paid a fee of {_usdc(r['fee'])} on top), "
+        return (f"{_usdc(r['amount'])} {money} is held as a work order for issue #{r['issue']} (its funder paid a fee of {_usdc(r['fee'])} on top), "
                 f"paid when {what}. Unpaid by {_day(r['deadline'])}, it goes back to its funder. Order {r['order']}.")
     if k == "pay" and "order" in r and r.get("quorum") and not r.get("paid"):       # recorded, not paid: the reasons travel in the line
         return ghwords.quorum_note(r["order"], r["quorum"])
@@ -533,7 +533,7 @@ def _note2(r: dict) -> str | None:
         what = ("the pull request that closes this issue is merged and meets the bounty's terms" if r["mode"] == 0
                 else "the issue's acceptance checks pass on a pull request that meets the bounty's terms")
         money = "test USDC" if r["faucet"] else f"from balance {r['balance']}"
-        return (f"{_usdc(r['amount'])} {money} is in escrow for issue #{r['issue']}, paid when {what}. "
+        return (f"{_usdc(r['amount'])} {money} is held for issue #{r['issue']}, paid when {what}. "
                 f"Unpaid by {_day(r['deadline'])}, it goes back to its funder. Job {r['job']}.")
     if k == "pay" and "payee_id" in r:
         from ..settle.v2 import pay
@@ -587,7 +587,7 @@ def note(r: dict) -> str:
     if k == "fund":
         what = "a maintainer merges the pull request that closes this issue" if r["mode"] == 0 else "the acceptance checks pass"
         held = f" The payment is released {wait(r.get('review', 0))} that; until then /knos veto takes it back." if r.get("review") else ""
-        return f"{_usdc(r['amount'])} test USDC is in escrow for issue #{r['issue']}, paid when {what}.{held} Job {r['job']}."
+        return f"{_usdc(r['amount'])} test USDC is held for issue #{r['issue']}, paid when {what}.{held} Job {r['job']}."
     if k == "pay":
         net = sum(p["amount"] - p["fee"] for p in r["paid"])
         hold = max(p["waits"] for p in r["paid"])

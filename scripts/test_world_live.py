@@ -1,8 +1,8 @@
-"""TASK-WORLD live checks against the hosted app and the Pages site (T4 test_hero_needs, T7 test_refuse_list):
+"""Live checks against the hosted app and the Pages site (test_hero_needs, test_refuse_list):
 
-- T7: GET /api/refuse is the published list (dated, with its source); 0 of 30 bad briefs (tests/test_refuse.py) come
+- the refuse list: GET /api/refuse is the published list (dated, with its source); 0 of 30 bad briefs (tests/test_refuse.py) come
   back Ready from POST /api/ready/card, and a harmless one still does.
-- T4: the live home page's examples cover housing, food, energy and health across >= 5 technologies, and the housing
+- the hero: the live home page's examples cover housing, food, energy and health across >= 5 technologies, and the housing
   brief (a test report from an accredited lab as its proof) is Ready and attested on devnet, read back from the chain.
 
     KNOS_ADMIN_KEY=... python scripts/test_world_live.py <housing-brief.json>

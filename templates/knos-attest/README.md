@@ -11,7 +11,7 @@ who did the work can ask for the payment himself. These files are kept in Knos i
    `knos settle --neutral <pull request url>`, which starts the same run.
 3. The run reads GitHub's public record of that pull request and the order on Solana. If the record supports it,
    GitHub signs a statement that names the order, the pull request and the commit, and a relayer carries it to
-   Solana, where the escrow pays.
+   Solana, where the payment program pays.
 
 It needs no secret, checks out no code and changes nothing anywhere. What it can do is written at the top of
 [the file](.github/workflows/knos-attest.yml), and why a run started by hand in your own repository is trusted.

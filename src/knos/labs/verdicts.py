@@ -274,9 +274,9 @@ def check(msg: dict, sigs: list[dict], referees: Iterable[str], m: int, *, now: 
     if (seen_nonces is not None and msg.get("nonce") in seen_nonces) or SpentStore.key(msg) in store:
         problems.append("this verdict was already used (its nonce is spent)")
     if amount is not None and int(msg.get("amount", -1)) != int(amount):
-        problems.append(f"the verdict releases {msg.get('amount')}, the escrow holds {amount}")
+        problems.append(f"the verdict releases {msg.get('amount')}, the held money is {amount}")
     if recipient is not None and msg.get("recipient") != recipient:
-        problems.append("the verdict pays another recipient than the escrow's")
+        problems.append("the verdict pays another recipient than the held money's")
     if not problems and record:
         store.spend(msg)
         if seen_nonces is not None and hasattr(seen_nonces, "add"):

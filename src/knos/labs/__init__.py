@@ -28,7 +28,7 @@ REGISTRY = {
     "jlcpcb": ("electronics", "JLCPCB", "electronics", "JLCPCB open API: documented, access by application (stub)"),
     "xometry": ("mechanical", "Xometry", "mechanical", "Xometry: its API is for manufacturing partners, not buyers (stub; manual orders)"),
     "pylabrobot": ("robotics", "PyLabRobot", "robotics", "PyLabRobot: liquid-handling protocols re-run on its simulator as sealed tests"),
-    "manual": ("manual", "Manual", "any", "any lab without an API: Knos holds the escrow, a person places the order"),
+    "manual": ("manual", "Manual", "any", "any lab without an API: Knos holds the money until the proof passes, a person places the order"),
 }
 
 

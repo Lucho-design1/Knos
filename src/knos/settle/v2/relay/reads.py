@@ -148,7 +148,7 @@ def _said_since(ledger, address: Pubkey, pattern: str, since: int) -> tuple[re.M
     return None
 
 
-# -- knos_meter: an evaluation counted, with no escrow --------------------------------------------------------------------
+# -- knos_meter: an evaluation counted, with no money held -----------------------------------------------------------------
 def credits_for(ledger, buyer_id: int) -> list[tuple[Pubkey, meter.Credits, int]]:
     """(address, Credits, what its token account holds) for every credits account prepaid for one buyer's evaluations."""
     found = ledger.program_accounts(meter.METER_ID, meter.CREDITS_LEN, {8: buyer_id.to_bytes(8, "little")})

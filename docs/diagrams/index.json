@@ -4,7 +4,7 @@
   {
    "source": "README.md",
    "block": 1,
-   "sha256": "275835c7126009ace475b34f3234f3c8f5c1cb0814a9cadabe7f08722120b8e1",
+   "sha256": "45f562a95e92818e7e70edd281537999a66fd091bc471486b9f11a3024a37d0d",
    "svg": "docs/diagrams/readme-1.svg"
   },
   {
@@ -26,12 +26,6 @@
    "svg": "docs/diagrams/docs-index-method-1.svg"
   },
   {
-   "source": "docs/JUDGES.md",
-   "block": 1,
-   "sha256": "844b5d47a0cf0bc55a5d50b89b969ce4a207461ce611946f0950703b0a1d90ee",
-   "svg": "docs/diagrams/docs-judges-1.svg"
-  },
-  {
    "source": "docs/NUMBERS.md",
    "block": 1,
    "sha256": "7a5a20ac1472960a199bef7e5514e59388fb0ea4606d393fc22dd0210d15bd62",
@@ -46,7 +40,7 @@
   {
    "source": "docs/README.md",
    "block": 1,
-   "sha256": "6304b09454388c2af23e5e3599ca6f5da75aba9c59c1878bac65a822e05cf31b",
+   "sha256": "a2793b0bde7589dee87c754d752a7ec5bae118c78c4e6f48a39070987ec8e303",
    "svg": "docs/diagrams/docs-readme-1.svg"
   },
   {
@@ -104,12 +98,6 @@
    "svg": "docs/diagrams/docs-reference-keys-1.svg"
   },
   {
-   "source": "docs/reference/MARKET_SIZE.md",
-   "block": 1,
-   "sha256": "c7c4aaacbf632e8fe30ab8145c24e9a750662fc48d6a3025d4a4f58123da72bf",
-   "svg": "docs/diagrams/docs-reference-market-size-1.svg"
-  },
-  {
    "source": "docs/reference/METER.md",
    "block": 1,
    "sha256": "0ae69021955a14687721538f90aef0b666c618f36325b946de5e8cd6f4bfe99e",
@@ -136,7 +124,7 @@
   {
    "source": "docs/reference/README.md",
    "block": 1,
-   "sha256": "b28b07e7f58b4fb2c916b2f2ae622a5bb4a55ef0807e6ed55ac119e0acbb23c8",
+   "sha256": "81d8f99f5c0a0b32566f1a617eedb4a5f8b45864ce42e63b54f33f6bb4af3a46",
    "svg": "docs/diagrams/docs-reference-readme-1.svg"
   },
   {

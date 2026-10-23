@@ -12,7 +12,7 @@ money for that account, and the reply on the pull request links to `#payee=<logi
 3. Gives one link at a time: GitHub's new-repository form filled in (owner, name `knos-claim`, public, empty) while
    that repository does not exist; then GitHub's new-file page in it with the claim workflow filled in (examples/knos-claim.yml,
    the same file as [`templates/knos-claim`](../../templates/knos-claim)); then the claim workflow's page. No template
-   repository is involved since 0.3.31 ([MONOREPO.md](MONOREPO.md)).
+   repository is involved since 0.3.31.
 4. Check reads the account's Bind on devnet and says whether it names this passkey's address. The relay then sends
    what was held.
 

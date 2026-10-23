@@ -3,7 +3,7 @@ workflow from BOTH of its homes, drexthealpha/knos-oidc-rotate and Knos's branch
 CLAIM_SHA for Bind, CLAIM_SHA or CLAIM_SHA_ORG for BindOrg), and from no look-alike: not someone else's Knos, not
 drexthealpha/Knos-x, not another case. LiteSVM, the testkeys build tests/fixtures/knos_pay_v2_0335_test.so
 (scripts/build_programs_v2.sh pay) beside the committed knos_oidc test build. The 0.3.34 test build refuses the new
-home: that is what the founder's upgrade changes (docs/reference/CUTOVER-0331.md section 2)."""
+home: that is what the upgrade changes."""
 from __future__ import annotations
 
 from pathlib import Path

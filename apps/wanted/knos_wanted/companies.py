@@ -1,4 +1,4 @@
-"""Companies mode (TASK-CHAMPION T5): a company states its need in one sentence and gets, in one call, a Ready brief, a
+"""Companies mode: a company states its need in one sentence and gets, in one call, a Ready brief, a
 private demand check and an opened milestone. Anyone anywhere answers an open milestone and is paid only on the proof
 Knos chose for the field, after the 72-hour challenge window; each verified result becomes an attestation on the solver
 (knos_wanted.track), so the next company sees proven solvers first.

@@ -1,4 +1,4 @@
-"""Docs legibility (TASK-CHAMPION T6): a prose paragraph of more than 60 words is split between its sentences into
+"""Docs legibility: a prose paragraph of more than 60 words is split between its sentences into
 paragraphs of 60 words at most. No word changes: lists, tables, headings, code, HTML and quotes are left as they are.
 
     python scripts/split_paragraphs.py [--check] [files...]     (default: README.md, docs/*.md, docs/reference/*.md)
@@ -17,7 +17,7 @@ SKIP = ("|", "#", "<", "- ", "* ", "+ ", ">", "![", "    ", "\t", "[[")      # a
 # documents whose figures must stay in the paragraph that carries their sample, ids and date (scripts/rate_claims.py)
 KEEP_WHOLE = ("docs/reference/LOAD.md", "docs/reference/BENCH.md",
               # written whole by their generators (each has its own --check): changed there, never here
-              "docs/reference/MANIFEST.md", "docs/reference/SOLANA-COVERAGE.md", "docs/reference/SIBYL-COVERAGE.md",
+              "docs/reference/MANIFEST.md", "docs/reference/SOLANA-COVERAGE.md",
               "docs/reference/QLOO-COVERAGE.md")
 SENT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\[(`\"'0-9])")
 

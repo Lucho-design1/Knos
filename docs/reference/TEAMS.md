@@ -4,18 +4,17 @@
 
 **In plain words.** A team that runs coding agents posts work, its agents do it, and Knos's referee decides on sealed
 tests whether the work counts. The team pays for each pull request the referee verified; an agent can pay for a single
-check itself; a bounty is held in escrow and paid on the verdict.
+check itself; a bounty is held and paid on the verdict.
 
 Everything is counted per team and per agent, and the
 invoice bills only what the chain confirms. Devnet only today: every payment is test money, and Knos's revenue is 0.
 
-Code: `src/knos/money/teams.py` (metering, invoices, dashboard), `src/knos/money/business.py` (prices, model, the 1B
-USD arithmetic), `src/knos/nebius/flow.py` (the one flow end to end). Page: `web/teams/` (data `web/teams_data.json`,
-dashboard `web/team_data.json`). Tests: `tests/test_money_teams.py`, `tests/test_nebius_flow.py`.
+Code: `src/knos/money/teams.py` (metering, invoices, dashboard), `src/knos/money/business.py` (prices),
+`src/knos/nebius/flow.py` (the one flow end to end). Tests: `tests/test_money_teams.py`, `tests/test_nebius_flow.py`.
 
 ## Who pays, and how much
 
-Starting prices the founder decided on 14 Oct 2026, from [config/fees.yaml](../../config/fees.yaml) (the one fee
+Starting prices decided on 14 Oct 2026, from [config/fees.yaml](../../config/fees.yaml) (the one fee
 config). Nobody pays them yet.
 
 | who pays | for | price | status |
@@ -30,12 +29,12 @@ config). Nobody pays them yet.
 - **USDC on Solana.** A raw check is paid with x402 v2 `exact` through the public x402.org facilitator (no key; the
   facilitator pays the network fee): `knos.money.x402_exact`, used by the flow (`knos.nebius.onchain.Devnet.pay_check`).
   A bounty is held by `knos_pay` (`fund_wallet_ix`) and released on the verdict.
-- **Card and bank:** through Airwallex later (not built; no account yet). No Stripe: the founder is in Nigeria.
+- **Card and bank:** through Airwallex later (not built; no account yet). No Stripe.
 
 ## The one flow, and its devnet evidence
 
 `python -m knos.nebius flow --out DIR [--wallets DIR]` ([examples/nebius/README.md](../../examples/nebius/README.md)):
-post (seal + escrow) -> Nemotron 3 Super writes, runs and tests code -> the agent pays one check over x402 -> Tavily
+post (seal + money held) -> Nemotron 3 Super writes, runs and tests code -> the agent pays one check over x402 -> Tavily
 provenance -> the Knos referee -> paid -> metered and invoiced.
 
 Two runs on 14 Oct 2026, one team record (`examples/nebius/flow-run/usage.jsonl`, labelled internal dogfooding; the
@@ -45,7 +44,7 @@ own test mint `7mHYTL1fmdiaHcYDLVJVz9zqgFdssqFNQAjVZYYQnR1p` (synthetic test uni
 
 | step | run 1 | run 2 |
 |---|---|---|
-| escrow funded, 5.00 test units (devnet, finalized) | `3ofNVFEyHoodeWAwFW46oygXSaVv7GxRHvsGjTooKiKdvMSbt9twaeEHoiBbXVL4XRo3fZfiKhyjZGGDba4iT9mh` (1,861 ms) | `2dWrwKMfHURPXSLxUgo6UkaCNPGC6t7sik4BgcRNRQZknFMNiyDkU6j1RdYRjy7TTiLy379geZUSHEzXz4nGQdEa` (1,557 ms) |
+| money held, 5.00 test units (devnet, finalized) | `3ofNVFEyHoodeWAwFW46oygXSaVv7GxRHvsGjTooKiKdvMSbt9twaeEHoiBbXVL4XRo3fZfiKhyjZGGDba4iT9mh` (1,861 ms) | `2dWrwKMfHURPXSLxUgo6UkaCNPGC6t7sik4BgcRNRQZknFMNiyDkU6j1RdYRjy7TTiLy379geZUSHEzXz4nGQdEa` (1,557 ms) |
 | agent's check over x402, 0.02 (devnet, finalized) | `5KtTdsE32va9X1QYwzAVgZEdkiYcQprvXxmTVsSTE14VcJ1RgUsMhV52Yxtt7mAxnzwfdYekeaywjw3ELAGhE6p1` (2,897 ms) | `3YXhV5wTRFz6E4q4XxxyqeGgH7zQh1zaEuGSJZDDPUjvbeBGoVrAJkaAsYAa99Hk6gmJudbr1ncFRqapUWWihkw9` (2,674 ms) |
 | referee on the agent's code | accepted, re-run agreed | accepted, re-run agreed |
 | referee on the scripted cheater (synthetic) | refused: `test_edited` (its own tests passed) | refused: `test_edited` |
@@ -61,7 +60,7 @@ Why the payout is LiteSVM: `knos_pay` releases a job only on a GitHub Actions OI
 prove.yml the job pins. A task judged outside GitHub has no such run, so no `knos` command can release it on a
 verdict.
 
-The flow replays the same job (amount, terms, pin) with the test builds and pays it there; the devnet escrows can go
+The flow replays the same job (amount, terms, pin) with the test builds and pays it there; the devnet held money can go
 back to the team after their deadline (1 day): anyone may send the refund (`refund_ix`), as the relay's upkeep does.
 This gap (no release on a verdict without GitHub Actions) is logged as a pain to fix.
 
@@ -93,36 +92,6 @@ python -m knos.money.business --out web/teams_data.json --team-data web/team_dat
 2. In a checkout with the agent's change committed: `knos verify --agent "<your agent>"`. The first verification is free.
 3. For every agent pull request: the GitHub Action (`action.yml`) on the repository, or the `knos_verify` tool of
    `knos mcp` inside the agent.
-
-## The model, and the 1B USD path (arithmetic, not a forecast)
-
-`knos.money.business.model` multiplies the starting prices by volumes a reader types (all 0 by default). It is labelled
-MODEL, not a forecast. It is revenue only: Knos's cost per verification is not measured yet, so no margin or
-profit is stated.
-
-Inputs, each verified on its page on 14 Oct 2026:
-
-| figure | source |
-|---|---|
-| GitHub merged pull requests grew from about 25 million a month (January 2023) to more than 90 million a month (GitHub's figure, in its post on pull request limits) | [Visual Studio Magazine, 30 Jun 2026](https://visualstudiomagazine.com/articles/2026/06/30/github-extends-contribution-controls-from-prs-to-issues.aspx) |
-| labs pay 200 to 2,000 USD per task mostly (an interviewed environment founder); interviewees consistently cite robustness against reward hacking as a quality criterion | [Epoch AI, "An FAQ on reinforcement learning environments", 12 Jan 2026](https://epoch.ai/gradient-updates/state-of-rl-envs) |
-| 1,119 of 3,736 agent pull requests that said tests pass had a failing check; 6,059 of 8,954 that fail a measured Knos check were merged anyway | [SLOP_AUDIT.md](SLOP_AUDIT.md) (Knos's own audit) |
-
-What each line ALONE needs for 1B USD a year at the starting prices:
-
-| line | volume needed |
-|---|---|
-| verified merges at 1.00 | 83,333,333 a month: 92.6% of the 90 million pull requests GitHub merges a month |
-| agent checks at 0.02 | 4,166,666,667 a month |
-| bounty fee at 5% | 20,000,000,000 USD of bounties a year |
-| task packages at Knos's 10% | 5,000,000 a year at 2,000 USD each, 50,000,000 at 200 USD |
-
-And a share of GitHub's merges at 1.00 USD per verified merge: 1% = 10,800,000 USD a year; 5% = 54,000,000; 10% =
-108,000,000; 25% = 270,000,000; 50% = 540,000,000.
-
-Reading: no single line reaches 1B USD at these prices on today's volumes. The path is several lines together (verified
-merges, agent checks, bounty escrow, lab task packages), volumes that grow with agent output, and prices that follow
-the measured cost and value. This is arithmetic on starting prices, not a plan.
 
 ## Limits
 

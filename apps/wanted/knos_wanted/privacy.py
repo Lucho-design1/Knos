@@ -1,4 +1,4 @@
-"""No personal data goes to Qloo (Qloo hackathon kit, docs/SAFE_USE.md: "Do not send names, email addresses, device
+"""No personal data goes to Qloo (Qloo's docs/SAFE_USE.md: "Do not send names, email addresses, device
 identifiers, account IDs, location histories, or other personal data to Qloo"). Every argument of every MCP call is
 checked here BEFORE it leaves the server; a refused call never reaches Qloo.
 

@@ -1,4 +1,4 @@
-"""test_stack_coverage, live: the three coverage files (Solana devnet, Sibyl's free plan, Qloo's hackathon API) are what
+"""test_stack_coverage, live: the two coverage files (Solana devnet, Qloo's API) are what
 their generators write from the official docs read on the date they carry, and no capability is marked USED without a
 place a person reaches it: every USED row names at least one interface, and every API route a row names answers on the
 live app (not 404).
@@ -42,14 +42,14 @@ def answers(path: str) -> int:
         return e.code
 
 
-for name in ("solana_coverage", "sibyl_coverage", "qloo_coverage"):
+for name in ("solana_coverage", "qloo_coverage"):
     run = subprocess.run([sys.executable, str(ROOT / "scripts" / f"{name}.py"), "--check"], capture_output=True, text=True, cwd=ROOT)
     ok(run.returncode == 0, f"{name}: the file is what the docs and the code say", run.stdout.strip()[-80:])
     ok(READ in (ROOT / "scripts" / f"{name}.py").read_text(encoding="utf-8"), f"{name}: the official docs read on {READ}")
 
 P = ("app", "front", "mcp", "api", "cli")
 routes = set()
-for name in ("solana_coverage", "sibyl_coverage"):
+for name in ("solana_coverage",):
     m = load(name)
     rows = list(m.ROWS) + (m.rpc_rows() if hasattr(m, "rpc_rows") else [])
     used = [r for r in rows if r["status"] == "USED"]

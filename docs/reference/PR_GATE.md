@@ -28,7 +28,7 @@ Gate check can be the bypass signal a maintainer opts into (`pass_label`).
 
 Unsolicited bot pull requests are merged far less often (Greenkeeper 32%, ASE 2017) than opted-in ones (Dependabot
 about 70%, median about 4 hours, arXiv 2206.07230). Gate is opt-in by the maintainer and needs no wallet, no token and
-no escrow.
+no held money.
 
 ## Install
 
@@ -101,7 +101,7 @@ tests only" and that the author issued it.
 `bounties.enabled: true` adds two things. A pull request that says it closes an issue ("Fixes #12") and fails Gate is
 closed.
 
-The escrow is the existing knos_pay one on Solana devnet (`knos fund-wallet OWNER/REPO#N AMOUNT`): the program pays the
+The payment program is the existing knos_pay one on Solana devnet (`knos fund-wallet OWNER/REPO#N AMOUNT`): the program pays the
 merged pull request whose GitHub-signed run met the terms, and takes its fee for the treasury, a token account of Knos's
 Squads vault.
 
@@ -129,7 +129,7 @@ devnet (no value), whose terms require the `Knos Gate` check and allow only `gat
 
 | step | evidence |
 |---|---|
-| 5.00 in escrow from the Gate demo wallet `H3iUwqY9aKKD1H9m5MmTYNcwcv8xUkGDDDfps6XjXtBP` | [funding transaction](https://explorer.solana.com/tx/4xurN74ZuqE8Uz9dqUhomSLMA5ko8LAr1gnS2Btafe9oiUHJwz2StfmF6dWBxGqX7VDDr9J1iKc2d242LiTV33fG?cluster=devnet) |
+| 5.00 held from the Gate demo wallet `H3iUwqY9aKKD1H9m5MmTYNcwcv8xUkGDDDfps6XjXtBP` | [funding transaction](https://explorer.solana.com/tx/4xurN74ZuqE8Uz9dqUhomSLMA5ko8LAr1gnS2Btafe9oiUHJwz2StfmF6dWBxGqX7VDDr9J1iKc2d242LiTV33fG?cluster=devnet) |
 | a claim that fails the hidden tests is closed | [#274](https://github.com/drexthealpha/knos-e2e/pull/274), [run 38433820579](https://github.com/drexthealpha/knos-e2e/actions/runs/38433820579) |
 | the correct claim passes Gate and is merged | [#275](https://github.com/drexthealpha/knos-e2e/pull/275), [run 38433833108](https://github.com/drexthealpha/knos-e2e/actions/runs/38433833108) |
 | paid 51 s after the merge: 4.95 to the author's bound wallet, 0.05 fee to the treasury account `DkEX9RMi4NvJJTTr8463hctJo2tnS83g9Ti6sqEPCHT9` (owner: the Squads vault) | [payment transaction](https://explorer.solana.com/tx/2MbUhEUKdzLvyHe4WEd8cLqv1HGcKV91GGTNqF8y8EWN4jYTAw36n2nvsLBTsCw8ep9BBZLs3279TaN9Zobt9h1x?cluster=devnet) |

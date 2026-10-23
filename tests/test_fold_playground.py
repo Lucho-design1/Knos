@@ -1,4 +1,4 @@
-"""The playground in Knos's own issues (docs/reference/CUTOVER-0331.md section 4, the founder's decision of 14 Oct 2026),
+"""The playground in Knos's own issues (decided 14 Oct 2026),
 and knos-labs as the tag `archive/labs` (section 3): every constant and page names drexthealpha/Knos, and the files a
 stranger's issue and pull request need are in this tree, written by `python scripts/small_repos.py fold`."""
 from __future__ import annotations
@@ -93,15 +93,3 @@ def test_the_labs_links_name_the_branch_of_knos():
     for rel in ("CHANGELOG.md", "docs/reference/DISCLOSURE.md", "docs/reference/README.md", "src/knos/init.py"):
         text = (ROOT / rel).read_text(encoding="utf-8")
         assert link in text and "https://github.com/drexthealpha/knos-labs" not in text, rel
-
-
-def test_the_cutover_pages_say_what_was_done_and_what_waits():
-    monorepo = (ROOT / "docs" / "reference" / "MONOREPO.md").read_text(encoding="utf-8")
-    cutover = (ROOT / "docs" / "reference" / "CUTOVER-0331.md").read_text(encoding="utf-8")
-    for name in ("knos-workflows", "knos-labs", "knos-playground"):
-        row = next(ln for ln in monorepo.splitlines() if ln.startswith(f"| {name} |"))
-        assert "0.3.34 branch" in row and "6 Dec 2026" in row, name
-    assert cutover.count("Done on the 0.3.34 branch (15 Oct 2026") == 3
-    for sha in ("96b243f1b1dd", "def6ac689479", "b7196a2ad17c", "5b26b1cddeae", "43c8605d155e", "160edd4e19fc", "64b31fae2b00"):
-        assert f"workflows-{sha}" in monorepo or sha in cutover, sha
-    assert "ed6136f9e3e1dd45b3d0c97facd1608b98175625" in cutover and "2026-11-13 15:48" in cutover

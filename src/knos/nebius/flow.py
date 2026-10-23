@@ -14,7 +14,7 @@ Token Factory) -> the Knos referee judges that code on sealed tests -> paid, fin
   5 referee    knos.referee.works: sealed bundle hash, locked judge hash, cheat library, hidden tests, re-run; a
                refusal is explained by Nemotron 3 Ultra (advisory: the verdict is copied, never changed)
   6 paid       on a pass: the job is paid to the agent's wallet. LABELLED LiteSVM: knos_pay pays only on a GitHub
-               Actions OIDC token from a pinned prove.yml run, which a locally judged task cannot have (PAIN.md)
+               Actions OIDC token from a pinned prove.yml run, which a locally judged task cannot have
   7 metered    every step is a usage event (knos.money.teams); the invoice is checked against devnet; the dashboard
                shows verifications, cheats caught, failing merges blocked and "paid and final in N ms"
 
@@ -118,13 +118,13 @@ def run_flow(root: Path, out: Path, *, wallets: Path | None = None, team: str = 
             post["escrow"] = f
             ev("escrow_funded", sig=f["sig"], network="devnet", amount_units=bounty_units, decimals=6, mint=f["mint"], final_ms=f["finalized_ms"],
                job=f["job"])
-            say(f"posted: bounty {bounty_units / 1e6:.2f} test units in escrow, job {f['job']}, final in {f['finalized_ms']} ms, tx {f['sig']}")
+            say(f"posted: bounty {bounty_units / 1e6:.2f} test units held until the proof passes, job {f['job']}, final in {f['finalized_ms']} ms, tx {f['sig']}")
         except Exception as why:  # noqa: BLE001 - the flow goes on and says the funding failed
             post["escrow"] = {"funded": False, "error": str(why)[:300]}
-            say(f"posted: escrow funding FAILED: {str(why)[:200]}")
+            say(f"posted: funding the held money FAILED: {str(why)[:200]}")
     else:
-        post["escrow"] = {"funded": False, "why": "no --wallets: no devnet escrow in this run"}
-        say(f"posted: task {TASK} sealed ({seal_h[:16]}); no devnet escrow (no --wallets)")
+        post["escrow"] = {"funded": False, "why": "no --wallets: no money held on devnet in this run"}
+        say(f"posted: task {TASK} sealed ({seal_h[:16]}); no money held on devnet (no --wallets)")
     steps.append(post)
 
     # 2. the agent writes, runs and tests code on Nemotron
@@ -186,7 +186,7 @@ def run_flow(root: Path, out: Path, *, wallets: Path | None = None, team: str = 
             f"{'pass' if own.passed else 'fail'}" + ("" if cc.passed else f"; {cc.reasons[:1]}"))
 
     # 6. paid
-    paid: dict[str, Any] = {"step": "paid", "paid": False, "why": "the referee refused: the escrow stays, and returns to the team at its deadline"}
+    paid: dict[str, Any] = {"step": "paid", "paid": False, "why": "the referee refused: the held money stays, and returns to the team at its deadline"}
     if c.passed:
         from solders.keypair import Keypair
 
@@ -210,7 +210,7 @@ def run_flow(root: Path, out: Path, *, wallets: Path | None = None, team: str = 
     steps.append({"step": "metered", "invoice_due_usd": dash["invoice"]["due_usd"], "paid_and_final": dash["paid_and_final"]})
     say(f"invoice for {team}: {dash['invoice']['due_usd']} USD due (test money); paid and final: {dash['paid_and_final']}")
 
-    data = {"generated": teams.now_iso(), "track": "Coding and Agentic Engineering", "team": team, "agent": agent_name,
+    data = {"generated": teams.now_iso(), "team": team, "agent": agent_name,
             "modes": {"token_factory": tf.mode, "tavily": tv.mode, "chain": "devnet" if dn is not None else "none",
                       "payout": "LiteSVM (testkeys build), not devnet"},
             "steps": steps, "dashboard": dash, "calls": [r.to_dict() for r in tf.calls],
@@ -230,8 +230,8 @@ def page(d: dict) -> str:
         name = s.get("step", "")
         if name == "post":
             esc = s.get("escrow") or {}
-            what = f"sealed {e(s['seal_hash'][:16])}; " + (f"escrow job {e(esc.get('job', ''))}, final in {esc.get('finalized_ms')} ms, tx <code>{e(esc.get('sig', ''))}</code>"
-                                                            if esc.get("sig") else e(esc.get("why") or esc.get("error") or "no escrow"))
+            what = f"sealed {e(s['seal_hash'][:16])}; " + (f"held in job {e(esc.get('job', ''))}, final in {esc.get('finalized_ms')} ms, tx <code>{e(esc.get('sig', ''))}</code>"
+                                                            if esc.get("sig") else e(esc.get("why") or esc.get("error") or "no held money"))
         elif name == "code":
             what = f"{s['rounds']} round(s); its tests: " + ", ".join("pass" if t["passed"] else "fail" for t in s["tests"]) + (" (MOCK model replies)" if s["mode"] == "mock" else "")
         elif name == "check_fee":
@@ -251,7 +251,7 @@ def page(d: dict) -> str:
     t = d["dashboard"]["totals"]
     return ("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Knos flow run</title>"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body>"
-            f"<h1>Knos: one task, end to end</h1><p>Track: {e(d['track'])}. Token Factory: {e(d['modes']['token_factory'])}; Tavily: "
+            f"<h1>Knos: one task, end to end</h1><p>Token Factory: {e(d['modes']['token_factory'])}; Tavily: "
             f"{e(d['modes']['tavily'])}; chain: {e(d['modes']['chain'])}; payout: {e(d['modes']['payout'])}.</p>"
             f"<table>{''.join(rows)}</table><h2>Team dashboard</h2><p>verifications {t['verifications']}, verified {t['verified']}, "
             f"refused {t['refused']}, cheats caught {t['cheats_caught']}, failing merges blocked {t['failing_merges_blocked']}</p>"

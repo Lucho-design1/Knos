@@ -17,8 +17,7 @@ smallest case, paid work for strangers on public issues, because that is where t
 measured.
 
 An invoice priced per merged change has the same shape: the seller's word, and the seller's count.
-[MARKET.md](MARKET.md) has the buyers, the prices and one customer worked through, and [PILOT.md](PILOT.md) has the
-one offer for money. Nobody has bought anything, and no buyer has been asked.
+[MARKET.md](MARKET.md) has the prices. Nobody has bought anything.
 
 The promise is two-sided. Buyers can defend the bill; suppliers can defend what they are owed. Each side keeps its
 own ledger, computes the same statement from evidence neither side signed, and can prove it later without the other
@@ -26,44 +25,6 @@ and without Knos ([DISPUTES.md](DISPUTES.md) has how Knos stays out of the verdi
 
 The argument, with its sources. Outside sources were read between 2 and 6 Oct 2026; a date beside a link is the
 source's own date. "Secondary" marks a number read in coverage of the original, not in the original.
-
-## The first customer, and who is not one
-
-Nobody has bought anything, so this is who Knos would go to first, not who it has. The first customer is an
-organisation of which all five are true:
-
-1. **It buys measurable outcomes from several outside suppliers.** With one supplier there is one count to argue
-   over and little to compare; with none outside the company there is no invoice.
-2. **It has recurring disputes or duplicate billing.** If every invoice is already approved without argument, a
-   second count saves nothing.
-3. **It can define acceptance before delivery.** The terms are fixed at funding, so whoever cannot write down
-   what "done" means cannot use them.
-4. **It spends enough that the savings exceed the cost.** The costs and one customer worked through are in
-   [MARKET.md](MARKET.md); no saving has been measured with any buyer.
-5. **It has a budget owner who will hand over invoices.** The first step is a count beside invoices the buyer
-   already receives ([SHADOW.md](SHADOW.md), [PILOT.md](PILOT.md)), and it cannot start without them.
-
-Who is not a customer, today:
-
-- A team that pays by the seat or by the token and is content to: there is no outcome to count.
-- A buyer with one supplier it trusts, or with work done only by its own staff.
-- A buyer whose acceptance is a person's taste, decided after delivery.
-- A buyer who needs money moved on a mainnet, a bank payout from Knos, single sign-on tried with a real provider, a private
-  deployment that has run or a support contract: none of these exists. The self-host bundle has single sign-on through any OpenID Connect provider, tested against a stand-in provider only.
-- A supplier, as the payer: Knos never charges the party being rated.
-- Anyone who needs a company to sign with: there is no legal entity.
-
-**Days to approve, not seconds to pay.** From merge to paid took 28 seconds at the median, over 56 payments on
-devnet (10 Oct 2026). That is not the wait this customer has. It waits for a person to approve the invoice, while two companies
-argue over whose count is right.
-
-Days to approve is defined as the days from the day the buyer receives a
-supplier's invoice to the day a person with authority approves it. Knos would read both dates: receipt from the
-buyer's payables system, approval from the record `knos statement approve` writes (who, in which role, on which
-day).
-
-Knos has not measured that wait with any buyer, so no figure for it is given; [PILOT.md](PILOT.md) lists it
-among what a pilot would measure.
 
 ## 1. An agent's word costs nothing, so it is not evidence
 
@@ -119,8 +80,7 @@ work that held up, and for a worker to know the money is there.
 
 ## 3. Paying per result already exists, where the seller keeps the meter
 
-Intercom charges 0.99 USD per outcome for its support agent, Fin, which has passed 100 million USD of annual recurring revenue ([Sacra](https://sacra.com/research/intercom),
-secondary). For code, Sourcegraph began billing one product per merged changeset on 14 Sep 2026: "If it doesn't get merged, you don't pay"
+Intercom charges 0.99 USD per outcome for its support agent, Fin. For code, Sourcegraph began billing one product per merged changeset on 14 Sep 2026: "If it doesn't get merged, you don't pay"
 ([changelog](https://sourcegraph.com/changelog/agentic-batch-changes-ga), [its note on pricing, 16 Sep 2026](https://sourcegraph.com/blog/agentic-batch-changes-pricing)).
 
 In both the seller's own system counts the results. One person who works on such contracts says where they break: "Attribution disputes are where these contracts fall apart" (a
@@ -149,7 +109,7 @@ revision ([text](https://pacliirms.austlii.edu.au/pits/en/treaty_database/2006/1
 
 | UCP 600 | the rule Knos takes |
 |---|---|
-| Article 4: "A credit by its nature is a separate transaction from the sale or other contract on which it may be based." | The escrow is separate from any argument about the work. It hears no disputes. |
+| Article 4: "A credit by its nature is a separate transaction from the sale or other contract on which it may be based." | The payment program is separate from any argument about the work. It hears no disputes. |
 | Article 5: "Banks deal with documents and not with goods, services or performance to which the documents may relate." Article 14(a): they examine "on the basis of the documents alone". | The program reads GitHub's signed statement and the order's terms, and nothing else. It never looks at the code. |
 | Article 15(a): "When an issuing bank determines that a presentation is complying, it must honour." | A pay token that matches the terms is paid in the transaction that verifies it. Nobody can veto it. |
 | Article 14(b): the bank has "a maximum of five banking days" to examine. Article 16: a refusal needs a single notice that states "each discrepancy"; a bank that fails to give it "shall be precluded from claiming that the documents do not constitute a complying presentation". | The time to object is fixed and comes first. A maintainer who does not want a pull request to be paid says so before merging (`/knos reject`, with the reason). Merging is acceptance. |
@@ -180,24 +140,24 @@ That is why the
 default also asks for a person's merge, and why a funder can keep part of the money back for a warranty period,
 set at funding and public before the work starts.
 
-### Escrow in marketplaces, and where disputes arise
+### Held money in marketplaces, and where disputes arise
 
-Stand-alone escrow lost to payment built into the marketplace. In 2001 "only 6% of online auction buyers" had paid through an online escrow service.
+A stand-alone service that holds the money lost to payment built into the marketplace. In 2001 "only 6% of online auction buyers" had paid through one.
 
-Escrow.com charged 3% by cheque or money order and 6% by card, and the authors found that stand-alone escrow "may have difficulty surviving" where expected fraud is low ([Hu, Lin,
+Escrow.com charged 3% by cheque or money order and 6% by card, and the authors found that such a stand-alone service "may have difficulty surviving" where expected fraud is low ([Hu, Lin,
 Whinston and Zhang, Information Systems Research 15(3), 2004](https://www.scheller.gatech.edu/directory/research/information-technology-management/zhang/pdf/isr-escrow.pdf)).
 
 What won was a payment inside the marketplace's own flow: in July 2002 "about 60 percent of PayPal's business" came from eBay users ([Associated Press, 8 Jul
 2002](https://www.paypalobjects.com/html/press/070802APEbayBuys.html)).
 
-Escrow inside a marketplace moves the dispute to the moment of release. On Upwork a fixed-price dispute opens in
+Held money inside a marketplace moves the dispute to the moment of release. On Upwork a fixed-price dispute opens in
 two cases: a client ends a contract "with a deposited balance and requests a refund", or the freelancer "submitted
 work for a contract or milestone, but the client hasn't released the payment". A party has "seven calendar days"
 to file.
 
 An agent then gives "a non-binding resolution", and the last step is "a binding arbitration service" that the
 parties buy ([Upwork](https://support.upwork.com/hc/en-us/articles/211068528-Dispute-a-fixed-price-contract)).
-Both cases have one cause: the money is in escrow, and what counts as done was left to a person to decide
+Both cases have one cause: the money is held, and what counts as done was left to a person to decide
 afterwards.
 
 Where the buyer decides alone, the seller carries the risk. On Mechanical Turk, "Requesters have the right to reject a Turker's completed work without
@@ -258,7 +218,7 @@ The rule: an order can be reserved. An assigned issue pays only its assignee, an
 unassigned one for 7 days unless the funder set another number. The free check marks a false "tests pass" before a
 person reads the pull request. Knos does not remove the review work.
 
-A maintainer who is flooded should also use GitHub's own limits ([COMPARE.md](COMPARE.md)).
+A maintainer who is flooded should also use GitHub's own limits on who may open pull requests.
 
 ### Akerlof: a third party's certificate counters a market for lemons
 
@@ -296,16 +256,12 @@ A receipt verifies with no chain; the chain is for the money and for the root.
 A chain gives this three things a company cannot promise. The money is committed before the work, in a program and not in a company's account
 (Bountysource). The payee needs no account with a payment company, only a GitHub account and an address, which can be a wallet made from a passkey.
 
-And the verifier is a program any other program can call ([OIDC.md](OIDC.md)). A company running the same escrow would be one more party to trust. Until an
+And the verifier is a program any other program can call ([OIDC.md](OIDC.md)). A company running the same payment program would be one more party to trust. Until an
 outside review Knos is still such a party, through its multisig (section 4, Bountysource).
 
 Solana, for two reasons. Verifying GitHub's RSA-2048 signature on chain takes 2 transactions, each within Solana's
 computing limit, and on the first deployment carrying a whole token took 7 transactions and 35,000 lamports of fees
 ([BENCH.md](BENCH.md), measured).
-
-And agent payments are a rail that exists: the x402 site showed 75.41 million transactions and 24.24 million USD of volume
-for its last 30 days ([x402.org](https://www.x402.org), read 6 Oct 2026), across every chain it runs on; this page gives no
-chain's share of it. That figure says nothing about whether any work was done.
 
 A payment rail moves money when someone says so. Knos is about who may say so.
 

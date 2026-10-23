@@ -16,7 +16,7 @@ Knos judges whether the work is correct. A passing Knos check can be a bypass si
 
 ## What it costs and what it never does
 
-- Free for public repositories. No wallet, no token and no escrow are needed for the check.
+- Free for public repositories. No wallet, no token and no held money are needed for the check.
 - It never shows a hidden test's contents in a log, comment or receipt.
 - It never opens a pull request on your repository, and never pays anyone unless you fund a bounty.
 

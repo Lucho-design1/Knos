@@ -39,7 +39,7 @@ def test_opening_moves_the_verdict_to_disputed_and_records_who_when_and_why():
     assert a["deliverable"] == ids.deliverable("order-1", 12) and a["evaluation"] == ids.evaluation(a["deliverable"], "c0ffee", T, "knos", 7)
     assert a["history"] == [{"at": int(NOW), "by": "dana", "event": "opened", "note": "the suite's fixture is stale"}]
     assert "neutral judge" in a["next"] and "knos settle --neutral https://github.com/acme/app/pull/41" in a["next"] and "kind `pay`" in a["next"]
-    assert "stays in escrow" in a["money"] and a["cost"]["supplier"] == 0 and a["outcome"] is None
+    assert "stays held" in a["money"] and a["cost"]["supplier"] == 0 and a["outcome"] is None
     assert _open(verdict="insufficient evidence")["was"] == "insufficient_evidence"
 
 
@@ -93,7 +93,7 @@ def test_an_order_paid_on_a_merge_is_ruled_by_its_arbiter_and_nobody_else():
 
 
 def test_the_money_sentence_follows_the_orders_state_and_the_reply_never_starts_with_a_command():
-    assert "escrow" in appeal.money("open") and "paid already" in appeal.money("paid") and "went back" in appeal.money("refunded")
+    assert "stays held" in appeal.money("open") and "paid already" in appeal.money("paid") and "went back" in appeal.money("refunded")
     a = _open(reason="/knos pay @dana `now`")
     assert a["reason"] == "pay @dana now"
     for record in (a, appeal.asked(a, NOW + 1), appeal.resolve(a, NOW + 2, rerun=_rerun(True))):

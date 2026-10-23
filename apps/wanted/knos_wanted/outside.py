@@ -1,4 +1,4 @@
-"""The outside counter (TASK-QLOO-CHAMPION M8): crossings and pre-order commitments made by people outside Knos, counted
+"""The outside counter: crossings and pre-order commitments made by people outside Knos, counted
 from the store and nothing else, never seeded.
 
 Each counted event is one row of the day's record (kind "outside", key the UTC day, kept on devnet by
@@ -7,7 +7,7 @@ the order's address; no personal data is kept (no address, no label, no wallet).
 same rows are listed at GET /api/outside/rows, so the counter equals the store.
 
 Left out, and said on the invite page (RULE): the operator's own runs (a request carrying the X-Knos-Admin key), the
-founder's and the test runs' guest sessions (a label naming Knos, a test, a proof run or CI), and automated clients (a
+team's and the test runs' guest sessions (a label naming Knos, a test, a proof run or CI), and automated clients (a
 user agent of a headless browser, a script, curl, a bot or GitHub Actions). Nothing is added by hand.
 """
 from __future__ import annotations

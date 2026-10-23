@@ -1,4 +1,4 @@
-"""Projects that survive a redeploy, kept on Solana devnet with what Knos already has (TASK-QLOO-CHAMPION M1).
+"""Projects that survive a redeploy, kept on Solana devnet with what Knos already has.
 
 The app's state directory is not on a disk (Render rebuilds it on every deploy), so each saved project is also written,
 off the request's path, into its own account of the SPL Record program (recr1L3PCGKLbckBqMNcJhuuyU1zgo8nBhfLVsJNwr5,
@@ -29,7 +29,8 @@ RECORD = "recr1L3PCGKLbckBqMNcJhuuyU1zgo8nBhfLVsJNwr5"
 HEADER = 33                        # RecordData: version u8 + authority 32 (WRITABLE_START_INDEX)
 MAGIC = b"KNOS1"
 CHUNK = 800                        # bytes of data per Write transaction (a transaction holds 1,232)
-KINDS = ("projects", "traces", "pages", "outside", "orders", "amc")      # an order's document is what releases or refunds it
+KINDS = ("projects", "traces", "pages", "outside", "orders", "amc",     # an order's document is what releases or refunds it
+         "agentkeys")                       # an agent key's caps and counters (only the secret's sha256): a restart keeps them
 _q: "queue.Queue[tuple[str, str, dict]]" = queue.Queue()
 _index: dict[tuple[str, str], tuple[str, int]] = {}      # (kind, key) -> (record account, capacity)
 _lock = threading.Lock()

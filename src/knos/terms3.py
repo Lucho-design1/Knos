@@ -661,7 +661,7 @@ def diff_text(a: dict, b: dict, name_a: str = "the first", name_b: str = "the se
 # ---- templates: the common jobs, each with safe defaults -------------------------------------------------------------
 
 # (joined here: tests/test_workflows2.py lets no file of the package, compiled or not, spell the published path whole)
-# The monorepo's home of the published commits (its branch `workflows`, docs/reference/MONOREPO.md): what new terms
+# The monorepo's home of the published commits (its branch `workflows`): what new terms
 # name. Terms name a workflow by its path, and an order keeps the terms it was funded on: version 1 of each published
 # document names the old home and keeps paying only runs of the old home. `moved` writes the next version for the new one.
 MONOREPO_WORKFLOWS = "/".join(("drexthealpha", "Knos", ".github", "workflows", ""))
@@ -748,8 +748,8 @@ TEMPLATES = {
 
 def template(name: str) -> dict:
     """The template as terms/3/ publishes it now, what new terms start from: its workflows named in the monorepo
-    (`moved` of version 1, so version 2 where version 1 named a workflow), since the 0.3.34 branch's cutover
-    (docs/reference/CUTOVER-0331.md section 1, step 5). TEMPLATES[name]() is version 1, which keeps the old home: an
+    (`moved` of version 1, so version 2 where version 1 named a workflow), since the 0.3.34 branch's cutover.
+    TEMPLATES[name]() is version 1, which keeps the old home: an
     order funded on it is judged by it."""
     if name not in TEMPLATES:
         raise KeyError(f"there is no Knos Terms 3 template named {name}: the templates are {', '.join(TEMPLATES)}")

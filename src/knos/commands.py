@@ -232,7 +232,7 @@ _ABOUT = {
     "tip": "a maintainer, on a merged pull request: pay its author now",
     "settle": "on a merged pull request: try its payment again",
     "faucet": "on the playground's faucet issue: test USDC, which has no monetary value",
-    "status": "what is in escrow here",
+    "status": "what is held here",
     "help": "this list",
 }
 _ON_PULL = {"fund": False, "offer": False, "reserve": False, "raise": False, "cancel": False, "split": True, "take": False, "release": False, "address": True, "mine": True, "pay": True, "reject": True,

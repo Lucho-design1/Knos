@@ -1,7 +1,7 @@
 # knos-settle
 
 The JavaScript client for Knos: work paid for on signed acceptance. It derives the addresses, builds the audiences,
-instructions and transactions, and reads the accounts of three Solana programs: `knos-pay`, the escrow that holds a
+instructions and transactions, and reads the accounts of three Solana programs: `knos-pay`, the payment program that holds a
 work order's money until GitHub signs the run that found its terms were met; `knos-oidc`, which verifies GitHub Actions
 and GitLab CI tokens on chain; and `knos-meter`, prepaid credits for evaluations. One file, no dependencies: it
 runs as is in a browser and in Node 20+. Every address, audience, instruction, account reader and transaction is
@@ -96,7 +96,7 @@ import { quote, eligible, statement } from "knos-settle/agent";
 
 const RPC = "https://api.devnet.solana.com";
 const offers = await quote(RPC, 1353152983, 7);                          // a repository's GitHub id, an issue's number
-console.log(offers.said);                                                // what is in escrow for it, and what stands in the way
+console.log(offers.said);                                                // what is held for it, and what stands in the way
 for (const o of offers.items) console.log(o.money, "until", new Date(o.deadline * 1000).toISOString(), "-", o.terms?.words[0]);
 console.log((await eligible(RPC, 1353152983, 7, 12)).said);              // whether pull request 12 meets the terms: not decidable here
 console.log((await statement(RPC, 142920951, "2026-10")).said);          // what a seller billed and was paid in a month
@@ -111,7 +111,7 @@ console.log((await statement(RPC, 142920951, "2026-10")).said);          // what
   `knos attest` for it (the reusable workflow `.github/workflows/attest.yml` runs the same command). What it returns from the
   chain: the orders that could pay, and the command for each.
 - `statement(connection, seller, month)` is one seller's month: each buyer's evaluations, accepted and rejected, their declared
-  value and fees, recomputed from the meter's own log lines and compared with the month account; and the payments the escrow
+  value and fees, recomputed from the meter's own log lines and compared with the month account; and the payments the payment program
   logged to the seller. A history the node cut short is said so in `notes`.
 
 A `connection` is the RPC address, or `{ url, programs, names, now }` to name other program ids, call a mint's money something,

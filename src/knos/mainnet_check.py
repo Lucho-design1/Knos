@@ -75,7 +75,7 @@ SECURITY_TXT = b"=======BEGIN SECURITY.TXT V1======="
 PROGRAMDATA_HEADER = 45  # u32 tag | u64 slot | u8 option | [32] authority
 PINS_REPO = "drexthealpha/knos-oidc-rotate"
 # The pinned rotate and claim commits have two homes: the old repository and Knos's branch `oidc-rotate` (the same
-# commits; docs/reference/CUTOVER-0331.md section 2). A pin is a commit when either home has it.
+# commits). A pin is a commit when either home has it.
 PINS_REPOS = (PINS_REPO, "drexthealpha/Knos")
 REPO = "drexthealpha/Knos"      # whose program.yml runs `gh` reads, wherever the command is run
 NOT_HERE = "not checked from here: needs a clone"

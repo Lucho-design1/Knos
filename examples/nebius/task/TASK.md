@@ -9,4 +9,4 @@ Write `parse_duration(text)` in `duration.py`: it turns a human duration into wh
   decimal point raise `ValueError`.
 
 You may change `duration.py` and add tests under `tests/`. Nothing else. A sealed set of acceptance tests that you never
-see decides whether the work is accepted (the Knos referee); the escrow pays only on that verdict.
+see decides whether the work is accepted (the Knos referee); the payment program pays only on that verdict.

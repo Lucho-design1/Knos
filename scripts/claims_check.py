@@ -1,9 +1,9 @@
-"""Check every number in the pitch-facing text against docs/facts.json, and every fact against its source.
+"""Check every number in the front-facing text against docs/facts.json, and every fact against its source.
 
     python scripts/claims_check.py --offline   # file-backed facts (the test suite runs this)
     python scripts/claims_check.py             # also the live facts: devnet and GitHub
 
-Pitch-facing text is README.md and the home page's first view (web/index.html). Every number in
+Front-facing text is README.md and the home page's first view (web/index.html). Every number in
 it must be one a fact in docs/facts.json says ("say"), and every fact must hold:
 
     {"say": ["17.8%"], "what": "...", "json": "docs/bench.json", "path": "market.index.overall.first_pr_per_repo.any_check_failed.share", "equals": 0.178}
@@ -13,9 +13,9 @@ it must be one a fact in docs/facts.json says ("say"), and every fact must hold:
     {"say": ["4.03"], "what": "...", "doc": "docs/reference/MARKET.md", "source": "https://...", "read": "..."}   said in a document
     {"say": ["16"], "what": "...", "claim": "capabilities.exercised"}                    a registered fact (scripts/doc_claims.py)
 
-A fact with "doc" backs a number in a document that is not pitch-facing (docs/reference/MARKET.md, docs/reference/REGULATION.md, ...): the
+A fact with "doc" backs a number in a document that is not front-facing (docs/reference/MARKET.md, docs/reference/REGULATION.md, ...): the
 document must still say every number the fact lists, and the fact must hold like any other. Its numbers may be used in
-the pitch-facing text too, so a number has one fact wherever it is said.
+the front-facing text too, so a number has one fact wherever it is said.
 
 A fact with "claim" names a fact of scripts/doc_claims.py's registry, which computes it from its one source (the
 capability manifest, the upgrade record, the program ids): "say" must be that value as the registry prints it. No fact is
@@ -100,7 +100,7 @@ def words(path: str) -> str:
 
 
 def numbers(path: str) -> list[tuple[str, str]]:
-    """(number, the line it is on) for every number in the file's pitch-facing text."""
+    """(number, the line it is on) for every number in the file's front-facing text."""
     out = []
     for line in pitch_text(path).splitlines():
         for m in NUMBER.finditer(line):
@@ -255,7 +255,7 @@ def main(argv: list[str] | None = None) -> int:
             ok, detail = False, f"{type(why).__name__}: {why}"
         fails += ok is False
         print(f"{'SKIP' if ok is None else 'PASS' if ok else 'FAIL'}  {', '.join(f['say']) or f['what'][:40]}: {detail}")
-    print(f"{len(facts)} facts, {len(used)} numbers in the pitch-facing text, {fails} failures" + (" (offline)" if offline else ""))
+    print(f"{len(facts)} facts, {len(used)} numbers in the front-facing text, {fails} failures" + (" (offline)" if offline else ""))
     return 1 if fails else 0
 
 

@@ -106,7 +106,7 @@ export function orderState(o, events, now) {
   else if (o?.state === "warranty") { state = "paid"; words = `Paid, with a holdback in warranty until ${when(o.holdUntil)}: ${show(o.amount - o.paid)} waits, and goes back to the funder if the change is reverted before then.`; reached.add("accepted"); reached.add("paid"); }
   else if (o && o.reservedBy && o.reservedUntil > now) { state = "reserved"; words = `Funded, and reserved until ${when(o.reservedUntil)} by the GitHub account with id ${o.reservedBy}.`; reached.add("reserved"); }
   // an order funded with a presentation grace can still be paid for two hours past its deadline: its refund opens after them
-  else if (o) { state = "funded"; words = `Funded: ${show(o.amount - o.paid)} is in the order's own escrow account. Unpaid by ${when(refundAt(o))}, anyone can send it back${o.grace ? `: its deadline, ${when(o.deadline)}, and ${GRACE_WORDS}` : ""}.`; }
+  else if (o) { state = "funded"; words = `Funded: ${show(o.amount - o.paid)} is held in the order's own account. Unpaid by ${when(refundAt(o))}, anyone can send it back${o.grace ? `: its deadline, ${when(o.deadline)}, and ${GRACE_WORDS}` : ""}.`; }
   else if (has("reverted")) { state = "refunded"; words = `Paid, then reverted inside the warranty: the holdback of ${show(Number(last("reverted").amount))} went back to the funder.`; reached.add("refunded"); }
   else if (has("refunded") && has("paid")) { state = "refunded"; words = `Paid in part; the rest, ${show(Number(last("refunded").amount))}, went back to the funder.`; }
   else if (has("refunded")) { state = "refunded"; words = `Refunded: ${show(Number(last("refunded").amount))} went back to where it came from. Nothing was paid.`; }

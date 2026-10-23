@@ -625,7 +625,7 @@ def record(rows: list[dict], ref: dict | None = None, receipt: dict | None = Non
     elif refunded:
         status, why = REFUNDED, f"{_units(refunded, cur)} went back to the funder on {last['date']}. Nothing was accepted."
     else:
-        status, why = HELD, (f"Funded, and nothing is accepted yet. The escrow holds {_units(still, cur)}"
+        status, why = HELD, (f"Funded, and nothing is accepted yet. Held until the proof passes: {_units(still, cur)}"
                              f"{' until ' + last['held_until'] if last['held_until'] else ''}.")
     return {
         "id": deliverable_of(first), "record": first.get("record") or "order",
@@ -822,7 +822,7 @@ def owed(events: list[dict], payee_id: int, last: str = "", refs: dict | None = 
 
 
 def owed_lines(rows: list[dict], payee: str) -> list[str]:
-    said = [f"Owed to {payee}, from the escrow's own records on devnet (test USDC; nothing here is real money):"]
+    said = [f"Owed to {payee}, from the payment program's own records on devnet (test USDC; nothing here is real money):"]
     if not rows:
         said.append("  Nothing is held for this account, in a review window or reverted in the history that was read.")
     for r in rows:
@@ -924,7 +924,7 @@ def history_for(owner_id: int, wallets=(), limit: int = 1000, last: str = "") ->
     try:
         got = owner_history(url, owner_id, wallets, min(limit, 1000), last) or escrow_history(url, min(limit, 1000), last)
     except (chain.Refused, OSError, ValueError) as why:
-        raise cli.Stop(f"Solana did not give the escrow's history: {ghwords.first_line(why)}.") from None
+        raise cli.Stop(f"Solana did not give the payment program's history: {ghwords.first_line(why)}.") from None
     for note in got.notes():
         cli.err.print(note, markup=False)
     return got
@@ -983,7 +983,7 @@ def register(app, help_lines: list | None = None) -> None:
         got = history_for(owner_id, wallet, limit, b)
         short = bool(got.unread or 2 in got.cut)        # the second escrow's history is the one a work order is in
         if short and not partial:
-            raise cli.Stop("The cluster did not give the escrow's whole history (see above), so the file would not be the one another party gets.",
+            raise cli.Stop("The cluster did not give the payment program's whole history (see above), so the file would not be the one another party gets.",
                            "Run it again, or with --partial for a file that says it is partial.")
         scope = scope_of(owner_id, a, b, wallet, short)
         rows, head = chained(lines(got.events, scope["owner_id"], wallet, a, b), scope)
@@ -1027,7 +1027,7 @@ def register(app, help_lines: list | None = None) -> None:
     @audit_app.command("show")
     def show_(order: str = typer.Argument(..., help="an order's or a bounty's address, or a deliverable (order:funded transaction:milestone)"),
               refs: Path = typer.Option(None, "--refs", help="a CSV of your own references: order,ref,paid_outside,dispute"),
-              limit: int = typer.Option(1000, "--limit", help="how many of the escrow's newest transactions to read (at most 1000)"),
+              limit: int = typer.Option(1000, "--limit", help="how many of the payment program's newest transactions to read (at most 1000)"),
               offline: bool = typer.Option(False, "--chain-lines-only", help="do not rebuild the acceptance receipt or read a multisig: the log lines alone"),
               as_json: bool = typer.Option(False, "--json", help="the records as JSON")) -> None:
         """One deliverable as four linked records: who authorised it and under which budget, why it was accepted, what it is as a billable line, and where its money is. Read from the chain; your references come from --refs."""
@@ -1036,7 +1036,7 @@ def register(app, help_lines: list | None = None) -> None:
         got = cli._history(limit)
         rows = [r for r in all_lines(got.events) if order in (r["order"], deliverable_of(r))]
         if not rows:
-            raise cli.Stop(f"The escrow's history that was read shows no order, bounty or deliverable {order}.",
+            raise cli.Stop(f"The payment program's history that was read shows no order, bounty or deliverable {order}.",
                            "Name an order's address as `knos audit export` prints it, or read further back with --limit.")
         receipts: dict = {}
         approvals: dict = {}
@@ -1055,7 +1055,7 @@ def register(app, help_lines: list | None = None) -> None:
     def owed_(payee: str = typer.Option(..., "--payee", help="the supplier's GitHub login or id"),
               last: str = typer.Option("", "--to", help="as of the end of this UTC day (default: now)"),
               refs: Path = typer.Option(None, "--refs", help="a CSV of references and disputes: order,ref,paid_outside,dispute"),
-              limit: int = typer.Option(1000, "--limit", help="how many of the escrow's newest transactions to read (at most 1000)"),
+              limit: int = typer.Option(1000, "--limit", help="how many of the payment program's newest transactions to read (at most 1000)"),
               as_json: bool = typer.Option(False, "--json", help="the lines as JSON")) -> None:
         """What is owed to a supplier and why it is not paid yet: held for a wallet, in a review window until a date, reverted, or disputed, with the transaction as evidence for each line. Read from the chain's records alone: it needs no access to the buyer's repository."""
         from . import cli

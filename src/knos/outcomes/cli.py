@@ -71,7 +71,7 @@ def register(app: Any, help_lines: list | None = None) -> None:
 
     @sub.command("tiers")
     def tiers_(spec: Path = typer.Argument(...), as_json: bool = typer.Option(False, "--json")) -> None:
-        """One knos_pay order per tier, and what the buyer escrows in all."""
+        """One knos_pay order per tier, and what the buyer has held in all."""
         from . import escrow
         s = _load(spec)
         rows, total = escrow.orders(s), escrow.escrowed(s)
@@ -80,7 +80,7 @@ def register(app: Any, help_lines: list | None = None) -> None:
             return
         for o in rows:
             typer.echo(f"{o['name']:<12} seq {o['seq']:<5} {o['amount'] / 1e6:>10.2f} + fee {o['fee'] / 1e6:.2f}  order {o['address']}  terms {o['terms_hash'][:16]}")
-        typer.echo(f"cap {total['cap'] / 1e6:.2f}; escrowed with fees {total['total'] / 1e6:.2f}")
+        typer.echo(f"cap {total['cap'] / 1e6:.2f}; held with fees {total['total'] / 1e6:.2f}")
 
     @sub.command("lock")
     def lock_(spec: Path = typer.Argument(...), history: Path = typer.Option(None, "--history", help="the data as they stand at funding"),

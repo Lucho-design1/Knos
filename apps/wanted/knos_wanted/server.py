@@ -79,7 +79,7 @@ ROUTES = {"/api/trace/keep": "product", "/api/qloo-diff": "product", "/api/open-
           "/api/auth/challenge": "auth", "/api/auth/passkey/register": "auth", "/api/auth/passkey/login": "auth",
           "/api/auth/google": "auth", "/api/auth/guest": "auth",
           "/api/wallet": "tx", "/api/wallet/faucet": "faucet", "/api/sign": "tx", "/api/maker/claim": "lock", "/api/lend/quote": "lock",
-          "/api/lend/advance": "lock", "/api/lend/collect": "lock"}
+          "/api/lend/advance": "lock", "/api/lend/collect": "lock", "/oauth/token": "auth"}
 SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/api/fund", "/api/task/submit", "/api/anchor",
              "/api/preorder/demo", "/api/preorder/faucet", "/api/preorder/tx", "/api/preorder/submit",
              "/api/wallet", "/api/wallet/faucet", "/api/sign", "/api/maker/claim", "/api/lend/quote", "/api/lend/advance", "/api/lend/collect")   # no anonymous money or faucet calls
@@ -87,7 +87,7 @@ SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/
 PAGES = {"/fields": "fields.html", "/money": "money.html", "/companies": "companies.html", "/trace": "trace.html", "/trace.html": "trace.html", "/with-without": "with_without.html", "/with-without.html": "with_without.html",
          "/qloo-safe-use": "qloo_safe_use.html", "/qloo-safe-use.html": "qloo_safe_use.html", "/invite": "invite.html", "/invite.html": "invite.html"}
 GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos will not fund: the refuse list the Ready check applies", "/api/fields": "Fields: 7 bottlenecks by 7 technologies, 49 cells, each live or next",
-              "/api/money": "The money page: each number with its source, and the share Knos needs for $1B a year at the live fee",
+              "/api/money": "The money page: what is held, released and charged, and the price list",
               "/api/vectors": "The seven product-value vectors, measured: cost, speed, friction, trust, capability, access, status",
               "/api/proof": "The latest real verdict this server reached (shown first on both front doors)",
               "/api/ready/card": "A Ready card, read back from its devnet attestation (?hash= the criteria hash)",
@@ -102,19 +102,24 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos
               "/api/front": "Research products open for backing now (the front door's list; ?slug= one product)",
               "/api/demand/fields": "The Qloo demand families F1-F8: every option's name, Qloo parameter, kind, help and example",
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
-              "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funder escrows",
+              "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funders' held money",
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/mcp/store": "The app-store MCP profile: read-only tools, no sign-in, a daily call cap (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
               "/": "The app", "/api/status": "Server status", "/api/products": "Listed products", "/api/quote": "Fee quote",
               "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
               "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
-              "/api/receivables": "Receivables a lender can finance (passkey wallets, Huma-style terms)",
+              "/api/receivables": "Receivables a lender can finance (passkey wallets: advance rate, fee, due date)",
               "/api/referee/group": "The FROST referee group (public)", "/api/referee/pending": "Open referee signing sessions",
               "/api/referee/session": "One referee signing session", "/api/prize/evidence": "A demo prize's public evidence (the round's verdict)",
-              "/api/project/evidence": "A project attempt's public review (both pages and the claim ids)"}
+              "/api/project/evidence": "A project attempt's public review (both pages and the claim ids)",
+              "/.well-known/agent-card.json": "The A2A 1.0 Agent Card: the MCP endpoint, the OAuth 2.0 client-credentials flow, the skills",
+              "/.well-known/oauth-authorization-server": "OAuth 2.0 authorization server metadata (RFC 8414): client credentials only",
+              "/.well-known/oauth-protected-resource": "OAuth 2.0 protected resource metadata (RFC 9728): the MCP endpoint",
+              "/.well-known/oauth-protected-resource/mcp": "The same metadata at the resource's own path (RFC 9728 section 3.1)"}
 SUMMARIES = {"/api/check": "Demand check on Qloo", "/api/company/need": "Companies: one sentence to a Ready brief, a private demand check and an opened milestone", "/api/ready/card": "Attest a Ready brief on devnet: the shareable card", "/api/open-signals": "Demand from open signals only (no Qloo, keyless)", "/api/research": "Research card from a paper id", "/api/cross": "Start a crossing",
              "/api/preorder": "Pre-order on proof", "/api/milestone": "Post milestone evidence; 2 of 3 referees release",
              "/api/refund": "Refund past the deadline", "/api/fund": "Fund a milestone", "/api/factor": "Receivable financing offer",
-             "/api/anchor": "Anchor the record root on devnet", "/api/task/submit": "Submit to a contributor round"}
+             "/api/anchor": "Anchor the record root on devnet", "/api/task/submit": "Submit to a contributor round",
+             "/oauth/token": "OAuth 2.0 token (RFC 6749 4.4, client credentials): an agent key's id and secret -> a one-hour Bearer token"}
 
 
 
@@ -139,14 +144,12 @@ def inline_css(page: str) -> str:
 
 
 def money_doc() -> dict:
-    """The money page's numbers (money_data.MONEY), and the share of each pool Knos needs for $1B a year at the live fee."""
+    """The money page's price list (money_data.MONEY) and the live payout fee with its floor, from config/fees.yaml."""
     from .money_data import MONEY
     f = preorder.fee_line()
-    bps = f.get("rate_bps") or 0
-    need = 1e9 / (bps / 1e4) if bps else None              # $1B a year of fees, before costs, at the live payout fee
-    shares = [{"id": x["id"], "share": need / x["usd"]} for x in MONEY["pools"] if need and x.get("usd")]
-    return {**MONEY, "fee": {"rate_bps": bps, "status": f.get("status"), "source": "config/fees.yaml"},
-            "target_usd": 1e9, "needed_usd": need, "shares": shares, "assumes": "fees taken only on money released on proof; before costs"}
+    doc = {k: v for k, v in MONEY.items() if k != "pools"}
+    return {**doc, "fee": {"rate_bps": f.get("rate_bps") or 0, "floor": f.get("floor"), "status": f.get("status"),
+                           "source": "config/fees.yaml"}}
 
 class State:
     def __init__(self, q: Qloo | None = None, rest: Client | None = None):
@@ -378,7 +381,7 @@ def make_handler(state: State):
                 if rep_ is None:
                     return self._send(404, {"error": "unknown report"})
                 if not x402.ready():
-                    return self._send(503, {"error": "the paid route needs the devnet escrow configured"})
+                    return self._send(503, {"error": "the paid route needs the devnet test wallet configured"})
                 pay_h = self.headers.get("PAYMENT-SIGNATURE")
                 try:
                     if not pay_h:
@@ -391,11 +394,18 @@ def make_handler(state: State):
                 return self._send(200, {**rep_, "paid": settled}, headers={"PAYMENT-RESPONSE": x402.header(settled)})
             if u.path == "/api/receivables":
                 return self._send(200, {"receivables": wallets.receivables(), "money": wallets.MONEY,
-                                        "model": "PayFi receivable financing (as Huma Finance): advance rate, fee, due date, repaid by the release"})
+                                        "model": "PayFi receivable financing: advance rate, fee, due date, repaid by the release"})
             if u.path == "/api/commitments":
                 take = min(100, max(1, int((qs.get("take") or ["50"])[0] or 50)))
                 offset = max(0, int((qs.get("offset") or ["0"])[0] or 0))
                 return self._send(200, {"commitments": preorder.all_public(offset + take)[offset:], "take": take, "offset": offset})
+            if u.path in ("/.well-known/agent-card.json", "/.well-known/oauth-authorization-server", "/.well-known/oauth-protected-resource",
+                          "/.well-known/oauth-protected-resource/mcp"):     # RFC 9728 also places it under the resource's path
+                from . import agentkeys
+                base = tasks.public_base(self._base())
+                doc = agentkeys.card(base) if u.path.endswith("agent-card.json") else agentkeys.server_metadata(base) \
+                    if u.path.endswith("authorization-server") else agentkeys.resource_metadata(base)
+                return self._send(200, doc, headers={"Access-Control-Allow-Origin": "*"})
             if u.path in ("/mcp", "/mcp/store"):
                 if "text/html" in (self.headers.get("Accept") or ""):
                     return self._send(200, agent.DISCOVERY.encode(), "text/html; charset=utf-8")
@@ -415,7 +425,7 @@ def make_handler(state: State):
                 from . import vectors
                 page = (STATIC / "index.html").read_text(encoding="utf-8")
                 pr = vectors.proof().get("proof")
-                if pr:                                        # the proof shown first, in the page itself (T3: at the first paint)
+                if pr:                                        # the proof shown first, in the page itself (at the first paint)
                     data = json.dumps(pr, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
                     page = page.replace('<script type="application/json" id="k-proof">null</script>',
                                         f'<script type="application/json" id="k-proof">{data}</script>', 1)
@@ -507,6 +517,8 @@ def make_handler(state: State):
             outside.begin(self.headers)                   # the outside counter reads who is asking (knos_wanted.outside)
             if u.path in ("/mcp", "/mcp/store"):
                 return self._mcp("store" if u.path == "/mcp/store" else "full")
+            if u.path == "/oauth/token":
+                return self._oauth_token()
             if u.path in ("/api/actions/preorder", blink.PAY_PATH):
                 return self._action(u)
             if u.path in ("/api/referee/commit", "/api/referee/share", "/api/referee/attest"):   # a referee host's FROST round (signed by its transport key)
@@ -526,7 +538,11 @@ def make_handler(state: State):
                 return self._send(429, {"error": "too many requests from this address; try again in a few minutes"})
             try:
                 body = self._json()
-                self.user = auth.who(self.headers.get("Authorization"))
+                if u.path == "/api/task/submit":               # knos_task_submit's route: an agent key or its token too
+                    from . import agentkeys
+                    self.user = agentkeys.principal(self.headers.get("Authorization"))
+                else:
+                    self.user = auth.who(self.headers.get("Authorization"))
                 if u.path in SIGNED_IN and self.user is None:
                     return self._send(401, {"error": "sign in first (passkey, Google or a guest label)"})
                 if u.path == "/api/milestone" and not state.allow("commitment:" + str(body.get("commitment", ""))[:64], "milestone_one"):
@@ -537,7 +553,7 @@ def make_handler(state: State):
             except (auth.AuthError, wallets.NeedPasskey) as why:
                 return self._send(401, {"error": str(why)[:300], "needs": "passkey" if isinstance(why, wallets.NeedPasskey) else None})
             except preorder.Settled as why:
-                return self._send(409, {"error": str(why)[:300], "refused_by": "the escrow order on devnet (read from the chain)"})
+                return self._send(409, {"error": str(why)[:300], "refused_by": "the order on devnet (read from the chain)"})
             except preorder.NotVerified as why:
                 return self._send(422, {"error": f"milestone not verified: {why}"[:400], "verified": False})
             except escrow.EscrowUnavailable as why:
@@ -572,7 +588,28 @@ def make_handler(state: State):
             out = agent.mcp(state, msg, profile)
             if out is None:
                 return self._send(202, b"", "text/plain")
-            return self._send(200, out, headers={"Mcp-Session-Id": "knos"} if msg.get("method") == "initialize" else None)
+            hdr = {"Mcp-Session-Id": "knos"} if msg.get("method") == "initialize" else {}
+            need = ((out.get("result") or {}).get("structuredContent") or {}) if isinstance(out.get("result"), dict) else {}
+            if need.get("needs") == "authorization":          # a write tool without a credential: where to get one (RFC 9728 5.1)
+                hdr["WWW-Authenticate"] = f'Bearer resource_metadata="{need["resource_metadata"]}", scope="knos.solve"'
+            return self._send(200, out, headers=hdr or None)
+
+        def _oauth_token(self):
+            """POST /oauth/token: client credentials, as a form body (RFC 6749 4.4) or JSON, the client by HTTP Basic or in the body."""
+            from . import agentkeys
+            if not state.allow(self._client(), "auth"):
+                return self._send(429, {"error": "slow_down", "error_description": "too many token requests from this address"})
+            n = int(self.headers.get("Content-Length") or 0)
+            if n > MAX_BODY:
+                return self._send(400, {"error": "invalid_request", "error_description": "request too large"})
+            raw = self.rfile.read(n) if n > 0 else b""
+            try:
+                form = json.loads(raw or b"{}") if (self.headers.get("Content-Type") or "").startswith("application/json") else \
+                    {k: v[0] for k, v in parse_qs(raw.decode("utf-8")).items()}
+            except (ValueError, UnicodeDecodeError):
+                return self._send(400, {"error": "invalid_request", "error_description": "a form body: grant_type=client_credentials"})
+            code, body, headers = agentkeys.token(form if isinstance(form, dict) else {}, self.headers.get("Authorization"))
+            return self._send(code, body, headers=headers or None)
 
         def _action(self, u):
             qs = parse_qs(u.query)
@@ -625,6 +662,8 @@ def make_handler(state: State):
                 if got.get("anchored"):
                     state.last_anchor = {"tx": got["tx"], "explorer": got["explorer"], "root": got["root"]}
                 return got
+            if path == "/api/task/submit" and user.get("kind") == "agent":   # its prize: the key's payout wallet, within its cap
+                return agent._task_submit(body, user)
             if path == "/api/task/submit":
                 return tasks.submit(str(body.get("round", "")), str(body.get("name", "")), str(body.get("code", "")),
                                     f"{user.get('kind')}: {user.get('label')}", sub=str(user.get("sub") or ""),

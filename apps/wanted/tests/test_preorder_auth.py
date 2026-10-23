@@ -121,7 +121,7 @@ def test_check_without_key_cannot_decide_and_preorder_is_gated(app):
     st, e = call(app, "/api/preorder", {"report": r["hash"], "units": 5}, tok)
     assert st in (400, 503)
     st, s = call(app, "/api/status")
-    assert s["preorders"]["available"] is False and s["preorders"]["why"] == "escrow unavailable on this server"
+    assert s["preorders"]["available"] is False and s["preorders"]["why"] == "holding money is unavailable on this server"
     assert s["qloo_rest"]["rest"] is False and s["qloo_rest"]["reason"] == "no Qloo API key on this server"
     assert call(app, "/api/report?hash=" + r["hash"])[1]["hash"] == r["hash"]
 

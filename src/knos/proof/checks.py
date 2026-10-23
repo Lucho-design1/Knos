@@ -151,7 +151,7 @@ def _json(out: str, start: str):
 
 
 # Workflows that are not CI of a commit: the always-on relay restarts itself every few minutes on the newest commit and
-# never finishes, so waiting for it would never pass (TASK-QLOO-CHAMPION M9). Matched by the file's own `name:`.
+# never finishes, so waiting for it would never pass. Matched by the file's own `name:`.
 NOT_CI = (".github/workflows/worker.yml",)
 
 

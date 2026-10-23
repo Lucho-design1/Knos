@@ -73,16 +73,16 @@ export function initFirst(ctx) {
       const where = `<a href="${esc(EXPLORER("tx", sig))}" target="_blank" rel="noopener">${esc(sig.slice(0, 8))}…</a>`;
       if (tx.meta?.err) { out.innerHTML = `<p class="status bad">That transaction failed on devnet, so it paid nothing (${where}).</p>`; return; }
       const paid = paidLines(tx, programs);
-      if (!paid.length) { out.innerHTML = `<p id="verdict" class="verdict" data-verdict="not a payment">Not a payment by Knos</p><p class="fine">This transaction (${where}) has no payment line from either escrow program.</p>`; return; }
+      if (!paid.length) { out.innerHTML = `<p id="verdict" class="verdict" data-verdict="not a payment">Not a payment by Knos</p><p class="fine">This transaction (${where}) has no payment line from either payment program.</p>`; return; }
       const named = async (path, key, fallback) => chain.gh(path).then((r) => r[key]).catch(() => fallback);
       const rows = await Promise.all(paid.map(async (p) => `<dl class="facts paid-facts">
         <dt>Task</dt><dd>issue #${esc(p.issue)} of ${esc(await named(`/repositories/${p.repo}`, "full_name", `repository ${p.repo}`))}${p.pr ? `, pull request #${esc(p.pr)}` : ""}</dd>
         <dt>Paid to</dt><dd>${esc(await named(`/user/${p.payee}`, "login", `GitHub user ${p.payee}`))} (GitHub id ${esc(p.payee)})</dd>
-        <dt>Kept by the escrow</dt><dd>${money(p.fee, 6, 2)} test USDC, the fee</dd>
-        <dt>Escrow program</dt><dd>${p.deployment === 1 ? "first" : "second"} deployment</dd></dl>`));
+        <dt>Kept by the program</dt><dd>${money(p.fee, 6, 2)} test USDC, the fee</dd>
+        <dt>Payment program</dt><dd>${p.deployment === 1 ? "first" : "second"} deployment</dd></dl>`));
       const total = paid.reduce((n, p) => n + p.amount, 0), time = tx.blockTime ? `${new Date(tx.blockTime * 1000).toISOString().slice(0, 16).replace("T", " ")} UTC` : "no time recorded";
       out.innerHTML = `<p id="verdict" class="verdict ok" data-verdict="paid">Paid: ${money(total, 6, 2)} test USDC</p>${rows.join("")}
-        <p class="fine">Block time ${esc(time)}, transaction ${where}. This is read from the escrow's own log line in that transaction on Solana devnet.
+        <p class="fine">Block time ${esc(time)}, transaction ${where}. This is read from the payment program's own log line in that transaction on Solana devnet.
           It is test USDC: devnet money is worth nothing.</p>`;
     } catch (e) { out.innerHTML = `<p class="status bad">${esc(e.message)}</p>`; }
   }

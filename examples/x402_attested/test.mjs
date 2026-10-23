@@ -53,7 +53,7 @@ test("the client funds the order the 402 names, is served, and the seller is pai
     const req = got.messages.paymentRequired.accepts[0];
     assert.deepEqual([req.scheme, req.amount, req.asset, req.payTo, req.extra.order, req.extra.fee, req.extra.termsHash],
                      ["knos-order", String(fx.amount), fx.mint, fx.seller.wallet, fx.order.address, String(fx.fee), fx.terms_hash]);
-    // delivered against escrow: the settlement says the money is held, not paid
+    // delivered against held money: the settlement says the money is held, not paid
     assert.deepEqual(got.settlement.extensions["knos-order"].info, { order: fx.order.address, state: "escrowed", deadline: fx.order.deadline });
     assert.equal(got.settlement.payer, fx.buyer);
     const at = async () => (await fetch(`${w.base}/orders/${fx.order.address}`)).json();

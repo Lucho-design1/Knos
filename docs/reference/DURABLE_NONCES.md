@@ -1,4 +1,4 @@
-# Durable nonces: sign an escrow now, send it later
+# Durable nonces: sign a funding now, send it later
 
 A Solana transaction names a recent blockhash and is refused once the cluster's block height passes the
 `lastValidBlockHeight` that came with it ([confirmation docs](https://solana.com/docs/advanced/confirmation): the most

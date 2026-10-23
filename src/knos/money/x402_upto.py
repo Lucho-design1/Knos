@@ -235,7 +235,7 @@ def settle_ixs(authorizer: Keypair, payee: Pubkey, ch: Channel, channel: Pubkey,
     `used` must be more than what is settled already and at most the deposit; `used` == 0 seals with no voucher and
     refunds everything."""
     if used < 0 or used > ch.deposit:
-        raise ValueError(f"used {used} is outside 0..{ch.deposit} (the ceiling the payer escrowed)")
+        raise ValueError(f"used {used} is outside 0..{ch.deposit} (the ceiling the payer holds in the channel)")
     if hashlib.sha256(splits_bytes(splits)).digest() != ch.distribution_hash:
         raise ValueError("these splits are not the ones the channel was opened with")
     head = [ed25519_ix(authorizer, voucher(channel, used, expires_at)), settle_and_seal_ix(payee, channel, True)] if used > ch.settled \

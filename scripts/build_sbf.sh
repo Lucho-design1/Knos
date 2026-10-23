@@ -13,7 +13,7 @@
 # CARGO_BUILD_SBF names the binary when it is not the one on PATH. Also pinned: the lockfile as committed (--locked), overflow checks on (programs-v2/Cargo.toml). The ELF's
 # e_flags is the sBPF version (0 = v0 ... 3 = v3); the script checks it.
 #
-# It writes deploy/upgrade-0329/HASHES-<v>.txt: for each program the sha256 of the file and the hash
+# It writes programs-v2/target/arch-<v>/HASHES-<v>.txt (not committed): for each program the sha256 of the file and the hash
 # `solana-verify get-executable-hash` prints (sha256 of the file without its trailing zero bytes: what
 # `solana-verify get-program-hash` prints for a deployed program). The verified (docker) build is the same command
 # inside solana-verify's image, which needs docker (docs/reference/PLATFORM.md says which command and image):
@@ -36,7 +36,7 @@ export CARGO_TARGET_DIR="${CARGO_TARGET_DIR_BASE:-$PWD/programs-v2/target}/arch-
 # differ in those bytes; with it, both say /build (this checkout) and /cargo (the crates cargo downloaded).
 cargo_home="${CARGO_HOME:-$HOME/.cargo}"
 export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }--remap-path-prefix=$PWD=/build --remap-path-prefix=$cargo_home=/cargo"
-out="deploy/upgrade-0329"; fix="tests/fixtures/platform"
+out="$CARGO_TARGET_DIR"; fix="tests/fixtures/platform"
 mkdir -p "$out" "$fix"
 version_of() { od -An -tu4 -j48 -N4 "$1" | tr -d ' '; }      # ELF64 e_flags, at byte 48
 exe_hash() { python3 - "$1" <<'PY'

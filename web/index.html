@@ -85,6 +85,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
 <link rel="alternate" type="application/atom+xml" href="index.atom" title="Agent PR Index">
 <!-- The first screen: the outcome as the h1, then who it is for, then the sentence, then the number. Styled here because app.css is at its size limit (tests/web/motion.mjs). From 900 px the top margin is 36 px, so the upgrade line sits 4 px down and 24 px tall, clear of the sentence. -->
 <style>.hero .hero-fact { text-wrap: pretty; } .hero .hero-outcome { font-size: var(--s2); line-height: 1.35; font-weight: 500; color: var(--ink); max-width: 26em; margin: 0 0 8px; text-wrap: balance; } .hero .hero-who { color: var(--ink); max-width: 34em; margin: 0 0 6px; text-wrap: pretty; } .hero .hero-fact { margin-bottom: 12px; } .hero .hero-board { margin-top: 12px; } .hero h1 { margin-bottom: 12px; } .hero .hero-fact .k-num { color: var(--ink); font-weight: 600; } #how-it-works { margin-top: 64px; scroll-margin-top: 80px; } @media (min-width: 900px) { .hero { padding-top: 36px; } .hero-upgrades { top: 4px; } .hero-upgrades > summary { padding-block: 2px; } }</style>
+<link rel="preconnect" href="https://drexthealpha.github.io" crossorigin>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
@@ -120,7 +121,6 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
         <a href="#install">Install</a>
         <a href="#records">Records</a>
         <a href="#network">Numbers</a>
-        <a href="#judges">Check every claim yourself</a>
         <a href="./faq.html">Questions</a>
       </div>
     </div>
@@ -274,7 +274,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
         <li><span>The checks and the files a change may touch are fixed at funding.</span></li>
         <li><span>A supplier can collect payment without waiting for the buyer.</span></li>
         <li><span>Payment on a black-box check: 0 of 63 cheating pull requests passed it, 56 passed plain CI.</span></li>
-        <li><span>A count of accepted work that neither side keeps alone, with no escrow.</span></li>
+        <li><span>A count of accepted work that neither side keeps alone, no money held.</span></li>
       </ul>
       <p class="fine" id="one-sentence">Knos carries research across the valley of death: each step is paid only on verified proof.</p>
       <p class="lede">A work order is a task, its budget and the terms that decide when it is done. All three are fixed before
@@ -480,7 +480,7 @@ ${src(h, price.src)}</section>
   // a link that names an idea (?q=, from the fields page) runs its check at once: one press, already pressed
   const asked = new URLSearchParams(location.search).get("q");
   if (asked) { q.value = asked.slice(0, 500); ask(q.value); }
-  // proof first: the latest real verdict this server reached, drawn at load and labelled as a past check (T3);
+  // proof first: the latest real verdict this server reached, drawn at load and labelled as a past check;
   // the visitor's own check replaces it
   const seen = (el, then) => {
     if (!("IntersectionObserver" in window)) return then();
@@ -525,7 +525,7 @@ ${src(h, price.src)}</section>
   <li data-v="cost"><b>$0</b> per check</li>
   <li data-v="speed"><b>…</b> median to verdict</li>
   <li data-v="friction"><b>2 steps</b>, no sign-up</li>
-  <li data-v="trust"><b>Escrow</b> on devnet</li>
+  <li data-v="trust"><b>Held</b> until proof, on devnet</li>
   <li data-v="capability"><b>2.08x</b> fewer tokens, <b>70% vs 5%</b> pass</li>
   <li data-v="access"><b>7 fields</b>, any country, phone</li>
   <li data-v="status"><b>Ready cards</b></li>
@@ -544,7 +544,7 @@ ${src(h, price.src)}</section>
     </ol>
     <p class="fine" id="home-when" data-not-prose>Passkey sign-in, no account · devnet, test money, no customers yet</p>
     <!-- home:idt -->
-    <section id="home-idt" aria-label="IDT benchmark" data-ratio="2.08"><p class="fine" id="idt-line">Clear briefs: <strong class="k-num" id="idt-ratio">2.08x</strong> fewer reasoning tokens, measured on 20 tasks.</p><details class="k-more" id="idt-per-brief" data-not-prose><summary>Each brief</summary><p class="fine">One model (sonnet, medium effort) for both. Vague: 12,365 tokens, 5% passed. Ready: 5,942 tokens, 70% passed.</p><div class="k-table"><table><thead><tr><th scope="col">Task</th><th scope="col">Vague</th><th scope="col">Ready</th><th scope="col">Saved</th><th scope="col">Passed</th></tr></thead><tbody><tr><td>c01</td><td class="k-num">3,380</td><td class="k-num">67</td><td class="k-num">+3,313</td><td>no / yes</td></tr><tr><td>c02</td><td class="k-num">151</td><td class="k-num">53</td><td class="k-num">+98</td><td>no / yes</td></tr><tr><td>c03</td><td class="k-num">1,718</td><td class="k-num">63</td><td class="k-num">+1,655</td><td>no / yes</td></tr><tr><td>c04</td><td class="k-num">204</td><td class="k-num">107</td><td class="k-num">+97</td><td>no / yes</td></tr><tr><td>c05</td><td class="k-num">669</td><td class="k-num">58</td><td class="k-num">+611</td><td>no / yes</td></tr><tr><td>c06</td><td class="k-num">80</td><td class="k-num">93</td><td class="k-num">-13</td><td>no / yes</td></tr><tr><td>c07</td><td class="k-num">169</td><td class="k-num">72</td><td class="k-num">+97</td><td>no / yes</td></tr><tr><td>c08</td><td class="k-num">581</td><td class="k-num">226</td><td class="k-num">+355</td><td>no / yes</td></tr><tr><td>c09</td><td class="k-num">274</td><td class="k-num">118</td><td class="k-num">+156</td><td>yes / yes</td></tr><tr><td>c10</td><td class="k-num">554</td><td class="k-num">111</td><td class="k-num">+443</td><td>no / no</td></tr><tr><td>r01</td><td class="k-num">208</td><td class="k-num">846</td><td class="k-num">-638</td><td>no / no</td></tr><tr><td>r02</td><td class="k-num">825</td><td class="k-num">701</td><td class="k-num">+124</td><td>no / yes</td></tr><tr><td>r03</td><td class="k-num">158</td><td class="k-num">240</td><td class="k-num">-82</td><td>no / yes</td></tr><tr><td>r04</td><td class="k-num">351</td><td class="k-num">277</td><td class="k-num">+74</td><td>no / yes</td></tr><tr><td>r05</td><td class="k-num">581</td><td class="k-num">240</td><td class="k-num">+341</td><td>no / yes</td></tr><tr><td>r06</td><td class="k-num">90</td><td class="k-num">444</td><td class="k-num">-354</td><td>no / no</td></tr><tr><td>r07</td><td class="k-num">1,507</td><td class="k-num">784</td><td class="k-num">+723</td><td>no / no</td></tr><tr><td>r08</td><td class="k-num">74</td><td class="k-num">520</td><td class="k-num">-446</td><td>no / no</td></tr><tr><td>r09</td><td class="k-num">259</td><td class="k-num">705</td><td class="k-num">-446</td><td>no / yes</td></tr><tr><td>r10</td><td class="k-num">532</td><td class="k-num">217</td><td class="k-num">+315</td><td>no / no</td></tr></tbody></table></div><p class="fine">Output tokens include thinking. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/runs.json" rel="noopener">Every run, raw</a>.</p><p class="fine" id="idt-self">Building this with a coding agent: the TASK-QLOO-CHAMPION goal used 216,498 output tokens over 285 messages (2026-10-21), recorded through <code>knos_usage</code>. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/self_usage.json" rel="noopener">Raw</a>.</p></details><p class="fine" id="qloo-line" data-delta="-0.032">With Qloo's line: 3.2% fewer tokens, Ready 4 vs 4 of 10.</p><details class="k-more" id="qloo-per-brief" data-not-prose><summary>With and without Qloo</summary><p class="fine">The 10 research briefs, each run without and with its Grounding (Qloo) line (sonnet, medium effort): 5,074 vs 4,912 output tokens, $0.307 vs $0.3325 estimated. The IDT ratio above is Knos's own (clear briefs), not Qloo's.</p><div class="k-table"><table><thead><tr><th scope="col">Task</th><th scope="col">Without</th><th scope="col">With Qloo</th><th scope="col">Ready</th></tr></thead><tbody><tr><td>r01</td><td class="k-num">792</td><td class="k-num">845</td><td>no / yes</td></tr><tr><td>r02</td><td class="k-num">698</td><td class="k-num">927</td><td>yes / no</td></tr><tr><td>r03</td><td class="k-num">258</td><td class="k-num">231</td><td>no / yes</td></tr><tr><td>r04</td><td class="k-num">294</td><td class="k-num">278</td><td>yes / no</td></tr><tr><td>r05</td><td class="k-num">267</td><td class="k-num">219</td><td>no / no</td></tr><tr><td>r06</td><td class="k-num">514</td><td class="k-num">472</td><td>no / no</td></tr><tr><td>r07</td><td class="k-num">767</td><td class="k-num">577</td><td>no / yes</td></tr><tr><td>r08</td><td class="k-num">549</td><td class="k-num">548</td><td>no / no</td></tr><tr><td>r09</td><td class="k-num">712</td><td class="k-num">630</td><td>yes / yes</td></tr><tr><td>r10</td><td class="k-num">223</td><td class="k-num">185</td><td>yes / no</td></tr></tbody></table></div><p class="fine"><a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/qloo_runs.json" rel="noopener">Every run, raw</a>.</p></details></section>
+    <section id="home-idt" aria-label="IDT benchmark" data-ratio="2.08"><p class="fine" id="idt-line">Clear briefs: <strong class="k-num" id="idt-ratio">2.08x</strong> fewer reasoning tokens, measured on 20 tasks.</p><details class="k-more" id="idt-per-brief" data-not-prose><summary>Each brief</summary><p class="fine">One model (sonnet, medium effort) for both. Vague: 12,365 tokens, 5% passed. Ready: 5,942 tokens, 70% passed.</p><div class="k-table"><table><thead><tr><th scope="col">Task</th><th scope="col">Vague</th><th scope="col">Ready</th><th scope="col">Saved</th><th scope="col">Passed</th></tr></thead><tbody><tr><td>c01</td><td class="k-num">3,380</td><td class="k-num">67</td><td class="k-num">+3,313</td><td>no / yes</td></tr><tr><td>c02</td><td class="k-num">151</td><td class="k-num">53</td><td class="k-num">+98</td><td>no / yes</td></tr><tr><td>c03</td><td class="k-num">1,718</td><td class="k-num">63</td><td class="k-num">+1,655</td><td>no / yes</td></tr><tr><td>c04</td><td class="k-num">204</td><td class="k-num">107</td><td class="k-num">+97</td><td>no / yes</td></tr><tr><td>c05</td><td class="k-num">669</td><td class="k-num">58</td><td class="k-num">+611</td><td>no / yes</td></tr><tr><td>c06</td><td class="k-num">80</td><td class="k-num">93</td><td class="k-num">-13</td><td>no / yes</td></tr><tr><td>c07</td><td class="k-num">169</td><td class="k-num">72</td><td class="k-num">+97</td><td>no / yes</td></tr><tr><td>c08</td><td class="k-num">581</td><td class="k-num">226</td><td class="k-num">+355</td><td>no / yes</td></tr><tr><td>c09</td><td class="k-num">274</td><td class="k-num">118</td><td class="k-num">+156</td><td>yes / yes</td></tr><tr><td>c10</td><td class="k-num">554</td><td class="k-num">111</td><td class="k-num">+443</td><td>no / no</td></tr><tr><td>r01</td><td class="k-num">208</td><td class="k-num">846</td><td class="k-num">-638</td><td>no / no</td></tr><tr><td>r02</td><td class="k-num">825</td><td class="k-num">701</td><td class="k-num">+124</td><td>no / yes</td></tr><tr><td>r03</td><td class="k-num">158</td><td class="k-num">240</td><td class="k-num">-82</td><td>no / yes</td></tr><tr><td>r04</td><td class="k-num">351</td><td class="k-num">277</td><td class="k-num">+74</td><td>no / yes</td></tr><tr><td>r05</td><td class="k-num">581</td><td class="k-num">240</td><td class="k-num">+341</td><td>no / yes</td></tr><tr><td>r06</td><td class="k-num">90</td><td class="k-num">444</td><td class="k-num">-354</td><td>no / no</td></tr><tr><td>r07</td><td class="k-num">1,507</td><td class="k-num">784</td><td class="k-num">+723</td><td>no / no</td></tr><tr><td>r08</td><td class="k-num">74</td><td class="k-num">520</td><td class="k-num">-446</td><td>no / no</td></tr><tr><td>r09</td><td class="k-num">259</td><td class="k-num">705</td><td class="k-num">-446</td><td>no / yes</td></tr><tr><td>r10</td><td class="k-num">532</td><td class="k-num">217</td><td class="k-num">+315</td><td>no / no</td></tr></tbody></table></div><p class="fine">Output tokens include thinking. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/runs.json" rel="noopener">Every run, raw</a>.</p></details><p class="fine" id="qloo-line" data-delta="-0.032">With Qloo's line: 3.2% fewer tokens, Ready 4 vs 4 of 10.</p><details class="k-more" id="qloo-per-brief" data-not-prose><summary>With and without Qloo</summary><p class="fine">The 10 research briefs, each run without and with its Grounding (Qloo) line (sonnet, medium effort): 5,074 vs 4,912 output tokens, $0.307 vs $0.3325 estimated. The IDT ratio above is Knos's own (clear briefs), not Qloo's.</p><div class="k-table"><table><thead><tr><th scope="col">Task</th><th scope="col">Without</th><th scope="col">With Qloo</th><th scope="col">Ready</th></tr></thead><tbody><tr><td>r01</td><td class="k-num">792</td><td class="k-num">845</td><td>no / yes</td></tr><tr><td>r02</td><td class="k-num">698</td><td class="k-num">927</td><td>yes / no</td></tr><tr><td>r03</td><td class="k-num">258</td><td class="k-num">231</td><td>no / yes</td></tr><tr><td>r04</td><td class="k-num">294</td><td class="k-num">278</td><td>yes / no</td></tr><tr><td>r05</td><td class="k-num">267</td><td class="k-num">219</td><td>no / no</td></tr><tr><td>r06</td><td class="k-num">514</td><td class="k-num">472</td><td>no / no</td></tr><tr><td>r07</td><td class="k-num">767</td><td class="k-num">577</td><td>no / yes</td></tr><tr><td>r08</td><td class="k-num">549</td><td class="k-num">548</td><td>no / no</td></tr><tr><td>r09</td><td class="k-num">712</td><td class="k-num">630</td><td>yes / yes</td></tr><tr><td>r10</td><td class="k-num">223</td><td class="k-num">185</td><td>yes / no</td></tr></tbody></table></div><p class="fine"><a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/qloo_runs.json" rel="noopener">Every run, raw</a>.</p></details></section>
     <!-- /home:idt -->
   </section>
 
@@ -553,12 +553,12 @@ ${src(h, price.src)}</section>
     <h1 id="verify-h">How we verify</h1>
     <p class="lede">Every claim below opens its own evidence.</p>
     <ol class="verify-list">
-      <li><h2>Money waits in escrow</h2><p>A Solana program holds each payment until proof arrives. <a href="#records">The public record</a></p></li>
+      <li><h2>Money held until the proof passes</h2><p>A Solana program holds each payment until proof arrives. <a href="#records">The public record</a></p></li>
       <li><h2>Independent referees release it</h2><p>Two of three separate hosts re-check the proof and sign. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/REFEREE_FROST.md">The referee group</a></p></li>
       <li><h2>Your passkey signs every payment</h2><p>The server only relays. It never holds your key. <a href="wanted.html#verify">The app's checks</a></p></li>
       <li><h2>Demand comes from live taste data</h2><p>Qloo's data decides who wants it, where, and the price. Code decides, not a person.</p></li>
       <li><h2>Upgrades wait in public</h2><p>A program change waits eight days, in public. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/GOVERNANCE.md">Who can change the programs</a></p></li>
-      <li><h2>Check it yourself</h2><p><a href="#verifier">Verifier</a> · <a href="#network">Numbers</a> · <a href="#judges">Check every claim yourself</a></p></li>
+      <li><h2>Check it yourself</h2><p><a href="#verifier">Verifier</a> · <a href="#network">Numbers</a></p></li>
     </ol>
     <p class="devnet">Solana devnet, a test network: the money is test money, worth nothing.</p>
   </section>
@@ -646,7 +646,7 @@ ${src(h, price.src)}</section>
 </details>
       <details class="k-more">
         <summary>What the reply says</summary>
-        <blockquote id="fund-reply">Knos: 20.00 test USDC is in escrow for issue #7. It is paid when a maintainer merges a pull request that closes this issue, if these checks passed at that pull request's last commit: <code>test</code> (the checks you named). The pull request may not change <code>.github/**</code> or <code>.knos/**</code>. If it is not paid by its deadline, the money goes back to where it came from. To earn it: open a pull request whose description says <code>Fixes #7</code>. <code>/knos take</code> reserves the issue for 7 days. For the money to reach you when it is paid, comment <code>/knos address &lt;your Solana address&gt;</code> on your pull request; without an address it waits for you until you bind a wallet (180 days at most).</blockquote>
+        <blockquote id="fund-reply">Knos: 20.00 test USDC is held for issue #7 until the proof passes. It is paid when a maintainer merges a pull request that closes this issue, if these checks passed at that pull request's last commit: <code>test</code> (the checks you named). The pull request may not change <code>.github/**</code> or <code>.knos/**</code>. If it is not paid by its deadline, the money goes back to where it came from. To earn it: open a pull request whose description says <code>Fixes #7</code>. <code>/knos take</code> reserves the issue for 7 days. For the money to reach you when it is paid, comment <code>/knos address &lt;your Solana address&gt;</code> on your pull request; without an address it waits for you until you bind a wallet (180 days at most).</blockquote>
       </details>
       <details class="k-more">
 <summary>Who may fund, fixed terms, tests mode</summary>
@@ -705,7 +705,7 @@ ${src(h, price.src)}</section>
     </div>
 
     <form id="status-form" class="card money">
-      <h3>What is in escrow for an issue?</h3>
+      <h3>What is held for an issue?</h3>
       <label for="st-issue">Issue</label>
       <input id="st-issue" type="text" autocomplete="off" required placeholder="owner/repo#7">
       <button type="submit" id="st-go">Read it from Solana</button>
@@ -726,7 +726,7 @@ ${src(h, price.src)}</section>
       <h3>Fund any issue</h3>
       <details class="k-more">
 <summary>What this form does</summary>
-<p>Put test USDC in escrow, from your wallet, for an issue of any public repository. That repository needs no file.
+<p>Hold test USDC, from your wallet, for an issue of any public repository. That repository needs no file.
   <strong>Nothing is sent</strong> until your wallet shows you the transaction and you approve it.</p>
 </details>
       <p id="any-available" class="status" role="status" aria-live="polite">Checking which version of the payment program runs on devnet…</p>
@@ -832,7 +832,7 @@ ${src(h, price.src)}</section>
           <p>Or from a terminal, one command does all three:</p>
           <pre>knos claim YOUR_SOLANA_ADDRESS</pre>
 <p class="fine">Why by hand: an address carried in a link could be someone else's, so you type it. GitHub signs that the
-  repository's owner names that address; the escrow takes that signature only from a run started by hand, by the
+  repository's owner names that address; the payment program takes that signature only from a run started by hand, by the
   owner, in a repository named <code>knos-claim</code>. A later binding replaces an earlier one.</p>
 </details>
         </li>
@@ -917,17 +917,16 @@ ${src(h, price.src)}</section>
   <section id="view-pricing" class="view" hidden>
     <p class="k-kicker" id="price-rule">Knos never charges the party being rated.</p>
     <h2 id="pricing">What Knos costs</h2>
-    <p class="lede">Demand checks, Ready briefs and proof pages are free. A company pays on money it releases.</p>
     <div class="card" id="price-decided">
-      <h3>Knos's prices</h3>
       <div class="table-wrap"><table id="price-decided-table"><thead><tr><th>What</th><th>Price</th><th>Who pays</th></tr></thead><tbody>
         <tr><th scope="row">Demand check</th><td>10 a month free</td><td>nobody</td></tr>
-        <tr><th scope="row">Deep demand check</th><td>500 USD each, by card</td><td>the company</td></tr>
+        <tr><th scope="row">Deep demand check</th><td>500 USD each, by card once the company exists</td><td>the company</td></tr>
         <tr><th scope="row">Ready brief</th><td>free</td><td>nobody</td></tr>
         <tr><th scope="row">Proof page</th><td>free</td><td>nobody</td></tr>
-        <tr><th scope="row">Release on verified proof</th><td>1% on top; the solver keeps 100%</td><td>the company</td></tr>
+        <tr><th scope="row">Release on verified proof</th><td>1% on top, plus payment costs; the solver keeps 100%</td><td>the company</td></tr>
+        <tr><th scope="row">How a milestone is paid</th><td>by card up to 500 USD; larger milestones by bank transfer or in real money (Circle's USDC), held until the proof passes</td><td>the company</td></tr>
       </tbody></table></div>
-      <p class="fine" id="price-decided-now">Decided 23 Oct 2026. No company is formed yet, so nobody is charged today. The program on devnet charges 0.30% until a timelocked upgrade.</p>
+      <p class="fine" id="price-decided-now">Nobody is charged today: no company exists yet. Devnet charges 0.30% until the timelocked upgrade.</p>
     </div>
     <div class="k-card" id="bill"></div>
     <div class="card">
@@ -936,7 +935,7 @@ ${src(h, price.src)}</section>
         <tr><th scope="row">Check</th><td>pull request or artifact checked</td><td>free, forever</td><td>nobody</td><td>nowhere</td></tr>
         <tr><th scope="row">Meter</th><td>evaluation</td><td>100,000 a month free per organisation, then 0.002 USD</td><td>buyer</td><td>prepaid credits</td></tr><!-- proposed; the deployed knos_meter charges 0.05 after 10,000 free (#price-honest) -->
         <tr><th scope="row">Acceptance</th><td>dollar released or reconciled against a signed acceptance</td><td>0.30%; by contract 0.20% on monthly value above 1M (the rate never goes below 0.20%); small tickets are netted: outcomes under 20 USD accumulate and settle as one release per payee per period, charged 0.30% of the netted amount with the 0.05 floor once per release; no cap</td><td>funder, on top of the amount</td><td>knos_pay at release (on chain: 0.30% and the floor; volume rates are a rebate by contract, off chain)</td></tr>
-        <tr><th scope="row">Record</th><td>lookup of a supplier's delivery record through the machine-priced API</td><td>0.10 USD a lookup, paid per call by the caller (an agent, a marketplace, an underwriter) through the knos-order/x402 flow; the public record page and its file stay free</td><td>the buyer, marketplace or insurer reading it</td><td><code>knos record serve</code> (anyone runs it; Knos hosts none); budgeted at ZERO revenue until someone buys it</td></tr>
+        <tr><th scope="row">Record</th><td>lookup of a supplier's delivery record through the machine-priced API</td><td>0.10 USD a lookup, paid per call by the caller (an agent, a marketplace, an underwriter) through the knos-order/x402 flow; the public record page and its file stay free</td><td>the buyer, marketplace or insurer reading it</td><td><code>knos record serve</code> (anyone runs it; Knos hosts none)</td></tr>
         <tr><th scope="row">Control</th><td>organisation, per year</td><td>Team 25,000; Business 100,000; Enterprise from 400,000 (not deliverable yet: it needs single sign-on, private deployment and support that do not exist)</td><td>buyer</td><td>contract</td></tr>
         <tr><th scope="row">Pilot</th><td>one buyer, two suppliers, 30 days, one reconciled invoice</td><td>2,500 USD, credited against year one</td><td>buyer</td><td>contract</td></tr>
       </tbody></table></div>
@@ -1002,7 +1001,7 @@ ${src(h, price.src)}</section>
     <p class="lede">Open what Knos paid, and to whom.</p>
     <details class="k-more">
 <summary>Where the records come from</summary>
-<p class="fine">Counted from the public record of both escrows and from GitHub, and published as files beside these pages.
+<p class="fine">Counted from the public record of both payment programs and from GitHub, and published as files beside these pages.
   Nothing is typed by hand. No file means no record here, which is not the same as no payment.</p>
 </details>
     <form id="rec-form" class="card">
@@ -1047,7 +1046,7 @@ ${src(h, price.src)}</section>
     <p class="lede">Read the counts from the programs' own logs.</p>
     <details class="k-more">
 <summary>What is counted apart</summary>
-<p class="fine">Counted from the two escrow programs' logs on Solana devnet, the public relay log and GitHub. Knos's own
+<p class="fine">Counted from the two payment programs' logs on Solana devnet, the public relay log and GitHub. Knos's own
   activity, self-payment and free faucet money are shown apart and never added to outside use.</p>
 </details>
     <div id="network-stats"></div>
@@ -1117,7 +1116,7 @@ ${src(h, price.src)}</section>
   <span>Devnet is test mode: the money is test USDC.
     <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/GOVERNANCE.md">Who can change the programs</a></span>
   <span><a href="https://github.com/drexthealpha/Knos">Source (MIT)</a></span>
-  <span><a href="faq.html">Questions</a> · <a href="check/">The ten-second check</a> · <a href="#judges" id="foot-judges">Check every claim yourself</a></span>
+  <span><a href="faq.html">Questions</a> · <a href="check/">The ten-second check</a></span>
   <span><a href="privacy.html">Privacy and terms</a></span>
 </footer>
 <!-- One script for the first screen. The code of every other page is asked for when that page is first opened (web/front.js, PAGES). -->

@@ -1,6 +1,6 @@
 """The graduation demo on Solana devnet, with real transactions on the public knos_pay program and SYNTHETIC claims.
 
-    python -m knos.graduation.devnet --wallets DIR --out web/revenue_devnet.json [--judge-repo ID]
+    python -m knos.graduation.devnet --wallets DIR --out <file> [--judge-repo ID]
 
 DIR holds the demo's own devnet keys (payer.json; the script writes mint.json, buyer-1.json, buyer-2.json there) and
 is never printed. What it does, each step once (a step whose account already exists is not sent again):
@@ -99,7 +99,7 @@ def main(argv: list[str] | None = None) -> int:
               min_buyers=2, min_locked=25 * UNIT)
     e = address(pa, "escrow", payer.pubkey())
     if led.account(e) is None:
-        send("claim A: fund the milestone escrow (50 test units)", [escrow_ix(pa, payer.pubkey(), accounts[str(payer.pubkey())], mint)])
+        send("claim A: fund the milestone hold (50 test units)", [escrow_ix(pa, payer.pubkey(), accounts[str(payer.pubkey())], mint)])
     for b, amt in zip(buyers, (20 * UNIT, 10 * UNIT)):
         o = address(pa, "pool", b.pubkey())
         if led.account(o) is None:

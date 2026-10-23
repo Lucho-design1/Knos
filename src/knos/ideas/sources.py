@@ -39,7 +39,7 @@ SOURCES: dict[str, dict[str, Any]] = {
     "arxiv": {"name": "arXiv", "api": "https://export.arxiv.org/api/query", "key": None,
               "rules": "no key; one request every 3 s, one connection at a time; metadata CC0 (info.arxiv.org/help/api/tou.html, read 14 Oct 2026)"},
     "pubmed": {"name": "PubMed (NCBI E-utilities)", "api": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", "key": "NCBI_API_KEY (optional)",
-               "rules": "3 req/s without a key, 10 with one; send tool= and email=; show NCBI's disclaimer (ncbi.nlm.nih.gov/books/NBK25497, per CAPABILITIES-GAP 14 Oct 2026; "
+               "rules": "3 req/s without a key, 10 with one; send tool= and email=; show NCBI's disclaimer (ncbi.nlm.nih.gov/books/NBK25497, read 14 Oct 2026; "
                         "live probe header x-ratelimit-limit: 3, 14 Oct 2026)"},
     "europepmc": {"name": "Europe PMC", "api": "https://www.ebi.ac.uk/europepmc/webservices/rest/search", "key": None,
                   "rules": "open, no key; no published rate figure (Knos keeps 5 req/s); live probe 200, 14 Oct 2026"},
@@ -52,10 +52,10 @@ SOURCES: dict[str, dict[str, Any]] = {
                           "with source retraction-watch (crossref.org/documentation/retrieve-metadata/rest-api/access-and-authentication, "
                           "crossref.org/documentation/retrieve-metadata/retraction-watch, read 14 Oct 2026)"},
     "clinicaltrials": {"name": "ClinicalTrials.gov API v2", "api": "https://clinicaltrials.gov/api/v2/studies", "key": None,
-                       "rules": "open, no key; no rate figure in the OpenAPI spec (clinicaltrials.gov/api/oas/v2); ~5 req/s observed without 429 (CAPABILITIES-GAP, 14 Oct 2026)"},
+                       "rules": "open, no key; no rate figure in the OpenAPI spec (clinicaltrials.gov/api/oas/v2); ~5 req/s observed without 429 (14 Oct 2026)"},
     "uspto": {"name": "USPTO Open Data Portal (patents)", "api": "https://api.uspto.gov/api/v1/patent/applications/search", "key": "USPTO_ODP_API_KEY (required)",
               "rules": "free key from data.uspto.gov (USPTO.gov account with MFA), header X-API-KEY; burst 1 (no parallel calls), 4-15 req/s, 5M metadata calls/week "
-                       "(data.uspto.gov/apis/api-rate-limits per CAPABILITIES-GAP 14 Oct 2026); PatentsView moved into ODP on 20 Mar 2026 "
+                       "(data.uspto.gov/apis/api-rate-limits, read 14 Oct 2026); PatentsView moved into ODP on 20 Mar 2026 "
                        "(uspto.gov bulletin 18 Mar 2026). Live probe 14 Oct 2026: 401 without a key, 403 with a wrong one. EPO OPS needs registration "
                        "(probe 403 fair use) and Lens a token (probe 401): not used."},
 }

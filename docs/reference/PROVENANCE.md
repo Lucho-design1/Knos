@@ -139,7 +139,7 @@ What the public id ran when docs/provenance.json was read: `10f2b6cbb4983527a822
 | 4 | hash on chain | `10f2b6cbb4983527a82225b29491941b77961da32245b449c9c1b151a5e995e4` (the build above; when it was read is `read` in docs/provenance.json) | docs/provenance.json |
 | 5 | upgrade proposal | proposal 5 (244HX9wyPMjypMLPkiSr2qJgv9vg4sVH1Jrz7oq24p3z): Executed, approved by 2 of 2 | web/upgrades.json |
 | 6 | execution transaction | [`3K2h2Q4DMHp1gSf7rgAprAmt5VFfuDUzUMEDmCjMrnpF2AkBf3dp4B6htszgXu6mY1Zo1JCt7fSwTnFEHb4n3g5Z`](https://explorer.solana.com/tx/3K2h2Q4DMHp1gSf7rgAprAmt5VFfuDUzUMEDmCjMrnpF2AkBf3dp4B6htszgXu6mY1Zo1JCt7fSwTnFEHb4n3g5Z?cluster=devnet) | docs/provenance.json |
-| 7 | exercised scenario | [`4Ak4At4DPuBem2sAUbi6nRGcT9qME8p3RoNQRPmEPb6yYApa91thktndj3t3N5GJtTt7U3iq8TNRiUwN8XThogoo`](https://explorer.solana.com/tx/4Ak4At4DPuBem2sAUbi6nRGcT9qME8p3RoNQRPmEPb6yYApa91thktndj3t3N5GJtTt7U3iq8TNRiUwN8XThogoo?cluster=devnet) (meter_single: One attested evaluation is counted once on chain, with no escrow.) | docs/capabilities.json |
+| 7 | exercised scenario | [`4Ak4At4DPuBem2sAUbi6nRGcT9qME8p3RoNQRPmEPb6yYApa91thktndj3t3N5GJtTt7U3iq8TNRiUwN8XThogoo`](https://explorer.solana.com/tx/4Ak4At4DPuBem2sAUbi6nRGcT9qME8p3RoNQRPmEPb6yYApa91thktndj3t3N5GJtTt7U3iq8TNRiUwN8XThogoo?cluster=devnet) (meter_single: One attested evaluation is counted once on chain, with no money held.) | docs/capabilities.json |
 
 Every link is recorded and the hash on chain is this build's.
 

@@ -102,7 +102,7 @@ plan**: the whole bounty in task.json, divided by the role shares of the one fee
 config/fees.yaml; only roles the config has) when it is installed, else by task.json's shares.
 
 The payout fee is the funder's, on top of the bounty, as fees.yaml says; the agents' part is divided among the agents
-whose changes were kept. It is a plan: nothing is signed or sent. Paying it is graduation's job (an escrow order on
+whose changes were kept. It is a plan: nothing is signed or sent. Paying it is graduation's job (an order that holds the money on
 devnet).
 
 ## A measured run (synthetic data)

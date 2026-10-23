@@ -1,7 +1,7 @@
 """The site's order statements: for each organisation, each month's audit lines, as web/statements.js reads them.
 
     files(events, owner_ids) -> {"audit/<owner id>.json": text}     for scripts/pages_data.py, beside statements/<login>.json
-    python scripts/audit_statements.py --out _site --owner 5001 [--owner ...]     reads the escrow's history from the cluster
+    python scripts/audit_statements.py --out _site --owner 5001 [--owner ...]     reads the payment program's history from the cluster
 
 One file per organisation: {"type": "knos.audit-statement", "version": 1, "owner_id", "months": {"2026-09": {"scope", "lines"}}}.
 `scope` is knos.audit.scope_of(owner, first day, last day) and `lines` is knos.audit.lines(events, owner, (), first day,

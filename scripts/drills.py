@@ -659,7 +659,7 @@ def a_replay_is_refused(new, tokens: list[Captured]) -> str:
         seen.append(f"the {name} token again: error {code_of(why)}" if code_of(why) is not None else f"the {name} token again: {why}")
     if before != (svm.balance(pay.vault_pda(j.mint)), svm.balance(pay.ata(pay.FEE_OWNER, j.mint))):
         raise Failed("a refused replay moved money")
-    return ("after the payment both tokens are verified again (the verifier keeps no memory) and sent to the escrow once more: "
+    return ("after the payment both tokens are verified again (the verifier keeps no memory) and sent to the payment program once more: "
             + "; ".join(seen) + "; no money moved")
 
 
@@ -684,7 +684,7 @@ def a_revoked_key_signs_nothing(new, tokens: list[Captured]) -> str:
     _again, steps, why = svm.verify(t.jwt, oidc.GITHUB, n, svm.wallet(5))
     if why is None or steps != 0 or code_of(why) != 78:
         raise Failed(f"a new verification under the revoked key should stop at its first step with error 78, and {why or 'went through'}")
-    return (f"the fund token of {t.c.get('repository')} is verified; the guardian revokes the key that signed it; the escrow then refuses "
+    return (f"the fund token of {t.c.get('repository')} is verified; the guardian revokes the key that signed it; the payment program then refuses "
             "that verified token (error 78: no test USDC is minted, no job is funded) and the verifier refuses to verify it again (78)")
 
 
@@ -924,7 +924,7 @@ def github_down_ten_minutes() -> Outage:
         waited = c.now() - 30 - posted
     return Outage("GitHub's API is down for ten minutes",
                   f"every request the relay made to GitHub answered 502 for {down} s; three merged pull requests had their proof tokens posted just before",
-                  "the pull request is merged and no payment comment appears; `knos bounty` still shows the money in escrow",
+                  "the pull request is merged and no payment comment appears; `knos bounty` still shows the held money",
                   f"nothing to do. The relay asks again every {EVERY} s; a token is good for an hour past its expiry, so an outage under an hour "
                   "loses none. Longer than that: run the workflow again (`/knos settle`) for a fresh token",
                   f"all 3 paid on the first pass after GitHub answered, {took} s later ({waited} s after their comments); none paid twice in the passes that followed")
@@ -1267,7 +1267,7 @@ def issuer_key_rotates() -> Outage:
     return Outage("GitHub rotates its signing key mid-period",
                   "three days into a 14-day order GitHub signs with a key the verifier did not hold (a new kid in its key set)",
                   "with the rotation done (A): nothing; a payment in the new key's first day is refused and paid once the day is over. "
-                  "Without it (B): every payment is refused, the order's money stays in escrow, and it goes back to the funder at the deadline",
+                  "Without it (B): every payment is refused, the order's money stays held, and it goes back to the funder at the deadline",
                   "the daily rotate run, signed under the old key while it still signs, names the new key; anyone sends RegisterKey; the "
                   "guardian approves; a day later the key verifies. If GitHub stops signing with every key the verifier holds before that, "
                   "no attestation can be verified and only an upgrade of the verifier (8 days) admits a key",

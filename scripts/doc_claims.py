@@ -63,7 +63,7 @@ OTHER = ["src/knos/cli.py", "server.json", "gemini-extension.json", "glama.json"
          "plugin/.claude-plugin/plugin.json", "plugin/.codex-plugin/plugin.json"]
 PROGRAMS_START, PROGRAMS_END = "<!-- programs:start -->", "<!-- programs:end -->"
 REHEARSAL = "## The 0.3.14 rehearsal on devnet"     # the section of docs/reference/CAPABILITIES.md that names the staging addresses
-NAMES = {"knos_oidc": "the verifier", "knos_pay": "the escrow", "knos_meter": "the count", "knos_passkey": "a wallet from a passkey"}
+NAMES = {"knos_oidc": "the verifier", "knos_pay": "the payment program", "knos_meter": "the count", "knos_passkey": "a wallet from a passkey"}
 _WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen",
           "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
 _NUM = r"(\d+|" + "|".join(_WORDS[1:]) + r"|no|none|zero)"

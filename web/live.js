@@ -72,7 +72,7 @@ export function newestRound(items) {
 export function roundOf({ issue, comments = [], pull = null, pullComments = [], runs = [], chain = [] }, now, explorer) {
   const link = (text, href) => ({ text, href });
   const started = ms(issue.created_at);
-  const funded = knosSays(comments, "is in escrow"), refused = !funded && knosSays(comments, "nothing was funded", "not confirmed", "stopped");
+  const funded = knosSays(comments, "is in escrow", "is held for issue"), refused = !funded && knosSays(comments, "nothing was funded", "not confirmed", "stopped");
   const escrow = explorerLinks(funded?.body).find((l) => l.kind === "address") || null;
   const paid = knosSays(pullComments, "paid.", "held for"), unpaid = !paid && knosSays(pullComments, "not paid", "nothing to pay", "stopped");
   const merged = ms(pull?.merged_at);
@@ -88,7 +88,7 @@ export function roundOf({ issue, comments = [], pull = null, pullComments = [], 
     .find(signs) || runs[0] || null;
   const stages = [
     { id: "ask", name: "Issue opened, asking for 5 test USDC", at: started, links: [link(`issue #${issue.number}`, issue.html_url)] },
-    { id: "fund", name: "In escrow on devnet", at: ms(funded?.created_at), links: [...(funded ? [link("funding comment", funded.html_url)] : []), ...(escrow ? [link("escrow account", explorer("address", escrow.id))] : []),
+    { id: "fund", name: "Held on devnet", at: ms(funded?.created_at), links: [...(funded ? [link("funding comment", funded.html_url)] : []), ...(escrow ? [link("account holding it", explorer("address", escrow.id))] : []),
       ...(fundTx ? [link("funding transaction", explorer("tx", fundTx.signature))] : [])],
       note: fundTx ? `devnet confirmed it at ${clock(fundTx.blockTime * 1000)}` : refused ? String(refused.body).split("\n")[0].slice(0, 200) : "" },
     { id: "open", name: "Pull request opened", at: ms(pull?.created_at), links: pull ? [link(`pull request #${pull.number}`, pull.html_url)] : [] },
@@ -123,7 +123,7 @@ export async function readRound(env, found) {
   const [comments, pr, pullComments] = await Promise.all([gh(`/repos/${repo}/issues/${issue.number}/comments?per_page=100`),
     pull ? gh(`/repos/${repo}/pulls/${pull.number}`) : null, pull ? gh(`/repos/${repo}/issues/${pull.number}/comments?per_page=100`) : []]);
   const sha = pr?.merged_at ? pr.merge_commit_sha : null;
-  const escrow = explorerLinks(knosSays(comments, "is in escrow")?.body).find((l) => l.kind === "address");
+  const escrow = explorerLinks(knosSays(comments, "is in escrow", "is held for issue")?.body).find((l) => l.kind === "address");
   const [runs, chain] = await Promise.all([
     sha ? gh(`/repos/${repo}/actions/runs?head_sha=${sha}&per_page=20`).then((r) => r.workflow_runs || [], () => []) : [],
     escrow ? rpc("getSignaturesForAddress", [escrow.id, { limit: 20, commitment: "confirmed" }]).then((r) => r || [], () => []) : []]);
@@ -134,7 +134,7 @@ export async function readRound(env, found) {
 // devnet for the escrow account's transactions once the funding comment has named it.
 export async function advance(env, raw) {
   const { gh, rpc, repo } = env, r = { ...raw }, n = r.issue.number;
-  const funded = knosSays(r.comments, "is in escrow");
+  const funded = knosSays(r.comments, "is in escrow", "is held for issue");
   if (!funded) { r.comments = await gh(`/repos/${repo}/issues/${n}/comments?per_page=100`); return r; }
   const escrow = explorerLinks(funded.body).find((l) => l.kind === "address");
   if (escrow) r.chain = await rpc("getSignaturesForAddress", [escrow.id, { limit: 20, commitment: "confirmed" }]).then((x) => x || r.chain, () => r.chain);

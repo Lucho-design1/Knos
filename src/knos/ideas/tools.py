@@ -44,7 +44,7 @@ MCP_TOOLS: list[dict[str, Any]] = [
     {"name": "knos_idea_wanted", "title": "Is the idea wanted? Demand + pull commitment plan",
      "description": "Step 2 (wall 1, money before proof): Knos's demand check on the product the idea would become (Qloo via its "
                     "official MCP harness; a labelled MOCK until QLOO_API_KEY) and the plan of a pull commitment: a buyer commits "
-                    "to buy `units` at `price` if the result is verified, locked as one knos_pay escrow per stage and released "
+                    "to buy `units` at `price` if the result is verified, held in one knos_pay order per stage and released "
                     "stage by stage (preprint posted, trial registered, results posted, referee pass, lab QC...). Returns the plan "
                     "with amounts, fees (config/fees.yaml) and deadlines; it signs and sends nothing (`knos idea commit` locks it).",
      "properties": {"ref": _REF,

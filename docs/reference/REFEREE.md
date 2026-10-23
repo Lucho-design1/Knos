@@ -79,7 +79,7 @@ The rules on a change:
 | core_path_touched | core_path | a trusted-core path (the self loop's referee, programs, workflows) |
 | assertion_removed, detector_marker_removed | assertion_removed | assertions or `knos:detector` markers removed from an existing test |
 
-The outcome rules (TASK-OUTCOMES item 6): `outcome_spec_hash_changed`, `outcome_window_changed`,
+The outcome rules: `outcome_spec_hash_changed`, `outcome_window_changed`,
 `outcome_salt_changed`, `outcome_control_drift` (beyond the agreed tolerance), `outcome_measurement_code_drift` and
 `outcome_data_tampered` (data that existed at funding edited or removed; new data is not refused).
 
@@ -93,9 +93,8 @@ script.
 A rule that crashes, or a diff header that cannot be read, is a refusing `rule_error` finding: the library fails
 closed, never open.
 
-Changed in v0.3.31 (task P-cheatfp, internal dogfooding): two rules refused honest work, and both were narrowed.
-Per [SELF.md](SELF.md), `cheats/` is trusted core, so a referee change is the founder's decision: the founder's
-signature on the release is the gate, and this change waits for it. What changed:
+Changed in v0.3.31: two rules refused honest work, and both were narrowed. Per [SELF.md](SELF.md), `cheats/` is trusted
+core, so a referee change waits for the signature on the release. What changed:
 
 - `hardcoded_answers` counts a visible test line only when the test holding that line exercises the changed file.
   "Exercises" means the test imports the file (Python by module name; JavaScript and Ruby by the file's name in a
@@ -115,7 +114,7 @@ Limits that remain: a test that reaches code only through a hub module (a CLI th
 as exercising whatever that hub imports. A write guard that names the whole `.knos/` folder reads, as text, the same
 as the forgery, so it is still refused.
 
-Measured on three 0.3.31 dogfooding patches (V31CAP, V31FOLD, V31DOG, scanned as diffs against a4ea15cf), these two
+Measured on three 0.3.31 patches (scanned as diffs against a4ea15cf), these two
 rules refused 22 files before the change and 12 after: hardcoded_answers went from 20 to 11 and
 references_sealed_bundle from 2 to 1.
 
@@ -127,7 +126,7 @@ submissions of the benchmark are checked against the rules too (none is refused)
 
 `referee.DemandBook().lock(spec_hash, buyer, amount, escrow_ref=...)` records a pre-order;
 `referee.wanted(orders, min_buyers=N, min_locked=X)` passes when N distinct buyers have X locked. Only orders with an
-escrow reference count (a pledge is shown and not counted), each buyer counts once, and the bar is set by whoever asks.
+held-money reference count (a pledge is shown and not counted), each buyer counts once, and the bar is set by whoever asks.
 Amounts are integers in the currency's smallest unit.
 
 ## Makeable

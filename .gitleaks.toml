@@ -1,0 +1,33 @@
+# gitleaks (github.com/gitleaks/gitleaks) over this repository's whole history: `gitleaks git . --redact`.
+# The default rules, plus what is known to be public or test material: signed test vectors and fixtures (made by test
+# keys from fixed seeds), the public keys of referees, Squads members and issuers, transaction and token hashes, and CI
+# cache keys. Each allowed path below was read and holds no secret; a finding anywhere else is a real one to look at.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "public keys, hashes and test fixtures (read 23 Oct 2026)"
+paths = [
+  '''(^|/)tests?/''',
+  '''(^|/)(fixtures|testdata|vectors)(/|\.json$)''',
+  '''fixtures?\.json$''',
+  '''\.test\.mjs$''',
+  '''(^|/)test\.mjs$''',
+  '''^docs/receipt/vectors(\.v\d+)?\.json$''',
+  '''^docs/RECEIPT\.md$''',
+  '''^docs/load\.json$''',
+  '''^docs/index\.html$''',
+  '''^docs/reference/SPENDING_LIMITS\.md$''',
+  '''^config/referees\.yaml$''',
+  '''^config/referee-frost\.json$''',
+  '''^scripts/squads_devnet\.json$''',
+  '''^scripts/vulture_whitelist\.py$''',
+  '''^src/knos/receipt2/issuers\.json$''',
+  '''^src/knos/settle/v2/program_ids\.json$''',
+  '''^programs-v2/program_ids\.json$''',
+  '''^programs-v2/knos_zk/src/vk\.rs$''',
+  '''^zk/score_circuit/src/main\.rs$''',
+  '''^sdk/settle/passkey\.js$''',
+  '''^\.github/workflows/program\.yml$''',
+  '''^rehearsals/''',
+]

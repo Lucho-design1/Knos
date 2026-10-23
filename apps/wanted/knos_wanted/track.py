@@ -125,7 +125,7 @@ def record(wallet: str, led=None) -> dict:
             "program": str(sas.PROGRAM), "cluster": "devnet"}
 
 
-# ---- the shareable "Ready to fund" card (TASK-CHAMPION T2, status) ---------------------------------------------------
+# ---- the shareable "Ready to fund" card (status) ------------------------------------------------------------------
 # A brief that passes Knos's Ready check is attested once on devnet, under the same credential, by its criteria hash:
 #   schema ["schema", credential, "brief-ready", 1]: criteria_sha256, title, milestones, checked_at
 #   attestation nonce = sha256("ready|" + criteria_sha256): the same brief is the same card, however often it is made

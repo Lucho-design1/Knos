@@ -413,7 +413,7 @@ Sources:
 
 ### The stages of a payment (recorded on devnet)
 
-From `python scripts/latency_stages.py --rpc https://api.devnet.solana.com --json`, run on 6 October 2026 from 14:58 to 15:06 UTC against the public relay log (drexthealpha/Knos) and devnet: 41 payments of 2 to 5 October 2026. Every payment in it was made by the public program ids (the relay log's payments, read from their escrows' history).
+From `python scripts/latency_stages.py --rpc https://api.devnet.solana.com --json`, run on 6 October 2026 from 14:58 to 15:06 UTC against the public relay log (drexthealpha/Knos) and devnet: 41 payments of 2 to 5 October 2026. Every payment in it was made by the public program ids (the relay log's payments, read from their payment programs' history).
 
 Each stage is timed only for the payments whose log line recorded it, so each row has its own n; a stage no line recorded says "not recorded", and no figure here is derived from another row.
 

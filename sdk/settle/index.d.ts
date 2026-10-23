@@ -181,7 +181,7 @@ export interface Order {
   repoId: Num; issue: Num; scope: string; seq: number; holdbackBps: number; killBps: number;
   /** What the payees receive in total. */
   amount: Num;
-  /** Escrowed on top of the amount. */
+  /** Held on top of the amount. */
   fee: Num; rate: Num; paid: Num; deadline: Num; notBefore: Num; holdUntil: Num; warrantyS: Num; reservedBy: Num; reservedUntil: Num; cancelAt: Num;
   payeeId: Num; funderId: Num; ownerId: Num; arbiterId: Num; judgeRepoId: Num; source: Address; refundTo: Address; rentTo: Address; mint: Address;
   terms: string; wfRepoHash: string; wfSha: string; feeBps: number;

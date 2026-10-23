@@ -84,7 +84,7 @@ money:
 7. **Control of the upgrade and guardian keys by people who answer for them:** independent holders, a tested
    succession, and notice of every upgrade ([GOVERNANCE.md](GOVERNANCE.md)).
 8. **An outside security review** of the programs and the judge, with its report published.
-9. **Licensed handling of real money:** legal advice on escrow and money transmission, and a regulated partner
+9. **Licensed handling of real money:** legal advice on held money and money transmission, and a regulated partner
    where the law asks for one ([REGULATION.md](REGULATION.md)).
 10. **Insurance** for errors and for loss of funds, or a stated reason for having none.
 11. **Support with a named owner:** who answers a supplier's finance operator about an unpaid, accepted invoice.

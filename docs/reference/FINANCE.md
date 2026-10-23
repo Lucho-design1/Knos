@@ -14,7 +14,7 @@ delivered, why it was accepted, whether it was billed before, and what happens i
     knos audit verify close.csv                  # every row's hash, the totals and the head
     knos audit owed --payee <login>              # the supplier's side
 
-All four read the escrow's own log lines on Solana ([`src/knos/audit.py`](../../src/knos/audit.py),
+All four read the payment program's own log lines on Solana ([`src/knos/audit.py`](../../src/knos/audit.py),
 [`src/knos/records.py`](../../src/knos/records.py)). No database is kept, and nothing is asked of GitHub.
 
 **With no command line.** The approver's screen of the site ([CONSOLE.md](CONSOLE.md#the-approvers-screen),
@@ -69,9 +69,9 @@ Five states of the money, and one correction. A record has exactly one.
 
 | status | when |
 |---|---|
-| `paid on devnet (test money)` | the escrow sent the accepted amount to the supplier's wallet. If a part is held back in a review window, the record says how much and until when. |
-| `payable` | accepted, and owed: the escrow holds it for a supplier who has named no wallet yet. The supplier names one (`knos claim <address>`), then anyone settles. |
-| `held` | funded, and nothing is accepted yet. The escrow holds the price until the order's deadline. |
+| `paid on devnet (test money)` | the payment program sent the accepted amount to the supplier's wallet. If a part is held back in a review window, the record says how much and until when. |
+| `payable` | accepted, and owed: the payment program holds it for a supplier who has named no wallet yet. The supplier names one (`knos claim <address>`), then anyone settles. |
+| `held` | funded, and nothing is accepted yet. The payment program holds the price until the order's deadline. |
 | `refunded` | nothing was accepted by the deadline (or the rest of a standing order was left over), and the money went back to the funder. |
 | `paid outside Knos` | the buyer's refs file says it paid by bank and uses Knos for the count. The chain cannot confirm this. If the chain also shows a payment, the record says to check that it was not paid twice. |
 | `reverted` | the correction: accepted, then reverted inside the review window. What the order still held went back to the funder; what was already paid stays paid, and the commercial record carries a credit for the part that went back. |
@@ -361,7 +361,7 @@ takes the funding comment or the order's address, reads the order's own account 
 
 | Row | Read from the order account |
 | --- | --- |
-| Funded | the amount the payees receive (escrowed at funding; the fee was paid by the funder on top), with a link to the funding transaction when the comment names it |
+| Funded | the amount the payees receive (held at funding; the fee was paid by the funder on top), with a link to the funding transaction when the comment names it |
 | Acceptance window | until when a passing run is paid (`payUntil`), counting down; after it, what is unpaid returns to the funder |
 | Appeal | `/knos appeal <reason>`, free; who decides: the order's arbiter, or the neutral judge running the agreed checks again |
 | Payment date | the day the checks pass, at the latest the window's end; with a holdback, the part kept back and the day it is released (the end of the warranty, unless a failing run reverts it) |
@@ -416,8 +416,8 @@ with a quiet buyer ran on the simulator only: it was not exercised on the public
 - **Names.** The statement carries GitHub's numeric ids.
 - **Limits at funding without the receipt.** The log lines do not carry them; a receipt is rebuilt for work
   orders, not for bounties.
-- **The first deployment's bounties.** The statement reads the second escrow. `knos receipts` lists both.
-- **History beyond the newest 1000 transactions of the escrow.** For an owner whose orders go further back the
+- **The first deployment's bounties.** The statement reads the second payment program. `knos receipts` lists both.
+- **History beyond the newest 1000 transactions of the payment program.** For an owner whose orders go further back the
   export is refused, or with `--partial` written as a file that says it is partial and whose head is not one to
   compare.
 - **Real money.** Devnet only.

@@ -172,7 +172,7 @@ export function live(el, programs, WS = globalThis.WebSocket) {
     }
     if (m.method === "programNotification" && feed) {
       const k = m.params.result.value.pubkey;
-      feed.insertAdjacentHTML("afterbegin", `<li>escrow account <a class="mono" href="https://explorer.solana.com/address/${esc(k)}?cluster=devnet" rel="noopener">${esc(k.slice(0, 10))}…</a> changed</li>`);
+      feed.insertAdjacentHTML("afterbegin", `<li>holding account <a class="mono" href="https://explorer.solana.com/address/${esc(k)}?cluster=devnet" rel="noopener">${esc(k.slice(0, 10))}…</a> changed</li>`);
       while (feed.children.length > 8) feed.lastChild.remove();
     }
     if (m.method === "blockNotification") blocks++;

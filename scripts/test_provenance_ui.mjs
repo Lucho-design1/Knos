@@ -1,4 +1,4 @@
-// M3 test_provenance_ui, live, at 375x812 and 1280x800: 0 Qloo-derived values without a link to their trace.
+// test_provenance_ui, live, at 375x812 and 1280x800: 0 Qloo-derived values without a link to their trace.
 // On the app's crossing outcome, the product page, the home cards, the front door's demand check and the "With and
 // without Qloo" page: every [data-qloo] value holds a source link, and every link opens a trace that names the request
 // (endpoint, params, entity/tag ids, no key), a result excerpt and the limit. As an audit, every Qloo value of the

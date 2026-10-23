@@ -21,7 +21,7 @@
 # So what stays trusted: everyone who can write a commit status here (write access, or a token with `statuses: write`),
 # this file as it is on the default branch, and GitHub's API.
 #
-# Every merged pull request that matches gets Knos's answer on it, also "nothing is in escrow". To act on fewer, set
+# Every merged pull request that matches gets Knos's answer on it, also "nothing is held". To act on fewer, set
 # QUERY to more search terms (for example `label:funded`).
 name: knos on release
 

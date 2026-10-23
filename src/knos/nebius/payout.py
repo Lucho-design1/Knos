@@ -70,4 +70,4 @@ def pay_job(root: Path, *, repo_id: int, issue: int, amount: int, wf_repo: str, 
             "litesvm_pay_tx": sigs[-1] if ok else None, "job": str(job), "payee_wallet": str(payee_wallet),
             "to_payee_units": c.balance(pay.ata(payee_wallet, m)), "fee_units": c.balance(fee_acct), "mint": str(m),
             "why_litesvm": "knos_pay pays only on a GitHub Actions OIDC token from a signed run of the pinned prove.yml; "
-                           "this flow's work was judged locally, so no such run exists (see PAIN: payout without GitHub Actions)"}
+                           "this flow's work was judged locally, so no such run exists"}

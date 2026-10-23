@@ -92,7 +92,7 @@ def test_the_organisation_claim_caller_calls_the_pinned_claim_workflow_with_kind
     assert job["uses"] == f"drexthealpha/knos-oidc-rotate/.github/workflows/claim.yml@{IDS['claim_sha_org']}"
     assert job["with"] == {"address": "${{ inputs.address }}", "kind": "org"} and job["permissions"] == {"id-token": "write", "issues": "write"}
     lib = (ROOT / "programs-v2" / "knos_pay" / "src" / "order_judge.rs").read_text(encoding="utf-8")
-    assert "CLAIM_SHA_ORG" in lib and '"/knos-claim"' in lib                # the escrow takes it from a repository of that name only
+    assert "CLAIM_SHA_ORG" in lib and '"/knos-claim"' in lib                # the payment program takes it from a repository of that name only
     said = "\n".join(ln for ln in text.splitlines() if ln.startswith("#"))
     assert "everyone with write access" in said and "by hand only" in said and "ORGANISATION" in said
     # the person's caller differs in the commit's kind and nothing a claim could be forged with
@@ -110,7 +110,7 @@ def test_a_caller_that_names_no_published_commit_or_another_claim_commit_is_not_
     assert any(f"at {'1' * 40}, and the examples name {pub.pin()}" in line for line in r.wrong("knos-task", other))
     claim = r.files("knos-claim-org")
     moved = {**claim, ".github/workflows/knos-claim.yml": claim[".github/workflows/knos-claim.yml"].replace(IDS["claim_sha_org"].encode(), b"2" * 40)}
-    assert any("the escrow takes an organisation's claim at" in line for line in r.wrong("knos-claim-org", moved))
+    assert any("the payment program takes an organisation's claim at" in line for line in r.wrong("knos-claim-org", moved))
     assert r.wrong("knos-task", files) == [] and r.wrong("knos-claim-org", claim) == []
     with pytest.raises(SystemExit, match="there is no repository knos-nothing"):
         r.files("knos-nothing")

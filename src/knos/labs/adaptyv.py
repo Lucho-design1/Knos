@@ -111,7 +111,7 @@ class Adaptyv(Adapter):
         """Accept the quote (never moves money): invoice_id and the machine payment link. The escrow reference is sent
         as the purchase order number, so the lab's invoice names the Knos escrow that pays it."""
         _s, a, _h = self._call("POST", f"/experiments/{order.order_id}/quote/confirm",
-                               {"purchase_order_number": order.escrow_ref[:64], "notes": "paid from a Knos escrow on the LAB verdict"},
+                               {"purchase_order_number": order.escrow_ref[:64], "notes": "paid from money Knos holds until the LAB verdict"},
                                spends=True)
         return a
 

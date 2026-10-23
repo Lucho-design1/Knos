@@ -10,8 +10,9 @@ TaskNotCancelableError, -32004 UnsupportedOperationError, -32009 VersionNotSuppo
 `A2A-Version: 1.0` (section 3.6.1).
 
 The card is served by the same process that answers, so it never names an endpoint that does not run:
-`python -m knos.a2a serve [--port N] [--url PUBLIC_URL]` serves both, on 127.0.0.1 unless told otherwise. Knos has no
-hosted A2A endpoint today; hosting one behind HTTPS is the founder's decision (docs/reference/A2A.md).
+`python -m knos.a2a serve [--port N] [--url PUBLIC_URL]` serves both, on 127.0.0.1 unless told otherwise. These A2A
+methods are not hosted; the app hosts its own Agent Card (knos_wanted.agentkeys.card), whose interface is its MCP endpoint
+and whose security is an agent key's OAuth 2.0 client credentials (docs/reference/A2A.md).
 
 Skills, each one of Knos's own tools behind the same checks as `knos mcp`:
     verify      a checkout with a committed change -> the referee's cheat checks and two re-runs of its tests, a
@@ -47,8 +48,8 @@ def card(url: str, version: str | None = None) -> dict:
     from . import version as installed
     return {
         "name": "Knos",
-        "description": ("The referee and escrow for machine and human research work: Knos re-runs the work against sealed checks, "
-                        "refuses known cheats, and releases escrowed money on Solana only on verified proof."),
+        "description": ("The referee and the payment program for machine and human research work: Knos re-runs the work against sealed checks, "
+                        "refuses known cheats, and releases held money on Solana only on verified proof."),
         "supportedInterfaces": [{"url": url, "protocolBinding": "JSONRPC", "protocolVersion": PROTOCOL_VERSION}],
         # the same endpoint where A2A 0.3.0 cards named it (top-level url, preferredTransport); the methods answered are 1.0's
         "url": url, "preferredTransport": "JSONRPC",
@@ -68,8 +69,8 @@ def card(url: str, version: str | None = None) -> dict:
              "tags": ["referee", "claims", "github", "tests"],
              "examples": ["https://github.com/OWNER/REPO/pull/12"], "inputModes": ["application/json", "text/plain"], "outputModes": ["application/json"]},
             {"id": "find-work", "name": "Find funded work",
-             "description": "Lists open work orders with money in escrow that an agent can take, with the terms that decide payment.",
-             "tags": ["work", "bounty", "escrow"],
+             "description": "Lists open work orders with held money that an agent can take, with the terms that decide payment.",
+             "tags": ["work", "bounty", "held-until-proof"],
              "examples": ['{"skill": "find-work"}'], "inputModes": ["application/json"], "outputModes": ["application/json"]},
         ],
     }

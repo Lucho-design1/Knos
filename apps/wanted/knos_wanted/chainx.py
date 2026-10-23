@@ -528,4 +528,4 @@ def private_pledge(order: str, ciphertext: bytes, pubkey_proof: bytes, range_pro
                          [_ix(ZK_ELGAMAL, bytes([ZK_RANGE_U64]) + range_proof, [])]], payer)
     return {"ciphertext": base64.b64encode(ciphertext).decode(), "ciphertext_sha256": h, "elgamal_pubkey": base64.b64encode(pubkey_proof[:32]).decode(),
             "pubkey_signature": sigs[0], "range_signature": sigs[1], "explorer": [escrow.explorer(s) for s in sigs],
-            "proves": "the amount is encrypted under a valid key and is 0 to 2^64 - 1; the escrow's lock still shows it on chain"}
+            "proves": "the amount is encrypted under a valid key and is 0 to 2^64 - 1; the held order still shows it on chain"}

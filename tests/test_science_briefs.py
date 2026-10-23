@@ -1,4 +1,4 @@
-"""TASK-WORLD T11 test_science_briefs: real research passes the Ready check. Lab, field and clinical milestones may run
+"""test_science_briefs: real research passes the Ready check. Lab, field and clinical milestones may run
 to 1,095 days (held in tranches of at most 90 days, the longest an order holds money); a count on a named standard or
 registry, or an effect size in SD, is a measurable target; a verifier's check may use normal punctuation. What was not
 measurable before still is not."""

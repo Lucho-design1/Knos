@@ -169,7 +169,7 @@ def _plan_pay(ledger, me: Pubkey, t: _Token, now: int, v: int = 1) -> _Plan:
         if before:      # and here the payee had a wallet: the job was paid and is gone
             raise _Stop({"ok": True, **result, "sigs": list(dict.fromkeys(e.pop("sig") for e in before)), "already": True, "paid": before})
         raise _no(kind, "this token has paid its one bounty already; another bounty on the issue is paid by a new run of the workflow" if spent and opened else
-                  "no bounty is in escrow for this issue (never funded, or already paid or refunded)" if not jobs else
+                  "no bounty is held for this issue (never funded, or already paid or refunded)" if not jobs else
                   "the bounty on this issue is already held for another GitHub user" if not opened else
                   "no open bounty on this issue pins this workflow at this commit" if not any(j.state == "open" for _a, j in pinned) else
                   "the open bounty on this issue has other terms than the ones this token was made for" if not any(j.state == "open" for _a, j in agreed) else
@@ -178,7 +178,7 @@ def _plan_pay(ledger, me: Pubkey, t: _Token, now: int, v: int = 1) -> _Plan:
     bound = pay.read_bind(_data(_read(ledger, [pay.bind_pda(payee)]), pay.bind_pda(payee)))
     wallet = pay.destination(bound, t.aud)
     if wallet == pay.auth_pda():
-        raise _no(kind, "the address this token names is the escrow's own account")
+        raise _no(kind, "the address this token names is the payment program's own account")
     groups: list[Group] = []
     for addr, j in mine:
         ix = pay.pay_ix(me, t.account, t.key, addr, j, payee, wallet, used=used)

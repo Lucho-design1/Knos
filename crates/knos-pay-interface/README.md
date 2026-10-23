@@ -2,7 +2,7 @@
 
 Fund, top up, refund and read a Knos work order from another Solana program.
 
-`knos_pay` holds a work order's money in escrow and pays it when GitHub signs that the order's terms were met; the
+`knos_pay` holds a work order's money until the proof passes and pays it when GitHub signs that the order's terms were met; the
 signature is checked on chain by `knos-oidc`. This crate is what a program needs to be the FUNDER of an order by
 CPI (a cross-program call: your program calls `knos_pay`): a DAO treasury that pays for a merged change, a grants program, a vault. It holds the program ids, the
 addresses, the three instructions a funder sends and a reader of the Order account. Its only dependency is

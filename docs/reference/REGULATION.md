@@ -11,7 +11,7 @@ Everything else is listed at the end as not examined.
 Sources were read on 3 Oct 2026. The description of the product was last checked against the programs live on devnet on 10 Oct 2026
 (knos_pay 2.2, knos_oidc 2.2); no source was read again for it, and no conclusion below was checked by anyone outside Knos.
 
-## 1. Is the escrow money transmission?
+## 1. Is the payment program money transmission?
 
 ### What the product does
 
@@ -30,7 +30,7 @@ Sources were read on 3 Oct 2026. The description of the product was last checked
   including taking every vault" ([SECURITY.md](SECURITY.md), section 7). The multisig is 2-of-3 and every member
   key is the founder's: no second person has to agree ([GOVERNANCE.md](GOVERNANCE.md)).
 - **That does not end with an outside review.** The decision recorded in [GOVERNANCE.md](GOVERNANCE.md), section 7,
-  is that the verifier is frozen after a review and the escrow stays upgradeable behind the delay. So Knos keeps
+  is that the verifier is frozen after a review and the payment program stays upgradeable behind the delay. So Knos keeps
   the power to replace the program that holds the money, with notice, for as long as that decision stands.
 - A funder with only a passkey can fund an order from a passkey wallet. A relayer, today Knos's, pays the network
   fee of that transaction; it cannot change the amount, the order or the destination, which the passkey signed.
@@ -54,7 +54,7 @@ Involving Convertible Virtual Currencies"
 
 ### What it does not say
 
-The guidance has no passage on an escrow program that holds money with no custodian and releases it on a
+The guidance has no passage on a payment program that holds money with no custodian and releases it on a
 condition. Any conclusion for Knos is the author's inference, not the guidance's.
 
 | pointing away from transmission | pointing toward it |
@@ -66,7 +66,7 @@ condition. Any conclusion for Knos is the author's inference, not the guidance's
 | | One person holds every key that can replace the program. |
 
 This is the first question for counsel. The answer may differ once independent people hold keys of the multisig,
-and it does not go away after an outside review, because the escrow is meant to stay upgradeable.
+and it does not go away after an outside review, because the payment program is meant to stay upgradeable.
 
 ### Not examined
 

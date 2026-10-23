@@ -4,7 +4,7 @@
 
 **In plain words.** Ten demand checks a month are free, and so are Ready briefs and proof pages. A deep demand check costs 500 USD, and a company pays 1% on money it releases on proof. No company is formed yet, so nobody pays today.
 
-Where every escrow and fee stands now: [the money page](https://knos.onrender.com/money).
+What is held, released and charged now: [the money page](https://knos.onrender.com/money).
 
 ## Knos's prices, decided 23 Oct 2026
 
@@ -16,9 +16,11 @@ Where every escrow and fee stands now: [the money page](https://knos.onrender.co
 | Proof page | free | nobody | free |
 | Release | 1% of money released on verified proof | the company (the funder), on top | the program charges 0.30% |
 
-The company is charged by card as soon as it exists. No company is formed yet, so nobody is charged today.
+Deep checks are charged by card once the company exists. No company is formed yet, so nobody is charged today.
 
-The solver keeps 100% of what they are paid. The company pays the release fee on top of the amount.
+The solver keeps 100% of what they are paid. The company pays the 1% release fee and the payment costs on top of the amount.
+
+Cards cover milestones up to 500 USD. Larger milestones are paid by bank transfer or in USDC.
 
 The 1% is decided, not live. The `knos_pay` program on devnet charges 0.30% today, in test money.
 
@@ -115,6 +117,6 @@ The site's [price page](https://drexthealpha.github.io/Knos/#pricing) reads the 
 
 ## Read more
 
-- [The market and the full price book](reference/MARKET.md): every line, its reasons and its sources.
+- [The full price book](reference/MARKET.md): every line, and what devnet can and cannot show.
 - [The meter](reference/METER.md): what is counted, and who can check it.
 - [Start here](START.md): check, fund and get paid in five minutes.

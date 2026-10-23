@@ -1,15 +1,15 @@
 <img src="../../web/brand/mark.svg" height="40" alt="Knos">
 
-# Money: one fee config, graduation, splits, x402 and the revenue page
+# Money: one fee config, graduation, splits, x402 and the revenue data
 
-**In plain words.** Every Knos fee lives in one file, and the code reads it from there. When a claim passes, money for its next step and its first orders waits in escrow on devnet. When the work is accepted, everyone who helped is paid their share at once.
+**In plain words.** Every Knos fee lives in one file, and the code reads it from there. When a claim passes, money for its next step and its first orders is held on devnet until the proof passes. When the work is accepted, everyone who helped is paid their share at once.
 
-Where every escrow and fee stands now: [the money page](https://knos.onrender.com/money).
+What is held, released and charged now: [the money page](https://knos.onrender.com/money).
 
 How the money moves:
 
 1. A verdict passes (works, wanted, makeable).
-2. It opens a milestone escrow and a pre-order pool: knos_pay orders.
+2. It opens held money for the milestone and a pre-order pool: knos_pay orders.
 3. The judge workflow signs acceptance: the split is paid to the researcher, agent, lab and referee, and the fee goes to the treasury.
 4. If the deadline passes first, the money and the fee go back to whoever paid.
 
@@ -17,8 +17,8 @@ How the money moves:
 has been sold.
 
 Every price below says whether it is **live** (the deployed program charges it on devnet), **proposed**
-(the price book, nobody pays it yet), **decided** (a price the founder set on 14 Oct 2026 or 23 Oct 2026; nobody pays
-it yet) or a **placeholder** (a number only the founder can set).
+(the price book, nobody pays it yet), **decided** (a price set on 14 Oct 2026 or 23 Oct 2026; nobody pays
+it yet) or a **placeholder** (a number not set yet).
 
 ## The one fee config: `config/fees.yaml`
 
@@ -33,8 +33,8 @@ cfg.price("verification", 10, used=0)    # count-based lines take the month's fr
 cfg.split(100_000_003)                   # the contributor split, rounded as the program rounds
 cfg.task_package(2_000_000_000)          # Knos's share and the maintainer's
 cfg.platform("bounty_platform", 20_000_000)   # the 5% bounty fee: 60_000 on chain + 940_000 off chain = 1_000_000
-cfg.decided()                            # every starting price the founder set, with its date and source
-cfg.placeholders()                       # every number the founder has not set
+cfg.decided()                            # every decided starting price, with its date and source
+cfg.placeholders()                       # every number not set yet
 ```
 
 The live lines repeat numbers compiled into `knos_pay` (`knos.settle.v2.pay`) and the proposed lines repeat the price
@@ -57,21 +57,16 @@ A decided line must say when it was decided, why, and its source, and it can nev
 | demand check | 10 a month free | decided | nobody; the monthly count is not enforced yet |
 | deep demand check | 500 USD each, by card | decided | the company, from the day it exists; no company is formed yet, so nobody is charged |
 | Ready brief, proof page | free | decided | nobody |
-| release | 1% of money released on verified proof; the solver keeps 100% | decided | the company (the funder), on top; on chain only after the timelocked upgrade, and the program charges 0.30% until then |
+| release | 1% of money released on verified proof; the solver keeps 100% | decided | the company (the funder), on top, with the payment costs; on chain only after the timelocked upgrade, and the program charges 0.30% until then |
 
-The product's prices (demand check, deep demand check, Ready brief, proof page, release) are the founder's decision
-of 23 Oct 2026. The 1% is not live: the deployed `knos_pay` charges its payout fee, 0.30%, until a timelocked
-program upgrade carries the new rate.
+The product's prices (demand check, deep demand check, Ready brief, proof page, release) were decided on 23 Oct
+2026. Deep checks are charged by card once the company exists; nobody is charged today. The company pays the payment
+costs on top of the 1% release fee. The solver keeps 100% of what they are paid.
 
-Where each price of 14 Oct 2026 comes from (all: founder decision 14 Oct 2026, DECISIONS.md item 2):
+Cards cover milestones up to 500 USD; larger milestones are paid by bank transfer or in USDC.
 
-- **bounty fee 5%**: the founder's starting price. The founder compared it with what Algora charges organisations;
-  Algora's pricing page (algora.io/pricing) answered 404 when read on 14 Oct 2026, so this page states no Algora figure.
-- **lab order fee 3%**: labs already pay to be paid sooner: on Scientist.com SciPay suppliers pay 3.00% (NET30), 2.50%
-  (NET45) or 2.00% (NET60) ([scientist.com/scipay](https://www.scientist.com/scipay/), read 14 Oct 2026).
-- **graduation 0.5%**, **task package 90/10**, **split 60/25/10/5**, **x402 0.02 per check**: founder decision 14 Oct 2026.
-- **Knos Cloud 20/100/200 USD a month with 10% bonus credit**: founder decision 14 Oct 2026, on the Nous Portal pattern
-  (below). The 10% bonus is the founder's, not a sourced Nous figure.
+The 1% is not live: the deployed `knos_pay` charges its payout fee, 0.30%, until a timelocked program upgrade carries
+the new rate.
 
 ### Why the 5% bounty fee is not on chain (it needs a program upgrade)
 
@@ -117,12 +112,12 @@ took no part leaves its share to the others in proportion.
 
 Nobody forwards money after the fact: the split is paid in the one transaction that pays the order.
 
-## Graduation: the milestone escrow and the pre-order pool
+## Graduation: the held milestone money and the pre-order pool
 
 `knos.graduation.plan(verdict, claim_id=, repo_id=, amount=, contributors=)` refuses any verdict that did not pass all
 three checks of the referee. For one that did, it plans two kinds of knos_pay work order:
 
-- **the milestone escrow**: a funder locks `amount` for the next milestone (the payout fee on top). The research
+- **the held milestone money**: a funder locks `amount` for the next milestone (the payout fee on top). The research
   repository's pinned `prove.yml` run, signed by GitHub and verified on chain, pays it to the split. After the
   deadline anyone can send RefundOrder and the funder gets the amount and the fee back.
 - **the pre-order pool**: each buyer funds one order in the claim's pool scope. `graduation.pool(ledger, plan)` reads
@@ -132,20 +127,20 @@ three checks of the referee. For one that did, it plans two kinds of knos_pay wo
 
 Both are **private** orders (`F_PRIVATE`, salted scope): they store no repository and no issue, so a claim never shows
 up as a bounty on a GitHub issue. The salt is `sha256("knos-grad:" + claim id)`, derived from the public claim id on
-purpose, so anyone can find a claim's escrow and pool.
+purpose, so anyone can find a claim's held money and pool.
 
-No token here pays backers out of revenue: a pre-order buys the product, and an escrow funds a milestone or comes
+No token here pays backers out of revenue: a pre-order buys the product, and held money funds a milestone or comes
 back.
 
 ### On devnet (13 Oct 2026)
 
 `python -m knos.graduation.devnet` ran on the public knos_pay program with SYNTHETIC claims and a test mint of its own
 (`CP6GfXRQeVhdgQHpLZ3Bb4CQwopFsdb3XSuwwdagoPJa`, 6 decimals, no freeze authority), from the wallet
-`2x1YKK5uHktXLkg5aq6Z5nRV95AYg62dwLNp5YEAYBHu`. Every signature is in `web/revenue_devnet.json`:
+`2x1YKK5uHktXLkg5aq6Z5nRV95AYg62dwLNp5YEAYBHu`:
 
 | step | signature |
 |---|---|
-| claim A: milestone escrow, 50 test units | `2G9C94R5rw66HxwRPRoenHMpuZPxHtu32w6fk2UixWdroBW4kBULaMEZVzk2i985pbbqEy7CuQknMpAw3WA2LrFP` |
+| claim A: held milestone money, 50 test units | `2G9C94R5rw66HxwRPRoenHMpuZPxHtu32w6fk2UixWdroBW4kBULaMEZVzk2i985pbbqEy7CuQknMpAw3WA2LrFP` |
 | claim A: pre-order, 20 test units | `3A7NNa5M5wAHUSbwiHmdxYM7bySvxG3ykdSijCsYwsE4pQcwGtq5hsvmNtMgdCzKUqXrLGkWAxdmA8AottBQkJXu` |
 | claim A: pre-order, 10 test units | `5yfwjKJSupwc93TsCyrXSZ8deax5PYn3u8oCCRntPKGXKqSJRHja8gp75dRgU1AifvS3LDEh5r6Htv8s5cFP5ka6` |
 | claim B: pre-order with a 60 s deadline | `wf7AxxrXXAJT26BbX8WJwzNYZBn1ogxs6AtdVRRZ2eXYFEYrcpHYs3docaLw45TsGSK2bojxM578WLc9gnf8YwW` |
@@ -158,7 +153,7 @@ order past its deadline. The payout of claim A needs a GitHub-signed token from 
 not fake one.
 
 The payout path, with the four-way split and the fee, runs against the program's test build in LiteSVM
-(`tests/test_money_graduation.py`), and the audience the judge would sign is in `web/revenue_devnet.json`.
+(`tests/test_money_graduation.py`).
 
 ## For agents: MCP, Hermes and x402
 
@@ -166,28 +161,27 @@ The payout path, with the four-way split and the fee, runs against the program's
 plan, and return the unsigned instruction the paying wallet signs itself; they never read a key. `agent.call(name,
 args)` answers one, for an MCP server or a Hermes plugin (`ctx.register_tool`).
 
-`python -m knos.money.x402 --plans web/revenue_devnet.json --mint <mint>` runs the x402 endpoint (anyone runs it;
+`python -m knos.money.x402 --plans <plans.json> --mint <mint>` runs the x402 endpoint (anyone runs it;
 Knos hosts none), on the proposed `knos-order` scheme of [X402.md](X402.md):
 
 - `GET /fees` and `GET /pool/<claim>`: free.
 - `GET /preorder/<claim>`: `402` with a requirement to fund a pre-order in the pool; asked again with
-  `PAYMENT-SIGNATURE` naming the order, `200` "escrowed" once the chain shows it in that pool.
+  `PAYMENT-SIGNATURE` naming the order, `200` with the state `escrowed` once the chain shows it held in that pool.
 - `GET /checks`: `402` for a pack of paid checks (the smallest order is 5.00, so a pack is 250 checks at 0.02); each call is signed by the funding
   wallet over `knos-check:<order>:<n>`, and a replay or a stranger's call is refused. The count of each order is kept
   in a state file (`--state`), written before the call is answered, so a restart does not sell a call again.
 
-## The revenue page: `web/revenue/`
+## The revenue data
 
-`python -m knos.money.revenue --out web/revenue_data.json` writes what the page draws, in three parts kept apart:
+`python -m knos.money.revenue --out <file>` writes the revenue data, in three parts kept apart:
 
-- **measured**: the treasury's fee accounts and the demo's escrow and pool, read from devnet when the file was
+- **measured**: the treasury's fee accounts and the demo's held money and pool, read from devnet when the file was
   written. All of it is test money. A part that was not read says so; it is never guessed.
 - **schedule**: this config, each line with its status.
 - **model**: revenue for volumes the reader types, at the config's rates. It is labelled a MODEL, its inputs start at
   0, and a model with no inputs says 0. Its payout line is a lower bound: the floor is charged on each release, and the
   model sees only the month's total and count. Bounties and lab orders are typed twice: in the value released (their
-  on-chain 0.30% is in the payout line) and on their own lines, which count only the off-chain rest of the 5% and 3%. Its "1B USD question" is arithmetic on the rates (for example, 0.30% of
-  333,333,333,333 USD released in a year), not a forecast.
+  on-chain 0.30% is in the payout line) and on their own lines, which count only the off-chain rest of the 5% and 3%.
 
 ## Knos Cloud credits
 
@@ -201,22 +195,3 @@ credit counts are too:
 | Starter | 20 | 22 | 11000 |
 | Pro | 100 | 110 | 55000 |
 | Team | 200 | 220 | 110000 |
-
-The shape is copied from Nous Research, which sells open-core software (MIT) with hosted subscriptions on credits (Portal tiers of $20, $100 and $200) and enterprise
-deals; it reported about $36M annualized revenue by mid-September 2026 and raised $90M at a $1.5B valuation (TechCrunch, 7 Oct 2026, citing the Wall Street Journal;
-unaudited).
-
-Knos's tier prices match it by founder decision; the bonus and the credit unit are Knos's own. Labs pay 200 to 2,000 USD per verified task (Epoch AI, 12 Jan 2026),
-which is where a task package would sell.
-
-## Decisions only the founder can make
-
-- The remaining placeholders: what one Knos Cloud credit is worth and what each use consumes (`cfg.placeholders()`
-  lists them). The prices of 14 Oct 2026 are decided (`cfg.decided()`); revisit them once the cost per verification
-  is measured.
-- Whether the bounty fee's off-chain 4.70%, the lab order fee's 2.70% and the graduation fee stay off chain by invoice
-  and contract or go into a knos_pay build (a program upgrade through the multisig).
-- Who bears the lab order fee: the buyer on top, or deducted from the lab's payment.
-- Any token that pays backers out of revenue: not built (securities law).
-- Fiat rails for buyers, and selling task packages.
-- Which Squads multisig holds the treasury vault, for the record (the vault's address is fixed in the program).
