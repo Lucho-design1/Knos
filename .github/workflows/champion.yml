@@ -99,7 +99,10 @@ jobs:
         run: python scripts/split_paragraphs.py --check --strict
   vitals_shard:
     # three shards at once (the front door's pages, then the app's in two halves): every page still gets three cold runs,
-    # each a fresh browser; test_vitals below reads them all
+    # each a fresh browser; test_vitals below reads them all. They start once the quick jobs that open the same pages in
+    # their own browsers are done (measured at the same time, the front door's pages crossed 1.5 s in 3 runs of 3)
+    needs: [test_legibility, test_proof_first, test_companies_mode, test_value_vectors, test_stack_coverage]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
