@@ -65,7 +65,7 @@
  "public": {
   "label": "from public pull requests, not from Knos orders",
   "source": "docs/index.json",
-  "source_sha256": "27858e2dbd60c30bde314143f438532e8301c6e239b2007b4c9fbd57fa7db4a8",
+  "source_sha256": "26a8900313f222d886535435de984b0129e5c703bcfd012f6a33b2b236732092",
   "category": "merged pull requests whose description claimed passing tests",
   "week": "2026-09-28",
   "read": "2026-10-07",
@@ -104,5 +104,5 @@
   "dispute": "https://github.com/drexthealpha/Knos/issues/new?template=dispute-index-row.yml&title=Dispute+a+record%3A+claude-bot&agent=claude-bot&week=2026-09-28",
   "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECORD.md"
  },
- "sha256": "8beb6a1720b8b050180e0d693b842843cccbd05a69c7ecf195c20178ad4d99d9"
+ "sha256": "a3db92c69ba3507d6872ae6aa7e78ce055a8f1753dc3e499180fc4e7c3421776"
 }

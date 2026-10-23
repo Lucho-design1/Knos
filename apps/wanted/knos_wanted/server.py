@@ -46,10 +46,15 @@ def trusted_hops() -> int:
     return int(v) if v.isdigit() and 0 < int(v) <= 8 else 0
 
 
-def client_key(xff: str, peer: str) -> str:
-    """The address a rate limit counts. Each trusted proxy APPENDS the address it saw, so the entry the nearest
-    trusted proxy wrote is the n-th from the END; anything before it was written by the client and can be forged."""
+def client_key(xff: str, peer: str, cf: str = "") -> str:
+    """The address a rate limit counts. Behind a trusted proxy, Cloudflare's CF-Connecting-IP when it is there (Render
+    is fronted by Cloudflare, which sets it and overwrites any a client sends; the X-Forwarded-For entry a proxy
+    appended was an edge address that changes request to request, so 40 calls in a row were never limited). Else each
+    trusted proxy APPENDS the address it saw, so the entry the nearest trusted proxy wrote is the n-th from the END;
+    anything before it was written by the client and can be forged."""
     hops = trusted_hops()
+    if hops and cf.strip():
+        return cf.strip()[:64]
     parts = [x.strip() for x in (xff or "").split(",") if x.strip()]
     if hops and parts:
         return parts[-hops if len(parts) >= hops else 0][:64]
@@ -226,7 +231,7 @@ def make_handler(state: State):
             pass
 
         def _client(self) -> str:
-            return client_key(self.headers.get("X-Forwarded-For", ""), self.client_address[0])
+            return client_key(self.headers.get("X-Forwarded-For", ""), self.client_address[0], self.headers.get("CF-Connecting-IP", ""))
 
         def _send(self, code: int, body, ctype: str = "application/json", headers: dict | None = None) -> None:
             data = body if isinstance(body, bytes) else json.dumps(body, default=str).encode()

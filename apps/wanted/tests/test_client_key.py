@@ -18,9 +18,12 @@ def test_the_entry_the_proxy_appended_is_the_key_and_forged_leading_entries_chan
     assert server.client_key("", "10.0.0.1") == "10.0.0.1"
     monkeypatch.setenv("KNOS_WANTED_TRUST_PROXY", "2")                                         # CDN + Render
     assert server.client_key("1.2.3.4, 203.0.113.7, 198.51.100.2", "10.0.0.1") == "203.0.113.7"
+    # Cloudflare in front: its CF-Connecting-IP is the key, whichever edge address the proxy appended this time
+    assert {server.client_key(f"203.0.113.7, 172.70.0.{i}", "10.0.0.1", "203.0.113.7") for i in range(5)} == {"203.0.113.7"}
     for off in ("", "0", "yes"):
         monkeypatch.setenv("KNOS_WANTED_TRUST_PROXY", off)
         assert server.trusted_hops() == 0 and server.client_key("1.2.3.4, 203.0.113.7", "10.0.0.1") == "10.0.0.1"
+        assert server.client_key("", "10.0.0.1", "203.0.113.7") == "10.0.0.1"          # no trusted proxy: the header is ignored
 
 
 def test_a_client_cannot_step_around_the_faucet_limit_with_a_forged_header(monkeypatch, q, tmp_path):

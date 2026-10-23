@@ -24,7 +24,7 @@ jobs:
           node-version: "22"
       - run: |
           for t in 1 2 3; do timeout 120 npm install --no-save --no-audit --no-fund playwright@1.56.0 && break; [ $t != 3 ] || exit 1; done   # npm can hang
-          npx playwright install --with-deps chromium
+          npx playwright install chromium   # the runner's own Chrome brought its libraries; --with-deps waited 10 min on apt
           curl -fsS -m 120 -o /dev/null "$APP_URL/healthz"
       - run: node scripts/test_champion.mjs "${GITHUB_JOB}"
   test_value_vectors:
@@ -37,7 +37,7 @@ jobs:
           node-version: "22"
       - run: |
           for t in 1 2 3; do timeout 120 npm install --no-save --no-audit --no-fund playwright@1.56.0 && break; [ $t != 3 ] || exit 1; done   # npm can hang
-          npx playwright install --with-deps chromium
+          npx playwright install chromium   # the runner's own Chrome brought its libraries; --with-deps waited 10 min on apt
           curl -fsS -m 120 -o /dev/null "$APP_URL/healthz"
       - run: node scripts/test_champion.mjs "${GITHUB_JOB}"
   test_proof_first:
@@ -50,7 +50,7 @@ jobs:
           node-version: "22"
       - run: |
           for t in 1 2 3; do timeout 120 npm install --no-save --no-audit --no-fund playwright@1.56.0 && break; [ $t != 3 ] || exit 1; done   # npm can hang
-          npx playwright install --with-deps chromium
+          npx playwright install chromium   # the runner's own Chrome brought its libraries; --with-deps waited 10 min on apt
           curl -fsS -m 120 -o /dev/null "$APP_URL/healthz"
       - run: node scripts/test_champion.mjs "${GITHUB_JOB}"
   test_money_page:
@@ -63,7 +63,7 @@ jobs:
           node-version: "22"
       - run: |
           for t in 1 2 3; do timeout 120 npm install --no-save --no-audit --no-fund playwright@1.56.0 && break; [ $t != 3 ] || exit 1; done   # npm can hang
-          npx playwright install --with-deps chromium
+          npx playwright install chromium   # the runner's own Chrome brought its libraries; --with-deps waited 10 min on apt
           curl -fsS -m 120 -o /dev/null "$APP_URL/healthz"
       - run: node scripts/test_champion.mjs "${GITHUB_JOB}"
   test_companies_mode:
@@ -76,7 +76,7 @@ jobs:
           node-version: "22"
       - run: |
           for t in 1 2 3; do timeout 120 npm install --no-save --no-audit --no-fund playwright@1.56.0 && break; [ $t != 3 ] || exit 1; done   # npm can hang
-          npx playwright install --with-deps chromium
+          npx playwright install chromium   # the runner's own Chrome brought its libraries; --with-deps waited 10 min on apt
           curl -fsS -m 120 -o /dev/null "$APP_URL/healthz"
       - run: node scripts/test_champion.mjs "${GITHUB_JOB}"
   test_legibility:
@@ -92,7 +92,7 @@ jobs:
           python-version: "3.12"
       - run: |
           for t in 1 2 3; do timeout 120 npm install --no-save --no-audit --no-fund playwright@1.56.0 && break; [ $t != 3 ] || exit 1; done   # npm can hang
-          npx playwright install --with-deps chromium
+          npx playwright install chromium   # the runner's own Chrome brought its libraries; --with-deps waited 10 min on apt
       - name: Every public page
         run: node scripts/test_ui_sota.mjs legibility
       - name: Every doc

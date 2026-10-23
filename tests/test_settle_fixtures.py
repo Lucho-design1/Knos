@@ -460,7 +460,9 @@ def test_the_site_says_nothing_it_may_not():
 
 
 def test_the_site_asks_nobody_but_github_and_devnet():
-    hosts = {"api.github.com", "api.devnet.solana.com", "github.com", "explorer.solana.com", "faucet.circle.com", "drexthealpha.github.io"}
+    # and Knos's own app, which answers the front door's demand check (web/privacy.html: what you type goes there on Check)
+    hosts = {"api.github.com", "api.devnet.solana.com", "github.com", "explorer.solana.com", "faucet.circle.com", "drexthealpha.github.io",
+             "knos.onrender.com"}
     # The facts for search engines (JSON-LD, tests/test_seo.py) name schema.org's vocabulary, the licence and the package's
     # page: identifiers a search engine reads, which no browser asks for. They are held to exactly these three hosts, and
     # everything else on the page to the list above (tests/web/seo.mjs counts the requests the pages make in a browser).

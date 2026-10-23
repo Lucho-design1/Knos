@@ -50,7 +50,7 @@
  "claim_search": "(\"tests pass\" OR \"all tests pass\" OR \"tests passing\" OR \"CI passes\" OR \"CI is green\" OR \"CI passing\") in:body",
  "source": {
   "file": "docs/agent_weekly.json",
-  "sha256_of_canonical_json": "27858e2dbd60c30bde314143f438532e8301c6e239b2007b4c9fbd57fa7db4a8",
+  "sha256_of_canonical_json": "26a8900313f222d886535435de984b0129e5c703bcfd012f6a33b2b236732092",
   "reproduce": "python scripts/agent_pr_index.py board --check"
  },
  "links": {

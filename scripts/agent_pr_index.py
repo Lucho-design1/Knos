@@ -302,7 +302,7 @@ MIN_CLAIMS_TO_RANK = 30
 NAME = "Agent PR Index"
 NOT_JOINED = ("no list of Knos payments was joined to this sample, so the count is 0 for every agent: every Knos payment "
               "so far is test USDC on Solana devnet. It takes a sampled pull request that was also paid through Knos under "
-              "terms with a black-box check, and that list given to the script (--paid)")
+              "terms with a black-box check, and that list passed with --paid")
 WEEKLY_LIMITS = [
     "An agent is told by its author account or by a line its tool writes in the description (`agents`). A person "
     "who pastes that line is counted as the agent; an agent run under a person's own account without it is missed.",
