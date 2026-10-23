@@ -76,7 +76,8 @@ KINDS = (("urn:entity:podcast", ("podcast",)), ("urn:entity:tv_show", ("tv show"
          ("urn:entity:movie", ("film", "movie", "documentary")), ("urn:entity:book", ("book", "novel", "cookbook")),
          ("urn:entity:videogame", ("video game", "videogame", "mobile game", "game", "gaming")),
          ("urn:entity:place", ("restaurant", "cafe", "coffee shop", "coffee bar", "bar", "pub", "bakery", "hotel", "gym",
-                               "salon", "venue", "bistro", "diner", "food truck", "brewery", "club")),
+                               "salon", "venue", "bistro", "diner", "food truck", "brewery", "club", "festival", "music festival",
+                               "concert hall", "theater", "theatre", "museum", "karaoke", "arcade", "food hall", "night market")),
          ("urn:entity:artist", ("band", "album", "singer", "rapper", "musician")))
 NOT_KIND = ("board game", "card game", "game night", "games night")
 # Words that carry no product meaning: grammar, pitch words, and the words of an instruction to this app.
