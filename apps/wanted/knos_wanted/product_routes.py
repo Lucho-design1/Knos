@@ -81,6 +81,9 @@ ROUTES = [
     ("GET", "/api/sso/config", False, "Whether SAML single sign-on (SAML Jackson) is on", {}),
     ("GET", "/auth/sso", False, "Start SAML sign-in through SAML Jackson", {"tenant": "string"}),
     ("GET", "/auth/sso/callback", False, "SAML Jackson's OAuth callback", {"code": "string", "state": "string"}),
+    ("POST", "/auth/sso/acs", False, "A test IdP's signed SAML answer (Knos as the service provider; HTTP-POST binding)",
+     {"SAMLResponse": "string", "RelayState": "string"}),
+    ("GET", "/auth/sso/metadata", False, "Knos's SAML service-provider metadata (entity id, ACS)", {}),
     ("POST", "/api/company/multisig", False, "The devnet transaction that creates a company's Squads multisig (its creator signs)",
      {"name": "string", "members": "array", "threshold": "integer", "creator": "string"}),
     ("POST", "/api/company/confirm", False, "Mark a company's multisig created once it is on devnet", {"company": "string", "signature": "string"}),
@@ -149,6 +152,9 @@ def handle_get(h, state, u, qs) -> bool:
                 return h._redirect(enterprise.sso_start(q("tenant"), h._base(), next_page=q("next", "/"))) or True
             except enterprise.SSOError as why:
                 return h._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120])) or True
+        if p == "/auth/sso/metadata":
+            from . import saml_sp
+            return h._send(200, saml_sp.metadata(h._base()), "application/samlmetadata+xml") or True
         if p == "/auth/sso/callback":
             try:
                 s = enterprise.sso_callback(q("code"), q("state"))
@@ -214,6 +220,14 @@ def handle_post(h, state, path: str) -> bool:
                 return h._send(503, {"error": "C2PA reading is not installed on this server (c2pa-python)"}) or True
             mime = (h.headers.get("Content-Type") or "").split(";")[0].strip()
             return h._send(200, provenance.c2pa_read(_raw(h), mime)) or True
+        if path == "/auth/sso/acs":                    # a form post from the IdP, not JSON; lands on a page with the session
+            n = int(h.headers.get("Content-Length") or 0)
+            form = urllib.parse.parse_qs(h.rfile.read(n).decode("ascii", "replace") if 0 < n <= 600_000 else "")
+            try:
+                s = enterprise.saml_finish((form.get("SAMLResponse") or [""])[0], (form.get("RelayState") or [""])[0], h._base())
+                return h._redirect(s.get("next", "/") + "#session=" + s["token"]) or True
+            except enterprise.SSOError as why:
+                return h._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120])) or True
         b = h._json()
         if path == "/api/project/archive":
             admin = _admin(h.headers.get("X-Knos-Admin"))

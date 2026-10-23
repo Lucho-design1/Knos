@@ -1,5 +1,0 @@
-# sBPF v3 deploy build of knos_pay 0.3.34 (programs-v2/knos_pay, default features = devnet)
-# source: base b838b985f + uncommitted V34PAY changes in programs-v2/knos_pay (patches/0334-V34PAY.patch)
-# toolchain: cargo-build-sbf 4.4.0, platform-tools v1.57, RUSTFLAGS remap as scripts/build_sbf.sh
-# name  e_flags  bytes  sha256(file)  solana-verify executable hash
-knos_pay  3  413400  900c7cfb1e407d233a9283340dd3e41058e5dc91ca5849618955d1c65bb76d7c  9ae13fb9ae35262a959a903fae7b742e07a425ab97fc05fcf38b7db1bd1f0c62

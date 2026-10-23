@@ -1,8 +1,0 @@
-# REFUSED BY AGAVE 4.4 (devnet): sBPF v3 builds from cargo-build-sbf 2.3.13 + platform-tools v1.48 ("Failed to parse ELF file: invalid file header"). Kept as evidence; do NOT propose these.
-# source: 99cc4e3e37251a59227b24bd150c7e199e620527 + uncommitted changes in programs-v2
-# toolchain: solana-cargo-build-sbf 2.3.13, platform-tools v1.48, rustc 1.99.0
-# name  e_flags  bytes  sha256(file)  solana-verify executable hash
-knos_oidc  3  201040  2596016640f2f30a9f50644fa75aef55e4812606b9bdf2c60c665bda4f2d6899  1a476d59701e86679d653a75c4f4fab8bdcb09b004a4d1e603fca4ca4ced5743
-knos_pay  3  386760  0559810fc183fd7cfe8ad9d2726ace327f3948c0c68da10cbc7f2bd595903b02  65bb59432f887675ee5acd32fc7e0737e5efec6c56d3a540dcb04e6f978a99e2
-knos_meter  3  176160  5f8a4628f06bf848da4f2cc9ee1aa9303763d23c37ba526c82afab9a3a7c66f6  cceedd8b537270329fdd2c2b4df4ba1a0d1fbc7a3bdcbb7c36ec29acd64c50eb
-knos_passkey  3  125872  5e69d76b65f604b294664defc935d7aa7e4fef4bf69bc8998683597de7e96269  2ee44e09b65b9e51ecf75fda6fcea83d5e36493a4584662034bc3009becda4f2

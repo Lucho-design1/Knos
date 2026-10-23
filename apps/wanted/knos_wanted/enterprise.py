@@ -161,6 +161,13 @@ NEXT = ("/", "/companies")          # where a sign-in may land (the app's own pa
 
 def sso_start(tenant: str, base_url: str, opener=None, next_page: str = "/") -> str:
     cfg = sso_config()
+    from . import saml_sp
+    t = (tenant or cfg["test_tenant"]).strip().lower()
+    if t in test_idps() and saml_sp.available():     # a TEST IdP: Knos is the service provider itself, no Jackson call
+        try:
+            return saml_sp.start(t, test_idps()[t]["metadata"], base_url, next_page if next_page in NEXT else "/", opener)
+        except saml_sp.SAMLError as why:
+            raise SSOError(str(why)) from None
     if not cfg["enabled"]:
         raise SSOError("SAML single sign-on is not configured on this server (KNOS_SSO_URL, KNOS_SSO_CLIENT_SECRET)")
     tenant = (tenant or cfg["test_tenant"]).strip().lower()
@@ -208,6 +215,19 @@ def sso_callback(code: str, state: str, opener=None) -> dict:
     s = auth.issue(f"sso:{p['tenant']}:{hashlib.sha256(email.encode()).hexdigest()[:24]}", "sso", f"{email} ({p['tenant']})")
     s["tenant"] = p["tenant"]
     s["next"] = p.get("next") or "/"
+    return s
+
+
+def saml_finish(saml_response: str, relay: str, base_url: str, opener=None) -> dict:
+    """A test IdP's signed answer at /auth/sso/acs (saml_sp.finish) -> a session, like sso_callback's."""
+    from . import auth, saml_sp
+    try:
+        got = saml_sp.finish(saml_response, relay, base_url, opener)
+    except saml_sp.SAMLError as why:
+        raise SSOError(str(why)) from None
+    s = auth.issue(f"sso:{got['tenant']}:{hashlib.sha256(got['email'].encode()).hexdigest()[:24]}", "sso", f"{got['email']} ({got['tenant']})")
+    s["tenant"] = got["tenant"]
+    s["next"] = got["next"] or "/"
     return s
 
 
