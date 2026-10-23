@@ -97,47 +97,63 @@ jobs:
         run: node scripts/test_ui_sota.mjs legibility
       - name: Every doc
         run: python scripts/split_paragraphs.py --check --strict
-  test_vitals:
-    # measured alone: the other jobs' checks load the app and would be counted in its pages' times
-    needs: [test_value_vectors, test_proof_first, test_money_page, test_companies_mode, test_legibility, test_fields_matrix]
-    if: always()
+  vitals_shard:
+    # three shards at once (the front door's pages, then the app's in two halves): every page still gets three cold runs,
+    # each a fresh browser; test_vitals below reads them all
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [site, app0, app1]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "22"
-      - name: The preset, pointed at the live pages
+      - name: This shard's pages, with the preset
+        env:
+          SHARD: ${{ matrix.shard }}
         run: |
           node -e '
-          const fs = require("fs"), pages = JSON.parse(fs.readFileSync("scripts/public_pages.json", "utf8")).pages;
-          for (const [name, urls, block] of [["site", pages.filter((u) => u.includes("github.io")), ["https://knos.onrender.com/*"]],
-                                             ["app", pages.filter((u) => u.includes("onrender.com")), []]]) {
-            const c = require("./apps/wanted/lighthouserc.js");
-            const out = JSON.parse(JSON.stringify(c));
-            out.ci.collect.url = urls; out.ci.collect.numberOfRuns = 3; out.ci.collect.settings.blockedUrlPatterns = block;
-            delete out.ci.assert; delete out.ci.upload;
-            fs.writeFileSync(`lhci-${name}.json`, JSON.stringify(out, null, 1));
-          }'
-      - name: Open Chrome once (no page)
+          const fs = require("fs"), all = JSON.parse(fs.readFileSync("scripts/public_pages.json", "utf8")).pages;
+          const app = all.filter((u) => u.includes("onrender.com")), shard = process.env.SHARD;
+          const urls = shard === "site" ? all.filter((u) => u.includes("github.io")) : app.filter((_, i) => i % 2 === Number(shard.slice(3)));
+          const c = require("./apps/wanted/lighthouserc.js"), out = JSON.parse(JSON.stringify(c));
+          out.ci.collect.url = urls; out.ci.collect.numberOfRuns = 3;
+          out.ci.collect.settings.blockedUrlPatterns = shard === "site" ? ["https://knos.onrender.com/*"] : [];
+          delete out.ci.assert; delete out.ci.upload;
+          fs.writeFileSync("lhci.json", JSON.stringify(out, null, 1));
+          fs.writeFileSync("urls.txt", urls.join("\n") + "\n");'
+      - name: Open Chrome once, and warm each page once in a throwaway profile (all at once)
         run: |
           npx --yes @lhci/cli@0.14.0 healthcheck --fatal || true
           CHROME=$(node -e 'console.log(require("chrome-launcher").Launcher.getInstallations()[0] || "")' 2>/dev/null || true)
-          "${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --dump-dom about:blank > /dev/null 2>&1 || true
-      - name: Warm each server once (every measured run is still a fresh browser with an empty cache)
-        run: |
-          for u in $(node -e 'console.log(JSON.parse(require("fs").readFileSync("scripts/public_pages.json","utf8")).pages.join(" "))'); do
-            curl -fsS -m 120 -o /dev/null "$u" || true
-            # and once in a throwaway browser profile, so each page's styles, scripts and API answers are warm on the servers
-            CHROME=$(node -e 'console.log(require("chrome-launcher").Launcher.getInstallations()[0] || "")' 2>/dev/null || true)
-            timeout 60 "${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --user-data-dir="$(mktemp -d)"               --virtual-time-budget=8000 --dump-dom "$u" > /dev/null 2>&1 || true
-          done
-      - name: Three cold runs of every public page
-        run: |
-          npx --yes @lhci/cli@0.14.0 collect --config=lhci-site.json
-          curl -fsS -m 120 -o /dev/null "$APP_URL/healthz"
-          npx --yes @lhci/cli@0.14.0 collect --config=lhci-app.json --additive
+          while read -r u; do
+            ( curl -fsS -m 120 -o /dev/null "$u" || true
+              timeout 60 "${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --user-data-dir="$(mktemp -d)" \
+                --virtual-time-budget=8000 --dump-dom "$u" > /dev/null 2>&1 || true ) &
+          done < urls.txt
+          wait
+      - name: Three cold runs of each page
+        run: npx --yes @lhci/cli@0.14.0 collect --config=lhci.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: vitals-${{ matrix.shard }}
+          path: .lighthouseci/
+          include-hidden-files: true
+  test_vitals:
+    needs: [vitals_shard]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: vitals-*
+          path: .lighthouseci
+          merge-multiple: true
       - run: node scripts/test_quality_bar.mjs vitals .lighthouseci
   test_stack_coverage:
     runs-on: ubuntu-latest
@@ -182,3 +198,43 @@ jobs:
             code=$(curl -sS -m 300 -o out.json -w '%{http_code}' -H 'Content-Type: application/json' -d "$body" "$APP_URL/api/project/ci")
             echo "$check: HTTP $code $(head -c 400 out.json)"
           done < milestones.txt
+
+  # The same results, signed with this run's GitHub identity and logged in Sigstore's public Rekor v2 log: anyone can
+  # check them without Knos (scripts/verify_proofs.sh, or `sigstore verify github` by hand).
+  proofs:
+    needs: [test_fields_matrix, test_value_vectors, test_proof_first, test_money_page, test_companies_mode, test_legibility,
+            test_vitals, test_stack_coverage, test_outside_judge, test_knos_builds_knos]
+    if: always() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {contents: read, id-token: write}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: {persist-credentials: false}
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with: {version: "0.8.20", python-version: "3.12", enable-cache: false}
+      - name: install sigstore-python and what it needs, each by its hash
+        run: |
+          uv venv --no-config --python 3.12 "$RUNNER_TEMP/sg"
+          uv pip install --no-config --python "$RUNNER_TEMP/sg/bin/python" --require-hashes --no-deps --no-build -r requirements/rekor.txt
+      - name: write each test's result at this commit
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          needs = json.loads(os.environ["NEEDS"])
+          out = {"repository": os.environ["GITHUB_REPOSITORY"], "workflow": "champion.yml", "run_id": os.environ["GITHUB_RUN_ID"],
+                 "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"], "sha": os.environ["GITHUB_SHA"],
+                 "results": {name: job["result"] for name, job in sorted(needs.items())}}
+          open("proofs.json", "w").write(json.dumps(out, indent=1) + "\n")
+          print(json.dumps(out["results"]))
+          PY
+      - name: sign into Rekor v2, then verify as an outsider would
+        run: |
+          "$RUNNER_TEMP/sg/bin/sigstore" sign --rekor-version 2 --bundle proofs.sigstore.json proofs.json
+          "$RUNNER_TEMP/sg/bin/sigstore" verify github --bundle proofs.sigstore.json --repository "$GITHUB_REPOSITORY" \
+            --cert-identity "https://github.com/$GITHUB_REPOSITORY/.github/workflows/champion.yml@$GITHUB_REF" --sha "$GITHUB_SHA" proofs.json
+          python3 -c 'import json;e=json.load(open("proofs.sigstore.json"))["verificationMaterial"]["tlogEntries"][0];print("rekor", e["kindVersion"], "log index", e["logIndex"])'
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with: {name: proofs, path: "proofs*.json"}

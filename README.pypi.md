@@ -134,7 +134,7 @@ No. It runs on [devnet](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WO
 
 ### What does Knos cost?
 
-Checking is free; paying adds 0.30%, at least 0.05 [test USDC](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#test-usdc). A tip pays the fee out of the amount instead.
+Ten demand checks a month are free; releases will cost companies 1%. Today devnet charges 0.30%, at least 0.05 [test USDC](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#test-usdc).
 
 ### Who holds the money?
 
@@ -158,7 +158,7 @@ Open [the check](https://drexthealpha.github.io/Knos/check/) and paste an AI age
 
 - [Get started](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/START.md): check a pull request, fund a task, get paid, install the tools.
 
-- [Pricing](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/PRICING.md): what Knos costs. The check is free.
+- [Pricing](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/PRICING.md): what Knos costs. Demand checks are free, 10 a month.
 
 - [Trust](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/TRUST.md): who holds the keys, what is tested, and what is not.
 

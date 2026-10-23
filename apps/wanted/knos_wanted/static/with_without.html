@@ -112,11 +112,16 @@ const sig = (x, ph) => x[1] === null || x[1] === undefined ? `<li>${esc(x[0])}: 
   const s = d.summary || {};
   document.getElementById("ww-sum").innerHTML = `<b>${esc(s.changed)} of ${esc(s.rows)}</b> ideas changed with Qloo added: the verdict in ${esc(s.verdict)}, the audience in ${esc(s.audience)}, the cities in ${esc(s.cities)}, the price tier in ${esc(s.tier)}. Run ${esc(d.made)}.`;
   document.getElementById("ww-rule").textContent = d.rule || "";
+  const c = s.claude;                                       // the third arm: Claude alone, no tools and no data
+  if (c) document.getElementById("ww-sum").innerHTML += ` Claude alone agreed with Qloo on the verdict in <b>${esc(c.verdict_same_as_qloo)} of ${esc(c.rows)}</b>, the audience in ${esc(c.audience_same_as_qloo)}, the cities in ${esc(c.cities_same_as_qloo)}, the price tier in ${esc(c.tier_same_as_qloo)}.`;
   document.getElementById("ww-rules").innerHTML = Object.entries(d.rules || {}).map(([k, v]) => `<li><b>${esc(k.replace(/_/g, " "))}</b>: ${esc(v)}</li>`).join("");
   const open = (x) => x.open || x.without || {};
   document.getElementById("ww").innerHTML = d.rows.map((x) => `<li class="ww-row">
     <span class="ww-field">${esc(x.field)}</span><h2>${esc(x.idea)}</h2>
     <div class="ww-sides">
+      ${x.claude ? `<section class="ww-side"><h3>Claude alone</h3><p>${word(x.claude.verdict)}</p>
+        <p>${esc(x.claude.audience || "no audience")} · ${esc((x.claude.cities || []).join(", ") || "no cities")} · ${esc(x.claude.tier ? "price tier " + x.claude.tier : "no price tier")}</p>
+        <p>${esc(x.claude.why || "")}</p></section>` : ""}
       <section class="ww-side"><h3>Open signals only</h3><p>${word(open(x).verdict)}${open(x).tier ? ` · price tier ${esc(open(x).tier)}` : ""}</p>
 <ul>${(open(x).signals || []).map((g) => sig(g, open(x).phrase)).join("")}</ul></section>
       <section class="ww-side" data-qloo><h3>With Qloo added</h3><p>${word(x.with.verdict)}</p>

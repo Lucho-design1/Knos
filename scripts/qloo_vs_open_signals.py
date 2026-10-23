@@ -64,8 +64,16 @@ def open_only(b: dict) -> dict:
             "counted": b.get("attention_counted"), "signals": sig}
 
 
-def main(publish: bool) -> int:
+def claude_side(a: dict) -> dict | None:
+    """The first arm (scripts/llm_baseline.py): Claude alone, no tools and no data, in the same four fields."""
+    if not a or not a.get("verdict"):
+        return None
+    return {k: a.get(k) for k in ("verdict", "audience", "cities", "tier", "why", "model")}
+
+
+def main(publish: bool, claude_file: str | None = None) -> int:
     rows, rules = [], None
+    claude = json.loads(open(claude_file, encoding="utf-8").read()) if claude_file else {}
     op = {"X-Knos-Admin": os.environ.get("KNOS_ADMIN_KEY", "")}           # the operator's run: past the per-address limits
     for field, idea in IDEAS:
         s1, base = post("/api/open-signals", {"idea": idea}, op)
@@ -77,16 +85,28 @@ def main(publish: bool) -> int:
         a, b = with_qloo(rep), open_only(base)
         changed = [k for k in ("verdict", "audience", "cities", "tier") if a[k] != b[k]]
         post("/api/trace/keep", {"hash": a["hash"]}, op)
-        rows.append({"field": field, "idea": idea, "with": a, "open": b, "changed": changed})
+        row = {"field": field, "idea": idea, "with": a, "open": b, "changed": changed}
+        c = claude_side(claude.get(idea))
+        if c:
+            row["claude"] = c
+            row["claude_vs_qloo"] = [k for k in ("verdict", "audience", "cities", "tier") if c[k] != a[k]]
+        rows.append(row)
         print(f"{'changed' if changed else 'same   '} {field:9} {idea[:44]:44} open: {b['verdict']}, {b['tier'] or '-'} ({b['counted']} of 4) "
               f"| with Qloo: {a['verdict']}, {a['audience'] or '-'}, {'/'.join(a['cities']) or '-'}, {a['tier'] or '-'} | {','.join(changed) or '-'}", flush=True)
         time.sleep(1)
     n = sum(1 for r in rows if r["changed"])
     s = {"rows": len(rows), "changed": n, **{k: sum(1 for r in rows if k in r["changed"]) for k in ("verdict", "audience", "cities", "tier")}}
+    arms = [r for r in rows if r.get("claude")]
+    if arms:                                   # how often Claude alone said the same as Knos with Qloo, field by field
+        s["claude"] = {"rows": len(arms), **{f"{k}_same_as_qloo": sum(1 for r in arms if k not in r["claude_vs_qloo"])
+                                             for k in ("verdict", "audience", "cities", "tier")},
+                       "verdict_same_as_open_signals": sum(1 for r in arms if r["claude"]["verdict"] == r["open"]["verdict"])}
+        print("Claude alone vs with Qloo: " + json.dumps(s["claude"]))
     print(f"{n} of {len(rows)} changed with Qloo added: {json.dumps(s)}")
     if publish:
         st, got = post("/api/qloo-diff", {"made": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), "summary": s,
-                                          "rows": rows, "rule": RULE, "baseline": "open signals", "rules": rules}, op)
+                                          "rows": rows, "rule": RULE, "rules": rules,
+                                          "baseline": "open signals" + (", and Claude alone (claude -p: no tools, no data)" if arms else "")}, op)
         print(f"published: HTTP {st} {got}")
         if st != 200:
             return 1
@@ -96,4 +116,5 @@ def main(publish: bool) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main("--publish" in sys.argv[1:]))
+    args = sys.argv[1:]
+    sys.exit(main("--publish" in args, args[args.index("--claude") + 1] if "--claude" in args else None))

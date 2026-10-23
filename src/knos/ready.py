@@ -32,7 +32,10 @@ UNITS = ("%", "ms", "s", "sec", "secs", "second", "seconds", "min", "mins", "min
          "sections", "section", "signatures", "signature", "customers", "customer", "weeks", "months", "month", "lines",
          "commits", "prs", "accuracy", "auc", "f1", "rmse", "mae", "iops", "ops", "cycles", "boards", "parts", "batches",
          "percent", "trials", "trial", "prototype", "prototypes", "features", "feature", "patches", "arrays", "copies",
-         "reports", "screens", "endpoints", "steps", "participants", "patients", "litres", "liters", "mah", "wh")
+         "reports", "screens", "endpoints", "steps", "participants", "patients", "litres", "liters", "mah", "wh",
+         # physical work: pressure, force, mass, carbon, energy, area, volume, and what is built (TASK-WORLD T4)
+         "pa", "kpa", "mpa", "gpa", "psi", "bar", "n", "kn", "n/mm2", "n/mm²", "t", "tonne", "tonnes", "co2e", "kgco2e",
+         "kwh", "mwh", "gwh", "gw", "m2", "m²", "m3", "m³", "lux", "cubes", "blocks", "homes", "houses", "panels", "years")
 MIN_DEADLINE_S, MAX_DEADLINE_S = 60, 90 * 86_400
 DEFAULT_CHALLENGE_S = 72 * 3600
 MAX_KILL_FEE_BPS = 5000
@@ -180,10 +183,13 @@ def check(brief: dict) -> dict:
         problems.append("kill_fee_bps: 0 to 5000 (what the maker keeps if the buyer cancels)")
     if t["challenge_s"] is None or not 60 <= t["challenge_s"] <= 30 * 86_400:
         problems.append("challenge_s: 60 seconds to 30 days (the dispute window after a referee verdict)")
-    missing = problems + [f"{r['key']}.{f}" for r in rows for f in r["missing"]] + \
+    from . import refuse
+    no = refuse.refused(refuse.brief_text(brief))          # the published refuse list (knos.refuse): never fundable
+    missing = [f"refused: {r['why']} ('{r['word']}')" for r in no] + problems + [f"{r['key']}.{f}" for r in rows for f in r["missing"]] + \
         [f"{r['key']}: vague word '{w}', say a number and unit instead" for r in rows for w in r["vague"]]
     ok = not missing
-    return {"ready": ok, "label": "Ready" if ok else "Not ready", "missing": missing, "milestones": rows,
+    return {"ready": ok, "label": "Refused" if no else "Ready" if ok else "Not ready", "missing": missing, "milestones": rows,
+            "refused": no,
             "criteria_hash": criteria_hash(brief) if ok else None, **t,
             "rule": "each milestone: a measurable target, a verifier (a GitHub check, or what/how/who/where) and a deadline; no vague words"}
 

@@ -385,11 +385,64 @@ def _product_tools() -> set:
     return {t["name"] for t in MCP_TOOLS}
 
 
-def mcp(state, msg: dict) -> dict | None:
-    """One JSON-RPC message of the Streamable HTTP transport (POST /mcp). Notifications get no answer (None)."""
+# MCP tool annotations (the Claude connector directory asks each tool for a title and readOnlyHint or destructiveHint):
+# what reads, what writes, what moves money. And the app-store profile (POST /mcp/store): only the read-only tools an
+# AI app store may list (no sign-in, no money inside the assistant; a pre-order is a link out to the site), each call
+# within a daily cap.
+READ_ONLY = {"knos_research_card", "knos_demand_check", "knos_crossings", "knos_milestones", "knos_tasks", "knos_memory_search",
+             "knos_memory_recall", "knos_templates", "knos_projects", "knos_openapi", "knos_ready", "knos_usage",
+             "knos_milestone_prompt"}
+MONEY = {"knos_preorder"}
+STORE = {"knos_ready", "knos_demand_check"}           # with every qloo_* tool
+STORE_DAILY_CAP = 2000                                 # tool calls a day through /mcp/store, all callers together
+_store_day = {"day": "", "n": 0}
+
+
+def annotate(tool: dict) -> dict:
+    name = tool["name"]
+    ro = name in READ_ONLY or name.startswith("qloo_")
+    return {**tool, "annotations": {"title": tool.get("title") or name.replace("_", " "), "readOnlyHint": ro,
+                                    "destructiveHint": name in MONEY, "idempotentHint": ro,
+                                    "openWorldHint": name.startswith("qloo_") or name in ("knos_demand_check", "knos_cross", "knos_research_card")}}
+
+
+def in_store(name: str) -> bool:
+    return name in STORE or name.startswith("qloo_")
+
+
+def store_spend() -> bool:
+    """One more call within today's cap of the store profile (UTC day); False once the cap is reached."""
+    import time as _t
+    day = _t.strftime("%Y-%m-%d", _t.gmtime())
+    if _store_day["day"] != day:
+        _store_day.update(day=day, n=0)
+    if _store_day["n"] >= STORE_DAILY_CAP:
+        return False
+    _store_day["n"] += 1
+    return True
+
+
+def mcp(state, msg: dict, profile: str = "full") -> dict | None:
+    """One JSON-RPC message of the Streamable HTTP transport (POST /mcp, or /mcp/store: the app-store profile).
+    Notifications get no answer (None)."""
     mid, method, params = msg.get("id"), msg.get("method"), msg.get("params") or {}
     if mid is None:
         return None
+    store = profile == "store"
+    if store and method == "tools/call":
+        name = (params or {}).get("name")
+        if not (isinstance(name, str) and in_store(name)):
+            return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": f"{name} is not offered here: the app-store "
+                    "profile lists read-only tools only; money moves on the Knos site"}}
+        if not store_spend():
+            return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32000, "message": f"today's cap of {STORE_DAILY_CAP} calls is reached; "
+                    "try again tomorrow (UTC)"}}
+        if name == "knos_demand_check":
+            from . import privacy
+            try:
+                privacy.check({"idea": (params.get("arguments") or {}).get("idea"), "place": (params.get("arguments") or {}).get("place")})
+            except ValueError as why:
+                return {"jsonrpc": "2.0", "id": mid, "result": {"isError": True, "content": [{"type": "text", "text": str(why)[:300]}]}}
 
     def ok(result):
         return {"jsonrpc": "2.0", "id": mid, "result": result}
@@ -414,7 +467,8 @@ def mcp(state, msg: dict) -> dict | None:
         except Exception:  # noqa: BLE001
             extra = []
         from .product_routes import MCP_TOOLS
-        return ok({"tools": TOOLS + MCP_TOOLS + extra})
+        tools = [annotate(t) for t in TOOLS + MCP_TOOLS + extra]
+        return ok({"tools": [t for t in tools if in_store(t["name"])] if store else tools})
     if method == "tools/call":
         name, args = params.get("name"), params.get("arguments") or {}
         if isinstance(name, str) and name.startswith("qloo_"):

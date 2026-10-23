@@ -1,0 +1,6 @@
+# What champion.yml's `proofs` job installs to sign its proofs into Sigstore's Rekor v2 log: sigstore-python at one
+# version, with what it needs, each by its hash. Kept apart from sign.txt, which is published with the pinned workflows.
+#
+# Compile again after any change here:
+#   uv pip compile requirements/rekor.in --generate-hashes --python-version 3.12 --python-platform x86_64-manylinux_2_28 --no-config --exclude-newer <two weeks ago> -o requirements/rekor.txt
+sigstore==4.5.0

@@ -14,7 +14,8 @@ Fees: from config/fees.yaml through knos.money.fees_config, nothing typed here:
   funding     0 when the pre-order is locked (knos_pay holds the payout fee with the money)
   payout      the on-chain fee, taken by knos_pay at release to the maker (live)
   graduation  Knos's fee on a pre-order pool released after the product graduates (decided, collected off chain)
-  demand report  no fee line exists in config/fees.yaml: the report is free; pricing it is the founder's decision.
+  demand_check   10 a month free (decided 23 Oct 2026); a deep demand check 500 USD by card once the company exists
+  release        the 1% release fee (decided 23 Oct 2026); knos_pay charges the payout fee until a timelocked upgrade
 """
 from __future__ import annotations
 
@@ -144,7 +145,8 @@ def quote(units: int) -> dict:
                            "payer": f["payout"].get("payer")},
             "on_graduation": {"line": "graduation", "units": cfg.fee("graduation", amount) / 1e6, "status": f["graduation"]["status"],
                               "collected": f["graduation"].get("collected")},
-            "demand_report": {"line": None, "units": 0, "status": "free: config/fees.yaml has no demand-report line (founder decision)"}}
+            "demand_report": {"line": "demand_check", "units": 0, "status": f["demand_check"]["status"],
+                              "free_a_month": f["demand_check"]["free_a_month"], "today": f["demand_check"]["today"]}}
 
 
 # ---- the decision check in the Record: Sibyl is the agent's working memory; money rules live on chain ------------

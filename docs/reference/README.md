@@ -114,6 +114,8 @@ The documents in this folder are listed below, with the eight front pages too.
 | [AUTORESEARCH.md](AUTORESEARCH.md) | autoresearch for anyone: agents change one file, the referee keeps or refuses each run, sealed data decides payment |
 | [GAME.md](GAME.md) | the Knos game: people and AI scientists attack one sealed goal at once; a pooled pot split by the referee's verdicts |
 | [DEMAND_CHECK.md](DEMAND_CHECK.md) | the demand check on Qloo's MCP server: a maker's demand report, a buyer agent, pre-orders in a devnet escrow |
+| [REFUSE.md](REFUSE.md) | what Knos will not fund: the refuse list every Ready check applies |
+| [MCP_STORE.md](MCP_STORE.md) | Knos in AI assistants: the read-only app-store MCP, its tools, limits and privacy |
 | [QLOO-COVERAGE.md](QLOO-COVERAGE.md) | every Qloo parameter, type and endpoint the docs list, and where a person sets it on each interface |
 | [IDEAS.md](IDEAS.md) | an idea in from anyone or any research source, every field; demand, then pull commitments released in stages |
 | [NEBIUS.md](NEBIUS.md) | Nemotron models on Nebius Token Factory as Knos coders and cheat explainers, Tavily provenance; the referee still decides |

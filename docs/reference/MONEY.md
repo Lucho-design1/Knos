@@ -4,6 +4,8 @@
 
 **In plain words.** Every Knos fee lives in one file, and the code reads it from there. When a claim passes, money for its next step and its first orders waits in escrow on devnet. When the work is accepted, everyone who helped is paid their share at once.
 
+Where every escrow and fee stands now: [the money page](https://knos.onrender.com/money).
+
 How the money moves:
 
 1. A verdict passes (works, wanted, makeable).
@@ -15,8 +17,8 @@ How the money moves:
 has been sold.
 
 Every price below says whether it is **live** (the deployed program charges it on devnet), **proposed**
-(the price book, nobody pays it yet), **decided** (a starting price the founder set on 14 Oct 2026, to revisit once the
-cost per verification is measured; nobody pays it yet) or a **placeholder** (a number only the founder can set).
+(the price book, nobody pays it yet), **decided** (a price the founder set on 14 Oct 2026 or 23 Oct 2026; nobody pays
+it yet) or a **placeholder** (a number only the founder can set).
 
 ## The one fee config: `config/fees.yaml`
 
@@ -52,8 +54,16 @@ A decided line must say when it was decided, why, and its source, and it can nev
 | graduation | 0.50% of the money released after graduation | decided | by contract, off chain, until a knos_pay build carries it |
 | task package | 10% to Knos, 90% to the maintainer | decided | the lab that buys the package; off chain, by contract |
 | x402 check | 0.02 USD each, in devnet USDC (test money), sold in packs of 250 (one 5.00 order) | decided | the agent that calls `/checks` |
+| demand check | 10 a month free | decided | nobody; the monthly count is not enforced yet |
+| deep demand check | 500 USD each, by card | decided | the company, from the day it exists; no company is formed yet, so nobody is charged |
+| Ready brief, proof page | free | decided | nobody |
+| release | 1% of money released on verified proof; the solver keeps 100% | decided | the company (the funder), on top; on chain only after the timelocked upgrade, and the program charges 0.30% until then |
 
-Where each decided price comes from (all: founder decision 14 Oct 2026, DECISIONS.md item 2):
+The product's prices (demand check, deep demand check, Ready brief, proof page, release) are the founder's decision
+of 23 Oct 2026. The 1% is not live: the deployed `knos_pay` charges its payout fee, 0.30%, until a timelocked
+program upgrade carries the new rate.
+
+Where each price of 14 Oct 2026 comes from (all: founder decision 14 Oct 2026, DECISIONS.md item 2):
 
 - **bounty fee 5%**: the founder's starting price. The founder compared it with what Algora charges organisations;
   Algora's pricing page (algora.io/pricing) answered 404 when read on 14 Oct 2026, so this page states no Algora figure.

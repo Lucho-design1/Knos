@@ -97,6 +97,18 @@ def test_the_decided_prices_are_the_founders_with_their_sources(cfg):
     assert cfg.public()["decided"] == d
 
 
+def test_the_product_prices_of_23_oct_are_decided_and_the_program_still_charges_its_own_fee(cfg):
+    f = cfg.doc["fees"]
+    assert (f["demand_check"]["free_a_month"], f["deep_demand_check"]["usd_each"], f["ready_brief"]["usd_each"], f["proof_page"]["usd_each"]) == (10, "500", "0", "0")
+    assert f["release"]["rate_bps"] == 100 and "company" in f["release"]["payer"] and "100%" in f["release"]["what"]
+    for k in ("demand_check", "deep_demand_check", "ready_brief", "proof_page", "release"):
+        assert f[k]["status"] == "decided" and f[k]["decided"] == "23 Oct 2026" and "founder decision 23 Oct 2026" in f[k]["source"], k
+    # the 1% is not live: the deployed program charges its compiled payout fee until the timelocked upgrade
+    assert f["payout"]["status"] == "live" and f["payout"]["rate_bps"] == pay.FEE_BPS == 30 and "timelocked" in f["release"]["collected"]
+    assert "nobody is charged today" in f["deep_demand_check"]["collected"]
+    assert any(x.startswith("fees.release.rate_bps = 100 (23 Oct 2026") for x in cfg.decided())
+
+
 def test_the_bounty_fee_is_five_percent_of_which_the_program_takes_its_compiled_fee(cfg):
     """knos_pay's fee is compiled into the program (0.30%): the 5% bounty fee is that on-chain fee plus an off-chain rest,
     never 5% on chain and never 5% on top of the 0.30%."""

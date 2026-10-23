@@ -13,8 +13,9 @@
     cfg.credit_tiers, cfg.decided(), cfg.placeholders(), cfg.public()
 
 The live lines mirror what the deployed program charges (knos.settle.v2.pay) and the proposed lines mirror the price
-book (knos.billing). The decided lines are the founder's starting prices of 14 Oct 2026, each with its source; none of
-them is live, because knos_pay charges only its compiled payout fee. Those numbers are compiled into the program and typed once in those modules; this file states
+book (knos.billing). The decided lines are the founder's starting prices of 14 Oct 2026 and the product's prices of
+23 Oct 2026 (the 1% release fee among them), each with its source; none of them is live, because knos_pay charges only
+its compiled payout fee (0.30%) until a timelocked program upgrade. Those numbers are compiled into the program and typed once in those modules; this file states
 them again so a reader has one place, and `validate` refuses the file when one differs. So nothing can drift: a
 change to a fee is a change to the program (an upgrade through the multisig) or to the price book, and this file and
 its tests move with it.

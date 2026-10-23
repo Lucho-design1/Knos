@@ -2,7 +2,29 @@
 
 # What Knos costs
 
-**In plain words.** Checking a pull request is free. When a task is paid, Knos takes 0.30% of it, and never less than 0.05. Today all of it is test money, so nobody pays anything real.
+**In plain words.** Ten demand checks a month are free, and so are Ready briefs and proof pages. A deep demand check costs 500 USD, and a company pays 1% on money it releases on proof. No company is formed yet, so nobody pays today.
+
+Where every escrow and fee stands now: [the money page](https://knos.onrender.com/money).
+
+## Knos's prices, decided 23 Oct 2026
+
+| What | Price | Who pays | Today |
+|---|---|---|---|
+| Demand check | 10 a month free | nobody | free; the monthly count is not enforced yet |
+| Deep demand check | 500 USD each, by card | the company | not charged: no company is formed yet |
+| Ready brief | free | nobody | free |
+| Proof page | free | nobody | free |
+| Release | 1% of money released on verified proof | the company (the funder), on top | the program charges 0.30% |
+
+The company is charged by card as soon as it exists. No company is formed yet, so nobody is charged today.
+
+The solver keeps 100% of what they are paid. The company pays the release fee on top of the amount.
+
+The 1% is decided, not live. The `knos_pay` program on devnet charges 0.30% today, in test money.
+
+The 1% goes on chain only with a program upgrade, which waits in public first ([Trust](TRUST.md)).
+
+## What the programs charge today
 
 ```mermaid
 flowchart TB
@@ -14,7 +36,7 @@ flowchart TB
 ```
 *Checking is free. A fee is charged only when money moves or work is counted.*
 
-This page gives the prices the programs on [devnet](WORDS.md#devnet) charge today.
+This part gives the prices the programs on [devnet](WORDS.md#devnet) charge today.
 
 **Every price here is in [test USDC](WORDS.md#test-usdc), so Knos's revenue is zero.**
 

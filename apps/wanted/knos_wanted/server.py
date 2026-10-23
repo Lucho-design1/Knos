@@ -79,7 +79,7 @@ SIGNED_IN = ("/api/preorder", "/api/milestone", "/api/refund", "/api/factor", "/
 # every GET route below (do_GET), for the OpenAPI document (knos_wanted.openapi); the product routes list their own
 PAGES = {"/fields": "fields.html", "/money": "money.html", "/companies": "companies.html", "/trace": "trace.html", "/trace.html": "trace.html", "/with-without": "with_without.html", "/with-without.html": "with_without.html",
          "/qloo-safe-use": "qloo_safe_use.html", "/qloo-safe-use.html": "qloo_safe_use.html", "/invite": "invite.html", "/invite.html": "invite.html"}
-GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/fields": "Fields: 7 bottlenecks by 7 technologies, 49 cells, each live or next",
+GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos will not fund: the refuse list the Ready check applies", "/api/fields": "Fields: 7 bottlenecks by 7 technologies, 49 cells, each live or next",
               "/api/money": "The money page: each number with its source, and the share Knos needs for $1B a year at the live fee",
               "/api/vectors": "The seven product-value vectors, measured: cost, speed, friction, trust, capability, access, status",
               "/api/proof": "The latest real verdict this server reached (shown first on both front doors)",
@@ -96,7 +96,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/fields": "Fields: 7
               "/api/demand/fields": "The Qloo demand families F1-F8: every option's name, Qloo parameter, kind, help and example",
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
               "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funder escrows",
-              "/mcp": "MCP discovery page (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
+              "/mcp": "MCP discovery page (POST JSON-RPC here)", "/mcp/store": "The app-store MCP profile: read-only tools, no sign-in, a daily call cap (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
               "/": "The app", "/api/status": "Server status", "/api/products": "Listed products", "/api/quote": "Fee quote",
               "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
               "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
@@ -307,6 +307,9 @@ def make_handler(state: State):
                 return self._send(200, outside.totals())
             if u.path == "/api/outside/rows":
                 return self._send(200, {"rows": outside.rows(), "rule": outside.RULE})
+            if u.path == "/api/refuse":                      # the published refuse list (knos.refuse), applied by every Ready check
+                from knos import refuse
+                return self._send(200, refuse.public())
             if u.path == "/api/fields":                      # the fields page: 7 bottlenecks by 7 technologies
                 from .fields_data import FIELDS
                 return self._send(200, FIELDS)
@@ -386,10 +389,10 @@ def make_handler(state: State):
                 take = min(100, max(1, int((qs.get("take") or ["50"])[0] or 50)))
                 offset = max(0, int((qs.get("offset") or ["0"])[0] or 0))
                 return self._send(200, {"commitments": preorder.all_public(offset + take)[offset:], "take": take, "offset": offset})
-            if u.path == "/mcp":
+            if u.path in ("/mcp", "/mcp/store"):
                 if "text/html" in (self.headers.get("Accept") or ""):
                     return self._send(200, agent.DISCOVERY.encode(), "text/html; charset=utf-8")
-                return self._send(405, {"error": "POST JSON-RPC messages to /mcp (MCP Streamable HTTP)"}, headers={"Allow": "POST"})
+                return self._send(405, {"error": f"POST JSON-RPC messages to {u.path} (MCP Streamable HTTP)"}, headers={"Allow": "POST"})
             if u.path == "/auth/orcid":
                 try:
                     return self._redirect(auth.orcid_authorize(self._base() + "/auth/orcid/callback"))
@@ -492,8 +495,8 @@ def make_handler(state: State):
         def do_POST(self):
             u = urlparse(self.path)
             outside.begin(self.headers)                   # the outside counter reads who is asking (knos_wanted.outside)
-            if u.path == "/mcp":
-                return self._mcp()
+            if u.path in ("/mcp", "/mcp/store"):
+                return self._mcp("store" if u.path == "/mcp/store" else "full")
             if u.path in ("/api/actions/preorder", blink.PAY_PATH):
                 return self._action(u)
             if u.path in ("/api/referee/commit", "/api/referee/share", "/api/referee/attest"):   # a referee host's FROST round (signed by its transport key)
@@ -549,14 +552,14 @@ def make_handler(state: State):
                 raise auth.AuthError("passkeys work only on this site's own https origin (or localhost)")
             return origin, rp_id
 
-        def _mcp(self):
+        def _mcp(self, profile: str = "full"):
             try:
                 msg = self._json()
             except ValueError as why:
                 return self._send(400, {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": str(why)[:200]}})
             if not state.allow(self._client(), "check"):
                 return self._send(429, {"jsonrpc": "2.0", "id": msg.get("id"), "error": {"code": -32000, "message": "rate limited"}})
-            out = agent.mcp(state, msg)
+            out = agent.mcp(state, msg, profile)
             if out is None:
                 return self._send(202, b"", "text/plain")
             return self._send(200, out, headers={"Mcp-Session-Id": "knos"} if msg.get("method") == "initialize" else None)

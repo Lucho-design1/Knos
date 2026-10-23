@@ -36,6 +36,53 @@
     "usd_each": "0.002",
     "note": "Checking stays free for public repositories and on your own runners; this is the Meter line of the price book."
    },
+   "demand_check": {
+    "status": "decided",
+    "what": "a demand check: an idea or a paper checked against Qloo demand evidence",
+    "free_a_month": 10,
+    "beyond": "not set by the decision",
+    "today": "free; the monthly count is not enforced yet",
+    "decided": "23 Oct 2026",
+    "rationale": "the founder's product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company",
+    "source": "founder decision 23 Oct 2026"
+   },
+   "deep_demand_check": {
+    "status": "decided",
+    "what": "a deep demand check, paid by card",
+    "usd_each": "500",
+    "payer": "the company",
+    "collected": "by card, from the day the company exists; no company is formed yet, so nobody is charged today, and card payment is not built",
+    "decided": "23 Oct 2026",
+    "rationale": "the founder's product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company",
+    "source": "founder decision 23 Oct 2026"
+   },
+   "ready_brief": {
+    "status": "decided",
+    "what": "a Ready brief: free",
+    "usd_each": "0",
+    "decided": "23 Oct 2026",
+    "rationale": "the founder's product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company",
+    "source": "founder decision 23 Oct 2026"
+   },
+   "proof_page": {
+    "status": "decided",
+    "what": "a proof page: free",
+    "usd_each": "0",
+    "decided": "23 Oct 2026",
+    "rationale": "the founder's product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company",
+    "source": "founder decision 23 Oct 2026"
+   },
+   "release": {
+    "status": "decided",
+    "what": "the release fee: 1% of the money released from escrow on verified proof, paid by the company (the funder) on top; the solver keeps 100% of what they are paid",
+    "rate_bps": 100,
+    "payer": "the company (the funder), on top of the amount",
+    "today": "the deployed knos_pay charges its live payout fee, 0.30% (at least 0.05), in test money on devnet",
+    "collected": "on chain by knos_pay once the timelocked program upgrade through the Squads vault carries it; no company is formed yet, so nobody is charged today",
+    "decided": "23 Oct 2026",
+    "rationale": "the founder's product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company",
+    "source": "founder decision 23 Oct 2026"
+   },
    "payout": {
     "status": "live",
     "what": "the fee on every release from escrow to a payee (the Acceptance line): the funder pays it on top of the amount",
@@ -197,6 +244,10 @@
    }
   },
   "decided": [
+   "fees.deep_demand_check.usd_each = 500 (23 Oct 2026; founder decision 23 Oct 2026)",
+   "fees.ready_brief.usd_each = 0 (23 Oct 2026; founder decision 23 Oct 2026)",
+   "fees.proof_page.usd_each = 0 (23 Oct 2026; founder decision 23 Oct 2026)",
+   "fees.release.rate_bps = 100 (23 Oct 2026; founder decision 23 Oct 2026)",
    "fees.bounty_platform.rate_bps = 500 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2). The comparison with Algora's fee to organisations is the founder's; Algora's pricing page (algora.io/pricing) answered 404 on 14 Oct 2026, so no Algora figure is stated here)",
    "fees.lab_order.rate_bps = 300 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2). Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45), 2.00% (NET60), https://www.scientist.com/scipay/ (read 14 Oct 2026))",
    "fees.graduation.rate_bps = 50 (14 Oct 2026; founder decision 14 Oct 2026 (DECISIONS.md item 2))",

@@ -6,8 +6,7 @@
 things. "Enforced" means a test checks the code on every change; the test is named. "Promise, not yet enforced" means
 no code holds it yet. The page has a fingerprint (a [hash](../WORDS.md#hash)) at the bottom.
 
-If one letter changes, the
-fingerprint changes.
+If one letter changes, the fingerprint changes.
 
 Money here is [test USDC](../WORDS.md#test-usdc) on [devnet](../WORDS.md#devnet). It has no value. This page is not a
 contract and not legal advice.
@@ -64,4 +63,4 @@ The rules that grow from these rights are in [STANDARD.md](STANDARD.md).
 
 ---
 
-sha256 of everything above this line: `994f6fec1e4d8cbb2aa8b256acb19ac4d3bf564a0d40147e94fdaacd8dd6f926`. Check it yourself: `sed '/^---$/,$d' docs/reference/CHARTER.md | sha256sum`. `tests/test_neutrality.py` checks it on every change.
+sha256 of everything above this line: `b61eb4013164d62c0cba19a683edeba11011c8e569570d1c86f5bd5784167b80`. Check it yourself: `sed '/^---$/,$d' docs/reference/CHARTER.md | sha256sum`. `tests/test_neutrality.py` checks it on every change.

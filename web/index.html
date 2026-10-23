@@ -337,14 +337,15 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     <input id="k-q" name="q" type="text" aria-label="A DOI, an arXiv id or an idea" maxlength="500" placeholder="A DOI, an arXiv id or an idea" enterkeyhint="go" spellcheck="false">
     <button id="k-go" type="submit">Check demand</button>
   </form>
-  <div class="k-try" role="group" aria-label="Examples, one per technology">
-    <button type="button" class="k-chip" data-tech="ai" data-q="an AI recipe planner for families">AI recipes</button>
+  <div class="k-try" role="group" aria-label="Examples: housing, food, energy, health, across technologies">
+    <button type="button" class="k-chip" data-tech="ai" data-need="food" data-q="an AI recipe planner for families">AI recipes</button>
     <button type="button" class="k-chip" data-tech="web3" data-q="a crypto podcast for beginners">Crypto podcast</button>
     <button type="button" class="k-chip" data-tech="quantum" data-q="a quantum physics book for kids">Quantum book</button>
-    <button type="button" class="k-chip" data-tech="energy" data-q="a solar powered music festival">Solar festival</button>
-    <button type="button" class="k-chip" data-tech="biotech" data-q="a probiotic kombucha brand">Kombucha</button>
+    <button type="button" class="k-chip" data-tech="energy" data-need="energy" data-q="a solar powered music festival">Solar festival</button>
+    <button type="button" class="k-chip" data-tech="biotech" data-need="food" data-q="a probiotic kombucha brand">Kombucha</button>
     <button type="button" class="k-chip" data-tech="materials" data-q="a recycled ocean plastic swimwear brand">Ocean swimwear</button>
-    <button type="button" class="k-chip" data-tech="biotech" data-q="10.1038/nature16521">A paper: sweat sensor</button></div>
+    <button type="button" class="k-chip" data-tech="materials" data-need="housing" data-q="a tiny home kit for first-time buyers">Tiny home</button>
+    <button type="button" class="k-chip" data-tech="biotech" data-need="health" data-q="10.1038/nature16521">A paper: sweat sensor</button></div>
   <div id="k-card" class="k-slot" aria-live="polite"></div>
   <script type="application/json" id="k-proof">null</script>
 <script data-src="brand/hero.js">
@@ -915,7 +916,18 @@ ${src(h, price.src)}</section>
   <section id="view-pricing" class="view" hidden>
     <p class="k-kicker" id="price-rule">Knos never charges the party being rated.</p>
     <h2 id="pricing">What Knos costs</h2>
-    <p class="lede">Checking is free. Pay only for accepted work, counted or paid.</p>
+    <p class="lede">Demand checks, Ready briefs and proof pages are free. A company pays on money it releases.</p>
+    <div class="card" id="price-decided">
+      <h3>Knos's prices</h3>
+      <div class="table-wrap"><table id="price-decided-table"><thead><tr><th>What</th><th>Price</th><th>Who pays</th></tr></thead><tbody>
+        <tr><th scope="row">Demand check</th><td>10 a month free</td><td>nobody</td></tr>
+        <tr><th scope="row">Deep demand check</th><td>500 USD each, by card</td><td>the company</td></tr>
+        <tr><th scope="row">Ready brief</th><td>free</td><td>nobody</td></tr>
+        <tr><th scope="row">Proof page</th><td>free</td><td>nobody</td></tr>
+        <tr><th scope="row">Release on verified proof</th><td>1% on top; the solver keeps 100%</td><td>the company</td></tr>
+      </tbody></table></div>
+      <p class="fine" id="price-decided-now">Decided 23 Oct 2026. No company is formed yet, so nobody is charged today. The program on devnet charges 0.30% until a timelocked upgrade.</p>
+    </div>
     <div class="k-card" id="bill"></div>
     <div class="card">
       <h3>The price book</h3>

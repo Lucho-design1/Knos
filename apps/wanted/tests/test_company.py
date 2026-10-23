@@ -58,7 +58,8 @@ def test_fees_come_from_config():
     assert qd["at_release"]["units"] * 1e6 == cfg.fee("payout", 5_000_000) == pay.order_fee(5_000_000)
     assert qd["on_graduation"]["units"] * 1e6 == cfg.fee("graduation", 5_000_000)
     assert qd["at_release"]["status"] == "live" and qd["on_graduation"]["status"] == "decided"
-    assert qd["demand_report"]["line"] is None
+    assert qd["demand_report"]["line"] == "demand_check" and qd["demand_report"]["units"] == 0
+    assert qd["demand_report"]["free_a_month"] == 10 and qd["demand_report"]["status"] == "decided"
 
 
 def test_record_never_hides_the_report(q, pick, monkeypatch):
