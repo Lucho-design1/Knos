@@ -90,7 +90,8 @@
     return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}" data-not-prose>
   <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
   ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}</header>
-  ${empty ? `<p class="k-next" data-part="next">Qloo has no taste data for this yet. Name who it is for and what it is like, as in "a vegan meal kit for students, like HelloFresh". Science, B2B or lab work: <a href="${esc(API)}/companies">companies mode</a>.</p>` : `<div class="k-parts">`}
+  ${empty ? `<p class="k-next" data-part="next">Qloo has no taste data for this yet. Name who it is for and what it is like, as in "a vegan meal kit for students, like HelloFresh". Science, B2B or lab work: <a href="${esc(API)}/companies">companies mode</a>.</p>
+  <form class="k-like" data-like><label>Most like <input name="like" maxlength="80" placeholder="a product or brand you know" aria-label="What is it most like?"></label> <button type="submit">Check</button></form>` : `<div class="k-parts">`}
     ${empty ? "" : `<section class="k-part" data-part="audience" data-qloo><h3>Who wants it</h3>
       ${age || gender ? `<p class="k-big">${esc([age, gender].filter(Boolean).join(", "))}</p>` : `<p class="k-none">Qloo did not answer who.</p>`}
       ${segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
@@ -108,6 +109,7 @@ ${src(h, price.src)}</section>
 
   async function ask(v, extra = {}) {
     v = v.trim();
+    if (!extra.exclude && !extra.leader) slot.dataset.ex = "[]";
     if (!v) { q.focus(); return; }
     go.disabled = true; root.setAttribute("aria-busy", "true");
     const ref = paper(v), t0 = performance.now();
@@ -145,10 +147,23 @@ ${src(h, price.src)}</section>
   if (carried) draw(carried);                                  // in the page: at the first paint
   else seen(root, () => get("/api/proof").then((p) => draw(p && p.proof)).catch(() => {}));
   form.addEventListener("submit", (ev) => { ev.preventDefault(); ask(q.value); });
+  slot.addEventListener("submit", (ev) => {                 // "most like ...": the named product is the one to compare with
+    const f = ev.target.closest("[data-like]");
+    if (!f) return;
+    ev.preventDefault();
+    const like = String(new FormData(f).get("like") || "").trim();
+    if (like) ask(slot.dataset.idea || q.value, { leader: like });
+  });
   root.addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-q]"), pick = ev.target.closest("[data-pick]"), none = ev.target.closest("[data-none]");
     if (b) { q.value = b.dataset.q; ask(b.dataset.q); }
     else if (pick) ask(slot.dataset.idea || q.value, { leader: pick.dataset.pick });
-    else if (none) ask(slot.dataset.idea || q.value, { exclude: none.dataset.none.split(",").filter(Boolean) });
+    else if (none) {
+      let prev = [];
+      try { prev = JSON.parse(slot.dataset.ex || "[]"); } catch { prev = []; }
+      const all = [...new Set([...prev, ...none.dataset.none.split(",").filter(Boolean)])].slice(-20);
+      slot.dataset.ex = JSON.stringify(all);
+      ask(slot.dataset.idea || q.value, { exclude: all });
+    }
   });
 })();

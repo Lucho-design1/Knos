@@ -272,7 +272,8 @@ Qloo result.
 - Key only on the server (`QLOO_API_KEY` in the server's environment, or `qloo setup --qloo`): never in the
   browser, the repository, a log or a recording. The bridge forwards the environment to `qloo mcp` and reads no value.
 - Bounded retries: only when the envelope says `error.retryable`, at most two more, with backoff.
-- Minimal cache: live `ok`/`empty` answers only, 15 minutes, at most 200 files, under `.cache/` (git-ignored).
+- Minimal cache: in this flow, live `ok`/`empty` answers only, 15 minutes, at most 200 files, under `.cache/`
+  (git-ignored). The decision check's client (`qloo_rest.py`) keeps an answer 7 days and a refused question 1 day.
   MOCK answers are never cached. No Qloo response is committed; the tests use synthetic bodies only.
 
 ## What a report does not establish

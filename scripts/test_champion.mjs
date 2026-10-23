@@ -80,7 +80,7 @@ async function vectors() {
     await page.locator(".k-vectors").scrollIntoViewIfNeeded();
     await page.waitForFunction(() => /\d s/.test(document.querySelector('.k-vectors [data-v="speed"]')?.textContent || ""), null, { timeout: 30000 }).catch(() => {});
     const v = await page.$$eval(".k-vectors li", (l) => Object.fromEntries(l.map((li) => [li.dataset.v, { text: li.textContent.trim(), href: li.querySelector("a")?.href || null }])));
-    const want = { cost: /\$\d.* per check.*per brief/, speed: /\d+(\.\d)? s to verdict/, friction: /2 steps, no sign-up/, trust: /Escrow on devnet/,
+    const want = { cost: /\$\d.* per check.*per brief/, speed: /\d+(\.\d)? s median to verdict/, friction: /2 steps, no sign-up/, trust: /Escrow on devnet/,
                    capability: /2\.08x fewer tokens, 70% vs 5% pass/, access: /7 fields, any country, phone/, status: /\d+ Ready cards?/ };
     const miss = Object.entries(want).filter(([k, re]) => !re.test(v[k]?.text || "")).map(([k]) => `${k}: ${v[k]?.text}`);
     ok(!miss.length, `${name}: the seven vectors, measured`, miss.length ? miss : Object.values(v).map((x) => x.text));

@@ -137,9 +137,15 @@
   const rawFetch = window.fetch.bind(window);
   window.fetch = function (input, init) {
     const url = String(input && input.url || input);
-    const loud = /api\.devnet\.solana\.com|\/api\//.test(url);
-    if (loud) { busyN++; const p = pill(); if (p) { p.hidden = false; p.textContent = /devnet/.test(url) ? "Talking to Solana devnet…" : "Talking to the server…"; } }
-    return rawFetch(input, init).finally(() => { if (loud && --busyN <= 0) { busyN = 0; const p = pill(); if (p) p.hidden = true; } });
+    // a stream or a presence poll is not "talking to the server": it never ends, and the pill stayed up for good
+    const loud = /api\.devnet\.solana\.com|\/api\//.test(url) && !/\/stream|\/presence|\/api\/vectors|\/api\/proof/.test(url);
+    let done = false;
+    const end = () => { if (!done && loud) { done = true; if (--busyN <= 0) { busyN = 0; const p = pill(); if (p) p.hidden = true; } } };
+    if (loud) {
+      busyN++; const p = pill(); if (p) { p.hidden = false; p.textContent = /devnet/.test(url) ? "Talking to Solana devnet…" : "Talking to the server…"; }
+      setTimeout(end, 30000);                            // a call still open after 30 s stops holding the pill up
+    }
+    return rawFetch(input, init).finally(end);
   };
   const PREFETCH = { "#projects": "/api/projects", "#teams": "/api/companies", "#buy": "/api/products" };
   document.addEventListener("pointerdown", (e) => {

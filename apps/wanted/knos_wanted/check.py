@@ -410,14 +410,19 @@ def _buyer_group(run: _Run, idea: str, every: list[dict]) -> dict | None:
     return None
 
 
-def _recommend(run: _Run, kind: str, signal: dict, known: set) -> dict | None:
-    """Qloo's recommendations for this taste (/v2/insights filter.type = the idea's kind): products next to the idea.
-    Strong neighbours (affinity >= rules) that are not already matched are adjacent demand."""
+def _recommend(run: _Run, kind: str, signal: dict, known: set, tags: list[dict] | None = None) -> dict | None:
+    """Qloo's recommendations for this taste (/v2/insights filter.type = the idea's kind), kept to the idea's own taste
+    tags: products next to the idea. Strong neighbours (affinity >= rules) that are not already matched are adjacent
+    demand. With no taste tag to keep them in the idea's domain, they are not asked for and move nothing (unscoped,
+    the same brands came back for a kombucha and a handbag)."""
+    if not tags:
+        return None
     thin = {"backfill.cross_domain.take": "5"} if len(known) < 3 else {}    # thin matches: cross-domain backfill, not a refusal
+    scope = {"filter.tags": ",".join(t["id"] for t in tags[:3]), "operator.filter.tags": "union"}
     weight = {"signal.demographics.audiences.weight": "medium"} if signal.get("signal.demographics.audiences") else {}
     body, src = run.get("/v2/insights", {"filter.type": kind, "take": 10, "feature.explainability": "true", "bias.trends": "high",
-                                         "filter.popularity.min": "0.2", **weight, **thin, **signal},
-                        "recommendations: what this audience also likes (popularity at least 0.2, bias.trends high"
+                                         "filter.popularity.min": "0.2", **weight, **thin, **scope, **signal},
+                        "recommendations: what this audience also likes, in the idea's taste tags (popularity at least 0.2, bias.trends high"
                                          + (", cross-domain backfill)" if thin else ")"))
     if src is None:
         return None
@@ -590,7 +595,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
                               key=lambda r: -(r["affinity"] or 0))
 
     def recommended():
-        ev["recommended"] = _recommend(run, kind, signal, seen)
+        ev["recommended"] = _recommend(run, kind, signal, seen, ev["tags"])
 
     def trend():
         ev["trend"] = _trend(run, lead, today)

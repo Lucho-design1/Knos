@@ -45,5 +45,6 @@ def test_the_hero_is_one_box_on_both_front_doors():
     for page in sync_brand.HEROES:
         s = page.read_text(encoding="utf-8")
         hero = s[s.index("<!-- k-hero -->"):s.index("<!-- /k-hero -->")]
+        hero = re.sub(r"(<script\b[^>]*>).*?(</script>)", r"\1\2", hero, flags=re.S)   # an inline script's text is not markup
         assert hero.count("<form") == 1 and hero.count("<input") == 1 and 'id="k-mission"' in hero, page.name
         assert "valley of death" in hero and "every field of science" in hero

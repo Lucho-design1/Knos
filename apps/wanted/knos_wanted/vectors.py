@@ -154,7 +154,7 @@ def proof() -> dict:
     return {"proof": p, "label": "A real check this server ran" if p else "No real check yet"}
 
 
-SPEED = '<li data-v="speed"><b>…</b> to verdict</li>'
+SPEED = '<li data-v="speed"><b>…</b> median to verdict</li>'
 STATUS = '<li data-v="status"><b>Ready cards</b></li>'
 COST = '<li data-v="cost"><b>$0</b> per check</li>'
 
@@ -173,7 +173,7 @@ def fill(html: str, v: dict, base: str = "") -> str:
                                    'rel="noopener"><b>Escrow</b> on devnet</a></li>')
     s = (v.get("speed") or {}).get("median_s")
     if isinstance(s, (int, float)):
-        html = html.replace(SPEED, f'<li data-v="speed"><b>{s:g} s</b> to verdict</li>')
+        html = html.replace(SPEED, f'<li data-v="speed"><b>{s:g} s</b> median to verdict</li>')
     c = v.get("cost") or {}
     per, brief = c.get("api_usd_per_check"), c.get("usd_per_ready_brief")
     if isinstance(per, (int, float)):                # the same words vectors.js writes: nothing moves when it runs

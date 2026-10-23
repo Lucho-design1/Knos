@@ -184,7 +184,7 @@ Two or more points: "leans wanted". 0 or 1: "mixed". Below 0: "weak". Fewer than
   and sentences about a person before any call. Buyers name things they like, never who they are.
 - Smallest requests (limits of 3 to 12), bounded retries (only when Qloo says `retryable`, at most 2 more, with
   backoff), and a minimal private cache (live answers only, 15 minutes, at most 200 files under `.cache/`,
-  git-ignored). No Qloo response is ever committed; the tests use synthetic bodies only.
+  git-ignored; the decision check's client keeps an answer 7 days, a refused question 1 day). No Qloo response is ever committed; the tests use synthetic bodies only.
 
 ## Deploy (one service)
 
