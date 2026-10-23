@@ -63,6 +63,8 @@ def _save(kind: str, key: str, obj: dict, chain: bool = True) -> dict:
         g = grounding(obj)                         # kept on the project: its report file does not survive a redeploy
         if g:
             obj["grounding_snapshot"] = g
+    if kind in ("projects", "orders"):
+        _list_cache.clear()                        # the public list shows this change at once
     f = _dir(kind) / f"{key}.json"
     tmp = f.with_suffix(".tmp")
     tmp.write_text(json.dumps(obj, indent=1, default=str), encoding="utf-8")
@@ -534,9 +536,19 @@ def public_project(p: dict) -> dict:
     return out
 
 
+_list_cache: dict[int, tuple[float, list[dict]]] = {}
+
+
 def projects(n: int = 50) -> list[dict]:
-    """The public list: every project not archived, newest first. An archived one stays readable by its id."""
-    return [public_project(p) for p in _all("projects") if not p.get("unlisted")][:n]
+    """The public list: every project not archived, newest first. An archived one stays readable by its id. Built at
+    most once every 30 s (it read every project file and made ~800 KB; under a page test's load that took 17 s), and
+    again at once after any project is saved (_save clears it)."""
+    hit = _list_cache.get(n)
+    if hit and time.time() - hit[0] < 30:
+        return hit[1]
+    out = [public_project(p) for p in _all("projects") if not p.get("unlisted")][:n]
+    _list_cache[n] = (time.time(), out)
+    return out
 
 
 def unlist(pid: str, user: dict | None = None, admin: bool = False, why: str = "") -> dict:

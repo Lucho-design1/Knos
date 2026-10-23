@@ -100,8 +100,14 @@
   const none = () => { for (const id of ["mx-held", "mx-released", "mx-fee"]) document.getElementById(id).textContent = "not readable now"; };
   let pre = null;
   try { pre = JSON.parse(document.getElementById("k-data")?.textContent || "null"); } catch { pre = null; }
+  // the server sums the orders (m.totals); only an older server without them makes the page read every project
+  const shown = (t) => {
+    document.getElementById("mx-held").textContent = units(t.held);
+    document.getElementById("mx-released").textContent = units(t.released);
+    document.getElementById("mx-fee").textContent = units(t.charged);
+  };
   (pre ? Promise.resolve(pre) : fetch("/api/money").then((r) => r.json())).then(prices)
-    .then((m) => fetch("/api/projects?take=100").then((r) => r.json()).then((got) => totals(m, got))).catch(none);
+    .then((m) => m.totals ? shown(m.totals) : fetch("/api/projects?take=100").then((r) => r.json()).then((got) => totals(m, got))).catch(none);
 })();
 </script>
   <!-- k-vectors -->

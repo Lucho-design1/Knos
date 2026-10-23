@@ -37,6 +37,8 @@ class Resp:
 
 
 def test_keycloak_test_tenant_registered_in_jackson(monkeypatch):
+    from knos_wanted import saml_sp
+    monkeypatch.setattr(saml_sp, "available", lambda: False)      # the Jackson path (a test tenant goes to saml_sp when it can)
     monkeypatch.setenv("KNOS_SSO_URL", "https://jackson.test")
     monkeypatch.setenv("KNOS_SSO_CLIENT_SECRET", "v")
     monkeypatch.setenv("KNOS_SSO_API_KEY", "k")

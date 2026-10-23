@@ -148,8 +148,38 @@ def money_doc() -> dict:
     from .money_data import MONEY
     f = preorder.fee_line()
     doc = {k: v for k, v in MONEY.items() if k != "pools"}
-    return {**doc, "fee": {"rate_bps": f.get("rate_bps") or 0, "floor": f.get("floor"), "status": f.get("status"),
-                           "source": "config/fees.yaml"}}
+    fee = {"rate_bps": f.get("rate_bps") or 0, "floor": f.get("floor"), "status": f.get("status"), "source": "config/fees.yaml"}
+    return {**doc, "fee": fee, "totals": _money_totals(fee)}
+
+
+_totals_cache: dict = {"at": 0.0, "v": None}
+
+
+def _money_totals(fee: dict) -> dict | None:
+    """What is held, released and charged, summed here once a minute over every public order (GET /api/projects is
+    800 KB: the page no longer downloads it to add three numbers). A private order's amount is not public: skipped."""
+    if time.time() - _totals_cache["at"] < 60 and _totals_cache["v"] is not None:
+        return _totals_cache["v"]
+    try:
+        bps, floor = int(fee.get("rate_bps") or 0), float(fee.get("floor") or 0.05)
+        held = released = charged = 0.0
+        for p in valley.projects(100):
+            for ms in p.get("milestones") or []:
+                for o in ms.get("orders") or []:
+                    if o.get("units") is None:
+                        continue
+                    v = float(o["units"]) * float(o.get("unit_price") or 1)
+                    if o.get("status") == "locked":
+                        held += v
+                    elif o.get("status") == "released":
+                        released += v
+                        charged += max(v * bps / 1e4, floor)
+        out = {"held": round(held, 2), "released": round(released, 2), "charged": round(charged, 2), "unit": "test units",
+               "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    except Exception:  # noqa: BLE001 - the price list still answers; the page says the totals are not readable now
+        return None
+    _totals_cache.update(at=time.time(), v=out)
+    return out
 
 class State:
     def __init__(self, q: Qloo | None = None, rest: Client | None = None):

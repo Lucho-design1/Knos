@@ -29,6 +29,8 @@ class Resp(io.BytesIO):
 
 
 def test_sso_through_jackson_with_pkce(monkeypatch):
+    from knos_wanted import saml_sp
+    monkeypatch.setattr(saml_sp, "available", lambda: False)      # the Jackson path (a test tenant goes to saml_sp when it can)
     monkeypatch.setenv("KNOS_SSO_URL", "https://jackson.test")
     monkeypatch.setenv("KNOS_SSO_CLIENT_SECRET", "verifier-secret")
     monkeypatch.setenv("KNOS_SSO_API_KEY", "api-key")
