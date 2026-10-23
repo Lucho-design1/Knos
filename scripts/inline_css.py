@@ -5,8 +5,14 @@ before the first paint. Their font and image addresses are rewritten for the pag
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
+
+
+def tight(css: str) -> str:
+    """No comments, one space for each run of whitespace: the same rules in fewer bytes."""
+    return re.sub(r"\s+", " ", re.sub(r"/\*.*?\*/", "", css, flags=re.S)).strip()
 
 
 def main(argv: list[str]) -> int:
@@ -20,7 +26,7 @@ def main(argv: list[str]) -> int:
     for link, css in (('<link rel="stylesheet" href="brand/tokens.css">', tokens),
                       ('<link rel="stylesheet" href="app.css">', (site / "app.css").read_text(encoding="utf-8"))):
         if link in html:
-            html, done = html.replace(link, f"<style>{css}</style>", 1), done + 1
+            html, done = html.replace(link, f"<style>{tight(css)}</style>", 1), done + 1
     page.write_text(html, encoding="utf-8", newline="\n")
     print(f"inline css: {done} stylesheets written into {page}")
     return 0

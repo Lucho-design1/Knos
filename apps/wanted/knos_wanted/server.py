@@ -122,8 +122,10 @@ def inline_css(page: str) -> str:
         tokens = (STATIC / "brand" / "tokens.css").read_text(encoding="utf-8")
         tokens = tokens.replace('url("../fonts/', 'url("/static/fonts/').replace('url("mark.svg")', 'url("/static/brand/mark.svg")') \
             .replace('url("wordmark.svg")', 'url("/static/brand/wordmark.svg")')
-        _INLINE["css"] = {'<link rel="stylesheet" href="/static/brand/tokens.css">': f"<style>{tokens}</style>",
-                          '<link rel="stylesheet" href="/static/style.css">': f"<style>{(STATIC / 'style.css').read_text(encoding='utf-8')}</style>"}
+        def tight(css: str) -> str:                   # no comments, one space per run of whitespace: the same rules
+            return re.sub(r"\s+", " ", re.sub(r"/\*.*?\*/", "", css, flags=re.S)).strip()
+        _INLINE["css"] = {'<link rel="stylesheet" href="/static/brand/tokens.css">': f"<style>{tight(tokens)}</style>",
+                          '<link rel="stylesheet" href="/static/style.css">': f"<style>{tight((STATIC / 'style.css').read_text(encoding='utf-8'))}</style>"}
     for link, style in _INLINE["css"].items():
         page = page.replace(link, style, 1)
     return page
