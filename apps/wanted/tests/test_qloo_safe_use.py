@@ -15,7 +15,21 @@ PERSONAL = ["write to ada.lovelace@example.com", "call +1 512 555 0199", "my nam
             "see https://ada.example.com", "ship to 12 Baker Street", "from 192.168.1.20", "device id A1B2"]
 SENSITIVE = ["infer which customers have diabetes from their taste", "predict a voter's political party from the films they like",
              "guess people's income from their music", "identify a person's sexuality from their likes",
-             "decide who gets a loan from their taste profile", "find out the religion of my neighbour from what she watches"]
+             "decide who gets a loan from their taste profile", "find out the religion of my neighbour from what she watches",
+             "predict which people in Detroit will default on loans from their taste"]       # round 6 of the outside review
+
+
+def test_the_refuse_list_comes_before_any_qloo_call():
+    """Round 6: a demand check naming a word on the published list is refused before Qloo, like personal data."""
+    from knos import refuse
+    for cat, words in refuse.REFUSE.items():
+        with pytest.raises(privacy.Refused, match="/api/refuse"):
+            privacy.check({"idea": f"a product named for {words[0]}"})
+    privacy.check({"idea": "a cordless glue gun for schools"})                  # an allowed look-alike
+
+
+def test_words_in_any_alphabet_stay_whole():
+    assert check.tokens("cómics para niños en el café") == ["cómics", "para", "niños", "en", "el", "café"]
 
 
 @pytest.fixture

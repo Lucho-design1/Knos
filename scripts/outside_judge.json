@@ -1,217 +1,196 @@
 {
  "date": "2026-10-23",
- "by": "a fresh agent with no context, from the live site (round 5)",
- "report_sha256": "b97c152edff8a8aa8a348034586fd30035d240bfdb9ba9c856b941636f3182f0",
+ "by": "a fresh agent with no context, from the live site (round 6)",
+ "report_sha256": "1aa8e0de9d9c075a2ccd24756bb1bb476ed1a433ff5b92b86436037ba044841a",
  "scores": [
   {
    "name": "rule-1",
-   "score": 50
+   "score": 40
   },
   {
    "name": "rule-2",
-   "score": 20
-  },
-  {
-   "name": "rule-3",
-   "score": 90
-  },
-  {
-   "name": "rule-4",
-   "score": 72
-  },
-  {
-   "name": "rule-5",
-   "score": 62
-  },
-  {
-   "name": "rule-6",
-   "score": 82
-  },
-  {
-   "name": "rule-7",
-   "score": 82
-  },
-  {
-   "name": "rule-8",
-   "score": 45
-  },
-  {
-   "name": "rule-9",
-   "score": 95
-  },
-  {
-   "name": "rule-10",
-   "score": 100
-  },
-  {
-   "name": "rule-11",
-   "score": 90
-  },
-  {
-   "name": "rule-12",
-   "score": 100
-  },
-  {
-   "name": "rule-13",
    "score": 50
   },
   {
-   "name": "rule-14",
-   "score": 72
-  },
-  {
-   "name": "rule-15",
-   "score": 80
-  },
-  {
-   "name": "rule-16",
+   "name": "rule-3",
    "score": 60
   },
   {
-   "name": "rule-17",
-   "score": 88
+   "name": "rule-4",
+   "score": 85
   },
   {
-   "name": "rule-18",
+   "name": "rule-5",
+   "score": 50
+  },
+  {
+   "name": "rule-6",
+   "score": 85
+  },
+  {
+   "name": "rule-7",
+   "score": 55
+  },
+  {
+   "name": "rule-8",
+   "score": 80
+  },
+  {
+   "name": "rule-9",
+   "score": 85
+  },
+  {
+   "name": "rule-10",
+   "score": 85
+  },
+  {
+   "name": "rule-11",
+   "score": 40
+  },
+  {
+   "name": "rule-12",
+   "score": 50
+  },
+  {
+   "name": "rule-13",
    "score": 75
   },
   {
-   "name": "rule-19",
-   "score": 58
-  },
-  {
-   "name": "rule-20",
-   "score": 38
-  },
-  {
-   "name": "rule-21",
-   "score": 60
-  },
-  {
-   "name": "rule-22",
-   "score": 65
-  },
-  {
-   "name": "rule-23",
-   "score": 85
-  },
-  {
-   "name": "rule-24",
-   "score": 95
-  },
-  {
-   "name": "rule-25",
+   "name": "rule-14",
    "score": 80
   },
   {
-   "name": "rule-26",
-   "score": 72
-  },
-  {
-   "name": "rule-27",
-   "score": 90
-  },
-  {
-   "name": "rule-28",
-   "score": 85
-  },
-  {
-   "name": "rule-29",
-   "score": 90
-  },
-  {
-   "name": "rule-30",
-   "score": 90
-  },
-  {
-   "name": "rule-31",
-   "score": 70
-  },
-  {
-   "name": "rule-32",
+   "name": "rule-15",
    "score": 95
   },
   {
-   "name": "rule-33",
-   "score": 88
+   "name": "rule-16",
+   "score": 70
   },
   {
-   "name": "rule-34",
-   "score": 65
+   "name": "rule-17",
+   "score": 70
   },
   {
-   "name": "rule-35",
+   "name": "rule-18",
    "score": 55
   },
   {
-   "name": "rule-36",
-   "score": 90
+   "name": "rule-19",
+   "score": 80
   },
   {
-   "name": "judge-1",
+   "name": "rule-20",
+   "score": 60
+  },
+  {
+   "name": "rule-21",
+   "score": 40
+  },
+  {
+   "name": "rule-22",
+   "score": 38
+  },
+  {
+   "name": "rule-23",
+   "score": 55
+  },
+  {
+   "name": "Jason Calacanis",
+   "score": 35
+  },
+  {
+   "name": "Mike Diolosa",
+   "score": 60
+  },
+  {
+   "name": "Nicole Seligman",
+   "score": 58
+  },
+  {
+   "name": "Todd Boehly",
+   "score": 35
+  },
+  {
+   "name": "Cedric the Entertainer",
    "score": 30
   },
   {
-   "name": "judge-2",
-   "score": 62
-  },
-  {
-   "name": "judge-3",
-   "score": 55
-  },
-  {
-   "name": "judge-4",
-   "score": 32
-  },
-  {
-   "name": "judge-5",
-   "score": 25
-  },
-  {
-   "name": "judge-6",
-   "score": 35
+   "name": "Michael Abrams",
+   "score": 40
   }
  ],
  "outside_gaps": [
   {
    "score": "rule-1",
-   "gap": "the entrant's eligibility",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); no Devpost listing"
+   "gap": "the entrant's Devpost submission (by 30 Oct, 11:45 pm EDT)",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
   },
   {
    "score": "rule-2",
-   "gap": "the entrant's Devpost submission (by 30 Oct, 11:45 pm EDT)",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); no Devpost listing"
+   "gap": "the entrant's eligibility",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
   },
   {
-   "score": "rule-8",
-   "gap": "the Devpost text, filed by the entrant",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); no Devpost listing"
+   "score": "rule-3",
+   "gap": "the Devpost entry page, every field",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
   },
   {
-   "score": "rule-15",
-   "gap": "the entrant's attestation of ownership",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); no Devpost listing"
+   "score": "rule-7",
+   "gap": "the submission saying what was built in the period (git history from 14 Oct)",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
   },
   {
-   "score": "rule-20",
-   "gap": "real users and pre-orders",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); no Devpost listing"
+   "score": "rule-11",
+   "gap": "the Devpost text description",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
   },
   {
-   "score": "rule-33",
-   "gap": "the entrant's confirmation of the event credential",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); no Devpost listing"
+   "score": "rule-12",
+   "gap": "keeping any second submission distinct",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
   },
   {
-   "score": "judge-1",
-   "gap": "real makers, users and pre-orders",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); no Devpost listing"
+   "score": "rule-13",
+   "gap": "ownership and IP, in the affidavit",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
   },
   {
-   "score": "judge-4",
-   "gap": "a fan or venue product with real pre-orders",
-   "live_count": "0 crossings, 0 pre-order commitments by people outside Knos (/api/outside); no Devpost listing"
+   "score": "rule-16",
+   "gap": "entering as a solo entrant",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
+  },
+  {
+   "score": "rule-17",
+   "gap": "confirming no sponsor support",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
+  },
+  {
+   "score": "rule-18",
+   "gap": "tagging what was submitted and keeping the demo up to 5 Nov",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
+  },
+  {
+   "score": "Jason Calacanis",
+   "gap": "real outside users",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
+  },
+  {
+   "score": "Todd Boehly",
+   "gap": "paying customers and revenue",
+   "live_count": "0 crossings by outside people with a pre-order, 0 interviews, 0 letters of intent (/api/outside); no Devpost listing"
   }
+ ],
+ "fixed_after": [
+  "the refuse list now runs before any Qloo call on every demand path (privacy.check)",
+  "an ask to predict people's loan defaults is refused before Qloo (SENSITIVE gains default, loans, mortgages, arrears, evictions)",
+  "accented words stay whole (cómics, café) in the demand check and open signals",
+  "a page for the Qloo judges: docs/reference/QLOO_JUDGES.md (what was built from 14 Oct, where Qloo is measured)"
+ ],
+ "judgement": [
+  "verdict calibration: 8 of 9 realistic ideas refused, the cold-brew API example refused",
+  "the front door's two stories and about 30 navigation entries",
+  "the remaining judge and criteria scores (rule-4 to rule-6, rule-8 to rule-10, rule-14, rule-15, rule-19 to rule-23, Mike Diolosa, Nicole Seligman, Cedric the Entertainer, Michael Abrams)"
  ]
 }

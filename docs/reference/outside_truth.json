@@ -1,0 +1,34 @@
+{
+ "made": "2026-10-23 07:16 UTC",
+ "summary": {
+  "rows": 200,
+  "commercialized": 100,
+  "not": 100,
+  "tp": 40,
+  "fp": 45,
+  "fn": 60,
+  "tn": 55,
+  "accuracy": 0.475,
+  "base_rate": 0.5,
+  "precision": 0.4706,
+  "recall": 0.4,
+  "p_binomial_vs_base": 0.781623,
+  "p_fisher": 0.56734,
+  "verdicts": {
+   "OPEN": 85,
+   "REFUSE": 115
+  }
+ },
+ "method": "Population: DoD SBIR/STTR Phase I awards 2005-2014 on sbir.gov with an abstract of at least 200 characters. Commercialized = the Zenodo data links at least one granted US patent to the award's contract (a few also have a product or marking web page). Not = no linked patent and no Phase II from the same firm on the same topic code or title. 100 of each, drawn per award year in equal counts (seed 328). Knos sees one phrase: the title, or the abstract's first sentence, at most 120 characters. Prediction = OPEN from /api/open-signals (REFUSE and CANNOT_DECIDE count as not). p-values: exact binomial (one-sided, accuracy above the majority-class rate) and Fisher's exact (two-sided) on prediction x outcome.",
+ "sources": [
+  {
+   "name": "Zenodo: Data for 'A new approach to measuring invention commercialization: An application to the SBIR program' (Bottai, de Rassenfosse, Raiteri; Research Policy 10.1016/j.respol.2025.105302)",
+   "url": "https://doi.org/10.5281/zenodo.17018422"
+  },
+  {
+   "name": "sbir.gov award data (with abstracts)",
+   "url": "https://data.www.sbir.gov/awarddatapublic/award_data.csv"
+  }
+ ],
+ "population_base_rate": 0.0206
+}

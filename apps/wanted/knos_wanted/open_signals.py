@@ -81,7 +81,7 @@ SINCE = "2023-01-01"
 
 
 def phrase(idea: str) -> str:
-    words = [w for w in re.findall(r"[a-z0-9][a-z0-9-]*", (idea or "").lower()) if w not in STOP]
+    words = [w for w in re.findall(r"[^\W_][\w-]*", (idea or "").lower()) if w not in STOP]
     return " ".join(words[:2])           # the subject: two words find more than four (Hacker News, GDELT match them all)
 
 

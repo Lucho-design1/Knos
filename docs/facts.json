@@ -154,6 +154,22 @@
   },
   {
    "say": [
+    "1%"
+   ],
+   "what": "the release fee decided 23 Oct 2026, paid by the company on top; not on chain until the timelocked upgrade",
+   "file": "config/fees.yaml",
+   "has": "    rate_bps: 100"
+  },
+  {
+   "say": [
+    "10"
+   ],
+   "what": "demand checks a month that are free, decided 23 Oct 2026",
+   "file": "config/fees.yaml",
+   "has": "    free_a_month: 10"
+  },
+  {
+   "say": [
     "30"
    ],
    "what": "days after which a signing key expires unless it is attested again",

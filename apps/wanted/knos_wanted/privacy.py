@@ -37,7 +37,7 @@ INFER = re.compile(r"\b(infer\w*|predict\w*|guess\w*|identif\w+|determin\w+|find
 PEOPLE = re.compile(r"\b(persons?|people|someone|somebody|individuals?|users?|customers?|employees?|applicants?|tenants?|voters?|neighbou?rs?|"
                     r"patients?|visitors?|followers?|students?|candidates?|my (?:friend|wife|husband|partner|boss|child)\w*|their|his|her|whose)\b", re.I)
 SENSITIVE = re.compile(r"\b(health\w*|ill(?:ness)?|diseases?|diagnos\w*|diabet\w*|cancer|pregnan\w*|mental|depress\w*|disabilit\w*|hiv|"
-                       r"financ\w*|income|salar\w*|debts?|credit ?scores?|wealth\w*|poor|bankrupt\w*|politic\w*|votes?|voting|religio\w*|"
+                       r"financ\w*|income|salar\w*|debts?|credit ?scores?|default\w*|loans?|mortgages?|arrears|evict\w*|wealth\w*|poor|bankrupt\w*|politic\w*|votes?|voting|religio\w*|"
                        r"sexual\w*|gay|lesbian|transgender|ethnic\w*|race|racial|immigra\w*|citizenship|identity|identities|real names?)\b", re.I)
 ELIGIBLE = re.compile(r"\b(eligib\w*|approve|reject|deny|screen\w*|decide who gets)\b.{0,60}\b(loans?|credit|housing|rent\w*|jobs?|hir\w+|"
                       r"employ\w*|insurance|mortgage\w*)\b", re.I)
@@ -80,7 +80,23 @@ def problems(value, where: str = "input") -> list[str]:
     return out
 
 
+class Refused(ValueError):
+    """Refused before any Qloo call: the idea is on Knos's published refuse list (knos.refuse, GET /api/refuse)."""
+
+
+def _texts(value) -> list[str]:
+    if isinstance(value, dict):
+        return [t for v in value.values() for t in _texts(v)]
+    if isinstance(value, (list, tuple)):
+        return [t for v in value for t in _texts(v)]
+    return [value] if isinstance(value, str) and not SAFE.match(value) else []
+
+
 def check(value, where: str = "input") -> None:
+    from knos import refuse
+    no = refuse.refused(" ".join(_texts(value)))
+    if no:
+        raise Refused(f"Knos refuses this: {no[0]['why']} ('{no[0]['word']}'). The list is public: /api/refuse.")
     p = problems(value, where)
     if p:
         raise PersonalData("Knos sends no personal data to Qloo: " + "; ".join(p[:3])

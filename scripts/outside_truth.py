@@ -49,6 +49,8 @@ def post(path, body, headers=None, timeout=300):
             return e.code, json.loads(raw)
         except ValueError:                                  # a proxy's HTML page (the app restarting): not an answer
             return e.code, {"message": raw[:120].decode("utf-8", "replace")}
+    except (TimeoutError, urllib.error.URLError) as e:      # no answer at all: retried like a 5xx
+        return 599, {"message": str(e)[:120]}
 
 
 def phrase(row: dict) -> str:

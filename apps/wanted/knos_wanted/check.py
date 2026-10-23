@@ -148,7 +148,7 @@ def _norm(w: str) -> str:
 
 
 def tokens(text: str) -> list[str]:
-    return re.findall(r"[a-z][a-z0-9\-]{1,}", (text or "").lower())
+    return re.findall(r"[^\W\d_][\w\-]{1,}", (text or "").lower())        # any alphabet: "cómics" stays one word
 
 
 def content_words(idea: str, place: str | None = None) -> list[str]:
