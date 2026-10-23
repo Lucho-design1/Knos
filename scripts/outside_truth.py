@@ -44,7 +44,11 @@ def post(path, body, headers=None, timeout=300):
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, json.loads(r.read())
     except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read() or b"{}")
+        raw = e.read() or b"{}"
+        try:
+            return e.code, json.loads(raw)
+        except ValueError:                                  # a proxy's HTML page (the app restarting): not an answer
+            return e.code, {"message": raw[:120].decode("utf-8", "replace")}
 
 
 def phrase(row: dict) -> str:
@@ -96,9 +100,9 @@ def main(sample_path: str, limit: int | None, out: str | None, public: bool) -> 
         idea = phrase(row)
         for _ in range(10):                                                  # a 429 waits out the public window
             st, got = post("/api/open-signals", {"idea": idea}, op)
-            if st != 429:
+            if st != 429 and st < 500:
                 break
-            time.sleep(70)
+            time.sleep(70 if st == 429 else 20)                              # a 5xx: the app is restarting
         if st != 200 or not got.get("verdict"):
             print(f"FAIL {row['id']}: HTTP {st} {got.get('message') or got.get('error')}")
             continue

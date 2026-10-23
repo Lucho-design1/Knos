@@ -129,6 +129,7 @@ jobs:
         run: |
           npx --yes @lhci/cli@0.14.0 healthcheck --fatal || true
           CHROME=$(node -e 'console.log(require("chrome-launcher").Launcher.getInstallations()[0] || "")' 2>/dev/null || true)
+          "${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --dump-dom about:blank > /dev/null 2>&1 || true
           while read -r u; do
             ( curl -fsS -m 120 -o /dev/null "$u" || true
               timeout 60 "${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --user-data-dir="$(mktemp -d)" \
@@ -232,7 +233,8 @@ jobs:
           PY
       - name: sign into Rekor v2, then verify as an outsider would
         run: |
-          "$RUNNER_TEMP/sg/bin/sigstore" sign --rekor-version 2 --bundle proofs.sigstore.json proofs.json
+          "$RUNNER_TEMP/sg/bin/python" scripts/rekor_v2_config.py "$RUNNER_TEMP/trust.json"
+          "$RUNNER_TEMP/sg/bin/sigstore" --trust-config "$RUNNER_TEMP/trust.json" sign --rekor-version 2 --bundle proofs.sigstore.json proofs.json
           "$RUNNER_TEMP/sg/bin/sigstore" verify github --bundle proofs.sigstore.json --repository "$GITHUB_REPOSITORY" \
             --cert-identity "https://github.com/$GITHUB_REPOSITORY/.github/workflows/champion.yml@$GITHUB_REF" --sha "$GITHUB_SHA" proofs.json
           python3 -c 'import json;e=json.load(open("proofs.sigstore.json"))["verificationMaterial"]["tlogEntries"][0];print("rekor", e["kindVersion"], "log index", e["logIndex"])'

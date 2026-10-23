@@ -104,9 +104,12 @@ def main(publish: bool, claude_file: str | None = None) -> int:
         print("Claude alone vs with Qloo: " + json.dumps(s["claude"]))
     print(f"{n} of {len(rows)} changed with Qloo added: {json.dumps(s)}")
     if publish:
-        st, got = post("/api/qloo-diff", {"made": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), "summary": s,
-                                          "rows": rows, "rule": RULE, "rules": rules,
-                                          "baseline": "open signals" + (", and Claude alone (claude -p: no tools, no data)" if arms else "")}, op)
+        doc = {"made": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), "summary": s, "rows": rows,
+               "rule": RULE, "rules": rules, "baseline": "open signals" + (", and Claude alone (claude -p: no tools, no data)" if arms else "")}
+        if os.environ.get("KNOS_DIFF_SAVE"):              # a private copy (never the repo): a failed publish need not ask Qloo again
+            with open(os.environ["KNOS_DIFF_SAVE"], "w", encoding="utf-8") as f:
+                json.dump(doc, f)
+        st, got = post("/api/qloo-diff", doc, op)
         print(f"published: HTTP {st} {got}")
         if st != 200:
             return 1

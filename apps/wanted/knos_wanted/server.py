@@ -248,7 +248,7 @@ def make_handler(state: State):
 
         def _json(self) -> dict:
             n = int(self.headers.get("Content-Length") or 0)
-            if n > MAX_BODY:
+            if n > (4 * MAX_BODY if urlparse(self.path).path == "/api/qloo-diff" else MAX_BODY):   # the operator's table: 3 arms x 20 rows
                 raise ValueError("request too large")
             got = json.loads(self.rfile.read(n) or b"{}")
             if not isinstance(got, dict):
