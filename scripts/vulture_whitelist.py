@@ -323,3 +323,5 @@ _.check_verdict, _.check_claims, _.rekor_url
 
 # knos.demand_cli: `knos demand` is a Typer command; Typer calls it by its decorator, never by name.
 _.demand_
+# knos.ready.tranches: the app (apps/wanted valley.py, wallets.py) funds a long milestone's first 90-day order with it.
+_.tranches

@@ -5,10 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knos. How we verify</title>
 <meta name="description" content="What checks every number, every decision and every payment on Knos, and where to see it yourself.">
-<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/brand/tokens.css">
 <link rel="stylesheet" href="/static/style.css">
 <script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/static/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png">
 </head>
 <body>
 <!-- k-bar -->
@@ -88,7 +90,7 @@
       <p class="small">The server keeps only the passkey's public key. The passkey owns a LazorKit smart wallet on devnet
       (program FLb7fyAtkfA4TSa2uYcAT8QKHd2pkoMHgmqfnXFXo7ao); Solana's secp256r1 precompile checks each approval. A pre-order,
       a milestone's funding, a commitment to buy, a receivable's sale, an advance and its collection are each signed by the
-      person's own passkey. The server only pays the fee and relays. Google, ORCID and email sign-in are not available yet.</p></details></div>
+      person's own passkey. The server only pays the fee and relays.</p></details></div>
 
   <div class="card"><h2>Record: an append-only journal</h2>
     <p>Every decision, lock and release is written down, and its root anchored on devnet. <span id="anchor" class="small muted"></span></p>

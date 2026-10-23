@@ -669,7 +669,9 @@ def prepare_project_fund(led, user: dict, pid: str, key: str, units, rp_id: str,
     claim = ideas.claim(valley.memo(p, m, crit), field_name=preorder.FIELD, kind="person", by={"app": "knos projects", "project": pid, "milestone": key,
                                                                        "funder": f"passkey {h['sub']}"[:80]})
     m_, keys_, label = C.parse_panel(f"{pm}:{','.join(pkeys)}", me["vault"], str(me["vault"]), True)
-    plan = W.plan(claim, units=units, price=1, stages=[("referee_pass", 10_000)], stage_work_s=[int(m["deadline_s"])], demand_hash=p.get("report"))
+    from knos import ready
+    tranches = ready.tranches(int(m["deadline_s"]))       # an order holds money 90 days at most: a long milestone, in tranches
+    plan = W.plan(claim, units=units, price=1, stages=[("referee_pass", 10_000)], stage_work_s=[tranches[0]], demand_hash=p.get("report"))
     amount = plan["stage1"]["amount"]
     need = amount + pay.order_fee(amount)
     have = _units(led, me["token_account"])
@@ -685,7 +687,8 @@ def prepare_project_fund(led, user: dict, pid: str, key: str, units, rp_id: str,
     if led.account(pay.ata(pay.FEE_OWNER, mint)) is None:
         pre.insert(0, pay.create_ata_ix(relayer().pubkey(), pay.FEE_OWNER, mint))
     prep = _prep(led, h, me, [fund], pre)
-    meta = {"cred_id": h["cred_id"], "project": pid, "milestone": key, "units": units, "deadline_s": int(m["deadline_s"]), "claim": claim,
+    meta = {"cred_id": h["cred_id"], "project": pid, "milestone": key, "units": units, "deadline_s": int(m["deadline_s"]),
+            "tranches": tranches, "tranche": 1, "claim": claim,
             "plan_hash": plan["commitment_hash"], "order": str(order), "funder_vault": str(me["vault"]), "kind": kind, "grant": grant,
             "pool": pool, "referral": {"code": referral["code"], "wallet": referral["wallet"]} if referral else None,
             "panel": {"m": m_, "keys": keys_, "unlisted": True, "label": label}, "program": str(prog), "mint": str(mint),

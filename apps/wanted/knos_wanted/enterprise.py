@@ -89,16 +89,39 @@ def _http(method: str, url: str, data: dict | None = None, headers: dict | None 
         else:
             body = json.dumps(data).encode()
             h["Content-Type"] = "application/json"
-    req = urllib.request.Request(url, data=body, method=method, headers=h)
     op = opener or urllib.request.urlopen
+    # Jackson runs on another free Render service: from this one it can answer 429 or 5xx for a while (rate limited,
+    # or waking). Each is tried again after its Retry-After (or 2, 4, 8 s), at most 25 s in all; then a plain message.
+    waited = 0.0
+    for attempt in range(5):
+        req = urllib.request.Request(url, data=body, method=method, headers=h)
+        try:
+            with op(req, timeout=60) as r:
+                raw = r.read(512_000)
+            return json.loads(raw or b"{}")
+        except urllib.error.HTTPError as e:
+            if e.code not in (429, 502, 503, 504) or waited >= RETRY_BUDGET_S:
+                if e.code in (429, 502, 503, 504):
+                    raise SSOError("single sign-on is busy right now; try again in a minute") from None
+                raise SSOError(f"SAML Jackson answered HTTP {e.code} on {urllib.parse.urlparse(url).path}") from None
+            pause = _retry_after(e.headers.get("Retry-After") if e.headers else None, 2.0 * 2 ** attempt)
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            raise SSOError(f"SAML Jackson is not reachable ({type(e).__name__}); it may be waking up, try again in a minute") from None
+        pause = min(pause, RETRY_BUDGET_S - waited)
+        _sleep(pause)
+        waited += pause
+    raise SSOError("single sign-on is busy right now; try again in a minute")
+
+
+RETRY_BUDGET_S = 25.0
+_sleep = time.sleep          # tests replace it
+
+
+def _retry_after(value, default: float) -> float:
     try:
-        with op(req, timeout=60) as r:
-            raw = r.read(512_000)
-    except urllib.error.HTTPError as e:
-        raise SSOError(f"SAML Jackson answered HTTP {e.code} on {urllib.parse.urlparse(url).path}") from None
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
-        raise SSOError(f"SAML Jackson is not reachable ({type(e).__name__}); it may be waking up, try again in a minute") from None
-    return json.loads(raw or b"{}")
+        return max(0.5, min(float(value), 20.0))
+    except (TypeError, ValueError):
+        return default
 
 
 def ensure_connection(tenant: str, base_url: str, opener=None) -> dict:

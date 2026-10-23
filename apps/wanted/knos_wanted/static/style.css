@@ -125,7 +125,6 @@ label.opt { font-weight: 400; font-size: var(--fs-1); margin: 6px 0; }
 .meter { height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; margin: 6px 0 2px; }
 .meter > span { display: block; height: 100%; background: var(--accent); }
 .card.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-.soon button { margin: 0; } .soon button:disabled { opacity: .7; }
 #fundList, #lendList, #needList { list-style: none; padding: 0; }
 
 /* static/ux.js: display modes, the display sheet, the "what is happening" pill */

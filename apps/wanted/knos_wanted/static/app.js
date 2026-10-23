@@ -143,8 +143,8 @@ async function passkeyUse() {
   setSession(await api("/api/auth/passkey/login", { id: a.id, clientDataJSON: b64u(a.response.clientDataJSON),
     authenticatorData: b64u(a.response.authenticatorData), signature: b64u(a.response.signature) }));
 }
-// Google, ORCID and email are shown, switched off ("Not available yet"): a passkey is the one sign-in, for everyone,
-// and it is the wallet that signs every payment. Nothing here needs an account anywhere.
+// The sheet shows only what works: a passkey is the one sign-in, for everyone, and it is the wallet that signs every
+// payment. Nothing here needs an account anywhere. (A company signs in with its own SSO on /companies.)
 
 // ---- researcher ----------------------------------------------------------------------------------------------------
 const KIND = { memory: "Memory", paper: "Paper", qloo: "Qloo", decision: "Decision" };

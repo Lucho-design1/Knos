@@ -37,6 +37,8 @@ from .qloo_mcp import AGGREGATE, Qloo, QlooUnavailable
 from .qloo_rest import Client
 
 STATIC = Path(__file__).parent / "static"
+ROOT_ICONS = {"/favicon.ico": "favicon.ico", "/apple-touch-icon.png": "brand/apple-touch-icon.png",
+              "/apple-touch-icon-precomposed.png": "brand/apple-touch-icon.png"}
 
 
 def trusted_hops() -> int:
@@ -421,6 +423,9 @@ def make_handler(state: State):
             if u.path in ("/sw.js", "/manifest.webmanifest"):        # the PWA: its worker's scope is the whole app
                 ctype = "text/javascript; charset=utf-8" if u.path == "/sw.js" else "application/manifest+json"
                 return self._send(200, (STATIC / u.path[1:]).read_bytes(), ctype, {"Cache-Control": "no-cache"})
+            if u.path in ROOT_ICONS:                                    # where browsers look without a link: the crow
+                f = STATIC / ROOT_ICONS[u.path]
+                return self._send(200, f.read_bytes(), mimetypes.guess_type(f.name)[0] or "image/x-icon", {"Cache-Control": "max-age=86400"})
             if u.path.startswith("/static/"):
                 f = (STATIC / u.path[len("/static/"):]).resolve()
                 if STATIC.resolve() in f.parents and f.is_file():

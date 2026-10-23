@@ -434,9 +434,27 @@ def _recommend(run: _Run, kind: str, signal: dict, known: set, tags: list[dict] 
 
 def _audience(run: _Run, signal: dict, what: str, take: int = 6) -> tuple[list[dict], int | None]:
     body, src = run.get("/v2/insights", {"filter.type": "urn:audience", "take": take, **signal}, what)
-    rows = [{"name": a.get("disambiguation") or a.get("name"), "affinity": (a.get("query") or {}).get("affinity"), "src": src}
+    rows = [{"name": a.get("disambiguation") or a.get("name"), "id": a.get("entity_id") or a.get("id"),
+             "affinity": (a.get("query") or {}).get("affinity"), "src": src}
             for a in (((body or {}).get("results") or {}).get("entities") or [])[:take] if safe_segment(a)]
     return rows, src
+
+
+# words of a Qloo id path that say nothing about the idea ("urn:audience:hobbies_and_interests:sneakerheads")
+PATH_GENERIC = {"urn", "tag", "audience", "qloo", "keyword", "genre", "category", "subtype", "and", "the", "of", "interest",
+                "hobbie", "hobby", "lifestyle", "preference", "communitie", "community", "global", "issue", "investing", "entity"}
+
+
+def _path_words(urn) -> set[str]:
+    return {_norm(w) for w in re.split(r"[:_\-./]+", str(urn or "").lower()) if len(w) > 2} - PATH_GENERIC
+
+
+def tied(row: dict, words: list[str], tags: list[dict]) -> bool:
+    """A segment shown under "Who wants it" must share a word, or a Qloo tag path word, with its idea: its name's words or
+    its id's path against the idea's content words and the paths of the idea's own Qloo tags (TASK-WORLD T10)."""
+    idea = set(words) | {w for t in tags for w in _path_words(t.get("id"))}
+    own = {_norm(w) for w in tokens(row.get("name") or "")} | _path_words(row.get("id"))
+    return bool(own & idea)
 
 
 def _informative(rows: list[dict]) -> list[dict]:
@@ -534,7 +552,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
                      "top_gender": max(gender, key=gender.get) if gender else None, "src": s5}
     signal_before = dict(signal)
     every, _ = _audience(run, signal, "audience segments ranked by affinity", take=20)
-    ev["audiences"] = every[:6]
+    ev["audiences"] = [{**a, "tied": tied(a, words, ev["tags"])} for a in every[:6]]
     ev["buyer_group"] = _buyer_group(run, idea, every)
     if ev["buyer_group"] and ev["buyer_group"].get("id"):
         signal = {**signal, "signal.demographics.audiences": ev["buyer_group"]["id"]}       # the named group steers the later calls
@@ -828,7 +846,7 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
         pr = ev.get("price") or {"tier": "mid", "unit_price": TIERS["mid"]}
         vs = ev.get("versus") or {}
         d["plan"] = {"who": {"age": (ev.get("who") or {}).get("top_age"), "gender": (ev.get("who") or {}).get("top_gender"),
-                             "segments": [a["name"] for a in _informative(ev.get("audiences") or [])][:4]},
+                             "segments": [a["name"] for a in _informative(ev.get("audiences") or []) if a.get("tied")][:4]},
                      "where": [c["name"] + (f" ({c['country']})" if c.get("country") else "") for c in ev.get("cities") or []][:4],
                      "tier": pr["tier"], "unit_price": pr["unit_price"], "target_units": d["target_units"], "reserve_units": d["reserve_units"],
                      "escrow_target": d["target_units"] * pr["unit_price"], "escrow_reserve": d["reserve_units"] * pr["unit_price"],

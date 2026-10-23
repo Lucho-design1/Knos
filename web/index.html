@@ -13,8 +13,6 @@
 <!-- the colour of the browser's own bar: the page's paper (web/app.css --paper), dark first, light for a light system -->
 <meta name="theme-color" content="#07080c">
 <meta name="theme-color" content="#f4f4f0" media="(prefers-color-scheme: light)">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
 <!-- The card of a shared link is a file of this site (web/brand/card.png, drawn by scripts/brand.py); the page itself asks for nothing here. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Knos">
@@ -87,6 +85,9 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
 <link rel="alternate" type="application/atom+xml" href="index.atom" title="Agent PR Index">
 <!-- The first screen: the outcome as the h1, then who it is for, then the sentence, then the number. Styled here because app.css is at its size limit (tests/web/motion.mjs). From 900 px the top margin is 36 px, so the upgrade line sits 4 px down and 24 px tall, clear of the sentence. -->
 <style>.hero .hero-fact { text-wrap: pretty; } .hero .hero-outcome { font-size: var(--s2); line-height: 1.35; font-weight: 500; color: var(--ink); max-width: 26em; margin: 0 0 8px; text-wrap: balance; } .hero .hero-who { color: var(--ink); max-width: 34em; margin: 0 0 6px; text-wrap: pretty; } .hero .hero-fact { margin-bottom: 12px; } .hero .hero-board { margin-top: 12px; } .hero h1 { margin-bottom: 12px; } .hero .hero-fact .k-num { color: var(--ink); font-weight: 600; } #how-it-works { margin-top: 64px; scroll-margin-top: 80px; } @media (min-width: 900px) { .hero { padding-top: 36px; } .hero-upgrades { top: 4px; } .hero-upgrades > summary { padding-block: 2px; } }</style>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
 </head>
 <body>
 <a class="k-skip" href="#fd-in">Skip to the check box</a>
@@ -427,7 +428,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     const d = r.decision || {}, p = d.plan || {}, h = r.hash;
     let [word, cls] = WORD[d.verdict] || [String(d.verdict || "No verdict"), "unknown"];
     const who = r.who || {}, age = (p.who?.age || who.top_age || "").replace(/_/g, " ").replace(" and ", " and "), gender = p.who?.gender || who.top_gender || "";
-    const segs = (p.who?.segments || (r.audiences || []).map((a) => a.name)).filter(Boolean).slice(0, 3);
+    const segs = (p.who?.segments || (r.audiences || []).filter((a) => a.tied).map((a) => a.name)).filter(Boolean).slice(0, 3);
     const cities = (r.cities || []).slice(0, 5), price = r.price || {}, tier = String(price.tier || "").toLowerCase();
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
     // visitor can pick another match, or none of them; the verdict's reason is Knos's rule, apart from Qloo's data

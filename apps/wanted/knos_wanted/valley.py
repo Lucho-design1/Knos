@@ -194,7 +194,8 @@ def _create_custom(user: dict, title: str, brief: dict, report: str | None, team
     if not isinstance(brief.get("milestones"), list) or not 1 <= len(brief["milestones"]) <= 12:
         raise Refused("brief.milestones: 1 to 12 milestones")
     from knos import ready
-    rows = [ready.normal(m if isinstance(m, dict) else {}, i) for i, m in enumerate(brief["milestones"])]
+    long = ready.science_brief(brief)
+    rows = [ready.normal(m if isinstance(m, dict) else {}, i, long) for i, m in enumerate(brief["milestones"])]
     share = 10_000 // len(rows)
     ms = [{"key": n["key"], "name": n["name"] or n["key"], "kind": "build", "share_bps": share, "route": "none", "game": False,
            "deadline_s": n["deadline_s"] or ready.MIN_DEADLINE_S, "target": n["target"], "verifier": n["verifier"]} for n in rows]
@@ -668,8 +669,10 @@ def fund_tx(pid: str, key: str, units: int, account: str, kind: str = "funder", 
     cap = blink._Capture(led)
     # the payee is bound when a maker claims the milestone (claim); until then the funder's own wallet stands in the
     # document (never paid: a release needs a claimed attempt, a refund always goes back to the funder)
+    from knos import ready
+    tranches = ready.tranches(int(m["deadline_s"]))       # an order holds money 90 days at most: a long milestone, in tranches
     doc = C.commit(claim, units=units, price=1, payee=C.parse_payee(str(wallet)), funder=blink._Wallet(wallet), funder_token=tok,
-                   mint=mint, led=cap, stages=[("referee_pass", 10_000)], stage_work_s=[int(m["deadline_s"])],
+                   mint=mint, led=cap, stages=[("referee_pass", 10_000)], stage_work_s=[tranches[0]],
                    panel=pan, program=preorder.program(), demand_hash=p.get("report"), unlisted_panel=True, criteria=_brief(p))
     amount = units * escrow.UNIT
     setup = [pay.create_ata_ix(authority.pubkey(), w, mint) for w in (pay.FEE_OWNER,) if led.account(pay.ata(w, mint)) is None]
@@ -688,7 +691,8 @@ def fund_tx(pid: str, key: str, units: int, account: str, kind: str = "funder", 
     o = {"order": st["order"], "project": pid, "milestone": key, "claim_id": claim["id"], "units": units, "unit_price": 1, "kind": kind,
          "funder": str(wallet), "grant": grant if kind == "grant" else None, "pool": pool,
          "referral": {"code": referral["code"], "wallet": referral["wallet"]} if referral else None,
-         "status": "pending", "deadline_s": int(m["deadline_s"]), "doc": doc, "made": _now(), "signatures": {}, "criteria_hash": crit,
+         "status": "pending", "deadline_s": int(m["deadline_s"]), "tranches": tranches, "tranche": 1,
+         "doc": doc, "made": _now(), "signatures": {}, "criteria_hash": crit,
          "private": private is True}
     _save("orders", st["order"], o)
     with _lock:

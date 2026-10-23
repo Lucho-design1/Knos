@@ -149,10 +149,9 @@ class Run:
             p.goto(self.base + "/#" + view, wait_until="domcontentloaded")
         p.wait_for_function("() => typeof api === 'function'", timeout=30_000)
         p.click("#whoBtn")
-        soon = p.evaluate("() => ['googleSoon', 'orcidSoon', 'emailSoon'].map((id) => { const b = document.getElementById(id); "
-                          "return !!b && b.disabled && b.offsetParent !== null; })")
-        if not all(soon):
-            raise RuntimeError(f"the sign-in sheet does not show Google, ORCID and email as 'not available yet': {soon}")
+        dead = p.evaluate("() => [...document.querySelectorAll('#signin button')].filter((b) => b.disabled && b.offsetParent !== null).length")
+        if dead:
+            raise RuntimeError(f"the sign-in sheet shows {dead} switched-off button(s): it shows only what works")
         p.fill("#pkName", f"Playwright {role}")
         p.click("#pkNew")
         p.wait_for_function("() => { try { return !!JSON.parse(localStorage.getItem('knos.session')||'null'); } catch (e) { return false; } }", timeout=60_000)

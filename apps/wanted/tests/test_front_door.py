@@ -107,13 +107,11 @@ def test_the_app_opens_on_the_products_with_one_tap_actions():
     assert ".hp-card { margin: 0; min-height:" in css and page.count('class="card hp-card sk"') == 3
 
 
-def test_sign_in_is_a_passkey_for_everyone_and_the_others_are_shown_switched_off():
+def test_sign_in_is_a_passkey_for_everyone_and_shows_only_what_works():
     page = (STATIC / "index.html").read_text(encoding="utf-8")
     sheet = page[page.index('<section id="signin"'):page.index("</section>", page.index('<section id="signin"'))]
     assert 'id="pkNew"' in sheet and 'id="pkUse"' in sheet and 'id="pkName"' in sheet
-    for b in ("googleSoon", "orcidSoon", "emailSoon"):
-        assert re.search(rf'<button type="button" class="quiet" id="{b}" disabled', sheet), b       # visible, not hidden
-    assert 'data-i18n="soon_l">Not available yet' in sheet and 'id="email"' not in sheet and "hidden" not in sheet.split('id="soonL"')[1].split("</div>")[0]
+    assert " disabled" not in sheet and "Not available" not in sheet and "soon" not in sheet       # TASK-WORLD T10: no dead buttons
     js = (STATIC / "app.js").read_text(encoding="utf-8")
     assert "accounts.google.com" not in js and "/api/auth/guest" not in js and "/api/auth/email\"" not in js
 

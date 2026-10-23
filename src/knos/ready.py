@@ -7,7 +7,9 @@ of milestones; each milestone needs
   verifier  machine: the GitHub check or test name that decides it; or
             human (lab results, documents): what is measured, how, who measures it, where the record is published
             (the DOE SMART fields)
-  deadline  seconds from funding (deadline_s, 60 s to 90 days) or whole days (deadline_days)
+  deadline  seconds from funding (deadline_s, 60 s to 90 days) or whole days (deadline_days); a lab, field or clinical
+            milestone (it names a standard, a registry, a trial or a lab) up to 1,095 days, held in tranches of at most
+            90 days each (an order on chain holds money 90 days at most)
 and no vague word (VAGUE) in its name, target or verifier. The answer is Ready, or Not ready with every missing field
 by name and a one-tap rewrite template per milestone. The criteria hash is the sha256 of the canonical JSON of the
 fields that decide payment (plus the kill fee and the challenge window); it is fixed at lock.
@@ -37,6 +39,8 @@ UNITS = ("%", "ms", "s", "sec", "secs", "second", "seconds", "min", "mins", "min
          "pa", "kpa", "mpa", "gpa", "psi", "bar", "n", "kn", "n/mm2", "n/mm²", "t", "tonne", "tonnes", "co2e", "kgco2e",
          "kwh", "mwh", "gwh", "gw", "m2", "m²", "m3", "m³", "lux", "cubes", "blocks", "homes", "houses", "panels", "years")
 MIN_DEADLINE_S, MAX_DEADLINE_S = 60, 90 * 86_400
+MAX_SCIENCE_DEADLINE_S = 1_095 * 86_400       # lab, field and clinical work: seasons, damp-heat hours, accuracy studies
+TRANCHE_S = MAX_DEADLINE_S                     # the most one order holds money on chain (knos_pay error 81)
 DEFAULT_CHALLENGE_S = 72 * 3600
 MAX_KILL_FEE_BPS = 5000
 _UNIT_RE = "|".join(sorted((re.escape(u) for u in UNITS), key=len, reverse=True))
@@ -45,7 +49,17 @@ _NUM_UNIT = re.compile(r"(?<![\w.])(\d+(?:[.,]\d+)?)\s*(?:[A-Za-z][\w-]*\s+){0,2
 # a named test: test_x, file.py::case, tests/..., check "name", or a joined name with "test(s)" in it (e2e-login-tests)
 _TEST = re.compile(r"(?:\btest_[A-Za-z0-9_]+|\b[\w./-]+\.(?:py|js|ts|mjs|rs|go)::[\w\[\]-]+|\b[\w./-]*tests?/[\w./-]+|"
                    r"check\s+[\"'`][^\"'`]{2,100}[\"'`]|\b[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*[-_]tests?(?:[-_][A-Za-z0-9]+)*\b)")
-_CHECK_NAME = re.compile(r"^[\w .:/()\[\]@,+#-]{2,100}$")
+# what decides it, in its own words: normal punctuation allowed (, ; % < > ' "), control characters and backticks not
+_CHECK_NAME = re.compile(r"^[^\x00-\x1f\x7f`]{2,300}$")
+# a named standard or registry the result is judged on: a count of passes or exceedances on it is measurable
+_STANDARD = re.compile(r"\b(?:ASTM|IEC|ISO(?:/IEC)?|EN|UN|UL|SAE|AASHTO|OECD|EPA|CLSI|USABC|RILEM|IEEE|ANSI|NIST|IS)\s?"
+                       r"[A-Z]{0,2}\s?\d[\w.:-]*|\bWHO\s+(?:GDWQ|PQ|TPP|prequalification)\b|ClinicalTrials\.gov|\bAEA RCT Registry\b|"
+                       r"\bISRCTN\b|\bPROSPERO\b|\bOSF\s+(?:registry|preregistration)\b|\bRIDIE\b|\bEGAP\b")
+# an effect size in standard deviations ("0.20 SD gain")
+_EFFECT = re.compile(r"(?<![\w.])\d+(?:\.\d+)?\s*SD\b")
+# a lab, field or clinical milestone: it may run past 90 days, held in tranches
+_SCIENCE = re.compile(r"\b(?:lab|laborator\w*|field|clinical|trial|RCT|preregist\w*|accredit\w*|certif\w*|season\w*|cohort|"
+                      r"study|damp heat|qualification|registry)\b", re.I)
 HUMAN_FIELDS = ("what", "how", "who", "where")
 
 
@@ -59,17 +73,41 @@ def vague_words(text: str) -> list[str]:
 
 
 def measurable(target: str) -> bool:
-    return bool(_NUM_UNIT.search(target) or _TEST.search(target))
+    """A number with its unit, a named test, a count on a named standard or registry ("1 pass on ASTM C1157"), or an
+    effect size in SD."""
+    return bool(_NUM_UNIT.search(target) or _TEST.search(target) or _EFFECT.search(target)
+                or (re.search(r"(?<![\w.])\d", target) and _STANDARD.search(target)))
 
 
-def deadline_s(m: dict) -> int | None:
+def science(m: dict) -> bool:
+    """Lab, field or clinical work: its name, target or verifier names a standard, a registry, a trial or a lab."""
+    v = m.get("verifier") if isinstance(m.get("verifier"), dict) else {}
+    text = " ".join(x for x in (m.get("name"), m.get("target"), *v.values()) if isinstance(x, str))
+    return bool(_SCIENCE.search(text) or _STANDARD.search(text))
+
+
+def science_brief(brief) -> bool:
+    """A research brief: one of its milestones is lab, field or clinical work, so each of its milestones may run long
+    (a costing sheet or an emissions log is paced by the trial around it)."""
+    ms = brief.get("milestones") if isinstance(brief, dict) else None
+    return any(isinstance(m, dict) and science(m) for m in ms) if isinstance(ms, list) else False
+
+
+def deadline_s(m: dict, long: bool = False) -> int | None:
     d = m.get("deadline_s")
     if d is None and m.get("deadline_days") is not None:
         d = m.get("deadline_days")
         d = d * 86_400 if isinstance(d, int) and not isinstance(d, bool) else None
-    if isinstance(d, bool) or not isinstance(d, int) or not MIN_DEADLINE_S <= d <= MAX_DEADLINE_S:
+    top = MAX_SCIENCE_DEADLINE_S if long or science(m) else MAX_DEADLINE_S
+    if isinstance(d, bool) or not isinstance(d, int) or not MIN_DEADLINE_S <= d <= top:
         return None
     return d
+
+
+def tranches(deadline: int) -> list[int]:
+    """A milestone's deadline as the orders that hold its money, each at most TRANCHE_S (90 days) long."""
+    n = -(-deadline // TRANCHE_S)
+    return [TRANCHE_S] * (n - 1) + [deadline - TRANCHE_S * (n - 1)]
 
 
 def clean(brief) -> dict:
@@ -83,21 +121,22 @@ def clean(brief) -> dict:
     return b
 
 
-def normal(m: dict, i: int = 0) -> dict:
-    """One milestone's deciding fields, normalised (the form the hash and the order memo are made from)."""
+def normal(m: dict, i: int = 0, long: bool = False) -> dict:
+    """One milestone's deciding fields, normalised (the form the hash and the order memo are made from). `long`: it
+    belongs to a research brief (science_brief), so its deadline may run to 1,095 days."""
     m = m if isinstance(m, dict) else {}
     raw = m.get("verifier")
     v: dict = raw if isinstance(raw, dict) else {}
     kind = v.get("kind") if v.get("kind") in ("machine", "human") else ("machine" if v.get("check") else "human" if any(v.get(x) for x in HUMAN_FIELDS) else "")
-    ver = {"kind": kind, "check": _text(v.get("check"), 100)} if kind == "machine" else \
+    ver = {"kind": kind, "check": _text(v.get("check"), 300)} if kind == "machine" else \
         {"kind": kind, **{f: _text(v.get(f), 200) for f in HUMAN_FIELDS}} if kind == "human" else {"kind": ""}
     key = _text(m.get("key"), 40) or f"m{i + 1}"
     return {"key": re.sub(r"[^a-z0-9_]", "_", key.lower())[:40], "name": _text(m.get("name"), 160), "target": _text(m.get("target"), 300),
-            "verifier": ver, "deadline_s": deadline_s(m)}
+            "verifier": ver, "deadline_s": deadline_s(m, long)}
 
 
-def check_milestone(m: dict, i: int = 0) -> dict:
-    n = normal(m, i)
+def check_milestone(m: dict, i: int = 0, long: bool = False) -> dict:
+    n = normal(m, i, long)
     missing, vague = [], []
     if len(n["name"]) < 3:
         missing.append("name")
@@ -112,11 +151,12 @@ def check_milestone(m: dict, i: int = 0) -> dict:
         if not v["check"]:
             missing.append("verifier.check: the GitHub check or test name")
         elif not _CHECK_NAME.match(v["check"]):
-            missing.append("verifier.check: letters, digits, spaces and . : / ( ) [ ] - only")
+            missing.append("verifier.check: 2 to 300 characters, no backticks or control characters")
     else:
         missing += [f"verifier.{f}" for f in HUMAN_FIELDS if len(v[f]) < 3]
     if n["deadline_s"] is None:
-        missing.append("deadline: 60 seconds to 90 days")
+        missing.append("deadline: 60 seconds to 1,095 days for lab, field or clinical work" if long or science(m)
+                       else "deadline: 60 seconds to 90 days")
     words = " ".join([n["name"], n["target"], *(x for k, x in v.items() if k != "kind")])
     vague = vague_words(words)
     ok = not missing and not vague
@@ -157,7 +197,8 @@ def terms(brief: dict) -> dict:
 
 
 def criteria_hash(brief: dict) -> str:
-    ms = [normal(m, i) for i, m in enumerate(clean(brief)["milestones"])]
+    long = science_brief(clean(brief))
+    ms = [normal(m, i, long) for i, m in enumerate(clean(brief)["milestones"])]
     body = {"v": 1, "milestones": ms, **terms(brief)}
     return hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
 
@@ -166,7 +207,8 @@ def check(brief: dict) -> dict:
     """Ready, or Not ready with the exact missing fields and a rewrite template per milestone. Free, sends nothing."""
     raw = brief.get("milestones") if isinstance(brief, dict) else None
     brief = clean(brief)
-    rows = [check_milestone(m, i) for i, m in enumerate(brief["milestones"])]
+    long = science_brief(brief)
+    rows = [check_milestone(m, i, long) for i, m in enumerate(brief["milestones"])]
     problems = [] if rows else ["milestones: at least one"]
     if raw is not None and not isinstance(raw, list):
         problems.append("milestones: a list of milestone objects")

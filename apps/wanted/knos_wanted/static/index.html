@@ -5,13 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knos. Check demand</title>
 <meta name="description" content="Paste a paper or an idea: Qloo's demand verdict, then pre-orders, milestones in escrow on Solana devnet, paid only on proof.">
-<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/brand/tokens.css">
 <link rel="stylesheet" href="/static/style.css">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#1f2a44">
 <script>document.documentElement.dataset.view = (location.hash.slice(1).split("=")[0] || "home").replace(/[^a-z]/g, "");</script>
 <script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/static/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png">
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Skip to the app</a>
@@ -68,12 +70,6 @@
       <button id="pkNew" type="button" data-i18n="pk_new">Create a passkey wallet</button>
       <button id="pkUse" type="button" class="ghost" data-i18n="pk_use">Sign in with my passkey</button>
       <p class="muted small" id="pkNote" data-i18n="pk_note"></p>
-      <p class="small muted" id="soonL" data-i18n="soon_l">Not available yet</p>
-      <div class="row soon" aria-describedby="soonL">
-        <button type="button" class="quiet" id="googleSoon" disabled>Google</button>
-        <button type="button" class="quiet" id="orcidSoon" disabled>ORCID</button>
-        <button type="button" class="quiet" id="emailSoon" disabled data-i18n="email_l">Email</button>
-      </div>
       <button id="outBtn" type="button" class="ghost" hidden data-i18n="sign_out">Sign out</button>
     </div>
   </section>
@@ -180,7 +176,7 @@
     const d = r.decision || {}, p = d.plan || {}, h = r.hash;
     let [word, cls] = WORD[d.verdict] || [String(d.verdict || "No verdict"), "unknown"];
     const who = r.who || {}, age = (p.who?.age || who.top_age || "").replace(/_/g, " ").replace(" and ", " and "), gender = p.who?.gender || who.top_gender || "";
-    const segs = (p.who?.segments || (r.audiences || []).map((a) => a.name)).filter(Boolean).slice(0, 3);
+    const segs = (p.who?.segments || (r.audiences || []).filter((a) => a.tied).map((a) => a.name)).filter(Boolean).slice(0, 3);
     const cities = (r.cities || []).slice(0, 5), price = r.price || {}, tier = String(price.tier || "").toLowerCase();
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
     // visitor can pick another match, or none of them; the verdict's reason is Knos's rule, apart from Qloo's data

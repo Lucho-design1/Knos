@@ -267,7 +267,7 @@ def grounding(rep: dict) -> dict:
     cities = [c["name"] for c in (rep.get("cities") or []) if c.get("name")][:3] or \
         [x["located"] for x in ((fam.get("F3") or {}).get("answer") or []) if x.get("located")][:3]
     out = {"audience": ", ".join(x for x in (who.get("top_age"), who.get("top_gender")) if x) or None,
-           "segments": plan.get("who", {}).get("segments") or [a.get("name") for a in (rep.get("audiences") or [])[:3]],
+           "segments": plan.get("who", {}).get("segments") or [a.get("name") for a in (rep.get("audiences") or []) if a.get("tied")][:3],
            "cities": list(dict.fromkeys(cities)), "price_tier": (rep.get("price") or {}).get("tier"),
            "comparables": comps, "report": rep.get("hash")}
     return {k: v for k, v in out.items() if v}

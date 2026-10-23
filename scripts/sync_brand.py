@@ -24,6 +24,20 @@ SITE = "https://drexthealpha.github.io/Knos/"
 WAKE = "wanted.html"
 COPIES = {WEB / "brand" / n: STATIC / "brand" / n for n in ("tokens.css", "wordmark.svg", "mark.svg", "bar.js", "hero.js", "vectors.js")}
 COPIES |= {f: STATIC / "fonts" / f.name for f in sorted((WEB / "fonts").iterdir()) if f.suffix in (".woff2", ".txt")}
+# the crow icon set (scripts/make_icons.py) on every Knos page, the app's included (TASK-WORLD T10)
+COPIES |= {WEB / "icon.svg": STATIC / "icon.svg", WEB / "favicon.ico": STATIC / "favicon.ico",
+           **{WEB / "brand" / n: STATIC / "brand" / n for n in ("apple-touch-icon.png", "icon-192.png", "icon-512.png")}}
+ICON_LINK = re.compile(r'[ \t]*<link rel="(?:icon|shortcut icon|apple-touch-icon)"[^>]*>\n?')
+# pages outside PAGES that still carry the icons: (page, the path from it to the site's root)
+ICON_ONLY = {WEB / "check" / "index.html": "../"}
+
+
+def icons(s: str, root: str) -> str:
+    """The page's icon links, replaced by the one set: the crow as SVG, favicon.ico for older browsers, a home-screen PNG."""
+    block = (f'<link rel="icon" href="{root}icon.svg" type="image/svg+xml">\n<link rel="icon" href="{root}favicon.ico" sizes="16x16 32x32 48x48">\n'
+             f'<link rel="apple-touch-icon" href="{root}brand/apple-touch-icon.png">\n')
+    s = ICON_LINK.sub("", s)
+    return s.replace("</head>", block + "</head>", 1)
 # page: (its home, the front door, the app, its tokens link, loads web/brand/bar.js)
 PAGES = {
     WEB / "index.html": ("", "", WAKE, "brand/tokens.css", False),        # web/front.js runs this bar
@@ -89,6 +103,7 @@ def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) 
         api = "" if tokens.startswith("/static/") else "@app"
         js = "/static/brand/vectors.js" if tokens.startswith("/static/") else tokens.replace("tokens.css", "vectors.js")
         s = VECTORS.sub(lambda _: f"<!-- k-vectors -->\n{vectors(api, js)}\n<!-- /k-vectors -->", s, count=1)
+    s = icons(s, "/static/" if tokens.startswith("/static/") else "")
     link = f'<link rel="stylesheet" href="{tokens}">'
     if link not in s:
         s = re.sub(r'(<link rel="stylesheet")', lambda m: f"{link}\n{m.group(1)}", s, count=1) if "<link rel=\"stylesheet\"" in s \
@@ -104,8 +119,10 @@ def main(argv: list[str]) -> int:
             if not check:
                 b.parent.mkdir(parents=True, exist_ok=True)
                 b.write_bytes(a.read_bytes())
-    for path, args in PAGES.items():
-        new = page(path, *args)
+    todo = [(p, lambda p=p, a=a: page(p, *a)) for p, a in PAGES.items()] + \
+        [(p, lambda p=p, r=r: icons(p.read_text(encoding="utf-8"), r)) for p, r in ICON_ONLY.items()]
+    for path, make in todo:
+        new = make()
         if new != path.read_text(encoding="utf-8"):
             off.append(str(path.relative_to(ROOT)))
             if not check:
