@@ -94,6 +94,19 @@ def record(wallet: str, led=None) -> dict:
     led = led or escrow.ledger()
     f = _dir() / f"{hashlib.sha256(wallet.encode()).hexdigest()[:24]}.json"
     rows = json.loads(f.read_text(encoding="utf-8")) if f.exists() else []
+    # the local rows do not survive a redeploy; the solvers' index (kept on devnet) names every maker attestation, and
+    # each is read back from the chain all the same
+    from . import valley
+    known = {r["attestation"] for r in rows}
+    found = list(((valley._safe_load("pages", "solvers") or {}).get("wallets") or {}).get(wallet) or [])
+    for p in valley._all("projects"):                # and each project's own record of its paid attempts
+        for m in p.get("milestones") or []:
+            for a in m.get("attempts") or []:
+                found += [t["attestation"] for t in a.get("attestations") or [] if t.get("wallet") == wallet and t.get("attestation")]
+    for att in found:
+        if att not in known:
+            known.add(att)
+            rows.append({"attestation": att, "wallet": wallet})
     cred, schema = _ids(escrow.demo_key().pubkey())
     shown = []
     for r in rows:
@@ -104,7 +117,8 @@ def record(wallet: str, led=None) -> dict:
         fields = sas.decode(LAYOUT, tuple(FIELDS), a.data)
         if a.credential != cred or a.schema != schema or fields.get("wallet") != wallet:
             continue
-        shown.append({**r, "on_chain": fields, "explorer": escrow.explorer(r["attestation"], "address")})
+        shown.append({**{k: fields.get(k) for k in ("project", "milestone", "role", "criteria_sha256", "release")}, **r,
+                      "on_chain": fields, "explorer": escrow.explorer(r["attestation"], "address")})
     from . import chainx
     return {"wallet": wallet, "verified_milestones": len(shown), "attestations": shown, "credential": str(cred), "schema": str(schema),
             "badges": chainx.badges_of(wallet),

@@ -106,8 +106,13 @@ def solvers() -> dict:
     """Wallets with verified milestones, most first: each attestation read back from devnet (track.record)."""
     from . import track, valley
     idx = valley._safe_load("pages", "solvers") or {"wallets": {}}
+    wallets = list(idx["wallets"])
+    for p in valley._all("projects"):                # the makers each project paid, should the index be behind
+        for m in p.get("milestones") or []:
+            for a in m.get("attempts") or []:
+                wallets += [t["wallet"] for t in a.get("attestations") or [] if t.get("role") == "maker" and t.get("wallet")]
     rows = []
-    for wallet in list(idx["wallets"])[:100]:
+    for wallet in list(dict.fromkeys(wallets))[:100]:
         try:
             rec = track.record(wallet)
         except Exception:  # noqa: BLE001 - a wallet the chain cannot answer for is not listed as proven
