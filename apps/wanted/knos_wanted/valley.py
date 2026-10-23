@@ -65,6 +65,7 @@ def _save(kind: str, key: str, obj: dict, chain: bool = True) -> dict:
             obj["grounding_snapshot"] = g
     if kind in ("projects", "orders"):
         _list_cache.clear()                        # the public list shows this change at once
+        _json_cache.clear()
     f = _dir(kind) / f"{key}.json"
     tmp = f.with_suffix(".tmp")
     tmp.write_text(json.dumps(obj, indent=1, default=str), encoding="utf-8")
@@ -548,7 +549,25 @@ def projects(n: int = 50) -> list[dict]:
         return hit[1]
     out = [public_project(p) for p in _all("projects") if not p.get("unlisted")][:n]
     _list_cache[n] = (time.time(), out)
+    _json_cache.pop(n, None)
     return out
+
+
+_json_cache: dict[int, tuple[float, bytes]] = {}
+
+
+def projects_json(n: int = 50) -> bytes:
+    """GET /api/projects as bytes, encoded once for every request in the same 30 s: each request had made its own copy
+    of ~800 KB, and many at once ran the free instance out of memory (Render killed it at 512 MB, 23 Oct 2026)."""
+    lst = projects(n)                              # refreshes _list_cache (and drops this one) when it is stale
+    built = (_list_cache.get(n) or (0.0, None))[0]  # a save in another thread may have cleared it: then build anew
+    hit = _json_cache.get(n)
+    if hit and built and hit[0] == built:
+        return hit[1]
+    body = json.dumps({"projects": lst}, default=str).encode()
+    if built:
+        _json_cache[n] = (built, body)
+    return body
 
 
 def unlist(pid: str, user: dict | None = None, admin: bool = False, why: str = "") -> dict:

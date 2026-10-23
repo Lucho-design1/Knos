@@ -113,7 +113,7 @@ def handle_get(h, state, u, qs) -> bool:
         if p == "/api/templates":
             return h._send(200, valley.templates()) or True
         if p == "/api/projects":
-            return h._send(200, {"projects": valley.projects(min(100, max(1, int(q("take", "50") or 50))))}) or True
+            return h._send(200, valley.projects_json(min(100, max(1, int(q("take", "50") or 50))))) or True
         if p == "/api/project":
             return h._send(200, valley.public_project(valley.project(q("id")))) or True
         if p == "/api/project/prompt":
