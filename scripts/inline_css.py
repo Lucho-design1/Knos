@@ -1,7 +1,7 @@
-"""The built front door carries its two stylesheets in the page (TASK-CHAMPION T7): each was a render-blocking request
+"""The built site's pages carry their stylesheets in the page (TASK-CHAMPION T7): each was a render-blocking request
 before the first paint. Their font and image addresses are rewritten for the page's place at the site's root.
 
-    python scripts/inline_css.py _site/index.html
+    python scripts/inline_css.py _site/index.html [_site/wanted.html ...]   (pages at the site's root)
 """
 from __future__ import annotations
 
@@ -16,7 +16,12 @@ def tight(css: str) -> str:
 
 
 def main(argv: list[str]) -> int:
-    page = Path(argv[0])
+    for one in argv:
+        inline(Path(one))
+    return 0
+
+
+def inline(page: Path) -> None:
     site = page.parent
     html = page.read_text(encoding="utf-8")
     tokens = (site / "brand" / "tokens.css").read_text(encoding="utf-8")
@@ -29,7 +34,6 @@ def main(argv: list[str]) -> int:
             html, done = html.replace(link, f"<style>{tight(css)}</style>", 1), done + 1
     page.write_text(html, encoding="utf-8", newline="\n")
     print(f"inline css: {done} stylesheets written into {page}")
-    return 0
 
 
 if __name__ == "__main__":
