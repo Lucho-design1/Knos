@@ -19,6 +19,8 @@ import threading
 import time
 
 SURFACE = "qloo api mcp (Qloo's harness)"
+# the V8 heap of each Node process the app starts (Qloo's two harness servers): the free instance has 512 MB for all
+NODE_HEAP = "--max-old-space-size=96"
 CALL_S = 20.0
 # Qloo parameter -> harness argument, per endpoint: a call maps only when every parameter it sends is listed here
 MAP = {
@@ -42,8 +44,9 @@ def mapped(path: str, params: dict) -> tuple[str, dict] | None:
 
 
 class Harness:
-    def __init__(self, command: list[str] | None = None, env: dict | None = None):
-        self.command, self.env = command, env
+    def __init__(self, command: list[str] | None = None, env: dict | None = None, call_s: float = CALL_S):
+        self.command, self.env, self.call_s = command, env, call_s
+        self.server_info: dict = {}                   # the server's answer to initialize (name, version)
         self.proc: subprocess.Popen | None = None
         self.lock, self.n, self.answered = threading.Lock(), 0, 0
         self.failed_at: float | None = None           # never 0: a fresh machine's clock starts near 0
@@ -89,7 +92,7 @@ class Harness:
     def _wait(self, sent: tuple[int, list]) -> dict:
         sid, slot = sent
         try:
-            if not slot[0].wait(CALL_S) or slot[1] is None:
+            if not slot[0].wait(self.call_s) or slot[1] is None:
                 raise TimeoutError("the harness did not answer in time")
             return slot[1]
         finally:
@@ -110,11 +113,13 @@ class Harness:
             env = {**os.environ, **(self.env or {})}
             if env.get("QLOO_BASE_URL") and not env.get("QLOO_TRUSTED_BASE_URL"):
                 env["QLOO_TRUSTED_BASE_URL"] = env["QLOO_BASE_URL"]   # the harness trusts only the endpoint it is told
+            env.setdefault("NODE_OPTIONS", NODE_HEAP)                  # each Node process within its share of 512 MB
             self.proc = subprocess.Popen(self._cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                          text=True, encoding="utf-8", errors="replace", bufsize=1, env=env)
             threading.Thread(target=self._read, args=(self.proc,), daemon=True, name="qloo-harness").start()
-        self._wait(self._send("initialize", {"protocolVersion": "2024-11-05", "capabilities": {},
-                                             "clientInfo": {"name": "knos", "version": "1"}}))
+        got = self._wait(self._send("initialize", {"protocolVersion": "2024-11-05", "capabilities": {},
+                                                   "clientInfo": {"name": "knos", "version": "1"}}))
+        self.server_info = ((got or {}).get("result") or {}).get("serverInfo") or {}
         self._send("notifications/initialized", notify=True)
 
     def warm(self) -> None:

@@ -45,3 +45,26 @@ def test_the_memory_answer_names_what_a_load_test_reads():
     got = server.memory_now(S())
     assert set(got) == {"rss_mb", "peak_mb", "threads", "checks_running", "checks_at_once", "reports_in_memory", "processes", "all_processes_mb"}
     assert got["reports_in_memory"] == 2 and got["checks_at_once"] == check.CHECKS_AT_ONCE and got["threads"] >= 1
+
+
+def test_qloo_mcp_is_spoken_to_directly_with_no_node_bridge():
+    """The live MCP flow runs `qloo mcp` itself (qloo_mcp.Direct) instead of a Node bridge that starts it: here the same
+    transport drives the MOCK MCP server over stdio, and the client takes it as it takes the bridge."""
+    import os
+    import sys
+    from pathlib import Path
+
+    from knos_wanted import qloo_mcp
+    app = str(Path(qloo_mcp.__file__).resolve().parents[1])
+    env = {"PYTHONPATH": os.pathsep.join([app, os.environ.get("PYTHONPATH", "")]), "QLOO_API_KEY": ""}
+    t = qloo_mcp.Direct(timeout=30, command=[sys.executable, "-m", "knos_wanted.mock_mcp"], env=env)
+    try:
+        info = t.init()
+        assert set(qloo_mcp.WORKFLOWS) <= set(info["tools"]) and info["server"].get("name")
+        got = t.call("qloo_find_tags", {"query": "hot sauce"})
+        assert got["isError"] is False and isinstance(got["structuredContent"], dict)
+        q = qloo_mcp.Qloo(transport=t, mode="mock")
+        assert q.mode == "mock" and set(qloo_mcp.WORKFLOWS) <= set(q.tools)
+    finally:
+        t.close()
+    assert t.h.proc is None

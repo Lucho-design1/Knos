@@ -36,7 +36,18 @@ def test_no_credential_means_mock(monkeypatch):
         def call(self, name, arguments):
             return InProcess().call(name, arguments)
 
+    class NotReadyDirect:                           # the live path: `qloo mcp` spoken to directly (qloo_mcp.Direct)
+        def __init__(self, *a, **k):
+            pass
+
+        def init(self):
+            return {"server": {"name": "qloo-harness"}, "tools": [], "capabilities": {"adapter": {"ready": False}}}
+
+        def close(self):
+            pass
+
     monkeypatch.setattr(qloo_mcp, "Bridge", NotReady)
+    monkeypatch.setattr(qloo_mcp, "Direct", NotReadyDirect)
     monkeypatch.setattr(NotReady, "available", staticmethod(lambda: None))
     monkeypatch.setattr(qloo_mcp.shutil, "which", lambda name: "/usr/bin/" + name)
     c = Qloo(sleep=lambda s: None)

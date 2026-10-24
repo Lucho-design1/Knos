@@ -1,10 +1,11 @@
 """Knos's Qloo client: the nine canonical Qloo workflows over MCP, through Qloo's own local server.
 
-    Python service  --JSON lines-->  bridge/qloo_bridge.mjs (official MCP SDK 1.30.1)  --MCP stdio-->  `qloo mcp`
+    Python service  --MCP stdio (JSON-RPC lines)-->  `qloo mcp`                       (live: Direct)
+    Python service  --JSON lines-->  bridge/qloo_bridge.mjs (official MCP SDK 1.30.1)  --MCP stdio-->  MOCK server
 
-Why a Node sidecar and not a Python MCP client: it is the exact SDK and version Qloo's starter pins
-(starter/mcp-client), the harness already needs Node 22.19+, and the Python service stays on the
-standard library. This flow does not use `qloo api` (raw endpoints; the decision check does, qloo_harness.py): the
+Live, the service speaks MCP to Qloo's server itself, as qloo_harness does to `qloo api mcp`: the Node bridge and the
+server it started were two Node processes of about 100 MB each on a free instance of 512 MB (24 Oct 2026). The bridge
+(the exact SDK Qloo's starter pins) still runs the MOCK server. This flow does not use `qloo api` (raw endpoints; the decision check does, qloo_harness.py): the
 nine workflows cover every question the demand check
 asks (docs/reference/DEMAND_CHECK.md, "Tools used and why").
 
@@ -158,6 +159,49 @@ class Bridge:
                 p.kill()
 
 
+class Direct:
+    """`qloo mcp` spoken to over stdio from this process (MCP JSON-RPC lines, as qloo_harness speaks to `qloo api mcp`):
+    no Node bridge in between. The bridge and the server it started were two Node processes of about 100 MB each on a
+    free instance of 512 MB, which ran out of memory under load on 24 Oct 2026."""
+    name = "qloo mcp over stdio"
+
+    def __init__(self, timeout: float = TIMEOUT_S, command: list[str] | None = None, env: dict | None = None):
+        from . import qloo_harness
+        q = (shutil.which("qloo.cmd") if os.name == "nt" else None) or shutil.which("qloo")
+        if not (command or q):
+            raise QlooUnavailable("the qloo command is not installed (npm install --global @qloo/qloo-harness)")
+        self.h = qloo_harness.Harness(command=command or [q, "mcp"], env=env, call_s=timeout)
+
+    def _rpc(self, method: str, params: dict) -> dict:
+        try:
+            self.h._ensure()
+            got = self.h._wait(self.h._send(method, params)) or {}
+        except (OSError, ValueError, TimeoutError, AssertionError) as why:
+            raise QlooUnavailable(f"qloo mcp: {type(why).__name__}: {str(why)[:200]}") from None
+        if got.get("error"):
+            raise QlooUnavailable(str(got["error"].get("message") if isinstance(got["error"], dict) else got["error"])[:300])
+        return got.get("result") or {}
+
+    def init(self) -> dict:
+        tools = [t.get("name") for t in self._rpc("tools/list", {}).get("tools") or []]
+        cap = self._rpc("tools/call", {"name": "qloo_capabilities", "arguments": {}}).get("structuredContent")
+        return {"server": self.h.server_info, "tools": tools, "capabilities": cap or {}}
+
+    def call(self, name: str, arguments: dict) -> dict:
+        r = self._rpc("tools/call", {"name": name, "arguments": arguments})
+        return {"structuredContent": r.get("structuredContent"), "isError": r.get("isError", False)}
+
+    def close(self) -> None:
+        p, self.h.proc = self.h.proc, None
+        self.h.ready = False
+        if p and p.poll() is None:
+            try:
+                p.stdin.close() if p.stdin else None
+                p.wait(timeout=5)
+            except Exception:  # noqa: BLE001
+                p.kill()
+
+
 # ---- the client --------------------------------------------------------------------------------------------------
 class Qloo:
     def __init__(self, transport=None, *, mode: str | None = None, reason: str = "", cache_dir: str | os.PathLike | None = None,
@@ -184,18 +228,18 @@ class Qloo:
         why_not = Bridge.available()
         if os.environ.get("KNOS_WANTED_MOCK") == "1":
             return (Bridge(mock=True) if why_not is None else InProcess()), "mock", "KNOS_WANTED_MOCK=1"
-        if why_not is None and shutil.which("qloo"):
-            b = Bridge()
+        if shutil.which("qloo"):
+            b = Direct()                                # live: Qloo's own server, no Node bridge in front of it
             try:
                 info = b.init()
                 ready = bool(((info.get("capabilities") or {}).get("adapter") or {}).get("ready"))
                 if ready:
                     return b, "live", "qloo mcp ready (qloo_capabilities: adapter.ready true)"
                 b.close()
-                return Bridge(mock=True), "mock", "qloo mcp started but has no Qloo credential (qloo_capabilities: adapter.ready false)"
+                return (Bridge(mock=True) if why_not is None else InProcess()), "mock", "qloo mcp started but has no Qloo credential (qloo_capabilities: adapter.ready false)"
             except QlooUnavailable as why:
                 b.close()
-                return Bridge(mock=True), "mock", f"qloo mcp did not start: {why}"
+                return (Bridge(mock=True) if why_not is None else InProcess()), "mock", f"qloo mcp did not start: {why}"
         if why_not is None:
             return Bridge(mock=True), "mock", "the qloo command is not installed (npm install --global @qloo/qloo-harness)"
         return InProcess(), "mock", why_not

@@ -206,7 +206,9 @@ def memory_now(st) -> dict:
         try:
             f = dict(line.split(":", 1) for line in (d / "status").read_text(encoding="utf-8").splitlines() if ":" in line)
             if "VmRSS" in f:
-                procs.append({"pid": int(d.name), "name": f.get("Name", "").strip(), "rss_mb": round(int(f["VmRSS"].split()[0]) / 1024, 1)})
+                cmd = (d / "cmdline").read_bytes().replace(b"\0", b" ").decode("utf-8", "replace").strip()
+                procs.append({"pid": int(d.name), "name": f.get("Name", "").strip(), "rss_mb": round(int(f["VmRSS"].split()[0]) / 1024, 1),
+                              "command": " ".join(w.rsplit("/", 1)[-1] for w in cmd.split()[:4])})   # program names, no paths
         except (OSError, ValueError):
             continue
     return {"rss_mb": mb.get("VmRSS"), "peak_mb": mb.get("VmHWM"), "threads": threading.active_count(),
