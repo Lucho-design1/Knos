@@ -457,21 +457,24 @@ def tied(row: dict, words: list[str], tags: list[dict]) -> bool:
     return bool(own & idea)
 
 
-def _who_wants(run: _Run, tags: list[dict], ents: list[dict], per: int = 3) -> list[dict]:
-    """"Who wants it": Qloo's audiences for each of the idea's own taste tags (signal.interests.tags, one tag a call),
-    else for its matched products (signal.interests.entities): every audience shown names the tag or product that ties
-    it, so none is unrelated. Shown only; the verdict does not read them."""
-    asks = [("tag", t, {"signal.interests.tags": t["id"]}) for t in tags if t.get("id")] or \
-        [("product", m, {"signal.interests.entities": m["id"]}) for m in ents if m and m.get("id")]
+def _who_wants(run: _Run, tags: list[dict], ents: list[dict], per: int = 6) -> list[dict]:
+    """"Who wants it": Qloo's audiences for each of the idea's matched products (signal.interests.entities), and for each
+    of its own taste tags weighed with those products (a tag alone answers Qloo's neutral 0.5 for every idea: Wrestling,
+    Sneakerheads, Golf). Only audiences above neutral (rules: informative_affinity) are shown, each naming the tag or
+    product that ties it. Shown only; the verdict does not read them."""
+    ids = ",".join(m["id"] for m in ents if m and m.get("id"))
+    asks = [("product", m, {"signal.interests.entities": m["id"]}) for m in ents if m and m.get("id")]
+    asks += [("tag", t, {"signal.interests.tags": t["id"], **({"signal.interests.entities": ids} if ids else {})})
+             for t in tags if t.get("id")]
     run.prefetch([("/v2/insights", {"filter.type": "urn:audience", "take": per, **s}) for _, _, s in asks])
     out, seen = [], set()
     for kind, by, s in asks:
         rows, src = _audience(run, s, f"who wants it: audiences of the {kind} {by.get('name')}", take=per)
-        for a in rows:
-            if a.get("name") and a["name"] not in seen and isinstance(a.get("affinity"), (int, float)):
+        for a in _informative(rows):
+            if a.get("name") and a["name"] not in seen:
                 seen.add(a["name"])
                 out.append({**a, "tie": {"kind": kind, "name": by.get("name"), "id": by.get("id")}, "src": src})
-    return out[:6]
+    return sorted(out, key=lambda a: -a["affinity"])[:6]
 
 
 def _informative(rows: list[dict]) -> list[dict]:
