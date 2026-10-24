@@ -814,7 +814,7 @@ def test_no_token_outlives_its_key_by_more_than_25_hours_whatever_expiry_it_carr
 
 
 def test_only_the_guardian_approves_and_revokes_and_it_can_do_nothing_else():
-    c = Chain2()
+    c = Chain2("knos_oidc_v2_0335_test.so")      # the source's testkeys build: the key admin of step 4 (KEYS.md)
     key, n = new_key()
     assert c.register(GH, n, c.attest(GH, n)), c.err
     kp = oidc.key_pda(GH, n)
@@ -828,17 +828,20 @@ def test_only_the_guardian_approves_and_revokes_and_it_can_do_nothing_else():
             assert not c.send([Instruction(oidc.OIDC_ID, tag, [AccountMeta(who, False, False), AccountMeta(kp, False, True)])]) and code(c) == 79
     k = c.key(GH, n)
     assert not k.approved and not k.revoked
-    # the real guardian is a multisig vault: an address no key signs for. With signature checking off (as the
-    # vault's signature by a cross-program call would look to this program) it approves and revokes; a stranger's
-    # address sent the same way still does not
+    # the key admin is the upgrade multisig's vault (KEYS.md step 4): an address no key signs for. With signature
+    # checking off (as the vault's signature by a cross-program call would look to this program) it approves and
+    # revokes; the real guardian (a brake, with no time lock) and a stranger sent the same way do not
     assert oidc.GUARDIAN == Pubkey.from_string("AT1aKj1DpgaWerxmS4YjDkNpWPNUtCCKVDvxLhFxg5Jc") and not oidc.GUARDIAN.is_on_curve()
+    assert oidc.KEY_ADMIN == Pubkey.from_string("CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2") and not oidc.KEY_ADMIN.is_on_curve()
     vn = new_key()[1]
     assert c.register(GH, vn, c.attest(GH, vn)), c.err
     assert not c.send_unsigned([oidc.approve_ix(stranger.pubkey(), GH, vn)]) and code(c) == 79
     assert not c.send_unsigned([oidc.revoke_ix(Keypair().pubkey(), GH, vn)]) and code(c) == 79
-    assert c.send_unsigned([oidc.approve_ix(oidc.GUARDIAN, GH, vn)]), c.err
+    assert not c.send_unsigned([oidc.approve_ix(oidc.GUARDIAN, GH, vn)]) and code(c) == 79
+    assert not c.send_unsigned([oidc.revoke_ix(oidc.GUARDIAN, GH, vn)]) and code(c) == 79
+    assert c.send_unsigned([oidc.approve_ix(oidc.KEY_ADMIN, GH, vn)]), c.err
     assert c.key(GH, vn).approved and not c.key(GH, vn).revoked
-    assert c.send_unsigned([oidc.revoke_ix(oidc.GUARDIAN, GH, vn)]), c.err
+    assert c.send_unsigned([oidc.revoke_ix(oidc.KEY_ADMIN, GH, vn)]), c.err
     assert c.key(GH, vn).revoked
     assert c.svm.get_sigverify()                                                               # checking is back on
     # the guardian cannot add a key: that takes GitHub's signature
@@ -909,8 +912,9 @@ def test_the_real_build_trusts_none_of_the_test_values():
     assert not c.send_unsigned([oidc.revoke_ix(GUARDIAN.pubkey(), GH, github[0])]) and code(c) == 79
     assert not c.key(GH, github[0]).revoked
     # the real guardian revokes, and the key is gone
-    assert c.send_unsigned([oidc.revoke_ix(oidc.GUARDIAN, GH, github[0])]), c.err
-    assert c.key(GH, github[0]).revoked and not c.send_unsigned([oidc.approve_ix(oidc.GUARDIAN, GH, github[0])]) and code(c) == 78
+    assert not c.send_unsigned([oidc.revoke_ix(oidc.GUARDIAN, GH, github[0])]) and code(c) == 79      # a brake only
+    assert c.send_unsigned([oidc.revoke_ix(oidc.KEY_ADMIN, GH, github[0])]), c.err
+    assert c.key(GH, github[0]).revoked and not c.send_unsigned([oidc.approve_ix(oidc.KEY_ADMIN, GH, github[0])]) and code(c) == 78
     assert [c.key(GH, n).revoked for n in github] == [True, False, False, False]
 
 

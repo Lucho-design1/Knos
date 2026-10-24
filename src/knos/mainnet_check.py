@@ -364,15 +364,20 @@ def names_key(elf: bytes, key: Pubkey) -> bool:
 
 
 def _guardian(account: Account, ids: dict, elfs: dict[str, bytes]) -> tuple[bool, str]:
-    """Whether the GUARDIAN is vault 0 of the pinned guardian multisig (which no single key can change) and is the one both
-    on-chain binaries name; and the evidence in words. `elfs`: each program's bytes on chain."""
+    """Whether the GUARDIAN is vault 0 of the pinned guardian multisig (which no single key can change) and is the one the
+    on-chain binaries name: knos_pay for Pause, and knos_oidc for its keys until KEYS.md step 4, after which knos_oidc
+    names the upgrade vault as its key admin instead; and the evidence in words. `elfs`: each program's bytes on chain."""
     squads, guardian = Pubkey.from_string(ids["squads_program"]), Pubkey.from_string(ids["guardian"])
     gs, found = multisig_at(account, ids["guardian_multisig"], ids["squads_program"])
     its_vault = gs is not None and vault_address(Pubkey.from_string(ids["guardian_multisig"]), squads) == guardian
     named = [name for name in PROGRAMS if names_key(elfs[name], guardian)]
-    return (its_vault and gs is not None and gs.config_authority is None and len(named) == len(PROGRAMS),
+    admin = Pubkey.from_string(ids["upgrade_authority"])
+    step4 = "knos_oidc" not in named and "knos_oidc" in elfs and names_key(elfs["knos_oidc"], admin)
+    whole = len(named) == len(PROGRAMS) or (step4 and [n for n in PROGRAMS if n != "knos_oidc"] == named)
+    return (its_vault and gs is not None and gs.config_authority is None and whole,
             found + ("" if gs is None else f"; vault 0 is {'' if its_vault else 'not '}{guardian}")
-            + f"; named in the on-chain binary of: {', '.join(named) or 'neither program'}")
+            + f"; named in the on-chain binary of: {', '.join(named) or 'neither program'}"
+            + (f"; knos_oidc's key admin is the upgrade vault {admin} (KEYS.md step 4)" if step4 else ""))
 
 
 def _github_keys(fetch: Fetch, ids: dict) -> list[tuple[str, int, oidc.Key | None]]:

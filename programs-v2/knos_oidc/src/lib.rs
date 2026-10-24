@@ -15,8 +15,8 @@
 //!   - Any wallet: register a PRIVATE key of its own (RegisterPrivateKey), renew it and revoke it. Such a key is
 //!     marked private with that wallet's address in the key account and in every token account it verifies, and
 //!     is never GitHub's, GitLab's or an attested issuer's.
-//!   - The guardian (pins::GUARDIAN, a multisig vault) can approve a key that an attestation admitted and can
-//!     revoke any key, for ever. It cannot add a key (that takes GitHub's signature), cannot change a delay or an
+//!   - The key admin (pins::KEY_ADMIN, the upgrade multisig's vault, behind its 8-day time lock) can approve a key that
+//!     an attestation admitted and can revoke any key, for ever (the guardian keeps only knos_pay's Pause). It cannot add a key (that takes GitHub's signature), cannot change a delay or an
 //!     expiry, cannot undo a revocation, and has no instruction that touches a token account or moves anything
 //!     else. So on its own it can stop tokens from verifying, and it cannot make this program accept a token the
 //!     issuer did not sign.
@@ -587,7 +587,7 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         6 => {
             let guardian = next_account_info(it)?; let key = next_account_info(it)?;
             if !rest.is_empty() { return Err(ProgramError::InvalidInstructionData); }
-            if !guardian.is_signer || !pins::is_guardian(guardian.key) { return Err(err(E_GUARDIAN)); }
+            if !guardian.is_signer || !pins::is_key_admin(guardian.key) { return Err(err(E_GUARDIAN)); }
             key_limbs(program_id, key)?;
             let mut d = key.try_borrow_mut_data()?;
             if d[K_FLAGS] & F_REVOKED != 0 { return Err(err(E_REVOKED)); }
@@ -599,8 +599,8 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         7 => {
             let guardian = next_account_info(it)?; let key = next_account_info(it)?;
             if !rest.is_empty() { return Err(ProgramError::InvalidInstructionData); }
-            // the guardian, for any key; or the wallet that registered a private key, for that key
-            let may = pins::is_guardian(guardian.key) || registrant_of(program_id, key).as_ref() == Some(guardian.key);
+            // the key admin, for any key; or the wallet that registered a private key, for that key
+            let may = pins::is_key_admin(guardian.key) || registrant_of(program_id, key).as_ref() == Some(guardian.key);
             if !guardian.is_signer || !may { return Err(err(E_GUARDIAN)); }
             key_limbs(program_id, key)?;
             let mut d = key.try_borrow_mut_data()?;
@@ -772,7 +772,7 @@ mod tests {
     fn the_attester_is_the_pinned_account_and_its_two_repositories() {
         for repo in pins::ATTEST_REPO_IDS { assert!(pins::attester(pins::ATTEST_OWNER_ID, repo)); }
         assert!(!pins::attester(pins::ATTEST_OWNER_ID, 1) && !pins::attester(1, pins::ATTEST_REPO_IDS[0]) && !pins::attester(0, 0));
-        assert!(pins::is_guardian(&pins::GUARDIAN) && !pins::is_guardian(&Pubkey::default()));
+        assert!(pins::is_key_admin(&pins::KEY_ADMIN) && !pins::is_key_admin(&pins::GUARDIAN) && !pins::is_key_admin(&Pubkey::default()));
         // the test values exist only in a testkeys build
         assert_eq!(pins::attester(424_242, 987_654_321), cfg!(feature = "testkeys"));
         assert_eq!(pins::TEST_GUARDIAN.is_some(), cfg!(feature = "testkeys"));

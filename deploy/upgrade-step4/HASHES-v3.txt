@@ -1,0 +1,10 @@
+# sBPF v3 deploy builds of knos_oidc with KEYS.md step 4 (programs-v2, default features), and knos_pay unchanged
+# source: main 305867b6 + the step-4 change (programs-v2/knos_oidc: Approve and Revoke take pins::KEY_ADMIN, the upgrade
+#         multisig's vault CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2, behind its 8-day time lock; the guardian keeps
+#         knos_pay's Pause only)
+# toolchain: cargo-build-sbf 4.4.0 (Agave 4.4.0-beta.0), platform-tools v1.57, --locked,
+#            RUSTFLAGS --remap-path-prefix=<checkout>=/build --remap-path-prefix=<cargo home>=/cargo as scripts/build_sbf.sh
+# reproduced: knos_pay comes out byte for byte as deploy/upgrade-0335 names it (24 Oct 2026)
+# name  e_flags  bytes  sha256(file)  solana-verify executable hash  devnet buffer (authority = upgrade vault)
+knos_oidc  3  173184  d08414fd83481406717bbc1ab5c4657dc3a95332a18ac6b2f402b12edf429ef2  26d208cb5b3534c76f4cca87540a99333d1a711ac285e17165019631c9294650  322HeDSYKJcd7d5N7CYDoWVooAcpeYH7urFUoABLUmaR
+knos_pay  3  413544  68cb33d3aae0fb8c17de2f1b795810baf063d01bda3ba6baa2c444eaaffb5996  e01605411369b40b9e6fd28595d0254f06357fbf7f5c887eef207f8d5b68ad3a  C7MrKvNU2yxMG5RJqzCkCDGowe5T1R69j3LXz3Qj1VdA

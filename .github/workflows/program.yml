@@ -48,7 +48,7 @@ name: program
 #                   everything in a container with no cache (a reproducible build must not start from one), which no
 #                   branch push has to wait for.
 #   v3-build        the sBPF v3 deploy builds of knos_oidc and knos_pay, the bytes the upgrade multisig's proposals
-#                   carry (deploy/upgrade-0335): `scripts/build_sbf.sh v3 deploy` with cargo-build-sbf 4.4.0 (Agave
+#                   carry (deploy/upgrade-step4; 0.3.35 in upgrade-0335): `scripts/build_sbf.sh v3 deploy` with cargo-build-sbf 4.4.0 (Agave
 #                   4.4.0-beta.0) and platform-tools v1.57, each archive held to its sha256 before anything in it
 #                   runs. Each build must be, byte for byte, the one V3_EXPECT names, and the buffer it names on
 #                   devnet must hold it; otherwise the job fails and nothing is signed for these builds. Only where
@@ -73,7 +73,7 @@ on:
   push:
     # examples/**: every example program is built and tested here. crates/**: the interface crates the programs and the
     # examples depend on.
-    paths: ["programs/**", "programs-v2/**", "crates/**", "examples/**", "idl/**", "src/knos/settle/**", "tests/_*.py", "tests/test_oidc*.py", "tests/test_pay*.py", "tests/test_order*.py", "tests/test_settle*.py", "tests/test_meter*.py", "tests/test_passkey*.py", "tests/test_cpi_fund.py", "tests/test_workflow_vault.py", "tests/test_upgrade_gate.py", "scripts/build_programs*.sh", "scripts/build_sbf.sh", "deploy/upgrade-0335/HASHES-v3.txt", "scripts/interface_fixture.py", ".github/workflows/program.yml"]
+    paths: ["programs/**", "programs-v2/**", "crates/**", "examples/**", "idl/**", "src/knos/settle/**", "tests/_*.py", "tests/test_oidc*.py", "tests/test_pay*.py", "tests/test_order*.py", "tests/test_settle*.py", "tests/test_meter*.py", "tests/test_passkey*.py", "tests/test_cpi_fund.py", "tests/test_workflow_vault.py", "tests/test_upgrade_gate.py", "scripts/build_programs*.sh", "scripts/build_sbf.sh", "deploy/upgrade-0335/HASHES-v3.txt", "deploy/upgrade-step4/HASHES-v3.txt", "scripts/interface_fixture.py", ".github/workflows/program.yml"]
   schedule:
     - cron: "41 3 * * *"
 
@@ -508,7 +508,7 @@ jobs:
       AGAVE_V3_SHA256: 91e7913c825e77b131d66ba07bc125832fab3a78730881d5bfbc29b2542c74c2
       PLATFORM_TOOLS: v1.57
       PLATFORM_TOOLS_SHA256: b0f7af104adf726fff2a6a09ea2eb2f2d2965c92295f4d7388c08d140e0c2b00
-      V3_EXPECT: deploy/upgrade-0335/HASHES-v3.txt
+      V3_EXPECT: deploy/upgrade-step4/HASHES-v3.txt
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6

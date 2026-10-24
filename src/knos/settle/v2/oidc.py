@@ -43,7 +43,8 @@ from ...platform import verify as _verify
 
 IDS = load_ids()            # the pinned ids, or a staging deployment named by KNOS_PROGRAM_IDS
 OIDC_ID = Pubkey.from_string(IDS["knos_oidc"])
-GUARDIAN = Pubkey.from_string(IDS["guardian"])    # a multisig vault: it approves attested keys and revokes keys, nothing else
+GUARDIAN = Pubkey.from_string(IDS["guardian"])    # a multisig vault: knos_pay's Pause only, once KEY_ADMIN is deployed
+KEY_ADMIN = Pubkey.from_string(IDS["upgrade_authority"])   # the upgrade vault (8-day lock): approves attested keys, revokes keys
 
 KEY_DELAY = 86_400          # a key admitted by an attestation verifies nothing for a day
 KEY_TTL = 30 * 86_400       # a key expires this long after it was last attested

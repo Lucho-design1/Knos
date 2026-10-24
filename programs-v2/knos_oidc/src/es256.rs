@@ -251,7 +251,7 @@ fn refresh(program_id: &Pubkey, accounts: &[AccountInfo], rest: &[u8]) -> Progra
 fn approve(program_id: &Pubkey, accounts: &[AccountInfo], rest: &[u8]) -> ProgramResult {
     let [guardian, key] = accounts else { return Err(err(E_ACCOUNTS)) };
     if !rest.is_empty() { return Err(ProgramError::InvalidInstructionData); }
-    if !guardian.is_signer || !pins::is_guardian(guardian.key) { return Err(err(E_GUARDIAN)); }
+    if !guardian.is_signer || !pins::is_key_admin(guardian.key) { return Err(err(E_GUARDIAN)); }
     ec_account(program_id, key)?;
     let mut d = key.try_borrow_mut_data()?;
     if d[K_FLAGS] & F_REVOKED != 0 { return Err(err(E_REVOKED)); }
@@ -269,7 +269,7 @@ fn revoke(program_id: &Pubkey, accounts: &[AccountInfo], rest: &[u8]) -> Program
     let mut d = key.try_borrow_mut_data()?;
     // the guardian, for any key; or the wallet that registered a private key, for that key
     let registrant = d[K_FLAGS] & F_PRIVATE != 0 && d[K_ISSUER] == pins::ISSUER_PRIVATE && d[EC_REGISTRANT..] == guardian.key.as_ref()[..];
-    if !pins::is_guardian(guardian.key) && !registrant { return Err(err(E_GUARDIAN)); }
+    if !pins::is_key_admin(guardian.key) && !registrant { return Err(err(E_GUARDIAN)); }
     d[K_FLAGS] |= F_REVOKED;
     Ok(())
 }

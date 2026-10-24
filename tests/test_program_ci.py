@@ -271,11 +271,12 @@ def test_the_v3_builds_are_build_sbf_with_the_pinned_toolchain_and_must_be_the_p
     assert "bash scripts/build_sbf.sh v3 deploy" in run
     script = (ROOT / "scripts" / "build_sbf.sh").read_text(encoding="utf-8")
     assert 'want_sbf="4.4.0"; want_tools="v1.57"' in script and "--remap-path-prefix=$PWD=/build" in script
-    # V3_EXPECT is the 0.3.35 upgrade's file: the two buffers the multisig is asked to deploy, and their hashes
+    # V3_EXPECT is the step-4 upgrade's file (knos_oidc's Approve and Revoke behind the upgrade vault; knos_pay as in
+    # 0.3.35): the buffers the multisig is asked to deploy, and their hashes
     expect = (ROOT / job["env"]["V3_EXPECT"]).read_text(encoding="utf-8")
     rows = {r.split()[0]: r.split() for r in expect.splitlines() if r.strip() and not r.startswith("#")}
     assert rows["knos_pay"][4:] == ["e01605411369b40b9e6fd28595d0254f06357fbf7f5c887eef207f8d5b68ad3a", "C7MrKvNU2yxMG5RJqzCkCDGowe5T1R69j3LXz3Qj1VdA"]
-    assert rows["knos_oidc"][4:] == ["925c76f051f9c28f617dc18352fcdab6127b2d23b164eb87fcab282e02bbe968", "dJA4mokfAqG7eTKUrD1MawKbWPJrzjc72qehpujiy6V"]
+    assert rows["knos_oidc"][4:] == ["26d208cb5b3534c76f4cca87540a99333d1a711ac285e17165019631c9294650", "322HeDSYKJcd7d5N7CYDoWVooAcpeYH7urFUoABLUmaR"]
     # the check step, with stand-ins for solana-verify and solana: the right bytes pass, other bytes fail it
     bash = _bash()
     [check] = [s for s in job["steps"] if "V3_EXPECT" in str(s.get("run", ""))]

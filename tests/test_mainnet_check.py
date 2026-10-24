@@ -282,11 +282,14 @@ def test_a_compiled_program_names_the_guardian_as_four_immediates_which_a_search
     would have failed on every real deployment.)"""
     fixtures = Path(__file__).parent / "fixtures"
     guardian = Pubkey.from_string(oidc.IDS["guardian"])
-    for build in ("knos_oidc_v2_real.so", "knos_oidc_v2_test.so", "knos_pay_v2_nodevnet.so", "knos_pay_v2_test.so"):
+    vault = Pubkey.from_string(oidc.IDS["upgrade_authority"])
+    for build in ("knos_oidc_v2_test.so", "knos_pay_v2_nodevnet.so", "knos_pay_v2_test.so"):     # the builds deployed today
         built = (fixtures / build).read_bytes()
         assert bytes(guardian) not in built, build
         assert mc.names_key(built, guardian), build
-        assert not mc.names_key(built, Pubkey.from_string(oidc.IDS["upgrade_authority"])), build      # the loader knows the vault, the programs do not
+        assert not mc.names_key(built, vault), build      # the loader knows the vault, these programs do not
+    step4 = (fixtures / "knos_oidc_v2_real.so").read_bytes()      # KEYS.md step 4: the key admin is the upgrade vault
+    assert mc.names_key(step4, vault) and not mc.names_key(step4, guardian)
     assert mc.names_key((fixtures / "knos_pay_v2_nodevnet.so").read_bytes(), Pubkey.from_string(oidc.IDS["fee_owner"]))      # knos-pay pays it
     for build in ("knos_oidc_test.so", "knos_pay_nodevnet.so"):      # the first deployment's builds name another guardian
         assert not mc.names_key((fixtures / build).read_bytes(), guardian), build
@@ -308,7 +311,11 @@ def test_the_guardian_check_passes_for_the_real_pinned_multisig_and_the_real_com
     def account(address):
         return (ids["squads_program"], bytes.fromhex(REAL["guardian"])) if address == ids["guardian_multisig"] else None
     ok, said = mc._guardian(account, ids, real)
-    assert ok and said.endswith("named in the on-chain binary of: knos_oidc, knos_pay") and f"vault 0 is {ids['guardian']}" in said, said
+    assert ok and said.endswith(f"named in the on-chain binary of: knos_pay; knos_oidc's key admin is the upgrade vault {ids['upgrade_authority']} "
+                                "(KEYS.md step 4)") and f"vault 0 is {ids['guardian']}" in said, said
+    deployed = {**real, "knos_oidc": (fixtures / "knos_oidc_v2_test.so").read_bytes()}        # before step 4: both name it
+    ok, said = mc._guardian(account, ids, deployed)
+    assert ok and said.endswith("named in the on-chain binary of: knos_oidc, knos_pay"), said
     first = {"knos_oidc": (fixtures / "knos_oidc_test.so").read_bytes(), "knos_pay": (fixtures / "knos_pay_nodevnet.so").read_bytes()}
     ok, said = mc._guardian(account, ids, first)
     assert not ok and said.endswith("named in the on-chain binary of: neither program")

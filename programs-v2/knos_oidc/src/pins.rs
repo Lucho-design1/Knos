@@ -23,7 +23,8 @@
 //! Every key, genesis or attested, expires KEY_TTL after it was registered or last attested (Refresh): a key the
 //! issuer has retired stops being named by the rotate workflow and expires KEY_TTL later.
 //!
-//! GUARDIAN can approve an attested key and revoke any key, and nothing else: see lib.rs.
+//! KEY_ADMIN (the upgrade multisig's vault, behind its 8-day time lock) approves an attested key and revokes any key,
+//! and nothing else: see lib.rs. The guardian keeps only knos_pay's Pause, a brake that never waits (KEYS.md, step 4).
 use solana_program::{pubkey, pubkey::Pubkey};
 
 pub const ISSUER_GITHUB: u8 = 0;
@@ -97,9 +98,13 @@ pub const KEY_DELAY: i64 = 86_400;
 /// A key expires this long after it was last attested (RegisterKey, Refresh).
 pub const KEY_TTL: i64 = 30 * 86_400;
 
-/// The guardian: a Squads vault (multisig EwqWNR3XwE9RMsJQdH7pZJSx4WERXCKLQdBpMnr8jFx5, no time lock, so that a
-/// revocation is not delayed). Approve and Revoke need its signature.
+/// The guardian: a Squads vault (multisig EwqWNR3XwE9RMsJQdH7pZJSx4WERXCKLQdBpMnr8jFx5, no time lock). It signs
+/// knos_pay's Pause and nothing here: a key it could approve with no wait would be a door with no lock.
 pub const GUARDIAN: Pubkey = pubkey!("AT1aKj1DpgaWerxmS4YjDkNpWPNUtCCKVDvxLhFxg5Jc");
+
+/// Who approves and revokes keys: vault 0 of the upgrade multisig 9HcsMEo2o6zZu9t1kbFWpnyKn7hiHaZYYFwNHZSpmWqK (2 of 3,
+/// time lock 691,200 s), the same keys and the same public wait as a change of this program's code.
+pub const KEY_ADMIN: Pubkey = pubkey!("CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2");
 
 /// Test builds only (`--features testkeys`): two test moduli, a test rotate pin, the test harness's repository and
 /// a test guardian. The keys are derived from a fixed seed in tests/_settle.py (SeedKey); no key file is committed.
@@ -133,7 +138,7 @@ pub const TEST_GUARDIAN: Option<Pubkey> = None;
 pub fn attester(owner_id: u64, repo_id: u64) -> bool {
     (owner_id == ATTEST_OWNER_ID && ATTEST_REPO_IDS.contains(&repo_id)) || TEST_ATTEST == Some((owner_id, repo_id))
 }
-pub fn is_guardian(key: &Pubkey) -> bool { *key == GUARDIAN || TEST_GUARDIAN.as_ref() == Some(key) }
+pub fn is_key_admin(key: &Pubkey) -> bool { *key == KEY_ADMIN || TEST_GUARDIAN.as_ref() == Some(key) }
 
 #[cfg(test)]
 mod two_homes {
