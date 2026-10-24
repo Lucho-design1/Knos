@@ -470,23 +470,36 @@ def tied(row: dict, words: list[str], tags: list[dict]) -> bool:
     return bool(own & idea)
 
 
-def _who_wants(run: _Run, tags: list[dict], ents: list[dict], per: int = 6) -> list[dict]:
-    """"Who wants it": Qloo's audiences for each of the idea's matched products (signal.interests.entities), and for each
-    of its own taste tags weighed with those products (a tag alone answers Qloo's neutral 0.5 for every idea: Wrestling,
-    Sneakerheads, Golf). Only audiences above neutral (rules: informative_affinity) are shown, each naming the tag or
-    product that ties it. Shown only; the verdict does not read them."""
-    ids = ",".join(m["id"] for m in ents if m and m.get("id"))
-    asks = [("product", m, {"signal.interests.entities": m["id"]}) for m in ents if m and m.get("id")]
-    asks += [("tag", t, {"signal.interests.tags": t["id"], **({"signal.interests.entities": ids} if ids else {})})
-             for t in tags if t.get("id")]
-    run.prefetch([("/v2/insights", {"filter.type": "urn:audience", "take": per, **s}) for _, _, s in asks])
+def _who_wants(run: _Run, tags: list[dict], ents: list[dict], kind: str = "urn:entity:brand", per: int = 6) -> list[dict]:
+    """"Who wants it": Qloo's audiences of products, read with signal.interests.entities (a tag alone as the signal
+    answers Qloo's neutral 0.5 for every idea: Wrestling, Sneakerheads, Golf). The products are the idea's matched ones,
+    and, for each of its own taste tags, the tag's top products in the idea's kind (/v2/insights filter.tags): an idea
+    no product matches still reaches the people of its taste. Only audiences above neutral (rules: informative_affinity)
+    are shown, each tied to the matched product, or to the tag and the product it came through. Shown only; the
+    verdict does not read them."""
+    tags = [t for t in tags if t.get("id")]
+    run.prefetch([("/v2/insights", {"filter.type": kind, "filter.tags": t["id"], "take": 2}) for t in tags])
+    asks = [("product", m, None) for m in ents if m and m.get("id")]
+    known = {m["id"] for _, m, _ in asks}
+    for t in tags:
+        body, _ = run.get("/v2/insights", {"filter.type": kind, "filter.tags": t["id"], "take": 2},
+                          f"who wants it: the top products of the tag {t.get('name')}", broaden=False)
+        for e in (((body or {}).get("results") or {}).get("entities") or [])[:2]:
+            if e.get("entity_id") and e["entity_id"] not in known:
+                known.add(e["entity_id"])
+                asks.append(("tag", {"name": e.get("name"), "id": e["entity_id"]}, t))
+    asks = asks[:6]
+    run.prefetch([("/v2/insights", {"filter.type": "urn:audience", "take": per, "signal.interests.entities": m["id"]}) for _, m, _ in asks])
     out, seen = [], set()
-    for kind, by, s in asks:
-        rows, src = _audience(run, s, f"who wants it: audiences of the {kind} {by.get('name')}", take=per)
+    for how, m, tag in asks:
+        rows, src = _audience(run, {"signal.interests.entities": m["id"]}, f"who wants it: audiences of the product {m.get('name')}"
+                              + (f" (top in the tag {tag.get('name')})" if tag else ""), take=per)
+        tie = ({"kind": "tag", "name": tag.get("name"), "id": tag["id"], "via": m.get("name"), "via_id": m["id"]} if tag else
+               {"kind": "product", "name": m.get("name"), "id": m["id"]})
         for a in _informative(rows):
             if a.get("name") and a["name"] not in seen:
                 seen.add(a["name"])
-                out.append({**a, "tie": {"kind": kind, "name": by.get("name"), "id": by.get("id")}, "src": src})
+                out.append({**a, "tie": tie, "src": src})
     return sorted(out, key=lambda a: -a["affinity"])[:6]
 
 
@@ -555,7 +568,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
             if t.get("id") and t["id"] not in {x["id"] for x in ev["tags"]} and {_norm(x) for x in tokens(t.get("name"))} & set(words):
                 ev["tags"].append({"name": t.get("name"), "id": t["id"], "popularity": t.get("popularity"), "src": s4})
     sig_ents = [m["id"] for m in near] or ([lead["id"]] if lead else [])
-    ev["who_wants"] = _who_wants(run, ev["tags"][:3], [m for m in (near or ([lead] if lead else []))][:2])
+    ev["who_wants"] = _who_wants(run, ev["tags"][:3], [m for m in (near or ([lead] if lead else []))][:2], kind)
     if not sig_ents:
         return ev
     signal = {"signal.interests.entities": ",".join(sig_ents), **({"signal.location.query": place} if place else {})}

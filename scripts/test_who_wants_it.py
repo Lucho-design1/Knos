@@ -38,7 +38,7 @@ def main() -> int:
         untied += [f"{idea}: {b}" for b in bad]
         showing += bool(wants)
         lines.append(f"{idea[:44]:44} {len(wants)} audience(s): " +
-                     "; ".join(f"{a['name']} {a['affinity']:.2f} (Qloo {a['tie']['kind']} {a['tie']['name']})" for a in wants[:3]))
+                     "; ".join(f"{a['name']} {a['affinity']:.2f} (Qloo {a['tie']['kind']} {a['tie']['name']}{', through ' + a['tie']['via'] if a['tie'].get('via') else ''})" for a in wants[:3]))
     shown = [x for x in sets if x]
     same = max((shown.count(x) for x in shown), default=0)
     ok = showing >= 15 and not untied and same < len(shown)

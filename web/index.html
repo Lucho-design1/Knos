@@ -449,7 +449,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     ${empty ? "" : `<section class="k-part" data-part="audience" data-qloo><h3>Who wants it</h3>
       ${age || gender ? `<p class="k-big">${esc([age, gender].filter(Boolean).join(", "))}</p>` : `<p class="k-none">Qloo did not answer who.</p>`}
       ${wants.length ? `<ul class="k-wants">${wants.map((a) => `<li><b>${esc(a.name)}</b> <span class="k-fine">tied by Qloo ${
-        a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}</span></li>`).join("")}</ul>`
+        a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}${a.tie.via ? `, through ${esc(a.tie.via)}` : ""}</span></li>`).join("")}</ul>`
         : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
     <section class="k-part k-where" data-part="cities" data-qloo><h3>Where to launch</h3>
       ${cities.length ? map(cities) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${src(h, cities[0]?.src)}</section>

@@ -540,6 +540,7 @@ def make_handler(state: State):
                     "fees": preorder.fee_line(), "auth": auth.config(),
                     "framing": demand.FRAMING, "escrow": escrow.available(),
                     "demo_wallet": bool(os.environ.get("KNOS_WANTED_DEVNET_KEYPAIR")), "cluster": "devnet",
+                    "relayer": preorder.relayer_funds(),
                     "record": company.root() is not None, "targets": ["brand", "place", "artist", "movie", "book", "podcast", "tv_show"]}
 
         def do_POST(self):

@@ -22,6 +22,7 @@ import ipaddress
 import json
 import os
 import socket
+import sys
 import threading
 import time
 import urllib.error
@@ -109,6 +110,30 @@ def program():
 def relayer():
     v = os.environ.get("KNOS_WANTED_RELAYER_KEYPAIR")
     return _kp(v) if v else escrow.demo_key()
+
+
+RELAYER_LOW_SOL = 0.5          # below this the app says so: a release costs about 0.003 SOL, the faucet is often dry
+_funds: dict = {}
+
+
+def relayer_funds(max_age_s: float = 60.0) -> dict:
+    """The relayer's devnet SOL, read from the chain at most once a minute, with an alert below RELAYER_LOW_SOL (the
+    release of 24 Oct 2026 failed at 0.00083 SOL: the payout's token account could not be paid for)."""
+    if _funds and time.monotonic() - _funds.get("_at", 0) < max_age_s:
+        return {k: v for k, v in _funds.items() if k != "_at"}
+    try:
+        from knos import chain
+        who = str(relayer().pubkey())
+        sol = int(chain.call(escrow.ledger().url, "getBalance", [who])["value"]) / 1e9
+    except Exception as why:  # noqa: BLE001 - no wallet configured, or the RPC did not answer: said, not guessed
+        return {"read": False, "why": f"{type(why).__name__}: {str(why)[:120]}"}
+    low = sol < RELAYER_LOW_SOL
+    if low and not _funds.get("low"):
+        print(f"knos relayer: {who} holds {sol:.4f} devnet SOL, under {RELAYER_LOW_SOL}: releases may fail", file=sys.stderr, flush=True)
+    _funds.clear()
+    _funds.update({"read": True, "address": who, "sol": round(sol, 6), "low": low, "floor_sol": RELAYER_LOW_SOL, "_at": time.monotonic(),
+                   **({"alert": f"the relayer holds {sol:.4f} devnet SOL, under {RELAYER_LOW_SOL}: top it up before releases fail"} if low else {})})
+    return {k: v for k, v in _funds.items() if k != "_at"}
 
 
 def _counted(rec: dict) -> None:

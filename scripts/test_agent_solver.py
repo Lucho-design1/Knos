@@ -76,7 +76,8 @@ def funded_project() -> tuple[str, str] | None:
     def find():
         for p in http("/api/projects?take=100")[1].get("projects", []):
             m = (p.get("milestones") or [{}])[0]
-            if p.get("solver_brief") == BRIEF and m.get("status") not in ("released",):
+            # an open milestone only: one another solver claimed, or one judged by a round a redeploy closed, cannot pay
+            if p.get("solver_brief") == BRIEF and m.get("status") in (None, "", "open", "funded", "locked"):
                 return p, m
         return None, None
     p, m = find()
