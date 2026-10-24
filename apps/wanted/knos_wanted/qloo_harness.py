@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import signal
 import sys
 import subprocess
 import threading
@@ -114,8 +115,11 @@ class Harness:
             if env.get("QLOO_BASE_URL") and not env.get("QLOO_TRUSTED_BASE_URL"):
                 env["QLOO_TRUSTED_BASE_URL"] = env["QLOO_BASE_URL"]   # the harness trusts only the endpoint it is told
             env.setdefault("NODE_OPTIONS", NODE_HEAP)                  # each Node process within its share of 512 MB
+            # a session of its own: `qloo` is a launcher with a child server, and stopping the launcher alone left the
+            # server (115 MB) running, one more at each restart (24 Oct 2026: six of them, 804 MB in all)
             self.proc = subprocess.Popen(self._cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                         text=True, encoding="utf-8", errors="replace", bufsize=1, env=env)
+                                         text=True, encoding="utf-8", errors="replace", bufsize=1, env=env,
+                                         start_new_session=os.name != "nt")
             threading.Thread(target=self._read, args=(self.proc,), daemon=True, name="qloo-harness").start()
         got = self._wait(self._send("initialize", {"protocolVersion": "2024-11-05", "capabilities": {},
                                                    "clientInfo": {"name": "knos", "version": "1"}}))
@@ -152,7 +156,10 @@ class Harness:
         except (OSError, ValueError, TimeoutError, AssertionError) as why:
             self.failed_at = time.monotonic()
             print(f"qloo harness: {type(why).__name__}: {str(why)[:120]}; REST for a minute", file=sys.stderr, flush=True)
-            self.stop(proc)
+            # a slow answer is not a dead harness: under load every slow one restarted it, every ~20 s; it is stopped only
+            # when it broke (a closed pipe, a bad line) or has exited
+            if not isinstance(why, TimeoutError) or (proc is not None and proc.poll() is not None):
+                self.stop(proc)
             return None
 
     def stop(self, proc: subprocess.Popen | None) -> None:
@@ -166,7 +173,14 @@ class Harness:
                 self.ready = False
                 self.proc = None
         if proc.poll() is None:
-            proc.kill()
+            pid = getattr(proc, "pid", None)
+            try:
+                if os.name != "nt" and isinstance(pid, int):
+                    os.killpg(os.getpgid(pid), signal.SIGKILL)      # the launcher and the server it started
+                else:
+                    proc.kill()
+            except (ProcessLookupError, PermissionError):
+                proc.kill()
         try:
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:

@@ -192,14 +192,7 @@ class Direct:
         return {"structuredContent": r.get("structuredContent"), "isError": r.get("isError", False)}
 
     def close(self) -> None:
-        p, self.h.proc = self.h.proc, None
-        self.h.ready = False
-        if p and p.poll() is None:
-            try:
-                p.stdin.close() if p.stdin else None
-                p.wait(timeout=5)
-            except Exception:  # noqa: BLE001
-                p.kill()
+        self.h.stop(self.h.proc)                    # the whole process group: `qloo` and the server it started
 
 
 # ---- the client --------------------------------------------------------------------------------------------------

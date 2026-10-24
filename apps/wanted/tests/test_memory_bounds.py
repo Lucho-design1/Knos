@@ -94,3 +94,41 @@ def test_a_failed_harness_question_stops_that_process_and_never_a_newer_one():
     assert old.killed and old.waited and h.proc is new and h.ready and not new.killed
     h.stop(new)                                      # the current one failing: stopped, and started again next time
     assert new.killed and h.proc is None and not h.ready
+
+
+def test_stopping_the_harness_stops_the_server_its_launcher_started():
+    """`qloo` is a launcher with a child server: stop() ends the whole process group, not the launcher alone."""
+    import os
+    import subprocess
+
+    import pytest
+
+    from knos_wanted import qloo_harness
+    if os.name == "nt":
+        pytest.skip("process groups are POSIX")
+    launcher = subprocess.Popen(["sh", "-c", "sleep 60 & echo $!; wait"], stdout=subprocess.PIPE, text=True, start_new_session=True)
+    child = int(launcher.stdout.readline())
+    h = qloo_harness.Harness(command=["qloo", "api", "mcp"])
+    h.proc, h.ready = launcher, True
+    h.stop(launcher)
+    time.sleep(0.2)
+    assert launcher.poll() is not None and h.proc is None
+    with open(f"/proc/{child}/stat") if os.path.exists(f"/proc/{child}/stat") else open(os.devnull) as f:
+        state = f.read().split(")")[-1].split()[:1]
+    assert state in ([], ["Z"])                      # the child server is gone (or a zombie with no memory)
+
+
+def test_a_slow_answer_keeps_the_harness_running(monkeypatch):
+    from knos_wanted import qloo_harness
+    h = qloo_harness.Harness(command=["qloo", "api", "mcp"])
+    p = _Proc()
+    h.proc, h.ready = p, True
+    monkeypatch.setattr(h, "enabled", lambda: True)
+    monkeypatch.setattr(h, "_ensure", lambda: None)
+    monkeypatch.setattr(h, "_send", lambda *a, **k: (1, [None, None]))
+
+    def slow(sent):
+        raise TimeoutError("the harness did not answer in time")
+    monkeypatch.setattr(h, "_wait", slow)
+    assert h.call("qloo_search", {"query": "x"}) is None
+    assert h.proc is p and h.ready and not p.killed and h.failed_at is not None     # REST for a minute, same process
