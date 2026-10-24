@@ -67,7 +67,8 @@ h1 { font-size: 28px; } a { color: var(--accent); } .muted { color: var(--muted)
   <h1>Knos demand check</h1>
   <p>Is it wanted? Qloo's taste data answers, code decides, and buyers pay the maker only on proof.</p>
   <div class="wake" aria-hidden="true"><i></i></div>
-  <p id="state" role="status">Waking the server. A free instance sleeps when nobody uses it; the first visit can take up to a minute.</p>
+  <p>Waking the server. A free instance sleeps when nobody uses it; the first visit can take up to a minute.</p>
+  <p class="muted" id="state" role="status"></p>
   <p class="muted">Not moving? Open <a id="direct" href="https://knos.onrender.com/">the app directly</a>.</p>
 </main>
 <script>
@@ -85,12 +86,13 @@ async function ping() {
     location.replace(APP + (PAGES.includes(to) ? to : "/") + location.hash);
   } catch (e) {
     const s = Math.round((Date.now() - start) / 1000);
-    document.getElementById("state").textContent = "Still waking the server (" + s + " s). Free instances take up to a minute.";
+    document.getElementById("state").textContent = "Still waking (" + s + " s).";
     if (s < 180) setTimeout(ping, 4000);
     else document.getElementById("state").textContent = "The server did not answer in 3 minutes. Try the direct link below.";
   }
 }
-// after the page is drawn: asked before it, the app's address (a new connection) stood in the first paint's way
+// the explanation above stays as drawn; only this short line changes, so the first screen is the largest paint.
+// After the page is drawn: asked before it, the app's address (a new connection) stood in the first paint's way
 if (document.readyState === "complete") ping(); else addEventListener("load", () => setTimeout(ping, 0), { once: true });
 </script>
 </body>

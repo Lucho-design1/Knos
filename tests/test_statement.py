@@ -267,7 +267,10 @@ def test_another_program_reads_the_pdf_when_one_is_installed(tool):
                **{k: os.environ[k] for k in ("SYSTEMROOT", "LANG", "LC_ALL") if k in os.environ}}
         got = subprocess.run([program, "--check", path.name] if tool == "qpdf" else [program, "-layout", path.name, "-"], capture_output=True, text=True,
                              encoding="utf-8", timeout=60, cwd=folder, env=env)
-    assert got.returncode == 0, got.stderr
+    # Git for Windows' pdftotext on GitHub's runners also crashes on its way out (0xC0000374, a heap error) after printing
+    # the whole text (tests.yml run of 873d81b4): there the exit code says nothing about the file, so what it read decides.
+    crashed_after_reading = os.name == "nt" and tool == "pdftotext" and got.returncode >= 0xC0000000 and "insufficient evidence" in got.stdout
+    assert got.returncode == 0 or crashed_after_reading, got.stderr
     if tool == "pdftotext":
         assert "Statement for invoice INV-2026-09" in got.stdout and "insufficient evidence" in got.stdout and sept()["lines"][0]["invoice_line"] in got.stdout
 

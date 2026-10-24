@@ -14,19 +14,40 @@ env:
   APP_URL: https://knos.onrender.com
   SITE_URL: https://drexthealpha.github.io/Knos/
 jobs:
-  test_fields_matrix:
+  fields_shard:
+    # the 49-cell grid's demand checks in three shards (two at a time each, six at once: the free app keeps little
+    # memory spare); shard 0 also reads the grid, each cell's feature and the heroes. test_fields_matrix reads them.
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: "22"
+          node-version: 22
       - run: |
           for t in 1 2 3; do timeout 120 npm install --no-save --no-audit --no-fund playwright@1.56.0 && break; [ $t != 3 ] || exit 1; done   # npm can hang
           npx playwright install chromium   # the runner's own Chrome brought its libraries; --with-deps waited 10 min on apt
           curl -fsS -m 120 -o /dev/null "$APP_URL/healthz"
-      - run: node scripts/test_champion.mjs "${GITHUB_JOB}"
+      - run: node scripts/test_champion.mjs test_fields_matrix
+        env:
+          FIELDS_SHARD: ${{ matrix.shard }}
+          FIELDS_OF: 3
+  test_fields_matrix:
+    # the milestone's check: it passes when all three shards did
+    needs: [fields_shard]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          echo "fields shards: $RESULT"
+          [ "$RESULT" = success ]
+        env:
+          RESULT: ${{ needs.fields_shard.result }}
   test_value_vectors:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -98,7 +119,7 @@ jobs:
       - name: Every doc
         run: python scripts/split_paragraphs.py --check --strict
   vitals_shard:
-    # three shards at once (the front door's pages, then the app's in two halves): every page still gets three cold runs,
+    # six shards at once (the front door's pages in two, the app's in four): every page still gets three cold runs,
     # each a fresh browser; test_vitals below reads them all. They start once the quick jobs that open the same pages in
     # their own browsers are done (measured at the same time, the front door's pages crossed 1.5 s in 3 runs of 3)
     needs: [test_legibility, test_proof_first, test_companies_mode, test_value_vectors, test_stack_coverage]
@@ -108,7 +129,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [site, app0, app1]
+        shard: [site0, site1, app0, app1, app2, app3]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -121,10 +142,11 @@ jobs:
           node -e '
           const fs = require("fs"), all = JSON.parse(fs.readFileSync("scripts/public_pages.json", "utf8")).pages;
           const app = all.filter((u) => u.includes("onrender.com")), shard = process.env.SHARD;
-          const urls = shard === "site" ? all.filter((u) => u.includes("github.io")) : app.filter((_, i) => i % 2 === Number(shard.slice(3)));
+          const site = shard.startsWith("site"), k = Number(shard.slice(-1)), n = site ? 2 : 4;
+          const urls = (site ? all.filter((u) => u.includes("github.io")) : app).filter((_, i) => i % n === k);
           const c = require("./apps/wanted/lighthouserc.js"), out = JSON.parse(JSON.stringify(c));
           out.ci.collect.url = urls; out.ci.collect.numberOfRuns = 3;
-          out.ci.collect.settings.blockedUrlPatterns = shard === "site" ? ["https://knos.onrender.com/*"] : [];
+          out.ci.collect.settings.blockedUrlPatterns = site ? ["https://knos.onrender.com/*"] : [];
           delete out.ci.assert; delete out.ci.upload;
           fs.writeFileSync("lhci.json", JSON.stringify(out, null, 1));
           fs.writeFileSync("urls.txt", urls.join("\n") + "\n");'
@@ -139,6 +161,12 @@ jobs:
                 --virtual-time-budget=8000 --dump-dom "$u" > /dev/null 2>&1 || true ) &
           done < urls.txt
           wait
+          # nothing of the warm-up may run while pages are measured: a leftover renderer of a warm-up Chrome took the
+          # CPU in run 39997654630 (the runner's benchmark 8% lower, the browser's own work 3.4x), and the home page
+          # read 213 ms of blocking time where its other runs read 0
+          pkill -f -- "--dump-dom" || true
+          sleep 2
+          left=$(pgrep -fc -- "--dump-dom" || true); echo "warm-up Chrome processes left: ${left:-0}"
       - name: Three cold runs of each page
         run: npx --yes @lhci/cli@0.14.0 collect --config=lhci.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

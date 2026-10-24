@@ -1155,6 +1155,8 @@ def release(pid: str, key: str, attempt: str, led=None, sign=None, release_fn=No
             m = _milestone(p, key)
             m["history"].append({"at": _now(), "what": f"attempt {attempt} verified: the FROST referee group is signing", "orders": paid})
             _save("projects", pid, p)
+        from . import referee as _referee
+        threading.Thread(target=_referee.wake_host2, daemon=True).start()   # host 2 starts now, not at its next timer
         return {"released": paid, "amc_collected": [], "milestone": "signing",
                 "review_sha256": hashlib.sha256(review.read_bytes()).hexdigest()}
     return _settle(pid, key, attempt, paid, led, review)

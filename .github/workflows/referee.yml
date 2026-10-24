@@ -29,6 +29,8 @@ name: knos referee (FROST host 2 of 3)
 on:
   schedule:
     - cron: "*/5 * * * *"
+  repository_dispatch:
+    types: [knos-referee]      # host 1 (the app) wakes host 2 when a session opens, if it holds a token for it
   workflow_dispatch:
     inputs:
       session:

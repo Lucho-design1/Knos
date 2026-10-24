@@ -176,11 +176,13 @@
     let [word, cls] = WORD[d.verdict] || [String(d.verdict || "No verdict"), "unknown"];
     const who = r.who || {}, age = (p.who?.age || who.top_age || "").replace(/_/g, " ").replace(" and ", " and "), gender = p.who?.gender || who.top_gender || "";
     const segs = (p.who?.segments || (r.audiences || []).filter((a) => a.tied).map((a) => a.name)).filter(Boolean).slice(0, 3);
+    // Qloo's audiences for the idea's own tags (or products), each naming what ties it: none is unrelated
+    const wants = (r.who_wants || []).filter((a) => a && a.name && a.tie && a.tie.name).slice(0, 4);
     const cities = (r.cities || []).slice(0, 5), price = r.price || {}, tier = String(price.tier || "").toLowerCase();
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
     // visitor can pick another match, or none of them; the verdict's reason is Knos's rule, apart from Qloo's data
     const lead = r.leader && typeof r.leader === "object" ? r.leader : null, why = (d.reasons || [])[0];
-    const empty = !(age || gender) && !segs.length && !cities.length && !tier;     // no part answered: one next step, no empty boxes
+    const empty = !(age || gender) && !segs.length && !wants.length && !cities.length && !tier;     // no part answered: one next step, no empty boxes
     if (empty && d.verdict !== "OPEN") [word, cls] = ["No taste data from Qloo", "unknown"];   // missing data is not a verdict
     const others = (r.matches || []).filter((m) => m && m.name && (!lead || m.id !== lead.id)).slice(0, 3);
     const read = lead ? `<p class="k-read" data-part="match">Read as <b>${esc(lead.name)}</b>${label ? "" : ` · Not it? ${others.map((m) =>
@@ -193,7 +195,9 @@
   <form class="k-like" data-like><label>Most like <input name="like" maxlength="80" placeholder="a product or brand you know" aria-label="What is it most like?"></label> <button type="submit">Check</button></form>` : `<div class="k-parts">`}
     ${empty ? "" : `<section class="k-part" data-part="audience" data-qloo><h3>Who wants it</h3>
       ${age || gender ? `<p class="k-big">${esc([age, gender].filter(Boolean).join(", "))}</p>` : `<p class="k-none">Qloo did not answer who.</p>`}
-      ${segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
+      ${wants.length ? `<ul class="k-wants">${wants.map((a) => `<li><b>${esc(a.name)}</b> <span class="k-fine">tied by Qloo ${
+        a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}</span></li>`).join("")}</ul>`
+        : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
     <section class="k-part k-where" data-part="cities" data-qloo><h3>Where to launch</h3>
       ${cities.length ? map(cities) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${src(h, cities[0]?.src)}</section>
     <section class="k-part" data-part="price" data-qloo><h3>Price tier</h3>

@@ -191,6 +191,24 @@ def trust(session_id: str | None) -> dict | None:
             "frost_signature": s.get("signature"), "release": (res.get("signatures") or [None])[0]}
 
 
+def wake_host2(repo: str = "drexthealpha/Knos") -> bool:
+    """Host 1 starts host 2 (referee.yml) by repository_dispatch the moment a session opens, when this server holds a
+    GitHub token for it (KNOS_REFEREE_DISPATCH_TOKEN). Without one, the relay workflow starts host 2 when it sees an
+    open session (worker.yml). Never raises: a missed wake leaves the relay and the 5-minute timer."""
+    tok = os.environ.get("KNOS_REFEREE_DISPATCH_TOKEN")
+    if not tok:
+        return False
+    import json
+    import urllib.request
+    req = urllib.request.Request(f"https://api.github.com/repos/{repo}/dispatches", json.dumps({"event_type": "knos-referee"}).encode(),
+                                 {"Authorization": f"Bearer {tok}", "Accept": "application/vnd.github+json"}, method="POST")
+    try:
+        urllib.request.urlopen(req, timeout=15).close()
+        return True
+    except OSError:
+        return False
+
+
 def start(rec: dict, url: str, led, kind: str = "preorder") -> dict:
     """Open a signing session for a verified milestone; host 1 signs in the background; hosts 2 and 3 poll for it."""
     from knos.threshold import check, participant

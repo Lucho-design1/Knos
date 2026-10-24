@@ -176,6 +176,20 @@ jobs:
             echo "Another run already relays, or GitHub did not list the runs. This run has nothing to do."
             echo "go=false" >> "$GITHUB_OUTPUT"
           fi
+      # Referee host 2 (referee.yml) signs only when it runs, and GitHub starts its 5-minute timer late: a verified
+      # attempt waited for a person to start it by hand. The app (host 1) lists the open signing sessions; when one
+      # waits and no referee run is going, this run starts host 2 (workflow_dispatch: the run's own token may start it).
+      - name: start referee host 2 when a signing session waits
+        if: steps.chain.outputs.go == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n="$(curl -fsS --max-time 30 https://knos.onrender.com/api/referee/pending | python3 -c 'import json,sys; print(len(json.load(sys.stdin).get("sessions", [])))' || echo 0)"
+          going="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow referee.yml --limit 5 --json status --jq '[.[] | select(.status != "completed")] | length' || echo 1)"
+          echo "open signing sessions: $n; referee runs going: $going"
+          if [ "$n" -gt 0 ] && [ "$going" = "0" ]; then   # another workflow, so not this chain's start (knos.proof.chain)
+            gh api -X POST "repos/$GITHUB_REPOSITORY/actions/workflows/referee.yml/dispatches" -f ref=main && echo "started referee host 2"
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: steps.chain.outputs.go == 'true'
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0

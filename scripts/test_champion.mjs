@@ -34,6 +34,9 @@ const post = async (path, body, headers = {}) => {
   return [r.status, await r.json().catch(() => ({}))];
 };
 
+// sharded in CI (champion.yml fields_shard): FIELDS_SHARD k of FIELDS_OF; shard 0 also reads the grid, its features and
+// the heroes; each shard asks its share of the demand checks, two at a time (the free app keeps little memory spare)
+const SHARD = Number(process.env.FIELDS_SHARD || 0), OF = Number(process.env.FIELDS_OF || 1), AT_ONCE = OF > 1 ? 2 : 4;
 async function fields() {
   const { ctx, page } = await open(APP + "/fields");
   await page.waitForSelector("#fx a.fc", { timeout: 60000 });
@@ -43,12 +46,12 @@ async function fields() {
   ok(cells.length === 49 && pairs.size === 49, "49 cells, 7 bottlenecks by 7 technologies, each once", { cells: cells.length });
   ok(cells.every((c) => c.status === "live" || c.status === "next"), "each cell is live or next", { next: cells.filter((c) => c.status === "next").map((c) => `${c.b}x${c.t}`) });
   ok(cells.filter((c) => c.unlock).length === 12, "the framework's 12 unlock pairs are marked");
-  const features = cells.filter((c) => !c.href.startsWith("/?q="));
+  const features = SHARD === 0 ? cells.filter((c) => !c.href.startsWith("/?q=")) : [];
   for (const c of features) { const r = await fetch(APP + c.href.split("#")[0]); ok(r.status === 200, `${c.b} x ${c.t}: its feature answers`, c.href); }
   // each demand check, four at a time: a verdict (OPEN, REFUSE or CANNOT_DECIDE), never an error
-  const checks = cells.filter((c) => c.href.startsWith("/?q=")), got = [];
-  for (let i = 0; i < checks.length; i += 4) {
-    got.push(...await Promise.all(checks.slice(i, i + 4).map(async (c) => {
+  const checks = cells.filter((c) => c.href.startsWith("/?q=")).filter((_, i) => i % OF === SHARD), got = [];
+  for (let i = 0; i < checks.length; i += AT_ONCE) {
+    got.push(...await Promise.all(checks.slice(i, i + AT_ONCE).map(async (c) => {
       const idea = decodeURIComponent(c.href.slice(4).split("#")[0]);
       let [s, r] = await post("/api/check", { idea });
       // without the operator's key (CI) the per-address limit (30 checks in 10 minutes) paces the run: wait it out
@@ -62,6 +65,7 @@ async function fields() {
   const bad = got.filter((g) => g.s !== 200 || !["OPEN", "REFUSE", "CANNOT_DECIDE"].includes(g.v));
   const tally = got.reduce((m, g) => ({ ...m, [g.v]: (m[g.v] || 0) + 1 }), {});
   ok(!bad.length, `${got.length} demand checks answer now`, bad.length ? bad.slice(0, 5) : tally);
+  if (SHARD !== 0) return;
   for (const [door, url] of [["front door", SITE], ["app", APP + "/"]]) {
     const o = await open(url);
     const techs = await o.page.$$eval("#k-hero [data-tech]", (l) => [...new Set(l.map((b) => b.dataset.tech))]);

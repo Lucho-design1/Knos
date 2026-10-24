@@ -19,6 +19,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+from pathlib import Path
 import re
 import sys
 import time
@@ -156,13 +157,15 @@ def main() -> int:
     v = got.get("referee") or {}
     ok(v.get("pass"), f"the sealed referee: {v.get('decision')}, lift {v.get('lift')} over the baseline (needs {v.get('min_margin')})"
        + (f": {got['_error']}" if got.get("_error") else ""))
-    end = time.monotonic() + 600
+    # nobody acts from here: host 1 (the app) wakes host 2 by repository_dispatch when it holds a token, and the relay
+    # workflow starts host 2 when it sees the open session (worker.yml); the 5-minute timer is the last resort
+    end, started = time.monotonic() + 900, time.monotonic()
     status = got.get("milestone")
     while status != "released" and time.monotonic() < end and not got.get("_error"):
         time.sleep(10)                                   # the FROST referee hosts sign within minutes
         p = http(f"/api/project?id={pid}")[1]
         status = next((m.get("status") for m in p.get("milestones", []) if m.get("key") == key), status)
-    ok(status == "released", f"the milestone is {status}")
+    ok(status == "released", f"the milestone is {status}, {time.monotonic() - started:.0f} s after the winning submission, 0 operator steps")
     after, end = balance(payout), time.monotonic() + 120
     while after <= before and time.monotonic() < end:
         time.sleep(5)
@@ -177,7 +180,11 @@ def main() -> int:
     for what, cred in (("its OAuth token", access), ("the key itself", agent_key)):
         got = tool("knos_project_open", {"template": "internal_tool", "title": "After revoke"}, cred)
         ok("revoked" in got.get("_error", ""), f"a write call with {what} is refused after the revoke")
-    print(f"{'PASS' if not FAILS else 'FAIL'} test_agent_solver: {len(FAILS)} failed", flush=True)
+    line = (f"PASS test_agent_solver: 0 operator steps, paid {after - before:g} test units on devnet" if not FAILS
+            else f"FAIL test_agent_solver: {len(FAILS)} failed: {FAILS[:3]}")
+    print(line, flush=True)
+    world = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+    (world / "test_agent_solver.txt").write_text(line + "\n", encoding="utf-8")
     return 1 if FAILS else 0
 
 

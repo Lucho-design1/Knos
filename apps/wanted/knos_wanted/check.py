@@ -457,6 +457,23 @@ def tied(row: dict, words: list[str], tags: list[dict]) -> bool:
     return bool(own & idea)
 
 
+def _who_wants(run: _Run, tags: list[dict], ents: list[dict], per: int = 3) -> list[dict]:
+    """"Who wants it": Qloo's audiences for each of the idea's own taste tags (signal.interests.tags, one tag a call),
+    else for its matched products (signal.interests.entities): every audience shown names the tag or product that ties
+    it, so none is unrelated. Shown only; the verdict does not read them."""
+    asks = [("tag", t, {"signal.interests.tags": t["id"]}) for t in tags if t.get("id")] or \
+        [("product", m, {"signal.interests.entities": m["id"]}) for m in ents if m and m.get("id")]
+    run.prefetch([("/v2/insights", {"filter.type": "urn:audience", "take": per, **s}) for _, _, s in asks])
+    out, seen = [], set()
+    for kind, by, s in asks:
+        rows, src = _audience(run, s, f"who wants it: audiences of the {kind} {by.get('name')}", take=per)
+        for a in rows:
+            if a.get("name") and a["name"] not in seen and isinstance(a.get("affinity"), (int, float)):
+                seen.add(a["name"])
+                out.append({**a, "tie": {"kind": kind, "name": by.get("name"), "id": by.get("id")}, "src": src})
+    return out[:6]
+
+
 def _informative(rows: list[dict]) -> list[dict]:
     return [a for a in rows if isinstance(a.get("affinity"), (int, float)) and a["affinity"] > RULES["informative_affinity"]]
 
@@ -470,7 +487,7 @@ def _key(path: str, params: dict) -> str:
 
 def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: dt.date, exclude: set[str]) -> dict:
     ev: dict = {"product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
-                "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
+                "who": None, "where": [], "places": [], "audiences": [], "who_wants": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
     words = content_words(idea, place)
     ev["words"], ev["named_audience"] = words, [{"word": w, "dimension": d, "key": k} for w, d, k in audience_named(idea)]
     if not words:
@@ -522,6 +539,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
             if t.get("id") and t["id"] not in {x["id"] for x in ev["tags"]} and {_norm(x) for x in tokens(t.get("name"))} & set(words):
                 ev["tags"].append({"name": t.get("name"), "id": t["id"], "popularity": t.get("popularity"), "src": s4})
     sig_ents = [m["id"] for m in near] or ([lead["id"]] if lead else [])
+    ev["who_wants"] = _who_wants(run, ev["tags"][:3], [m for m in (near or ([lead] if lead else []))][:2])
     if not sig_ents:
         return ev
     signal = {"signal.interests.entities": ",".join(sig_ents), **({"signal.location.query": place} if place else {})}
@@ -818,7 +836,7 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
     run = _Run(client, on_call)
     ok, why = client.ready()
     empty = {"product_type": None, "words": content_words(idea, place), "matches": [], "unrelated": [], "excluded": [], "leader": None,
-             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
+             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "who_wants": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
     ev = gather(run, idea, place, leader, today, set(exclude or [])) if ok else empty
     if ok and opts:                                # F1-F8: each asked-for family's own calls, numbered with the rest
         ev["families"] = families.answer(run, ev, idea, place, opts)
