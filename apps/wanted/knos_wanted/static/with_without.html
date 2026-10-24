@@ -12,7 +12,7 @@
 .ww-list { list-style: none; padding: 0; margin: var(--sp-5) 0; display: grid; gap: var(--sp-4); min-height: 150vh; }   /* the rows arrive after the page: the room is kept, nothing below moves */
 .ww-list:not(:empty) { min-height: 0; }
 .ww-side li a, .ww-row a, details > summary { display: inline-block; min-height: 24px; padding: 2px 0; }
-.ww-row { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); }
+.ww-row { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--sp-4) var(--sp-5); content-visibility: auto; contain-intrinsic-size: auto 520px; }   /* the 20 rows: laid out as they come into view, not all on load */
 .ww-row h2 { font-size: var(--s2); margin: 4px 0 var(--sp-3); }
 .ww-field { display: inline-block; padding: 2px 10px; border-radius: 99px; background: var(--soft); color: var(--muted); font-size: var(--s-1); }
 .ww-sides { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }

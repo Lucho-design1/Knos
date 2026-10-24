@@ -156,10 +156,17 @@ _totals_cache: dict = {"at": 0.0, "v": None}
 
 
 def _money_totals(fee: dict) -> dict | None:
-    """What is held, released and charged, summed here once a minute over every public order (GET /api/projects is
-    800 KB: the page no longer downloads it to add three numbers). A private order's amount is not public: skipped."""
-    if time.time() - _totals_cache["at"] < 60 and _totals_cache["v"] is not None:
-        return _totals_cache["v"]
+    """What is held, released and charged, summed over every public order (GET /api/projects is 800 KB: the page no
+    longer downloads it to add three numbers). A private order's amount is not public: skipped. The sum runs in the
+    background, at most once a minute, and the page shows the last one: over 577 projects a cold sum took 20 s, and
+    under a champion run's load past 120 s, so /money timed out (run 40092771755)."""
+    if time.time() - _totals_cache["at"] >= 60 and not _totals_cache.get("busy"):
+        _totals_cache["busy"] = True
+        threading.Thread(target=_sum_totals, args=(fee,), daemon=True, name="knos-money-totals").start()
+    return _totals_cache["v"]
+
+
+def _sum_totals(fee: dict) -> None:
     try:
         bps, floor = int(fee.get("rate_bps") or 0), float(fee.get("floor") or 0.05)
         held = released = charged = 0.0
@@ -176,13 +183,16 @@ def _money_totals(fee: dict) -> dict | None:
                         charged += max(v * bps / 1e4, floor)
         out = {"held": round(held, 2), "released": round(released, 2), "charged": round(charged, 2), "unit": "test units",
                "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+        _totals_cache.update(at=time.time(), v=out)
     except Exception:  # noqa: BLE001 - the price list still answers; the page says the totals are not readable now
-        return None
-    _totals_cache.update(at=time.time(), v=out)
-    return out
+        _totals_cache.update(at=time.time())
+    finally:
+        _totals_cache["busy"] = False
 
 
 REPORTS_IN_MEMORY = 100
+
+
 class State:
     def __init__(self, q: Qloo | None = None, rest: Client | None = None):
         self.q = q or Qloo()
@@ -901,6 +911,7 @@ def _restore_projects(budget_s: float = 60.0) -> None:
                 else:
                     valley._save(kind, key, obj, chain=False)
             box["n"] = chainstate.restore(put)
+            money_doc()                                  # the money page's totals are summed once now, in the background
         except Exception as why:  # noqa: BLE001
             box["error"] = f"{type(why).__name__}: {str(why)[:200]}"
     t = threading.Thread(target=run, daemon=True)
