@@ -19,3 +19,24 @@
 - **Since:** the refuse list now applies to demand checks, so ideas naming weapons would be refused, not scored.
 
 Numbers, method and sources: [outside_truth.json](outside_truth.json). Run it again: `python scripts/outside_truth.py <sample.json> --public` (the sample is built from the two public datasets above).
+
+## Kickstarter: 250 held-out projects
+
+**In plain words.** The same question on crowdfunding: did a past Kickstarter project reach its goal? Here 78.8% of the held-out projects succeeded, so always guessing "successful" scores 78.8%. A predictor has to beat that, not 50%. Run 24 Oct 2026, 500 of 500 rows answered.
+
+| Measure, held-out (n=250) | (a) Open signals | (b) Open signals + Qloo |
+|---|---|---|
+| Accuracy | 64.0% | 59.6% |
+| Base rate | 78.8% | 78.8% |
+| p, binomial vs base rate | 1.0 | 1.0 |
+| p, Fisher's exact | 0.86 | 0.87 |
+| Confusion (tp / fp / fn / tn) | 145 / 38 / 52 / 15 | 130 / 34 / 67 / 19 |
+| OPEN means (tuned) | failed | failed |
+
+- **Result:** neither predictor beats always guessing "successful". Adding Qloo lowered accuracy by 4.4 points. Like the SBIR result, a demand check is not a forecast of a campaign's outcome.
+- **Sample:** 500 successful or failed projects launched 2019 to 2023, from the webrobots.io dump of 2026-10-12, drawn per main category in proportion (seed 0).
+- **Split:** 250 tune, 250 held-out, half of each outcome on each side. The tune half picks one thing per predictor: whether OPEN means success or failure.
+- **What Knos saw:** the name, the blurb and the category, at most about 200 characters. A refused idea counts as not OPEN.
+- **Reading:** the dump is a scrape of Kickstarter's pages, not the full archive. Open signals measure attention today, not a 2021 campaign's backers.
+
+Numbers, method and source: [kickstarter_truth.json](kickstarter_truth.json). Run it again: `python scripts/test_kickstarter_truth.py <ks-sample.json>` (build the sample with `--build` from the dump above).
