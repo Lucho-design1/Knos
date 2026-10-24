@@ -194,3 +194,26 @@ def test_the_mcp_flow_starts_qloo_mcp_only_when_it_is_first_used(monkeypatch):
     assert q.status() == {"mode": "live"}
     q.close()
     assert made[-1] == "closed"
+
+
+def test_an_idle_mcp_flow_stops_qloo_mcp_and_starts_it_again_when_asked(monkeypatch):
+    from knos_wanted import qloo_mcp
+    monkeypatch.delenv("KNOS_WANTED_MOCK", raising=False)
+    made, closed = [], []
+
+    class Fake:
+        mode = "live"
+
+        def __init__(self):
+            made.append(self)
+
+        def call(self, name, args, **k):
+            return name
+
+        def close(self):
+            closed.append(self)
+    q = qloo_mcp.Lazy(factory=Fake)
+    q.call("qloo_find_tags", {})
+    q.idle()
+    assert closed == made and q.status()["mode"] == "not started"
+    assert q.call("qloo_describe", {}) == "qloo_describe" and len(made) == 2      # a new one at the next call

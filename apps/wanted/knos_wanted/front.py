@@ -115,7 +115,14 @@ def start(state) -> None:
     if _started or not seeds_on():
         return
     _started = True
-    threading.Thread(target=ensure_seeded, args=(state,), daemon=True, name="knos-front-seeds").start()
+    def seed():
+        try:
+            ensure_seeded(state)
+        finally:
+            idle = getattr(state.q, "idle", None)        # the seeds' crossings started `qloo mcp`: stopped until next asked
+            if callable(idle) and os.environ.get("KNOS_WANTED_MOCK") != "1":
+                idle()
+    threading.Thread(target=seed, daemon=True, name="knos-front-seeds").start()
 
 
 # ---- the list ------------------------------------------------------------------------------------------------------

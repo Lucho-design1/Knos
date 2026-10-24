@@ -362,18 +362,40 @@ class Lazy:
     never asks it (the crossing agent, the MCP proxy and the guided flows do). Under MOCK it starts at once (in process,
     cheap). Until it has started, status() says so."""
 
+    IDLE_S = 600.0              # stopped after this long unused, started again at the next call
+
     def __init__(self, factory=None):
         self._factory = factory or Qloo
         self._q: Qloo | None = None
         self._lock = threading.Lock()
+        self._used = 0.0
+        self._timer: threading.Thread | None = None
         if os.environ.get("KNOS_WANTED_MOCK") == "1":
             self._get()
 
     def _get(self) -> Qloo:
         with self._lock:
+            self._used = time.monotonic()
             if self._q is None:
                 self._q = self._factory()
+                if os.environ.get("KNOS_WANTED_MOCK") != "1" and (self._timer is None or not self._timer.is_alive()):
+                    self._timer = threading.Thread(target=self._watch, daemon=True, name="qloo-mcp-idle")
+                    self._timer.start()
             return self._q
+
+    def _watch(self) -> None:
+        while True:
+            time.sleep(60)
+            if self._q is not None and time.monotonic() - self._used > self.IDLE_S:
+                self.idle()
+                return
+
+    def idle(self) -> None:
+        """Stop `qloo mcp` now (its 120 MB back to the instance); the next call starts it again."""
+        with self._lock:
+            q, self._q = self._q, None
+        if q is not None:
+            q.close()
 
     def __getattr__(self, name):
         if name.startswith("_"):
