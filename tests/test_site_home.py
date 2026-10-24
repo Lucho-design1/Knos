@@ -30,15 +30,15 @@ def test_the_snapshot_cards_are_the_ones_its_rows_draw():
 
 def test_the_bare_address_opens_on_the_products_with_three_one_tap_actions_each():
     home = _section("view-home")
-    # the first screen is the mission and one box (web/brand/hero.html, scripts/sync_brand.py); the products follow
-    mission = "Carry research from every field of science across the valley of death."
+    # the first screen names its buyer and has one box (web/brand/hero.html, scripts/sync_brand.py); the products follow
+    mission = "Someone about to build a product? See who wants it first."
     assert f'<h1 id="k-mission" class="k-mission">{mission}</h1>' in home and len(_words(mission)) <= 12
     assert '<input id="k-q" name="q"' in home and '<h2 id="home-h">Open for backing</h2>' in home
     cards = re.findall(r'<li class="hp" data-slug="([a-z0-9-]+)">(.*?)</li>', home, re.S)
     assert 1 <= len(cards) <= 3
     for slug, body in cards:
         acts = re.findall(r'<a class="k-btn( quiet)?" href="wanted\.html#(back|fund|contribute)=([a-z0-9-]+)" data-app="#\2=\3">([^<]+)</a>', body)
-        assert [(a[1], a[2], a[3]) for a in acts] == [("back", slug, "Back it"), ("fund", slug, "Fund a milestone"), ("contribute", slug, "Contribute")]
+        assert [(a[1], a[2], a[3]) for a in acts] == [("back", slug, "Back it"), ("fund", slug, "Fund the work"), ("contribute", slug, "Contribute")]
         title = re.search(r'<h3 class="hp-t">(.*?)</h3>', body)[1]
         assert len(_words(title)) <= 12
     # the cards are a live view's rows (data-not-prose); the prose of the first screen, the bar with it, stays in its budget

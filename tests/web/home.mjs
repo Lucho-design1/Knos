@@ -2,7 +2,7 @@
 // THE FIRST SCREEN at the bare address (index.html #view-home, web/home.js): the research products people can back
 // now, on a phone and a laptop, held in headless Chromium on a build of web/:
 //   instant   the snapshot's cards are drawn before any host answers (everything off the site refused), whole, with
-//             their three one-tap actions (Back it, Fund a milestone, Contribute) above the fold on a phone
+//             their three one-tap actions (Back it, Fund the work, Contribute) above the fold on a phone
 //   words     the first screen says 56 words of prose at most, the bar included (the cards are data-not-prose)
 //   live      with the reader's first move the app is asked (GET /api/front) and, when it answers, the cards are redrawn
 //             in place from the live list, with no shift of the layout; an empty or failed answer leaves the snapshot;
@@ -78,9 +78,9 @@ for (const [w, h] of [[375, 812], [390, 844], [320, 640], [1280, 800]]) {
   await page.waitForFunction(() => document.documentElement.dataset.ready !== undefined, null, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(400);
   const got = await cards(page);
-  ok(`${w}px: the bare address opens on the research products, the check of agent work hidden`, await page.isVisible("#view-home") && !(await page.isVisible("#view-check")) && (await page.textContent("#k-mission")).trim() === "Carry research from every field of science across the valley of death." && (await page.isVisible("#k-q")));
+  ok(`${w}px: the bare address opens on the research products, the check of agent work hidden`, await page.isVisible("#view-home") && !(await page.isVisible("#view-check")) && (await page.textContent("#k-mission")).trim() === "Someone about to build a product? See who wants it first." && (await page.isVisible("#k-q")));
   ok(`${w}px: the snapshot's ${snap.rows.length} products are drawn before any host answers`, got.length === snap.rows.length && got.every((c, i) => c.slug === snap.rows[i].slug && c.visible), got);
-  ok(`${w}px: each has its three one-tap actions, each a link to the app at that action through the wake page`, got.every((c) => c.acts.map((a) => a[0]).join() === "Back it,Fund a milestone,Contribute"
+  ok(`${w}px: each has its three one-tap actions, each a link to the app at that action through the wake page`, got.every((c) => c.acts.map((a) => a[0]).join() === "Back it,Fund the work,Contribute"
     && c.acts.every(([, app, href]) => /^#(back|fund|contribute)=[a-z0-9-]+$/.test(app) && href === `wanted.html${app}`)), got.map((c) => c.acts));
   const box = await page.evaluate(() => document.getElementById("k-ask").getBoundingClientRect().bottom);
   ok(`${w}px: the one box is above the fold`, box <= h, box);

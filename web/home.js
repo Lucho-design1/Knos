@@ -19,9 +19,8 @@ export function cardHTML(p) {
   const fill = reserve ? Math.max(2, Math.min(100, Math.round((100 * backed) / reserve))) : 2;
   const act = (what, label, cls) => `<a class="k-btn${cls}" href="wanted.html#${what}=${slug}" data-app="#${what}=${slug}">${label}</a>`;
   return `<li class="hp" data-slug="${esc(slug)}"><p class="hp-src">${p.tech_name ? esc(p.tech_name) + " · " : ""}${esc(p.paper || "Your idea")}${p.maker ? "" : " · maker wanted"}</p>`
-    + `<h3 class="hp-t">${esc(title(p.title))}</h3><div class="hp-bar" aria-hidden="true"><i style="width:${fill}%"></i></div>`
-    + `<p class="hp-n"><span class="k-num">${backed}</span> of ${reserve} pre-ordered</p>`
-    + `<p class="hp-act">${act("back", "Back it", "")} ${act("fund", "Fund a milestone", " quiet")} ${act("contribute", "Contribute", " quiet")}</p></li>`;
+    + `<h3 class="hp-t">${esc(title(p.title))}</h3>${backed ? `<div class="hp-bar" aria-hidden="true"><i style="width:${fill}%"></i></div>` : ""}`
+    + `<p class="hp-act">${act("back", "Back it", "")} ${act("fund", "Fund the work", " quiet")} ${act("contribute", "Contribute", " quiet")}</p></li>`;
 }
 
 // The live list, drawn in place of the snapshot: only an answer that holds products replaces it.

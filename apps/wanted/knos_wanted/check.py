@@ -503,6 +503,58 @@ def _who_wants(run: _Run, tags: list[dict], ents: list[dict], kind: str = "urn:e
     return sorted(out, key=lambda a: -a["affinity"])[:6]
 
 
+ALSO_LOVE = (("music", "urn:entity:artist"), ("film", "urn:entity:movie"))
+
+
+def _also_love(run: _Run, ents: list[str], via: str, take: int = 4) -> dict | None:
+    """What the people of this taste also love, in two other Qloo domains (artists and films, /v2/insights with
+    signal.interests.entities): shown only, the verdict does not read it."""
+    if not ents:
+        return None
+    sig = {"signal.interests.entities": ",".join(ents)}
+    run.prefetch([("/v2/insights", {"filter.type": t, "take": take, **sig}) for _, t in ALSO_LOVE])
+    out = []
+    for domain, t in ALSO_LOVE:
+        body, n = run.get("/v2/insights", {"filter.type": t, "take": take, **sig}, f"also loved: {domain} ({t}) of the people of this taste", broaden=False)
+        items = [{"name": e.get("name"), "affinity": (e.get("query") or {}).get("affinity")}
+                 for e in (((body or {}).get("results") or {}).get("entities") or [])[:take] if e.get("name")]
+        if items:
+            out.append({"domain": domain, "items": items, "src": n})
+    return {"via": via, "domains": out} if out else None
+
+
+def _launch(run: _Run, ents: list[str], place: str | None) -> dict | None:
+    """Where to launch when no product matched the idea: Qloo's destinations and heatmap for the top products of its
+    taste tags (the same calls as for a matched product, with that signal). Shown only; the verdict does not read it."""
+    loc = place or DEFAULT_PLACE
+    cc = market_country(loc)
+    sig = {"signal.interests.entities": ",".join(ents)}
+    q10 = {"filter.type": "urn:entity:destination", "take": 8, **({"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}), **sig}
+    q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **sig}
+    run.prefetch([("/v2/insights", q10), ("/v2/insights", q7)])
+    body, s10 = run.get("/v2/insights", q10, f"launch cities in {loc}, from the top products of the idea's taste tags", broaden=False)
+    cities = []
+    for r in (((body or {}).get("results") or {}).get("entities") or []):
+        geo = (r.get("properties") or {}).get("geocode") or {}
+        if (cc and geo.get("country_code") and geo["country_code"] != cc) or len(cities) >= 5:
+            continue
+        at = r.get("location") or {}
+        lat, lon = at.get("lat", at.get("latitude")), at.get("lon", at.get("longitude"))
+        ok = isinstance(lat, (int, float)) and isinstance(lon, (int, float))
+        cities.append({"name": r.get("name"), "country": geo.get("country_code"), "affinity": (r.get("query") or {}).get("affinity"),
+                       "lat": lat if ok else None, "lon": lon if ok else None, "src": s10})
+    from . import open_signals
+    for c in [c for c in cities if c["lat"] is None]:
+        got = open_signals.coords(c["name"], c.get("country"))
+        if got:
+            c.update(lat=got[0], lon=got[1], coords_from="Wikidata")
+    body, s7 = run.get("/v2/insights", q7, f"where: map points in {loc}, from the top products of the idea's taste tags", wait_s=MAP_WAIT_S)
+    where = [{"lat": (h.get("location") or {}).get("latitude"), "lon": (h.get("location") or {}).get("longitude"),
+              "affinity": (h.get("query") or {}).get("affinity"), "src": s7}
+             for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:5]]
+    return {"cities": cities, "where": where, "via": "the top products of its taste tags"} if cities or where else None
+
+
 def _informative(rows: list[dict]) -> list[dict]:
     return [a for a in rows if isinstance(a.get("affinity"), (int, float)) and a["affinity"] > RULES["informative_affinity"]]
 
@@ -516,7 +568,7 @@ def _key(path: str, params: dict) -> str:
 
 def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: dt.date, exclude: set[str]) -> dict:
     ev: dict = {"product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
-                "who": None, "where": [], "places": [], "audiences": [], "who_wants": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
+                "who": None, "where": [], "places": [], "audiences": [], "who_wants": [], "also_love": None, "launch": None, "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
     words = content_words(idea, place)
     ev["words"], ev["named_audience"] = words, [{"word": w, "dimension": d, "key": k} for w, d, k in audience_named(idea)]
     if not words:
@@ -569,7 +621,10 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
                 ev["tags"].append({"name": t.get("name"), "id": t["id"], "popularity": t.get("popularity"), "src": s4})
     sig_ents = [m["id"] for m in near] or ([lead["id"]] if lead else [])
     ev["who_wants"] = _who_wants(run, ev["tags"][:3], [m for m in (near or ([lead] if lead else []))][:2], kind)
+    via = sig_ents or list(dict.fromkeys(a["tie"]["via_id"] for a in ev["who_wants"] if (a.get("tie") or {}).get("via_id")))[:3]
+    ev["also_love"] = _also_love(run, via, "the products it matched" if sig_ents else "the top products of its taste tags")
     if not sig_ents:
+        ev["launch"] = _launch(run, via, place) if via else None
         return ev
     signal = {"signal.interests.entities": ",".join(sig_ents), **({"signal.location.query": place} if place else {})}
     loc = place or DEFAULT_PLACE
@@ -887,7 +942,7 @@ def _demand_check(idea: str, place: str | None = None, leader: str | None = None
     run = _Run(client, on_call)
     ok, why = client.ready()
     empty = {"product_type": None, "words": content_words(idea, place), "matches": [], "unrelated": [], "excluded": [], "leader": None,
-             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "who_wants": [], "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
+             "tags": [], "who": None, "where": [], "places": [], "audiences": [], "who_wants": [], "also_love": None, "launch": None, "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
     ev = gather(run, idea, place, leader, today, set(exclude or [])) if ok else empty
     if ok and opts:                                # F1-F8: each asked-for family's own calls, numbered with the rest
         ev["families"] = families.answer(run, ev, idea, place, opts)

@@ -333,9 +333,9 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
   <section id="view-home" class="view home" aria-labelledby="k-mission">
 <!-- k-hero -->
 <div class="k-hero" id="k-hero" data-api="@app" data-app="wanted.html">
-  <h1 id="k-mission" class="k-mission">Carry research from every field of science across the valley of death.</h1>
+  <h1 id="k-mission" class="k-mission">Someone about to build a product? See who wants it first.</h1>
   <form class="k-ask" id="k-ask" autocomplete="off" role="search" aria-label="Check demand">
-    <input id="k-q" name="q" type="text" aria-label="A DOI, an arXiv id or an idea" maxlength="500" placeholder="A DOI, an arXiv id or an idea" enterkeyhint="go" spellcheck="false">
+    <input id="k-q" name="q" type="text" aria-label="What are you about to build? An idea, or a paper's DOI" maxlength="500" placeholder="What are you about to build?" enterkeyhint="go" spellcheck="false">
     <button id="k-go" type="submit">Check demand</button>
   </form>
   <div class="k-try" role="group" aria-label="Examples: housing, food, energy, health, across technologies">
@@ -392,33 +392,44 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     throw new Error("the crossing took too long");
   }
 
-  // cities at their latitude and longitude, on a frame fitted to them (graticule every 10 degrees)
-  function map(cities) {
+  // the launch cities on OpenStreetMap's tiles, at the closest zoom that holds them all; Qloo's heatmap points as
+  // light rings. Tiles are asked only once a result is drawn (the first screen asks no host but its own)
+  function map(cities, where = []) {
     const pts = cities.filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon));
     if (!pts.length) return `<p class="k-none">Qloo named the cities but no coordinates came with them.</p>`;
-    const lat = pts.map((c) => c.lat), lon = pts.map((c) => c.lon);
-    let [x0, x1, y0, y1] = [Math.min(...lon), Math.max(...lon), Math.min(...lat), Math.max(...lat)];
-    const padX = Math.max(8, (x1 - x0) * .2), padY = Math.max(5, (y1 - y0) * .25);
-    x0 -= padX; x1 += padX; y0 -= padY; y1 += padY;
-    const W = 320, H = Math.round(Math.min(220, Math.max(140, W * (y1 - y0) / (x1 - x0)))), X = (v) => ((v - x0) / (x1 - x0)) * W, Y = (v) => H - ((v - y0) / (y1 - y0)) * H;
-    let grid = "";
-    for (let g = Math.ceil(x0 / 10) * 10; g <= x1; g += 10) grid += `<line x1="${X(g).toFixed(1)}" y1="0" x2="${X(g).toFixed(1)}" y2="${H}"/>`;
-    for (let g = Math.ceil(y0 / 10) * 10; g <= y1; g += 10) grid += `<line x1="0" y1="${Y(g).toFixed(1)}" x2="${W}" y2="${Y(g).toFixed(1)}"/>`;
-    // each label beside its dot, on the side with room; a label that would cover another shows the city's number only
-    const boxes = [], hit = (b) => boxes.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
-    const dots = pts.map((c, i) => {
-      const x = X(c.lon), y = Y(c.lat), name = String(i + 1), w = name.length * 7 + 4;
-      let label = null;
-      for (const right of [x > W * .62, !(x > W * .62)]) {
-        const b = right ? { x0: x - 10 - w, x1: x - 10 } : { x0: x + 10, x1: x + 10 + w };
-        Object.assign(b, { y0: y - 8, y1: y + 8 });
-        if (b.x0 >= 0 && b.x1 <= W && !hit(b)) { boxes.push(b); label = { right, text: name }; break; }
-      }
-      if (!label) { const b = { x0: x + 8, x1: x + 22, y0: y - 8, y1: y + 8 }; boxes.push(b); label = { right: false, text: String(i + 1) }; }
-      return `<g><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${i === 0 ? 7 : 5}"/><text x="${(x + (label.right ? -10 : 10)).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="${label.right ? "end" : "start"}">${esc(label.text)}</text></g>`;
-    }).join("");
-    return `<svg class="k-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Launch cities on a map: ${esc(pts.map((c) => c.name).join(", "))}"><g class="k-grid">${grid}</g>${dots}</svg>` +
+    const W = 320, H = 200, T = 256;
+    const px = (lat, lon, z) => { const n = T * 2 ** z, r = (lat * Math.PI) / 180;
+      return [((lon + 180) / 360) * n, ((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * n]; };
+    let z = 12;
+    for (; z > 1; z--) {
+      const xy = pts.map((c) => px(c.lat, c.lon, z)), xs = xy.map((q) => q[0]), ys = xy.map((q) => q[1]);
+      if (Math.max(...xs) - Math.min(...xs) < W - 48 && Math.max(...ys) - Math.min(...ys) < H - 48) break;
+    }
+    const xy = pts.map((c) => px(c.lat, c.lon, z)), xs = xy.map((q) => q[0]), ys = xy.map((q) => q[1]);
+    const cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2, x0 = cx - W / 2, y0 = cy - H / 2;
+    const n = 2 ** z, tiles = [];
+    for (let tx = Math.floor(x0 / T); tx <= Math.floor((x0 + W) / T); tx++)
+      for (let ty = Math.max(0, Math.floor(y0 / T)); ty <= Math.min(n - 1, Math.floor((y0 + H) / T)); ty++)
+        tiles.push(`<img class="k-tile" alt="" loading="lazy" src="https://tile.openstreetmap.org/${z}/${((tx % n) + n) % n}/${ty}.png" style="left:${(tx * T - x0).toFixed(0)}px;top:${(ty * T - y0).toFixed(0)}px">`);
+    const heat = where.filter((w) => Number.isFinite(w.lat) && Number.isFinite(w.lon)).map((w) => { const [x, y] = px(w.lat, w.lon, z);
+      return `<span class="k-heat" style="left:${(x - x0).toFixed(0)}px;top:${(y - y0).toFixed(0)}px"></span>`; }).join("");
+    const pins = pts.map((c, i) => `<span class="k-pin" title="${esc(c.name)}" style="left:${(xy[i][0] - x0).toFixed(0)}px;top:${(xy[i][1] - y0).toFixed(0)}px">${i + 1}</span>`).join("");
+    return `<div class="k-osm" role="img" aria-label="Launch cities on a map: ${esc(pts.map((c) => c.name).join(", "))}">${tiles.join("")}${heat}${pins}` +
+      `<a class="k-osm-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></div>` +
       (pts.some((c) => c.coords_from === "Wikidata") ? `<p class="k-fine">Coordinates: Wikidata</p>` : "");
+  }
+
+  // the answer Claude gave alone for the same idea (the published table behind "With and without Qloo"), beside Knos's
+  let table = null;
+  const norm = (t) => String(t || "").toLowerCase().replace(/\s+/g, " ").trim();
+  async function claudeAlone(idea, mine) {
+    table = table || await get("/api/qloo-diff").catch(() => ({ rows: [] }));
+    const row = (table.rows || []).find((x) => norm(x.idea) === norm(idea));
+    const c = row && row.claude;
+    if (!c) return `<p class="k-none">Claude was not asked about this idea alone.</p>`;
+    const side = (who, v) => `<div><h4>${who}</h4><p class="k-big">${esc((WORD[v.verdict] || [v.verdict || "-"])[0])}</p>
+      <p>${esc(v.audience || "no audience")}</p><p>${esc((v.cities || []).join(", ") || "no cities")}</p><p>${esc(v.tier ? "price tier " + v.tier : "no price tier")}</p></div>`;
+    return `<div class="k-vs">${side("Claude alone", c)}${side("Knos with Qloo", mine)}</div>${c.why ? `<p class="k-fine">Claude: ${esc(c.why)}</p>` : ""}`;
   }
 
   const WORD = { OPEN: ["Open for pre-orders", "open"], REFUSE: ["Not yet: pre-orders stay closed", "refuse"], CANNOT_DECIDE: ["Qloo cannot decide this one", "unknown"] };
@@ -431,11 +442,13 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     const segs = (p.who?.segments || (r.audiences || []).filter((a) => a.tied).map((a) => a.name)).filter(Boolean).slice(0, 3);
     // Qloo's audiences for the idea's own tags (or products), each naming what ties it: none is unrelated
     const wants = (r.who_wants || []).filter((a) => a && a.name && a.tie && a.tie.name).slice(0, 4);
-    const cities = (r.cities || []).slice(0, 5), price = r.price || {}, tier = String(price.tier || "").toLowerCase();
+    const launch = r.launch || {}, cities = ((r.cities || []).length ? r.cities : launch.cities || []).slice(0, 5);
+    const where = (r.where || []).length ? r.where : launch.where || [], also = (r.also_love && r.also_love.domains) || [];
+    const price = r.price || {}, tier = String(price.tier || "").toLowerCase();
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
     // visitor can pick another match, or none of them; the verdict's reason is Knos's rule, apart from Qloo's data
     const lead = r.leader && typeof r.leader === "object" ? r.leader : null, why = (d.reasons || [])[0];
-    const empty = !(age || gender) && !segs.length && !wants.length && !cities.length && !tier;     // no part answered: one next step, no empty boxes
+    const empty = !(age || gender) && !segs.length && !wants.length && !cities.length && !tier && !also.length;     // no part answered: one next step, no empty boxes
     if (empty && d.verdict !== "OPEN") [word, cls] = ["No taste data from Qloo", "unknown"];   // missing data is not a verdict
     const others = (r.matches || []).filter((m) => m && m.name && (!lead || m.id !== lead.id)).slice(0, 3);
     const read = lead ? `<p class="k-read" data-part="match">Read as <b>${esc(lead.name)}</b>${label ? "" : ` · Not it? ${others.map((m) =>
@@ -452,11 +465,15 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
         a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}${a.tie.via ? `, through ${esc(a.tie.via)}` : ""}</span></li>`).join("")}</ul>`
         : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
     <section class="k-part k-where" data-part="cities" data-qloo><h3>Where to launch</h3>
-      ${cities.length ? map(cities) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${src(h, cities[0]?.src)}</section>
+      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${!(r.cities || []).length && cities.length ? `<p class="k-fine">From the people who like the top products of its taste.</p>` : ""}${src(h, cities[0]?.src)}</section>
+    ${also.length ? `<section class="k-part" data-part="also" data-qloo><h3>They also love</h3>${also.map((d) =>
+      `<p class="k-also" data-domain="${esc(d.domain)}"><b>${esc(d.domain === "music" ? "Music" : d.domain === "film" ? "Film" : d.domain)}</b> ${
+      d.items.map((x) => esc(x.name)).join(", ")}${src(h, d.src)}</p>`).join("")}</section>` : ""}
     <section class="k-part" data-part="price" data-qloo><h3>Price tier</h3>
       ${tier ? `<ol class="k-tiers" aria-label="Price tier: ${esc(tier)}">${TIERS.map((t) => `<li${t === tier ? ' aria-current="true"' : ""}>${t}</li>`).join("")}</ol>` : `<p class="k-none">Qloo gave no price signal.</p>`}
 ${src(h, price.src)}</section>
   </div>`}
+  <details class="k-claude" data-claude><summary>Claude alone</summary><div class="k-claude-body" data-claude-body></div></details>
   <footer class="k-card-foot"><p class="k-fine">Aggregate taste from Qloo: not causal, not a forecast, not about any one person.${
     HEALTH.test(r.idea || "") ? " Not medical advice: Qloo has no medical demand." : ""}</p>
     ${d.verdict === "OPEN" ? `<a class="k-cta" href="${esc(APP)}#buy=${esc(h)}">Open pre-orders for it →</a>` : `<a class="k-cta quiet" href="${esc(APP)}#research">Try it with a launch market →</a>`}</footer>
@@ -473,6 +490,7 @@ ${src(h, price.src)}</section>
     try {
       const r = ref ? await crossing(ref) : await post("/api/check", { idea: v, ...extra });
       slot.innerHTML = card(r);
+      slot.last = r;
       slot.dataset.idea = v;
       delete slot.dataset.past;
       slot.dataset.ms = String(Math.round(performance.now() - t0));
@@ -495,6 +513,7 @@ ${src(h, price.src)}</section>
     if (!r || slot.dataset.ms || slot.querySelector(".k-status")) return;
     const when = String(r.checked_at || "").replace("T", " ").replace(/:\d\dZ$/, " UTC");
     slot.innerHTML = card(r, `Real check, ${when}`);
+    slot.last = r;
     slot.dataset.past = "1";
     try { performance.mark("knos-proof-shown"); } catch { /* old browsers */ }   // when the past result was drawn
   };
@@ -503,6 +522,28 @@ ${src(h, price.src)}</section>
   if (carried) draw(carried);                                  // in the page: at the first paint
   else seen(root, () => get("/api/proof").then((p) => draw(p && p.proof)).catch(() => {}));
   form.addEventListener("submit", (ev) => { ev.preventDefault(); ask(q.value); });
+  // the newest payout to an agent, as the chain has it (the app reads the transaction back from devnet)
+  const paid = document.getElementById("k-paid");
+  if (paid) get("/api/agent/payout/latest").then((x) => {
+    if (!x || !x.found || !(x.units > 0)) return;
+    const day = String(x.at || "").slice(0, 10);
+    paid.innerHTML = `An agent was paid <b>${esc(x.units)} test units</b> for verified work${day ? `, ${esc(day)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">the transaction</a>`;
+    paid.hidden = false;
+  }).catch(() => {});
+
+  // the fold "Claude alone": filled when it is first opened, from the published table, beside this card's answer
+  slot.addEventListener("toggle", async (ev) => {
+    const box = ev.target;
+    if (!(box instanceof HTMLDetailsElement) || !box.matches("[data-claude]") || !box.open) return;
+    const body = box.querySelector("[data-claude-body]");
+    if (!body || body.dataset.done) return;
+    body.dataset.done = "1";
+    const r = slot.last || {}, d = r.decision || {}, who = r.who || {}, p = d.plan || {};
+    const cities = ((r.cities || []).length ? r.cities : (r.launch || {}).cities || []).slice(0, 3).map((c) => c.name);
+    const mine = { verdict: d.verdict, audience: [(p.who?.age || who.top_age || "").replace(/_/g, " "), p.who?.gender || who.top_gender || ""].filter(Boolean).join(", "),
+                   cities, tier: (r.price || {}).tier };
+    body.innerHTML = await claudeAlone(r.idea || slot.dataset.idea, mine);
+  }, true);
   slot.addEventListener("submit", (ev) => {                 // "most like ...": the named product is the one to compare with
     const f = ev.target.closest("[data-like]");
     if (!f) return;
@@ -524,29 +565,21 @@ ${src(h, price.src)}</section>
   });
 })();
 </script>
+  <p class="k-paid" id="k-paid" data-not-prose hidden></p>
   <p class="k-agent" data-not-prose>Agents: MCP at <code>https://knos.onrender.com/mcp</code>, tool <code>knos_cross</code></p>
-<ul class="k-vectors" data-api="@app" data-not-prose aria-label="Measured">
-  <li data-v="cost"><b>$0</b> per check</li>
-  <li data-v="speed"><b>…</b> median to verdict</li>
-  <li data-v="friction"><b>2 steps</b>, no sign-up</li>
-  <li data-v="trust"><b>Held</b> until proof, on devnet</li>
-  <li data-v="capability"><b>2.08x</b> fewer tokens, <b>70% vs 5%</b> pass</li>
-  <li data-v="access"><b>7 fields</b>, any country, phone</li>
-  <li data-v="status"><b>Ready cards</b></li>
-</ul>
-<script src="brand/vectors.js" defer></script>
 </div>
 <!-- /k-hero -->
     <h2 id="home-h">Open for backing</h2>
     <ol class="hp-list" id="home-products" data-not-prose aria-label="Research products open for backing now">
       <!-- home:products (scripts/front_snapshot.py) -->
       <script type="application/json" id="home-snapshot">{"taken":"2026-10-19","rows":[{"slug":"sweat-glucose-watch","title":"A fitness watch with a sweat glucose sensor","paper":"Nature, 2016","reserve_units":48,"backed_units":0,"maker":false},{"slug":"air-water-bottle","title":"A water bottle that harvests drinking water from desert air","paper":"Science, 2017","reserve_units":54,"backed_units":0,"maker":false},{"slug":"glow-hydration-bottle","title":"A smart water bottle that glows to remind you to drink","paper":null,"reserve_units":55,"backed_units":0,"maker":false}]}</script>
-      <li class="hp" data-slug="sweat-glucose-watch"><p class="hp-src">Nature, 2016 · maker wanted</p><h3 class="hp-t">A fitness watch with a sweat glucose sensor</h3><div class="hp-bar" aria-hidden="true"><i style="width:2%"></i></div><p class="hp-n"><span class="k-num">0</span> of 48 pre-ordered</p><p class="hp-act"><a class="k-btn" href="wanted.html#back=sweat-glucose-watch" data-app="#back=sweat-glucose-watch">Back it</a> <a class="k-btn quiet" href="wanted.html#fund=sweat-glucose-watch" data-app="#fund=sweat-glucose-watch">Fund a milestone</a> <a class="k-btn quiet" href="wanted.html#contribute=sweat-glucose-watch" data-app="#contribute=sweat-glucose-watch">Contribute</a></p></li>
-      <li class="hp" data-slug="air-water-bottle"><p class="hp-src">Science, 2017 · maker wanted</p><h3 class="hp-t">A water bottle that harvests drinking water from desert air</h3><div class="hp-bar" aria-hidden="true"><i style="width:2%"></i></div><p class="hp-n"><span class="k-num">0</span> of 54 pre-ordered</p><p class="hp-act"><a class="k-btn" href="wanted.html#back=air-water-bottle" data-app="#back=air-water-bottle">Back it</a> <a class="k-btn quiet" href="wanted.html#fund=air-water-bottle" data-app="#fund=air-water-bottle">Fund a milestone</a> <a class="k-btn quiet" href="wanted.html#contribute=air-water-bottle" data-app="#contribute=air-water-bottle">Contribute</a></p></li>
-      <li class="hp" data-slug="glow-hydration-bottle"><p class="hp-src">Your idea · maker wanted</p><h3 class="hp-t">A smart water bottle that glows to remind you to drink</h3><div class="hp-bar" aria-hidden="true"><i style="width:2%"></i></div><p class="hp-n"><span class="k-num">0</span> of 55 pre-ordered</p><p class="hp-act"><a class="k-btn" href="wanted.html#back=glow-hydration-bottle" data-app="#back=glow-hydration-bottle">Back it</a> <a class="k-btn quiet" href="wanted.html#fund=glow-hydration-bottle" data-app="#fund=glow-hydration-bottle">Fund a milestone</a> <a class="k-btn quiet" href="wanted.html#contribute=glow-hydration-bottle" data-app="#contribute=glow-hydration-bottle">Contribute</a></p></li>
+      <li class="hp" data-slug="sweat-glucose-watch"><p class="hp-src">Nature, 2016 · maker wanted</p><h3 class="hp-t">A fitness watch with a sweat glucose sensor</h3><p class="hp-act"><a class="k-btn" href="wanted.html#back=sweat-glucose-watch" data-app="#back=sweat-glucose-watch">Back it</a> <a class="k-btn quiet" href="wanted.html#fund=sweat-glucose-watch" data-app="#fund=sweat-glucose-watch">Fund the work</a> <a class="k-btn quiet" href="wanted.html#contribute=sweat-glucose-watch" data-app="#contribute=sweat-glucose-watch">Contribute</a></p></li>
+      <li class="hp" data-slug="air-water-bottle"><p class="hp-src">Science, 2017 · maker wanted</p><h3 class="hp-t">A water bottle that harvests drinking water from desert air</h3><p class="hp-act"><a class="k-btn" href="wanted.html#back=air-water-bottle" data-app="#back=air-water-bottle">Back it</a> <a class="k-btn quiet" href="wanted.html#fund=air-water-bottle" data-app="#fund=air-water-bottle">Fund the work</a> <a class="k-btn quiet" href="wanted.html#contribute=air-water-bottle" data-app="#contribute=air-water-bottle">Contribute</a></p></li>
+      <li class="hp" data-slug="glow-hydration-bottle"><p class="hp-src">Your idea · maker wanted</p><h3 class="hp-t">A smart water bottle that glows to remind you to drink</h3><p class="hp-act"><a class="k-btn" href="wanted.html#back=glow-hydration-bottle" data-app="#back=glow-hydration-bottle">Back it</a> <a class="k-btn quiet" href="wanted.html#fund=glow-hydration-bottle" data-app="#fund=glow-hydration-bottle">Fund the work</a> <a class="k-btn quiet" href="wanted.html#contribute=glow-hydration-bottle" data-app="#contribute=glow-hydration-bottle">Contribute</a></p></li>
       <!-- /home:products -->
     </ol>
     <p class="fine" id="home-when" data-not-prose>Passkey sign-in, no account · devnet, test money, no customers yet</p>
+    <p class="home-mission" id="home-mission">Science to products, past the valley of death, paid on Solana.</p>
     <!-- home:idt -->
     <section id="home-idt" aria-label="IDT benchmark" data-ratio="2.08"><p class="fine" id="idt-line">Clear briefs: <strong class="k-num" id="idt-ratio">2.08x</strong> fewer reasoning tokens, measured on 20 tasks.</p><details class="k-more" id="idt-per-brief" data-not-prose><summary>Each brief</summary><p class="fine">One model (sonnet, medium effort) for both. Vague: 12,365 tokens, 5% passed. Ready: 5,942 tokens, 70% passed.</p><div class="k-table"><table><thead><tr><th scope="col">Task</th><th scope="col">Vague</th><th scope="col">Ready</th><th scope="col">Saved</th><th scope="col">Passed</th></tr></thead><tbody><tr><td>c01</td><td class="k-num">3,380</td><td class="k-num">67</td><td class="k-num">+3,313</td><td>no / yes</td></tr><tr><td>c02</td><td class="k-num">151</td><td class="k-num">53</td><td class="k-num">+98</td><td>no / yes</td></tr><tr><td>c03</td><td class="k-num">1,718</td><td class="k-num">63</td><td class="k-num">+1,655</td><td>no / yes</td></tr><tr><td>c04</td><td class="k-num">204</td><td class="k-num">107</td><td class="k-num">+97</td><td>no / yes</td></tr><tr><td>c05</td><td class="k-num">669</td><td class="k-num">58</td><td class="k-num">+611</td><td>no / yes</td></tr><tr><td>c06</td><td class="k-num">80</td><td class="k-num">93</td><td class="k-num">-13</td><td>no / yes</td></tr><tr><td>c07</td><td class="k-num">169</td><td class="k-num">72</td><td class="k-num">+97</td><td>no / yes</td></tr><tr><td>c08</td><td class="k-num">581</td><td class="k-num">226</td><td class="k-num">+355</td><td>no / yes</td></tr><tr><td>c09</td><td class="k-num">274</td><td class="k-num">118</td><td class="k-num">+156</td><td>yes / yes</td></tr><tr><td>c10</td><td class="k-num">554</td><td class="k-num">111</td><td class="k-num">+443</td><td>no / no</td></tr><tr><td>r01</td><td class="k-num">208</td><td class="k-num">846</td><td class="k-num">-638</td><td>no / no</td></tr><tr><td>r02</td><td class="k-num">825</td><td class="k-num">701</td><td class="k-num">+124</td><td>no / yes</td></tr><tr><td>r03</td><td class="k-num">158</td><td class="k-num">240</td><td class="k-num">-82</td><td>no / yes</td></tr><tr><td>r04</td><td class="k-num">351</td><td class="k-num">277</td><td class="k-num">+74</td><td>no / yes</td></tr><tr><td>r05</td><td class="k-num">581</td><td class="k-num">240</td><td class="k-num">+341</td><td>no / yes</td></tr><tr><td>r06</td><td class="k-num">90</td><td class="k-num">444</td><td class="k-num">-354</td><td>no / no</td></tr><tr><td>r07</td><td class="k-num">1,507</td><td class="k-num">784</td><td class="k-num">+723</td><td>no / no</td></tr><tr><td>r08</td><td class="k-num">74</td><td class="k-num">520</td><td class="k-num">-446</td><td>no / no</td></tr><tr><td>r09</td><td class="k-num">259</td><td class="k-num">705</td><td class="k-num">-446</td><td>no / yes</td></tr><tr><td>r10</td><td class="k-num">532</td><td class="k-num">217</td><td class="k-num">+315</td><td>no / no</td></tr></tbody></table></div><p class="fine">Output tokens include thinking. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/runs.json" rel="noopener">Every run, raw</a>.</p></details><p class="fine" id="qloo-line" data-delta="-0.032">With Qloo's line: 3.2% fewer tokens, Ready 4 vs 4 of 10.</p><details class="k-more" id="qloo-per-brief" data-not-prose><summary>With and without Qloo</summary><p class="fine">The 10 research briefs, each run without and with its Grounding (Qloo) line (sonnet, medium effort): 5,074 vs 4,912 output tokens, $0.307 vs $0.3325 estimated. The IDT ratio above is Knos's own (clear briefs), not Qloo's.</p><div class="k-table"><table><thead><tr><th scope="col">Task</th><th scope="col">Without</th><th scope="col">With Qloo</th><th scope="col">Ready</th></tr></thead><tbody><tr><td>r01</td><td class="k-num">792</td><td class="k-num">845</td><td>no / yes</td></tr><tr><td>r02</td><td class="k-num">698</td><td class="k-num">927</td><td>yes / no</td></tr><tr><td>r03</td><td class="k-num">258</td><td class="k-num">231</td><td>no / yes</td></tr><tr><td>r04</td><td class="k-num">294</td><td class="k-num">278</td><td>yes / no</td></tr><tr><td>r05</td><td class="k-num">267</td><td class="k-num">219</td><td>no / no</td></tr><tr><td>r06</td><td class="k-num">514</td><td class="k-num">472</td><td>no / no</td></tr><tr><td>r07</td><td class="k-num">767</td><td class="k-num">577</td><td>no / yes</td></tr><tr><td>r08</td><td class="k-num">549</td><td class="k-num">548</td><td>no / no</td></tr><tr><td>r09</td><td class="k-num">712</td><td class="k-num">630</td><td>yes / yes</td></tr><tr><td>r10</td><td class="k-num">223</td><td class="k-num">185</td><td>yes / no</td></tr></tbody></table></div><p class="fine"><a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/qloo_runs.json" rel="noopener">Every run, raw</a>.</p></details></section>
     <!-- /home:idt -->
