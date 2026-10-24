@@ -96,6 +96,7 @@
     <button type="button" class="k-chip" data-tech="materials" data-need="housing" data-q="a tiny home kit for first-time buyers">Tiny home</button>
     <button type="button" class="k-chip" data-tech="biotech" data-need="health" data-q="10.1038/nature16521">A paper: sweat sensor</button></div>
   <div id="k-card" class="k-slot" aria-live="polite"></div>
+  <p class="k-paid" id="k-paid" data-not-prose hidden></p>
   <script type="application/json" id="k-proof">null</script>
 <script data-src="/static/brand/hero.js">
 // The one box of both front doors (web/brand/hero.html): a DOI, an arXiv id or an idea in, Qloo's demand verdict out,
@@ -288,7 +289,8 @@ ${src(h, price.src)}</section>
     body.dataset.done = "1";
     const r = slot.last || {}, d = r.decision || {}, who = r.who || {}, p = d.plan || {};
     const cities = ((r.cities || []).length ? r.cities : (r.launch || {}).cities || []).slice(0, 3).map((c) => c.name);
-    const mine = { verdict: d.verdict, audience: [(p.who?.age || who.top_age || "").replace(/_/g, " "), p.who?.gender || who.top_gender || ""].filter(Boolean).join(", "),
+    const mine = { verdict: d.verdict, audience: [(p.who?.age || who.top_age || "").replace(/_/g, " "), p.who?.gender || who.top_gender || ""].filter(Boolean).join(", ")
+                     || (p.who?.segments || (r.audiences || []).filter((x) => x.tied).map((x) => x.name)).filter(Boolean).slice(0, 2).join(", "),
                    cities, tier: (r.price || {}).tier };
     body.innerHTML = await claudeAlone(r.idea || slot.dataset.idea, mine);
   }, true);
@@ -313,7 +315,6 @@ ${src(h, price.src)}</section>
   });
 })();
 </script>
-  <p class="k-paid" id="k-paid" data-not-prose hidden></p>
   <p class="k-agent" data-not-prose>Agents: MCP at <code>https://knos.onrender.com/mcp</code>, tool <code>knos_cross</code></p>
 </div>
 <!-- /k-hero -->

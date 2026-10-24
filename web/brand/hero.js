@@ -188,7 +188,8 @@ ${src(h, price.src)}</section>
     body.dataset.done = "1";
     const r = slot.last || {}, d = r.decision || {}, who = r.who || {}, p = d.plan || {};
     const cities = ((r.cities || []).length ? r.cities : (r.launch || {}).cities || []).slice(0, 3).map((c) => c.name);
-    const mine = { verdict: d.verdict, audience: [(p.who?.age || who.top_age || "").replace(/_/g, " "), p.who?.gender || who.top_gender || ""].filter(Boolean).join(", "),
+    const mine = { verdict: d.verdict, audience: [(p.who?.age || who.top_age || "").replace(/_/g, " "), p.who?.gender || who.top_gender || ""].filter(Boolean).join(", ")
+                     || (p.who?.segments || (r.audiences || []).filter((x) => x.tied).map((x) => x.name)).filter(Boolean).slice(0, 2).join(", "),
                    cities, tier: (r.price || {}).tier };
     body.innerHTML = await claudeAlone(r.idea || slot.dataset.idea, mine);
   }, true);
