@@ -43,5 +43,5 @@ def test_the_memory_answer_names_what_a_load_test_reads():
     class S:
         reports = {"a": 1, "b": 2}
     got = server.memory_now(S())
-    assert set(got) == {"rss_mb", "peak_mb", "threads", "checks_running", "checks_at_once", "reports_in_memory"}
+    assert set(got) == {"rss_mb", "peak_mb", "threads", "checks_running", "checks_at_once", "reports_in_memory", "processes", "all_processes_mb"}
     assert got["reports_in_memory"] == 2 and got["checks_at_once"] == check.CHECKS_AT_ONCE and got["threads"] >= 1

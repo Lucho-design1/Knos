@@ -201,8 +201,17 @@ def memory_now(st) -> dict:
                 mb[k] = round(int(v.split()[0]) / 1024, 1)
     except OSError:
         pass
+    procs = []                                       # every process in the container (Render counts them all): name, MB
+    for d in Path("/proc").glob("[0-9]*"):
+        try:
+            f = dict(line.split(":", 1) for line in (d / "status").read_text(encoding="utf-8").splitlines() if ":" in line)
+            if "VmRSS" in f:
+                procs.append({"pid": int(d.name), "name": f.get("Name", "").strip(), "rss_mb": round(int(f["VmRSS"].split()[0]) / 1024, 1)})
+        except (OSError, ValueError):
+            continue
     return {"rss_mb": mb.get("VmRSS"), "peak_mb": mb.get("VmHWM"), "threads": threading.active_count(),
-            "checks_running": check.running[0], "checks_at_once": check.CHECKS_AT_ONCE, "reports_in_memory": len(st.reports)}
+            "checks_running": check.running[0], "checks_at_once": check.CHECKS_AT_ONCE, "reports_in_memory": len(st.reports),
+            "processes": sorted(procs, key=lambda x: -x["rss_mb"])[:8], "all_processes_mb": round(sum(x["rss_mb"] for x in procs), 1)}
 
 
 REPORTS_IN_MEMORY = 100
