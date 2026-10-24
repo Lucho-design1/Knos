@@ -265,8 +265,14 @@ def test_another_program_reads_the_pdf_when_one_is_installed(tool):
         system = [os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32")] if os.name == "nt" else []
         env = {"PATH": os.pathsep.join([os.path.dirname(program), *system]), "HOME": folder, "USERPROFILE": folder,
                **{k: os.environ[k] for k in ("SYSTEMROOT", "LANG", "LC_ALL") if k in os.environ}}
-        got = subprocess.run([program, "--check", path.name] if tool == "qpdf" else [program, "-layout", path.name, "-"], capture_output=True, text=True,
-                             encoding="utf-8", timeout=60, cwd=folder, env=env)
+        try:
+            got = subprocess.run([program, "--check", path.name] if tool == "qpdf" else [program, "-layout", path.name, "-"], capture_output=True, text=True,
+                                 encoding="utf-8", timeout=60, cwd=folder, env=env)
+        except subprocess.TimeoutExpired as e:     # it also hangs on its way out there (tests.yml run 40068845622): what it printed decides
+            if not (os.name == "nt" and tool == "pdftotext"):
+                raise
+            out = e.stdout.decode("utf-8", "replace") if isinstance(e.stdout, bytes) else e.stdout or ""
+            got = subprocess.CompletedProcess(e.cmd, 0xC0000000, out, "")
     # Git for Windows' pdftotext on GitHub's runners also crashes on its way out (0xC0000374, a heap error) after printing
     # the whole text (tests.yml run of 873d81b4): there the exit code says nothing about the file, so what it read decides.
     crashed_after_reading = os.name == "nt" and tool == "pdftotext" and got.returncode >= 0xC0000000 and "insufficient evidence" in got.stdout

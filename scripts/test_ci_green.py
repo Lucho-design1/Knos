@@ -31,7 +31,8 @@ def main(argv: list[str]) -> int:
         bad = [j for j in jobs if j["conclusion"] not in ("success", "skipped")]
         failed = set()
         for j in bad:
-            log = subprocess.run(["gh", "api", f"repos/{REPO}/actions/jobs/{j['databaseId']}/logs"], capture_output=True, text=True).stdout
+            log = subprocess.run(["gh", "api", f"repos/{REPO}/actions/jobs/{j['databaseId']}/logs"], capture_output=True, text=True,
+                                 encoding="utf-8", errors="replace").stdout or ""
             failed |= set(re.findall(r"FAILED (\S+)", log))
         line = (f"PASS test_ci_green: run {rid} on {sha[:8]}, {len(jobs)} jobs, 0 failed" if not bad else
                 f"FAIL test_ci_green: run {rid} on {sha[:8]}: {len(bad)} job(s) failed, tests {sorted(failed)[:5]}")
