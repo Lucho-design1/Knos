@@ -97,6 +97,7 @@ def _create(payer, new, space: int, lamports: int, owner: str):
 # ---- Token-2022 project credits through the transfer hook (programs-hook/knos_hook, deployed on devnet) -----------------
 HOOK = "AFQFtodihz5jAHpVBUk87AkH8FJsQdmHt8Z5NKLWRj1T"
 HOOK_INIT = bytes([43, 34, 13, 49, 167, 88, 235, 235])     # the SPL Transfer Hook interface's InitializeExtraAccountMetaList
+HOOK_MINT = bytes([187, 99, 204, 115, 30, 116, 73, 210])   # knos_hook MintCredits: the hook mints, only into the escrow
 CREDIT_LEN = 234                                         # base mint padded to 165, account type 1, TransferHook TLV 2 + 2 + 64
 
 
@@ -107,6 +108,16 @@ def _find(seeds: list, program: str):
 
 def _hook_pdas(mint) -> tuple:
     return _find([b"extra-account-metas", bytes(_pk(mint))], HOOK), _find([b"rules", bytes(_pk(mint))], HOOK)
+
+
+def _mint_authority(mint):
+    """The hook's PDA that is each credit mint's authority: no key can mint a project's credits, only knos_hook can."""
+    return _find([b"mint-authority", bytes(_pk(mint))], HOOK)
+
+
+def to_hook_ix(mint, current):
+    """Token-2022 SetAuthority (MintTokens) from `current` to the hook's PDA."""
+    return _ix(TOKEN22, bytes([6, 0, 1]) + bytes(_mint_authority(mint)), [(_pk(mint), False, True), (_pk(current), True, False)])
 
 
 def _credit_mint(led, pid: str) -> dict:
@@ -122,9 +133,10 @@ def _credit_mint(led, pid: str) -> dict:
            _ix(TOKEN22, bytes([20, 0]) + bytes(payer.pubkey()) + bytes([0]), [(mint.pubkey(), False, True)])]          # InitializeMint2, 0 dp
     sig = led.send(ixs, payer, [payer, mint])
     rule = led.send([_ix(HOOK, HOOK_INIT + bytes(owner), [(validation, False, True), (mint.pubkey(), False, False), (payer.pubkey(), True, True),
-                                                         (SYSTEM, False, False), (rules, False, True)])], payer)
+                                                         (SYSTEM, False, False), (rules, False, True)]),
+                     to_hook_ix(mint.pubkey(), payer.pubkey())], payer)        # then the hook alone mints: the key that made it cannot
     st[pid] = {"mint": str(mint.pubkey()), "hook": HOOK, "rules": str(rules), "validation": str(validation), "escrow_owner": str(owner),
-               "signature": sig, "rules_signature": rule}
+               "mint_authority": str(_mint_authority(mint.pubkey())), "signature": sig, "rules_signature": rule}
     _keep("credits", st)
     return st[pid]
 
@@ -138,20 +150,28 @@ def credit_transfer_ix(mint, source, dest, authority, amount: int):
 
 
 def project_credits(pid: str, order: str, units: int, led=None) -> dict:
-    """A locked order's units as the project's credits, held in the escrow: minted to the relayer, moved in through the hook."""
+    """A locked order's units as the project's credits, held in the escrow: knos_hook mints them into the escrow, at the
+    escrow owner's signature (the mint's authority is the hook's PDA). A mint made before that is handed to the PDA first."""
     led = led or escrow.ledger()
     with _lock:
         done = _state("credit-orders")
         if order in done:
             return done[order]
-        c, payer = _credit_mint(led, pid), _payer()
+        c, payer, holder = _credit_mint(led, pid), _payer(), escrow.demo_key()
         mint, owner = _pk(c["mint"]), _pk(c["escrow_owner"])
-        inbox, vault = _ata(payer.pubkey(), mint), _ata(owner, mint)
-        make = [_ix(ATA, bytes([1]), [(payer.pubkey(), True, True), (a, False, True), (w, False, False), (mint, False, False),
-                                      (SYSTEM, False, False), (TOKEN22, False, False)]) for a, w in ((inbox, payer.pubkey()), (vault, owner))]
-        ixs = [*make, _ix(TOKEN22, bytes([7]) + struct.pack("<Q", int(units)), [(mint, False, True), (inbox, False, True), (payer.pubkey(), True, False)]),
-               credit_transfer_ix(mint, inbox, vault, payer.pubkey(), int(units))]
-        sig = led.send(ixs, payer)
+        vault, (_, rules) = _ata(owner, mint), _hook_pdas(mint)
+        md = led.account(mint) or b""                  # the mint's authority, as the chain has it: handed to the hook once
+        pre = [to_hook_ix(mint, payer.pubkey())] if md[:4] == b"\x01\x00\x00\x00" and md[4:36] == bytes(payer.pubkey()) else []
+        ixs = [*pre, _ix(ATA, bytes([1]), [(payer.pubkey(), True, True), (vault, False, True), (owner, False, False), (mint, False, False),
+                                          (SYSTEM, False, False), (TOKEN22, False, False)]),
+               _ix(HOOK, HOOK_MINT + struct.pack("<Q", int(units)),
+                   [(mint, False, True), (vault, False, True), (rules, False, False), (_mint_authority(mint), False, False),
+                    (owner, True, False), (TOKEN22, False, False)])]
+        sig = led.send(ixs, payer, [payer, holder] if holder.pubkey() != payer.pubkey() else [payer])
+        if pre:
+            st = _state("credits")
+            st[pid] = {**st.get(pid, c), "mint_authority": str(_mint_authority(mint))}
+            _keep("credits", st)
         row = {"order": order, "units": units, "credit_mint": c["mint"], "hook": HOOK, "escrow_account": str(vault), "signature": sig,
                "explorer": escrow.explorer(sig)}
         done[order] = row

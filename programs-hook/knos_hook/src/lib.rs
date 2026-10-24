@@ -14,13 +14,19 @@
 //!   Execute                         data = [105,37,101,197,75,251,102,26] | amount (u64 LE)
 //!       accounts (as Token-2022 passes them): [source, mint, destination, owner, validation PDA, rules PDA]
 //!       Fails with Custom(1) unless the destination token account's owner is the rules' allowed_owner.
+//!   MintCredits                     data = [187,99,204,115,30,116,73,210] | amount (u64 LE)   (sha256("knos_hook:mint_credits")[..8])
+//!       accounts: [mint (w), destination token account (w), rules PDA, mint authority PDA ["mint-authority", mint],
+//!                  allowed_owner (signer), Token-2022 program]
+//!       The project's credits are minted by this program alone (the mint's authority is the PDA, so no key can mint
+//!       them), and only into a token account the rules' allowed_owner owns, the escrow, at its own signature.
 //!
 //! ERRORS (Custom): 0 bad instruction, 1 destination not allowed, 2 wrong validation or rules address, 3 not the mint's
-//!   authority, 4 already initialised.
+//!   authority, 4 already initialised, 5 not signed by the allowed owner, 6 not Token-2022.
 
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
+    instruction::{AccountMeta, Instruction},
     program::invoke_signed,
     program_error::ProgramError,
     pubkey::Pubkey,
@@ -33,6 +39,9 @@ pub const EXECUTE: [u8; 8] = [105, 37, 101, 197, 75, 251, 102, 26];
 pub const INIT_METAS: [u8; 8] = [43, 34, 13, 49, 167, 88, 235, 235];
 pub const VALIDATION_SEED: &[u8] = b"extra-account-metas";
 pub const RULES_SEED: &[u8] = b"rules";
+pub const MINT_CREDITS: [u8; 8] = [187, 99, 204, 115, 30, 116, 73, 210];
+pub const MINT_AUTHORITY_SEED: &[u8] = b"mint-authority";
+pub const TOKEN_2022: Pubkey = solana_program::pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 /// the validation account: TLV [Execute discriminator 8][length u32 4][PodSlice count u32 4][ExtraAccountMeta 35]
 pub const VALIDATION_LEN: usize = 8 + 4 + 4 + 35;
 /// the rules account: version u8 = 1 | allowed_owner 32
@@ -54,6 +63,8 @@ pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], data: &[u8]) -> Pr
         execute(program_id, accounts, rest)
     } else if tag == INIT_METAS {
         init(program_id, accounts, rest)
+    } else if tag == MINT_CREDITS {
+        mint_credits(program_id, accounts, rest)
     } else {
         Err(err(0))
     }
@@ -137,4 +148,51 @@ fn init(program_id: &Pubkey, accounts: &[AccountInfo], rest: &[u8]) -> ProgramRe
     rd[0] = 1;
     rd[1..33].copy_from_slice(&rest[0..32]);
     Ok(())
+}
+
+fn mint_credits(program_id: &Pubkey, accounts: &[AccountInfo], rest: &[u8]) -> ProgramResult {
+    if rest.len() < 8 {
+        return Err(err(0));
+    }
+    let amount = u64::from_le_bytes(rest[0..8].try_into().map_err(|_| err(0))?);
+    let it = &mut accounts.iter();
+    let mint = next_account_info(it)?;
+    let destination = next_account_info(it)?;
+    let rules = next_account_info(it)?;
+    let authority = next_account_info(it)?;
+    let owner = next_account_info(it)?;
+    let token = next_account_info(it)?;
+    if *token.key != TOKEN_2022 || mint.owner != &TOKEN_2022 || destination.owner != &TOKEN_2022 {
+        return Err(err(6));
+    }
+    let (r, _) = Pubkey::find_program_address(&[RULES_SEED, mint.key.as_ref()], program_id);
+    let (a, ab) = Pubkey::find_program_address(&[MINT_AUTHORITY_SEED, mint.key.as_ref()], program_id);
+    if *rules.key != r || rules.owner != program_id || *authority.key != a {
+        return Err(err(2));
+    }
+    let allowed = {
+        let rd = rules.try_borrow_data()?;
+        if rd.len() < RULES_LEN || rd[0] != 1 {
+            return Err(err(2));
+        }
+        Pubkey::new_from_array(rd[1..33].try_into().map_err(|_| err(2))?)
+    };
+    if !owner.is_signer || *owner.key != allowed {
+        return Err(err(5));
+    }
+    {
+        let dd = destination.try_borrow_data()?;
+        if dd.len() < 64 || &dd[0..32] != mint.key.as_ref() || &dd[32..64] != allowed.as_ref() {
+            return Err(err(1));
+        }
+    }
+    // Token-2022 MintTo (7): [mint (w), destination (w), mint authority (signer)]
+    let mut data = vec![7u8];
+    data.extend_from_slice(&amount.to_le_bytes());
+    let ix = Instruction {
+        program_id: TOKEN_2022,
+        accounts: vec![AccountMeta::new(*mint.key, false), AccountMeta::new(*destination.key, false), AccountMeta::new_readonly(a, true)],
+        data,
+    };
+    invoke_signed(&ix, &[mint.clone(), destination.clone(), authority.clone(), token.clone()], &[&[MINT_AUTHORITY_SEED, mint.key.as_ref(), &[ab]]])
 }

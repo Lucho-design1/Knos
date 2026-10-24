@@ -14,8 +14,8 @@ from solders.pubkey import Pubkey
 from solders.system_program import CreateAccountParams, create_account
 from solders.transaction import Transaction
 
-# the build deployed on devnet at AFQFtodihz5jAHpVBUk87AkH8FJsQdmHt8Z5NKLWRj1T (cargo build-sbf in programs-hook/knos_hook;
-# 74,664 bytes, the same bytes `solana program dump` returns for that address)
+# the build deployed on devnet at AFQFtodihz5jAHpVBUk87AkH8FJsQdmHt8Z5NKLWRj1T on 24 Oct 2026 (cargo build-sbf --tools-version
+# v1.57 in programs-hook/knos_hook; 79,592 bytes, sha256 97b8f270...ef08b): Execute, InitializeExtraAccountMetaList, MintCredits
 SO = Path(os.environ.get("KNOS_HOOK_SO") or Path(__file__).resolve().parents[3] / "programs-hook" / "knos_hook" / "deployed" / "knos_hook_devnet.so")
 pytestmark = pytest.mark.skipif(not SO.exists(), reason="the hook program is not built here (cargo build-sbf programs-hook/knos_hook)")
 
@@ -24,6 +24,7 @@ ATA = Pubkey.from_string("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")
 SYSTEM = Pubkey.from_string("11111111111111111111111111111111")
 EXECUTE = bytes([105, 37, 101, 197, 75, 251, 102, 26])
 INIT = bytes([43, 34, 13, 49, 167, 88, 235, 235])
+MINT_CREDITS = bytes([187, 99, 204, 115, 30, 116, 73, 210])
 MINT_LEN = 234          # base mint padded to 165, account type 1, TransferHook TLV 2 + 2 + 64
 
 
@@ -122,4 +123,41 @@ def test_a_lock_becomes_project_credits_held_in_the_escrow_through_the_hook(monk
     assert vault[32:64] == bytes(owner.pubkey()) and int.from_bytes(vault[64:72], "little") == 7
     c = chainx.credits_of("prj_" + "a" * 12)
     assert c["hook"] == chainx.HOOK and c["escrow_owner"] == str(owner.pubkey())
+    md = bytes(led.svm.get_account(Pubkey.from_string(c["mint"])).data)
+    assert md[:4] == b"\x01\x00\x00\x00" and md[4:36] == bytes(chainx._mint_authority(c["mint"]))    # the hook alone mints
     assert bytes(led.svm.get_account(Pubkey.from_string(c["rules"])).data)[:33] == b"" + bytes(owner.pubkey())   # version 1 | owner
+
+
+def _hand_to_hook(c):
+    svm, hook, payer, mint, *_ = c
+    pda = Pubkey.find_program_address([b"mint-authority", bytes(mint)], hook)[0]
+    ix = Instruction(TOKEN22, bytes([6, 0, 1]) + bytes(pda), [AccountMeta(mint, False, True), AccountMeta(payer.pubkey(), True, False)])
+    svm.expire_blockhash()
+    assert not hasattr(send(svm, [ix], payer), "err")
+    return pda
+
+
+def _mint(c, pda, dest, signer, amount=5):
+    svm, hook, payer, mint, _, _, accts, validation, rules = c
+    ix = Instruction(hook, MINT_CREDITS + struct.pack("<Q", amount),
+                     [AccountMeta(mint, False, True), AccountMeta(accts[dest], False, True), AccountMeta(rules, False, False),
+                      AccountMeta(pda, False, False), AccountMeta(signer.pubkey(), True, False), AccountMeta(TOKEN22, False, False)])
+    svm.expire_blockhash()
+    svm.airdrop(signer.pubkey(), 1_000_000_000)
+    return send(svm, [ix], signer)
+
+
+def test_the_hook_alone_mints_credits_and_only_into_the_escrow(chain):
+    svm, hook, payer, mint, escrow, stranger, accts, validation, rules = chain
+    pda = _hand_to_hook(chain)
+    ok = _mint(chain, pda, escrow.pubkey(), escrow)
+    assert not hasattr(ok, "err"), ok
+    assert int.from_bytes(bytes(svm.get_account(accts[escrow.pubkey()]).data)[64:72], "little") == 5
+    elsewhere = _mint(chain, pda, stranger.pubkey(), escrow)                                     # into anyone else's account
+    assert hasattr(elsewhere, "err") and "custom program error: 0x1" in " ".join(logs(elsewhere))
+    not_owner = _mint(chain, pda, escrow.pubkey(), stranger)                                     # signed by someone else
+    assert hasattr(not_owner, "err") and "custom program error: 0x5" in " ".join(logs(not_owner))
+    by_key = Instruction(TOKEN22, bytes([7]) + struct.pack("<Q", 1), [AccountMeta(mint, False, True),
+                         AccountMeta(accts[payer.pubkey()], False, True), AccountMeta(payer.pubkey(), True, False)])
+    svm.expire_blockhash()
+    assert hasattr(send(svm, [by_key], payer), "err")                                            # the key that made the mint cannot
