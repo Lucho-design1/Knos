@@ -21,8 +21,9 @@ try {
   got = await page.evaluate(() => ({ h1: document.querySelector("h1")?.textContent.trim(),
     links: [...document.querySelectorAll("a[href]")].map((a) => a.href).filter((h) => /^https?:/.test(h)),
     secs: Object.fromEntries([...document.querySelectorAll("section.t[id]")].map((s) => [s.id, [...s.querySelectorAll("a[href]")].map((a) => a.href)])) }));
-} finally {
+} catch (e) {
   await browser.close();
+  throw e;
 }
 if (got.h1 !== "How we test Knos") { fails++; lines.push(`FAIL h1 ${JSON.stringify(got.h1)}`); }
 for (const [id, re] of Object.entries(NEED)) {
@@ -37,10 +38,15 @@ for (const u of uniq) {
   for (let t = 0; t < 2 && !(code >= 200 && code < 400); t++) {
     try { code = (await fetch(u, { redirect: "follow", signal: AbortSignal.timeout(90000), headers: { "User-Agent": "knos-link-check" } })).status; } catch { code = 0; }
   }
+  if (code === 403 || code === 429) {          // a site that limits scripts (the Solana explorer): opened as a reader opens it
+    const tab = await browser.newPage();
+    try { code = (await tab.goto(u, { waitUntil: "load", timeout: 90000 }))?.status() || 0; } catch { code = 0; } finally { await tab.close(); }
+  }
   const ok = code >= 200 && code < 400;
   if (!ok) broken++;
   lines.push(`${ok ? "ok  " : "FAIL"} ${code} ${u}`);
 }
+await browser.close();
 if (broken) fails++;
 lines.push(fails ? `FAIL test_how_we_test: ${broken} broken of ${uniq.length} links, ${fails} check(s) failed`
                  : `PASS test_how_we_test: ${Object.keys(NEED).length} claims each linked to its run, ${uniq.length} links, 0 broken`);
