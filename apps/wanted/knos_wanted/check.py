@@ -506,12 +506,12 @@ def _who_wants(run: _Run, tags: list[dict], ents: list[dict], kind: str = "urn:e
 ALSO_LOVE = (("music", "urn:entity:artist"), ("film", "urn:entity:movie"))
 
 
-def _also_love(run: _Run, ents: list[str], via: str, take: int = 4) -> dict | None:
+def _also_love(run: _Run, ents: list[str], via: str, take: int = 4, key: str = "signal.interests.entities") -> dict | None:
     """What the people of this taste also love, in two other Qloo domains (artists and films, /v2/insights with
-    signal.interests.entities): shown only, the verdict does not read it."""
+    signal.interests.entities, or .tags when no product carries the taste): shown only, the verdict does not read it."""
     if not ents:
         return None
-    sig = {"signal.interests.entities": ",".join(ents)}
+    sig = {key: ",".join(ents)}
     run.prefetch([("/v2/insights", {"filter.type": t, "take": take, **sig}) for _, t in ALSO_LOVE])
     out = []
     for domain, t in ALSO_LOVE:
@@ -523,12 +523,12 @@ def _also_love(run: _Run, ents: list[str], via: str, take: int = 4) -> dict | No
     return {"via": via, "domains": out} if out else None
 
 
-def _launch(run: _Run, ents: list[str], place: str | None) -> dict | None:
+def _launch(run: _Run, ents: list[str], place: str | None, key: str = "signal.interests.entities") -> dict | None:
     """Where to launch when no product matched the idea: Qloo's destinations and heatmap for the top products of its
     taste tags (the same calls as for a matched product, with that signal). Shown only; the verdict does not read it."""
     loc = place or DEFAULT_PLACE
     cc = market_country(loc)
-    sig = {"signal.interests.entities": ",".join(ents)}
+    sig = {key: ",".join(ents)}
     q10 = {"filter.type": "urn:entity:destination", "take": 8, **({"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}), **sig}
     q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **sig}
     run.prefetch([("/v2/insights", q10), ("/v2/insights", q7)])
@@ -622,9 +622,12 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     sig_ents = [m["id"] for m in near] or ([lead["id"]] if lead else [])
     ev["who_wants"] = _who_wants(run, ev["tags"][:3], [m for m in (near or ([lead] if lead else []))][:2], kind)
     via = sig_ents or list(dict.fromkeys(a["tie"]["via_id"] for a in ev["who_wants"] if (a.get("tie") or {}).get("via_id")))[:3]
-    ev["also_love"] = _also_love(run, via, "the products it matched" if sig_ents else "the top products of its taste tags")
+    key, said = "signal.interests.entities", "the products it matched" if sig_ents else "the top products of its taste tags"
+    if not via:                                      # no product carries the taste: the idea's own tags are the signal
+        via, key, said = [t["id"] for t in ev["tags"][:3]], "signal.interests.tags", "its taste tags"
+    ev["also_love"] = _also_love(run, via, said, key=key)
     if not sig_ents:
-        ev["launch"] = _launch(run, via, place) if via else None
+        ev["launch"] = _launch(run, via, place, key=key) if via else None
         return ev
     signal = {"signal.interests.entities": ",".join(sig_ents), **({"signal.location.query": place} if place else {})}
     loc = place or DEFAULT_PLACE

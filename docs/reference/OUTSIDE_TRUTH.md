@@ -63,3 +63,21 @@ Numbers, weights and method: [kickstarter_truth_tuned.json](kickstarter_truth_tu
 Run it again: `python scripts/test_kickstarter_truth.py <ks-sample.json>` (build the sample with `--build` from the dump above).
 
 The tuned one: `--collect <ks-sample.json> <features.json>`, then `--tuned <ks-sample.json> <features.json>`.
+
+## Kickstarter: 300 projects ranked
+
+**In plain words.** A ranking question this time: does the demand score put the projects that raised the most (pledged over goal) near the top? 300 new projects, none from the earlier 500. The rules were committed before the run, and it ran once.
+
+| Measure (n=300) | Value |
+|---|---|
+| Spearman, (a) open signals | 0.113 |
+| Spearman, (b) open signals + Qloo | 0.108 |
+| Difference, (b) minus (a) | -0.006 |
+| 95% interval, 2,000 paired bootstrap resamples (seed 1) | [-0.037, +0.025] |
+
+- **Result:** The interval spans zero, so this test cannot tell whether Qloo helps the ranking.
+- **Plan:** [qloo_lift_ranked_plan.md](qloo_lift_ranked_plan.md), sha256 `f5fc2b93dec35d813fd921962c85860a415dada508a266c274048340ea0d1da6`, committed before any row was scored.
+- **Sample:** successful or failed projects launched 2019 to 2023 from the webrobots.io dump of 2026-10-12, drawn with seed 1.
+- **Scores:** the two tuned models above, fit on the earlier 250 tune rows only; none of these 300 was used to fit them.
+
+Numbers: [qloo_lift_ranked.json](qloo_lift_ranked.json). Run it again: `python scripts/test_qloo_lift_ranked.py --score <ks-sample.json> <ks-features.json> <lift-sample.json> <lift-features.json>`.
