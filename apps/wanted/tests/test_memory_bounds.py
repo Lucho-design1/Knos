@@ -68,3 +68,29 @@ def test_qloo_mcp_is_spoken_to_directly_with_no_node_bridge():
     finally:
         t.close()
     assert t.h.proc is None
+
+
+class _Proc:
+    def __init__(self):
+        self.killed = self.waited = False
+
+    def poll(self):
+        return 0 if self.killed else None
+
+    def kill(self):
+        self.killed = True
+
+    def wait(self, timeout=None):
+        self.waited = True
+        return 0
+
+
+def test_a_failed_harness_question_stops_that_process_and_never_a_newer_one():
+    from knos_wanted import qloo_harness
+    h = qloo_harness.Harness(command=["qloo", "api", "mcp"])
+    old, new = _Proc(), _Proc()
+    h.proc, h.ready = new, True                      # another thread already started a new harness
+    h.stop(old)                                      # the question that failed went to the old one
+    assert old.killed and old.waited and h.proc is new and h.ready and not new.killed
+    h.stop(new)                                      # the current one failing: stopped, and started again next time
+    assert new.killed and h.proc is None and not h.ready

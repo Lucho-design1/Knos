@@ -134,8 +134,10 @@ class Harness:
         """Qloo's answer body from the harness, or None (not installed, failed in the last minute, or not answered)."""
         if not self.enabled() or (self.failed_at is not None and time.monotonic() - self.failed_at < 60):
             return None
+        proc = None
         try:
             self._ensure()
+            proc = self.proc                              # the process this question goes to: the one stopped if it fails
             res = (self._wait(self._send("tools/call", {"name": tool, "arguments": args})) or {}).get("result") or {}
             body = res.get("structuredContent")
             if body is None:
@@ -150,12 +152,25 @@ class Harness:
         except (OSError, ValueError, TimeoutError, AssertionError) as why:
             self.failed_at = time.monotonic()
             print(f"qloo harness: {type(why).__name__}: {str(why)[:120]}; REST for a minute", file=sys.stderr, flush=True)
-            self.ready = False
-            with self.lock:
-                if self.proc is not None:
-                    self.proc.kill()
-                self.proc = None
+            self.stop(proc)
             return None
+
+    def stop(self, proc: subprocess.Popen | None) -> None:
+        """Stop the process a question failed on, and wait for it; the harness is started again only if that process was
+        still the current one. Stopping whatever was current instead let a newer process be killed while the failed one
+        (118 MB) kept running beside it: two `qloo api mcp` under load, 24 Oct 2026."""
+        if proc is None:
+            return
+        with self.lock:
+            if self.proc is proc:
+                self.ready = False
+                self.proc = None
+        if proc.poll() is None:
+            proc.kill()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
 
 
 _one: Harness | None = None
