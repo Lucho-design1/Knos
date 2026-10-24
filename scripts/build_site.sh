@@ -38,10 +38,10 @@ for f in 404.html privacy.html retry.js; do [ -s "$out/$f" ] || { echo "web/$f i
 # check/index.html, listed with it in sitemap.xml, and llms.txt (https://llmstxt.org/), all files of web/ carried by the
 # copy above. Each "Last updated" and every lastmod is the date of the commit this site is built from (for a release,
 # the release commit); a commit this clone does not have (a test's) gives HEAD's date, and a tree with no git today's.
-for f in faq.html check/index.html sitemap.xml llms.txt; do [ -s "$out/$f" ] || { echo "web/$f is missing"; exit 1; }; done
+for f in faq.html how-we-test.html check/index.html sitemap.xml llms.txt; do [ -s "$out/$f" ] || { echo "web/$f is missing"; exit 1; }; done
 stamp=$(git show -s --format=%cs "$sha" 2>/dev/null || git log -1 --format=%cs 2>/dev/null || date -u +%Y-%m-%d)
 printf '%s' "$stamp" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || { echo "no build date: $stamp"; exit 1; }
-for f in faq.html check/index.html sitemap.xml; do
+for f in faq.html how-we-test.html check/index.html sitemap.xml; do
   sed -i.bak "s/KNOS_BUILD_DATE/$stamp/g" "$out/$f" && rm -f "$out/$f.bak"
   if grep -q KNOS_BUILD_DATE "$out/$f"; then echo "web/$f: the build date was not stamped"; exit 1; fi
 done

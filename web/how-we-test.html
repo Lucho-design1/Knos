@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knos. How we test Knos</title>
+<meta name="description" content="Each claim Knos makes, with the run behind it: Qloo against Claude alone, Kickstarter, past research awards and an agent paid on devnet.">
+<meta name="author" content="drexthealpha">
+<link rel="canonical" href="https://drexthealpha.github.io/Knos/how-we-test.html">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#07080c">
+<meta name="theme-color" content="#f4f4f0" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Knos">
+<meta property="og:title" content="Knos. How we test Knos">
+<meta property="og:description" content="Each claim Knos makes, with the run behind it: Qloo against Claude alone, Kickstarter, past research awards and an agent paid on devnet.">
+<meta property="og:url" content="https://drexthealpha.github.io/Knos/how-we-test.html">
+<meta property="og:image" content="https://drexthealpha.github.io/Knos/brand/card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="brand/tokens.css">
+<link rel="stylesheet" href="app.css">
+<style>.tests .t { margin: 32px 0 0; } .tests .t-n { font-size: var(--s1); margin: 4px 0; }</style>
+<script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="preconnect" href="https://drexthealpha.github.io" crossorigin>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+</head>
+<body>
+<!-- k-bar -->
+<header class="bar k-bar" id="k-bar">
+  <a class="brand" href="./#home" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
+  <nav id="nav" aria-label="Knos">
+    <a href="./#home">Check demand</a>
+    <a href="wanted.html?to=/companies">Companies</a>
+    <a href="wanted.html?to=/fields">Fields</a>
+    <a href="wanted.html#projects">Projects</a>
+    <a href="https://github.com/drexthealpha/Knos/tree/main/docs" rel="noopener">Docs</a>
+    <div class="more" id="more">
+      <button id="more-button" class="more-button" type="button" aria-expanded="false" aria-controls="more-list">More</button>
+      <div class="more-list" id="more-list">
+        <a href="wanted.html?to=/money">The money</a>
+        <a href="./#pricing">Pricing</a>
+        <a href="./#verify">How we verify</a>
+        <a href="wanted.html#buy">Back a product</a>
+        <a href="wanted.html#fund">Fund a milestone</a>
+        <a href="wanted.html#contribute">Open work</a>
+        <a href="wanted.html#make">Make</a>
+        <a href="wanted.html#teams">Teams</a>
+        <a href="wanted.html#agents">Agents</a>
+        <a href="wanted.html?to=/with-without">With and without Qloo</a>
+        <a href="wanted.html?to=/qloo-safe-use">How Knos uses Qloo safely</a>
+        <a href="wanted.html?to=/invite">Invite</a>
+        <a href="./#check-a-pull-request" id="go-check">Check a pull request</a>
+        <a href="./#demo">Demo</a>
+        <a href="./#install">Install</a>
+        <a href="./#records">Records</a>
+        <a href="./#network">Numbers</a>
+        <a href="./faq.html">Questions</a>
+        <a href="./how-we-test.html">How we test</a>
+      </div>
+    </div>
+  </nav>
+  <div class="tools">
+    <button id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
+    <a id="whoBtn" class="signin" href="wanted.html#signin">Sign in</a>
+  </div>
+</header>
+<script src="brand/bar.js" defer></script>
+<!-- /k-bar -->
+<main>
+  <section class="view tests" id="tests">
+    <h1>How we test Knos</h1>
+    <p class="lede">Every number Knos shows comes from a run you can open.</p>
+    <section class="t" id="with-without">
+      <h2>Qloo beside Claude alone</h2>
+      <p class="t-n">20 ideas: Qloo changed the answer on all 20. Claude alone named the same audience on 0.</p>
+      <p class="fine"><a href="https://knos.onrender.com/with-without" rel="noopener">The table</a> · <a href="https://knos.onrender.com/api/qloo-diff" rel="noopener">The data</a> · <a href="https://github.com/drexthealpha/Knos/blob/main/scripts/qloo_vs_open_signals.py" rel="noopener">The script</a></p>
+    </section>
+    <section class="t" id="kickstarter">
+      <h2>Kickstarter, 250 held-out projects</h2>
+      <p class="t-n">Tuned: 76.8% right on open signals, 78.0% with Qloo. Always guessing success: 78.8%.</p>
+      <p class="fine"><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/OUTSIDE_TRUTH.md#kickstarter-250-held-out-projects" rel="noopener">The report</a> · <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/kickstarter_truth.json" rel="noopener">First run</a> · <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/kickstarter_truth_tuned.json" rel="noopener">Tuned run</a></p>
+    </section>
+    <section class="t" id="ranked">
+      <h2>Kickstarter, 300 projects ranked</h2>
+      <p class="t-n">300 projects. The plan was fixed, with its sha256, before the run.</p>
+      <p class="fine"><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/qloo_lift_ranked_plan.md" rel="noopener">The plan, fixed before the run</a> · <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/qloo_lift_ranked.json" rel="noopener">The result</a> · <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/OUTSIDE_TRUTH.md#kickstarter-300-projects-ranked" rel="noopener">The report</a></p>
+    </section>
+    <section class="t" id="sbir">
+      <h2>200 past research awards</h2>
+      <p class="t-n">47.5% right where the base rate is 50%. No better than a coin.</p>
+      <p class="fine"><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/OUTSIDE_TRUTH.md" rel="noopener">The report</a> · <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/outside_truth.json" rel="noopener">The data</a></p>
+    </section>
+    <section class="t" id="payout">
+      <h2>An agent paid for verified work</h2>
+      <p class="t-n">5 test units on devnet, 23 Oct 2026.</p>
+      <p class="fine"><a href="https://explorer.solana.com/tx/4237vWZNovpksV8auB8mFFmBHohQXvFYJkCiu1P6yaGNYRPsmyLGXRA3f2HwF7z17NSY4bJyKEA4f3Agtah8yDQs?cluster=devnet" rel="noopener">The transaction</a> · <a href="https://knos.onrender.com/api/agent/payout/latest" rel="noopener">The newest payout, read from devnet</a> · <a href="https://github.com/drexthealpha/Knos/blob/main/scripts/test_agent_paid_visible.mjs" rel="noopener">The check</a></p>
+    </section>
+    <p class="fine" id="updated">Last updated <time datetime="KNOS_BUILD_DATE">KNOS_BUILD_DATE</time></p>
+  </section>
+</main>
+<footer class="foot">
+  <span>Devnet is test mode: the money is test USDC.</span>
+  <span><a href="./">Knos home</a> · <a href="privacy.html">Privacy and terms</a> · <a href="https://github.com/drexthealpha/Knos">Source (MIT)</a></span>
+</footer>
+</body>
+</html>

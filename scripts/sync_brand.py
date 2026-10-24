@@ -48,6 +48,7 @@ def icons(s: str, root: str, preconnect: bool = False) -> str:
 PAGES = {
     WEB / "index.html": ("", "", WAKE, "brand/tokens.css", False),        # web/front.js runs this bar
     WEB / "faq.html": ("./", "./", WAKE, "brand/tokens.css", True),
+    WEB / "how-we-test.html": ("./", "./", WAKE, "brand/tokens.css", True),
     WEB / "privacy.html": ("./", "./", WAKE, "brand/tokens.css", True),
     WEB / "404.html": (SITE, SITE, SITE + WAKE, "brand/tokens.css", True),        # its <base href="/Knos/"> holds at any depth
     WEB / "wanted.html": ("./", "./", WAKE, "brand/tokens.css", True),
