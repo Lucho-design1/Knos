@@ -355,3 +355,37 @@ def results(env: dict | None) -> list:
 
 def num(v) -> float | None:
     return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+
+
+class Lazy:
+    """The MCP flow's client, started at its first use: `qloo mcp` is a Node process of about 120 MB, and a demand check
+    never asks it (the crossing agent, the MCP proxy and the guided flows do). Under MOCK it starts at once (in process,
+    cheap). Until it has started, status() says so."""
+
+    def __init__(self, factory=None):
+        self._factory = factory or Qloo
+        self._q: Qloo | None = None
+        self._lock = threading.Lock()
+        if os.environ.get("KNOS_WANTED_MOCK") == "1":
+            self._get()
+
+    def _get(self) -> Qloo:
+        with self._lock:
+            if self._q is None:
+                self._q = self._factory()
+            return self._q
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return getattr(self._get(), name)
+
+    def status(self) -> dict:
+        if self._q is None:
+            return {"mode": "not started", "label": "qloo mcp starts at the first MCP call", "aggregate": AGGREGATE,
+                    "reason": "the MCP flow's server is started when an agent first asks it; a demand check does not"}
+        return self._q.status()
+
+    def close(self) -> None:
+        if self._q is not None:
+            self._q.close()

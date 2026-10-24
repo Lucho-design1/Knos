@@ -165,3 +165,32 @@ def test_a_call_while_the_harness_starts_goes_to_rest_at_once(monkeypatch):
     assert h.call("qloo_search", {"query": "x"}) is None and time.monotonic() - t0 < 1
     time.sleep(0.1)
     assert started == [1]                             # the start goes on in the background
+
+
+def test_the_mcp_flow_starts_qloo_mcp_only_when_it_is_first_used(monkeypatch):
+    from knos_wanted import qloo_mcp
+    monkeypatch.delenv("KNOS_WANTED_MOCK", raising=False)
+    made = []
+
+    class Fake:
+        mode, reason = "live", "test"
+
+        def __init__(self):
+            made.append(self)
+
+        def status(self):
+            return {"mode": "live"}
+
+        def call(self, name, args, **k):
+            return {"ok": name}
+
+        def close(self):
+            made.append("closed")
+    q = qloo_mcp.Lazy(factory=Fake)
+    assert made == [] and q.status()["mode"] == "not started"          # nothing started for a status read
+    q.close()
+    assert made == []
+    assert q.call("qloo_find_tags", {}) == {"ok": "qloo_find_tags"} and len(made) == 1 and q.mode == "live"
+    assert q.status() == {"mode": "live"}
+    q.close()
+    assert made[-1] == "closed"

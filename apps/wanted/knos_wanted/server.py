@@ -33,7 +33,7 @@ from urllib.parse import parse_qs, urlparse
 
 from . import outside
 from . import agent, auth, blink, buyer, catalog, check, company, demand, escrow, front, planner, preorder, privacy, product_routes, referee, research, tasks, valley, wallets, x402
-from .qloo_mcp import AGGREGATE, Qloo, QlooUnavailable
+from .qloo_mcp import AGGREGATE, Lazy, Qloo, QlooUnavailable
 from .qloo_rest import Client
 
 STATIC = Path(__file__).parent / "static"
@@ -221,7 +221,7 @@ REPORTS_IN_MEMORY = 100
 
 class State:
     def __init__(self, q: Qloo | None = None, rest: Client | None = None):
-        self.q = q or Qloo()
+        self.q = q or Lazy()          # `qloo mcp` (120 MB) starts at the MCP flow's first use
         self.rest = rest or Client()
         self.cards: dict[str, dict] = {}
         self.last_anchor: dict | None = None
@@ -972,7 +972,7 @@ def serve(host: str | None = None, port: int | None = None) -> None:
     httpd = ThreadingHTTPServer((host, port), make_handler(state))
     rest_ok, rest_why = state.rest.ready()
     print(f"Knos demand check on http://{host}:{port}  Qloo REST: {'on' if rest_ok else 'off (' + rest_why + ')'}  "
-          f"Qloo MCP: {state.q.mode} ({state.q.reason})  pre-orders on proof: preflight running (see /api/status)", flush=True)
+          f"Qloo MCP: {state.q.status().get('mode')}  pre-orders on proof: preflight running (see /api/status)", flush=True)
     try:
         httpd.serve_forever()
     finally:
