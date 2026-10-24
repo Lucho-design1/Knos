@@ -39,4 +39,27 @@ Numbers, method and sources: [outside_truth.json](outside_truth.json). Run it ag
 - **What Knos saw:** the name, the blurb and the category, at most about 200 characters. A refused idea counts as not OPEN.
 - **Reading:** the dump is a scrape of Kickstarter's pages, not the full archive. Open signals measure attention today, not a 2021 campaign's backers.
 
-Numbers, method and source: [kickstarter_truth.json](kickstarter_truth.json). Run it again: `python scripts/test_kickstarter_truth.py <ks-sample.json>` (build the sample with `--build` from the dump above).
+Numbers, method and source: [kickstarter_truth.json](kickstarter_truth.json).
+
+### Tuned on the 250, scored once on the held-out 250
+
+The same rows, now read as numbers instead of one verdict: Wikipedia views and Hacker News stories, the Qloo matches, the
+leader's popularity, the top audience affinity, cities and price tier, and each category's success rate in the tune half.
+
+A logistic model was fit on the 250 tune rows only, its cut-off set there too, and the held-out 250 were scored once.
+
+| Measure, held-out (n=250) | (a) Open signals, tuned | (b) Open signals + Qloo, tuned |
+|---|---|---|
+| Accuracy | 76.8% | 78.0% |
+| Base rate | 78.8% | 78.8% |
+| p, binomial vs base rate | 0.80 | 0.66 |
+| p, Fisher's exact | 0.056 | 0.14 |
+| Confusion (tp / fp / fn / tn) | 183 / 44 / 14 / 9 | 190 / 48 / 7 / 5 |
+
+- **Result:** tuning lifts both, and Qloo adds 1.2 points over the open signals, but neither beats always guessing "successful". Past funding outcomes are not what a demand check measures.
+
+Numbers, weights and method: [kickstarter_truth_tuned.json](kickstarter_truth_tuned.json).
+
+Run it again: `python scripts/test_kickstarter_truth.py <ks-sample.json>` (build the sample with `--build` from the dump above).
+
+The tuned one: `--collect <ks-sample.json> <features.json>`, then `--tuned <ks-sample.json> <features.json>`.

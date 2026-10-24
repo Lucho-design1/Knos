@@ -18,6 +18,7 @@ from __future__ import annotations
 import datetime
 import gzip
 import json
+import math
 import os
 import random
 import sys
@@ -225,10 +226,145 @@ def main(sample_path: str, limit: int | None, cache: str | None, part: tuple[int
     return 0 if full else 1
 
 
+# ---- the tuned predictor (C6): features of each answer, a logistic model fit on the tune half only, held-out once -------
+TUNED_PUBLIC = os.path.join(os.path.dirname(__file__), "..", "docs", "reference", "kickstarter_truth_tuned.json")
+OPEN_F = ("wiki_log_views", "hn_log_stories", "wiki_counts", "hn_counts", "attention_counted", "open_verdict_open")
+QLOO_F = ("qloo_matches", "qloo_leader_popularity", "qloo_top_affinity", "qloo_audiences_above_neutral", "qloo_cities",
+          "qloo_tier", "qloo_verdict_open")
+TIERS = {"budget": 0, "low": 0, "mid": 1, "premium": 2, "luxury": 3}
+
+
+def _num(v) -> float:
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else float(bool(v))
+
+
+def features(text: str, headers: dict) -> dict | None:
+    """The numbers one row's two answers give (no text kept): open signals, then the demand check with Qloo."""
+    st, o = post("/api/open-signals", {"idea": text}, headers, timeout=300)
+    st2, r = post("/api/check", {"idea": text}, headers, timeout=300)
+    if st not in (200, 400) or st2 not in (200, 400):
+        return None
+    sig = {x.get("source"): x for x in (o.get("signals") or [])} if st == 200 else {}
+    wiki, hn = sig.get("Wikimedia pageviews") or {}, sig.get("Hacker News") or {}
+    f = {"wiki_log_views": math.log1p(float(wiki.get("views_per_day") or 0)), "hn_log_stories": math.log1p(float(hn.get("stories_2_years") or 0)),
+         "wiki_counts": float(bool(wiki.get("counts"))), "hn_counts": float(bool(hn.get("counts"))),
+         "attention_counted": _num(o.get("attention_counted")), "open_verdict_open": float(o.get("verdict") == "OPEN")}
+    if st2 != 200:
+        return {**f, **{k: 0.0 for k in QLOO_F}}
+    aff = [a["affinity"] for a in (r.get("audiences") or []) if isinstance(a.get("affinity"), (int, float))]
+    pops = [m.get("popularity") for m in (r.get("matches") or []) if isinstance(m.get("popularity"), (int, float))]
+    lead = r.get("leader") if isinstance(r.get("leader"), dict) else {}
+    return {**f, "qloo_matches": float(len(r.get("matches") or [])),
+            "qloo_leader_popularity": float(lead.get("popularity") or (max(pops) if pops else 0.0)),
+            "qloo_top_affinity": float(max(aff) if aff else 0.5), "qloo_audiences_above_neutral": float(sum(1 for x in aff if x > 0.55)),
+            "qloo_cities": float(len(r.get("cities") or [])),
+            "qloo_tier": float(TIERS.get(str((r.get("price") or {}).get("tier") or "").lower(), 1)),
+            "qloo_verdict_open": float((r.get("decision") or {}).get("verdict") == "OPEN")}
+
+
+def collect(sample_path: str, cache: str, part: tuple[int, int] | None) -> int:
+    rows = json.loads(open(sample_path, encoding="utf-8").read())["rows"]
+    if part:
+        rows = [r for i, r in enumerate(rows) if i % part[1] == part[0]]
+    got = json.loads(open(cache, encoding="utf-8").read()) if os.path.exists(cache) else {}
+    head = {"X-Knos-Admin": os.environ.get("KNOS_ADMIN_KEY", "")}
+    for n, row in enumerate(rows, 1):
+        if row["id"] in got:
+            continue
+        f = None
+        for _ in range(3):
+            f = features(idea(row), head)
+            if f:
+                break
+            time.sleep(20)
+        if f:
+            got[row["id"]] = f
+            with open(cache, "w", encoding="utf-8") as fh:
+                json.dump(got, fh)
+        print(f"{n:3} {'ok' if f else 'MISS'} {row['id']}", flush=True)
+    return 0 if all(r["id"] in got for r in rows) else 1
+
+
+def _fit(x: list[list[float]], y: list[int], l2: float = 1.0, steps: int = 3000, lr: float = 0.1) -> list[float]:
+    """Logistic regression by gradient descent (standardised inputs, an L2 penalty): the weights, the intercept last."""
+    n, k = len(x), len(x[0])
+    w = [0.0] * (k + 1)
+    for _ in range(steps):
+        g = [0.0] * (k + 1)
+        for xi, yi in zip(x, y):
+            z = w[-1] + sum(a * b for a, b in zip(w, xi))
+            p = 1 / (1 + math.exp(-max(-30.0, min(30.0, z))))
+            for j in range(k):
+                g[j] += (p - yi) * xi[j]
+            g[-1] += p - yi
+        for j in range(k):
+            w[j] -= lr * (g[j] / n + l2 * w[j] / n)
+        w[-1] -= lr * g[-1] / n
+    return w
+
+
+def tuned(sample_path: str, cache: str) -> int:
+    sample = json.loads(open(sample_path, encoding="utf-8").read())
+    rows, feats = sample["rows"], json.loads(open(cache, encoding="utf-8").read())
+    tune = [r for r in rows if r["split"] == "tune" and r["id"] in feats]
+    held = [r for r in rows if r["split"] == "held_out" and r["id"] in feats]
+    base = sum(r["state"] == "successful" for r in tune) / len(tune)
+    cat: dict[str, list[int]] = {}
+    for r in tune:                                   # the category's success rate, from the tune half alone
+        cat.setdefault(r["category"]["main"], []).append(int(r["state"] == "successful"))
+    rate = {c: (sum(v) + 5 * base) / (len(v) + 5) for c, v in cat.items()}
+    out: dict = {}
+    lines = [f"tuned on {len(tune)} tune rows, scored once on {len(held)} held-out rows; tune base rate {base:.3f}"]
+    for name, cols in (("open_signals", OPEN_F), ("open_signals_qloo", OPEN_F + QLOO_F)):
+        def vec(r, cols=cols):
+            return [feats[r["id"]].get(c, 0.0) for c in cols] + [rate.get(r["category"]["main"], base)]
+        xt = [vec(r) for r in tune]
+        mu = [sum(c) / len(c) for c in zip(*xt)]
+        sd = [max(1e-9, (sum((v - m) ** 2 for v in c) / len(c)) ** 0.5) for c, m in zip(zip(*xt), mu)]
+        yt = [int(r["state"] == "successful") for r in tune]
+        w = _fit([[(a - m) / s for a, m, s in zip(v, mu, sd)] for v in xt], yt)
+
+        def prob(r, w=w, vec=vec, mu=mu, sd=sd):
+            z = w[-1] + sum(b * (a - m) / s for a, m, s, b in zip(vec(r), mu, sd, w))
+            return 1 / (1 + math.exp(-max(-30.0, min(30.0, z))))
+        # calibration to the base rate: the threshold that is most accurate on the tune half (nearest 0.5 on a tie)
+        cands = sorted({round(prob(r), 4) for r in tune} | {0.5})
+        thr = max(cands, key=lambda t: (sum((prob(r) >= t) == bool(y) for r, y in zip(tune, yt)), -abs(t - 0.5)))
+        h = score([{"verdict": "OPEN" if prob(r) >= thr else "NOT", "truth": r["state"] == "successful"} for r in held], True)
+        out[name] = {"features": [*cols, "category_tune_rate"], "threshold": thr,
+                     "tune_accuracy": round(sum((prob(r) >= thr) == bool(y) for r, y in zip(tune, yt)) / len(tune), 4),
+                     "weights": {c: round(v, 4) for c, v in zip([*cols, "category_tune_rate", "intercept"], w)}, "held_out": h}
+        lines.append(f"{name}: held-out n={h['rows']} accuracy {h['accuracy']} vs base rate {h['base_rate']}, p binomial "
+                     f"{h['p_binomial_vs_base']}, p Fisher {h['p_fisher']}, tp {h['tp']} fp {h['fp']} fn {h['fn']} tn {h['tn']} "
+                     f"(tune accuracy {out[name]['tune_accuracy']}, threshold {thr})")
+    full = len(tune) == 250 and len(held) == 250
+    nums = "; ".join(f"{k} acc {v['held_out']['accuracy']} vs base {v['held_out']['base_rate']} p_binom {v['held_out']['p_binomial_vs_base']}"
+                     for k, v in out.items())
+    if full:
+        with open(TUNED_PUBLIC, "w", encoding="utf-8") as fh:
+            json.dump({"made": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), "predictors": out,
+                       "method": ("The same 500 rows and split as kickstarter_truth.json. Per row, numbers only: open signals (Wikipedia "
+                                  "views a day and Hacker News stories in 2 years, log1p; whether each counts; whether attention counted; "
+                                  "the open-signals verdict) and, for (b), the demand check with Qloo (matches, the leader's popularity, "
+                                  "the top audience affinity, audiences above 0.55, cities, price tier, the verdict); both get the main "
+                                  "category's success rate in the tune half (smoothed 5 rows toward its base rate). A logistic regression "
+                                  "(L2) is fit on the 250 tune rows, its threshold set to the most accurate one on them; the 250 held-out "
+                                  "rows are scored once."), "source": SOURCE}, fh, indent=1)
+    lines.append(("PASS" if full else "FAIL") + f" test_kickstarter_truth (tuned): {len(held)} held-out rows scored once; {nums}")
+    print("\n".join(lines))
+    with open(os.path.join(os.path.dirname(os.path.abspath(sample_path)), "test_kickstarter_truth.txt"), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+    return 0 if full else 1
+
+
 if __name__ == "__main__":
     a = sys.argv[1:]
     if a and a[0] == "--build":
         sys.exit(build(a[1], a[2]))
+    if a and a[0] == "--collect":
+        sys.exit(collect(a[1], a[2], tuple(int(x) for x in a[a.index("--part") + 1].split("/")) if "--part" in a else None))  # type: ignore[arg-type]
+    if a and a[0] == "--tuned":
+        sys.exit(tuned(a[1], a[2]))
     sys.exit(main(a[0], int(a[a.index("--limit") + 1]) if "--limit" in a else None,
                   a[a.index("--cache") + 1] if "--cache" in a else None,
                   tuple(int(x) for x in a[a.index("--part") + 1].split("/")) if "--part" in a else None))  # type: ignore[arg-type]

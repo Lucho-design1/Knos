@@ -134,6 +134,26 @@ def held_by(what: str, authority: str | None, pda_of: str | None = None) -> None
                          f"time lock {ms['time_lock']} s){'; ' + '; '.join(bad) if bad else ''}")
 
 
+def oidc_key_admin_live() -> bool:
+    """Whether the deployed knos_oidc refuses the guardian key approval (KEYS.md step 4: Approve and Revoke take the
+    upgrade vault). Simulated on the cluster with signature checking off, as the vault's signature by a cross-program
+    call looks to the program: Approve (6) signed by the guardian answers Custom(79) only when the guardian may not
+    approve; the build before step 4 takes the guardian and fails later, on the key account, with another error."""
+    from solders.hash import Hash
+    from solders.instruction import AccountMeta, Instruction
+    from solders.message import Message
+    from solders.transaction import Transaction
+    oidc, guardian = Pubkey.from_string(IDS["knos_oidc"]), Pubkey.from_string(IDS["guardian"])
+    probe = Pubkey.find_program_address([b"knos-admin-safety-probe"], oidc)[0]
+    ix = Instruction(oidc, bytes([6]), [AccountMeta(guardian, True, False), AccountMeta(probe, False, True)])
+    payer = Pubkey.from_string("FRXXJkfpwasEpttH5dvDwkySuJzL5D5swjA52U7TMeRD")        # a funded address pays the simulated fee
+    tx = Transaction.new_unsigned(Message.new_with_blockhash([ix], payer, Hash.default()))
+    got = rpc("simulateTransaction", [base64.b64encode(bytes(tx)).decode(),
+                                      {"encoding": "base64", "sigVerify": False, "replaceRecentBlockhash": True, "commitment": "confirmed"}])
+    err = (got or {}).get("value", {}).get("err") if isinstance(got, dict) else None
+    return isinstance(err, dict) and (err.get("InstructionError") or [None, None])[1] == {"Custom": 79}
+
+
 def program_authority(program: str) -> tuple[bool, str | None]:
     acc = account(program)
     if not acc or acc[0] != LOADER:
@@ -193,7 +213,16 @@ def main() -> int:
         fee_owners = {pinned("programs-v2/knos_pay/src/lib.rs", "FEE_OWNER"), pinned("programs-v2/knos_meter/src/lib.rs", "FEE_OWNER")}
         check("pins agree", guardians == {IDS["guardian"]} and fee_owners == {IDS["fee_owner"]},
               f"GUARDIAN {sorted(map(str, guardians))}, FEE_OWNER {sorted(map(str, fee_owners))} in knos_pay, knos_oidc, knos_meter")
-        held_by("GUARDIAN (knos_pay Pause; knos_oidc approve/revoke key)", IDS["guardian"])
+        if oidc_key_admin_live():
+            # KEYS.md step 4 is deployed: knos_oidc's Approve and Revoke take the upgrade vault (behind its 8-day lock), and
+            # the guardian signs knos_pay's Pause alone, a brake that ends by itself and never moves money: no wait for it
+            ms = STATE["guardian"]
+            ok = ms["threshold"] >= MIN_THRESHOLD and ms["config_authority"] == SYSTEM
+            check("GUARDIAN (knos_pay Pause only; knos_oidc keys are the upgrade vault's)", ok,
+                  f"{IDS['guardian']} = vault 0 of the guardian multisig ({ms['threshold']} of {ms['members']}, time lock {ms['time_lock']} s, "
+                  f"a brake); the deployed knos_oidc names the key admin {IDS['upgrade_authority']}")
+        else:
+            held_by("GUARDIAN (knos_pay Pause; knos_oidc approve/revoke key)", IDS["guardian"])
         held_by("FEE_OWNER (all fees; knos_pay SetPlan; knos_meter plans)", IDS["fee_owner"])
         pay = Pubkey.from_string(IDS["knos_pay"])
         mint = str(Pubkey.find_program_address([b"mint"], pay)[0])
@@ -205,7 +234,9 @@ def main() -> int:
             held_by(f"freeze authority faucet test USDC {mint}", str(Pubkey.from_bytes(d[50:82])) if d[46] == 1 else None, auth_pda)
         credits = credit_mints(o.txs)
         for m, a in sorted(credits.items()):
-            held_by(f"mint authority project credits {m}", a)
+            # the hook's PDA ["mint-authority", mint]: knos_hook alone mints, and only into the escrow its rules name
+            held_by(f"mint authority project credits {m}", a,
+                    pda_of=str(Pubkey.find_program_address([b"mint-authority", bytes(Pubkey.from_string(m))], Pubkey.from_string(HOOK))[0]))
         if not credits:
             print(f"INFO  no project credit mint in the newest {o.txs} knos_hook transactions", flush=True)
         for name, ms in MULTISIGS.items():
