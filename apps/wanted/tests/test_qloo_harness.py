@@ -39,6 +39,9 @@ def test_a_stand_in_harness_answers_questions_in_flight_and_its_stop_is_a_fallba
     script = tmp_path / "fake_mcp.py"
     script.write_text(FAKE, encoding="utf-8")
     h = H.Harness(command=[sys.executable, str(script)])
+    assert h.call("qloo_insights", {"type": "urn:a", "take": 1}) is None   # still starting: REST, and the start goes on
+    h.warm()                                                                  # as the server does at start
+    assert h.ready
     got: dict = {}
     slow = threading.Thread(target=lambda: got.__setitem__("slow", h.call("qloo_insights", {"type": "urn:a", "take": 1})))
     slow.start()

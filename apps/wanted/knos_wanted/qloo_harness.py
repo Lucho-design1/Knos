@@ -22,6 +22,7 @@ import time
 SURFACE = "qloo api mcp (Qloo's harness)"
 # the V8 heap of each Node process the app starts (Qloo's two harness servers): the free instance has 512 MB for all
 NODE_HEAP = "--max-old-space-size=96"
+START_S = 240.0         # the handshake's wait at a start: the free instance loads the harness slowly
 MAX_STARTS = 3          # starts in a row whose handshake did not finish: then this process asks Qloo's REST API only
 CALL_S = 20.0
 # Qloo parameter -> harness argument, per endpoint: a call maps only when every parameter it sends is listed here
@@ -92,10 +93,10 @@ class Harness:
             proc.stdin.flush()
         return None if notify else (sid, slot)
 
-    def _wait(self, sent: tuple[int, list]) -> dict:
+    def _wait(self, sent: tuple[int, list], timeout: float | None = None) -> dict:
         sid, slot = sent
         try:
-            if not slot[0].wait(self.call_s) or slot[1] is None:
+            if not slot[0].wait(timeout or self.call_s) or slot[1] is None:
                 raise TimeoutError("the harness did not answer in time")
             return slot[1]
         finally:
@@ -126,14 +127,26 @@ class Harness:
             env.setdefault("NODE_OPTIONS", NODE_HEAP)                  # each Node process within its share of 512 MB
             # a session of its own: `qloo` is a launcher with a child server, and stopping the launcher alone left the
             # server (115 MB) running, one more at each restart (24 Oct 2026: six of them, 804 MB in all)
-            self.proc = subprocess.Popen(self._cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            self.proc = subprocess.Popen(self._cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                          text=True, encoding="utf-8", errors="replace", bufsize=1, env=env,
                                          start_new_session=os.name != "nt")
             threading.Thread(target=self._read, args=(self.proc,), daemon=True, name="qloo-harness").start()
+            threading.Thread(target=self._errors, args=(self.proc,), daemon=True, name="qloo-harness-stderr").start()
+        t0 = time.monotonic()
+        # its own, longer wait: the harness answers its handshake in 2.4 s on four cores and much later on the free
+        # instance's share of one, where the 20 s of a call made every start time out (24 Oct 2026)
         got = self._wait(self._send("initialize", {"protocolVersion": "2024-11-05", "capabilities": {},
-                                                   "clientInfo": {"name": "knos", "version": "1"}}))
+                                                   "clientInfo": {"name": "knos", "version": "1"}}), START_S)
+        print(f"qloo harness: {' '.join(self._cmd() or [])[-24:]} started in {time.monotonic() - t0:.1f} s", file=sys.stderr, flush=True)
         self.server_info = ((got or {}).get("result") or {}).get("serverInfo") or {}
         self._send("notifications/initialized", notify=True)
+
+    def _errors(self, proc: subprocess.Popen) -> None:
+        """The harness's own error output, in this server's log (its first 40 lines): the reason it did not start is
+        there, not in a timeout."""
+        for n, line in enumerate(proc.stderr or []):
+            if n < 40 and line.strip():
+                print(f"qloo harness stderr: {line.rstrip()[:300]}", file=sys.stderr, flush=True)
 
     def warm(self) -> None:
         """Start the harness ahead of the first check (its start, not Qloo, is the slow part)."""
@@ -146,6 +159,10 @@ class Harness:
     def call(self, tool: str, args: dict) -> dict | None:
         """Qloo's answer body from the harness, or None (not installed, failed in the last minute, or not answered)."""
         if not self.enabled() or (self.failed_at is not None and time.monotonic() - self.failed_at < 60):
+            return None
+        if not self.ready:                            # still starting: this call goes to REST, no check waits on it
+            if not self.starting.locked():
+                threading.Thread(target=self.warm, daemon=True, name="qloo-harness-warm").start()
             return None
         proc = None
         try:

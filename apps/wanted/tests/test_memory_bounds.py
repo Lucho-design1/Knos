@@ -153,3 +153,15 @@ def test_at_most_one_harness_process_and_rest_only_after_three_failed_starts(mon
     with pytest.raises(OSError):
         h._ensure()                                                   # no fourth process
     assert len(made) == qloo_harness.MAX_STARTS and made[-1].killed and not h.enabled()
+
+
+def test_a_call_while_the_harness_starts_goes_to_rest_at_once(monkeypatch):
+    from knos_wanted import qloo_harness
+    h = qloo_harness.Harness(command=["qloo", "api", "mcp"])
+    started = []
+    monkeypatch.setattr(h, "enabled", lambda: True)
+    monkeypatch.setattr(h, "warm", lambda: started.append(1))
+    t0 = time.monotonic()
+    assert h.call("qloo_search", {"query": "x"}) is None and time.monotonic() - t0 < 1
+    time.sleep(0.1)
+    assert started == [1]                             # the start goes on in the background

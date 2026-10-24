@@ -80,6 +80,7 @@
   <details class="small"><summary>The rules</summary><ul id="ww-rules"></ul><p id="ww-rule"></p></details>
   <p class="small"><a href="/qloo-safe-use">How Knos uses Qloo safely</a> · <a href="/">Check your own idea</a></p>
 </main>
+<script type="application/json" id="k-data">null</script>
 <script>
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const WORD = { OPEN: "Open for pre-orders", REFUSE: "Not yet", CANNOT_DECIDE: "Cannot decide" };
@@ -107,8 +108,10 @@ const SAID = {
 const sig = (x, ph) => x[1] === null || x[1] === undefined ? `<li>${esc(x[0])}: no answer</li>`
   : `<li><a href="${esc((LINK[x[0]] || (() => "#"))(x, ph))}" rel="noopener">${(SAID[x[0]] || ((y) => esc(y[0])))(x)}</a>${x[2] ? " (counts)" : ""}</li>`;
 (async () => {
-  const r = await fetch("/api/qloo-diff");
-  const d = await r.json().catch(() => ({}));
+  // the table is in the page (the server writes it into #k-data): no request before the rows are drawn
+  let d = null, r = { ok: true };
+  try { d = JSON.parse(document.getElementById("k-data")?.textContent || "null"); } catch (e) { d = null; }
+  if (!d) { r = await fetch("/api/qloo-diff"); d = await r.json().catch(() => ({})); }
   if (!r.ok || !d.rows) { document.getElementById("ww-sum").textContent = d.error || "Not published yet."; return; }
   const s = d.summary || {};
   document.getElementById("ww-sum").innerHTML = `<b>${esc(s.changed)} of ${esc(s.rows)}</b> ideas changed with Qloo added: the verdict in ${esc(s.verdict)}, the audience in ${esc(s.audience)}, the cities in ${esc(s.cities)}, the price tier in ${esc(s.tier)}. Run ${esc(d.made)}.`;

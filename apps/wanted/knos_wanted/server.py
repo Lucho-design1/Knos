@@ -92,7 +92,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos
               "/api/proof": "The latest real verdict this server reached (shown first on both front doors)",
               "/api/ready/card": "A Ready card, read back from its devnet attestation (?hash= the criteria hash)",
               "/api/solvers": "Proven solvers first: wallets by verified milestones, each read back from devnet",
-              "/fields": "Fields", "/money": "The money", "/companies": "Companies", "/api/trace": "A demand report's Qloo calls, redacted: endpoint, params, ids, excerpt, limit",
+              "/fields": "Fields", "/money": "The money", "/with-without": "With and without Qloo: the 20 ideas, the table in the page", "/companies": "Companies", "/api/trace": "A demand report's Qloo calls, redacted: endpoint, params, ids, excerpt, limit",
               "/api/outside": "The outside counter: crossings and pre-order commitments by people outside Knos, summed from the store",
               "/api/outside/rows": "Every row the outside counter sums (kind, time, crossing id or order address, via)",
               "/api/qloo-diff": "The \"With and without Qloo\" table: 20 ideas, each checked with Qloo and with the key unset", "/sw.js": "The app's service worker (offline shell, background sync)",
@@ -377,8 +377,14 @@ def make_handler(state: State):
                 return self._send(200, inline_css(vectors.filled(page)).encode("utf-8"), "text/html; charset=utf-8")
             if u.path in PAGES:                              # the trace, "With and without Qloo", Qloo safe use, the invite
                 from . import vectors
-                return self._send(200, inline_css(vectors.filled((STATIC / PAGES[u.path]).read_text(encoding="utf-8"))).encode("utf-8"),
-                                  "text/html; charset=utf-8")
+                page = (STATIC / PAGES[u.path]).read_text(encoding="utf-8")
+                if u.path in ("/with-without", "/with-without.html"):     # its table in the page: drawn with no request first
+                    try:
+                        data = json.dumps(valley._load("pages", "qloo_diff"), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+                        page = page.replace(DATA_SLOT, f'<script type="application/json" id="k-data">{data}</script>', 1)
+                    except valley.Refused:
+                        pass                                 # not published yet: the page asks and says so
+                return self._send(200, inline_css(vectors.filled(page)).encode("utf-8"), "text/html; charset=utf-8")
             if u.path == "/api/trace":                       # a report's Qloo calls, redacted (knos_wanted.trace)
                 from . import trace as _trace
                 t = _trace.load(state, (qs.get("hash") or [""])[0])
