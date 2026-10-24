@@ -236,7 +236,7 @@ body { background: var(--paper); line-height: 1.55; }
 h1, h2, h3, h4 { font-weight: 600; letter-spacing: -.02em; }
 h2 { font-size: clamp(var(--s3), 4vw, var(--s4)); line-height: 1.1; letter-spacing: -.03em; margin: 0 0 16px; }
 h3 { font-size: var(--s2); line-height: 1.25; }
-.lede { font-size: var(--s2); line-height: 1.45; max-width: 46ch; }
+.lede { font-size: var(--s2); line-height: 1.45; max-width: 60ch; }
 html { scroll-padding-top: 112px; }
 main { padding: 0 16px 96px; }
 .view > details + h2, .view > .card + h2 { margin-top: 64px; }
@@ -350,6 +350,7 @@ details.k-more[open] > summary::before { rotate: 45deg; }
 details.k-more > summary:hover { color: var(--ink); }
 details.k-more > :not(summary) { max-width: 68ch; }
 details.k-more > .table-wrap, details.k-more > pre { max-width: 100%; }
+details.k-more > .lead-with { max-width: 800px; } .lead-with > li, .story-number { max-width: none; }
 @supports (interpolate-size: allow-keywords) {
   details.k-more { interpolate-size: allow-keywords; }
   details.k-more::details-content { block-size: 0; overflow: clip; transition: block-size var(--dur-2) var(--ease), content-visibility var(--dur-2) allow-discrete; }

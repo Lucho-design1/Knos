@@ -81,8 +81,8 @@ def measurable(target: str) -> bool:
 
 def science(m: dict) -> bool:
     """Lab, field or clinical work: its name, target or verifier names a standard, a registry, a trial or a lab."""
-    v = m.get("verifier") if isinstance(m.get("verifier"), dict) else {}
-    text = " ".join(x for x in (m.get("name"), m.get("target"), *v.values()) if isinstance(x, str))
+    v = m.get("verifier")
+    text = " ".join(x for x in (m.get("name"), m.get("target"), *(v.values() if isinstance(v, dict) else ())) if isinstance(x, str))
     return bool(_SCIENCE.search(text) or _STANDARD.search(text))
 
 

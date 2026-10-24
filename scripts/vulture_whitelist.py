@@ -324,3 +324,5 @@ _.check_verdict, _.check_claims, _.rekor_url
 _.demand_
 # knos.ready.tranches: the app (apps/wanted valley.py, wallets.py) funds a long milestone's first 90-day order with it.
 _.tranches
+# scripts/trim_fonts.py: fontTools reads its subset.Options and TTFont settings as attributes (opts.flavor, opts.layout_features).
+_.flavor, _.layout_features
