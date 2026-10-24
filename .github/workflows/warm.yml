@@ -1,0 +1,51 @@
+name: warm
+
+# Keeps https://knos.onrender.com awake: Render's free instance sleeps after 15 minutes without a request, and its
+# first answer after that takes 20 s or more. One run asks /healthz every 600 s for 6 hours (36 probes) and logs each
+# as `PROBE <UTC time> <HTTP status> <seconds to first byte>`; 30 s before its end it starts the next run, so the chain
+# probes on with no gap. GitHub's timer (hourly) starts a run only when no run of the chain is going, so a stopped
+# chain starts again within the hour. scripts/test_warm.py reads the probes back from the runs' logs.
+#
+# No secret, no checkout, no action from outside: the run's own token may start this workflow and nothing else.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: warm-${{ github.event_name }}
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 370
+    steps:
+      - name: one run of the chain at a time (the timer's run starts only when none is going)
+        id: alone
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          going=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/warm.yml/runs?status=in_progress" --jq "[.workflow_runs[] | select(.id != $GITHUB_RUN_ID)] | length")
+          if [ "${{ github.event_name }}" = schedule ] && [ "$going" != 0 ]; then echo "a run is probing: this one ends"; echo "go=no" >> "$GITHUB_OUTPUT"; else echo "go=yes" >> "$GITHUB_OUTPUT"; fi
+      - name: 36 probes, 600 s apart, then the next run
+        if: steps.alone.outputs.go == 'yes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          for n in $(seq 1 36); do
+            t0=$(date +%s)
+            out=$(curl -s -o /dev/null -w "%{http_code} %{time_starttransfer}" --max-time 120 https://knos.onrender.com/healthz || echo "000 120")
+            echo "PROBE $(date -u +%Y-%m-%dT%H:%M:%SZ) $out"
+            if [ "$n" = 36 ]; then break; fi
+            sleep $(( 600 - ($(date +%s) - t0) ))
+          done
+          gh api -X POST "repos/$GITHUB_REPOSITORY/actions/workflows/warm.yml/dispatches" -f ref=main
+          echo "the next run is started"
