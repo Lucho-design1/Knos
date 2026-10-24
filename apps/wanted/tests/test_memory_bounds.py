@@ -132,3 +132,24 @@ def test_a_slow_answer_keeps_the_harness_running(monkeypatch):
     monkeypatch.setattr(h, "_wait", slow)
     assert h.call("qloo_search", {"query": "x"}) is None
     assert h.proc is p and h.ready and not p.killed and h.failed_at is not None     # REST for a minute, same process
+
+
+def test_at_most_one_harness_process_and_rest_only_after_three_failed_starts(monkeypatch):
+    import pytest
+
+    from knos_wanted import qloo_harness
+    h = qloo_harness.Harness(command=["qloo", "api", "mcp"])
+    made = []
+
+    def start():
+        made.append(_Proc())
+        h.proc = made[-1]
+        raise TimeoutError("the harness did not answer in time")      # the handshake never finishes
+    monkeypatch.setattr(h, "_start", start)
+    for _ in range(qloo_harness.MAX_STARTS):
+        with pytest.raises(TimeoutError):
+            h._ensure()
+    assert len(made) == qloo_harness.MAX_STARTS and all(p.killed for p in made[:-1])   # each stopped before the next
+    with pytest.raises(OSError):
+        h._ensure()                                                   # no fourth process
+    assert len(made) == qloo_harness.MAX_STARTS and made[-1].killed and not h.enabled()

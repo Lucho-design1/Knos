@@ -22,6 +22,7 @@ import time
 SURFACE = "qloo api mcp (Qloo's harness)"
 # the V8 heap of each Node process the app starts (Qloo's two harness servers): the free instance has 512 MB for all
 NODE_HEAP = "--max-old-space-size=96"
+MAX_STARTS = 3          # starts in a row whose handshake did not finish: then this process asks Qloo's REST API only
 CALL_S = 20.0
 # Qloo parameter -> harness argument, per endpoint: a call maps only when every parameter it sends is listed here
 MAP = {
@@ -48,6 +49,7 @@ class Harness:
     def __init__(self, command: list[str] | None = None, env: dict | None = None, call_s: float = CALL_S):
         self.command, self.env, self.call_s = command, env, call_s
         self.server_info: dict = {}                   # the server's answer to initialize (name, version)
+        self.starts = 0                               # starts in a row that did not finish the handshake
         self.proc: subprocess.Popen | None = None
         self.lock, self.n, self.answered = threading.Lock(), 0, 0
         self.failed_at: float | None = None           # never 0: a fresh machine's clock starts near 0
@@ -62,7 +64,7 @@ class Harness:
         return [q, "api", "mcp"] if q else None
 
     def enabled(self) -> bool:
-        return os.environ.get("KNOS_QLOO_HARNESS", "1") != "0" and self._cmd() is not None
+        return os.environ.get("KNOS_QLOO_HARNESS", "1") != "0" and self._cmd() is not None and self.starts < MAX_STARTS
 
     def _read(self, proc: subprocess.Popen) -> None:
         for line in proc.stdout:                       # each answer to the request that carries its id
@@ -105,9 +107,16 @@ class Harness:
         with self.starting:
             if self.ready and self.proc is not None and self.proc.poll() is None:
                 return
+            # one harness process at most: one that never finished its handshake is stopped before the next starts (each
+            # start had left one behind, 120 MB each, while the harness answered none of 24 Oct 2026's calls)
+            self.stop(self.proc)
+            if self.starts >= MAX_STARTS:
+                raise OSError(f"the harness did not start {MAX_STARTS} times: REST only from now on")
+            self.starts += 1
             self.ready = False
             self._start()
             self.ready = True
+            self.starts = 0
 
     def _start(self) -> None:
         with self.lock:
