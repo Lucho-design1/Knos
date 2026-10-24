@@ -12,7 +12,7 @@ Written by `scripts/solana_coverage.py`; `--check` fails CI when a row's file no
 | Capability | Group | Status | Code | App | Front door | /mcp | API | CLI | Source |
 |---|---|---|---|---|---|---|---|---|---|
 | `getAccountInfo` | RPC HTTP | USED | `apps/wanted/knos_wanted/chainx.py` | — | — | — | `chainx.py` | `bundle.py`; `chain.py`; `mainnet_check.py`; `observe.py`; `receipt.py`; `reproduce.py` | https://solana.com/docs/rpc/http/getaccountinfo |
-| `getBalance` | RPC HTTP | USED | `web/app.js` | — | the site's wallet | — | `escrow.py` | `devnet.py` | https://solana.com/docs/rpc/http/getbalance |
+| `getBalance` | RPC HTTP | USED | `web/app.js` | — | the site's wallet | — | `escrow.py`; `preorder.py` | `devnet.py` | https://solana.com/docs/rpc/http/getbalance |
 | `getBlock` | RPC HTTP | USED | `src/knos/bundle.py` | — | — | — | — | `bundle.py` | https://solana.com/docs/rpc/http/getblock |
 | `getBlockCommitment` | RPC HTTP | USED | `web/netfacts.js` | — | #network: Network facts panel / finality clock | — | — | — | https://solana.com/docs/rpc/http/getblockcommitment |
 | `getBlockHeight` | RPC HTTP | USED | `web/netfacts.js` | — | #network: Network facts panel / finality clock | — | — | `faucet.py`; `blockhash.py` | https://solana.com/docs/rpc/http/getblockheight |

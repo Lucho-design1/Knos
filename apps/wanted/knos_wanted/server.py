@@ -181,6 +181,8 @@ def _money_totals(fee: dict) -> dict | None:
     _totals_cache.update(at=time.time(), v=out)
     return out
 
+
+REPORTS_IN_MEMORY = 100
 class State:
     def __init__(self, q: Qloo | None = None, rest: Client | None = None):
         self.q = q or Qloo()
@@ -211,7 +213,9 @@ class State:
     def keep(self, r: dict) -> None:
         with self.lock:
             self.reports[r["hash"]] = r
-            while len(self.reports) > 500:
+            # the newest in memory, the rest read back from disk (report()): 500 full reports took about a fifth of the
+            # free instance's 512 MB and it was killed for memory under a day of checks (24 Oct 2026)
+            while len(self.reports) > REPORTS_IN_MEMORY:
                 self.reports.popitem(last=False)
 
     def report(self, h) -> dict | None:
