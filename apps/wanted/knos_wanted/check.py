@@ -506,6 +506,11 @@ def _who_wants(run: _Run, tags: list[dict], ents: list[dict], kind: str = "urn:e
 ALSO_LOVE = (("music", "urn:entity:artist"), ("film", "urn:entity:movie"))
 
 
+def _flat(items: list[dict]) -> bool:
+    """Every answer at one affinity: Qloo's fallback for a signal it could not use, not this taste's."""
+    return len(items) > 1 and len({x.get("affinity") for x in items}) == 1
+
+
 def _also_love(run: _Run, ents: list[str], via: str, take: int = 4, key: str = "signal.interests.entities") -> dict | None:
     """What the people of this taste also love, in two other Qloo domains (artists and films, /v2/insights with
     signal.interests.entities, or .tags when no product carries the taste): shown only, the verdict does not read it."""
@@ -518,7 +523,7 @@ def _also_love(run: _Run, ents: list[str], via: str, take: int = 4, key: str = "
         body, n = run.get("/v2/insights", {"filter.type": t, "take": take, **sig}, f"also loved: {domain} ({t}) of the people of this taste", broaden=False)
         items = [{"name": e.get("name"), "affinity": (e.get("query") or {}).get("affinity")}
                  for e in (((body or {}).get("results") or {}).get("entities") or [])[:take] if e.get("name")]
-        if items:
+        if items and not _flat(items):
             out.append({"domain": domain, "items": items, "src": n})
     return {"via": via, "domains": out} if out else None
 
@@ -552,6 +557,8 @@ def _launch(run: _Run, ents: list[str], place: str | None, key: str = "signal.in
     where = [{"lat": (h.get("location") or {}).get("latitude"), "lon": (h.get("location") or {}).get("longitude"),
               "affinity": (h.get("query") or {}).get("affinity"), "src": s7}
              for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:5]]
+    if _flat(cities):
+        cities = []
     return {"cities": cities, "where": where, "via": "the top products of its taste tags"} if cities or where else None
 
 
