@@ -26,6 +26,7 @@ import json
 import math
 import re
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 from .qloo_rest import LIVE_LABEL, Client, QlooError
@@ -217,8 +218,9 @@ class _Run:
         def one(path, p):
             try:
                 self.c.get(path, p)
-            except Exception:  # noqa: BLE001 - asked again, in order, by get()
-                pass
+            except Exception as e:  # noqa: BLE001 - get() goes straight to its lighter question
+                return e
+            return None
         ex = ThreadPoolExecutor(max_workers=len(calls) or 1)
         for path, params in calls:                         # sent at once; get() waits for its own, never asks twice
             p = self.guide(params)[0] if path == "/v2/insights" else params
@@ -235,15 +237,18 @@ class _Run:
     def get(self, path: str, params: dict, what: str, broaden: bool = True, wait_s: float | None = None,
             _broadened: bool = False) -> tuple[dict | None, int | None]:
         """One numbered call. A prefetched question is waited for (up to `wait_s` seconds when given: a call that decides
-        nothing need not hold up the verdict), then read from the cache."""
+        nothing need not hold up the verdict), then read from the cache. A prefetched question that failed is not asked
+        again: its lighter form goes next. Each call records how long it held the report up (ms), waits included."""
+        t0 = time.perf_counter()
         params, dropped = self.guide(params) if path == "/v2/insights" else (params, [])
         fut = self._inflight.pop(_key(path, params), None)
+        failed = None
         if fut is not None:
             try:
-                fut.result(timeout=wait_s)
+                failed = fut.result(timeout=wait_s)
             except Exception:  # noqa: BLE001 - concurrent.futures.TimeoutError: not answered within wait_s
                 if wait_s is not None and not fut.done():
-                    self._add({"call": f"GET {path}", "what": what, "params": params,
+                    self._add({"call": f"GET {path}", "what": what, "params": params, "ms": _ms(t0),
                                "error": f"Qloo had not answered within {wait_s:g} s; left out of this report (it decides nothing)"})
                     return None, None
         if dropped:
@@ -255,13 +260,16 @@ class _Run:
             tries.append(light)
         err = None
         for p in tries:
+            if p is params and failed is not None:
+                err = failed
+                continue
             try:
                 got = self.c.get(path, p)
             except QlooError as e:
                 err = e
                 continue
             rec = self._add({"call": got["source"]["call"], "what": what, "params": got["source"]["params"],
-                             "cached": got["source"]["cached"], "at": got["source"]["at"], "body_digest": _digest(got["body"]),
+                             "cached": got["source"]["cached"], "at": got["source"]["at"], "ms": _ms(t0), "body_digest": _digest(got["body"]),
                              **({"surface": got["source"]["surface"]} if got["source"].get("surface") else {}),
                              **({"note": "retried without location/tags after Qloo refused them"} if p is not params else {})})
             narrow = [k for k in p if k.startswith(self.NARROWING)]
@@ -275,9 +283,14 @@ class _Run:
         short = ("Qloo refused this server's API key (HTTP %s): no Qloo data was used" % code if code in ("401", "403") else
                  "Qloo's rate limit for this key was reached (HTTP 429, after one retry): try again in a minute" if code == "429" else
                  f"Qloo could not answer this part (HTTP {code})" if code else
-                 "Qloo's monthly call budget is spent" if "budget" in str(err) else "Qloo could not be reached")
-        self._add({"call": f"GET {path}", "what": what, "params": params, "error": short})
+                 "Qloo's monthly call budget is spent" if "budget" in str(err) else
+                 "Qloo did not answer in time" if "did not answer" in str(err) else "Qloo could not be reached")
+        self._add({"call": f"GET {path}", "what": what, "params": params, "ms": _ms(t0), "error": short})
         return None, None
+
+
+def _ms(t0: float) -> int:
+    return round((time.perf_counter() - t0) * 1000)
 
 
 def _digest(body) -> str:
@@ -552,7 +565,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     q10 = {"filter.type": "urn:entity:destination", "take": 8, "feature.explainability": "true",
            **({"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}), **ents_only}
     hotel = {"filter.hotel_class.min": "3"} if {"hotel", "hotels", "resort", "stay"} & set(words) else {}
-    q6 = {"filter.type": "urn:entity:place", "filter.location.query": loc, "take": 5, "filter.properties.business_rating.min": "3.5",
+    q6 = {"filter.type": "urn:entity:place", **({"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}), "take": 5, "filter.properties.business_rating.min": "3.5",
           "filter.external.exists": "tripadvisor", **hotel, **ents_only,
           # the idea's taste tags, any of them (union), so a place matches on one: broadened away when they empty it
           **({"filter.tags": ",".join(t["id"] for t in ev["tags"][:3]), "operator.filter.tags": "union"} if ev["tags"] else {})}
@@ -582,9 +595,11 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
 
     def places():
         body, s6 = run.get("/v2/insights", q6, f"where: named places in {loc} where this taste clusters (rated 3.5+, on Tripadvisor)")
-        for r in (((body or {}).get("results") or {}).get("entities") or [])[:5]:
+        for r in (((body or {}).get("results") or {}).get("entities") or []):
             p = r.get("properties") or {}
             geo = p.get("geocode") or {}
+            if len(ev["places"]) >= 5 or (cc and geo.get("country_code") and geo["country_code"] != cc):
+                continue                       # named places stay inside the chosen market, as the launch cities do
             area = ", ".join(str(x) for x in (geo.get("name"), geo.get("admin2_region") or geo.get("admin1_region")) if x)
             ev["places"].append({"name": r.get("name"), "area": area or str(p.get("address") or "")[:80], "price_level": p.get("price_level"),
                                  "affinity": (r.get("query") or {}).get("affinity"), "src": s6})

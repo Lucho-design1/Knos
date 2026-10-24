@@ -31,6 +31,7 @@ from . import qloo_harness
 
 TTL_S = 7 * 86_400
 ERROR_TTL_S = 86_400          # a 4xx answer (Qloo refused the question) is remembered for a day
+SLOW_TTL_S = 3_600           # a question Qloo did not answer within TIMEOUT_S is not asked again for an hour
 RATE_PER_S = 4.0
 DEFAULT_BUDGET = 9_000
 TIMEOUT_S = 45.0
@@ -151,15 +152,15 @@ class Client:
             doc = json.loads(f.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return None
-        ttl = ERROR_TTL_S if doc.get("error") else TTL_S
+        ttl = doc.get("ttl") or (ERROR_TTL_S if doc.get("error") else TTL_S)
         return doc if self.clock() - doc.get("t", 0) <= ttl else None
 
-    def _store(self, k: str, body, error: str | None = None, surface: str | None = None) -> None:
+    def _store(self, k: str, body, error: str | None = None, surface: str | None = None, ttl: int | None = None) -> None:
         d = self.folder / k[:2]
         d.mkdir(parents=True, exist_ok=True)
         tmp = d / f"{k}.tmp"
         tmp.write_text(json.dumps({"t": self.clock(), "body": body, **({"error": error} if error else {}),
-                                   **({"surface": surface} if surface else {})}), encoding="utf-8")
+                                   **({"surface": surface} if surface else {}), **({"ttl": ttl} if ttl else {})}), encoding="utf-8")
         os.replace(tmp, d / f"{k}.qloo")
 
     def get(self, path: str, params: dict | None = None) -> dict:
@@ -216,6 +217,13 @@ class Client:
                     self._store(k, None, error=msg)  # a refused question is not asked again for a day
                 raise QlooError(msg) from None
             except (urllib.error.URLError, TimeoutError, OSError, ValueError) as e:
+                if isinstance(e, TimeoutError) or isinstance(getattr(e, "reason", None), TimeoutError):
+                    # no answer within TIMEOUT_S: asking again at once only doubles the wait (24 Oct 2026: 2 x 2 x 45 s
+                    # on one places question made a check take 183 s); the caller's lighter question goes next
+                    self.live_calls += 1
+                    msg = f"{method} {path}: Qloo did not answer within {TIMEOUT_S:g} s"
+                    self._store(k, None, error=msg, ttl=SLOW_TTL_S)
+                    raise QlooError(msg) from None
                 if attempt == 0:
                     time.sleep(1.0)
                     continue

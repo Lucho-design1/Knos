@@ -274,3 +274,35 @@ def test_a_refused_optional_parameter_is_dropped_but_a_heatmap_keeps_its_place()
     assert n == 1 and asked[-1] == {"filter.type": "urn:heatmap", "filter.location.query": "Lagos"}
     body, n = run.get("/v2/insights", {"filter.type": "urn:entity:place", "filter.tags": "urn:tag:a", "operator.filter.tags": "union"}, "places")
     assert n == 2 and "filter.tags" not in asked[-1]
+
+
+def test_a_prefetched_question_that_failed_is_not_asked_again_and_each_call_has_its_ms():
+    asked = []
+
+    class C:
+        def get(self, path, params):
+            asked.append(dict(params))
+            if "filter.tags" in params:
+                raise QlooError(f"GET {path}: Qloo did not answer within 45 s")
+            return {"body": {"results": {"entities": [{"name": "x"}]}}, "source": {"call": "GET " + path, "params": params, "cached": False, "at": "t"}}
+    run = check._Run(C())
+    q = {"filter.type": "urn:entity:place", "filter.tags": "urn:tag:a", "take": 5}
+    run.prefetch([("/v2/insights", q)])
+    body, n = run.get("/v2/insights", q, "places")
+    assert n == 1 and len(asked) == 2 and "filter.tags" not in asked[-1]     # the failed one once, then its lighter form
+    assert isinstance(run.calls[0]["ms"], int)
+
+
+def test_named_places_are_asked_by_country_and_stay_in_the_market():
+    class InMarket(FakeQloo):
+        def body(self, path, p):
+            if p.get("filter.type") == "urn:entity:place":
+                return {"results": {"entities": [
+                    {"name": "Rome Guest House (synthetic)", "properties": {"geocode": {"name": "Roma", "country_code": "IT"}}, "query": {"affinity": 0.95}},
+                    {"name": "Austin Cafe (synthetic)", "properties": {"geocode": {"name": "Austin", "country_code": "US"}}, "query": {"affinity": 0.9}}]}}
+            return super().body(path, p)
+    fake = InMarket()
+    r = check.demand_check(IDEA, "United States", None, client=fake, today=TODAY)
+    asks = [p for path, p in fake.seen if p.get("filter.type") == "urn:entity:place"]
+    assert asks and all(p.get("filter.geocode.country_code") == "US" and "filter.location.query" not in p for p in asks)
+    assert [x["name"] for x in r["places"]] == ["Austin Cafe (synthetic)"]

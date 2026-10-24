@@ -106,3 +106,22 @@ def test_a_refused_question_is_cached_for_a_day_and_its_text_not_passed_on(tmp_p
     with pytest.raises(QlooError):
         c.get("/v2/insights", {"filter.type": "urn:audience", "signal.interests.tags": "urn:tag:bad"})
     assert op.n == 2
+
+
+def test_a_question_qloo_does_not_answer_in_time_is_asked_once_and_remembered_for_an_hour(tmp_path):
+    asked = []
+
+    def slow(req, timeout=None):
+        asked.append(req)
+        raise TimeoutError("The read operation timed out")
+    clk = Clock()
+    c = client(tmp_path, slow, clk)
+    for _ in range(2):
+        with pytest.raises(QlooError) as e:
+            c.get("/v2/insights", {"filter.type": "urn:entity:place", "filter.location.query": "United States"})
+        assert "did not answer within" in str(e.value)
+    assert len(asked) == 1                                   # no second 45 s try, and not asked again within the hour
+    clk.t += qloo_rest.SLOW_TTL_S + 1
+    with pytest.raises(QlooError):
+        c.get("/v2/insights", {"filter.type": "urn:entity:place", "filter.location.query": "United States"})
+    assert len(asked) == 2
