@@ -851,8 +851,28 @@ def annotate(rep: dict) -> None:
         c["out"] = c.get("error") or c.get("body_digest") or ""
 
 
+CHECKS_AT_ONCE = 3               # demand checks run at the same time; the next waits (each holds its Qloo answers)
+_checks = threading.BoundedSemaphore(CHECKS_AT_ONCE)
+running = [0]
+_running_lock = threading.Lock()
+
+
 def demand_check(idea: str, place: str | None = None, leader: str | None = None, client: Client | None = None,
                  today: dt.date | None = None, exclude: list[str] | None = None, on_call=None, options: dict | None = None) -> dict:
+    """One demand check (_demand_check), CHECKS_AT_ONCE at a time: six at once ran the free instance (512 MB) out of
+    memory in champion runs of 24 Oct 2026; the seventh visitor waits seconds instead of every visitor getting a 502."""
+    with _checks:
+        with _running_lock:
+            running[0] += 1
+        try:
+            return _demand_check(idea, place, leader, client, today, exclude, on_call, options)
+        finally:
+            with _running_lock:
+                running[0] -= 1
+
+
+def _demand_check(idea: str, place: str | None = None, leader: str | None = None, client: Client | None = None,
+                  today: dt.date | None = None, exclude: list[str] | None = None, on_call=None, options: dict | None = None) -> dict:
     from knos import qloo_families
 
     from . import families

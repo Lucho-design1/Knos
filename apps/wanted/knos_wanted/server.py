@@ -104,7 +104,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
               "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funders' held money",
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/mcp/store": "The app-store MCP profile: read-only tools, no sign-in, a daily call cap (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
-              "/": "The app", "/api/status": "Server status", "/api/products": "Listed products", "/api/quote": "Fee quote",
+              "/": "The app", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/products": "Listed products", "/api/quote": "Fee quote",
               "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
               "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
               "/api/receivables": "Receivables a lender can finance (passkey wallets: advance rate, fee, due date)",
@@ -188,6 +188,21 @@ def _sum_totals(fee: dict) -> None:
         _totals_cache.update(at=time.time())
     finally:
         _totals_cache["busy"] = False
+
+
+def memory_now(st) -> dict:
+    """VmRSS and VmHWM (the peak since start) from /proc/self/status, in MB, the threads, the demand checks running and
+    the reports held: what a load test reads before and after (Linux only; elsewhere the two sizes are None)."""
+    mb = {}
+    try:
+        for line in Path("/proc/self/status").read_text(encoding="utf-8").splitlines():
+            k, _, v = line.partition(":")
+            if k in ("VmRSS", "VmHWM"):
+                mb[k] = round(int(v.split()[0]) / 1024, 1)
+    except OSError:
+        pass
+    return {"rss_mb": mb.get("VmRSS"), "peak_mb": mb.get("VmHWM"), "threads": threading.active_count(),
+            "checks_running": check.running[0], "checks_at_once": check.CHECKS_AT_ONCE, "reports_in_memory": len(st.reports)}
 
 
 REPORTS_IN_MEMORY = 100
@@ -487,6 +502,10 @@ def make_handler(state: State):
                 return self._send(404, {"error": "not found"})
             if u.path == "/api/status":
                 return self._send(200, self.status())
+            if u.path == "/api/ops/memory":                  # the operator's: this process's memory now and at its peak
+                if not product_routes._admin(self.headers.get("X-Knos-Admin")):
+                    return self._send(403, {"error": "the operator's X-Knos-Admin key reads this"})
+                return self._send(200, memory_now(state))
             if u.path == "/api/products":
                 return self._send(200, {"products": catalog.products(), "aggregate": AGGREGATE})
             if u.path == "/api/quote":

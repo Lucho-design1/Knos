@@ -36,6 +36,7 @@ RATE_PER_S = 4.0
 DEFAULT_BUDGET = 9_000
 TIMEOUT_S = 45.0
 MAX_BYTES = 4_000_000
+HEATMAP_KEEP = 50          # a heatmap answer's points kept: the app reads at most 8, Qloo sends thousands (6,999 seen)
 LIVE_LABEL = "LIVE Qloo data (Qloo REST API, read for this report, cached privately on the server for up to 7 days)"
 
 
@@ -49,6 +50,16 @@ class NoKey(QlooError):
 
 class BudgetExceeded(QlooError):
     pass
+
+
+def trim(body):
+    """A heatmap answer's first HEATMAP_KEEP points, with how many Qloo sent (heatmap_total): a 4 MB answer parsed on
+    every read held tens of MB per check, and checks at once ran the free instance out of memory (24 Oct 2026)."""
+    res = body.get("results") if isinstance(body, dict) else None
+    pts = res.get("heatmap") if isinstance(res, dict) else None
+    if isinstance(pts, list) and len(pts) > HEATMAP_KEEP:
+        return {**body, "results": {**res, "heatmap": pts[:HEATMAP_KEEP], "heatmap_total": len(pts)}}
+    return body
 
 
 class _Bucket:
@@ -173,7 +184,7 @@ class Client:
         if hit is not None and hit.get("error"):
             raise QlooError(hit["error"] + " (cached refusal)")
         if hit is not None:
-            return {"body": hit["body"], "source": {**src, "cached": True, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(hit["t"])),
+            return {"body": trim(hit["body"]), "source": {**src, "cached": True, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(hit["t"])),
                                                      **({"surface": hit["surface"]} if hit.get("surface") else {})}}
         ok, why = self.ready()
         if not ok:
@@ -183,6 +194,7 @@ class Client:
         m = qloo_harness.mapped(path, params) if self.harness and method == "GET" else None
         hb = qloo_harness.harness().call(*m) if m else None
         if hb is not None:                                  # Qloo's harness asked exactly this question (kit API_ACCESS)
+            hb = trim(hb)
             self.live_calls += 1
             self._store(k, hb, surface=qloo_harness.SURFACE)
             return {"body": hb, "source": {**src, "surface": qloo_harness.SURFACE, "cached": False,
@@ -229,5 +241,6 @@ class Client:
                     continue
                 raise QlooError(f"{method} {path}: {type(e).__name__}") from None
         self.live_calls += 1
+        body = trim(body)
         self._store(k, body, surface="REST API")
         return {"body": body, "source": {**src, "cached": False, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(self.clock()))}}
