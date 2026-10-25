@@ -102,3 +102,25 @@ thing from where shops of that kind are dense.
 - **Knos with Qloo:** the demand check's heatmap metros. 18 of 30 titles brought metros; the check refused "Museums" for being under 8 characters, which scores 0.
 
 Numbers and every metro named: [where_truth.json](where_truth.json). Run it again: `python scripts/test_where_truth.py` (its four steps are in the file).
+
+## Taste: which films a film's fans also love
+
+**In plain words.** For 30 films, each side named the 5 films that the film's fans most likely also love. The truth
+comes from MovieLens 32M: the films those fans rated highly far more often than everyone else did. This is the
+question behind "they also love" in every Knos result. Knos with Qloo scored a little higher than Claude alone, and
+the interval spans zero, so this test cannot tell them apart.
+
+| Measure (n=30 films) | Value |
+|---|---|
+| Overlap at 5 with the MovieLens top 10, Claude alone | 0.307 |
+| Overlap at 5 with the MovieLens top 10, Knos with Qloo | 0.320 |
+| Difference, Knos minus Claude | +0.013 |
+| 95% interval, 2,000 paired bootstrap resamples (seed 3) | [-0.060, +0.087] |
+
+- **Plan:** [taste_truth_plan.md](taste_truth_plan.md), sha256 `b65eb3d437acbec06eaea9c4064c81acada2c2aa3e73b55ea678128bd4438c01`, committed before either side predicted.
+- **Data:** F. Maxwell Harper and Joseph A. Konstan (2015), "The MovieLens Datasets: History and Context", ACM Transactions on Interactive Intelligent Systems 5(4). 32,000,204 ratings by 200,948 people; the data is not in this repository.
+- **Truth:** fans rated the film 4.5 or more; a candidate film needs 5,000 ratings and 300 fans who rated it 4.5 or more; the top 10 by lift over all users.
+- **Claude alone:** 2.1.267 (Claude Code), model claude-opus-5[1m], web tools denied. 15 of its 150 lines matched no MovieLens title under the plan's mapping, so 11 films had fewer than 5 scored.
+- **Knos with Qloo:** Knos's own Qloo client, search then insights for films; all 30 films resolved.
+
+Numbers and every film named: [taste_truth.json](taste_truth.json).
