@@ -566,7 +566,8 @@ def _informative(rows: list[dict]) -> list[dict]:
     return [a for a in rows if isinstance(a.get("affinity"), (int, float)) and a["affinity"] > RULES["informative_affinity"]]
 
 
-MAP_WAIT_S = 2.0          # how long the verdict waits, at the end, for Qloo's heatmap (the slowest answer; it decides nothing)
+MAP_WAIT_S = 8.0          # how long the check waits, at the end, for Qloo's heatmap (the slowest answer): the verdict reads
+                          # none of it, but the launch city and the pre-order target do (metros.py); at 2 s a cold cache lost it
 
 
 def _key(path: str, params: dict) -> str:
@@ -740,7 +741,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         for f in [ex.submit(x) for x in (places, persona, cities, ladder, recommended, trend, versus)]:
             f.result()
     ev["price"] = price_tier(every, [p_.get("price_level") for p_ in ev["places"]])
-    # the map points decide nothing (check.decide reads no `where`) and Qloo's heatmap is its slowest answer: read last,
+    # the verdict reads no `where` (the brief's launch terms do) and Qloo's heatmap is its slowest answer: read last,
     # so its wait overlaps everything above (it was asked at the start, with the other independent questions)
     body, s7 = run.get("/v2/insights", q7, f"where: map points in {loc}", wait_s=MAP_WAIT_S)
     for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:5]:

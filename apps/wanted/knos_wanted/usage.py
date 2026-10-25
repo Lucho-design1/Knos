@@ -12,7 +12,7 @@ from pathlib import Path
 KEY = "usage-counter"
 _lock = threading.Lock()
 _chain: dict = {"at": 0.0, "n": None}
-CHAIN_S = 60
+CHAIN_S = 15                          # how long a devnet count is reused (a count takes about 8 s)
 
 
 def _doc() -> dict:
