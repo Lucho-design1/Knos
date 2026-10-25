@@ -41,6 +41,12 @@ Add Knos to Claude Code with one command:
 claude mcp add --transport http knos https://knos.onrender.com/mcp
 ```
 
+An agent with a capped key from Knos puts this in `.mcp.json` and the key in `KNOS_AGENT_KEY`:
+
+```json
+{"mcpServers":{"knos":{"type":"http","url":"https://knos.onrender.com/mcp","headers":{"Authorization":"Bearer ${KNOS_AGENT_KEY}"}}}}
+```
+
 **Open call:** have research waiting for a market? [Cross it on Knos](https://knos.onrender.com/invite): the page counts every crossing and pre-order by people outside Knos, live.
 
 ## One use: paying AI agents for verified pull requests
