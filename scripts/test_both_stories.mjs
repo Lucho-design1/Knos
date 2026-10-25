@@ -33,7 +33,7 @@ try {
     const page = await (await browser.newContext({ viewport: { width: w, height: h } })).newPage();
     await page.goto(FRONT, { waitUntil: "load" });
     await page.waitForTimeout(1500);
-    const g = await page.evaluate(() => {
+    const g0 = await page.evaluate(() => {
       const H = innerHeight, step = document.getElementById("paid-on-proof"), b = step.getBoundingClientRect(), seen = [];
       const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
       for (let n = walk.nextNode(); n; n = walk.nextNode()) {
@@ -45,6 +45,10 @@ try {
         oidc: step.querySelector("#k-oidc a")?.href || "", paid: step.querySelector("#k-paid a")?.href || "",
         check: !!step.querySelector('a[href*="#check-a-pull-request"]') };
     });
+    // the step's text as a reader reads it: below the first screen it is drawn when scrolled to
+    await page.locator("#paid-on-proof").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1200);
+    const g = { ...g0, text: await page.evaluate(() => document.body.innerText) };
     ok(g.bottom <= 2 * g.H, `${w}px: Paid on proof fully within 2 screen heights (${Math.round(g.top)} to ${Math.round(g.bottom)} of ${2 * g.H})`);
     const bad = [...new Set((g.first.match(BANNED) || []).map((x) => x.toLowerCase()))];
     ok(bad.length === 0, `${w}px: none of the words for further down on the first screen`, bad);
@@ -62,8 +66,8 @@ try {
       ok(head && head[0] === "H2", "the checker opens, its heading an h2", head);
       await page.fill("#fd-in", PR);
       await page.click('#front-door button[data-fd="run"]');
-      const done = await page.waitForSelector('#front-result .fd-line:not([data-state="pending"])', { timeout: 120000 }).then(() => true).catch(() => false);
-      const res = done ? await page.evaluate(() => [...document.querySelectorAll("#front-result .fd-line")].map((li) => li.dataset.state + ": " + li.textContent.replace(/\s+/g, " ").trim().slice(0, 90))) : [];
+      const done = await page.waitForSelector("#check-verdict", { state: "visible", timeout: 120000 }).then(() => true).catch(() => false);
+      const res = done ? await page.evaluate(() => { const v = document.getElementById("check-verdict"); return [v.dataset.verdict, v.textContent.trim().slice(0, 120)]; }) : [];
       ok(done, `the public pull request is checked (${PR})`, res);
     }
     await page.context().close();

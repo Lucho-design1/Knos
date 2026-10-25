@@ -181,7 +181,9 @@ ${src(h, price.src)}</section>
   const draw = (r) => {
     if (!r || slot.dataset.ms || slot.querySelector(".k-status")) return;
     const when = String(r.checked_at || "").replace("T", " ").replace(/:\d\dZ$/, " UTC");
-    slot.innerHTML = card(r, `Real check, ${when}`);
+    // the last real check, folded to one line: the proof is on the first screen, the steps follow right under it
+    const d = r.decision || {}, w = (WORD[d.verdict] || [d.verdict || ""])[0];
+    slot.innerHTML = `<details class="k-more k-past"><summary>Real check, ${esc(when)}: ${esc(r.idea || "")}, ${esc(w)}</summary>${card(r, `Real check, ${when}`)}</details>`;
     slot.last = r;
     slot.dataset.past = "1";
     try { performance.mark("knos-proof-shown"); } catch { /* old browsers */ }   // when the past result was drawn
