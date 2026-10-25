@@ -81,3 +81,24 @@ The tuned one: `--collect <ks-sample.json> <features.json>`, then `--tuned <ks-s
 - **Scores:** the two tuned models above, fit on the earlier 250 tune rows only; none of these 300 was used to fit them.
 
 Numbers: [qloo_lift_ranked.json](qloo_lift_ranked.json). Run it again: `python scripts/test_qloo_lift_ranked.py --score <ks-sample.json> <ks-features.json> <lift-sample.json> <lift-features.json>`.
+
+## Where demand is: 30 kinds of business against the Census
+
+**In plain words.** For 30 kinds of local business, each side named the 5 large US metros where that business is most
+common per person. Census County Business Patterns 2023 gives the true top 10. Claude alone did better than Knos with
+Qloo, and the interval stays below zero. A heatmap of taste says where fans of a product cluster, which is a different
+thing from where shops of that kind are dense.
+
+| Measure (n=30 business types) | Value |
+|---|---|
+| Overlap at 5 with the Census top 10, Claude alone | 0.407 |
+| Overlap at 5 with the Census top 10, Knos with Qloo | 0.193 |
+| Difference, Knos minus Claude | -0.213 |
+| 95% interval, 2,000 paired bootstrap resamples (seed 1) | [-0.360, -0.060] |
+
+- **Plan:** [where_truth_plan.md](where_truth_plan.md), sha256 `86b76b6640ef74759d733c5cf12f4b2b126b59385f140b5423d18908cf4da0c0`, committed before either side predicted.
+- **Truth:** establishments per 100,000 people (cbp23msa over Vintage 2023 population), among the 110 metros of at least 500,000 people.
+- **Claude alone:** 2.1.267 (Claude Code), model claude-opus-5[1m]. It began 18 of its 30 answers with a sentence about data it could not fetch, and 4 named no metro; those lines count as misses.
+- **Knos with Qloo:** the demand check's heatmap metros. 18 of 30 titles brought metros; the check refused "Museums" for being under 8 characters, which scores 0.
+
+Numbers and every metro named: [where_truth.json](where_truth.json). Run it again: `python scripts/test_where_truth.py` (its four steps are in the file).
