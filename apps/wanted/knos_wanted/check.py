@@ -556,16 +556,26 @@ def _launch(run: _Run, ents: list[str], place: str | None, key: str = "signal.in
     body, s7 = run.get("/v2/insights", q7, f"where: map points in {loc}, from the top products of the idea's taste tags", wait_s=MAP_WAIT_S)
     where = [{"lat": (h.get("location") or {}).get("latitude"), "lon": (h.get("location") or {}).get("longitude"),
               "affinity": (h.get("query") or {}).get("affinity"), "src": s7}
-             for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:5]]
+             for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:HEAT_CELLS]]
     if _flat(cities):
         cities = []
     return {"cities": cities, "where": where, "via": "the top products of its taste tags"} if cities or where else None
+
+
+def _tag_map(run: _Run, tag: str, place: str | None) -> list[dict]:
+    """Qloo's heatmap for the idea's top matched tag, when the idea itself brought no cells."""
+    q = {"filter.type": "urn:heatmap", "filter.location.query": place or DEFAULT_PLACE, "take": 5, "signal.interests.tags": tag}
+    body, s7 = run.get("/v2/insights", q, f"where: map points for the top matched tag {tag}", wait_s=MAP_WAIT_S)
+    return [{"lat": (h.get("location") or {}).get("latitude"), "lon": (h.get("location") or {}).get("longitude"),
+             "affinity": (h.get("query") or {}).get("affinity"), "src": s7}
+            for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:HEAT_CELLS]]
 
 
 def _informative(rows: list[dict]) -> list[dict]:
     return [a for a in rows if isinstance(a.get("affinity"), (int, float)) and a["affinity"] > RULES["informative_affinity"]]
 
 
+HEAT_CELLS = 50           # the heatmap cells read (the cache keeps Qloo's first 50): metros.py needs 3 in one metro
 MAP_WAIT_S = 8.0          # how long the check waits, at the end, for Qloo's heatmap (the slowest answer): the verdict reads
                           # none of it, but the launch city and the pre-order target do (metros.py); at 2 s a cold cache lost it
 
@@ -744,7 +754,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     # the verdict reads no `where` (the brief's launch terms do) and Qloo's heatmap is its slowest answer: read last,
     # so its wait overlaps everything above (it was asked at the start, with the other independent questions)
     body, s7 = run.get("/v2/insights", q7, f"where: map points in {loc}", wait_s=MAP_WAIT_S)
-    for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:5]:
+    for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:HEAT_CELLS]:
         lc, hq = h.get("location") or {}, h.get("query") or {}
         ev["where"].append({"lat": lc.get("latitude"), "lon": lc.get("longitude"), "affinity": hq.get("affinity"), "src": s7})
     return ev
@@ -993,7 +1003,12 @@ def _demand_check(idea: str, place: str | None = None, leader: str | None = None
                      "ladder": [{k: r[k] for k in ("name", "affinity", "popularity")} for r in ev.get("ladder") or []][:6],
                      "venue_price_level": pr.get("venue_price_level"), "venue_check": pr.get("venue_check")}
     from . import metros                           # Qloo sets the money terms: launch city, pre-order target, refund rule
-    rep["terms"] = metros.terms(ev.get("where") or (ev.get("launch") or {}).get("where") or [])
+    cells = ev.get("where") or (ev.get("launch") or {}).get("where") or []
+    if ok and (not cells or metros.flat(cells)) and ev.get("tags"):    # no map: asked once more, by the top matched tag
+        cells = _tag_map(run, ev["tags"][0]["id"], place)
+        ev["where_by_tag"] = {"tag": ev["tags"][0]["name"], "cells": len(cells)}
+    rep["terms"] = metros.terms(cells)
+    rep["no_map"] = None if rep["terms"] else metros.NO_MAP
     rep["brief"] = metros.brief(idea, rep["terms"]) if rep["terms"] else None
     rep["options"] = opts
     rep["grounding"] = families.grounding(rep)

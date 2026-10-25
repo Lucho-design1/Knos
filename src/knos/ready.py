@@ -197,15 +197,17 @@ def terms(brief: dict) -> dict:
 
 
 def launch(brief) -> dict | None:
-    """The launch terms Qloo set (apps/wanted metros.py): city, metro code, mean affinity, pre-order target and refund
-    rule. Hashed with the milestones when a brief carries them; a brief without them hashes as before."""
+    """The launch terms Qloo set (apps/wanted metros.py): city, metro code, mean affinity, the heatmap cells and
+    population behind it, the pre-order target and the refund rule. Hashed with the milestones when a brief carries them; a brief without them hashes as before."""
     raw = brief.get("launch") if isinstance(brief, dict) else None
     if not isinstance(raw, dict):
         return None
-    a, t = raw.get("affinity"), raw.get("target")
+    a = raw.get("affinity")
+    whole = lambda k: raw.get(k) if isinstance(raw.get(k), int) and not isinstance(raw.get(k), bool) else None  # noqa: E731
     return {"city": _text(raw.get("city"), 120), "cbsa": _text(raw.get("cbsa"), 5),
             "affinity": round(float(a), 4) if isinstance(a, (int, float)) and not isinstance(a, bool) else None,
-            "target": t if isinstance(t, int) and not isinstance(t, bool) else None, "refund_rule": _text(raw.get("refund_rule"), 300)}
+            "cells": whole("cells"), "population": whole("population"), "target": whole("target"),
+            "refund_rule": _text(raw.get("refund_rule"), 300)}
 
 
 def criteria_hash(brief: dict) -> str:

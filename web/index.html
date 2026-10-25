@@ -447,7 +447,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     // the cities of Qloo's heatmap, each a Census metro (apps/wanted metros.py); else Qloo's destinations
     const heat = ((terms && terms.metros) || []).map((m) => ({ name: m.city, lat: m.lat, lon: m.lon, src: (r.where || [])[0]?.src }));
     const cities = (heat.length ? heat : (r.cities || []).length ? r.cities : launch.cities || []).slice(0, 5);
-    const where = (r.where || []).length ? r.where : launch.where || [], also = (r.also_love && r.also_love.domains) || [];
+    const where = ((r.where || []).length ? r.where : launch.where || []).slice(0, 8), also = (r.also_love && r.also_love.domains) || [];
     const price = r.price || {}, tier = String(price.tier || "").toLowerCase();
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
     // visitor can pick another match, or none of them; the verdict's reason is Knos's rule, apart from Qloo's data
@@ -469,7 +469,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
         a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}${a.tie.via ? `, through ${esc(a.tie.via)}` : ""}</span></li>`).join("")}</ul>`
         : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
     <section class="k-part k-where" data-part="cities" data-qloo data-heat="${heat.length}"><h3>Where to launch</h3>
-      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${terms ? `<p class="k-terms">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders, all refunded if it falls short.</p>` : !(r.cities || []).length && cities.length ? `<p class="k-fine">From the people of its taste.</p>` : ""}${src(h, cities[0]?.src)}</section>
+      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${terms ? `<p class="k-terms">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders, all refunded if it falls short.</p>` : r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}${src(h, cities[0]?.src)}</section>
     ${also.length ? `<section class="k-part" data-part="also" data-qloo><h3>They also love</h3>${also.map((d) =>
       `<p class="k-also" data-domain="${esc(d.domain)}"><b>${esc(d.domain === "music" ? "Music" : d.domain === "film" ? "Film" : d.domain)}</b> ${
       d.items.map((x) => esc(x.name)).join(", ")}${src(h, d.src)}</p>`).join("")}</section>` : ""}
