@@ -64,11 +64,12 @@ def client_key(xff: str, peer: str, cf: str = "") -> str:
 MAX_BODY = 16_384
 SESSION_S = 30 * 60
 LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish": (10, 600), "demo": (4, 600),
-          "faucet": (2, 3600), "tx": (20, 600), "check": (30, 600), "taste": (30, 600), "lock": (6, 600), "auth": (30, 600),
+          "faucet": (2, 3600), "tx": (20, 600), "check": (30, 600), "taste": (30, 600), "mcp": (300, 600), "lock": (6, 600), "auth": (30, 600),
           "milestone": (30, 600), "milestone_one": (10, 3600), "referee": (120, 600), "product": (60, 600),
           "live": (120, 600)}   # (calls, seconds) per client; "live": presence and draft autosave, apart from "product"
 GLOBAL_DEMO = (60, 3600)
 FRONT_ORIGINS = ("https://drexthealpha.github.io",)               # the front door, allowed to read the demand check
+MCP_CHECK_TOOLS = ("knos_demand_check", "knos_cross", "knos_research_card")   # MCP tools that ask Qloo: the check limit
 DEMAND_CORS = ("/api/check", "/api/demand/fields", "/api/cross", "/api/report", "/api/vectors", "/api/proof", "/api/ready/card", "/api/money", "/api/qloo-diff", "/api/agent/payout/latest", "/api/usage")                                           # demo pre-orders, all clients
 ROUTES = {"/api/trace/keep": "product", "/api/qloo-diff": "product", "/api/open-signals": "check", "/api/ready/card": "product", "/api/company/need": "product", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
@@ -743,7 +744,11 @@ def make_handler(state: State):
                 msg = self._json()
             except ValueError as why:
                 return self._send(400, {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": str(why)[:200]}})
-            if not state.allow(self._client(), "check"):
+            # a tool that asks Qloo or runs a check counts as a check; every other MCP message (initialize, tools/list,
+            # reading a round, claiming, submitting) has its own, larger allowance: an agent's one task is dozens of them
+            name = str(((msg.get("params") or {}) if isinstance(msg.get("params"), dict) else {}).get("name") or "")
+            spends = msg.get("method") == "tools/call" and (name in MCP_CHECK_TOOLS or name.startswith("qloo_"))
+            if not state.allow(self._client(), "check" if spends else "mcp"):
                 return self._send(429, {"jsonrpc": "2.0", "id": msg.get("id"), "error": {"code": -32000, "message": "rate limited"}})
             out = agent.mcp(state, msg, profile)
             if out is None:

@@ -82,7 +82,8 @@ def main() -> int:
         env = {**os.environ, "KNOS_AGENT_KEY": (folder / "agent.key").read_text(encoding="utf-8").strip()}
         env.pop("KNOS_ADMIN_KEY", None)                    # the agent's process never holds the operator's key
         run = subprocess.run([exe, "-p", PROMPT, "--strict-mcp-config", "--mcp-config", ".mcp.json", "--allowedTools", "mcp__knos__*",
-                              "--output-format", "stream-json", "--verbose"], cwd=folder, env=env, capture_output=True, text=True, timeout=2400)
+                              "--output-format", "stream-json", "--verbose"], cwd=folder, env=env, capture_output=True, text=True,
+                             encoding="utf-8", errors="replace", timeout=2400)
         calls, results, final = [], {}, ""
         for raw in run.stdout.splitlines():
             try:
