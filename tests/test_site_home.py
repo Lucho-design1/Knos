@@ -31,7 +31,7 @@ def test_the_snapshot_cards_are_the_ones_its_rows_draw():
 def test_the_bare_address_opens_on_the_products_with_three_one_tap_actions_each():
     home = _section("view-home")
     # the first screen names its buyer and has one box (web/brand/hero.html, scripts/sync_brand.py); the products follow
-    mission = "Someone about to build a product? See who wants it first."
+    mission = "See who wants your product, and where, before you build it"
     assert f'<h1 id="k-mission" class="k-mission">{mission}</h1>' in home and len(_words(mission)) <= 12
     assert '<input id="k-q" name="q"' in home and '<h2 id="home-h">Open for backing</h2>' in home
     cards = re.findall(r'<li class="hp" data-slug="([a-z0-9-]+)">(.*?)</li>', home, re.S)

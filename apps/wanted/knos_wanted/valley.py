@@ -261,6 +261,9 @@ def check_brief(brief: dict) -> dict:
     (fast path or rewrite), the effort and token budget an agent run gets, and the milestones' tiers."""
     from knos import idt
     r = _ready().check(brief)                 # names what is malformed, from the brief as it was sent
+    if r.get("ready"):
+        from . import usage
+        usage.bump(briefs=1)
     brief = _ready().clean(brief)              # the rest reads a clean shape: a malformed brief is never a server error
     rt = idt.route(brief)
     if rt["interpretations"]:

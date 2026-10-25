@@ -81,7 +81,7 @@
   <section id="v-home" class="view" aria-labelledby="k-mission">
 <!-- k-hero -->
 <div class="k-hero" id="k-hero" data-api="" data-app="/">
-  <h1 id="k-mission" class="k-mission">Someone about to build a product? See who wants it first.</h1>
+  <h1 id="k-mission" class="k-mission">See who wants your product, and where, before you build it</h1>
   <form class="k-ask" id="k-ask" autocomplete="off" role="search" aria-label="Check demand">
     <input id="k-q" name="q" type="text" aria-label="What are you about to build? An idea, or a paper's DOI" maxlength="500" placeholder="What are you about to build?" enterkeyhint="go" spellcheck="false">
     <button id="k-go" type="submit">Check demand</button>
@@ -96,7 +96,6 @@
     <button type="button" class="k-chip" data-tech="materials" data-need="housing" data-q="a tiny home kit for first-time buyers">Tiny home</button>
     <button type="button" class="k-chip" data-tech="biotech" data-need="health" data-q="10.1038/nature16521">A paper: sweat sensor</button></div>
   <div id="k-card" class="k-slot" aria-live="polite"></div>
-  <p class="k-paid" id="k-paid" data-not-prose hidden></p>
   <script type="application/json" id="k-proof">null</script>
 <script data-src="/static/brand/hero.js">
 // The one box of both front doors (web/brand/hero.html): a DOI, an arXiv id or an idea in, Qloo's demand verdict out,
@@ -191,7 +190,10 @@
     const segs = (p.who?.segments || (r.audiences || []).filter((a) => a.tied).map((a) => a.name)).filter(Boolean).slice(0, 3);
     // Qloo's audiences for the idea's own tags (or products), each naming what ties it: none is unrelated
     const wants = (r.who_wants || []).filter((a) => a && a.name && a.tie && a.tie.name).slice(0, 4);
-    const launch = r.launch || {}, cities = ((r.cities || []).length ? r.cities : launch.cities || []).slice(0, 5);
+    const launch = r.launch || {}, terms = r.terms || null;
+    // the cities of Qloo's heatmap, each a Census metro (apps/wanted metros.py); else Qloo's destinations
+    const heat = ((terms && terms.metros) || []).map((m) => ({ name: m.city, lat: m.lat, lon: m.lon, src: (r.where || [])[0]?.src }));
+    const cities = (heat.length ? heat : (r.cities || []).length ? r.cities : launch.cities || []).slice(0, 5);
     const where = (r.where || []).length ? r.where : launch.where || [], also = (r.also_love && r.also_love.domains) || [];
     const price = r.price || {}, tier = String(price.tier || "").toLowerCase();
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
@@ -213,8 +215,8 @@
       ${wants.length ? `<ul class="k-wants">${wants.map((a) => `<li><b>${esc(a.name)}</b> <span class="k-fine">tied by Qloo ${
         a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}${a.tie.via ? `, through ${esc(a.tie.via)}` : ""}</span></li>`).join("")}</ul>`
         : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
-    <section class="k-part k-where" data-part="cities" data-qloo><h3>Where to launch</h3>
-      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${!(r.cities || []).length && cities.length ? `<p class="k-fine">From the people of its taste.</p>` : ""}${src(h, cities[0]?.src)}</section>
+    <section class="k-part k-where" data-part="cities" data-qloo data-heat="${heat.length}"><h3>Where to launch</h3>
+      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${terms ? `<p class="k-terms">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders, all refunded if it falls short.</p>` : !(r.cities || []).length && cities.length ? `<p class="k-fine">From the people of its taste.</p>` : ""}${src(h, cities[0]?.src)}</section>
     ${also.length ? `<section class="k-part" data-part="also" data-qloo><h3>They also love</h3>${also.map((d) =>
       `<p class="k-also" data-domain="${esc(d.domain)}"><b>${esc(d.domain === "music" ? "Music" : d.domain === "film" ? "Film" : d.domain)}</b> ${
       d.items.map((x) => esc(x.name)).join(", ")}${src(h, d.src)}</p>`).join("")}</section>` : ""}
@@ -271,14 +273,28 @@ ${src(h, price.src)}</section>
   if (carried) draw(carried);                                  // in the page: at the first paint
   else seen(root, () => get("/api/proof").then((p) => draw(p && p.proof)).catch(() => {}));
   form.addEventListener("submit", (ev) => { ev.preventDefault(); ask(q.value); });
-  // the newest payout to an agent, as the chain has it (the app reads the transaction back from devnet)
-  const paid = document.getElementById("k-paid");
-  if (paid) get("/api/agent/payout/latest").then((x) => {
-    if (!x || !x.found || !(x.units > 0)) return;
-    const day = String(x.at || "").slice(0, 10);
-    paid.innerHTML = `An agent was paid <b>${esc(x.units)} test units</b> for verified work${day ? `, ${esc(day)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">the transaction</a>`;
-    paid.hidden = false;
-  }).catch(() => {});
+  // below the first screen: the newest payout to an agent, as the chain has it, and the usage counter (checks and
+  // briefs from the app's store, the payment program's devnet transactions). The build wrote both into the page
+  // (scripts/live_snapshot.py); they are asked again with the reader's first move, as the product list is (web/home.js)
+  let moved = false;
+  const later = (f) => { const go = () => { if (moved) return; moved = true; f(); };
+    for (const t of ["pointermove", "pointerdown", "touchstart", "keydown", "scroll", "focusin"]) addEventListener(t, go, { once: true, passive: true, capture: true }); };
+  later(() => {
+    const paid = document.getElementById("k-paid"), use = document.getElementById("k-usage");
+    if (paid) get("/api/agent/payout/latest").then((x) => {
+      if (!x || !x.found || !(x.units > 0)) return;
+      const day = String(x.at || "").slice(0, 10);
+      paid.innerHTML = `Agent paid <b>${esc(x.units)} test units</b> for verified work${day ? `, ${esc(day)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">the transaction</a>`;
+      paid.hidden = false;
+      paid.dataset.live = "1";
+    }).catch(() => {});
+    if (use) get("/api/usage").then((u) => {
+      if (!u || u.payouts == null) return;
+      use.innerHTML = `<b data-n="checks">${esc(u.checks)}</b> demand checks · <b data-n="briefs">${esc(u.briefs)}</b> Ready briefs since ${esc(u.since)} · <b data-n="payouts">${esc(u.payouts)}</b> payment program transactions on devnet`;
+      use.hidden = false;
+      use.dataset.live = "1";
+    }).catch(() => {});
+  });
 
   // the fold "Claude alone": filled when it is first opened, from the published table, beside this card's answer
   slot.addEventListener("toggle", async (ev) => {
@@ -315,7 +331,7 @@ ${src(h, price.src)}</section>
   });
 })();
 </script>
-  <p class="k-agent" data-not-prose>Agents: MCP at <code>https://knos.onrender.com/mcp</code>, tool <code>knos_cross</code></p>
+  <p class="k-agent" data-not-prose><code>claude mcp add --transport http knos https://knos.onrender.com/mcp</code></p>
 </div>
 <!-- /k-hero -->
     <h2 id="homeH">Open for backing</h2>
@@ -323,6 +339,19 @@ ${src(h, price.src)}</section>
       <li class="card hp-card sk" aria-hidden="true"></li><li class="card hp-card sk" aria-hidden="true"></li><li class="card hp-card sk" aria-hidden="true"></li>
     </ul>
     <p class="small"><a href="#research" data-i18n="home_own">Cross your own paper</a> · <a href="/verify" data-i18n="verify_link">How we verify</a></p>
+<!-- k-steps -->
+<section id="k-steps" class="k-steps" aria-label="How Knos works">
+  <ol class="k-step-list">
+    <li><h3>Check demand</h3><p>Qloo shows who wants it and the city to launch in.</p></li>
+    <li><h3>Ready brief</h3><p>That city and its pre-order target become the terms.</p></li>
+    <li><h3>Money held</h3><p>Pre-orders wait in a program on Solana until the target is met.</p></li>
+    <li id="paid-on-proof"><h3>Paid on proof</h3><p>The pull request's checks pass, and the program on Solana pays.</p>
+      <p class="k-paid" id="k-paid" data-not-prose>Agent paid <b>5 test units</b> for verified work, 2026-10-23 · <a href="https://explorer.solana.com/tx/4237vWZNovpksV8auB8mFFmBHohQXvFYJkCiu1P6yaGNYRPsmyLGXRA3f2HwF7z17NSY4bJyKEA4f3Agtah8yDQs?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
+      <p class="fine"><a href="https://drexthealpha.github.io/Knos/pricing.html">Pricing</a> · <a href="https://drexthealpha.github.io/Knos/how-we-test.html">How we test Knos</a></p></li>
+  </ol>
+  <p class="fine" id="k-usage" data-not-prose hidden></p>
+</section>
+<!-- /k-steps -->
   </section>
 
   <!-- RESEARCHER -->

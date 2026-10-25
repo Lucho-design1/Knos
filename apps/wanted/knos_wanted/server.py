@@ -69,7 +69,7 @@ LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish"
           "live": (120, 600)}   # (calls, seconds) per client; "live": presence and draft autosave, apart from "product"
 GLOBAL_DEMO = (60, 3600)
 FRONT_ORIGINS = ("https://drexthealpha.github.io",)               # the front door, allowed to read the demand check
-DEMAND_CORS = ("/api/check", "/api/demand/fields", "/api/cross", "/api/report", "/api/vectors", "/api/proof", "/api/ready/card", "/api/money", "/api/qloo-diff", "/api/agent/payout/latest")                                           # demo pre-orders, all clients
+DEMAND_CORS = ("/api/check", "/api/demand/fields", "/api/cross", "/api/report", "/api/vectors", "/api/proof", "/api/ready/card", "/api/money", "/api/qloo-diff", "/api/agent/payout/latest", "/api/usage")                                           # demo pre-orders, all clients
 ROUTES = {"/api/trace/keep": "product", "/api/qloo-diff": "product", "/api/open-signals": "check", "/api/ready/card": "product", "/api/company/need": "product", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
@@ -104,7 +104,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
               "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funders' held money",
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/mcp/store": "The app-store MCP profile: read-only tools, no sign-in, a daily call cap (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
-              "/": "The app", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/products": "Listed products", "/api/quote": "Fee quote",
+              "/": "The app", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/products": "Listed products", "/api/quote": "Fee quote",
               "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
               "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
               "/api/receivables": "Receivables a lender can finance (passkey wallets: advance rate, fee, due date)",
@@ -223,10 +223,11 @@ def latest_agent_payout() -> dict:
     """The newest milestone released to an attempt an agent key made, read back from devnet: the release
     transaction's confirmation and the test units the attempt's wallet received in it (its token balances before
     and after). Five minutes in a cache; {"found": false} when there is none or the chain does not answer."""
-    if time.time() - _payout_cache["at"] < 300 and _payout_cache["v"] is not None:
-        return _payout_cache["v"]
+    v = _payout_cache["v"]
+    if v is not None and time.time() - _payout_cache["at"] < (300 if v.get("found") else 30):
+        return v
     best = None
-    for p in valley.projects(100):
+    for p in valley._all("projects"):
         for m in p.get("milestones") or []:
             agents = {a.get("id"): a for a in m.get("attempts") or [] if a.get("agent_key")}
             for h in m.get("history") or []:
@@ -238,6 +239,9 @@ def latest_agent_payout() -> dict:
                 if att and sigs and (best is None or h.get("at", "") > best[0]):
                     best = (h.get("at", ""), sigs[0], att.get("wallet"), p.get("title") or p.get("id"))
     out: dict = {"found": False}
+    kept = valley._safe_load("pages", "latest-agent-payout")      # the last one read back confirmed: a redeploy keeps it
+    if kept and (best is None or kept.get("at", "") > best[0]):
+        best = (kept.get("at", ""), kept.get("signature"), kept.get("wallet"), kept.get("project"))
     if best:
         at, sig, wallet, title = best
         try:
@@ -248,8 +252,10 @@ def latest_agent_payout() -> dict:
             def held(rows):
                 return sum(float((b.get("uiTokenAmount") or {}).get("uiAmount") or 0) for b in rows or [] if b.get("owner") == wallet)
             units = held(meta.get("postTokenBalances")) - held(meta.get("preTokenBalances"))
-            out = {"found": bool(tx) and meta.get("err") is None, "signature": sig, "units": round(units, 6), "at": at, "project": title,
+            out = {"found": bool(tx) and meta.get("err") is None and units > 0, "signature": sig, "units": round(units, 6), "at": at, "project": title,
                    "slot": (tx or {}).get("slot"), "explorer": escrow.explorer(sig)}
+            if out["found"] and (not kept or kept.get("signature") != sig):
+                valley._save("pages", "latest-agent-payout", {"at": at, "signature": sig, "wallet": wallet, "project": title})
         except Exception as why:  # noqa: BLE001 - the chain did not answer: said, not guessed
             out = {"found": False, "why": f"{type(why).__name__}: {str(why)[:120]}"}
     _payout_cache.update(at=time.time(), v=out)
@@ -559,6 +565,9 @@ def make_handler(state: State):
                 return self._send(404, {"error": "not found"})
             if u.path == "/api/status":
                 return self._send(200, self.status())
+            if u.path == "/api/usage":                       # the public counter: checks and briefs from the store, payouts from devnet
+                from . import usage
+                return self._send(200, usage.counts())
             if u.path == "/api/agent/payout/latest":         # the newest payout to an agent, as the chain has it
                 return self._send(200, latest_agent_payout())
             if u.path == "/api/ops/memory":                  # the operator's: this process's memory now and at its peak

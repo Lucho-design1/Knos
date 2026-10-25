@@ -930,7 +930,10 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
         with _running_lock:
             running[0] += 1
         try:
-            return _demand_check(idea, place, leader, client, today, exclude, on_call, options)
+            rep = _demand_check(idea, place, leader, client, today, exclude, on_call, options)
+            from . import usage
+            usage.bump(checks=1, briefs=1 if rep.get("brief") else 0)
+            return rep
         finally:
             with _running_lock:
                 running[0] -= 1
@@ -988,6 +991,9 @@ def _demand_check(idea: str, place: str | None = None, leader: str | None = None
                      "persona": [x["name"] for x in ev.get("persona") or []][:6],
                      "ladder": [{k: r[k] for k in ("name", "affinity", "popularity")} for r in ev.get("ladder") or []][:6],
                      "venue_price_level": pr.get("venue_price_level"), "venue_check": pr.get("venue_check")}
+    from . import metros                           # Qloo sets the money terms: launch city, pre-order target, refund rule
+    rep["terms"] = metros.terms(ev.get("where") or (ev.get("launch") or {}).get("where") or [])
+    rep["brief"] = metros.brief(idea, rep["terms"]) if rep["terms"] else None
     rep["options"] = opts
     rep["grounding"] = families.grounding(rep)
     annotate(rep)

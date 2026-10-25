@@ -30,9 +30,16 @@ flowchart TB
 
 *No money locks on a vague brief. Each step is paid only when its proof is verified.*
 
-1. **Is it wanted?** A [demand check](docs/reference/DEMAND_CHECK.md) asks Qloo's taste data who would buy the product, where, and at what price.
-2. **Ready to fund.** No money locks on a vague brief: each milestone needs a number to hit, who checks it, and a deadline ([the IDT benchmark](docs/idt/summary.json)).
-3. **Held, then proof.** Backers fund one milestone at a time; the money waits in a program on [Solana](docs/WORDS.md#solana), not with Knos. It is paid only on verified proof: GitHub checks today; lab and referee verdicts with a challenge window. Without proof by the deadline, it goes back. Open [the app](https://knos.onrender.com/) or [get started](docs/START.md).
+1. **Check demand.** A [demand check](docs/reference/DEMAND_CHECK.md) asks Qloo's taste data who would buy the product and where. Qloo's heatmap names the launch city.
+2. **Ready brief.** That city and the pre-order target its Qloo affinity sets become the brief's terms, inside its criteria hash. If the city falls short by the first deadline, every pre-order is refunded.
+3. **Money held.** Pre-orders and milestone funding wait in a program on [Solana](docs/WORDS.md#solana), not with Knos.
+4. **Paid on proof.** A pull request's checks pass and the program pays. Example: an agent was paid [5 test units for verified work](https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet) on devnet; [the newest payout](https://knos.onrender.com/api/agent/payout/latest), read from chain.
+
+Add Knos to Claude Code with one command:
+
+```
+claude mcp add --transport http knos https://knos.onrender.com/mcp
+```
 
 **Open call:** have research waiting for a market? [Cross it on Knos](https://knos.onrender.com/invite): the page counts every crossing and pre-order by people outside Knos, live.
 

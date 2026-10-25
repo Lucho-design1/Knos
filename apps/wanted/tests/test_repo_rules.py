@@ -40,6 +40,8 @@ def test_no_recorded_qloo_bodies_in_repo():
     for p in ROOT.rglob("*.json"):
         if ".cache" in p.parts or ".venv" in p.parts or "node_modules" in p.parts:
             continue
+        if p.relative_to(ROOT).as_posix() == "knos_wanted/data/cbsa_msa_2023.json":     # Census metro boundaries (metros.py), no Qloo data
+            continue
         raise AssertionError(f"unexpected JSON file in the repository: {p.relative_to(ROOT)}")
 
 

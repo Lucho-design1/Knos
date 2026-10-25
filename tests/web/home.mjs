@@ -78,7 +78,7 @@ for (const [w, h] of [[375, 812], [390, 844], [320, 640], [1280, 800]]) {
   await page.waitForFunction(() => document.documentElement.dataset.ready !== undefined, null, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(400);
   const got = await cards(page);
-  ok(`${w}px: the bare address opens on the research products, the check of agent work hidden`, await page.isVisible("#view-home") && !(await page.isVisible("#view-check")) && (await page.textContent("#k-mission")).trim() === "Someone about to build a product? See who wants it first." && (await page.isVisible("#k-q")));
+  ok(`${w}px: the bare address opens on the research products, the check of agent work hidden`, await page.isVisible("#view-home") && !(await page.isVisible("#view-check")) && (await page.textContent("#k-mission")).trim() === "See who wants your product, and where, before you build it" && (await page.isVisible("#k-q")));
   ok(`${w}px: the snapshot's ${snap.rows.length} products are drawn before any host answers`, got.length === snap.rows.length && got.every((c, i) => c.slug === snap.rows[i].slug && c.visible), got);
   ok(`${w}px: each has its three one-tap actions, each a link to the app at that action through the wake page`, got.every((c) => c.acts.map((a) => a[0]).join() === "Back it,Fund the work,Contribute"
     && c.acts.every(([, app, href]) => /^#(back|fund|contribute)=[a-z0-9-]+$/.test(app) && href === `wanted.html${app}`)), got.map((c) => c.acts));

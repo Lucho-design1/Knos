@@ -196,10 +196,25 @@ def terms(brief: dict) -> dict:
             "challenge_s": ch if isinstance(ch, int) and not isinstance(ch, bool) else None}
 
 
+def launch(brief) -> dict | None:
+    """The launch terms Qloo set (apps/wanted metros.py): city, metro code, mean affinity, pre-order target and refund
+    rule. Hashed with the milestones when a brief carries them; a brief without them hashes as before."""
+    raw = brief.get("launch") if isinstance(brief, dict) else None
+    if not isinstance(raw, dict):
+        return None
+    a, t = raw.get("affinity"), raw.get("target")
+    return {"city": _text(raw.get("city"), 120), "cbsa": _text(raw.get("cbsa"), 5),
+            "affinity": round(float(a), 4) if isinstance(a, (int, float)) and not isinstance(a, bool) else None,
+            "target": t if isinstance(t, int) and not isinstance(t, bool) else None, "refund_rule": _text(raw.get("refund_rule"), 300)}
+
+
 def criteria_hash(brief: dict) -> str:
     long = science_brief(clean(brief))
     ms = [normal(m, i, long) for i, m in enumerate(clean(brief)["milestones"])]
     body = {"v": 1, "milestones": ms, **terms(brief)}
+    lt = launch(brief)
+    if lt is not None:
+        body["launch"] = lt
     return hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
 
 
@@ -221,6 +236,9 @@ def check(brief: dict) -> dict:
     if len({r["key"] for r in rows}) != len(rows):
         problems.append("milestones: each key once")
     t = terms(brief)
+    lt = launch(brief)
+    if lt is not None:
+        problems += [f"launch.{k}" for k, v in lt.items() if v in (None, "")]
     if t["kill_fee_bps"] is None or not 0 <= t["kill_fee_bps"] <= MAX_KILL_FEE_BPS:
         problems.append("kill_fee_bps: 0 to 5000 (what the maker keeps if the buyer cancels)")
     if t["challenge_s"] is None or not 60 <= t["challenge_s"] <= 30 * 86_400:
@@ -232,7 +250,7 @@ def check(brief: dict) -> dict:
     ok = not missing
     return {"ready": ok, "label": "Refused" if no else "Ready" if ok else "Not ready", "missing": missing, "milestones": rows,
             "refused": no,
-            "criteria_hash": criteria_hash(brief) if ok else None, **t,
+            "criteria_hash": criteria_hash(brief) if ok else None, **t, **({"launch": lt} if lt is not None else {}),
             "rule": "each milestone: a measurable target, a verifier (a GitHub check, or what/how/who/where) and a deadline; no vague words"}
 
 

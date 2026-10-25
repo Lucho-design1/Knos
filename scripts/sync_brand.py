@@ -49,6 +49,7 @@ PAGES = {
     WEB / "index.html": ("", "", WAKE, "brand/tokens.css", False),        # web/front.js runs this bar
     WEB / "faq.html": ("./", "./", WAKE, "brand/tokens.css", True),
     WEB / "how-we-test.html": ("./", "./", WAKE, "brand/tokens.css", True),
+    WEB / "pricing.html": ("./", "./", WAKE, "brand/tokens.css", True),
     WEB / "privacy.html": ("./", "./", WAKE, "brand/tokens.css", True),
     WEB / "404.html": (SITE, SITE, SITE + WAKE, "brand/tokens.css", True),        # its <base href="/Knos/"> holds at any depth
     WEB / "wanted.html": ("./", "./", WAKE, "brand/tokens.css", True),
@@ -61,6 +62,7 @@ MARK = re.compile(r"<!-- k-bar -->.*?<!-- /k-bar -->", re.S)
 PROOF_SLOT = '<script type="application/json" id="k-proof">null</script>'
 HERO = re.compile(r"<!-- k-hero -->.*?<!-- /k-hero -->", re.S)
 VECTORS = re.compile(r"<!-- k-vectors -->.*?<!-- /k-vectors -->", re.S)
+STEPS = re.compile(r"<!-- k-steps -->.*?<!-- /k-steps -->", re.S)
 # the two front doors' first screens: (the app's address for the API, the app's address for its pages, hero.js)
 HEROES = {WEB / "index.html": ("@app", WAKE, "brand/hero.js"), STATIC / "index.html": ("", "/", "/static/brand/hero.js")}
 
@@ -96,6 +98,9 @@ def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) 
         code = (WEB / "brand" / "hero.js").read_text(encoding="utf-8").strip()
         t = t.replace(PROOF_SLOT, f'{PROOF_SLOT}\n<script data-src="{js}">\n{code}\n</script>', 1)
         s = HERO.sub(lambda _: f'<!-- k-hero -->\n{t}\n<!-- /k-hero -->', s, count=1)
+        # the four steps under the first screen (web/brand/steps.html): check demand, Ready brief, money held, paid on proof
+        steps = (WEB / "brand" / "steps.html").read_text(encoding="utf-8").strip().replace("{SP}", site)
+        s = STEPS.sub(lambda _: f"<!-- k-steps -->\n{steps}\n<!-- /k-steps -->", s, count=1)
     # a page that runs web/brand/bar.js lays the bar out for scripts (and in the reader's theme) before its first paint:
     # set after it, the bar moves under the reader (a layout shift Lighthouse counts)
     EARLY = ('<script>document.documentElement.classList.add("js");'

@@ -90,7 +90,10 @@
     const segs = (p.who?.segments || (r.audiences || []).filter((a) => a.tied).map((a) => a.name)).filter(Boolean).slice(0, 3);
     // Qloo's audiences for the idea's own tags (or products), each naming what ties it: none is unrelated
     const wants = (r.who_wants || []).filter((a) => a && a.name && a.tie && a.tie.name).slice(0, 4);
-    const launch = r.launch || {}, cities = ((r.cities || []).length ? r.cities : launch.cities || []).slice(0, 5);
+    const launch = r.launch || {}, terms = r.terms || null;
+    // the cities of Qloo's heatmap, each a Census metro (apps/wanted metros.py); else Qloo's destinations
+    const heat = ((terms && terms.metros) || []).map((m) => ({ name: m.city, lat: m.lat, lon: m.lon, src: (r.where || [])[0]?.src }));
+    const cities = (heat.length ? heat : (r.cities || []).length ? r.cities : launch.cities || []).slice(0, 5);
     const where = (r.where || []).length ? r.where : launch.where || [], also = (r.also_love && r.also_love.domains) || [];
     const price = r.price || {}, tier = String(price.tier || "").toLowerCase();
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
@@ -112,8 +115,8 @@
       ${wants.length ? `<ul class="k-wants">${wants.map((a) => `<li><b>${esc(a.name)}</b> <span class="k-fine">tied by Qloo ${
         a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}${a.tie.via ? `, through ${esc(a.tie.via)}` : ""}</span></li>`).join("")}</ul>`
         : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
-    <section class="k-part k-where" data-part="cities" data-qloo><h3>Where to launch</h3>
-      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${!(r.cities || []).length && cities.length ? `<p class="k-fine">From the people of its taste.</p>` : ""}${src(h, cities[0]?.src)}</section>
+    <section class="k-part k-where" data-part="cities" data-qloo data-heat="${heat.length}"><h3>Where to launch</h3>
+      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${terms ? `<p class="k-terms">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders, all refunded if it falls short.</p>` : !(r.cities || []).length && cities.length ? `<p class="k-fine">From the people of its taste.</p>` : ""}${src(h, cities[0]?.src)}</section>
     ${also.length ? `<section class="k-part" data-part="also" data-qloo><h3>They also love</h3>${also.map((d) =>
       `<p class="k-also" data-domain="${esc(d.domain)}"><b>${esc(d.domain === "music" ? "Music" : d.domain === "film" ? "Film" : d.domain)}</b> ${
       d.items.map((x) => esc(x.name)).join(", ")}${src(h, d.src)}</p>`).join("")}</section>` : ""}
@@ -170,14 +173,28 @@ ${src(h, price.src)}</section>
   if (carried) draw(carried);                                  // in the page: at the first paint
   else seen(root, () => get("/api/proof").then((p) => draw(p && p.proof)).catch(() => {}));
   form.addEventListener("submit", (ev) => { ev.preventDefault(); ask(q.value); });
-  // the newest payout to an agent, as the chain has it (the app reads the transaction back from devnet)
-  const paid = document.getElementById("k-paid");
-  if (paid) get("/api/agent/payout/latest").then((x) => {
-    if (!x || !x.found || !(x.units > 0)) return;
-    const day = String(x.at || "").slice(0, 10);
-    paid.innerHTML = `An agent was paid <b>${esc(x.units)} test units</b> for verified work${day ? `, ${esc(day)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">the transaction</a>`;
-    paid.hidden = false;
-  }).catch(() => {});
+  // below the first screen: the newest payout to an agent, as the chain has it, and the usage counter (checks and
+  // briefs from the app's store, the payment program's devnet transactions). The build wrote both into the page
+  // (scripts/live_snapshot.py); they are asked again with the reader's first move, as the product list is (web/home.js)
+  let moved = false;
+  const later = (f) => { const go = () => { if (moved) return; moved = true; f(); };
+    for (const t of ["pointermove", "pointerdown", "touchstart", "keydown", "scroll", "focusin"]) addEventListener(t, go, { once: true, passive: true, capture: true }); };
+  later(() => {
+    const paid = document.getElementById("k-paid"), use = document.getElementById("k-usage");
+    if (paid) get("/api/agent/payout/latest").then((x) => {
+      if (!x || !x.found || !(x.units > 0)) return;
+      const day = String(x.at || "").slice(0, 10);
+      paid.innerHTML = `Agent paid <b>${esc(x.units)} test units</b> for verified work${day ? `, ${esc(day)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">the transaction</a>`;
+      paid.hidden = false;
+      paid.dataset.live = "1";
+    }).catch(() => {});
+    if (use) get("/api/usage").then((u) => {
+      if (!u || u.payouts == null) return;
+      use.innerHTML = `<b data-n="checks">${esc(u.checks)}</b> demand checks · <b data-n="briefs">${esc(u.briefs)}</b> Ready briefs since ${esc(u.since)} · <b data-n="payouts">${esc(u.payouts)}</b> payment program transactions on devnet`;
+      use.hidden = false;
+      use.dataset.live = "1";
+    }).catch(() => {});
+  });
 
   // the fold "Claude alone": filled when it is first opened, from the published table, beside this card's answer
   slot.addEventListener("toggle", async (ev) => {
