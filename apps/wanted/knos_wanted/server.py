@@ -64,7 +64,7 @@ def client_key(xff: str, peer: str, cf: str = "") -> str:
 MAX_BODY = 16_384
 SESSION_S = 30 * 60
 LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish": (10, 600), "demo": (4, 600),
-          "faucet": (2, 3600), "tx": (20, 600), "check": (30, 600), "lock": (6, 600), "auth": (30, 600),
+          "faucet": (2, 3600), "tx": (20, 600), "check": (30, 600), "taste": (30, 600), "lock": (6, 600), "auth": (30, 600),
           "milestone": (30, 600), "milestone_one": (10, 3600), "referee": (120, 600), "product": (60, 600),
           "live": (120, 600)}   # (calls, seconds) per client; "live": presence and draft autosave, apart from "product"
 GLOBAL_DEMO = (60, 3600)
@@ -104,7 +104,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
               "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funders' held money",
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/mcp/store": "The app-store MCP profile: read-only tools, no sign-in, a daily call cap (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
-              "/": "The app", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/products": "Listed products", "/api/quote": "Fee quote",
+              "/": "The app", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/taste/movie": "The films a film's fans also love, from Qloo (?title=&year=): names and years only", "/api/products": "Listed products", "/api/quote": "Fee quote",
               "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
               "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
               "/api/receivables": "Receivables a lender can finance (passkey wallets: advance rate, fee, due date)",
@@ -565,6 +565,12 @@ def make_handler(state: State):
                 return self._send(404, {"error": "not found"})
             if u.path == "/api/status":
                 return self._send(200, self.status())
+            if u.path == "/api/taste/movie":                 # the films a film's fans also love (Knos's Qloo client; names and years only)
+                from . import taste
+                if not product_routes._admin(self.headers.get("X-Knos-Admin")) and not state.allow(self._client(), "taste"):
+                    return self._send(429, {"error": "too many requests from this address; try again in a few minutes"})
+                y = (qs.get("year") or [""])[0]
+                return self._send(200, taste.also_love_movie(state.rest, (qs.get("title") or [""])[0], int(y) if y.isdigit() else None))
             if u.path == "/api/usage":                       # the public counter: checks and briefs from the store, payouts from devnet
                 from . import usage
                 return self._send(200, usage.counts())
