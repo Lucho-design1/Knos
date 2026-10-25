@@ -29,6 +29,17 @@ from . import escrow, preorder
 
 TASK_DIR = Path(__file__).resolve().parents[3] / "examples" / "autoresearch"
 TASK_README = "https://github.com/drexthealpha/Knos/blob/main/examples/autoresearch/README.md"
+TASK_DIR = Path(__file__).resolve().parents[3] / "examples" / "autoresearch"      # the image ships it beside the app
+
+
+def task_files() -> dict:
+    """The round's README and baseline train.py as text, in the answer itself: an agent limited to Knos's tools (no web
+    fetch) once wrote train.py blind, and every attempt failed in the sandbox with "shown": null."""
+    out = {}
+    for key, name in (("readme_text", "README.md"), ("baseline_source", "train.py")):
+        f = TASK_DIR / name
+        out[key] = f.read_text(encoding="utf-8") if f.is_file() else None
+    return out
 DEMO_TITLE = "Demo round: beat the sealed classifier (test money)"
 DEMO_LABEL = ("DEMO ROUND, devnet test money: the repository's example task, seeded by this server so contributors "
               "always have one open round; the sealed referee judges every submission")
@@ -140,6 +151,7 @@ def rounds() -> list[dict]:
                         "accuracy (for example: features 'square' and standardize True)",
                         "attempts_per_round": PER_ROUND, "time_budget_s": _budget() or DEMO_BUDGET_S,
                         "readme": TASK_README, "baseline": "https://github.com/drexthealpha/Knos/blob/main/examples/autoresearch/train.py",
+                        **task_files(),
                         "prize": f"{PRIZE_UNITS} test units on devnet for a scored attempt, when you give a devnet wallet"}}]
 
 
@@ -292,6 +304,9 @@ def submit(round_id: str, name: str, code: str, who: str, sub: str | None = None
     player, key = _player_for(str(game_id), sub or who, name, "agent" if "agent" in who else "human", gt)
     got = gt.call("knos_game_submit", {"player": player, "key": key, "file": code})   # the tool reads "file"
     result = {k: got.get(k) for k in ("n", "round", "decision", "shown", "reasons", "rules", "sha256", "said", "moved")}
+    if result.get("decision") != "scored":            # why "shown" is null, in the log (the reasons name no key)
+        print(f"knos referee: round {game_id} attempt {result.get('n')} {result.get('decision')}: "
+              f"{'; '.join(str(r) for r in (result.get('reasons') or []))[:300]}", flush=True)
     out = {"name": name, "round": game_id, "result": result, "submitted_sha256": hashlib.sha256(code.encode("utf-8")).hexdigest(),
            "note": "judged by the round's sealed referee on this server (devnet test money)"}
     if wallet and got.get("decision") == "scored":
