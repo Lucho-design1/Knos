@@ -21,7 +21,7 @@ PROMPT = ("Use the knos MCP tools only. 1) Run a demand check for 'an AI recipe 
 
 
 def main() -> int:
-    claude = shutil.which("claude")
+    claude = shutil.which("claude.exe") or shutil.which("claude.cmd") or shutil.which("claude")
     lines = [f"claude: {claude}"]
     if not claude:
         lines.append("FAIL test_agent_install: BLOCKED: Claude Code is not on PATH")
