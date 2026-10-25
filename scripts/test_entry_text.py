@@ -1,6 +1,7 @@
 """test_entry_text: the private entry text (v0328/research/ENTRY-QLOO-2026-10-30.md, outside every repository) is under
-900 words; its first sentence names Qloo and what it decides in Knos; it quotes the where-demand test's outcome and the
-Qloo-set terms, and names the buyer; it keeps the writing rules (no em dash, no "not X but Y", no list of three); and
+900 words; its first sentence names Qloo and what it decides in Knos; it quotes the where-demand test's numbers as
+docs/reference/where_truth.json holds them, the Qloo-set terms' case counts and one real launch city with its target,
+and names the buyer; when Knos did not beat Claude alone there, its second sentence leads with the Qloo-set terms; it keeps the writing rules (no em dash, no "not X but Y", no list of three); and
 no public repository of drexthealpha lists it (each one's tree on GitHub, read with gh).
 
     python scripts/test_entry_text.py
@@ -24,15 +25,20 @@ def main() -> int:
     text = ENTRY.read_text(encoding="utf-8")
     body = re.sub(r"^#.*$", "", text, flags=re.M).strip()
     words = len(text.split())
-    first = re.split(r"(?<=[.!?])\s", body, maxsplit=1)[0]
-    c1 = (PRIVATE / "world" / "test_where_truth.txt").read_text(encoding="utf-8")
-    c1_said = "0 of 30" in c1 and "0 of 30" in text and "key" in text
+    sentences = re.split(r"(?<=[.!?])\s", body)
+    first, second = sentences[0], sentences[1] if len(sentences) > 1 else ""
+    d1 = json.loads((Path(__file__).resolve().parents[1] / "docs" / "reference" / "where_truth.json").read_text(encoding="utf-8"))
+    nums = [f"{d1['mean_overlap']['claude_alone']:.3f}", f"{d1['mean_overlap']['knos_with_qloo']:.3f}", f"{d1['difference']:.3f}",
+            f"{d1['bootstrap']['interval_95'][0]:.3f}", f"{d1['bootstrap']['interval_95'][1]:.3f}"]
+    knos_ahead = d1["bootstrap"]["interval_95"][0] > 0
     checks = [
         (words < 900, f"{words} words (under 900)"),
         ("Qloo" in first and re.search(r"\bdecides?\b", first) is not None, f"first sentence names Qloo and what it decides: {first!r}"),
-        (c1_said, "the where-demand test's outcome, as its file states it (0 of 30, the missing key)"),
+        (all(n in text for n in nums) and str(d1["n"]) in text, f"the where-demand numbers {nums}, n {d1['n']}"),
+        (("Claude alone" in second) if knos_ahead else ("15" in second and "launch city" in second and "5" in second),
+         f"the second sentence leads with {'the where-demand result' if knos_ahead else 'the Qloo-set terms (15 with a map, 5 without)'}"),
         ("If fewer than <target> pre-orders come from <city> by the first milestone deadline, every pre-order is refunded." in text
-         and "15 produced a Ready brief" in text and "target 100" in text, "the Qloo-set terms: refund rule, launch cities, targets, 15 of 20"),
+         and "Los Angeles-Long Beach-Anaheim, CA" in text and "125 pre-orders" in text, "the refund rule and a real example: Los Angeles, target 125"),
         ("someone about to build a product" in text, "names the buyer: someone about to build a product"),
         ("\u2014" not in text, "no em dash"),
         (not re.search(r"\bnot\b[^.\n]{0,40}\bbut\b", text, re.I), 'no "not X but Y"'),
@@ -51,7 +57,7 @@ def main() -> int:
     lines = [f"{'ok  ' if c else 'FAIL'} {w}" for c, w in checks]
     bad = sum(not c for c, _ in checks)
     lines.append(f"FAIL test_entry_text: {bad} check(s) failed" if bad else
-                 f"PASS test_entry_text: {words} words, Qloo first, C1 outcome and C2 terms quoted, buyer named, 0 of {len(repos)} public repositories list it")
+                 f"PASS test_entry_text: {words} words, Qloo first, D2 terms second, D1 numbers and a real launch city quoted, buyer named, 0 of {len(repos)} public repositories list it")
     print("\n".join(lines))
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return 1 if bad else 0

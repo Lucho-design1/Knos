@@ -51,7 +51,10 @@ def main() -> int:
                 ev = json.loads(raw)
             except ValueError:
                 continue
-            for c in (ev.get("message") or {}).get("content") or []:
+            if not isinstance(ev, dict):
+                continue
+            msg = ev.get("message") if isinstance(ev.get("message"), dict) else {}
+            for c in msg.get("content") or []:
                 if isinstance(c, dict) and c.get("type") == "tool_use":
                     calls.append((c["id"], c["name"]))
                 if isinstance(c, dict) and c.get("type") == "tool_result":
@@ -63,6 +66,8 @@ def main() -> int:
             err, text = results.get(cid, (True, "no result"))
             lines.append(f"  tool {name}: {'error' if err else 'ok'}  {text[:220]}")
         lines.append(f"$ claude -p ... (exit {run.returncode}) answer: {final[:600]!r}")
+        if not calls:
+            lines.append(f"  stream: {run.stdout[-600:]!r} {run.stderr[-300:]!r}")
         check_ok = any(n.endswith("knos_demand_check") and not results.get(i, (True,))[0] for i, n in calls)
         sigs = SIG.findall(final)
         st = confirmed(sigs[0]) if sigs else None
