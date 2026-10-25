@@ -208,6 +208,7 @@ class _Run:
         self.calls: list[dict] = []
         self.on_call = on_call or (lambda c: None)       # the agent streams each call to the page as it happens
         self._inflight: dict = {}                          # prefetched questions still being answered: key -> Future
+        self.deadline: float | None = None                 # time.monotonic() past which only essential questions wait
         self._numbering = threading.Lock()                 # parts of a report ask at once; each call keeps one number
 
     def prefetch(self, calls: list[tuple[str, dict]]) -> None:
@@ -243,13 +244,21 @@ class _Run:
         params, dropped = self.guide(params) if path == "/v2/insights" else (params, [])
         fut = self._inflight.pop(_key(path, params), None)
         failed = None
+        # the check's time budget (CHECK_BUDGET_S): past it, a question that is not essential is left out, said so
+        left = None if self.deadline is None or what.startswith(ESSENTIAL) else self.deadline - time.monotonic()
+        if left is not None:
+            wait_s = max(0.2, left) if wait_s is None else max(0.2, min(wait_s, left))
+            if fut is None and left <= 0:
+                self._add({"call": f"GET {path}", "what": what, "params": params, "ms": 0,
+                           "error": f"left out: the check's {CHECK_BUDGET_S:g} s budget was spent before it was asked"})
+                return None, None
         if fut is not None:
             try:
                 failed = fut.result(timeout=wait_s)
             except Exception:  # noqa: BLE001 - concurrent.futures.TimeoutError: not answered within wait_s
                 if wait_s is not None and not fut.done():
                     self._add({"call": f"GET {path}", "what": what, "params": params, "ms": _ms(t0),
-                               "error": f"Qloo had not answered within {wait_s:g} s; left out of this report (it decides nothing)"})
+                               "error": f"Qloo had not answered within {wait_s:g} s; left out of this report"})
                     return None, None
         if dropped:
             what += f" (not sent: {', '.join(dropped)}, which Qloo ignores for {params.get('filter.type')})"
@@ -591,6 +600,7 @@ def _informative(rows: list[dict]) -> list[dict]:
     return [a for a in rows if isinstance(a.get("affinity"), (int, float)) and a["affinity"] > RULES["informative_affinity"]]
 
 
+CHECK_BUDGET_S = 8.0      # a demand check's time budget: past it, a question that is not essential is left out, said so
 HEAT_CELLS = 50           # the heatmap cells read (the cache keeps Qloo's first 50): metros.py needs 3 in one metro
 MAP_WAIT_S = 8.0          # how long the check waits, at the end, for Qloo's heatmap (the slowest answer): the verdict reads
                           # none of it, but the launch city and the pre-order target do (metros.py); at 2 s a cold cache lost it
@@ -988,6 +998,7 @@ def _demand_check(idea: str, place: str | None = None, leader: str | None = None
     client = client or Client()
     today = today or dt.datetime.now(dt.timezone.utc).date()
     run = _Run(client, on_call)
+    run.deadline = time.monotonic() + CHECK_BUDGET_S
     ok, why = client.ready()
     empty = {"product_type": None, "words": content_words(idea, place), "matches": [], "unrelated": [], "excluded": [], "leader": None,
              "tags": [], "who": None, "where": [], "places": [], "audiences": [], "who_wants": [], "also_love": None, "launch": None, "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
