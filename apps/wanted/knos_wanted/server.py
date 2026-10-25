@@ -74,7 +74,7 @@ DEMAND_CORS = ("/api/check", "/api/demand/fields", "/api/cross", "/api/report", 
 ROUTES = {"/api/trace/keep": "product", "/api/qloo-diff": "product", "/api/open-signals": "check", "/api/ready/card": "product", "/api/company/need": "product", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
-          "/api/check": "check", "/api/research": "check", "/api/cross": "check", "/api/factor": "lock",
+          "/api/check": "check", "/api/test/record": "check", "/api/research": "check", "/api/cross": "check", "/api/factor": "lock",
           "/api/fund": "lock", "/api/task/submit": "check", "/api/anchor": "lock",
           "/api/auth/email": "auth", "/api/auth/email/verify": "auth", "/api/preorder": "lock", "/api/milestone": "milestone", "/api/refund": "lock",
           "/api/auth/challenge": "auth", "/api/auth/passkey/register": "auth", "/api/auth/passkey/login": "auth",
@@ -708,7 +708,7 @@ def make_handler(state: State):
                     return self._send(401, {"error": "sign in first (passkey, Google or a guest label)"})
                 if u.path == "/api/milestone" and not state.allow("commitment:" + str(body.get("commitment", ""))[:64], "milestone_one"):
                     return self._send(429, {"error": "this commitment had 10 evidence posts in the last hour; try again later"})
-                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/research", "/api/cross", "/api/trace/keep", "/api/qloo-diff", "/api/open-signals", "/api/ready/card", "/api/company/need") + SIGNED_IN:
+                if u.path.startswith("/api/auth/") or u.path in ("/api/check", "/api/test/record", "/api/research", "/api/cross", "/api/trace/keep", "/api/qloo-diff", "/api/open-signals", "/api/ready/card", "/api/company/need") + SIGNED_IN:
                     return self._send(200, self.route_v2(u.path, body))
                 return self._send(200, self.route(u.path, body))
             except (auth.AuthError, wallets.NeedPasskey) as why:
@@ -855,6 +855,9 @@ def make_handler(state: State):
                                          client=Client(key="") if without else state.rest, exclude=ex, options=opts, stage=stage)
                 if without:
                     rep["without_qloo"] = True
+                else:
+                    from . import recorded                   # Qloo not answering: said, or the sample's last real card
+                    rep = recorded.honest(idea, rep)
                 rep["fees"] = preorder.fee_line()
                 card = state.cards.get(str(body.get("research") or ""))
                 if card:
@@ -865,6 +868,11 @@ def make_handler(state: State):
                 from . import vectors
                 vectors.note("check", rep["elapsed_ms"], rep, state)   # speed and cost, measured; a real verdict is the proof shown first
                 return rep
+            if path == "/api/test/record" and os.environ.get("KNOS_TEST_MODE") == "1":   # test mode only: a stub last card
+                from . import recorded
+                with recorded._lock:
+                    recorded._last[recorded.key(str(body.get("key") or ""))] = dict(body.get("card") or {})
+                return {"kept": True}
             if path == "/api/company/need":                # companies mode: one sentence -> Ready brief, private check, opened milestone
                 if not self.user:
                     raise auth.AuthError("sign in first: company SSO (one press), or any Knos session")
@@ -1063,7 +1071,14 @@ def serve(host: str | None = None, port: int | None = None) -> None:
     threading.Thread(target=tasks.available, daemon=True).start()        # seeds the demo round when no round is open
     valley.start_sweeper()                 # missed milestone deadlines: refund + reopen, every KNOS_VALLEY_SWEEP_S seconds
     from . import qloo_harness
-    threading.Thread(target=qloo_harness.harness().warm, daemon=True, name="qloo-harness-warm").start()   # Qloo's harness, started before the first check
+    threading.Thread(target=qloo_harness.harness().warm, daemon=True, name="qloo-harness-warm").start()
+
+    def fill():                                          # the sample chips' last real cards, in memory: one probe first
+        from . import recorded
+        said = recorded.fill_at_boot(state.rest, lambda idea: check.demand_check(idea, client=state.rest),
+                                     lambda ref: agent.start(state, ref=ref))
+        print(f"knos recorded: {said}", flush=True)
+    threading.Thread(target=fill, daemon=True, name="knos-recorded").start()   # Qloo's harness, started before the first check
     front.start(state)                     # the seeded research products (a wiped disk never shows an empty app)
     httpd = ThreadingHTTPServer((host, port), make_handler(state))
     rest_ok, rest_why = state.rest.ready()

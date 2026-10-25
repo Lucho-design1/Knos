@@ -205,6 +205,8 @@ def run(job: dict, state) -> None:
         idea = (product or (card or {}).get("product") or job.get("idea") or "").strip()
         rep = check.demand_check(idea, job.get("place"), job.get("leader"), client=state.rest, on_call=_qloo_step(job),
                                  options=job.get("options"))
+        from . import recorded                       # Qloo not answering: said, or the sample's last real card
+        rep = recorded.honest(job.get("ref") or idea, rep)
         rep["fees"] = preorder.fee_line()
         if card:
             rep["research"] = {**card, "why_never_crossed": research.why_never_crossed(card, rep)}

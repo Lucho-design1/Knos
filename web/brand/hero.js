@@ -100,16 +100,21 @@
     // visitor can pick another match, or none of them; the verdict's reason is Knos's rule, apart from Qloo's data
     const lead = r.leader && typeof r.leader === "object" ? r.leader : null, why = (d.reasons || [])[0];
     const empty = !(age || gender) && !segs.length && !wants.length && !cities.length && !tier && !also.length;     // no part answered: one next step, no empty boxes
-    if (empty && d.verdict !== "OPEN") [word, cls] = ["No taste data from Qloo", "unknown"];   // missing data is not a verdict
+    if (empty && d.verdict !== "OPEN" && !r.qloo_down) [word, cls] = ["No taste data from Qloo", "unknown"];   // a real empty answer only
+    // Qloo not answering (apps/wanted recorded.py): said first, with the sample's last real card when there is one
+    const at = (t) => String(t || "").replace("T", " ").slice(0, 16) + " UTC";
+    const down = r.stale ? `Qloo is not answering right now (HTTP ${r.stale.code}). Showing the last real answer from ${at(r.stale.from)}.`
+      : r.qloo_down ? `Qloo is not answering right now (HTTP ${r.qloo_down.code}). Try again in a few minutes.` : "";
     const others = (r.matches || []).filter((m) => m && m.name && (!lead || m.id !== lead.id)).slice(0, 3);
     const read = lead ? `<p class="k-read" data-part="match">Read as <b>${esc(lead.name)}</b>${label ? "" : ` · Not it? ${others.map((m) =>
       `<button type="button" class="k-chip" data-pick="${esc(m.name)}">${esc(m.name)}</button>`).join(" ")} <button type="button" class="k-chip" data-none="${
       esc([lead.id, ...others.map((m) => m.id)].filter(Boolean).join(","))}">None of these</button>`}</p>` : "";
     return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}" data-not-prose>
+  ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}
   <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
   ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}</header>
   ${empty && r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}
-  ${empty ? `<p class="k-next" data-part="next">Qloo has no taste data for this yet. Name who it is for and what it is like, as in "a vegan meal kit for students, like HelloFresh". Science, B2B or lab work: <a href="${esc(API)}/companies">companies mode</a>.</p>
+  ${empty && !r.qloo_down ? `<p class="k-next" data-part="next">Qloo has no taste data for this yet. Name who it is for and what it is like, as in "a vegan meal kit for students, like HelloFresh". Science, B2B or lab work: <a href="${esc(API)}/companies">companies mode</a>.</p>
   <form class="k-like" data-like><label>Most like <input name="like" maxlength="80" placeholder="a product or brand you know" aria-label="What is it most like?"></label> <button type="submit">Check</button></form>` : `<div class="k-parts">`}
     ${empty ? "" : `<section class="k-part" data-part="audience" data-qloo><h3>Who wants it</h3>
       ${age || gender ? `<p class="k-big">${esc([age, gender].filter(Boolean).join(", "))}</p>` : `<p class="k-none">Qloo did not answer who.</p>`}

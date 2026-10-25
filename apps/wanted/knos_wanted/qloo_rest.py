@@ -105,6 +105,16 @@ def _month(ts: float) -> str:
     return time.strftime("%Y-%m", time.gmtime(ts))
 
 
+
+def forced() -> int | None:
+    """Test mode only (KNOS_TEST_MODE=1): QLOO_FORCE_STATUS makes every Qloo call fail with that HTTP code. Both are
+    unset in production, where this is always None."""
+    if os.environ.get("KNOS_TEST_MODE") != "1":
+        return None
+    v = os.environ.get("QLOO_FORCE_STATUS", "")
+    return int(v) if v.isdigit() else None
+
+
 class Client:
     def __init__(self, key: str | None = None, base: str | None = None, folder: Path | None = None, budget: int | None = None,
                  opener=None, clock=time.time, bucket: _Bucket | None = None):
@@ -124,6 +134,8 @@ class Client:
         return bool(self._key)
 
     def ready(self) -> tuple[bool, str]:
+        if forced():
+            return True, f"test mode: every Qloo call answers HTTP {forced()}"
         if not self._key:
             return False, "no Qloo API key on this server"
         if not self.base.startswith("https://"):
@@ -198,6 +210,8 @@ class Client:
         """One Qloo call. GET, except when a parameter Qloo takes only in a JSON body is set (POST_ONLY): then POST."""
         params = {k: v for k, v in (params or {}).items() if v is not None and v != ""}
         method = "POST" if any(k in POST_ONLY for k in params) else "GET"
+        if forced():
+            raise QlooError(f"{method} {path}: HTTP {forced()} (test mode)")
         k = cache_key(method, path, params)
         src = {"call": f"{method} {path}", "params": params}
         hit = self._cached(k)
