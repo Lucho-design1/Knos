@@ -41,6 +41,29 @@ def usage_html(u: dict) -> str:
             f'<b data-n="payouts">{e(u["payouts"])}</b> payment program transactions on devnet')
 
 
+def oidc_latest() -> tuple[str, str] | None:
+    """The newest successful transaction of the knos_oidc program on devnet: (signature, day)."""
+    import datetime as dt
+    pid = json.loads((Path(__file__).resolve().parents[1] / "src" / "knos" / "settle" / "v2" / "program_ids.json").read_text())["knos_oidc"]
+    body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "getSignaturesForAddress", "params": [pid, {"limit": 20, "commitment": "confirmed"}]}).encode()
+    try:
+        with urllib.request.urlopen(urllib.request.Request("https://api.devnet.solana.com", body, {"Content-Type": "application/json"}), timeout=60) as r:
+            rows = json.loads(r.read()).get("result") or []
+    except Exception as why:  # noqa: BLE001
+        print(f"live_snapshot: knos_oidc: {type(why).__name__}")
+        return None
+    x = next((t for t in rows if t.get("err") is None), None)
+    if not x:
+        return None
+    day = dt.datetime.fromtimestamp(x["blockTime"], dt.timezone.utc).strftime("%Y-%m-%d") if x.get("blockTime") else ""
+    return x["signature"], day
+
+
+def oidc_html(sig: str, day: str) -> str:
+    return (f'Latest signature check on devnet{", " + html.escape(day) if day else ""} · <a href="https://explorer.solana.com/tx/'
+            f'{html.escape(sig)}?cluster=devnet" target="_blank" rel="noopener">the transaction</a>')
+
+
 def main(path: str) -> int:
     p = Path(path)
     s = p.read_text(encoding="utf-8")
@@ -48,6 +71,10 @@ def main(path: str) -> int:
     if x and x.get("found") and (x.get("units") or 0) > 0 and re.fullmatch(r"https://explorer\.solana\.com/tx/[1-9A-HJ-NP-Za-km-z]+\?cluster=devnet", str(x.get("explorer"))):
         s, n = re.subn(r'(<p class="k-paid" id="k-paid" data-not-prose>).*?(</p>)', lambda m: m[1] + paid_html(x) + m[2], s, count=1, flags=re.S)
         print(f"live_snapshot: payout {x['units']} units, {x.get('signature', '')[:8]}... ({n} line)")
+    sig = oidc_latest()
+    if sig:
+        s, n = re.subn(r'(<p class="k-paid" id="k-oidc" data-not-prose>).*?(</p>)', lambda m: m[1] + oidc_html(*sig) + m[2], s, count=1, flags=re.S)
+        print(f"live_snapshot: knos_oidc {sig[0][:8]}... ({n} line)")
     u = get("/api/usage")
     if u and isinstance(u.get("payouts"), int):
         s, n = re.subn(r'<p class="fine" id="k-usage" data-not-prose hidden></p>',

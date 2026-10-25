@@ -298,7 +298,17 @@ ${src(h, price.src)}</section>
   const later = (f) => { const go = () => { if (moved) return; moved = true; f(); };
     for (const t of ["pointermove", "pointerdown", "touchstart", "keydown", "scroll", "focusin"]) addEventListener(t, go, { once: true, passive: true, capture: true }); };
   later(() => {
-    const paid = document.getElementById("k-paid"), use = document.getElementById("k-usage");
+    const paid = document.getElementById("k-paid"), use = document.getElementById("k-usage"), oidc = document.getElementById("k-oidc");
+    // the newest signature check knos_oidc ran on devnet (the program reads GitHub's signature itself), from devnet
+    if (oidc) fetch("https://api.devnet.solana.com", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getSignaturesForAddress", params: ["FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W", { limit: 20, commitment: "confirmed" }] }) })
+      .then((r) => r.json()).then((j) => {
+        const x = (j.result || []).find((t) => t.err === null);
+        if (!x) return;
+        const day = x.blockTime ? new Date(x.blockTime * 1000).toISOString().slice(0, 10) : "";
+        oidc.innerHTML = `Latest signature check on devnet${day ? `, ${esc(day)}` : ""} · <a href="https://explorer.solana.com/tx/${esc(x.signature)}?cluster=devnet" target="_blank" rel="noopener">the transaction</a>`;
+        oidc.dataset.live = "1";
+      }).catch(() => {});
     if (paid) get("/api/agent/payout/latest").then((x) => {
       if (!x || !x.found || !(x.units > 0)) return;
       const day = String(x.at || "").slice(0, 10);
@@ -352,25 +362,27 @@ ${src(h, price.src)}</section>
   <p class="k-agent" data-not-prose><code>claude mcp add --transport http knos https://knos.onrender.com/mcp</code></p>
 </div>
 <!-- /k-hero -->
+<!-- k-steps -->
+<section id="k-steps" class="k-steps" aria-label="How Knos works">
+  <style>@media (min-width: 700px) { #k-steps { padding-top: 24vh; } }</style>
+  <ol class="k-step-list">
+    <li><h3>Check demand</h3><p>Qloo shows who wants it and the city to launch in.</p></li>
+    <li><h3>Ready brief</h3><p>That city and its pre-order target become the terms.</p></li>
+    <li><h3>Money held</h3><p>Pre-orders wait in a program until the target is met.</p></li>
+    <li id="paid-on-proof"><h3>Paid on proof</h3><p>GitHub signs which checks ran, and a Solana program checks that signature itself before it pays.</p>
+      <p class="k-paid" id="k-oidc" data-not-prose>Latest signature check on devnet, 2026-10-25 · <a href="https://explorer.solana.com/tx/pCpGcxBNpazogpF1qio85u4wC7ygeNGaJ6TcXDgat84jEPcJQz9bne4giqHXM4Ym8YSKjU7AQQxtb21eYeG8qq8?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
+      <p class="k-paid" id="k-paid" data-not-prose>Agent paid <b>5 test units</b> for verified work, 2026-10-24 · <a href="https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
+      <details class="k-more" id="agent-key" data-not-prose><summary>Agents with a key</summary><p class="fine">Put this in .mcp.json and the key in KNOS_AGENT_KEY:</p><pre><code>{"mcpServers":{"knos":{"type":"http","url":"https://knos.onrender.com/mcp","headers":{"Authorization":"Bearer ${KNOS_AGENT_KEY}"}}}}</code></pre></details>
+      <p class="fine"><a href="https://drexthealpha.github.io/Knos/#check-a-pull-request" id="steps-check">Check a pull request</a> · <a href="https://drexthealpha.github.io/Knos/pricing.html">Pricing</a> · <a href="https://drexthealpha.github.io/Knos/how-we-test.html">How we test Knos</a></p></li>
+  </ol>
+  <p class="fine" id="k-usage" data-not-prose hidden></p>
+</section>
+<!-- /k-steps -->
     <h2 id="homeH">Open for backing</h2>
     <ul id="homeList" class="plist hp" data-not-prose aria-busy="true" aria-live="polite">
       <li class="card hp-card sk" aria-hidden="true"></li><li class="card hp-card sk" aria-hidden="true"></li><li class="card hp-card sk" aria-hidden="true"></li>
     </ul>
     <p class="small"><a href="#research" data-i18n="home_own">Cross your own paper</a> · <a href="/verify" data-i18n="verify_link">How we verify</a></p>
-<!-- k-steps -->
-<section id="k-steps" class="k-steps" aria-label="How Knos works">
-  <ol class="k-step-list">
-    <li><h3>Check demand</h3><p>Qloo shows who wants it and the city to launch in.</p></li>
-    <li><h3>Ready brief</h3><p>That city and its pre-order target become the terms.</p></li>
-    <li><h3>Money held</h3><p>Pre-orders wait in a program on Solana until the target is met.</p></li>
-    <li id="paid-on-proof"><h3>Paid on proof</h3><p>The pull request's checks pass, and the program on Solana pays.</p>
-      <p class="k-paid" id="k-paid" data-not-prose>Agent paid <b>5 test units</b> for verified work, 2026-10-24 · <a href="https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
-      <details class="k-more" id="agent-key" data-not-prose><summary>Agents with a key</summary><p class="fine">Put this in .mcp.json and the key in KNOS_AGENT_KEY:</p><pre><code>{"mcpServers":{"knos":{"type":"http","url":"https://knos.onrender.com/mcp","headers":{"Authorization":"Bearer ${KNOS_AGENT_KEY}"}}}}</code></pre></details>
-      <p class="fine"><a href="https://drexthealpha.github.io/Knos/pricing.html">Pricing</a> · <a href="https://drexthealpha.github.io/Knos/how-we-test.html">How we test Knos</a></p></li>
-  </ol>
-  <p class="fine" id="k-usage" data-not-prose hidden></p>
-</section>
-<!-- /k-steps -->
   </section>
 
   <!-- RESEARCHER -->

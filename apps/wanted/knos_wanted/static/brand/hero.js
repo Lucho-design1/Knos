@@ -198,7 +198,17 @@ ${src(h, price.src)}</section>
   const later = (f) => { const go = () => { if (moved) return; moved = true; f(); };
     for (const t of ["pointermove", "pointerdown", "touchstart", "keydown", "scroll", "focusin"]) addEventListener(t, go, { once: true, passive: true, capture: true }); };
   later(() => {
-    const paid = document.getElementById("k-paid"), use = document.getElementById("k-usage");
+    const paid = document.getElementById("k-paid"), use = document.getElementById("k-usage"), oidc = document.getElementById("k-oidc");
+    // the newest signature check knos_oidc ran on devnet (the program reads GitHub's signature itself), from devnet
+    if (oidc) fetch("https://api.devnet.solana.com", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getSignaturesForAddress", params: ["FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W", { limit: 20, commitment: "confirmed" }] }) })
+      .then((r) => r.json()).then((j) => {
+        const x = (j.result || []).find((t) => t.err === null);
+        if (!x) return;
+        const day = x.blockTime ? new Date(x.blockTime * 1000).toISOString().slice(0, 10) : "";
+        oidc.innerHTML = `Latest signature check on devnet${day ? `, ${esc(day)}` : ""} · <a href="https://explorer.solana.com/tx/${esc(x.signature)}?cluster=devnet" target="_blank" rel="noopener">the transaction</a>`;
+        oidc.dataset.live = "1";
+      }).catch(() => {});
     if (paid) get("/api/agent/payout/latest").then((x) => {
       if (!x || !x.found || !(x.units > 0)) return;
       const day = String(x.at || "").slice(0, 10);

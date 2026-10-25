@@ -19,6 +19,8 @@ def _words(html: str) -> list[str]:
 
 def _section(sid: str) -> str:
     page = re.sub(r"(<script\b[^>]*>).*?(</script>)", r"\1\2", PAGE, flags=re.S)    # an inline script's markup is not the page's
+    # the four steps under the first screen (web/brand/steps.html) are their own part, below the fold: not its prose
+    page = re.sub(r"<!-- k-steps -->.*?<!-- /k-steps -->", "", page, flags=re.S)
     i = page.index(f'<section id="{sid}"')
     return page[i:page.index("</section>", i)]
 
@@ -76,7 +78,7 @@ def test_the_page_decides_its_first_view_before_the_first_paint_and_the_router_k
 
 def test_how_we_verify_is_one_page_of_short_plain_lines():
     v = _section("view-verify")
-    assert '<h1 id="verify-h">How we verify</h1>' in v
+    assert '<h2 id="verify-h">How we verify</h2>' in v
     items = re.findall(r"<li><h2>(.*?)</h2><p>(.*?)</p></li>", v, re.S)
     assert len(items) >= 5
     for head, body in items:

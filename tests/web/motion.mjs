@@ -99,8 +99,8 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   if (width === 1280) {
     const bar = await page.$$eval("#nav > a", (l) => l.filter((a) => a.offsetParent !== null).map((a) => a.textContent));
     check("words: the bar shows six words of links and More", bar.join() === menuOf(root).bar.join() && bar.join(" ").split(" ").length <= 6 && await page.isVisible("#more-button") && (await page.$$eval("#more-list a", (l) => l.filter((a) => a.offsetParent !== null).length)) === 0, bar);
-    const hero = await page.evaluate(() => ({ h1: document.querySelector("h1").textContent.trim(), fact: document.getElementById("hero-fact").textContent.trim().split(/\s+/).length,
-      order: [...document.querySelectorAll(".hero h1, .hero #hero-fact, .hero .actions, .hero #mark3d, #demo")].map((e) => e.id || e.className || e.tagName),
+    const hero = await page.evaluate(() => ({ h1: document.getElementById("check").textContent.trim(), fact: document.getElementById("hero-fact").textContent.trim().split(/\s+/).length,
+      order: [...document.querySelectorAll(".hero #check, .hero #hero-fact, .hero .actions, .hero #mark3d, #demo")].map((e) => e.id || e.className || e.tagName),
       demoTop: document.getElementById("demo").getBoundingClientRect().top, fold: innerHeight, door: !!document.getElementById("front-door") }));   // with the front door (0.3.17) the round sits below it
     check("words: the outcome, the figure in 18 words or fewer, two buttons, the mark, then the demo at the fold", hero.h1 === "Check an AI agent's pull request before it is paid." && hero.fact <= 18
       && (hero.door ? hero.order[0] === "check" && hero.order.at(-1) === "demo" && hero.demoTop >= hero.fold - 1 : hero.order.join() === "check,hero-fact,actions,mark3d,demo" && Math.abs(hero.demoTop - hero.fold) <= 1), hero);

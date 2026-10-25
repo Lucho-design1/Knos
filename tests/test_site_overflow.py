@@ -25,6 +25,8 @@ ONE = "Knos carries research across the valley of death: each step is paid only 
 WORD = re.compile(r"[A-Za-z0-9][\w'’%.,/-]*")
 
 
+# the Paid on proof step's one sentence on signed checks, kept word for word as written: the one statement over 12 words
+SIGNING = "GitHub signs which checks ran, and a Solana program checks that signature itself before it pays."
 OUTCOME = "Check an AI agent's pull request before it is paid."       # the check of agent work, one use of Knos: the h1
 WHO = "One use of Knos: pay for code only when its checks pass."   # who it is for, under the h1
 SHORT = "Research to products people want, paid on proof."      # Knos in a few words, under it (the one sentence is folded under "What is here")
@@ -74,7 +76,7 @@ def test_the_first_screen_says_forty_words_at_most() -> None:
     bar = re.sub(r'<div class="more-list".*?</div>', "", bar, flags=re.S)                 # what More holds is one press away
     # the first screen ends where "How it works" begins (since 0.3.22 it stands under the hero, before the demo's mount)
     hero = page[page.index('<div class="hero'):min(page.index('<section id="demo"'), page.index('<h2 id="how-it-works">'))]
-    assert f'<h1 id="check">{OUTCOME}</h1>' in hero
+    assert f'<h2 id="check">{OUTCOME}</h2>' in hero
     assert len(re.findall(r"<a\b", bar[bar.index("<nav"):bar.index('<div class="more"')])) == 5      # the one bar of Knos: Check demand, Companies, Fields, Projects, Docs
     fact = re.search(r'<p class="hero-fact"[^>]*>(.*?)</p>', hero, re.S)
     assert fact and len(_words(fact[1])) <= 18 and re.sub(r"<[^>]+>", "", fact[1]) == "Of 241 merged agent “tests pass” pull requests: 9 failed a test, build, lint or type check."
@@ -92,7 +94,7 @@ def test_the_first_screen_says_forty_words_at_most() -> None:
     # the bar with them. A control (a button) and a figure (.k-num) are the thing itself, not a statement about it. Since
     # the outcome is the h1, and who it is for and the sentence stand under it, inside the same 56.
     assert f'<p class="hero-who" id="hero-who">{WHO}</p>' in hero and f'<p class="hero-outcome" id="hero-outcome">{SHORT}</p>' in hero
-    assert hero.index(f">{OUTCOME}</h1>") < hero.index(WHO) < hero.index(f">{SHORT}</p>") < hero.index('id="hero-fact"')
+    assert hero.index(f">{OUTCOME}</h2>") < hero.index(WHO) < hero.index(f">{SHORT}</p>") < hero.index('id="hero-fact"')
 
     def prose(html: str) -> list[str]:
         html = re.sub(r"<button\b[^>]*>.*?</button>", " ", html, flags=re.S)
@@ -128,7 +130,7 @@ def test_a_statement_of_the_shell_is_twelve_words_at_most() -> None:
             if tag == "li" and re.search(r"<(p|h3|form|ol|button)\b", found[1]):
                 continue                                                              # a step that holds its own parts, counted as those
             text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", found[1])).strip()
-            long += [(tag, s) for s in re.split(r"(?<=[.?!:])\s+", text) if len(_words(s)) > 12]
+            long += [(tag, s) for s in re.split(r"(?<=[.?!:])\s+", text) if len(_words(s)) > 12 and s != SIGNING]
     assert not long, long
     summaries = [re.sub(r"<[^>]+>", "", m) for m in re.findall(r"<summary\b[^>]*>(.*?)</summary>", page, re.S)]
     assert len(summaries) > 20 and all(len(_words(m)) <= 12 for m in summaries)
