@@ -613,7 +613,8 @@ def _key(path: str, params: dict) -> str:
     return path + "?" + json.dumps(params, sort_keys=True, default=str)
 
 
-def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: dt.date, exclude: set[str]) -> dict:
+def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: dt.date, exclude: set[str],
+           verdict_only: bool = False) -> dict:
     ev: dict = {"product_type": None, "words": [], "matches": [], "unrelated": [], "excluded": [], "leader": None, "tags": [],
                 "who": None, "where": [], "places": [], "audiences": [], "who_wants": [], "also_love": None, "launch": None, "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
     words = content_words(idea, place)
@@ -692,16 +693,17 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         run.prefetch(_also_love_q(sig_ents, "signal.interests.entities"))
     elif ev["tags"]:
         run.prefetch([("/v2/insights", _tag_map_q(ev["tags"][0]["id"], place))])
-    ev["who_wants"] = _who_wants(run, ev["tags"][:3], [m for m in (near or ([lead] if lead else []))][:2], kind)
+    # the verdict card (verdict_only) reads none of who-wants-it, also-loved, the map or the launch: they come with the full card
+    ev["who_wants"] = [] if verdict_only else _who_wants(run, ev["tags"][:3], [m for m in (near or ([lead] if lead else []))][:2], kind)
     via = sig_ents or list(dict.fromkeys(a["tie"]["via_id"] for a in ev["who_wants"] if (a.get("tie") or {}).get("via_id")))[:3]
     key, said = "signal.interests.entities", "the products it matched" if sig_ents else "the top products of its taste tags"
     if not via:                                      # no product carries the taste: the idea's own tags are the signal
         via, key, said = [t["id"] for t in ev["tags"][:3]], "signal.interests.tags", "its taste tags"
-    if not sig_ents and via:
+    if not sig_ents and via and not verdict_only:
         run.prefetch(_also_love_q(via, key) + _launch_q(via, place, key))
-    ev["also_love"] = _also_love(run, via, said, key=key)
+    ev["also_love"] = None if verdict_only else _also_love(run, via, said, key=key)
     if not sig_ents:
-        ev["launch"] = _launch(run, via, place, key=key) if via else None
+        ev["launch"] = _launch(run, via, place, key=key) if via and not verdict_only else None
         return ev
     body, s5 = run.get("/v2/insights", {"filter.type": "urn:demographics", **signal}, "who: age and gender affinity")
     demo = ((body or {}).get("results") or {}).get("demographics") or []
@@ -785,11 +787,13 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
             ev["versus"] = _versus(run, near, lead, signal, ev["audiences"])
     # the independent parts, at once (each its own Qloo calls; the call list is numbered as each answer lands)
     with ThreadPoolExecutor(max_workers=7) as ex:
-        for f in [ex.submit(x) for x in (places, persona, cities, ladder, recommended, trend, versus)]:
+        for f in [ex.submit(x) for x in ((recommended, trend, versus) if verdict_only else (places, persona, cities, ladder, recommended, trend, versus))]:
             f.result()
     ev["price"] = price_tier(every, [p_.get("price_level") for p_ in ev["places"]])
     # the verdict reads no `where` (the brief's launch terms do) and Qloo's heatmap is its slowest answer: read last,
     # so its wait overlaps everything above (it was asked at the start, with the other independent questions)
+    if verdict_only:
+        return ev
     body, s7 = run.get("/v2/insights", q7, f"where: map points in {loc}", wait_s=MAP_WAIT_S)
     for h in (((body or {}).get("results") or {}).get("heatmap") or [])[:HEAT_CELLS]:
         lc, hq = h.get("location") or {}, h.get("query") or {}
@@ -971,16 +975,18 @@ _running_lock = threading.Lock()
 
 
 def demand_check(idea: str, place: str | None = None, leader: str | None = None, client: Client | None = None,
-                 today: dt.date | None = None, exclude: list[str] | None = None, on_call=None, options: dict | None = None) -> dict:
+                 today: dt.date | None = None, exclude: list[str] | None = None, on_call=None, options: dict | None = None,
+                 stage: str | None = None) -> dict:
     """One demand check (_demand_check), CHECKS_AT_ONCE at a time: six at once ran the free instance (512 MB) out of
     memory in champion runs of 24 Oct 2026; the seventh visitor waits seconds instead of every visitor getting a 502."""
     with _checks:
         with _running_lock:
             running[0] += 1
         try:
-            rep = _demand_check(idea, place, leader, client, today, exclude, on_call, options)
-            from . import usage
-            usage.bump(checks=1, briefs=1 if rep.get("brief") else 0)
+            rep = _demand_check(idea, place, leader, client, today, exclude, on_call, options, stage)
+            if stage != "verdict":                    # the verdict card and its full card are one check
+                from . import usage
+                usage.bump(checks=1, briefs=1 if rep.get("brief") else 0)
             return rep
         finally:
             with _running_lock:
@@ -988,7 +994,11 @@ def demand_check(idea: str, place: str | None = None, leader: str | None = None,
 
 
 def _demand_check(idea: str, place: str | None = None, leader: str | None = None, client: Client | None = None,
-                  today: dt.date | None = None, exclude: list[str] | None = None, on_call=None, options: dict | None = None) -> dict:
+                  today: dt.date | None = None, exclude: list[str] | None = None, on_call=None, options: dict | None = None,
+                  stage: str | None = None) -> dict:
+    """stage "verdict": only what the verdict card shows (verdict, matched product, audience), as soon as it is ready;
+    the questions for the map, also-loved and the launch are already sent, and the full check reads their answers."""
+    verdict_only = stage == "verdict"
     from knos import qloo_families
 
     from . import families
@@ -1005,8 +1015,8 @@ def _demand_check(idea: str, place: str | None = None, leader: str | None = None
     ok, why = client.ready()
     empty = {"product_type": None, "words": content_words(idea, place), "matches": [], "unrelated": [], "excluded": [], "leader": None,
              "tags": [], "who": None, "where": [], "places": [], "audiences": [], "who_wants": [], "also_love": None, "launch": None, "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
-    ev = gather(run, idea, place, leader, today, set(exclude or [])) if ok else empty
-    if ok and opts:                                # F1-F8: each asked-for family's own calls, numbered with the rest
+    ev = gather(run, idea, place, leader, today, set(exclude or []), verdict_only) if ok else empty
+    if ok and opts and not verdict_only:                                # F1-F8: each asked-for family's own calls, numbered with the rest
         ev["families"] = families.answer(run, ev, idea, place, opts)
     failed = [c for c in run.calls if c.get("error") and c["what"].startswith(ESSENTIAL)]
     missing = [c for c in run.calls if c.get("error") and c not in failed]
@@ -1042,12 +1052,13 @@ def _demand_check(idea: str, place: str | None = None, leader: str | None = None
                      "venue_price_level": pr.get("venue_price_level"), "venue_check": pr.get("venue_check")}
     from . import metros                           # Qloo sets the money terms: launch city, pre-order target, refund rule
     cells = ev.get("where") or (ev.get("launch") or {}).get("where") or []
-    if ok and (not cells or metros.flat(cells)) and ev.get("tags"):    # no map: asked once more, by the top matched tag
+    if ok and not verdict_only and (not cells or metros.flat(cells)) and ev.get("tags"):    # no map: asked once more, by the top matched tag
         cells = _tag_map(run, ev["tags"][0]["id"], place)
         ev["where_by_tag"] = {"tag": ev["tags"][0]["name"], "cells": len(cells)}
-    rep["terms"] = metros.terms(cells)
-    rep["no_map"] = None if rep["terms"] else metros.NO_MAP
+    rep["terms"] = None if verdict_only else metros.terms(cells)
+    rep["no_map"] = None if rep["terms"] or verdict_only else metros.NO_MAP
     rep["brief"] = metros.brief(idea, rep["terms"]) if rep["terms"] else None
+    rep["stage"] = "verdict" if verdict_only else "full"
     rep["options"] = opts
     rep["grounding"] = families.grounding(rep)
     annotate(rep)

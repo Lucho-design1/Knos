@@ -116,7 +116,7 @@
         a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}${a.tie.via ? `, through ${esc(a.tie.via)}` : ""}</span></li>`).join("")}</ul>`
         : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
     <section class="k-part k-where" data-part="cities" data-qloo data-heat="${heat.length}"><h3>Where to launch</h3>
-      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : `<p class="k-none">Qloo named no launch city.</p>`}${terms ? `<p class="k-terms">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders, all refunded if it falls short.</p>` : r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}${src(h, cities[0]?.src)}</section>
+      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : r.stage === "verdict" ? `<p class="k-none" data-pending>Qloo's map is on its way.</p>` : `<p class="k-none">Qloo named no launch city.</p>`}${terms ? `<p class="k-terms">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders, all refunded if it falls short.</p>` : r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}${src(h, cities[0]?.src)}</section>
     ${also.length ? `<section class="k-part" data-part="also" data-qloo><h3>They also love</h3>${also.map((d) =>
       `<p class="k-also" data-domain="${esc(d.domain)}"><b>${esc(d.domain === "music" ? "Music" : d.domain === "film" ? "Film" : d.domain)}</b> ${
       d.items.map((x) => esc(x.name)).join(", ")}${src(h, d.src)}</p>`).join("")}</section>` : ""}
@@ -139,13 +139,25 @@ ${src(h, price.src)}</section>
     const ref = paper(v), t0 = performance.now();
     said(ref ? "Reading the paper…" : "Asking Qloo…");
     try {
-      const r = ref ? await crossing(ref) : await post("/api/check", { idea: v, ...extra });
+      // the verdict card first (verdict, matched product, audience); the map, also-loved and the launch terms follow
+      // from the full check, whose Qloo questions the first one already sent
+      const r = ref ? await crossing(ref) : await post("/api/check", { idea: v, ...extra, stage: "verdict" });
       slot.innerHTML = card(r);
       slot.last = r;
       slot.dataset.idea = v;
       delete slot.dataset.past;
       slot.dataset.ms = String(Math.round(performance.now() - t0));
       slot.querySelector(".k-verdict")?.focus?.();
+      if (!ref && r.stage === "verdict") {
+        const full = await post("/api/check", { idea: v, ...extra }).catch(() => null);
+        if (full && slot.dataset.idea === v && slot.last === r) {
+          const open = slot.querySelector("details[data-claude]")?.open;
+          slot.innerHTML = card(full);
+          slot.last = full;
+          slot.dataset.full = String(Math.round(performance.now() - t0));
+          if (open) slot.querySelector("details[data-claude]")?.setAttribute("open", "");
+        }
+      }
     } catch (e) {
       slot.innerHTML = `<p class="k-err" role="alert">${esc(e.message || e)}. Try again, or <a href="${esc(APP)}#research">open the full crossing</a>.</p>`;
     } finally { go.disabled = false; root.removeAttribute("aria-busy"); }

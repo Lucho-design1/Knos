@@ -277,6 +277,16 @@ class State:
         self.lock = threading.Lock()
         self.qlock = threading.Lock()        # one Qloo conversation at a time over the one bridge
 
+    def pair(self, key: tuple) -> None:
+        """A verdict card was answered: the full card for the same idea, from the same address, within 5 minutes, is free."""
+        with self.lock:
+            self.__dict__.setdefault("pairs", {})[key] = time.monotonic()
+
+    def paired(self, key: tuple) -> bool:
+        with self.lock:
+            t = self.__dict__.setdefault("pairs", {}).pop(key, None)
+        return t is not None and time.monotonic() - t < 300
+
     def allow(self, client: str, kind: str) -> bool:
         n, window = LIMITS[kind]
         now = time.monotonic()
@@ -373,12 +383,15 @@ def make_handler(state: State):
             self.wfile.write(data)
 
         def _json(self) -> dict:
+            if getattr(self, "_body", None) is not None:      # read once: the check's rate limit reads it first
+                return self._body
             n = int(self.headers.get("Content-Length") or 0)
             if n > (4 * MAX_BODY if urlparse(self.path).path == "/api/qloo-diff" else MAX_BODY):   # the operator's table: 3 arms x 20 rows
                 raise ValueError("request too large")
             got = json.loads(self.rfile.read(n) or b"{}")
             if not isinstance(got, dict):
                 raise ValueError("send a JSON object")
+            self._body = got
             return got
 
         def _base(self) -> str:
@@ -671,8 +684,17 @@ def make_handler(state: State):
             kind = ROUTES.get(u.path)
             if kind is None:
                 return self._send(404, {"error": "not found"})
+            # a verdict card and the full card that follows it for the same idea are one check against the limit
+            pair, free = None, False
+            if u.path == "/api/check":
+                try:
+                    pb = self._json()
+                except ValueError as why:
+                    return self._send(400, {"error": str(why)[:200]})
+                pair = (self._client(), " ".join(str(pb.get("idea") or "").split()).lower()[:200])
+                free = pb.get("stage") != "verdict" and state.paired(pair)
             # the operator's own measured runs (scripts/qloo_vs_open_signals.py) carry its key and skip the per-address limits
-            if not product_routes._admin(self.headers.get("X-Knos-Admin")) and not state.allow(self._client(), kind):
+            if not product_routes._admin(self.headers.get("X-Knos-Admin")) and not free and not state.allow(self._client(), kind):
                 return self._send(429, {"error": "too many requests from this address; try again in a few minutes"})
             try:
                 body = self._json()
@@ -821,8 +843,11 @@ def make_handler(state: State):
                 privacy.check({k: v for k, v in opts.items() if isinstance(v, str) and k != "exclude"})   # exclude: Qloo ids, checked above
                 without = body.get("without_qloo") is True        # the same check with the key unset (the comparison)
                 t0 = time.perf_counter()
+                stage = "verdict" if body.get("stage") == "verdict" else None
+                if stage:
+                    state.pair((self._client(), " ".join(idea.split()).lower()[:200]))
                 rep = check.demand_check(idea, _text(body.get("place")), _text(body.get("leader"), 80),
-                                         client=Client(key="") if without else state.rest, exclude=ex, options=opts)
+                                         client=Client(key="") if without else state.rest, exclude=ex, options=opts, stage=stage)
                 if without:
                     rep["without_qloo"] = True
                 rep["fees"] = preorder.fee_line()

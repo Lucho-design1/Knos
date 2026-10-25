@@ -175,6 +175,26 @@ class Client:
         os.replace(tmp, d / f"{k}.qloo")
 
     def get(self, path: str, params: dict | None = None) -> dict:
+        """One Qloo call, asked once: a question already in flight (a verdict's prefetch, the full card asking the same)
+        is waited for and then read from the cache, never sent twice."""
+        clean = {k: v for k, v in (params or {}).items() if v is not None and v != ""}
+        key = cache_key("POST" if any(k in POST_ONLY for k in clean) else "GET", path, clean)
+        lock = self.__dict__.setdefault("_flight_lock", threading.Lock())
+        flight = self.__dict__.setdefault("_flight", {})
+        with lock:
+            waiting = flight.get(key)
+            if waiting is None:
+                flight[key] = threading.Event()
+        if waiting is not None:
+            waiting.wait(timeout=TIMEOUT_S + 5)
+            return self._get(path, params)
+        try:
+            return self._get(path, params)
+        finally:
+            with lock:
+                flight.pop(key).set()
+
+    def _get(self, path: str, params: dict | None = None) -> dict:
         """One Qloo call. GET, except when a parameter Qloo takes only in a JSON body is set (POST_ONLY): then POST."""
         params = {k: v for k, v in (params or {}).items() if v is not None and v != ""}
         method = "POST" if any(k in POST_ONLY for k in params) else "GET"
