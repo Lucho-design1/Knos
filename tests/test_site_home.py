@@ -56,7 +56,9 @@ def test_the_bare_address_opens_on_the_products_with_three_one_tap_actions_each(
     assert 'data-not-prose aria-label="Research products open for backing now"' in home
     # what is technical and the check of agent work are one press away, under "More" (web/brand/bar.html)
     bar_all = PAGE[PAGE.index('<header class="bar k-bar"'):PAGE.index("</header>")]
-    assert '<a href="#verify">How we verify</a>' in bar_all and '<a href="#check-a-pull-request" id="go-check">Check a pull request</a>' in bar_all
+    # "More" holds 7 at most (How we verify and the role pages stay at their own addresses, #verify and the rest)
+    assert '<a href="#check-a-pull-request" id="go-check">Check a pull request</a>' in bar_all and 'how-we-test.html">How we test</a>' in bar_all
+    assert len(re.findall(r"<a", bar_all[bar_all.index('id="more-list"'):])) <= 7 + 1          # the 7 and the Sign in link after them
 
 
 def test_the_page_decides_its_first_view_before_the_first_paint_and_the_router_knows_it():
