@@ -600,7 +600,10 @@ def _informative(rows: list[dict]) -> list[dict]:
     return [a for a in rows if isinstance(a.get("affinity"), (int, float)) and a["affinity"] > RULES["informative_affinity"]]
 
 
-CHECK_BUDGET_S = 8.0      # a demand check's time budget: past it, a question that is not essential is left out, said so
+# a demand check's time budget: past it, a question that is not essential is left out, said so. Off: at 8 s, 20 cold
+# ideas after a redeploy came back with a p95 of 10.60 s (from 15.87 s) but only 6 of 20 with heatmap cells (from 12),
+# so most first checks lost their launch city; a launch city is worth the seconds
+CHECK_BUDGET_S: float | None = None
 HEAT_CELLS = 50           # the heatmap cells read (the cache keeps Qloo's first 50): metros.py needs 3 in one metro
 MAP_WAIT_S = 8.0          # how long the check waits, at the end, for Qloo's heatmap (the slowest answer): the verdict reads
                           # none of it, but the launch city and the pre-order target do (metros.py); at 2 s a cold cache lost it
@@ -998,7 +1001,7 @@ def _demand_check(idea: str, place: str | None = None, leader: str | None = None
     client = client or Client()
     today = today or dt.datetime.now(dt.timezone.utc).date()
     run = _Run(client, on_call)
-    run.deadline = time.monotonic() + CHECK_BUDGET_S
+    run.deadline = time.monotonic() + CHECK_BUDGET_S if CHECK_BUDGET_S else None
     ok, why = client.ready()
     empty = {"product_type": None, "words": content_words(idea, place), "matches": [], "unrelated": [], "excluded": [], "leader": None,
              "tags": [], "who": None, "where": [], "places": [], "audiences": [], "who_wants": [], "also_love": None, "launch": None, "trend": None, "versus": None, "named_audience": [], "buyer_group": None, "recommended": None, "cities": [], "price": None, "persona": [], "persona_all": [], "ladder": [], "tag_families": []}
