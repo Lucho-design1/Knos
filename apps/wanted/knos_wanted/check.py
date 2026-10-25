@@ -511,6 +511,18 @@ def _flat(items: list[dict]) -> bool:
     return len(items) > 1 and len({x.get("affinity") for x in items}) == 1
 
 
+def _also_love_q(ents: list[str], key: str, take: int = 4) -> list[tuple[str, dict]]:
+    return [("/v2/insights", {"filter.type": t, "take": take, key: ",".join(ents)}) for _, t in ALSO_LOVE] if ents else []
+
+
+def _launch_q(ents: list[str], place: str | None, key: str) -> list[tuple[str, dict]]:
+    loc = place or DEFAULT_PLACE
+    cc = market_country(loc)
+    sig = {key: ",".join(ents)}
+    return [("/v2/insights", {"filter.type": "urn:entity:destination", "take": 8, **({"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}), **sig}),
+            ("/v2/insights", {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **sig})]
+
+
 def _also_love(run: _Run, ents: list[str], via: str, take: int = 4, key: str = "signal.interests.entities") -> dict | None:
     """What the people of this taste also love, in two other Qloo domains (artists and films, /v2/insights with
     signal.interests.entities, or .tags when no product carries the taste): shown only, the verdict does not read it."""
@@ -562,9 +574,13 @@ def _launch(run: _Run, ents: list[str], place: str | None, key: str = "signal.in
     return {"cities": cities, "where": where, "via": "the top products of its taste tags"} if cities or where else None
 
 
+def _tag_map_q(tag: str, place: str | None) -> dict:
+    return {"filter.type": "urn:heatmap", "filter.location.query": place or DEFAULT_PLACE, "take": 5, "signal.interests.tags": tag}
+
+
 def _tag_map(run: _Run, tag: str, place: str | None) -> list[dict]:
     """Qloo's heatmap for the idea's top matched tag, when the idea itself brought no cells."""
-    q = {"filter.type": "urn:heatmap", "filter.location.query": place or DEFAULT_PLACE, "take": 5, "signal.interests.tags": tag}
+    q = _tag_map_q(tag, place)
     body, s7 = run.get("/v2/insights", q, f"where: map points for the top matched tag {tag}", wait_s=MAP_WAIT_S)
     return [{"lat": (h.get("location") or {}).get("latitude"), "lon": (h.get("location") or {}).get("longitude"),
              "affinity": (h.get("query") or {}).get("affinity"), "src": s7}
@@ -638,34 +654,42 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
             if t.get("id") and t["id"] not in {x["id"] for x in ev["tags"]} and {_norm(x) for x in tokens(t.get("name"))} & set(words):
                 ev["tags"].append({"name": t.get("name"), "id": t["id"], "popularity": t.get("popularity"), "src": s4})
     sig_ents = [m["id"] for m in near] or ([lead["id"]] if lead else [])
+    # every question that needs only the matched products (or, with none, the top tag's map for the retry) goes out now,
+    # before "who wants it": the verdict waits on the slowest of them, not on their sum
+    if sig_ents:
+        signal = {"signal.interests.entities": ",".join(sig_ents), **({"signal.location.query": place} if place else {})}
+        loc = place or DEFAULT_PLACE
+        ents_only = {"signal.interests.entities": signal["signal.interests.entities"]}
+        cc = market_country(loc)
+        q10 = {"filter.type": "urn:entity:destination", "take": 8, "feature.explainability": "true",
+               **({"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}), **ents_only}
+        hotel = {"filter.hotel_class.min": "3"} if {"hotel", "hotels", "resort", "stay"} & set(words) else {}
+        q6 = {"filter.type": "urn:entity:place", **({"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}), "take": 5, "filter.properties.business_rating.min": "3.5",
+              "filter.external.exists": "tripadvisor", **hotel, **ents_only,
+              # the idea's taste tags, any of them (union), so a place matches on one: broadened away when they empty it
+              **({"filter.tags": ",".join(t["id"] for t in ev["tags"][:3]), "operator.filter.tags": "union"} if ev["tags"] else {})}
+        q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **ents_only}     # Qloo's API refuses output.heatmap.boundary (400)
+        q11 = {"filter.type": "urn:tag", "diversify.by": "subtype", "diversify.take": "2", "take": 8, **signal}
+        q6_broad = {k: v for k, v in q6.items() if not k.startswith(run.NARROWING)}            # its broadened retry, ready too
+        # every question that needs only the matched products, at once: the first verdict waits on the slowest of them,
+        # not on their sum; the in-order calls below are then answered from the cache, numbered as always
+        run.prefetch([("/v2/insights", {"filter.type": "urn:demographics", **signal}), ("/v2/insights", q6), ("/v2/insights", q6_broad),
+                      ("/v2/insights", q7), ("/v2/insights", q11), ("/v2/insights", q10),
+                      ("/v2/insights", {"filter.type": "urn:audience", "take": 20, **signal})])
+        run.prefetch(_also_love_q(sig_ents, "signal.interests.entities"))
+    elif ev["tags"]:
+        run.prefetch([("/v2/insights", _tag_map_q(ev["tags"][0]["id"], place))])
     ev["who_wants"] = _who_wants(run, ev["tags"][:3], [m for m in (near or ([lead] if lead else []))][:2], kind)
     via = sig_ents or list(dict.fromkeys(a["tie"]["via_id"] for a in ev["who_wants"] if (a.get("tie") or {}).get("via_id")))[:3]
     key, said = "signal.interests.entities", "the products it matched" if sig_ents else "the top products of its taste tags"
     if not via:                                      # no product carries the taste: the idea's own tags are the signal
         via, key, said = [t["id"] for t in ev["tags"][:3]], "signal.interests.tags", "its taste tags"
+    if not sig_ents and via:
+        run.prefetch(_also_love_q(via, key) + _launch_q(via, place, key))
     ev["also_love"] = _also_love(run, via, said, key=key)
     if not sig_ents:
         ev["launch"] = _launch(run, via, place, key=key) if via else None
         return ev
-    signal = {"signal.interests.entities": ",".join(sig_ents), **({"signal.location.query": place} if place else {})}
-    loc = place or DEFAULT_PLACE
-    ents_only = {"signal.interests.entities": signal["signal.interests.entities"]}
-    cc = market_country(loc)
-    q10 = {"filter.type": "urn:entity:destination", "take": 8, "feature.explainability": "true",
-           **({"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}), **ents_only}
-    hotel = {"filter.hotel_class.min": "3"} if {"hotel", "hotels", "resort", "stay"} & set(words) else {}
-    q6 = {"filter.type": "urn:entity:place", **({"filter.geocode.country_code": cc} if cc else {"filter.location.query": loc}), "take": 5, "filter.properties.business_rating.min": "3.5",
-          "filter.external.exists": "tripadvisor", **hotel, **ents_only,
-          # the idea's taste tags, any of them (union), so a place matches on one: broadened away when they empty it
-          **({"filter.tags": ",".join(t["id"] for t in ev["tags"][:3]), "operator.filter.tags": "union"} if ev["tags"] else {})}
-    q7 = {"filter.type": "urn:heatmap", "filter.location.query": loc, "take": 5, **ents_only}     # Qloo's API refuses output.heatmap.boundary (400)
-    q11 = {"filter.type": "urn:tag", "diversify.by": "subtype", "diversify.take": "2", "take": 8, **signal}
-    q6_broad = {k: v for k, v in q6.items() if not k.startswith(run.NARROWING)}            # its broadened retry, ready too
-    # every question that needs only the matched products, at once: the first verdict waits on the slowest of them,
-    # not on their sum; the in-order calls below are then answered from the cache, numbered as always
-    run.prefetch([("/v2/insights", {"filter.type": "urn:demographics", **signal}), ("/v2/insights", q6), ("/v2/insights", q6_broad),
-                  ("/v2/insights", q7), ("/v2/insights", q11), ("/v2/insights", q10),
-                  ("/v2/insights", {"filter.type": "urn:audience", "take": 20, **signal})])
     body, s5 = run.get("/v2/insights", {"filter.type": "urn:demographics", **signal}, "who: age and gender affinity")
     demo = ((body or {}).get("results") or {}).get("demographics") or []
     q = ((demo[0] or {}).get("query") or {}) if demo else {}
