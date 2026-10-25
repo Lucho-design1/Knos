@@ -50,7 +50,7 @@ def test_evidence_size_limit():
 
 def test_sessions_and_guest_label():
     s = auth.guest("ada@example.com")
-    assert s["kind"] == "guest" and "unverified" in s["label"]
+    assert s["kind"] == "guest" and s["label"] == "Guest " + s["sub"][6:10] and "@" not in s["label"]   # never what was typed
     assert auth.who("Bearer " + s["token"])["sub"] == s["sub"]
     assert auth.who("Bearer " + s["token"][:-2] + "xx") is None and auth.who(None) is None
     assert auth.who("Bearer " + s["token"], now=s["exp"] + 1) is None

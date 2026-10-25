@@ -297,7 +297,7 @@ function inCard(b, fn) {
 const tx = (sig) => (sig ? ` · <a href="${X(sig)}" target="_blank" rel="noopener">tx ${short(sig)} ↗</a>` : "");
 async function fundMilestone(p, units) {
   const got = await KnosPasskey.approve(await api("/api/project/fund", { passkey: true, project: p.project, milestone: p.first_milestone, units, kind: "funder" }), api);
-  return `✓ ${esc(got.units)} ${t("escrow_l")} · <a href="${esc(got.explorer)}" target="_blank" rel="noopener">escrow ${short(got.order)} ↗</a>${tx((got.signatures || {}).lock)} · <a href="#projects=${esc(p.project)}">${t("open_project")}</a>`;
+  return `✓ ${esc(got.units)} ${t("escrow_l")} · <a href="${esc(got.explorer)}" target="_blank" rel="noopener">money held ${short(got.order)} ↗</a>${tx((got.signatures || {}).lock)} · <a href="#projects=${esc(p.project)}">${t("open_project")}</a>`;
 }
 async function loadFund(focus) {
   try {

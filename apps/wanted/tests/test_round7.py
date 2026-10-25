@@ -157,7 +157,8 @@ def test_sign_in_providers_switch_on_with_their_keys(monkeypatch):
         return io.BytesIO(b"{}")
     assert auth.email_link("ada@example.com", "https://knos.example", opener=mail)["sent"]
     tok = sent["body"]["text"].split("#magic=")[1].split()[0]
-    assert auth.email_verify(tok)["label"] == "ada@example.com"
+    s = auth.email_verify(tok)
+    assert s["label"] == "Email " + s["sub"][6:10] and "@" not in s["label"]                 # never the address itself
     with pytest.raises(auth.AuthError, match="already used"):
         auth.email_verify(tok)
     assert auth.config()["orcid"] and auth.config()["email_provider"]

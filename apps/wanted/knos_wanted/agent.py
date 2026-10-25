@@ -352,7 +352,7 @@ TOOLS = [
      "inputSchema": {"type": "object", "properties": {"ref": {"type": "string"}, "idea": {"type": "string"}}, "additionalProperties": False}},
     {"name": "knos_sign_in", "title": "A session for the money tools",
      "description": "Returns a session token the money tools need. " + CONFIRM,
-     "inputSchema": {"type": "object", "properties": {"label": {"type": "string", "description": "who your human is (a display label)"}},
+     "inputSchema": {"type": "object", "properties": {"label": {"type": "string", "description": "a note on who opened it; never shown (the session shows as Guest and 4 characters of its id)"}},
                      "required": ["label"], "additionalProperties": False}},
     {"name": "knos_preorder", "title": "Pre-order (your human's passkey signs)",
      "description": "Prepares a pre-order of an OPEN report: no server key buys for anyone, so it returns the page where "

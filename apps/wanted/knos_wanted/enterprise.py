@@ -378,10 +378,10 @@ def ledger_lines(pid: str) -> list[dict]:
     return rows
 
 
-ACCOUNTS = {"locked": ("Assets:Knos escrow", "Liabilities:Milestone commitments"),
-            "released": ("Expenses:Milestones paid", "Assets:Knos escrow"),
-            "refunded": ("Assets:Refunds receivable", "Assets:Knos escrow"),
-            "closed": ("Expenses:Milestones paid", "Assets:Knos escrow")}
+ACCOUNTS = {"locked": ("Assets:Knos money held", "Liabilities:Milestone commitments"),
+            "released": ("Expenses:Milestones paid", "Assets:Knos money held"),
+            "refunded": ("Assets:Refunds receivable", "Assets:Knos money held"),
+            "closed": ("Expenses:Milestones paid", "Assets:Knos money held")}
 
 
 def export(pid: str, fmt: str) -> tuple[str, str]:

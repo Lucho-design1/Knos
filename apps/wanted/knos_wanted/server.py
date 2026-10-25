@@ -990,7 +990,14 @@ def _restore_projects(budget_s: float = 60.0) -> None:
         try:
             from . import trace as _trace
 
+            from . import privacy
+
             def put(kind, key, obj):
+                obj, n = privacy.scrub(obj)              # no email address comes back from devnet into the store
+                box["scrubbed"] = box.get("scrubbed", 0) + n
+                if n and kind != "traces":
+                    valley._save(kind, key, obj)         # and the devnet copy is rewritten without it
+                    return
                 if kind == "projects":
                     valley._save(kind, key, obj, chain=False)
                 elif kind == "traces":
@@ -998,13 +1005,15 @@ def _restore_projects(budget_s: float = 60.0) -> None:
                 else:
                     valley._save(kind, key, obj, chain=False)
             box["n"] = chainstate.restore(put)
+            box["scrubbed"] = box.get("scrubbed", 0) + privacy.scrub_disk(escrow._state_dir())
             money_doc()                                  # the money page's totals are summed once now, in the background
         except Exception as why:  # noqa: BLE001
             box["error"] = f"{type(why).__name__}: {str(why)[:200]}"
     t = threading.Thread(target=run, daemon=True)
     t.start()
     t.join(budget_s)
-    print(f"knos chainstate: restored {box.get('n', 0)} project(s) from devnet" + (f"; {box['error']}" if "error" in box else "")
+    print(f"knos chainstate: restored {box.get('n', 0)} project(s) from devnet; {box.get('scrubbed', 0)} email address(es) replaced"
+          + (f"; {box['error']}" if "error" in box else "")
           + ("" if not t.is_alive() else f"; still reading after {budget_s:.0f} s"), flush=True)
 
 

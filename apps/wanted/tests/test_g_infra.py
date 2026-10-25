@@ -13,8 +13,8 @@ from knos_wanted import enterprise, erp_import
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 JOURNAL = """date,description,account,amount,reference,status
 2026-10-17,"P: m1 (released, funder)",Expenses:Milestones paid,10.00,KNOS-77pBPLRi8PC,released
-2026-10-17,"P: m1 (released, funder)",Assets:Knos escrow,-10.00,KNOS-77pBPLRi8PC,released
-2026-10-17,"P: m2 (locked, grant)",Assets:Knos escrow,5.00,KNOS-4ZLF59p4KR3,locked
+2026-10-17,"P: m1 (released, funder)",Assets:Knos money held,-10.00,KNOS-77pBPLRi8PC,released
+2026-10-17,"P: m2 (locked, grant)",Assets:Knos money held,5.00,KNOS-4ZLF59p4KR3,locked
 2026-10-17,"P: m2 (locked, grant)",Liabilities:Milestone commitments,-5.00,KNOS-4ZLF59p4KR3,locked
 """
 
@@ -94,9 +94,9 @@ def test_realm_file_has_no_secrets_and_matches_jackson():
 def test_journal_entries_balance_and_reject_unknown():
     es = erp_import.entries(JOURNAL)
     assert [e["ref"] for e in es] == ["KNOS-77pBPLRi8PC released", "KNOS-4ZLF59p4KR3 locked"]
-    assert erp_import.balances(es) == {"Assets:Knos escrow": -5.0, "Expenses:Milestones paid": 10.0, "Liabilities:Milestone commitments": -5.0}
+    assert erp_import.balances(es) == {"Assets:Knos money held": -5.0, "Expenses:Milestones paid": 10.0, "Liabilities:Milestone commitments": -5.0}
     with pytest.raises(erp_import.ImportError_):
-        erp_import.entries(JOURNAL.replace("Assets:Knos escrow", "Assets:Other"))
+        erp_import.entries(JOURNAL.replace("Assets:Knos money held", "Assets:Other"))
     with pytest.raises(erp_import.ImportError_):
         erp_import.entries(JOURNAL.replace("-5.00", "-4.00"))
 

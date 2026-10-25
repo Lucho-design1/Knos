@@ -130,12 +130,12 @@ def email_verify(tok: str, now: float | None = None) -> dict:
         if sig in _used_links:
             raise AuthError("this sign-in link was already used: ask for a new one")
         _used_links.add(sig)
-    return issue(body["sub"], "email", body["label"])
+    return issue(body["sub"], "email", "Email " + body["sub"][6:10])        # never the address itself
 
 
 # ---- sessions --------------------------------------------------------------------------------------------------------
-def issue(sub: str, kind: str, label: str, now: float | None = None) -> dict:
-    body = {"sub": sub, "kind": kind, "label": label[:80], "exp": int((now or time.time()) + SESSION_S)}
+def issue(sub: str, kind: str, label: str, now: float | None = None, extra: dict | None = None) -> dict:
+    body = {"sub": sub, "kind": kind, "label": label[:80], "exp": int((now or time.time()) + SESSION_S), **(extra or {})}
     raw = b64u(json.dumps(body, sort_keys=True).encode())
     tok = raw + "." + b64u(hmac.new(_SECRET, raw.encode(), hashlib.sha256).digest())
     return {"token": tok, **body}
@@ -154,10 +154,16 @@ def who(header: str | None, now: float | None = None) -> dict | None:
     return body if body.get("exp", 0) > (now or time.time()) else None
 
 
+# a session a test or Knos itself opened (outside.py leaves it out of the outside count); read, never shown
+TEST_LABEL = re.compile(r"\b(knos|test\w*|proof|ci|demo|founder|drexthealpha)\b", re.I)
+
+
 def guest(label: str) -> dict:
-    label = " ".join(str(label or "").split())[:80] or "guest"
-    return issue("guest:" + hashlib.sha256((label + secrets.token_hex(8)).encode()).hexdigest()[:16], "guest",
-                 f"{label} (unverified label)")
+    """A guest session. Its display label is "Guest" and the first 4 characters of its id: never what the caller typed
+    (an agent once passed an email address), never the git user, the OS user or the environment."""
+    said = " ".join(str(label or "").split())[:80]
+    sub = "guest:" + hashlib.sha256((said + secrets.token_hex(8)).encode()).hexdigest()[:16]
+    return issue(sub, "guest", "Guest " + sub[6:10], extra={"test": bool(TEST_LABEL.search(said))})
 
 
 # ---- passkeys --------------------------------------------------------------------------------------------------------
@@ -303,5 +309,5 @@ def google(id_token: str, opener=None, now: float | None = None) -> dict:
         raise AuthError("the ID token is for another app")
     if int(info.get("exp", 0)) <= (now or time.time()):
         raise AuthError("the ID token has expired")
-    label = info.get("email") if str(info.get("email_verified")).lower() == "true" else info.get("name") or "Google user"
+    label = info.get("name") or "Google user"                 # never the email address
     return issue("google:" + str(info.get("sub")), "google", str(label))

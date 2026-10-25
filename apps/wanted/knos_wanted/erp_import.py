@@ -20,7 +20,7 @@ from collections import OrderedDict, defaultdict
 
 # Knos account -> (short code, Odoo account_type, ERPNext parent group, ERPNext root type)
 ACCOUNTS = {
-    "Assets:Knos escrow": ("KNOS101", "asset_current", "Current Assets", "Asset"),
+    "Assets:Knos money held": ("KNOS101", "asset_current", "Current Assets", "Asset"),
     "Assets:Refunds receivable": ("KNOS102", "asset_current", "Current Assets", "Asset"),
     "Liabilities:Milestone commitments": ("KNOS201", "liability_current", "Current Liabilities", "Liability"),
     "Expenses:Milestones paid": ("KNOS501", "expense", "Indirect Expenses", "Expense"),

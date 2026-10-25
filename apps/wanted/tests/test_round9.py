@@ -96,7 +96,7 @@ def test_mcp_covers_the_roles_with_a_confirm_convention(app):
     s, si, _ = call(base, "/mcp", {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
                                    "params": {"name": "knos_sign_in", "arguments": {"label": "e2e human"}}})
     tok = si["result"]["structuredContent"]["token"]
-    assert tok and "via MCP" in si["result"]["structuredContent"]["label"]
+    assert tok and si["result"]["structuredContent"]["label"].startswith("Guest ")
     s, tk, _ = call(base, "/mcp", {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "knos_tasks", "arguments": {}}})
     assert tk["result"]["structuredContent"]["rounds"][0]["demo"] is True
     s, page, h = call(base, "/mcp", None, headers={"Accept": "text/html"})

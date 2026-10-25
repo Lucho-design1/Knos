@@ -101,3 +101,54 @@ def check(value, where: str = "input") -> None:
     if p:
         raise PersonalData("Knos sends no personal data to Qloo: " + "; ".join(p[:3])
                            + ". Name things you like (a brand, a film, a cuisine), not who you are.")
+
+
+# ---- no email address in a stored record --------------------------------------------------------------------------------
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+
+
+def scrub(value):
+    """The value with every email address replaced by "Guest", and how many were replaced. Nothing else changes."""
+    if isinstance(value, str):
+        out, n = EMAIL.subn("Guest", value)
+        return out, n
+    if isinstance(value, dict):
+        total, out = 0, {}
+        for k, v in value.items():
+            out[k], n = scrub(v)
+            total += n
+        return out, total
+    if isinstance(value, list):
+        total, out = 0, []
+        for v in value:
+            x, n = scrub(v)
+            out.append(x)
+            total += n
+        return out, total
+    return value, 0
+
+
+def scrub_disk(root) -> int:
+    """Every stored JSON record under the app's state folder, scrubbed in place. Returns the count of replacements
+    (the values are never printed). A record of the valley store is saved through it, so its devnet copy is
+    rewritten too."""
+    import json
+    from pathlib import Path
+
+    from . import valley
+    total = 0
+    for f in Path(root).rglob("*.json"):
+        try:
+            obj = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        clean, n = scrub(obj)
+        if not n:
+            continue
+        total += n
+        rel = f.relative_to(root).parts
+        if len(rel) == 3 and rel[0] == "valley" and isinstance(clean, dict):
+            valley._save(rel[1], f.stem, clean)
+        else:
+            f.write_text(json.dumps(clean, indent=1, default=str), encoding="utf-8")
+    return total

@@ -53,7 +53,7 @@ def excluded(headers, user: dict | None, admin: bool) -> str | None:
     if _AUTO.search(str(headers.get("User-Agent") or "")):
         return "an automated client"
     label = str((user or {}).get("label") or "")
-    if (user or {}).get("kind") == "guest" and _TEST_LABEL.search(label):
+    if (user or {}).get("kind") == "guest" and ((user or {}).get("test") or _TEST_LABEL.search(label)):
         return "a Knos or test guest session"
     return None
 
