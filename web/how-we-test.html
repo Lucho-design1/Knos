@@ -61,6 +61,13 @@
   <section class="view tests" id="tests">
     <h1>How we test Knos</h1>
     <p class="lede">Every number Knos shows comes from a run you can open.</p>
+    <section class="t" id="where-it-fails">
+      <h2>Where it fails</h2>
+      <p class="t-n">Census: Knos with Qloo 0.193, Claude alone 0.407 at naming where a business is dense. Knos loses. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/where_truth.json" rel="noopener">The result</a></p>
+      <p class="t-n">Films: 0.320 with Qloo, 0.307 alone, interval [-0.060, +0.087]. A tie. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/taste_truth.json" rel="noopener">The result</a></p>
+      <p class="t-n">Kickstarter, tuned: 78.0% right with Qloo, below the 78.8% of always guessing success. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/OUTSIDE_TRUTH.md#kickstarter-250-held-out-projects" rel="noopener">The report</a></p>
+      <p class="t-n">No map: 12 of 30 business types got no Qloo heatmap, so Knos named no city for them. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/where_truth.json" rel="noopener">The result</a></p>
+    </section>
     <section class="t" id="with-without">
       <h2>Qloo beside Claude alone</h2>
       <p class="t-n">20 ideas: Qloo changed the answer on all 20. Claude alone named the same audience on 0.</p>
