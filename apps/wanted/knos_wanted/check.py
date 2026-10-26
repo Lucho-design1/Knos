@@ -60,7 +60,8 @@ AUDIENCE_TYPES = ("communities", "global_issues", "hobbies_and_interests", "inve
 AUDIENCE_TYPES = tuple("urn:audience:" + t for t in AUDIENCE_TYPES)
 SENSITIVE_TYPES = ("urn:audience:political_preferences", "urn:audience:lifestyle_preferences_beliefs")
 SENSITIVE_SEGMENT = re.compile(
-    r"\b(aapi|asian|black(?! friday)|african|latin[oax]|latine|hispanic|indigenous|native american|arab|jewish|muslim|christian\w*|catholic|"
+    r"\b(aapi|asian|black(?! friday)|african|latin[oax]|latine|hispanic|indigenous|native american|arab|jewish|juda\w*|muslim|islam\w*|christian\w*|catholic|"
+    r"belief\w*|bible\w*|torah|quran|ethnic\w*|racial|"
     r"protestant|evangelical|mormon|hindu\w*|buddhis\w*|sikh|religio\w*|faith\w*|church\w*|spiritual\w*|atheis\w*|lgbt\w*|queer|"
     r"gay|lesbian|bisexual|transgender|politic\w*|conservative\w*|liberal(?! arts)\w*|progressive\w*|democrat\w*|republican\w*|"
     r"health\w*|disab\w*|chronic|illness\w*|pregnan\w*|immigra\w*)\b", re.I)
@@ -68,8 +69,22 @@ SENSITIVE_SEGMENT = re.compile(
 
 def safe_segment(a: dict) -> bool:
     """A segment Knos may show and size: not of a sensitive type, not named for a sensitive trait."""
-    sid, name = str(a.get("id") or a.get("type") or ""), f"{a.get('name') or ''} {a.get('disambiguation') or ''}"
-    return not sid.startswith(SENSITIVE_TYPES) and not SENSITIVE_SEGMENT.search(name)
+    ids, name = [str(a.get(k) or "") for k in ("id", "entity_id", "type")], f"{a.get('name') or ''} {a.get('disambiguation') or ''}"
+    return not any(i.startswith(SENSITIVE_TYPES) for i in ids) and not SENSITIVE_SEGMENT.search(name)
+
+
+def scrub(rep: dict) -> dict:
+    """The report with every segment named for a sensitive trait taken out of what the card shows (a card kept from
+    before its name was known to be sensitive is shown without it); the decision it holds stays as it was made."""
+    out = dict(rep)
+    vs = out.get("versus")
+    if isinstance(vs, dict) and "audience" in str(vs.get("method") or ""):      # segments; taste tags are not people
+        out["versus"] = {**vs, **{k: [x for x in vs[k] if not SENSITIVE_SEGMENT.search(str(x))]
+                                  for k in ("whitespace", "shared", "leader_only") if isinstance(vs.get(k), list)}}
+    for k in ("audiences", "who_wants", "named_audience"):
+        if isinstance(out.get(k), list):
+            out[k] = [x for x in out[k] if not isinstance(x, dict) or safe_segment(x)]
+    return out
 NEUTRAL = 0.5          # Qloo's audience affinity when it has no signal: the list comes back flat at exactly 0.5
 
 # The kind of product, from the idea's nouns, in this priority order (a "podcast about video games" is a podcast).
