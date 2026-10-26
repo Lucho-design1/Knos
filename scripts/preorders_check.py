@@ -8,6 +8,7 @@ so this counts the pre-orders and says so. Standard library only (GitHub Actions
 from __future__ import annotations
 
 import json
+import re
 import sys
 import urllib.request
 
@@ -26,7 +27,11 @@ def main(pid: str, app: str = "https://knos.onrender.com") -> int:
     p = get(f"{app}/api/project?id={pid}")
     m = next(x for x in p["milestones"] if (x.get("verifier") or {}).get("check") == "test_preorders_from_city")
     launch = p.get("launch") or {}                                  # the brief's launch terms, inside its criteria hash
-    target = int(launch.get("target") or 0)
+    # a project opened before its launch block was kept has the target in its milestone's hashed text ("10 pre-order
+    # customers from Boulder, CO"), which its criteria hash covers too
+    said = re.match(r"\s*(\d+) pre-order customers from (.+)$", str(m.get("target") or ""))
+    target = int(launch.get("target") or (said.group(1) if said else 0))
+    launch = launch or ({"city": said.group(2)} if said else {})
     locked = [o for o in m.get("orders") or [] if o.get("status") == "locked"]
     on_chain, funders = 0, set()
     for o in locked:
