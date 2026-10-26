@@ -158,10 +158,21 @@ def run(job: dict, state) -> None:
                   inp="lock:" + key, out="plan written: recall -> paper -> product -> Qloo evidence -> decision -> remember",
                   effect="a second agent on the same paper is refused while this one runs")
         try:
-            if getattr(state.q, "mode", "") == "live":
+            from . import qloo_rest
+            if getattr(state.q, "mode", "") == "live" and qloo_rest.held() > 0:
+                _step(job, "qloo", "Qloo asked for a pause: the harness is not asked", tool="qloo mcp (official @qloo/qloo-harness)",
+                      out=f"nothing sent to Qloo for {qloo_rest.held():.0f} s more", effect="REST carries this crossing, labelled")
+            elif getattr(state.q, "mode", "") == "live":
                 words = " ".join((job.get("product") or job.get("idea") or job.get("ref") or "").split()[:6]) or "research product"
-                cap = state.q.call("qloo_find_tags", {"query": words},
-                                   why="the official qloo-harness MCP server reads Qloo beside the REST steps", step="harness")
+                box: dict = {}
+                t = threading.Thread(target=lambda: box.update(cap=state.q.call(
+                    "qloo_find_tags", {"query": words}, why="the official qloo-harness MCP server reads Qloo beside the REST steps",
+                    step="harness")), daemon=True)
+                t.start()
+                t.join(HARNESS_WAIT_S)                # a slow harness never holds the crossing: REST carries it, said so
+                if "cap" not in box:
+                    raise TimeoutError(f"the harness had not answered in {HARNESS_WAIT_S:.0f} s")
+                cap = box["cap"]
                 names = ", ".join(str(r.get("name")) for r in (cap.get("results") or [])[:4])
                 _step(job, "qloo", "the Qloo harness answers (live)", tool="qloo mcp (official @qloo/qloo-harness, via the Node bridge)",
                       inp={"tool": "qloo_find_tags", "query": words}, out=f"status {cap.get('status')}: {names}"[:200],
@@ -262,6 +273,15 @@ def start(state, *, ref: str | None = None, idea: str | None = None, place: str 
     if not (ref or idea):
         raise ValueError("paste a paper id (DOI, arXiv, PubMed, OpenAlex) or describe an idea")
     options = qloo_families.options(options)          # checked before the crossing starts, so a bad field is said at once
+    kept = None if wait or idea or place or product or leader else _kept(state, ref, options)
+    if kept:                                          # the same paper crossed here lately: its answer at once, said so
+        at = time.strftime("%H:%M UTC", time.gmtime(kept["started"]))
+        job = {**{k: kept[k] for k in ("ref", "idea", "place", "product", "leader", "options", "status", "report", "card")},
+               "id": secrets.token_hex(8), "started": time.time(), "kept_from": kept["id"],
+               "steps": [*kept["steps"], {"title": f"kept from the crossing of this paper at {at}", "at": time.time()}]}
+        with _lock:
+            JOBS[job["id"]] = job
+        return job
     job = {"id": secrets.token_hex(8), "ref": ref, "idea": idea, "place": place, "product": product, "leader": leader, "options": options,
            "status": "running", "steps": [], "started": time.time(), "report": None, "card": None}
     with _lock:
@@ -273,6 +293,27 @@ def start(state, *, ref: str | None = None, idea: str | None = None, place: str 
     else:
         threading.Thread(target=run, args=(job, state), daemon=True).start()
     return job
+
+
+KEEP_CROSSING_S = 6 * 3600   # a paper crossed in the last 6 hours is answered from that crossing (it reads the same paper)
+HARNESS_WAIT_S = 4.0         # the official harness's one call waits this long at most (on 26 Oct, refused by Qloo, it took 12 s)
+
+
+def _kept(state, ref: str | None, options: dict) -> dict | None:
+    """The newest finished crossing of this paper, with the same options and a demand report Qloo answered in full,
+    from the last 6 hours (one that met a Qloo outage is crossed again)."""
+    if not ref:
+        return None
+    with _lock:
+        done = [j for j in JOBS.values() if j.get("ref") == ref and j.get("status") == "done" and j.get("report") and not j.get("idea")
+                and not j.get("kept_from") and j.get("options") == options and time.time() - j["started"] < KEEP_CROSSING_S]
+    from . import qloo_rest
+    held = qloo_rest.held() > 0                       # Qloo asked for a pause: a new crossing could not ask it either
+    for j in sorted(done, key=lambda j: j["started"], reverse=True):
+        rep = state.report(j["report"]) or {}
+        if rep and (held or not (rep.get("qloo_down") or rep.get("stale"))):
+            return j
+    return None
 
 
 def crossings(state, n: int = 30) -> list[dict]:
