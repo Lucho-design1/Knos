@@ -616,6 +616,11 @@ def make_handler(state: State):
                     page = page.replace('<script type="application/json" id="k-proof">null</script>',
                                         f'<script type="application/json" id="k-proof">{data}</script>', 1)
                 return self._send(200, inline_css(vectors.filled(page)).encode("utf-8"), "text/html; charset=utf-8")
+            if re.fullmatch(r"/r/[0-9a-f]{16}", u.path):     # a demand result's permanent page, from the reports kept here
+                from . import result_page
+                rid = u.path[3:]
+                rep = result_page.find(state, rid)
+                return self._send(200 if rep else 404, result_page.page(rep, self._base() + u.path, rid).encode("utf-8"), "text/html; charset=utf-8")
             if u.path == "/status/qloo":                    # the last answer Qloo gave this server, from its own traffic: no call made
                 from . import qloo_rest as QR
                 last, held = dict(QR.LAST), QR.held()

@@ -140,7 +140,7 @@ def handle_get(h, state, u, qs) -> bool:
         if p == "/api/project/route":
             pr = valley.project(q("project"))
             return h._send(200, valley.route(valley._milestone(pr, q("milestone")))) or True
-        if p.startswith("/r/"):
+        if p.startswith("/r/") and not re.fullmatch(r"/r/[0-9a-f]{16}", p):     # 16 hex: a demand result's page (server.py)
             code = p[3:]
             r = valley.load_referral(code)
             kind, _, val = r["target"].partition("=")

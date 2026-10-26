@@ -286,7 +286,7 @@ ${src(h, price.src)}</section>
   <details class="k-claude" data-claude><summary>Claude alone</summary><div class="k-claude-body" data-claude-body></div></details>
   <footer class="k-card-foot"><p class="k-fine">Aggregate taste from Qloo: not causal, not a forecast, not about any one person.${
     HEALTH.test(r.idea || "") ? " Not medical advice: Qloo has no medical demand." : ""}</p>
-    ${d.verdict === "OPEN" ? `<a class="k-cta" href="${esc(APP)}#buy=${esc(h)}">Open pre-orders for it →</a>` : `<a class="k-cta quiet" href="${esc(APP)}#research">Try it with a launch market →</a>`}</footer>
+    ${d.verdict === "OPEN" ? `<a class="k-cta" href="${esc(APP)}#buy=${esc(h)}">Open pre-orders for it →</a>` : `<a class="k-cta quiet" href="${esc(APP)}#research">Try it with a launch market →</a>`}${/^[0-9a-f]{16}/.test(h || "") ? ` <a class="k-cta quiet" href="${esc(API)}/r/${esc(h.slice(0, 16))}" data-share>Share this result</a>` : ""}</footer>
 </article>`;
   }
 

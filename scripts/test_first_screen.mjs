@@ -80,7 +80,7 @@ ok(bad === 0, `step and capability links: ${links.size - bad} of ${links.size} a
 const r = await fetch(API + "/api/ready");
 const j = await r.json().catch(() => ({}));
 ok(r.status === 200 && /POST \/api\/ready/.test(j.how || ""), `GET /api/ready: ${r.status} JSON, "${String(j.how || "").slice(0, 40)}"`);
-const grep = run("git", ["grep", "-c", "3UwN1R"]).trim();
+const grep = run("git", ["grep", "-c", "3UwN1R", "--", ".", ":!scripts/test_first_screen.mjs"]).trim();
 ok(!grep, `git grep 3UwN1R: ${grep ? grep.split("\n").length : 0} files`);
 lines.push(fails ? `FAIL test_first_screen: ${fails} check(s) failed` :
   `PASS test_first_screen: 4 steps above the fold at 390 and 1280, ${caps} capability rows, ${links.size} links good, /api/ready 200`);
