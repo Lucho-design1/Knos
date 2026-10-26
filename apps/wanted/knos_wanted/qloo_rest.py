@@ -45,8 +45,40 @@ _hold = {"until": 0.0}        # after a 429: no Qloo request at all before this 
 LAST: dict = {}               # the last answer Qloo itself gave this process (its time, HTTP status and path): /status/qloo
 
 
+TODAY: dict = {}              # this process's Qloo traffic on the current UTC day: calls sent, cache hits, last 200, last 429
+
+
+def _now() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _today() -> dict:
+    day = time.strftime("%Y-%m-%d", time.gmtime())
+    if TODAY.get("day") != day:
+        TODAY.clear()
+        TODAY.update(day=day, calls=0, hits=0)
+    return TODAY
+
+
 def _seen(status, path: str) -> None:
-    LAST.update(at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), status=status, path=path)
+    LAST.update(at=_now(), status=status, path=path)
+    t = _today()
+    t["calls"] += 1
+    if status == 200:
+        t["last_ok"] = LAST["at"]
+    elif status == 429:
+        t["last_429"] = LAST["at"]
+
+
+def today() -> dict:
+    """Today's counts as /status/qloo shows them: calls sent, cache hits, the hit rate, the last success and last 429
+    (this process's; the last 429 also when an earlier day's pause still holds)."""
+    t = dict(_today())
+    asked = t["calls"] + t["hits"]
+    t["hit_rate"] = round(t["hits"] / asked, 3) if asked else None
+    t["held_s"] = round(held())
+    t["limited"] = t["held_s"] > 0 or (LAST.get("status") == 429)
+    return t
 
 
 def retry_after(value, now: float | None = None) -> float:
@@ -250,6 +282,7 @@ class Client:
         if hit is not None and hit.get("error"):
             raise QlooError(hit["error"] + " (cached refusal)")
         if hit is not None:
+            _today()["hits"] += 1
             return {"body": trim(hit["body"]), "source": {**src, "cached": True, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(hit["t"])),
                                                      **({"surface": hit["surface"]} if hit.get("surface") else {})}}
         ok, why = self.ready()

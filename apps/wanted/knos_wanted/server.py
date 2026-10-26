@@ -18,7 +18,6 @@ Rate limits per client address keep a public demo from draining the Qloo quota a
 from __future__ import annotations
 
 import hashlib
-import html
 import json
 import mimetypes
 import os
@@ -71,7 +70,7 @@ LIMITS = {"maker": (20, 600), "search": (40, 600), "buyer": (20, 600), "publish"
 GLOBAL_DEMO = (60, 3600)
 FRONT_ORIGINS = ("https://drexthealpha.github.io",)               # the front door, allowed to read the demand check
 MCP_CHECK_TOOLS = ("knos_demand_check", "knos_cross", "knos_research_card")   # MCP tools that ask Qloo: the check limit
-DEMAND_CORS = ("/api/check", "/api/demand/fields", "/api/cross", "/api/report", "/api/vectors", "/api/proof", "/api/ready/card", "/api/money", "/api/qloo-diff", "/api/agent/payout/latest", "/api/usage")                                           # demo pre-orders, all clients
+DEMAND_CORS = ("/api/qloo/status", "/api/check", "/api/demand/fields", "/api/cross", "/api/report", "/api/vectors", "/api/proof", "/api/ready/card", "/api/money", "/api/qloo-diff", "/api/agent/payout/latest", "/api/usage")                                           # demo pre-orders, all clients
 ROUTES = {"/api/trace/keep": "product", "/api/qloo-diff": "product", "/api/open-signals": "check", "/api/ready/card": "product", "/api/company/need": "product", "/api/maker/start": "maker", "/api/maker/search": "search", "/api/maker/confirm": "maker", "/api/maker/publish": "publish",
           "/api/buyer/start": "buyer", "/api/buyer/confirm": "buyer", "/api/preorder/demo": "demo", "/api/preorder/faucet": "faucet",
           "/api/preorder/tx": "tx", "/api/preorder/submit": "tx",
@@ -106,7 +105,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
               "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funders' held money",
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/mcp/store": "The app-store MCP profile: read-only tools, no sign-in, a daily call cap (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
-              "/": "301 to the front door, https://drexthealpha.github.io/Knos/", "/app": "301 to /app/", "/app/": "The app", "/status/qloo": "The last answer Qloo gave this server, from its own traffic", "/paid": "Paid on proof: the passkey wallet, pre-orders, pools, company sign-in and accounting files", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/taste/movie": "The films a film's fans also love, from Qloo (?title=&year=): names and years only", "/api/products": "Listed products", "/api/quote": "Fee quote",
+              "/": "301 to the front door, https://drexthealpha.github.io/Knos/", "/app": "301 to /app/", "/app/": "The app", "/status/qloo": "Qloo as this server met it today: calls, cache hits, last success, last 429", "/api/qloo/status": "The same as JSON, with the line the front door shows while Qloo limits requests", "/paid": "Paid on proof: the passkey wallet, pre-orders, pools, company sign-in and accounting files", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/taste/movie": "The films a film's fans also love, from Qloo (?title=&year=): names and years only", "/api/products": "Listed products", "/api/quote": "Fee quote",
               "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
               "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
               "/api/receivables": "Receivables a lender can finance (passkey wallets: advance rate, fee, due date)",
@@ -621,16 +620,12 @@ def make_handler(state: State):
                 rid = u.path[3:]
                 rep = result_page.find(state, rid)
                 return self._send(200 if rep else 404, result_page.page(rep, self._base() + u.path, rid).encode("utf-8"), "text/html; charset=utf-8")
-            if u.path == "/status/qloo":                    # the last answer Qloo gave this server, from its own traffic: no call made
-                from . import qloo_rest as QR
-                last, held = dict(QR.LAST), QR.held()
-                said = (f"<p>Last answer from Qloo: <b>HTTP {html.escape(str(last['status']))}</b> at {html.escape(last['at'])} "
-                        f"({html.escape(last['path'])}).</p>" if last else "<p>Qloo has not been asked since this server started.</p>")
-                said += f"<p>Nothing is sent to Qloo for {held:.0f} s more (its Retry-After).</p>" if held else ""
-                page = ("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
-                        "<title>Knos. Qloo status</title></head><body><main><h1>Qloo status</h1>" + said +
-                        "<p>Read from this server's own calls. This page asks Qloo nothing.</p></main></body></html>")
-                return self._send(200, page.encode("utf-8"), "text/html; charset=utf-8")
+            if u.path == "/status/qloo":                    # Qloo as this server met it today, from its own traffic: no call made
+                from . import qloo_status
+                return self._send(200, inline_css(qloo_status.page()).encode("utf-8"), "text/html; charset=utf-8")
+            if u.path == "/api/qloo/status":                # the same for the front door's line above the chips
+                from . import qloo_status
+                return self._send(200, qloo_status.doc(), headers={"Cache-Control": "no-store"})
             if u.path in ("/sw.js", "/manifest.webmanifest"):        # the PWA: its worker's scope is the whole app
                 ctype = "text/javascript; charset=utf-8" if u.path == "/sw.js" else "application/manifest+json"
                 return self._send(200, (STATIC / u.path[1:]).read_bytes(), ctype, {"Cache-Control": "no-cache"})

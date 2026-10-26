@@ -51,17 +51,25 @@ def test_the_documented_use_cases_pass():
         assert qloo_guard.problems(path, p) == [], (path, p)
 
 
-def test_status_qloo_says_the_last_answer_and_asks_qloo_nothing(monkeypatch):
-    monkeypatch.setattr(qloo_rest, "LAST", {"at": "2026-10-26T08:14:45Z", "status": 429, "path": "/search"})
+def test_status_qloo_says_todays_traffic_and_asks_qloo_nothing(monkeypatch):
+    day = __import__("time").strftime("%Y-%m-%d", __import__("time").gmtime())
+    monkeypatch.setattr(qloo_rest, "LAST", {"at": f"{day}T08:14:45Z", "status": 429, "path": "/search"})
+    monkeypatch.setattr(qloo_rest, "TODAY", {"day": day, "calls": 3, "hits": 9, "last_ok": f"{day}T07:00:00Z", "last_429": f"{day}T08:14:45Z"})
     sent = []
     monkeypatch.setattr(qloo_rest.Client, "_get", lambda self, *a, **k: sent.append(a))
     st = server.State(Qloo(InProcess(), mode="mock", sleep=lambda s: None), _client(Path("."), Opener()))
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.make_handler(st))
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     try:
-        with urllib.request.urlopen(f"http://127.0.0.1:{httpd.server_address[1]}/status/qloo", timeout=10) as r:
+        base = f"http://127.0.0.1:{httpd.server_address[1]}"
+        with urllib.request.urlopen(base + "/status/qloo", timeout=10) as r:
             page = r.read().decode()
-        assert r.status == 200 and "HTTP 429" in page and "2026-10-26T08:14:45Z" in page and sent == []
+        with urllib.request.urlopen(base + "/api/qloo/status", timeout=10) as r:
+            d = json.loads(r.read())
+        assert r.status == 200 and sent == []
+        assert "Calls sent today" in page and ">3<" in page and "9 (75%)" in page and "08:14 UTC" in page and "07:00 UTC" in page
+        assert d["calls"] == 3 and d["cache_hits"] == 9 and d["hit_rate"] == 0.75 and d["limited"] is True
+        assert d["line"].startswith("Qloo is limiting requests right now. Cards show the last live answer from ") and d["line"] in page
     finally:
         httpd.shutdown()
 

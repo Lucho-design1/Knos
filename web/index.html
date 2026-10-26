@@ -477,7 +477,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     const rows = (Array.isArray(r.calls) ? r.calls : []).map((c) => { const p = c.params || {};
       const keys = Object.keys(p).filter((k) => p[k] != null && p[k] !== "").map((k) => `${k}=${String(p[k]).slice(0, 40)}`).join(", ");
       return `<li data-call="${esc(c.n)}"><a href="${esc(API)}/trace.html?hash=${encodeURIComponent(r.hash || "")}#call-${esc(c.n)}" target="_blank" rel="noopener">#${esc(c.n)}</a> ${
-        esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${esc(c.ms ?? "?")} ms · ${c.cached ? "cached" : "live"}${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || String(c.effect || "").slice(0, 60) || "the verdict")}</li>`; });
+        esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${Number.isFinite(c.ms) ? `${esc(c.ms)} ms` : `recorded ${esc(String(r.made || c.at || "").slice(0, 10))}`} · ${c.cached ? "cached" : "live"}${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || String(c.effect || "").slice(0, 60) || "the verdict")}</li>`; });
     return rows.length ? `<details class="k-calls" data-part="calls"><summary>Qloo calls (${rows.length})</summary><ol>${rows.join("")}</ol></details>` : "";
   }
 
@@ -668,6 +668,13 @@ ${src(h, price.src)}</section>
   // the past result, drawn last: every chip and the box already answer, and a snapshot the card cannot read leaves
   // the first screen as it is (the chips still check)
   const shown = (r) => { try { draw(r); } catch (e) { console.warn("knos: the past result was not drawn", e); } };
+  // while Qloo limits the key, one line above the chips (this server's own traffic, GET /api/qloo/status), after the paint
+  const limited = () => get("/api/qloo/status").then((d) => {
+    const chips = root.querySelector(".k-try");
+    if (!d || !d.limited || !d.line || !chips || root.querySelector("[data-qloo-limit]")) return;
+    chips.insertAdjacentHTML("beforebegin", `<p class="k-fine k-limit" data-qloo-limit><a href="${esc(API)}/status/qloo">${esc(d.line)}</a></p>`);
+  }).catch(() => {});
+  if (document.readyState === "complete") setTimeout(limited, 0); else addEventListener("load", () => setTimeout(limited, 0), { once: true });
   let carried = null;
   try { carried = JSON.parse(document.getElementById("k-proof")?.textContent || "null"); } catch { carried = null; }
   if (carried) shown(carried);                                 // in the page: at the first paint
