@@ -84,7 +84,7 @@ def who(row: dict) -> str:
 
 def table(doc: dict) -> str:
     lines = [f"Every program the app or this site uses, and who can upgrade it, read from devnet on {doc['read_at']} "
-             "([`scripts/program_authorities.py`](scripts/program_authorities.py)):", "",
+             "([`scripts/program_authorities.py`](https://github.com/drexthealpha/Knos/blob/main/scripts/program_authorities.py)):", "",
              "| program | address | used for | upgrade authority |", "|---|---|---|---|"]
     lines += [f"| {r['name']} | `{r['address']}` | {r['used_for']} | {who(r)} |" for r in doc["programs"]]
     return "\n".join(lines)
@@ -107,7 +107,7 @@ def main(argv: list[str]) -> int:
                 print(f"differs from devnet: {r['name']} {r['address']}: kept {who(k)}, chain {who(r)}")
         print(f"{len(doc['programs'])} programs; JSON matches devnet: {same}; README matches the JSON: {shown}")
         return 0 if same and shown else 1
-    OUT.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
+    OUT.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8", newline="\n")
     README.write_text(_readme(text, doc), encoding="utf-8", newline="\n")
     print(table(doc))
     return 0

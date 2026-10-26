@@ -31,7 +31,7 @@ def block(s: dict) -> str:
         f"<td class=\"k-num\">{r['saved_output_tokens']:+,}</td><td>{'yes' if r['vague_passed'] else 'no'} / {'yes' if r['ready_passed'] else 'no'}</td></tr>"
         for r in s["rows"])
     return (f"\n    <section id=\"home-idt\" aria-label=\"IDT benchmark\" data-ratio=\"{s['ratio_vague_to_ready']}\">"
-            f"<p class=\"fine\" id=\"idt-line\">Clear briefs: <strong class=\"k-num\" id=\"idt-ratio\">{s['ratio_vague_to_ready']}x</strong> fewer reasoning tokens, measured on {n} tasks.</p>"
+            f"<p class=\"fine\" id=\"idt-line\">Clear briefs: <strong class=\"k-num\" id=\"idt-ratio\">{s['ratio_vague_to_ready']}x</strong> fewer output tokens, measured on {n} tasks.</p>"
             f"<details class=\"k-more\" id=\"idt-per-brief\" data-not-prose><summary>Each brief</summary>"
             f"<p class=\"fine\">One model ({html.escape(str(s['model']))}, {html.escape(str(s['effort']))} effort) for both. Vague: {s['vague_output_tokens']:,} tokens, {pct(s['vague_pass_rate'])} passed. "
             f"Ready: {s['ready_output_tokens']:,} tokens, {pct(s['ready_pass_rate'])} passed.</p>"

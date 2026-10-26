@@ -457,5 +457,5 @@ def test_raw_bytes_come_last_and_the_idl_says_how_the_program_can_change():
         assert [a["type"] for a in i["args"]].count("bytes") <= 1 and all(a["type"] != "bytes" for a in i["args"][:-1])
     text = json.dumps(IDL)
     # what may be said of the second deployment, and the word that may not
-    assert "Upgradeable only through a multisig with a public 48-hour delay, until an outside review." in IDL["docs"]
+    assert "Upgradeable only through a multisig with a public 8-day time lock, until an outside review." in IDL["docs"]
     assert "immutable" not in text.lower() and not re.search(r"\baudit", text, re.I)

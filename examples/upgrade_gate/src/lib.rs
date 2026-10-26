@@ -1,6 +1,6 @@
 //! upgrade_gate: a public, on-chain statement that GitHub's runner built these exact bytes from that commit.
 //!
-//! Knos's programs are upgradeable only through a multisig with a public 48-hour delay, until an outside review.
+//! Knos's programs are upgradeable only through a multisig with a public 8-day time lock, until an outside review.
 //! The members compare a buffer's hash with a build they made themselves; this program adds a statement nobody
 //! at Knos can write by hand. A record ["build", program, hash] exists only if GitHub signed a token for a run of
 //! Knos's own program.yml, at a commit of main or of a release tag, on a GitHub-hosted runner, whose audience is

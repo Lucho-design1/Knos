@@ -22,7 +22,7 @@ from knos import chain  # noqa: E402
 
 import program_authorities as pa  # noqa: E402
 
-WORLD = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+WORLD = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
 OUT = WORLD / "test_chain_truth.txt"
 APP_PROGRAM = "FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4"
 REFEREE = "Released by the referee's verdict"

@@ -53,7 +53,7 @@ line). It is checked with GitHub's recorded answers, so it runs with no network.
 ## 3. Both sides rebuild the invoice
 
 The order: the buyer's and the supplier's statements each have one line, agreed, with the same sha256
-([the record](https://raw.githubusercontent.com/drexthealpha/Knos/knos-0.3.34/evidence/knos-witness-acaa854d/witness.json)):
+([the record](https://github.com/drexthealpha/Knos/blob/main/evidence/knos-witness-acaa854d/witness.json)):
 
 `a3791c5d92a545a16b0486a01b9d70f091e3e431074a5b6cbb47549c7a110280`
 

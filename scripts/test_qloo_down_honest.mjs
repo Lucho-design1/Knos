@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const ROOT = new globalThis.URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_qloo_down_honest.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_qloo_down_honest.txt`;
 const SITE = process.argv[2];
 const PORT = 8097, BASE = `http://127.0.0.1:${PORT}`;
 const CHIPS = ["an AI recipe planner for families", "a crypto podcast for beginners", "a quantum physics book for kids", "a solar powered music festival",

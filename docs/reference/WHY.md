@@ -144,8 +144,8 @@ set at funding and public before the work starts.
 
 A stand-alone service that holds the money lost to payment built into the marketplace. In 2001 "only 6% of online auction buyers" had paid through one.
 
-Escrow.com charged 3% by cheque or money order and 6% by card, and the authors found that such a stand-alone service "may have difficulty surviving" where expected fraud is low ([Hu, Lin,
-Whinston and Zhang, Information Systems Research 15(3), 2004](https://www.scheller.gatech.edu/directory/research/information-technology-management/zhang/pdf/isr-escrow.pdf)).
+The largest such service charged 3% by cheque or money order and 6% by card, and the authors found that a stand-alone service "may have difficulty surviving" where expected fraud is low ([Hu, Lin,
+Whinston and Zhang, Information Systems Research 15(3), 2004](https://doi.org/10.1287/isre.1040.0027)).
 
 What won was a payment inside the marketplace's own flow: in July 2002 "about 60 percent of PayPal's business" came from eBay users ([Associated Press, 8 Jul
 2002](https://www.paypalobjects.com/html/press/070802APEbayBuys.html)).

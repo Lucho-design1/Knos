@@ -23,7 +23,7 @@ from qloo_vs_open_signals import IDEAS  # noqa: E402
 from test_kickstarter_truth import FROM, KEEP, TO, _when, idea  # noqa: E402
 
 APP = os.environ.get("KNOS_WANTED_URL", "https://knos.onrender.com").rstrip("/")
-WORLD = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+WORLD = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
 P95_S, MAX_S, FRESH = 20.0, 60.0, 30
 
 

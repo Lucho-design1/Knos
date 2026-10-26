@@ -714,7 +714,7 @@ for (const [address, data, want, vault] of recorded) {
 }
 const tag = knos.hex(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("account:Multisig"))).slice(0, 8));
 same("a multisig account starts with Anchor's tag for it", tag, "e07479ba44a14fec");
-const ms = new Uint8Array(231);         // the layout of a 2-of-3 multisig with a 48-hour time lock and a rent collector
+const ms = new Uint8Array(231);         // the layout of a 2-of-3 multisig with a time lock (48 hours in this layout) and a rent collector
 ms.set(knos.unhex(tag), 0); ms.set(knos.unb58(j.payer), 8); new DataView(ms.buffer).setUint16(72, 2, true);
 new DataView(ms.buffer).setUint32(74, 172800, true); new DataView(ms.buffer).setBigUint64(78, 5n, true); ms[94] = 1; ms.set(knos.unb58(j.rent_to), 95);
 ms[127] = 254; new DataView(ms.buffer).setUint32(128, 3, true);

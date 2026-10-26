@@ -8,7 +8,7 @@ import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 
 const URL = process.argv[2] || "https://drexthealpha.github.io/Knos/";
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_agent_paid_visible.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_agent_paid_visible.txt`;
 const lines = [];
 let good = 0, last = null;
 const browser = await chromium.launch();

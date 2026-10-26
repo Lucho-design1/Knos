@@ -13,7 +13,7 @@ services:
       - key: QLOO_API_KEY
         sync: false
       - key: QLOO_BASE_URL
-        value: https://hackathon.api.qloo.com
+        sync: false
       - key: QLOO_MONTHLY_BUDGET
         value: "8000"
       - key: KNOS_CLUSTER

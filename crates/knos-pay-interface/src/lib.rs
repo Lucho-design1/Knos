@@ -29,7 +29,7 @@ use solana_program::{
     system_program,
 };
 
-/// knos_pay, the second deployment (devnet). Upgradeable only through a multisig with a public 48-hour delay, until
+/// knos_pay, the second deployment (devnet). Upgradeable only through a multisig with a public 8-day time lock, until
 /// an outside review. Every function here takes the program's id, so another cluster is another argument.
 pub const ID: Pubkey = pubkey!("5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k");
 pub const ID_STR: &str = "5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k";

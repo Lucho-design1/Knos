@@ -2,7 +2,7 @@
 //! (a P-256 key that never leaves the device or its keychain); the wallet is this program's account at the address
 //! that key derives, and it can be paid before it exists on chain, like any address. Money leaves it only on an
 //! assertion of that passkey that names the mint, the destination, the amount and a number used once. This program
-//! is upgradeable only through a multisig with a public 48-hour delay, until an outside review. No key of Knos's is
+//! is upgradeable only through a multisig with a public 8-day time lock, until an outside review. No key of Knos's is
 //! named in it: nothing here pays, pauses, or chooses a destination but the passkey's own signature.
 //!
 //! HOW A SIGNATURE IS CHECKED. This program does no elliptic-curve arithmetic. Solana's secp256r1 precompile

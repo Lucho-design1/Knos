@@ -10,7 +10,7 @@ import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 
 const FRONT = "https://drexthealpha.github.io/Knos/";
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_both_stories.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_both_stories.txt`;
 const HEAD = "See who wants your product, and where, before you build it";
 const SENTENCE = "GitHub signs which checks ran, and a Solana program checks that signature itself before it pays.";
 const PR = "https://github.com/drexthealpha/knos-e2e/pull/266";

@@ -7,7 +7,7 @@ import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 
 const URL = process.argv[2] || "https://drexthealpha.github.io/Knos/how-we-test.html";
-const OUT = process.env.KNOS_WORLD ? `${process.env.KNOS_WORLD}/test_how_we_test.txt` : "C:/Users/zulab/knos-v1-private/v0328/world/test_how_we_test.txt";
+const OUT = process.env.KNOS_WORLD ? `${process.env.KNOS_WORLD}/test_how_we_test.txt` : `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world/test_how_we_test.txt`;
 const NEED = { "with-without": /onrender\.com\/(with-without|api\/qloo-diff)/, kickstarter: /kickstarter_truth/, sbir: /outside_truth\.json/,
   ranked: /qloo_lift_ranked\.json/, payout: /explorer\.solana\.com\/tx\/[1-9A-HJ-NP-Za-km-z]{64,90}\?cluster=devnet/ };
 const lines = [];

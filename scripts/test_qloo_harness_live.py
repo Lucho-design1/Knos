@@ -20,7 +20,7 @@ from qloo_vs_open_signals import IDEAS  # noqa: E402
 from knos_wanted import qloo_harness  # noqa: E402
 
 APP = os.environ.get("KNOS_WANTED_URL", "https://knos.onrender.com").rstrip("/")
-WORLD = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+WORLD = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
 H = {"Content-Type": "application/json", "X-Knos-Admin": os.environ.get("KNOS_ADMIN_KEY", "")}
 PEAK_MB = 400.0
 

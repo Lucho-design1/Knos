@@ -15,7 +15,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-PRIVATE = Path(r"C:\Users\zulab\knos-v1-private\v0328")
+PRIVATE = Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328"
 ENTRY = PRIVATE / "research" / "ENTRY-QLOO-2026-10-30.md"
 OUT = Path(os.environ.get("KNOS_WORLD", str(PRIVATE / "world"))) / "test_entry_text.txt"
 LIST3 = re.compile(r"\b[\w'.-]+(?: [\w'.-]+){0,4}, [\w'.-]+(?: [\w'.-]+){0,4},? (?:and|or) [\w'.-]+")

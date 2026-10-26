@@ -8,7 +8,7 @@ import { chromium } from "playwright";
 import { readFileSync, writeFileSync } from "node:fs";
 
 const FRONT = "https://drexthealpha.github.io/Knos/", APP = "https://knos.onrender.com";
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_usage_counter.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_usage_counter.txt`;
 const PROGRAM = JSON.parse(readFileSync(new globalThis.URL("../src/knos/settle/v2/program_ids.json", import.meta.url), "utf8")).knos_pay;
 const rpc = async (method, params) => (await (await fetch("https://api.devnet.solana.com", { method: "POST", headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) })).json()).result;

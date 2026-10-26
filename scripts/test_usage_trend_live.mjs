@@ -8,7 +8,7 @@ import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 
 const SHA = process.argv[2], CI = process.argv[3] || SHA;     // CI is read on the newest commit (a push cancels the older runs)
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_usage_trend_live.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_usage_trend_live.txt`;
 const lines = [];
 let fails = 0;
 const ok = (c, what) => { lines.push(`${c ? "ok  " : "FAIL"} ${what}`); if (!c) fails++; };

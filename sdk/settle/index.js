@@ -4,7 +4,7 @@
 // The Python client (src/knos/settle) is the authority; sdk/settle/test.mjs checks this file against the
 // byte-exact fixtures it wrote (sdk/settle/fixtures.json).
 //
-// The second deployment (programs-v2; upgradeable only through a multisig with a public 48-hour delay, whose keys one
+// The second deployment (programs-v2; upgradeable only through a multisig with a public 8-day time lock, whose keys one
 // person holds today; after an outside review, which has not happened, the plan is to remove its upgrade authority)
 // is under `v2`:
 //

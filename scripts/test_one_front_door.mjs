@@ -7,7 +7,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 
 const SHA = process.argv[2];
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_one_front_door.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_one_front_door.txt`;
 const SITE = "https://drexthealpha.github.io/Knos/", APP = "https://knos.onrender.com";
 const PR = "https://github.com/drexthealpha/knos-e2e/pull/266";
 const MISSION = "See who wants your product, and where, before you build it";

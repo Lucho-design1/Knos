@@ -10,7 +10,7 @@
 
 From a paper or idea to a product people want: a demand check on Qloo, a Ready brief, money held on Solana, paid on proof.
 
-Ready briefs: 2.08x fewer reasoning tokens, 70% vs 5% passed ([measured](docs/idt/summary.json)).
+Ready briefs: 2.08x fewer output tokens, 70% vs 5% passed ([measured](https://github.com/drexthealpha/Knos/blob/main/docs/idt/summary.json)).
 
 Devnet, test money, no customers yet.
 
@@ -125,7 +125,7 @@ One person holds every key today. Any change to the programs waits in public for
 
 Start at [the release page](docs/reference/MANIFEST.md): the code, how it is built, what runs on devnet, the payments and the fees.
 
-One task from start to end, on 9 Oct 2026 with Knos 0.3.23, in a repository Knos owns, with test USDC (one step fixed by hand): [funded](https://explorer.solana.com/tx/3UaY22WKexigMpkVhibfeMdNgBiyybWm2Z4LuLskKGbNUDXV34yYWyH42atxFjELbrqSgoVs6TwpFzSQwhfXqzgM?cluster=devnet) · [wrong work refused](https://github.com/drexthealpha/knos-witness/actions/runs/37890511112/job/113690226126) · [paid](https://explorer.solana.com/tx/2PtmKUrQHKPARZE4nr35Te559NGQSG7tSHUfwzcKCAjL7gzvQ76fNTVLMWvq8mcZLxd27tbyTe31mCk2PxEGfAqa?cluster=devnet) (Released by GitHub's signed check, verified on Solana) · [replay paid nothing more](https://github.com/drexthealpha/knos-witness/pull/10#issuecomment-6075196710) · [the record](https://raw.githubusercontent.com/drexthealpha/Knos/knos-0.3.34/evidence/knos-witness-acaa854d/witness.json).
+One task from start to end, on 9 Oct 2026 with Knos 0.3.23, in a repository Knos owns, with test USDC (one step fixed by hand): [funded](https://explorer.solana.com/tx/3UaY22WKexigMpkVhibfeMdNgBiyybWm2Z4LuLskKGbNUDXV34yYWyH42atxFjELbrqSgoVs6TwpFzSQwhfXqzgM?cluster=devnet) · [wrong work refused](https://github.com/drexthealpha/knos-witness/actions/runs/37890511112/job/113690226126) · [paid](https://explorer.solana.com/tx/2PtmKUrQHKPARZE4nr35Te559NGQSG7tSHUfwzcKCAjL7gzvQ76fNTVLMWvq8mcZLxd27tbyTe31mCk2PxEGfAqa?cluster=devnet) (Released by GitHub's signed check, verified on Solana) · [replay paid nothing more](https://github.com/drexthealpha/knos-witness/pull/10#issuecomment-6075196710) · [the record](https://github.com/drexthealpha/Knos/blob/main/evidence/knos-witness-acaa854d/witness.json).
 
 Every capability, with the file or transaction that shows it: [docs/reference/CAPABILITIES.md](docs/reference/CAPABILITIES.md).
 
@@ -205,7 +205,7 @@ Below: tables that scripts write from the code and the chain, and the licence. N
 <!-- programs:end -->
 
 <!-- authorities:start -->
-Every program the app or this site uses, and who can upgrade it, read from devnet on 2026-10-26 ([`scripts/program_authorities.py`](scripts/program_authorities.py)):
+Every program the app or this site uses, and who can upgrade it, read from devnet on 2026-10-26 ([`scripts/program_authorities.py`](https://github.com/drexthealpha/Knos/blob/main/scripts/program_authorities.py)):
 
 | program | address | used for | upgrade authority |
 |---|---|---|---|

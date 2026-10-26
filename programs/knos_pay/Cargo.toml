@@ -4,7 +4,7 @@ version = "0.3.10"
 edition = "2021"
 rust-version = "1.84"
 license = "MIT"
-description = "Pay on proof: an escrow that pays a GitHub user only on a GitHub-signed token verified by knos-oidc."
+description = "Pay on proof: money held until it pays a GitHub user only on a GitHub-signed token verified by knos-oidc."
 
 [lib]
 crate-type = ["cdylib", "lib"]

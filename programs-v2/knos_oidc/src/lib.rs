@@ -21,7 +21,7 @@
 //!     else. So on its own it can stop tokens from verifying, and it cannot make this program accept a token the
 //!     issuer did not sign.
 //!   - The upgrade authority (a second multisig vault): the program is upgradeable only through that multisig, with
-//!     a public 48-hour delay, until an outside review. After the review the upgrade authority is removed.
+//!     a public 8-day time lock, until an outside review. After the review the upgrade authority is removed.
 //!
 //! Instructions (first byte is the tag):
 //!   0 Write        payer(s,w) token(w) system            data: id[32] total u16 offset u16 chunk

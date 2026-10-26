@@ -6,7 +6,7 @@
 import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_public_text.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_public_text.txt`;
 const APP = "https://knos.onrender.com";
 const PAGES = ["https://drexthealpha.github.io/Knos/", `${APP}/`, "https://drexthealpha.github.io/Knos/how-we-test.html",
   "https://drexthealpha.github.io/Knos/pricing.html", `${APP}/invite`, `${APP}/with-without`];

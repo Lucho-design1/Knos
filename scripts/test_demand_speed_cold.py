@@ -16,7 +16,7 @@ import urllib.request
 from pathlib import Path
 
 APP = "https://knos.onrender.com"
-OUT = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world")) / "test_demand_speed_cold.txt"
+OUT = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world") / "test_demand_speed_cold.txt"
 WARM = "a ceramic mug that keeps coffee warm"
 IDEAS = ["a folding e-bike for apartment renters", "a sourdough starter subscription", "a meditation app for night-shift nurses",
          "vegan leather sneakers", "a board game about climate negotiation", "a podcast about West African jazz",

@@ -93,14 +93,13 @@ many claims were refused here. `tests/test_sibyl_is_load_bearing.py` and `tests/
 host's event through the hook and show the answer disappear when the store is deleted, when no Sibyl is there, and
 when its journal or a rule is edited by hand.
 
-Sibyl's releases were read from PyPI on 5 October 2026 and again on 6 October 2026 (`https://pypi.org/pypi/<package>/json`),
-with the same result:
+Sibyl's releases were read from PyPI on 26 October 2026 (`https://pypi.org/pypi/<package>/json`):
 
 | Package | Latest | Used by Knos |
 |---|---|---|
-| `sibyl-memory-client` | 0.8.1 (7 September 2026) | yes: the dependency, `>=0.8.1`. Nothing newer exists |
-| `sibyl-memory-mcp` | 0.2.1 (7 September 2026) | no. Its eight tools (`memory_remember`, `memory_recall`, `memory_search`, `memory_list`, `memory_forget`, `memory_set_state`, `memory_get_state`, `memory_record_event`) have the same names and arguments as in 0.1.13 (7 August 2026); since then it requires `sibyl-memory-client>=0.8.1` and `sibyl-memory-hermes>=0.4.0`, and takes its vocabulary of search verdicts from the client |
-| `sibyl-memory-hermes` | 0.4.1 (7 September 2026) | no. It makes Sibyl the memory provider of Hermes Agent: `pip install sibyl-memory-hermes`, `sibyl-memory-hermes install-plugin`, then `memory.provider: sibyl` in `~/.hermes/config.yaml` |
+| `sibyl-memory-client` | 0.9.0 (14 October 2026) | yes: the dependency, pinned `>=0.8.1,<0.9`. 0.9.0 requires a Sibyl account, so Knos stays on 0.8.1 |
+| `sibyl-memory-mcp` | 0.3.0 (14 October 2026) | no: Knos calls the client directly |
+| `sibyl-memory-hermes` | 0.5.0 (14 October 2026) | no. It makes Sibyl the memory provider of Hermes Agent: `pip install sibyl-memory-hermes`, `sibyl-memory-hermes install-plugin`, then `memory.provider: sibyl` in `~/.hermes/config.yaml` |
 
 Hermes Agent with that provider and Knos keep their memories in the same Sibyl store file by default
 (`~/.sibyl-memory/memory.db`). Knos keeps each repository under a tenant of its own, so its record is not among what

@@ -7,7 +7,7 @@
     "A signing key is one of GitHub's four keys of 2 Oct 2026 or is named by GitHub's own signature; a key admitted that way waits a day and the",
     "guardian's approval, every key expires 30 days after it was last attested, and the guardian can revoke a key for ever.",
     "The guardian (a vault of a 2-of-3 multisig; today one person holds all three keys) can approve and revoke. It cannot add a key, change a delay or an expiry, or touch a token account.",
-    "Upgradeable only through a multisig with a public 48-hour delay, until an outside review.",
+    "Upgradeable only through a multisig with a public 8-day time lock, until an outside review.",
     "The multisig is 2 of 3, and today one person holds all three keys.",
     "A native program: this file is written by hand from programs-v2/knos_oidc/src/lib.rs and checked by tests/test_idl.py.",
     "Instruction data is the discriminant byte, then the arguments in order, little-endian, with no padding.",

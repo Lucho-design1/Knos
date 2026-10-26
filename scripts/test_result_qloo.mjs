@@ -7,7 +7,7 @@ import { chromium } from "playwright";
 import { readFileSync, writeFileSync } from "node:fs";
 
 const URL = process.argv[2] || "https://drexthealpha.github.io/Knos/";
-const OUT = process.env.KNOS_WORLD ? `${process.env.KNOS_WORLD}/test_result_qloo.txt` : "C:/Users/zulab/knos-v1-private/v0328/world/test_result_qloo.txt";
+const OUT = process.env.KNOS_WORLD ? `${process.env.KNOS_WORLD}/test_result_qloo.txt` : `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world/test_result_qloo.txt`;
 const src = readFileSync(new globalThis.URL("./qloo_vs_open_signals.py", import.meta.url), "utf8");
 const IDEAS = [...src.slice(src.indexOf("IDEAS")).matchAll(/\("[A-Za-z0-9_ -]+",\s*"([^"]+)"\)/g)].map((m) => m[1]).slice(0, 20);
 const lines = [];

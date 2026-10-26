@@ -21,7 +21,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-WORLD = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+WORLD = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
 OUT = WORLD / "test_agent_install.txt"
 ADD = ["mcp", "add", "--transport", "http", "--scope", "project", "knos", "https://knos.onrender.com/mcp"]
 PROMPT = ("Use the knos tools only. Run a demand check for 'a smart water bottle that glows to remind you to drink', then run "

@@ -20,7 +20,7 @@ from pathlib import Path
 
 APP = "https://knos.onrender.com"
 ROOT = Path(__file__).resolve().parents[1]
-OUT = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world")) / "test_qloo_sets_terms.txt"
+OUT = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world") / "test_qloo_sets_terms.txt"
 REFUND = "If fewer than {target} pre-orders come from {city} by the first milestone deadline, every pre-order is refunded."
 
 

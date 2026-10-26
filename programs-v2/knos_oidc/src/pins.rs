@@ -1,5 +1,5 @@
 //! Everything this program trusts, fixed in the binary. No instruction changes any of it. An upgrade could: the
-//! program is upgradeable only through a multisig with a public 48-hour delay, until an outside review (after it
+//! program is upgradeable only through a multisig with a public 8-day time lock, until an outside review (after it
 //! the upgrade authority is removed). To check the trust root, compare these constants with the issuers' public key
 //! sets, reproduce the build, and read the program's upgrade authority on chain.
 //!

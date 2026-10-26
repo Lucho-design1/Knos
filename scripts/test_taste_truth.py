@@ -247,7 +247,7 @@ def score(truth_file: str, claude_file: str, knos_file: str) -> int:
              f"{'PASS' if passed else 'FAIL'} test_taste_truth: run once on {n} films, overlap {ma:.3f} Claude alone vs {mb:.3f} Knos with Qloo, "
              f"difference {mb - ma:+.3f} [{lo:+.3f}, {hi:+.3f}], {reading}"]
     print("\n".join(lines))
-    (Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world")) / "test_taste_truth.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world") / "test_taste_truth.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return 0 if passed else 1
 
 

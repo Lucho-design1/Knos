@@ -8,7 +8,7 @@ import { chromium } from "playwright";
 import { readFileSync, writeFileSync } from "node:fs";
 
 const PAGE = "https://drexthealpha.github.io/Knos/pricing.html", FRONT = "https://drexthealpha.github.io/Knos/";
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_pricing_page.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_pricing_page.txt`;
 const fee = Number((readFileSync(new globalThis.URL("../programs-v2/knos_pay/src/lib.rs", import.meta.url), "utf8").match(/pub const FEE_BPS: u64 = (\d+);/) || [])[1]);
 const lines = [];
 let fails = 0;

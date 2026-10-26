@@ -184,7 +184,7 @@ def main() -> int:
     line = (f"PASS test_agent_solver: 0 operator steps, paid {after - before:g} test units on devnet" if not FAILS
             else f"FAIL test_agent_solver: {len(FAILS)} failed: {FAILS[:3]}")
     print(line, flush=True)
-    world = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+    world = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
     (world / "test_agent_solver.txt").write_text(line + "\n", encoding="utf-8")
     return 1 if FAILS else 0
 

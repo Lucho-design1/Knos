@@ -8,7 +8,7 @@ runs as is in a browser and in Node 20+. Every address, audience, instruction, a
 checked byte for byte against the Python client (`fixtures.json`, `npm test` in the repository).
 
 It speaks to the second deployment (`knos.v2`). Its programs can be changed only through a multisig, after a public
-48-hour delay. Today one person holds every key of that multisig, and no outside security review has been done yet.
+8-day time lock. Today one person holds every key of that multisig, and no outside security review has been done yet.
 The first deployment stays readable: `knos.client(ids)` is its client.
 
 ## Install

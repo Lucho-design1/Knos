@@ -8,7 +8,7 @@ import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 
 const APP = "https://knos.onrender.com/", FRONT = "https://drexthealpha.github.io/Knos/";
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_app_home_one_screen.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_app_home_one_screen.txt`;
 const WORDS = ["passkey", "SSO", "SAML", "Xero", "QuickBooks"];
 // taken out of "More" (web/brand/bar.html) on 25 Oct 2026, each still at its own address
 const REMOVED = [["How we verify", `${FRONT}#verify`], ["Back a product", `${APP}#buy`], ["Fund a milestone", `${APP}#fund`],

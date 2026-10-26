@@ -183,7 +183,7 @@ def score(truth_file: str, claude_file: str, knos_file: str) -> int:
              f"{'PASS' if n else 'FAIL'} test_where_truth: run once on {n} business types, overlap {ma:.3f} Claude alone vs {mb:.3f} "
              f"Knos with Qloo, difference {mb - ma:+.3f} [{lo:+.3f}, {hi:+.3f}], {reading}"]
     print("\n".join(lines))
-    out = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world")) / "test_where_truth.txt"
+    out = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world") / "test_where_truth.txt"
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return 0 if n else 1
 

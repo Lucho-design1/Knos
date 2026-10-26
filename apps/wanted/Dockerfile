@@ -30,6 +30,7 @@ WORKDIR /app
 RUN useradd --create-home app && mkdir -p /data && chown app /data
 USER app
 ENV HOST=0.0.0.0 PORT=8080 KNOS_WANTED_CACHE=/data/qloo-mcp KNOS_WANTED_STATE=/data/state KNOS_WANTED_RECORD=/data/record \
-    PYTHONPATH=/src/apps/wanted KNOS_CLUSTER=devnet KNOS_FROST_BIN=/usr/local/bin/knos-frost KNOS_REFEREE_FROST_GROUP=/src/config/referee-frost.json QLOO_BASE_URL=https://hackathon.api.qloo.com QLOO_TRUSTED_BASE_URL=https://hackathon.api.qloo.com
+    PYTHONPATH=/src/apps/wanted KNOS_CLUSTER=devnet KNOS_FROST_BIN=/usr/local/bin/knos-frost KNOS_REFEREE_FROST_GROUP=/src/config/referee-frost.json
+# QLOO_API_KEY and QLOO_BASE_URL come from the host's environment (Render's secrets): no Qloo host is named here
 EXPOSE 8080
 CMD ["python", "-m", "knos_wanted", "serve"]

@@ -21,7 +21,7 @@ from solders.pubkey import Pubkey
 ROOT = Path(__file__).resolve().parents[1]
 IDS = json.loads((ROOT / "programs-v2" / "program_ids.json").read_text(encoding="utf-8"))
 REPO, RPC = "drexthealpha/Knos", "https://api.devnet.solana.com"
-WORLD = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+WORLD = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
 STATUS = ("Draft", "Active", "Rejected", "Approved", "Executing", "Executed", "Cancelled")
 
 

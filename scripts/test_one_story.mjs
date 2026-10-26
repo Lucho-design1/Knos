@@ -6,7 +6,7 @@
 import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_one_story.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_one_story.txt`;
 const STEPS = ["Check demand", "Ready brief", "Money held", "Paid on proof"];
 const TX = /https:\/\/explorer\.solana\.com\/tx\/[1-9A-HJ-NP-Za-km-z]{64,90}\?cluster=devnet/;
 const lines = [];

@@ -36,7 +36,7 @@ BRIEFS = {'about': 'Three open briefs whose proof is a computation (sweep2/06 se
              'title': 'Beat the sealed classifier: the autoresearch round, funded',
              'note': 'The only one of the three with an autonomous release path today: knos_milestone_submit sends '
                      'the train.py to the open round, its sealed referee judges it, and a verdict that meets the '
-                     "target releases the escrow with no human step. The margin is read from the round's shown "
+                     "target releases the money held with no human step. The margin is read from the round's shown "
                      '(Ladder) scores, which round down to 0.01.',
              'release': "the round's sealed referee: a scored submission whose shown accuracy is at least 0.5 "
                         "percentage points above the baseline's releases at once",

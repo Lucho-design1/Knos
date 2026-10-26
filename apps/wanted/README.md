@@ -75,7 +75,7 @@ an optional door; the product is the web page.
 ```sh
 # from the root of the Knos checkout (Python 3.12)
 pip install . "./apps/wanted[escrow,auth,config]"
-export QLOO_API_KEY=... QLOO_BASE_URL=https://hackathon.api.qloo.com
+export QLOO_API_KEY=... QLOO_BASE_URL=...   # the key and the API host Qloo gave you
 PYTHONPATH=apps/wanted python -m knos_wanted serve        # http://127.0.0.1:8080
 ```
 
@@ -196,7 +196,7 @@ docker run -p 8080:8080 --env-file apps/wanted/.env knos-demand
 
 | Variable | Needed for | Without it |
 |---|---|---|
-| `QLOO_API_KEY` (+ `QLOO_BASE_URL`, `QLOO_TRUSTED_BASE_URL` = `https://hackathon.api.qloo.com`) | live Qloo data | the check answers CANNOT_DECIDE (no Qloo evidence); the MCP flow runs MOCK (synthetic), labelled |
+| `QLOO_API_KEY` (+ `QLOO_BASE_URL`, the API host Qloo gave you; `QLOO_TRUSTED_BASE_URL` defaults to it) | live Qloo data | the check answers CANNOT_DECIDE (no Qloo evidence); the MCP flow runs MOCK (synthetic), labelled |
 | `KNOS_WANTED_DEVNET_KEYPAIR` | pre-orders and anchoring (a devnet test wallet with a little devnet SOL; path or JSON byte array) | escrow buttons explain what is missing |
 | `KNOS_WANTED_MINT` | the same test mint across restarts | a test mint is created on first use |
 | `KNOS_WANTED_RECORD` | where the Knos Record lives | `~/.knos/record` |

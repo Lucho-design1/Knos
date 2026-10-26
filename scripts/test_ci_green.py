@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 REPO = "drexthealpha/Knos"
-WORLD = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+WORLD = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
 
 
 def gh(*args: str) -> str:

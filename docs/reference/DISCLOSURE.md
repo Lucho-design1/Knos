@@ -72,7 +72,7 @@ TZ=UTC git log --date=format-local:'%Y-%m-%d %H:%M' --format='%ad %h %s' | grep 
   file, statements and exports, and screening of payout addresses. Drills of the recovery paths on the deployed
   bytes.
 - **Knos 0.3.14**: a correction and what follows from it. The payment program build that 0.3.13 proposed let one pay token
-  pay a second order funded later for the same issue; it was found during the proposal's 48-hour delay, before the
+  pay a second order funded later for the same issue; it was found while the proposal waited out its time lock (then 48 hours), before the
   build ran, and that release withdrew that proposal and proposed a corrected one, in which every signed token is
   accepted once by one marker rule ([SECURITY.md](SECURITY.md), section 15). Also: overflow checks in release
   builds of every program; fee tiers in place of one rate, and a devnet cap of 100,000 per order; a batch mode of

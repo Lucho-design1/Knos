@@ -16,7 +16,7 @@ REPO = "drexthealpha/Knos"
 EIGHT = ("test_fields_matrix", "test_value_vectors", "test_proof_first", "test_money_page", "test_companies_mode", "test_legibility",
          "test_vitals", "test_stack_coverage")
 TARGET_MIN = 12.3 / 2
-WORLD = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+WORLD = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
 
 
 def gh(*args: str) -> dict | list:

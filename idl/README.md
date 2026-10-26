@@ -21,7 +21,7 @@ inside each file is the version of the Knos crates the program was built with (0
 (the "runs" column).
 
 **Who can change the programs.** The four of the second deployment can be upgraded by a 2-of-3
-[multisig](../docs/WORDS.md#multisig), after a public 48-hour delay. Today one person holds all three keys. The first
+[multisig](../docs/WORDS.md#multisig), after a public 8-day time lock. Today one person holds all three keys. The first
 deployment has no upgrade authority, so nobody can change it. [docs/reference/GOVERNANCE.md](../docs/reference/GOVERNANCE.md) has the
 details.
 

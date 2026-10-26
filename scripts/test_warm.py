@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 REPO = "drexthealpha/Knos"
-WORLD = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+WORLD = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
 N, GAP, COLD_S, P95_S = 144, (540, 660), 10.0, 2.0
 PROBE = re.compile(r"PROBE (\S+) (\d{3}) ([\d.]+)")
 

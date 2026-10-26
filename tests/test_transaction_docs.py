@@ -39,7 +39,7 @@ def test_the_invoice_figures_are_what_shadow_gives_on_the_sample():
 
 
 def test_the_witnessed_links_agree_with_the_readme():
-    links = set(re.findall(r"https://(?:explorer\.solana\.com/tx|github\.com/drexthealpha/knos-witness|raw\.githubusercontent\.com/drexthealpha/Knos/knos-0\.3\.34/evidence)/[^)\s]+",
+    links = set(re.findall(r"https://(?:explorer\.solana\.com/tx|github\.com/drexthealpha/knos-witness|github\.com/drexthealpha/Knos/blob/main/evidence)/[^)\s]+",
                             _read(ROOT / "README.md")))
     assert links
     text = _read(DOCS / "TRANSACTION.md")

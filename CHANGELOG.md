@@ -106,7 +106,7 @@ crates stay at 0.3.14.
 
 ### What still says 48 hours, and why
 
-- **Receipts.** A receipt's list of what remains to be trusted names "a public 48-hour delay". `knos receipt` checks
+- **Receipts.** A receipt's list of what remains to be trusted names the public delay of upgrades (48 hours then). `knos receipt` checks
   that list word for word, and every receipt already made carries it, so the words stay.
 - **The programs' own comments and interface files** say 48 hours. Changing them would change the programs.
 - **The upgrade drill** (`scripts/drill_upgrade.sh`) still moves the clock 48 hours, so with `--from-devnet` it now
@@ -496,7 +496,7 @@ outside this repository. **No program changes in this release:** nothing under `
   ([`docs/reference/CAPABILITIES.md`](docs/reference/CAPABILITIES.md)). The rounds that need a second repository owner, more test USDC
   than the wallet holds or an arranged clock say `cannot`; those waiting on a deadline say `needs time`.
 - **The 8-day upgrade time lock is approved, not applied.** Its Squads configuration transaction (proposal 9) was
-  created and approved by two member keys; the Squads program executes it only once the present 48-hour lock has run,
+  created and approved by two member keys; the Squads program executes it only once the present two-day lock has run,
   and until then the lock on chain is 48 hours ([`docs/reference/GOVERNANCE.md`](docs/reference/GOVERNANCE.md)).
 
 ### The number, read again
@@ -632,7 +632,7 @@ at 0.3.14.
 
 ### Governance and lifecycle
 
-- **The upgrade gap, and its plan.** A seven-day notice can outlast the 48-hour upgrade delay.
+- **The upgrade gap, and its plan.** A seven-day notice can outlast the two-day upgrade delay.
   `scripts/timelock_plan.py` prints the Squads configuration transaction that sets the time lock to 8 days, above the
   minimum of the notice plus the grace, and refuses while any upgrade proposal is open or approved and not executed.
   It is planned, not applied: the time lock on chain is still 48 hours ([`docs/reference/GOVERNANCE.md`](docs/reference/GOVERNANCE.md)).
@@ -1466,7 +1466,7 @@ capability's note: only a public program id counts for "deployed" or "exercised"
 
 - **No program was changed.** Nothing under `programs-v2/*/src` or `programs/`, and no committed program build. No
   program was deployed, proposed or staged for this release.
-- **The four builds proposed by 0.3.14 execute on their own schedule,** through the multisig and its public 48-hour
+- **The four builds proposed by 0.3.14 execute on their own schedule,** through the multisig and its public two-day
   delay: `knos_oidc 2.1`, `knos_pay 2.1`, `knos_meter 1.1`, `knos_passkey 1.1`. This file names no time for them:
   the site's [upgrade record](https://drexthealpha.github.io/Knos/upgrades.json) and `knos status` are the record of
   the live state ([`web/upgrades.json`](web/upgrades.json) is the committed copy, of the time it names). Until each
@@ -1495,7 +1495,7 @@ capability's note: only a public program id counts for "deployed" or "exercised"
 
 ## 0.3.14 (October 2026)
 
-**In short:** A flaw found during the public 48-hour wait could have paid a re-funded order twice; that build never
+**In short:** A flaw found during the public two-day wait could have paid a re-funded order twice; that build never
 ran. Every token can now be used only once.
 
 **Knos is the neutral count and settlement for software work priced per outcome: terms fixed before the work, a
@@ -1503,7 +1503,7 @@ signed CI run attests they were met, a Solana program counts it or pays it.**
 
 **A token for `PayOrder` could pay a re-funded order twice in the 0.3.13 build.** With two fund comments on one
 issue, relaying the second fund token after the first order was paid put a new order at the same address, and the
-pay token that had paid the first order paid the second too. This was found during the 48-hour delay. That build was
+pay token that had paid the first order paid the second too. This was found during the two-day delay. That build was
 never live on any cluster, and only test USDC was involved. **Every token is now single-use in every instruction.**
 
 Everything is on Solana devnet with test USDC. What this release adds to the programs runs at their public addresses
@@ -1513,7 +1513,7 @@ line of [`docs/reference/CAPABILITIES.md`](docs/reference/CAPABILITIES.md) says 
 devnet", each with its transaction, where the release's rehearsal ran them on a staging deployment of this build
 ([`docs/reference/CAPABILITIES.md`](docs/reference/CAPABILITIES.md), "The 0.3.14 rehearsal on devnet").
 The 0.3.13 build was proposed on 2026-10-04 07:17 UTC and withdrawn before it could run. 0.3.14 proposes this build
-in its place, as `knos_pay 2.1` and `knos_oidc 2.1`, with the same public 48-hour delay. This file names no time for
+in its place, as `knos_pay 2.1` and `knos_oidc 2.1`, with the same public two-day delay. This file names no time for
 the new proposals: the site's [upgrade record](https://drexthealpha.github.io/Knos/upgrades.json), read from the
 chain, and `knos status` are the record of the live state ([`web/upgrades.json`](web/upgrades.json) is the committed
 copy, of the time it names).
@@ -1634,7 +1634,7 @@ security firm has examined anything.
 
 ### What is live, and when
 
-The payment program and the verifier are upgraded at their existing addresses, through the multisig, with its public 48-hour
+The payment program and the verifier are upgraded at their existing addresses, through the multisig, with its public two-day
 delay. That upgrade was proposed on 2026-10-04 07:17 UTC and withdrawn by 0.3.14 before 2026-10-06 07:17 UTC, when
 it could have run: it never ran ([`docs/reference/GOVERNANCE.md`](docs/reference/GOVERNANCE.md), section 3).
 `knos status` and the site's banner show a proposal while it is pending.
@@ -1775,7 +1775,7 @@ be changed, after a public wait.
 authority the same day, before anyone outside had read them. Three outside reviews then found defects that cannot
 be patched there. 0.3.12 does not touch it: `programs/` is byte for byte what was deployed, and the bounties funded
 on it finish on it. Everything new is a second pair of programs, `programs-v2`, with new addresses. It stays
-changeable until an outside review, only through a multisig with a public 48-hour delay, and is then to be locked so
+changeable until an outside review, only through a multisig with a public two-day delay, and is then to be locked so
 nobody can change it.
 
 Defects in the first deployment, and what the second does instead:

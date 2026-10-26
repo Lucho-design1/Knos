@@ -9,7 +9,7 @@
 //! There are two deployments of knos-oidc, and this crate reads the SECOND unless you name the first: `ID`,
 //! `Token::read` and `Token::read_any` are the second deployment's (`v2` is the same thing by name). It admits
 //! signing keys on GitHub's own signature, lets them expire and lets a guardian revoke them; it is upgradeable only
-//! through a multisig with a public 48-hour delay, until an outside review. The first deployment (`v1::ID`,
+//! through a multisig with a public 8-day time lock, until an outside review. The first deployment (`v1::ID`,
 //! `v1::read`) is immutable: no key of it expires and none can be revoked, so a program reads it only by naming it.
 //! A token account has the same layout under both; a token one deployment verified says nothing under the other.
 //!

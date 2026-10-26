@@ -9,7 +9,7 @@ import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 
 const FRONT = "https://drexthealpha.github.io/Knos/";
-const OUT = `${process.env.KNOS_WORLD || "C:/Users/zulab/knos-v1-private/v0328/world"}/test_verdict_speed_cold.txt`;
+const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_verdict_speed_cold.txt`;
 const WARM = "a hand-painted silk scarf";
 const IDEAS = ["a robot lawn mower for small yards", "a protein bar made from crickets", "a language app for Yoruba learners",
   "a wireless guitar amplifier", "a kids' coding robot kit", "a luxury pet hotel", "a smart ring that tracks sleep",

@@ -4,7 +4,7 @@ version = "0.3.14"
 edition = "2021"
 rust-version = "1.84"
 license = "MIT"
-description = "Acceptance without escrow: a neutral on-chain count of GitHub-signed evaluations, paid from prepaid credits. It moves no customer money."
+description = "Acceptance with no money held: a neutral on-chain count of GitHub-signed evaluations, paid from prepaid credits. It moves no customer money."
 
 [lib]
 crate-type = ["cdylib", "lib"]

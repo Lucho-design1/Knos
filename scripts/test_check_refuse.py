@@ -19,7 +19,7 @@ from knos import refuse  # noqa: E402
 from qloo_vs_open_signals import IDEAS  # noqa: E402
 
 APP = "https://knos.onrender.com"
-WORLD = Path(os.environ.get("KNOS_WORLD", r"C:\Users\zulab\knos-v1-private\v0328\world"))
+WORLD = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
 BASE = WORLD / "check_refuse_baseline.json"
 OP = {"X-Knos-Admin": os.environ.get("KNOS_ADMIN_KEY", "")}
 

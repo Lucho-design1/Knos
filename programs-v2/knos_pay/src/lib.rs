@@ -2,7 +2,7 @@
 //! escrow. It is paid to the author of the pull request that meets the terms fixed at funding, when GitHub itself
 //! signs a token saying the funder's pinned prove.yml workflow saw every funded condition met at the merged commit.
 //! The token is verified on chain by knos-oidc (OIDC_ID). This program is upgradeable only through a multisig with a
-//! public 48-hour delay, until an outside review; then made immutable. In the code below no key of Knos's moves money
+//! public 8-day time lock, until an outside review; then made immutable. In the code below no key of Knos's moves money
 //! or chooses where it goes: the guardian (another multisig) can refuse NEW funding for at most seven days per
 //! signature (Pause), and nothing else here. In knos-oidc its guardian can revoke a signing key; this program then
 //! refuses every token that key verified (TOKENS). A proof signed with it pays nothing: the job waits for a proof
