@@ -16,7 +16,7 @@ SITE = "https://drexthealpha.github.io/Knos/"
 ID = re.compile(r"/r/([0-9a-f]{16})")
 # the one plain sentence for each state that is not a full answer
 SAY = {"empty": "Qloo matched no product to this idea, so there is nothing to measure yet.",
-       "thin": "Qloo's map is too thin here to name a launch city, so no pre-order target is set.",
+       "thin": metros.NO_MAP,                     # the card's own words when Qloo's map names no launch city
        "outage": "Qloo did not answer this time, so this is its last full answer.",
        "error": "No result has this address, so check a product on the front door to make one."}
 
@@ -49,13 +49,19 @@ def state_of(rep: dict | None) -> str | None:
         return "outage"
     if not rep.get("matches"):
         return "empty"
-    if not metros.terms(rep.get("where") or []):
+    if not terms_of(rep):
         return "thin"
     return None
 
 
+def terms_of(rep: dict) -> dict | None:
+    """The launch terms the card draws: the report's own, else the check's rule over its heatmap cells."""
+    t = rep.get("terms")
+    return t if isinstance(t, dict) and t.get("city") else metros.terms(rep.get("where") or [])
+
+
 STYLE = """body{margin:0;background:#f4f4f0;color:#14151a;font:400 16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:720px;margin:0 auto;padding:16px 16px 40px}a{color:#2b3aa8}h1{font-size:1.6rem;line-height:1.2;margin:8px 0 4px}
+main{max-width:720px;margin:0 auto;padding:16px 16px 40px}a{color:#2b3aa8;padding-block:max(0px,calc((24px - 1em) / 2))}h1{font-size:1.6rem;line-height:1.2;margin:8px 0 4px}
 .verdict{font-weight:600;font-size:1.15rem;margin:0 0 12px}.say{border-left:3px solid #8a8d99;padding-left:10px}
 dl{display:grid;grid-template-columns:minmax(0,max-content) minmax(0,1fr);gap:4px 16px;margin:12px 0}dd{margin:0;overflow-wrap:anywhere}
 .row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin:16px 0}figure{margin:0}figcaption{font-size:.8rem;overflow-wrap:anywhere;max-width:180px}
@@ -74,9 +80,10 @@ def page(rep: dict | None, url: str, rid: str) -> str:
     else:
         idea = str(rep.get("idea") or "this idea")
         word = WORD.get(str((rep.get("decision") or {}).get("verdict") or ""), "Qloo cannot decide this one")
-        t = metros.terms(rep.get("where") or []) if st is None else None
+        t = terms_of(rep) if st is None else None
         made = str(rep.get("made") or "")[:10]
-        rows = [("Launch city", e(t["city"]) if t else "none"), ("Pre-order target", f"{t['target']}, all refunded if it falls short" if t else "none"),
+        # the launch city and target as the card has them; with no terms those rows are left out (the sentence says why)
+        rows = ([("Launch city", e(t["city"])), ("Pre-order target", f"{t['target']}, all refunded if it falls short")] if t else []) + [
                 ("Cities Qloo names", e(", ".join(str(c.get("name")) for c in (rep.get("cities") or [])[:5]) or "none")),
                 ("Qloo calls", f'<a href="/trace.html?hash={e(str(rep.get("hash") or ""))}">{len(rep.get("calls") or [])}, read {e(made)}</a>')]
         title = f"{idea}: {word}"

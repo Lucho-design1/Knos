@@ -21,6 +21,14 @@
 <link rel="stylesheet" href="app.css">
 <style>.tests .t { margin: 32px 0 0; } .tests .t-n { font-size: var(--s1); margin: 4px 0; }</style>
 <script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<style id="t-stack">@media (max-width: 479.98px) {
+  .t .k-table { overflow: visible; }
+  .t .k-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .t .k-table table, .t .k-table tbody, .t .k-table tr, .t .k-table td { display: block; min-width: 0; width: auto; }
+  .t .k-table tr { border: 1px solid var(--line); border-radius: var(--radius, 8px); padding: 8px 12px; margin: 0 0 8px; }
+  .t .k-table td { border: 0; padding: 2px 0; overflow-wrap: anywhere; }
+  .t .k-table td[data-h]::before { content: attr(data-h) ": "; color: var(--muted); }
+}</style>
 <link rel="preconnect" href="https://drexthealpha.github.io" crossorigin>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
@@ -55,7 +63,7 @@
     <a id="whoBtn" class="signin" href="wanted.html#signin">Sign in</a>
   </div>
 </header>
-<script src="brand/bar.js" defer></script>
+<script>addEventListener("load", () => { const s = document.createElement("script"); s.src = "brand/bar.js"; document.head.append(s); }, { once: true });</script>
 <!-- /k-bar -->
 <main>
   <section class="view tests" id="tests">
@@ -131,5 +139,8 @@
   <span>Devnet is test mode: the money is test USDC.</span>
   <span><a href="./">Knos home</a> · <a href="privacy.html">Privacy and terms</a> · <a href="https://github.com/drexthealpha/Knos">Source (MIT)</a></span>
 </footer>
+<script>/* each cell names its column, for the stacked cards on a phone */
+document.querySelectorAll(".t .k-table table").forEach((t) => { const h = [...t.querySelectorAll("thead th")].map((x) => x.textContent.trim());
+  t.querySelectorAll("tbody tr").forEach((r) => [...r.children].forEach((td, i) => { if (h[i]) td.setAttribute("data-h", h[i]); })); });</script>
 </body>
 </html>

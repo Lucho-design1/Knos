@@ -83,7 +83,10 @@ def vectors(api: str, js: str) -> str:
 def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) -> str:
     s = path.read_text(encoding="utf-8")
     src = "/static/brand/bar.js" if tokens.startswith("/static/") else tokens.replace("tokens.css", "bar.js")
-    block = f"<!-- k-bar -->\n{bar(home, site, app)}\n" + (f'<script src="{src}" defer></script>\n' if script else "") + "<!-- /k-bar -->"
+    # the bar's script is asked for after the page has loaded: nothing of it is needed for the first paint
+    late = ('<script>addEventListener("load", () => { const s = document.createElement("script"); '
+            f's.src = "{src}"; document.head.append(s); }}, {{ once: true }});</script>\n')
+    block = f"<!-- k-bar -->\n{bar(home, site, app)}\n" + (late if script else "") + "<!-- /k-bar -->"
     if MARK.search(s):
         s = MARK.sub(lambda _: block, s, count=1)
     else:

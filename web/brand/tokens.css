@@ -176,3 +176,6 @@ code, pre, kbd, .mono { font-family: var(--code); }
 .k-real{display:inline-block;padding:1px 8px;border-radius:99px;background:var(--soft);color:var(--fg);font-weight:600}
 main p,main li,main dd{max-width:65ch}
 .k-big,.mx-need{line-height:1.5}
+/* every tap target 24 px tall or more (WCAG 2.5.8): a link in text gets the height as padding that moves no line */
+:where(a[href]){padding-block:max(0px,calc((24px - 1em) / 2))}
+:where(summary){min-height:24px}

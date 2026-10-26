@@ -1,5 +1,7 @@
-<section id="k-built" class="k-built" aria-label="Built and checkable">
-  <style>#k-built { margin: 32px 0 0; } #k-built .k-caps { margin: 0; padding-left: 1.1em; font-size: var(--s-1); } #k-built .k-caps li { margin: 0 0 4px; }</style>
+<section id="k-built" class="k-built" aria-labelledby="k-built-h">
+  <style>#k-built { margin: 32px 0 0; } #k-built h2 { font: 600 var(--s1)/1.3 var(--head); margin: 0 0 8px; } #k-built .k-caps { margin: 0; padding-left: 1.1em; font-size: var(--s-1); } #k-built .k-caps li { margin: 0 0 4px; }</style>
+  <h2 id="k-built-h">How it is built</h2>
+  <p class="k-agent" data-not-prose><code>claude mcp add --transport http knos https://knos.onrender.com/mcp</code></p>
   <ul class="k-caps" id="k-caps">
     <li><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/QLOO-COVERAGE.md">537 of 537</a> documented Qloo parameters mapped, checked on every push</li>
     <li>The verdict comes from <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/DEMAND_CHECK.md">fixed rules in code</a>, each number citing its Qloo call</li>

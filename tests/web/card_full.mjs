@@ -18,13 +18,13 @@ function report(i) {
     call(3, "launch cities", { "filter.type": "urn:entity:destination", take: 8 }), call(4, "taste persona", { "filter.type": "urn:tag", take: 8 }),
     call(5, "brand ladder", { "filter.type": "urn:entity:brand", take: 6 }), call(6, "recommendations", { "filter.type": "urn:entity:brand", take: 10 }),
     { n: 7, call: "GET /v2/analysis/compare", what: "versus", params: { "a.signal.interests.entities": "e1", "b.signal.interests.entities": "e0" }, ms: 90 }];
-  return { hash: `${String(i).repeat(8)}`.padEnd(64, "0"), idea: `synthetic idea ${i}`, label: "LIVE Qloo data (synthetic test)", stage: "full",
+  return { hash: `${String(i).repeat(8)}`.padEnd(64, "0"), idea: `synthetic herbal drink ${i}`, label: "LIVE Qloo data (synthetic test)", stage: "full",
     decision: { verdict: "OPEN", reasons: ["synthetic"] }, who: { top_age: "25_to_29", top_gender: "female", src: 2 },
     matches: [{ id: "e0", name: `Leader ${i}` }, { id: "e1", name: `Match ${i}` }], leader: { id: "e0", name: `Leader ${i}` },
     cities: [{ name: `City ${i}`, lat: 40.7, lon: -74, src: 3, because: ["e1"] }],
-    persona: [{ name: `Tag A${i}`, src: 4 }, { name: `Tag B${i}`, src: 4 }],
+    persona: [{ name: `Herbal Fans ${i}`, src: 4 }, { name: "Beet Salad", src: 4 }],
     ladder: [{ name: `Brand X${i}`, affinity: 0.91, src: 5 }, { name: `Brand Y${i}`, affinity: 0.82, src: 5 }],
-    recommended: { items: [{ name: `Rec ${i}` }, { name: `Rec ${i}b` }], src: 6 },
+    recommended: { items: [{ name: `Herbal Co ${i}` }, { name: "BforBank" }], src: 6 },
     versus: { leader: `Leader ${i}`, overlap: 0.4, whitespace: [`Room ${i}`, `Room ${i}b`], src: 7 },
     trend: { entity: `Leader ${i}`, direction: "flat", data_through: "2026-05-07", src: 1 }, calls };
 }
@@ -48,9 +48,9 @@ const browser = await chromiumOrSkip();
     const hero = readFileSync(join(web, "brand/hero.html"), "utf8").replace(/\{API\}/g, "http://stub.test").replace(/\{APP\}/g, "http://stub.test/");
     await page.setContent(`<!doctype html><body>${hero}<script src="http://stub.test/hero.js"></script></body>`);
     for (const i of [1, 2, 3]) {
-      await page.fill("#k-q", `synthetic idea ${i}`);
+      await page.fill("#k-q", `synthetic herbal drink ${i}`);
       await page.click("#k-go");
-      await page.waitForFunction((i) => document.querySelector("#k-card .k-card .k-kick")?.textContent.includes(`synthetic idea ${i}`), i, { timeout: 15000 });
+      await page.waitForFunction((i) => document.querySelector("#k-card .k-card .k-kick")?.textContent.includes(`synthetic herbal drink ${i}`), i, { timeout: 15000 });
       const got = await page.evaluate(() => {
         const card = document.querySelector("#k-card .k-card");
         const parts = Object.fromEntries(["because", "whitespace", "persona", "ladder", "recommendations"].map((p) => {
@@ -63,9 +63,9 @@ const browser = await chromiumOrSkip();
         return { parts, rows, summary: panel?.querySelector("summary")?.textContent, trend: card.querySelector('[data-part="trend"]')?.textContent.trim(),
           city: card.querySelector(".k-cities li [data-because]")?.textContent.trim() };
       });
-      const want = { because: [[`City ${i} because Match ${i}`, "3", true]], whitespace: [[`Room ${i}`, "7", true], [`Room ${i}b`, "7", true]],
-        persona: [[`Tag A${i}`, "4", true], [`Tag B${i}`, "4", true]], ladder: [[`Brand X${i} 0.91`, "5", true], [`Brand Y${i} 0.82`, "5", true]],
-        recommendations: [[`Rec ${i}`, "6", true], [`Rec ${i}b`, "6", true]] };
+      const want = { because: null, whitespace: [[`Room ${i}`, "7", true], [`Room ${i}b`, "7", true]],
+        persona: [[`Herbal Fans ${i}`, "4", true]], ladder: [[`Brand X${i} 0.91`, "5", true], [`Brand Y${i} 0.82`, "5", true]],
+        recommendations: [[`Herbal Co ${i}`, "6", true]] };
       for (const [p, rows] of Object.entries(want))
         ok(`report ${i}: "${p}" renders each value, linked to the call it came from in the trace`, JSON.stringify(got.parts[p]) === JSON.stringify(rows), got.parts[p]);
       const fed = { 3: ["launch cities", "because"], 4: ["taste persona"], 5: ["brand ladder"], 6: ["next to it"], 7: ["room against the leader"], 2: ["who wants it"] };

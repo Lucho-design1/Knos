@@ -85,12 +85,14 @@
   const val = (n, html) => `<li data-call="${esc(n ?? "")}"><a class="k-val" href="${esc(API)}/trace.html?hash=${encodeURIComponent(traceOf)}#call-${esc(n ?? "")}" target="_blank" rel="noopener">${html}</a></li>`;
   function more(r) {
     const h = r.hash, ids = Object.fromEntries((r.matches || []).filter((m) => m && m.id).map((m) => [m.id, m.name]));
-    const because = (r.cities || []).filter((c) => (c.because || []).length).slice(0, 3);
     traceOf = h || "";
-    const vs = r.versus || null, persona = r.persona || [], ladder = r.ladder || [], rec = (r.recommended && r.recommended.items) || [];
+    // a word of at least 4 letters, its plural folded: the words of the idea, its matched products and Qloo's tags for it
+    const stems = (t) => String(t || "").toLowerCase().match(/[a-z0-9]{4,}/g)?.map((w) => w.replace(/(ies|es|s)$/, "")) || [];
+    const own = new Set([r.idea, ...Object.values(ids), ...(r.tags || []).map((t) => (t && t.name) || t)].flatMap(stems));
+    const tied = (x) => stems(x && x.name).some((w) => own.has(w));
+    const vs = r.versus || null, persona = (r.persona || []).filter(tied), ladder = r.ladder || [],
+      rec = ((r.recommended && r.recommended.items) || []).filter(tied);
     const parts = [];
-    if (because.length) parts.push(`<section class="k-part" data-part="because" data-qloo><h3>Because</h3><ul class="k-vals">${because.map((c) =>
-      val(c.src, `<b>${esc(c.name)}</b> <span class="k-fine">because ${esc(c.because.map((id) => ids[id] || id).join(", "))}</span>`)).join("")}</ul>${src(h, because[0].src)}</section>`);
     if (vs && (vs.whitespace || []).length) parts.push(`<section class="k-part" data-part="whitespace" data-qloo><h3>Room against ${esc(vs.leader)}</h3><ul class="k-vals">${
       vs.whitespace.slice(0, 6).map((w) => val(vs.src, esc(w))).join("")}</ul><p class="k-fine">overlap ${Math.round((vs.overlap || 0) * 100)}%</p>${src(h, vs.src)}</section>`);
     if (persona.length) parts.push(`<section class="k-part" data-part="persona" data-qloo><h3>Taste persona</h3><ul class="k-vals">${
@@ -188,7 +190,7 @@
       `<p class="k-also" data-domain="${esc(d.domain)}"><b>${esc(d.domain === "music" ? "Music" : d.domain === "film" ? "Film" : d.domain)}</b> ${
       d.items.map((x) => esc(x.name)).join(", ")}${src(h, d.src)}</p>`).join("")}</section>` : ""}
     <section class="k-part" data-part="price" data-qloo><h3>Price tier</h3>
-      ${tier ? `<ol class="k-tiers" aria-label="Price tier: ${esc(tier)}">${TIERS.map((t) => `<li${t === tier ? ' aria-current="true"' : ""}>${t}</li>`).join("")}</ol>` : `<p class="k-none">Qloo gave no price signal.</p>`}
+      ${tier ? `<p class="k-tier-said" data-price-said>Price tier: ${esc(tier)}</p><ol class="k-tiers" aria-label="Price tier: ${esc(tier)}">${TIERS.map((t) => `<li${t === tier ? ' aria-current="true"' : ""}>${t}</li>`).join("")}</ol>` : `<p class="k-none">Qloo gave no price signal.</p>`}
 ${src(h, price.src)}</section>
     ${more(r)}
   </div>`}

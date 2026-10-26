@@ -47,7 +47,7 @@
     <a id="whoBtn" class="signin" href="/app/#signin">Sign in</a>
   </div>
 </header>
-<script src="/static/brand/bar.js" defer></script>
+<script>addEventListener("load", () => { const s = document.createElement("script"); s.src = "/static/brand/bar.js"; document.head.append(s); }, { once: true });</script>
 <!-- /k-bar -->
 <main class="wrap">
   <h1>How Knos uses Qloo safely</h1>
