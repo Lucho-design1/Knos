@@ -198,16 +198,22 @@ def terms(brief: dict) -> dict:
 
 def launch(brief) -> dict | None:
     """The launch terms Qloo set (apps/wanted metros.py): city, metro code, mean affinity, the heatmap cells and
-    population behind it, the pre-order target and the refund rule. Hashed with the milestones when a brief carries them; a brief without them hashes as before."""
+    population behind it, the pre-order target and the refund rule, with the ranking's lift and the taste persona's tags. Hashed with the milestones when a brief carries them; a brief without them hashes as before."""
     raw = brief.get("launch") if isinstance(brief, dict) else None
     if not isinstance(raw, dict):
         return None
     a = raw.get("affinity")
     whole = lambda k: raw.get(k) if isinstance(raw.get(k), int) and not isinstance(raw.get(k), bool) else None  # noqa: E731
-    return {"city": _text(raw.get("city"), 120), "cbsa": _text(raw.get("cbsa"), 5),
-            "affinity": round(float(a), 4) if isinstance(a, (int, float)) and not isinstance(a, bool) else None,
-            "cells": whole("cells"), "population": whole("population"), "target": whole("target"),
-            "refund_rule": _text(raw.get("refund_rule"), 300)}
+    out = {"city": _text(raw.get("city"), 120), "cbsa": _text(raw.get("cbsa"), 5),
+           "affinity": round(float(a), 4) if isinstance(a, (int, float)) and not isinstance(a, bool) else None,
+           "cells": whole("cells"), "population": whole("population"), "target": whole("target"),
+           "refund_rule": _text(raw.get("refund_rule"), 300)}
+    lf = raw.get("lift")
+    if isinstance(lf, (int, float)) and not isinstance(lf, bool):     # the ranking's number, when the brief carries it
+        out["lift"] = round(float(lf), 4)
+    if isinstance(raw.get("persona"), list):                       # the taste persona's tags: changing one changes the hash
+        out["persona"] = [_text(x, 80) for x in raw["persona"][:8]]
+    return out
 
 
 def criteria_hash(brief: dict) -> str:

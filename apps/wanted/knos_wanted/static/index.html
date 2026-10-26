@@ -168,6 +168,45 @@
     return `<div class="k-vs">${side("Claude alone", c)}${side("Knos with Qloo", mine)}</div>${c.why ? `<p class="k-fine">Claude: ${esc(c.why)}</p>` : ""}`;
   }
 
+  // the parts of the card that read Qloo's answers already in the report (no new call): each value names its call
+  let traceOf = "";
+  const val = (n, html) => `<li data-call="${esc(n ?? "")}"><a class="k-val" href="${esc(API)}/trace.html?hash=${encodeURIComponent(traceOf)}#call-${esc(n ?? "")}" target="_blank" rel="noopener">${html}</a></li>`;
+  function more(r) {
+    const h = r.hash, ids = Object.fromEntries((r.matches || []).filter((m) => m && m.id).map((m) => [m.id, m.name]));
+    const because = (r.cities || []).filter((c) => (c.because || []).length).slice(0, 3);
+    traceOf = h || "";
+    const vs = r.versus || null, persona = r.persona || [], ladder = r.ladder || [], rec = (r.recommended && r.recommended.items) || [];
+    const parts = [];
+    if (because.length) parts.push(`<section class="k-part" data-part="because" data-qloo><h3>Because</h3><ul class="k-vals">${because.map((c) =>
+      val(c.src, `<b>${esc(c.name)}</b> <span class="k-fine">tied by ${esc(c.because.map((id) => ids[id] || id).join(", "))}</span>`)).join("")}</ul>${src(h, because[0].src)}</section>`);
+    if (vs && (vs.whitespace || []).length) parts.push(`<section class="k-part" data-part="whitespace" data-qloo><h3>Room against ${esc(vs.leader)}</h3><ul class="k-vals">${
+      vs.whitespace.slice(0, 6).map((w) => val(vs.src, esc(w))).join("")}</ul><p class="k-fine">overlap ${Math.round((vs.overlap || 0) * 100)}%</p>${src(h, vs.src)}</section>`);
+    if (persona.length) parts.push(`<section class="k-part" data-part="persona" data-qloo><h3>Taste persona</h3><ul class="k-vals">${
+      persona.slice(0, 6).map((t) => val(t.src, esc(t.name))).join("")}</ul>${src(h, persona[0].src)}</section>`);
+    if (ladder.length) parts.push(`<section class="k-part" data-part="ladder" data-qloo><h3>Brand ladder</h3><ol class="k-vals">${
+      ladder.slice(0, 6).map((b) => val(b.src, `${esc(b.name)} <span class="k-fine">${esc(Number(b.affinity || 0).toFixed(2))}</span>`)).join("")}</ol>${src(h, ladder[0].src)}</section>`);
+    if (rec.length) parts.push(`<section class="k-part" data-part="recommendations" data-qloo><h3>Next to it</h3><ul class="k-vals">${
+      rec.slice(0, 6).map((x) => val(r.recommended.src, esc(x.name))).join("")}</ul>${src(h, r.recommended.src)}</section>`);
+    return parts.join("");
+  }
+  // every Qloo call behind the card: what it asked, how long it took and which part of the card it fed
+  function calls(r) {
+    const fed = {}, add = (n, part) => { if (n != null) (fed[n] ||= new Set()).add(part); };
+    (r.cities || []).forEach((c) => add(c.src, "launch cities"));
+    (r.where || []).forEach((c) => add(c.src, "map"));
+    add(r.who && r.who.src, "who wants it"); add(r.price && r.price.src, "price tier");
+    ((r.also_love && r.also_love.domains) || []).forEach((d) => add(d.src, "they also love"));
+    (r.persona || []).forEach((t) => add(t.src, "taste persona")); (r.ladder || []).forEach((b) => add(b.src, "brand ladder"));
+    add(r.versus && r.versus.src, "room against the leader"); add(r.recommended && r.recommended.src, "next to it");
+    (r.cities || []).filter((c) => (c.because || []).length).forEach((c) => add(c.src, "because"));
+    const KEY = ["filter.type", "filter.location.query", "signal.interests.entities", "signal.interests.tags", "take", "query"];
+    const rows = (r.calls || []).map((c) => { const p = c.params || {};
+      const keys = KEY.filter((k) => p[k] != null && p[k] !== "").map((k) => `${k}=${String(p[k]).slice(0, 40)}`).join(", ");
+      return `<li data-call="${esc(c.n)}"><a href="${esc(API)}/trace.html?hash=${encodeURIComponent(r.hash || "")}#call-${esc(c.n)}" target="_blank" rel="noopener">#${esc(c.n)}</a> ${
+        esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${esc(c.ms ?? "?")} ms${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || "the verdict")}</li>`; });
+    return rows.length ? `<details class="k-calls" data-part="calls"><summary>Qloo calls (${rows.length})</summary><ol>${rows.join("")}</ol></details>` : "";
+  }
+
   const WORD = { OPEN: ["Open for pre-orders", "open"], REFUSE: ["Not yet: pre-orders stay closed", "refuse"], CANNOT_DECIDE: ["Qloo cannot decide this one", "unknown"] };
   const TIERS = ["budget", "mid", "premium", "luxury"];
   const HEALTH = /\b(health\w*|patient\w*|medic\w*|clinic\w*|disease\w*|drug\w*|therap\w*|diagnos\w*|supplement\w*|glucose|diabet\w*)\b/i;
@@ -217,7 +256,9 @@
     <section class="k-part" data-part="price" data-qloo><h3>Price tier</h3>
       ${tier ? `<ol class="k-tiers" aria-label="Price tier: ${esc(tier)}">${TIERS.map((t) => `<li${t === tier ? ' aria-current="true"' : ""}>${t}</li>`).join("")}</ol>` : `<p class="k-none">Qloo gave no price signal.</p>`}
 ${src(h, price.src)}</section>
+    ${more(r)}
   </div>`}
+  ${calls(r)}
   <details class="k-claude" data-claude><summary>Claude alone</summary><div class="k-claude-body" data-claude-body></div></details>
   <footer class="k-card-foot"><p class="k-fine">Aggregate taste from Qloo: not causal, not a forecast, not about any one person.${
     HEALTH.test(r.idea || "") ? " Not medical advice: Qloo has no medical demand." : ""}</p>

@@ -1057,7 +1057,7 @@ def _demand_check(idea: str, place: str | None = None, leader: str | None = None
         ev["where_by_tag"] = {"tag": ev["tags"][0]["name"], "cells": len(cells)}
     rep["terms"] = None if verdict_only else metros.terms(cells)
     rep["no_map"] = None if rep["terms"] or verdict_only else metros.NO_MAP
-    rep["brief"] = metros.brief(idea, rep["terms"]) if rep["terms"] else None
+    rep["brief"] = metros.brief(idea, rep["terms"], [x["name"] for x in ev.get("persona") or [] if x.get("name")]) if rep["terms"] else None
     rep["stage"] = "verdict" if verdict_only else "full"
     rep["options"] = opts
     rep["grounding"] = families.grounding(rep)

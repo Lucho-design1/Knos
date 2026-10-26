@@ -1,7 +1,9 @@
 """Qloo sets the money terms. Qloo's heatmap for an idea gives cells (a point and an affinity, 0 to 1); each cell is
 placed in a US Metropolitan Statistical Area by its 2023 Census boundary (TIGER/Line tl_2023_us_cbsa, LSAD M1,
 data/cbsa_msa_2023.json, simplified to 0.01 degree, with each metro's Vintage 2023 population). Of the metros holding
-at least 3 cells, the highest mean affinity is the launch city (when none holds 3, the one with the most cells). The
+at least 3 cells (the candidates), the highest lift is the launch city: lift = mean cell affinity / the metro's share
+of the candidates' population, so a metro wins for its taste, not for its size (Qloo's raw heatmap tracks where people
+are). When none holds 3 cells, every metro with a population is a candidate. The
 pre-order target is max(10, round(population / 100,000 x mean affinity)), and the brief refunds every pre-order when
 that city does not reach it by the first milestone's deadline. The launch block (city, affinity, cell count, population,
 target) sits inside the criteria hash (knos.ready)."""
@@ -16,6 +18,8 @@ MIN_TARGET = 10
 MIN_CELLS = 3
 NO_MAP = "Qloo has no map for this idea yet, so Knos sets no launch city."
 DEADLINE_DAYS = 30
+METHOD = ("lift = mean cell affinity / the metro's population share among the candidate metros (method 2: docs.qloo.com "
+          "documents no heatmap request without an interest signal, so no baseline heatmap is fetched)")
 REFUND = "If fewer than {target} pre-orders come from {city} by the first milestone deadline, every pre-order is refunded."
 
 
@@ -51,8 +55,8 @@ def flat(cells: list[dict]) -> bool:
 
 
 def stats(cells: list[dict]) -> list[dict]:
-    """Each US metro holding heatmap cells: its cell count, mean affinity, centre and 2023 population. Sorted by the
-    ranking the where-demand test reads: metros with at least 3 cells by mean affinity, then those with 1 or 2."""
+    """Each US metro holding heatmap cells: its cell count, mean affinity, centre, 2023 population, and (for a candidate)
+    its population share and lift. Sorted by lift among the candidates, then the metros that are not candidates."""
     by: dict[str, dict] = {}
     for c in cells or []:
         a = c.get("affinity")
@@ -66,17 +70,28 @@ def stats(cells: list[dict]) -> list[dict]:
         n = len(r["_a"])
         out.append({"cbsa": r["cbsa"], "city": r["city"], "cells": n, "affinity": round(sum(r["_a"]) / n, 4), "population": r["pop"],
                     "lat": round(sum(x for x, _ in r["_at"]) / n, 4), "lon": round(sum(y for _, y in r["_at"]) / n, 4)})
-    return sorted(out, key=lambda r: (r["cells"] < MIN_CELLS, -r["affinity"], -r["cells"], r["cbsa"]))
+    lift(out)
+    return sorted(out, key=lambda r: (r["cells"] < MIN_CELLS, r.get("lift") is None, -(r.get("lift") or 0), -r["cells"], r["cbsa"]))
+
+
+def lift(rows: list[dict]) -> list[dict]:
+    """Each candidate metro's population share and lift (mean affinity / share), in place. Candidates: the metros with
+    a population and at least MIN_CELLS cells, else every metro with a population."""
+    cand = [r for r in rows if r.get("population") and r["cells"] >= MIN_CELLS] or [r for r in rows if r.get("population")]
+    total = sum(r["population"] for r in cand)
+    for r in rows:
+        r["share"] = r["lift"] = None
+    for r in cand:
+        r["share"] = round(r["population"] / total, 6)
+        r["lift"] = round(r["affinity"] / r["share"], 4) if r["share"] else None
+    return rows
 
 
 def launch(rows: list[dict]) -> dict | None:
-    """The launch city: of the metros holding at least 3 cells, the highest mean affinity; when none holds 3, the one
-    with the most cells, ties by mean affinity. A metro with no population estimate (Puerto Rico) cannot set a target."""
-    rows = [r for r in rows if r.get("population")]
-    three = [r for r in rows if r["cells"] >= MIN_CELLS]
-    if three:
-        return max(three, key=lambda r: (r["affinity"], r["cells"], r["cbsa"]))
-    return max(rows, key=lambda r: (r["cells"], r["affinity"], r["cbsa"])) if rows else None
+    """The launch city: the candidate metro (lift()) with the highest lift. A metro with no population estimate (Puerto
+    Rico) cannot set a target."""
+    rows = [r for r in rows if r.get("population") and r.get("lift") is not None]
+    return max(rows, key=lambda r: (r["lift"], r["cells"], r["cbsa"])) if rows else None
 
 
 def terms(cells: list[dict]) -> dict | None:
@@ -89,18 +104,20 @@ def terms(cells: list[dict]) -> dict | None:
     if not top:
         return None
     target = max(MIN_TARGET, round(top["population"] / 100_000 * top["affinity"]))
-    return {"city": top["city"], "cbsa": top["cbsa"], "affinity": top["affinity"], "cells": top["cells"], "population": top["population"],
-            "target": target, "heatmap_cells": len(cells), "metros": rows,
+    return {"city": top["city"], "cbsa": top["cbsa"], "affinity": top["affinity"], "lift": top["lift"], "cells": top["cells"], "population": top["population"],
+            "target": target, "heatmap_cells": len(cells), "metros": rows, "method": METHOD,
             "refund_rule": REFUND.format(target=target, city=top["city"]),
             "source": "Qloo heatmap; Census TIGER/Line 2023 metro boundaries; Census Vintage 2023 population estimates"}
 
 
-def brief(idea: str, t: dict) -> dict:
-    """The Ready brief whose money terms Qloo set: one pre-order milestone in the launch city."""
+def brief(idea: str, t: dict, persona: list[str] | None = None) -> dict:
+    """The Ready brief whose money terms Qloo set: one pre-order milestone in the launch city. The taste persona's tags
+    ride in the launch block, inside the criteria hash."""
     return {"title": f"Pre-orders for {idea}"[:160],
             "milestones": [{"key": "preorders", "name": f"Pre-orders from {t['city']}",
                             "target": f"{t['target']} pre-order customers from {t['city']}",
                             "verifier": {"kind": "machine", "check": "test_preorders_from_city"}, "deadline_days": DEADLINE_DAYS}],
             "kill_fee_bps": 0, "challenge_s": 86_400,
             "launch": {"city": t["city"], "cbsa": t["cbsa"], "affinity": t["affinity"], "cells": t["cells"], "population": t["population"],
-                       "target": t["target"], "refund_rule": t["refund_rule"]}}
+                       "target": t["target"], "refund_rule": t["refund_rule"], **({"lift": t["lift"]} if t.get("lift") is not None else {}),
+                       **({"persona": [str(x) for x in persona][:8]} if persona else {})}}

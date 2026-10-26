@@ -101,7 +101,7 @@ def test_the_live_crossing_over_the_web_api(http):
     base, st = http
     c, j, _ = post(base, "/api/cross", {"ref": "10.0/x"})
     assert c == 200 and j["id"]
-    for _ in range(100):
+    for _ in range(300):                       # up to 30 s: four test workers share this machine
         c, p, _ = get(base, f"/api/cross?id={j['id']}&since=0")
         if p["status"] != "running":
             break
