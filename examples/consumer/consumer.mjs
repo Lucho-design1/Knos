@@ -231,7 +231,7 @@ function load(path, what) {
 export async function decideReceipt(r, rpc, { idl = load(IDL, "the IDL"), schemas = SCHEMAS } = {}) {
   const out = { kind: "receipt", paid: false, order: r?.order ?? null, transaction: null, terms_hash: null, agrees: [], disagrees: [], trusted: [] };
   const pay = idlOf(idl), version = r?.version;
-  if (![4, 5].includes(version)) return { ...out, disagrees: [`receipt version ${version} is not read here: versions 4 and 5 name the terms hash and the four ids`] };
+  if (![4, 5, 6].includes(version)) return { ...out, disagrees: [`receipt version ${version} is not read here: versions 4 to 6 name the terms hash and the four ids`] };
   const schemaFile = join(schemas, `acceptance-receipt.v${version}.schema.json`);
   if (!existsSync(schemaFile)) return { ...out, disagrees: [`the schema ${schemaFile} is not here`] };
   const errs = schemaErrors(load(schemaFile, "the schema"), r);

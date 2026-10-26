@@ -3886,7 +3886,7 @@ def _unpaid(run: Run, word: str, about: dict, record: str) -> tuple[dict | None,
                           policy_version=t.get("v") if c.terms else None, mint=str(o.mint), decimals=int(o.decimals), of=int(o.rate if milestone else o.amount),
                           milestone=milestone, payees=payees if all(p["to"] not in ("", "None") for p in payees) else (),
                           record_sha256=hashlib.sha256(record.encode()).hexdigest())
-        made = rc.build5(made, _declared(run, t))       # version 5 (0.3.19): the same receipt with its assurance level, computed from its evidence
+        made = rc.build6(rc.build5(made, _declared(run, t)))       # version 6 (the 8-day time lock), on version 5 (0.3.19): the same receipt with its assurance level, computed from its evidence
     except Exception as why:  # noqa: BLE001
         run.note(f"Knos attest: no receipt was written for this run ({_short(why)}). Its verdict above stands as it is.")
     try:

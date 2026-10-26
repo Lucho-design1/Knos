@@ -515,7 +515,7 @@ def pay(st: dict, status: dict | None, line: str, method: str, reference: str, o
     if terms_doc is not None and state in ("paid_outside", "devnet_demonstration"):
         from . import receipt as rc
         from . import terms3
-        level = (rc.assurance_of(receipt, receipt["assurance"]["declared_related"] if receipt["version"] == 5 else terms3.declared(terms_doc))["level"]
+        level = (rc.assurance_of(receipt, receipt["assurance"]["declared_related"] if receipt["version"] in (5, 6) else terms3.declared(terms_doc))["level"]
                  if receipt is not None else next(x["assurance"] for x in lines_now(st, status) if x["invoice_line"] == line))
         try:
             refused = terms3.payment_refusal(terms_doc, level)
@@ -749,7 +749,7 @@ def grn(st: dict, status: dict | None, line: str, receipt: dict | None = None, p
         why = rc.check(receipt)
         if why:
             raise Refused(f"--receipt is not a valid acceptance receipt: {why}")
-        seen, level = rc.exposed(receipt), rc.assurance_of(receipt, receipt["assurance"]["declared_related"] if receipt["version"] == 5 else ())
+        seen, level = rc.exposed(receipt), rc.assurance_of(receipt, receipt["assurance"]["declared_related"] if receipt["version"] in (5, 6) else ())
         c, m = (receipt.get("commercial_authorisation") if receipt["version"] >= 3 else None), receipt["amounts"]
         f = c["funder"] if c else None
         price = Decimal(m["of"]) / (10 ** m["decimals"])

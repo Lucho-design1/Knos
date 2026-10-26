@@ -18,7 +18,7 @@ two files taken from the release tag. Exit 0: paid, and every claim it checked a
 
 ## What it checks
 
-1. The receipt fits its version's published schema (versions 4 and 5), and names knos_pay at the IDL's address.
+1. The receipt fits its version's published schema (versions 4, 5 and 6), and names knos_pay at the IDL's address.
 2. The cluster has the receipt's transaction at `finalized` commitment, and it did not fail. It reads every version a
    cluster sends: legacy, version 0 (some accounts come from an address lookup table) and version 1, which Knos's
    relay sends. It asks with `"maxSupportedTransactionVersion": 1`; asked with 0, devnet refuses a version 1

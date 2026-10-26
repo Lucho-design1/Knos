@@ -15,7 +15,7 @@ does not allow, or `{"id": ..., "unsupported": true}` for an operation the imple
 The runner needs Python 3.10 and nothing of Knos's. `--require-all` makes an unsupported case a failure; `--format terms`
 runs one format.
 
-Kit version 4 has 370 cases. Version 2 added the receipt4 and ids rows, version 3 the ledger2 row, version 4 the receipt5 row; none changed a
+Kit version 5 has 411 cases. Version 2 added the receipt4 and ids rows, version 3 the ledger2 row, version 4 the receipt5 row, version 5 the receipt6 row; none changed a
 vector of the version before:
 
 | format | versions | cases | what it fixes |
@@ -27,6 +27,7 @@ vector of the version before:
 | statement | 1 | 8 | the meter's monthly statement and the hash both parties compare |
 | receipt4 | 4 | 60 | the acceptance receipt of version 4: four verdicts, the four ids, what the evidence does not show, and which receipts authorise payment ([RECEIPT.md](RECEIPT.md), [`receipt/vectors.v4.json`](../receipt/vectors.v4.json)) |
 | receipt5 | 5 | 40 | the acceptance receipt of version 5: the assurance level a reader computes from the receipt's evidence (reported, rerun, agreed; attested is refused), who stays trusted, and the control relationships the terms declare ([RECEIPT.md](RECEIPT.md), [`receipt/vectors.v5.json`](../receipt/vectors.v5.json)) |
+| receipt6 | 6 | 41 | the acceptance receipt of version 6: version 5's receipts with the upgrade multisig's line saying its 8-day time lock, and a signed receipt that leaves that line out refused ([RECEIPT.md](RECEIPT.md#version-6), [`receipt/vectors.v6.json`](../receipt/vectors.v6.json)) |
 | ids | 1 | 57 | the ids of a deliverable, an evaluation, an invoice line and a settlement, the four verdicts, and the rule that bills a deliverable once ([METER.md](METER.md)) |
 | ledger2 | 2 | 42 | the meter's batch commitment, format 2: an event's canonical bytes, its leaf, a batch's root, an inclusion proof, and the pair of batches that differ only in which evaluation was accepted ([METER.md](METER.md)) |
 
@@ -166,10 +167,10 @@ It is narrow on purpose.
 
 | implementation | passed | not implemented | failed |
 |---|---|---|---|
-| Python (`conformance/impl/knos_python.py`, the functions the rest of Knos uses) | 370 | 0 | 0 |
-| JavaScript (`conformance/impl/knos_js.mjs`, the client in `sdk/settle`) | 244 | 126 | 0 |
+| Python (`conformance/impl/knos_python.py`, the functions the rest of Knos uses) | 411 | 0 | 0 |
+| JavaScript (`conformance/impl/knos_js.mjs`, the client in `sdk/settle`) | 251 | 160 | 0 |
 
-Of the JavaScript client's 244, 101 are answered by functions `sdk/settle` exports and 143 by a few lines in the adapter
+Of the JavaScript client's 251, 101 are answered by functions `sdk/settle` exports and 150 by a few lines in the adapter
 written from this page and from the description in each vector file.
 
 The adapter covers operations the client has no function for: `receipt.digest`, `ledger.deliverable_id`,

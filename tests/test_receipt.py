@@ -270,7 +270,7 @@ def test_version_3_keeps_five_things_apart_in_order_and_versions_1_and_2_still_c
     for v in VECTORS["invalid_v3"]:
         why = receipt.check(_changed(v, "valid_v3"))
         assert why is not None and v["why"] in why, (v["name"], why)
-    assert "version 1, 2 or 3" in receipt.check({"type": receipt.TYPE, "version": 6})
+    assert "version 1, 2 or 3" in receipt.check({"type": receipt.TYPE, "version": 7})
 
 
 def test_the_version_3_schema_agrees_with_the_checker():

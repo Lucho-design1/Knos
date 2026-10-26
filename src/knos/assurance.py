@@ -64,7 +64,7 @@ def of_receipt(r: dict, declared=()) -> dict:
     why = rc.check(r)
     if why:
         raise ValueError(f"not a valid acceptance receipt: {why}")
-    groups = r["assurance"]["declared_related"] if r["version"] == 5 else declared
+    groups = r["assurance"]["declared_related"] if r["version"] in (5, 6) else declared
     was = rc.assurance_of(r, groups)["level"]
     auth = r.get("issuer_authenticated") if r["version"] >= 3 else None
     signed = r["version"] < 4 or auth is not None

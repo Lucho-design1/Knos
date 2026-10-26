@@ -210,13 +210,13 @@ const SHAPE = ["evaluator_observed", "policy", "amounts", "payees", "evidence_so
  *  parts: [{ id, title, asks, line, facts, more }] }, the shape of knos.receipt.parts (its `receipt` digest apart). */
 export function receiptParts(r) {
   if (!r || typeof r !== "object" || Array.isArray(r) || r.type !== "knos.acceptance-receipt") return { ok: false, error: "Paste an acceptance receipt: this is another file." };
-  if (r.version !== 4 && r.version !== 5) return { ok: false, error: `Read version 4 or 5: this is version ${Number(r.version) || "unknown"}.` };
-  if (SHAPE.some((k) => r[k] === undefined || r[k] === null) || (r.version === 5 && !r.assurance)) return { ok: false, error: "Paste the whole receipt: a part is missing." };
+  if (r.version !== 4 && r.version !== 5 && r.version !== 6) return { ok: false, error: `Read version 4, 5 or 6: this is version ${Number(r.version) || "unknown"}.` };
+  if (SHAPE.some((k) => r[k] === undefined || r[k] === null) || (r.version >= 5 && !r.assurance)) return { ok: false, error: "Paste the whole receipt: a part is missing." };
   try { return { ok: true, ...partsOf(r) }; } catch { return { ok: false, error: "Paste the whole receipt: a part does not read." }; }
 }
 function partsOf(r) {
   const o = r.evaluator_observed, a = r.issuer_authenticated, p = r.policy, m = r.amounts, src = r.evidence_source, got = r.ids, d = r.disputed;
-  const assured = r.version === 5 ? r.assurance : assuranceOf(r), level = assured.level, verdict = o.verdict;
+  const assured = r.version >= 5 ? r.assurance : assuranceOf(r), level = assured.level, verdict = o.verdict;
   let ident, one, more1;
   if (a !== null) {
     const gl = a.provider === "gitlab", cl = a.claims, host = { github: "GitHub", gitlab: "GitLab" }[a.provider];

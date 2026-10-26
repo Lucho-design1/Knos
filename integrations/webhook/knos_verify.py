@@ -120,7 +120,7 @@ def _audience(claims: dict) -> dict:
 def _receipt(r, token: str, claims: dict, facts: dict) -> None:
     try:
         a, o, p = r["issuer_authenticated"], r["evaluator_observed"], r["policy"]
-        shaped = r["type"] == "knos.acceptance-receipt" and r["version"] in (2, 3, 4, 5) and type(r["version"]) is int and o["verdict"] == "accepted"
+        shaped = r["type"] == "knos.acceptance-receipt" and r["version"] in (2, 3, 4, 5, 6) and type(r["version"]) is int and o["verdict"] == "accepted"
         named = {"order": r["order"], "commit": o["artifact"]["commit"], "terms_hash": p["terms_hash"], "mode": p["mode"],
                  "pull_request": o["artifact"]["pull_request"], "payees": [{"github_id": e["github_id"], "bps": e["bps"]} for e in r["payees"]]}
         repo, digest, told, issuer = r["repository"]["id"], a["token_sha256"], a["claims"], a["issuer"]

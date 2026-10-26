@@ -46,7 +46,7 @@ def _receipt_check(i: dict):
 def _receipt_assurance(i: dict):
     _receipt_check(i)
     r = i["receipt"]
-    return receipt.assurance_of(r, r["assurance"]["declared_related"] if r["version"] == 5 else ())["level"]
+    return receipt.assurance_of(r, r["assurance"]["declared_related"] if r["version"] in (5, 6) else ())["level"]
 
 
 def _receipt_verdict(i: dict):

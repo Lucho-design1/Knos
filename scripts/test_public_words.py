@@ -1,7 +1,8 @@
 """test_public_words: what a reader of Knos's public files and pages reads. "escrow" in no README, document,
-description or rendered page text (code identifiers listed apart); no "48-hour"; no private path; no hackathon host
-in the deploy values; the pricing page's exact sentence and no Kickstarter or Upwork market figure; the two links that
-were broken answer 200.
+description or rendered page text (code identifiers listed apart); the upgrade delay said as the 8-day time lock
+everywhere but in receipts of versions 1 to 5, whose words their format fixes; no private path; no hackathon host in
+the deploy values; the pricing page's exact sentence and no Kickstarter or Upwork market figure; the two links that
+were broken answer 200. This file names the words it looks for, so it does not read itself.
 
     python scripts/test_public_words.py
 """
@@ -22,11 +23,14 @@ OUT = WORLD / "test_public_words.txt"
 PRICING = "Free check. At mainnet the funder pays 1% on top of each payout; the solver keeps 100%."
 LINKS = ["https://github.com/drexthealpha/Knos/blob/main/evidence/knos-witness-acaa854d/witness.json",     # README "the record"
          "https://github.com/drexthealpha/Knos/blob/main/docs/idt/summary.json"]                          # PyPI README's IDT link
-# the receipt's trust line: its words are pinned by conformance kit version 1 (docs/receipt/vectors*.json, whose digests
-# cover them); a changed line is a new receipt format, so they stay, and are counted here apart
-RECEIPT_FORMAT = {"src/knos/receipt.py", "docs/reference/RECEIPT.md", "web/buyer_templates.json", "docs/receipt/vectors.json",
+SELF = "scripts/test_public_words.py"
+OLD_DELAY = "48" + "-hour"                  # the delay of receipt versions 1 to 5 (spelt in two pieces: this file names it)
+PRIVATE = "knos-v1" + "-private"            # the founder's private folder's name
+# receipts of versions 1 to 5 and the format's own definition of their line: their digests cover the words, so they
+# keep them (version 6, docs/reference/RECEIPT.md, says the 8-day time lock). The only places the old delay may stand.
+OLD_FORMAT = {"src/knos/receipt.py", "docs/reference/RECEIPT.md", "docs/receipt/vectors.json",
                   "docs/receipt/vectors.v4.json", "docs/receipt/vectors.v5.json", "examples/consumer/fixtures/order_paid.json",
-                  "examples/consumer/fixtures/receipt.json", "integrations/webhook/fixtures.json"}
+                  "examples/consumer/fixtures/receipt.json", "tests/data/receipt_parts.json"}
 
 
 def files(*globs: str) -> list[str]:
@@ -87,12 +91,12 @@ def main() -> int:
     ok(not esc, f'"escrow" in public prose, descriptions and rendered page text: {sum(esc.values())} {esc}')
     code = subprocess.run(["git", "grep", "-o", "-h", "-i", r"[A-Za-z_.]*escrow[A-Za-z_.]*", "--", *public], cwd=ROOT, capture_output=True, text=True).stdout.split()
     lines.append(f"     code identifiers kept (in code spans and code, never read as prose): {sorted(set(code))}")
-    hour = {r: n for r in files() if not r.startswith(("tests/", "CHANGELOG")) and (ROOT / r).is_file()
-            for n in [(ROOT / r).read_bytes().count(b"48-hour")] if n}
-    rest = {r: n for r, n in hour.items() if r not in RECEIPT_FORMAT}
-    ok(not hour, f'"48-hour": {sum(hour.values())} {hour} (receipt format, pinned by conformance kit version 1: '
-                 f'{ {r: n for r, n in hour.items() if r in RECEIPT_FORMAT} }; elsewhere: {sum(rest.values())})')
-    private = subprocess.run(["git", "grep", "-l", "-i", "knos-v1-private"], cwd=ROOT, capture_output=True, text=True).stdout.split()
+    hour = {r: n for r in files() if r != SELF and not r.startswith(("tests/", "CHANGELOG")) and (ROOT / r).is_file()
+            for n in [(ROOT / r).read_bytes().count(OLD_DELAY.encode())] if n}
+    rest = {r: n for r, n in hour.items() if r not in OLD_FORMAT}
+    ok(not rest, f'"{OLD_DELAY}" outside receipts of versions 1 to 5: {sum(rest.values())} {rest}; in them (allowed: their digests '
+                 f'cover the words): {sum(n for r, n in hour.items() if r in OLD_FORMAT)} in { {r: n for r, n in hour.items() if r in OLD_FORMAT} }')
+    private = [r for r in subprocess.run(["git", "grep", "-l", "-i", PRIVATE], cwd=ROOT, capture_output=True, text=True).stdout.split() if r != SELF]
     ok(not private, f"private paths: {len(private)} {private}")
     host = subprocess.run(["git", "grep", "-l", "hackathon" + ".api.qloo.com"], cwd=ROOT, capture_output=True, text=True).stdout.split()
     ok(not host, f"the hackathon host in any file (deploy values included): {len(host)} {host}")
@@ -104,7 +108,7 @@ def main() -> int:
     for u in LINKS:
         ok(status(u) == 200, f"{status(u)} {u}")
     lines.append(f"FAIL test_public_words: {fails} check(s) failed" if fails else
-                 "PASS test_public_words: 0 escrow in public prose, 0 48-hour, 0 private paths, 0 hackathon host, pricing exact, both links 200")
+                 "PASS test_public_words: 0 escrow in public prose, the old delay only in receipts of versions 1 to 5, 0 private paths, 0 hackathon host, pricing exact, both links 200")
     print("\n".join(lines))
     WORLD.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")

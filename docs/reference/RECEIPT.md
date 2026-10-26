@@ -24,17 +24,18 @@ Version 2 lacks the fourth; `knos receipt` still prints its heading and says it 
 5. **What trust remains** (`trust_remaining`). The list, in plain words: the host's signing key and its runner; the
    code of the pinned workflow; the repository's administrators for a merge-mode order; the account that ran the
    judge when it was not the order's own repository; and Knos's upgrade multisig (the programs are upgradeable only
-   through a multisig with a public 48-hour delay, until an outside review). The list follows from the provider, the
-   mode and the judge, and a receipt that leaves one out is not valid. These words were fixed when the delay was
-   48 hours. Since 11 Oct 2026 it is 8 days ([GOVERNANCE.md](GOVERNANCE.md), section 2). The words stay as they are,
-   because `knos receipt FILE` checks them word for word and every receipt already made carries them.
+   through a multisig with a public 8-day time lock, until an outside review). The list follows from the provider, the
+   mode and the judge, and a receipt that leaves one out is not valid. Versions 2 to 5 say the delay as it was when
+   their words were fixed, 48 hours; since 11 Oct 2026 it is 8 days ([GOVERNANCE.md](GOVERNANCE.md), section 2), and
+   version 6 says so ([Version 6](#version-6)). `knos receipt FILE` checks each version's words word for word, so a
+   receipt already made still checks.
 
 Beside the verdict itself `knos receipt` prints the trusted parties in one line, so nobody reads "accepted" without
 them:
 
 ```
    The pinned judge (repository, version cccc...) gave the verdict: accepted.
-   trusted: GitHub's signing key and runner; the pinned workflow at cccc...; the repository's administrators (the merge is the acceptance); Knos's upgrade multisig (public 48-hour delay).
+   trusted: GitHub's signing key and runner; the pinned workflow at cccc...; the repository's administrators (the merge is the acceptance); Knos's upgrade multisig (public 8-day time lock).
 ```
 
 Then `amendments`: every change of the order's terms between its funding and this payment (a top-up, an assignment
@@ -117,6 +118,20 @@ The five parts are not optional anywhere a receipt's acceptance is passed on:
 No product's import has a column for them, so they are not packed into a memo. A row whose receipt was not read
 says `reported`, the floor every receipt reaches, and that no receipt was read. Tests: `tests/test_exports_parts.py`,
 `tests/test_receipt_surfaces.py`.
+
+## Version 6
+
+Version 6 is version 5 with one line changed: in `trust_remaining`, the upgrade multisig's line says the time lock in
+force since 11 Oct 2026, "a public 8-day time lock". Version 5 says the delay of its time.
+
+Every receipt Knos writes now
+is version 6 (`knos.receipt.build6`, from version 5); `check` still reads versions 1 to 5, and refuses a version 6
+receipt that names the old delay. `as5` gives the version 5 receipt a version 6 one is, for a reader that knows
+version 5 only.
+
+Its vectors are [docs/receipt/vectors.v6.json](../receipt/vectors.v6.json) (conformance kit 5, format
+`receipt6`) and its schema [acceptance-receipt.v6.schema.json](../receipt/acceptance-receipt.v6.schema.json); both are
+written by `tests/test_receipt_v6.py`.
 
 ## Version 5
 

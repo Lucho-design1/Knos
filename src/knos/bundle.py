@@ -236,8 +236,8 @@ def _core(blob: bytes) -> tuple[dict, dict[str, bytes], int, list[tuple[str, str
     except Exception as e:  # noqa: BLE001
         raise ValueError(f"a file of the bundle cannot be read as what it is ({e})") from None
     why = rc.check(r)
-    if why or r["version"] not in (2, 3, 4, 5) or rc.as3(r) is None or files["receipt.json"] != _json(r):     # a version 4 or 5 one of a paid, accepted deliverable
-        raise ValueError(f"receipt.json is not a valid version 2, 3, 4 or 5 receipt of a payment in canonical form{': ' + why if why else ''}")
+    if why or r["version"] not in (2, 3, 4, 5, 6) or rc.as3(r) is None or files["receipt.json"] != _json(r):     # a version 4 or 5 one of a paid, accepted deliverable
+        raise ValueError(f"receipt.json is not a valid version 2 to 6 receipt of a payment in canonical form{': ' + why if why else ''}")
     a, o, p = r["issuer_authenticated"], r["evaluator_observed"], r["policy"]
     # 1. what the issuer authenticated
     if key.get("e") != "AQAB" or not rs256(token, n):
@@ -764,7 +764,7 @@ def gather(call, events: list[dict], target: str, get, published=None, verdict: 
                                                     (part["funder"]["github_id"], part["source"]["owner_id"]), list(shares)), rerun))
     # written as version 5 (0.3.19): the same receipt with its assurance level, computed from the evidence above and from
     # `declared`, the accounts the order's terms declare to be one party (knos.terms3.declared; none when nobody gave them)
-    r = rc.build5(r, declared)
+    r = rc.build6(rc.build5(r, declared))      # version 6 (0.4.0): the trust line says the 8-day time lock
     genesis = call("getGenesisHash", [])
     archive = {"type": CHAIN_ARCHIVE, "version": 1, "cluster": r["cluster"], "genesis": genesis, "payment": _copy(call, sig, tx),
                "funding": _copy(call, o["tx"], funding) if funding else None, "verified": _copy(call, verified_tx),

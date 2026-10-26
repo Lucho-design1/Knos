@@ -39,7 +39,7 @@
     "GitHub's signing key and its hosted runner: whoever holds that key, or a runner that lies about which workflow ran, could forge the token.",
     "The code of the pinned workflow at the commit named above: it decides what counts as accepted. Read it at that commit.",
     "The administrators of the repository: in merge mode the merge is the acceptance, and whoever may merge or change the branch rules can accept.",
-    "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 48-hour delay, until an outside review."
+    "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 8-day time lock, until an outside review."
    ],
    "passkey": true,
    "passkey_why_not": ""
@@ -70,7 +70,7 @@
     "The pull request's code runs as a separate process on the judge's machine and only its output is compared: 0 of 63 cheating pull requests in that suite passed. That is a count for that suite, not a proof for every attack.",
     "GitHub's signing key and its hosted runner: whoever holds that key, or a runner that lies about which workflow ran, could forge the token.",
     "The code of the pinned workflow at the commit named above: it decides what counts as accepted. Read it at that commit.",
-    "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 48-hour delay, until an outside review."
+    "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 8-day time lock, until an outside review."
    ],
    "passkey": false,
    "passkey_why_not": "its terms carry the hash of your acceptance suite, which this page cannot read from your repository"
@@ -102,7 +102,7 @@
     "GitHub's signing key and its hosted runner: whoever holds that key, or a runner that lies about which workflow ran, could forge the token.",
     "The code of the pinned workflow at the commit named above: it decides what counts as accepted. Read it at that commit.",
     "The administrators of the repository: in merge mode the merge is the acceptance, and whoever may merge or change the branch rules can accept.",
-    "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 48-hour delay, until an outside review."
+    "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 8-day time lock, until an outside review."
    ],
    "passkey": true,
    "passkey_why_not": ""
@@ -134,7 +134,7 @@
     "GitHub's signing key and its hosted runner: whoever holds that key, or a runner that lies about which workflow ran, could forge the token.",
     "The code of the pinned workflow at the commit named above: it decides what counts as accepted. Read it at that commit.",
     "The administrators of the repository: in merge mode the merge is the acceptance, and whoever may merge or change the branch rules can accept.",
-    "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 48-hour delay, until an outside review."
+    "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 8-day time lock, until an outside review."
    ],
    "passkey": false,
    "passkey_why_not": "a standing offer is funded from the organisation's Balance, by comment"
@@ -168,7 +168,7 @@
     "GitHub's signing key and its hosted runner: whoever holds that key, or a runner that lies about which workflow ran, could forge the token.",
     "The code of the pinned workflow at the commit named above: it decides what counts as accepted. Read it at that commit.",
     "The administrators of the repository: in merge mode the merge is the acceptance, and whoever may merge or change the branch rules can accept.",
-    "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 48-hour delay, until an outside review."
+    "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 8-day time lock, until an outside review."
    ],
    "passkey": false,
    "passkey_why_not": "a private order is funded by the organisation's attestor repository, by comment"

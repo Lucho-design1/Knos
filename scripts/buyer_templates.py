@@ -6,7 +6,7 @@
 For each template: its sentence and comment (knos.terms_templates), the parts they are made of (so the page can put
 the buyer's own amount, days, checks and paths in, with web/buyer.js's sentenceOf and commentOf; tests hold those two
 to this file's sentence and comment), how it is judged (in-process, black-box or hermetic: knos.terms.ASSURANCE) and
-what a buyer still has to trust in that mode (knos.receipt.trust_of, the list a paid order's receipt ends with).
+what a buyer still has to trust in that mode (knos.receipt.trust_now, the list a paid order's receipt ends with).
 `passkey` says whether the page can fund it from a passkey wallet: only a merge-mode order with no vendor and no
 policy, because its terms need no fact of the repository that a browser cannot read.
 
@@ -49,7 +49,7 @@ def one(name: str) -> dict:
              "vendor": cmd.vendor if offer else "", "holdback": int(getattr(cmd, "holdback", None) or 0), "warranty": int(getattr(cmd, "warranty", None) or 0),
              "days": cmd.days, "private": bool(t.policy)}
     return {"name": name, "title": TITLES[name], "sentence": ex["sentence"], "comment": ex["comment"], "where": ex["where"], "parts": parts,
-            "assurance": mode, "trusted": [ASSURANCE[mode] if mode != "in-process" else _MERGE, *receipt.trust_of("github", tm["mode"], "repository")],
+            "assurance": mode, "trusted": [ASSURANCE[mode] if mode != "in-process" else _MERGE, *receipt.trust_now("github", tm["mode"], "repository")],
             "passkey": not why, "passkey_why_not": why}
 
 

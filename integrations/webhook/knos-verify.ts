@@ -120,7 +120,7 @@ async function receiptHolds(r: any, token: string, claims: Json, facts: Facts): 
   let named: Json = {}, repo: unknown, digest: unknown, said: unknown, issuer: unknown, shaped = false;
   try {
     const a = r.issuer_authenticated, o = r.evaluator_observed, p = r.policy;
-    shaped = r.type === "knos.acceptance-receipt" && (r.version === 2 || r.version === 3 || r.version === 4 || r.version === 5) && o.verdict === "accepted";
+    shaped = r.type === "knos.acceptance-receipt" && (r.version === 2 || r.version === 3 || r.version === 4 || r.version === 5 || r.version === 6) && o.verdict === "accepted";
     named = { order: r.order, commit: o.artifact.commit, terms_hash: p.terms_hash, mode: p.mode, pull_request: o.artifact.pull_request,
       payees: r.payees.map((e: any) => ({ github_id: e.github_id, bps: e.bps })) };
     [repo, digest, said, issuer] = [r.repository.id, a.token_sha256, a.claims, a.issuer];

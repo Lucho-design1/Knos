@@ -77,9 +77,11 @@ def build(*, cluster: str, program: str, order: str, scope: str, repository: dic
 
 
 def check(r) -> str | None:
-    """None when `r` is a valid receipt of version 1, 2, 3, 4 or 5; otherwise the first reason it is not, in words."""
-    if isinstance(r, dict) and r.get("type") == TYPE and (type(r.get("version")) is not int or r["version"] not in (1, 2, 3, 4, 5)):
-        return f"not a {TYPE} of version 1, 2 or 3, or of version 4 or 5"
+    """None when `r` is a valid receipt of version 1 to 6; otherwise the first reason it is not, in words."""
+    if isinstance(r, dict) and r.get("type") == TYPE and (type(r.get("version")) is not int or r["version"] not in (1, 2, 3, 4, 5, 6)):
+        return f"not a {TYPE} of version 1, 2 or 3, or of version 4, 5 or 6"
+    if isinstance(r, dict) and r.get("type") == TYPE and r["version"] == 6:
+        return _check6(r)
     if isinstance(r, dict) and r.get("type") == TYPE and r["version"] == 5:
         return _check5(r)
     if isinstance(r, dict) and r.get("type") == TYPE and r["version"] == 4:
@@ -202,17 +204,30 @@ def trust_of(provider: str, mode: str, kind: str) -> list[str]:
         out.append("The administrators of the repository: in merge mode the merge is the acceptance, and whoever may merge or change the branch rules can accept.")
     if kind in ("neutral", "arbiter", "attestor"):
         out.append("The account that ran the judge: the run was in a repository other than the one the work was merged in, started by its owner.")
-    out.append("Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 48-hour delay, until an outside review.")
+    out.append(OLD_TRUST)
     return out
 
 
-def trusted_line(provider: str, mode: str, kind: str, commit: str) -> str:
+# The upgrade multisig's line, as receipts of versions 2 to 5 carry it: the delay as it stood when version 2 was
+# written. Since 11 Oct 2026 the time lock is 8 days, which version 6 says (`build6`); the old line stays here so a
+# receipt written then still checks.
+OLD_TRUST = "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 48-hour delay, until an outside review."
+NEW_TRUST = "Knos's upgrade multisig: the programs are upgradeable only through a multisig with a public 8-day time lock, until an outside review."
+OLD_SHORT, NEW_SHORT = "Knos's upgrade multisig (public 48-hour delay)", "Knos's upgrade multisig (public 8-day time lock)"
+
+
+def trust_now(provider: str, mode: str, kind: str) -> list[str]:
+    """`trust_of` as a receipt written today says it (version 6): the 8-day time lock."""
+    return [NEW_TRUST if t == OLD_TRUST else t for t in trust_of(provider, mode, kind)]
+
+
+def trusted_line(provider: str, mode: str, kind: str, commit: str, version: int = 5) -> str:
     """The parties `trust_of` lists, in one line: printed beside the verdict, so nobody reads "accepted" without them."""
     host = {"github": "GitHub", "gitlab": "GitLab"}[provider]
     who = [f"{host}'s signing key and runner", f"the pinned workflow at {commit}"]
     who += ["the repository's administrators (the merge is the acceptance)"] if mode == "merge" else []
     who += ["the account that ran the judge"] if kind in ("neutral", "arbiter", "attestor") else []
-    return "trusted: " + "; ".join([*who, "Knos's upgrade multisig (public 48-hour delay)"]) + "."
+    return "trusted: " + "; ".join([*who, NEW_SHORT if version >= 6 else OLD_SHORT]) + "."
 
 
 def build2(*, cluster: str, program: str, order: str, scope: str, repository: dict | None, commit: str, pull_request: int, terms_hash: str, mode: str,
@@ -506,11 +521,11 @@ def chain_only(r: dict) -> dict:
     (`reexecution`). A mirror is written with no host asked, so two copies of one payment's receipt are the same
     receipt when these are equal."""
     o = r.get("evaluator_observed") if isinstance(r, dict) else None
-    if r.get("version") not in (3, 4, 5) or not isinstance(o, dict) or not isinstance(o.get("evaluators"), list):
+    if r.get("version") not in (3, 4, 5, 6) or not isinstance(o, dict) or not isinstance(o.get("evaluators"), list):
         return r
     out = {**r, "evaluator_observed": {**o, "evaluators": [{k: v for k, v in e.items() if k != "reexecution"} if isinstance(e, dict) else e
                                                            for e in o["evaluators"]]}}
-    if r["version"] == 5 and isinstance(r.get("assurance"), dict):     # the level follows from the evidence left: without the runs' words, reported
+    if r["version"] in (5, 6) and isinstance(r.get("assurance"), dict):     # the level follows from the evidence left: without the runs' words, reported
         out["assurance"] = assurance_of(out, r["assurance"].get("declared_related") or ())
     return out
 
@@ -518,7 +533,7 @@ def chain_only(r: dict) -> dict:
 def as2(r: dict) -> dict:
     """The version 2 receipt a version 3 one holds (the same payment, without the fifth part and the judges' control);
     a receipt of version 1 or 2 as it is. What a reader that knows version 2 only is given."""
-    if r.get("version") in (4, 5):
+    if r.get("version") in (4, 5, 6):
         r3 = as3(r)
         return as2(r3) if r3 else r
     if r.get("version") != 3:
@@ -742,7 +757,7 @@ def dispute(r4: dict, *, role: str, by: str, at: int, reason: str) -> dict:
     (its sha256 and the verdict it gave). A payment the contested receipt recorded stays recorded: the money moved.
     The disputed receipt authorises none."""
     why = check(r4)
-    if why or r4["version"] not in (4, 5) or r4["disputed"] is not None:
+    if why or r4["version"] not in (4, 5, 6) or r4["disputed"] is not None:
         raise ValueError(why or "a receipt of version 4 or 5 that is not disputed already is contested (write an older one as version 4 first: build4)")
     o = r4["evaluator_observed"]
     r = {**r4, "evaluator_observed": {**o, "verdict": "disputed"},
@@ -760,7 +775,7 @@ def dispute(r4: dict, *, role: str, by: str, at: int, reason: str) -> dict:
 def contested(r: dict) -> dict | None:
     """The receipt a disputed receipt contests, rebuilt from it (its digest is `disputed.contests.sha256`); None for a
     receipt that is not disputed."""
-    if not isinstance(r, dict) or r.get("version") not in (4, 5) or not isinstance(r.get("disputed"), dict):
+    if not isinstance(r, dict) or r.get("version") not in (4, 5, 6) or not isinstance(r.get("disputed"), dict):
         return None
     o, was = r["evaluator_observed"], r["disputed"]["contests"]["verdict"]
     args = (r["evidence_source"]["kind"], r["policy"]["mode"], bool(o["evaluators"]) and "reexecution" in o["evaluators"][-1], r["transaction"] is not None)
@@ -803,8 +818,9 @@ def as3(r: dict) -> dict | None:
     """The version 3 receipt a version 4 one holds, when it holds one: an accepted, paid deliverable. None for a
     receipt of version 4 that is rejected, insufficient, disputed or unpaid (version 3 cannot say those), and the
     receipt itself for an older one."""
-    if r.get("version") not in (4, 5):
+    if r.get("version") not in (4, 5, 6):
         return r
+    r = as5(r)                                  # version 6's line is version 5's, in the words of its time
     if r["evaluator_observed"]["verdict"] != "accepted" or r["transaction"] is None:
         return None
     return {**{k: r[k] for k in _KEYS3}, "version": 3}
@@ -1057,6 +1073,8 @@ def build5(r4: dict, declared=()) -> dict:
 def as4(r: dict) -> dict:
     """The version 4 receipt a version 5 one holds (the same facts without the assurance level); an older receipt as it
     is. A disputed one names the digest of the version 4 receipt it then contests."""
+    if r.get("version") == 6:
+        r = as5(r)
     if r.get("version") != 5:
         return r
     out = {**{k: r[k] for k in _KEYS4}, "version": 4}
@@ -1093,6 +1111,44 @@ def _check5(r) -> str | None:
         return ("assurance is computed from the evidence, not chosen (knos.receipt.assurance_of): reported unless an evaluator outside the supplier's "
                 "control ran the suite itself (rerun), or two such with different owners, not declared related, agree (agreed)")
     return None
+
+
+# ---- version 6: the same receipt as version 5, its trust line saying the upgrade multisig's 8-day time lock -------------
+def _swap(r: dict, frm: str, to: str, version: int) -> dict:
+    out = {**r, "version": version, "trust_remaining": [to if t == frm else t for t in r["trust_remaining"]]}
+    if isinstance(out.get("disputed"), dict):           # a disputed receipt contests the same receipt in its own version
+        was = contested(out)
+        out["disputed"] = {**out["disputed"], "contests": {**out["disputed"]["contests"], "sha256": digest(was) if was else ""}}
+    return out
+
+
+def build6(r5: dict) -> dict:
+    """A version 5 receipt as version 6: the same receipt, the upgrade multisig's line saying the 8-day time lock in
+    force since 11 Oct 2026 (version 5 says the 48 hours of its time). Every receipt Knos writes now is version 6."""
+    why = check(r5)
+    if why or r5["version"] != 5:
+        raise ValueError(why or "build6 takes a version 5 receipt (build5 first)")
+    return _swap(r5, OLD_TRUST, NEW_TRUST, 6)
+
+
+def as5(r: dict) -> dict:
+    """The version 5 receipt a version 6 one is; an older receipt as it is."""
+    return _swap(r, NEW_TRUST, OLD_TRUST, 5) if isinstance(r, dict) and r.get("version") == 6 else r
+
+
+def _check6(r) -> str | None:
+    if not isinstance(r, dict) or set(r) != set(_KEYS5):
+        return f"not a {TYPE} of version 6: the receipt has fields {sorted(set(r) ^ set(_KEYS5)) if isinstance(r, dict) else []} missing or unknown"
+    t = r["trust_remaining"]
+    if not isinstance(t, list) or OLD_TRUST in t:          # where the line belongs, version 5's check of as5(r) asks for it
+        return "a version 6 receipt says the upgrade multisig's 8-day time lock in trust_remaining (version 5 said 48 hours)"
+    try:
+        if isinstance(r["disputed"], dict) and r["disputed"]["contests"]["sha256"] != digest(contested(r) or {}):
+            return "disputed.contests.sha256 is the digest of the receipt contested: this receipt with that verdict, and no dispute"
+        five = as5(r)
+    except (KeyError, TypeError, AttributeError):
+        return "not a version 6 receipt: as version 5, its dispute is not shaped as one"
+    return _check5(five)
 
 
 def _assured(a: dict, judges: list[dict]) -> list[str]:
@@ -1171,7 +1227,7 @@ def _render4(r: dict) -> list[str]:
     word = _ids.VERDICT_WORDS[o["verdict"]]
     out = [f"Acceptance receipt, version {r['version']}: order {r['order']} on {r['cluster']}", "",
            f"Verdict: {word}. " + ("This receipt authorises the payment it records." if o["verdict"] == "accepted" else "This receipt authorises no payment."),
-           *(_assured(r["assurance"], o["evaluators"]) if r["version"] == 5 else []),
+           *(_assured(r["assurance"], o["evaluators"]) if r["version"] in (5, 6) else []),
            f"   Deliverable {got['deliverable']}, evaluation {got['evaluation']}.",
            f"   Invoice line {got['invoice_line'] or 'not named'}; settlement {got['settlement'] or 'none: nothing was paid'}.",
            ("   Evidence: a token the issuer signed" + f" ({src['signed_by']}), recognised by sha256 {src['reference']}." if a is not None
@@ -1223,7 +1279,7 @@ def _render3(r: dict) -> list[str]:
            f"   The token is recognised by sha256 of its signature: {a['token_sha256']}.", "",
            f"2. {HEADINGS['evaluator_observed']}",
            f"   The pinned judge ({o['judge']['kind']}, version {o['judge']['version']}) gave the verdict: {o['verdict']}.",
-           f"   {trusted_line(a['provider'], p['mode'], o['judge']['kind'], o['judge']['version'])}",
+           f"   {trusted_line(a['provider'], p['mode'], o['judge']['kind'], o['judge']['version'], r['version'])}",
            ("   Named checks: not recorded in a version 1 receipt." if o["checks"] is None else "   Named checks: none were required." if not o["checks"]
             else "   Named checks: " + "; ".join(f"{e['name']}: {e['conclusion']}" for e in o["checks"]) + "."),
            f"   Artifact: commit {o['artifact']['commit']}, pull request {o['artifact']['pull_request']}.",
@@ -1320,10 +1376,10 @@ def parts(r: dict, declared=()) -> dict:
         raise ValueError(why)
     if r["version"] == 3:
         r = build4(r)
-    if r["version"] not in (4, 5):
+    if r["version"] not in (4, 5, 6):
         raise ValueError(f"a receipt of version {r['version']} does not say who funded or what was left unshown: `knos bundle make` writes the same payment as version 5")
     o, a, p, m, src, got, d = r["evaluator_observed"], r["issuer_authenticated"], r["policy"], r["amounts"], r["evidence_source"], r["ids"], r["disputed"]
-    assured = r["assurance"] if r["version"] == 5 else assurance_of(r, declared)
+    assured = r["assurance"] if r["version"] in (5, 6) else assurance_of(r, declared)
     level, verdict = assured["level"], o["verdict"]
     # 1. identity
     if a is not None:

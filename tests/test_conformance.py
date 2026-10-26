@@ -37,7 +37,7 @@ JS_NOT_IMPLEMENTED = {"receipt.check", "receipt.verdict", "receipt.assurance", "
 def test_the_vectors_are_the_ones_kit_version_1_names_and_every_case_is_well_formed():
     m = kit.manifest()
     named = {e["format"]: e["sha256"] for e in m["formats"]}
-    assert m["kit"] == 4 and {k: named[k] for k in KIT_1} == KIT_1 and set(named) - set(KIT_1) == {"receipt4", "receipt5", "ids", "ledger2"}     # versions 2 to 4 added four, changed none
+    assert m["kit"] == 5 and {k: named[k] for k in KIT_1} == KIT_1 and set(named) - set(KIT_1) == {"receipt4", "receipt5", "receipt6", "ids", "ledger2"}     # versions 2 to 5 added five, changed none
     assert named["receipt4"] == "8a7541ea1e249d438ae6e07572082e754087c62c275de57451fe6152975d8dc2"                # version 5 of the receipt did not touch version 4's vectors
     todo = kit.cases()
     assert len({c["id"] for c in todo}) == len(todo) == sum(e["cases"] for e in m["formats"])
