@@ -4,10 +4,11 @@
     python scripts/public_face.py --write     # rewrite each description this script can write from the source
     python scripts/public_face.py --remote    # needs the network: what a logged-out reader is served, and the fix for each
 
-The source is `sentence` in docs/facts.json. The places (`FACES`):
+The source is `sentence` in docs/facts.json, and for the MCP registry's listings (100 characters at most there)
+`registry_sentence`. The places (`FACES`):
 
     pyproject.toml                          `description`: what PyPI shows as the summary        exactly the sentence
-    server.json, gemini-extension.json      what the MCP registry and Gemini CLI list            exactly the sentence
+    server.json, gemini-extension.json      what the MCP registry and Gemini CLI list            exactly the registry sentence
     plugin manifests, the marketplace file  what Claude Code and Codex list                      begins with the sentence
     web/index.html                          <title>, meta description, og:title, og:description  the title; begins with it
     README.md                               the first line of text                               the sentence, in bold
@@ -54,8 +55,9 @@ STALE = ("Bounties that pay", "Paid GitHub bounties", "Hire any AI agent", "shar
          "neutral meter", "neither side keeps the count", "Pay AI agents", "pay AI coding agents", "AI agent work", "pays coding agents")
 
 EXACT, BEGINS, PART = "exactly the sentence", "begins with the sentence", "names no older product"
+REGISTRY = "exactly the registry sentence"
 JSON_FACES: tuple[tuple[str, str], ...] = (
-    ("server.json", EXACT), ("gemini-extension.json", EXACT),
+    ("server.json", REGISTRY), ("gemini-extension.json", REGISTRY),
     ("plugin/.claude-plugin/plugin.json", BEGINS), ("plugin/.codex-plugin/plugin.json", BEGINS), (".claude-plugin/marketplace.json", BEGINS),
     ("sdk/settle/package.json", PART),
 )
@@ -113,6 +115,13 @@ def _readmes(root: Path) -> list[str]:
     return sorted(Path(p).relative_to(root).as_posix() for p in glob.glob(str(root / "sdk" / "*" / "README.md")))
 
 
+def registry_sentence(root: Path = ROOT) -> str:
+    """The sentence for the MCP registry's listings (server.json, gemini-extension.json): 100 characters at most there."""
+    path = root / SOURCE
+    got = json.loads(path.read_text(encoding="utf-8")).get("registry_sentence") if path.is_file() else None
+    return got.strip() if isinstance(got, str) and got.strip() else sentence(root)
+
+
 def sentence(root: Path = ROOT) -> str:
     path = root / SOURCE
     got = json.loads(path.read_text(encoding="utf-8")).get(KEY) if path.is_file() else None
@@ -142,6 +151,8 @@ def _judge(where: str, got: str | None, rule: str, said: str) -> list[str]:
         return [f'{where}: uses "{word}", which no Knos description uses: {got[:90]}']
     if rule == EXACT and got != said:
         return [f"{where}: is not the sentence: {got[:90]}"]
+    if rule == REGISTRY and got != said:
+        return [f"{where}: is not the registry sentence: {got[:90]}"]
     if rule == BEGINS and not got.startswith(said):
         return [f"{where}: does not begin with the sentence: {got[:90]}"]
     return []
@@ -156,7 +167,8 @@ def problems(root: Path = ROOT) -> list[str]:
     said, out = sentence(root), []
     for rel, rule in JSON_FACES:
         if (root / rel).is_file():
-            out += _judge(rel, json.loads((root / rel).read_text(encoding="utf-8")).get("description"), rule, said)
+            out += _judge(rel, json.loads((root / rel).read_text(encoding="utf-8")).get("description"), rule,
+                          registry_sentence(root) if rule == REGISTRY else said)
     for rel, rule in TOML_FACES:
         if (root / rel).is_file():
             m = _TOML.search((root / rel).read_text(encoding="utf-8"))
@@ -212,7 +224,7 @@ def write(root: Path = ROOT) -> list[str]:
             old = json.loads('"' + m.group(m.lastindex or 1) + '"')
             if rule == BEGINS and old.startswith(said):
                 return m.group(0)
-            new = said if rule == EXACT else (said + " " + _tail(old)).strip()
+            new = registry_sentence(root) if rule == REGISTRY else said if rule == EXACT else (said + " " + _tail(old)).strip()
             text = json.dumps(new, ensure_ascii=False)
             return f"{m.group(1)}{text}" if rel.endswith(".json") else f"description = {text}"
 

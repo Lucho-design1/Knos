@@ -14,6 +14,13 @@ import { createServer } from "node:http";
 import { readFileSync, existsSync } from "node:fs";
 import { join, extname } from "node:path";
 import { chromiumOrSkip, TYPES } from "./overflow.mjs";
+// a link to a page the bar no longer lists (8e29789: "More" holds seven items, the others keep their own addresses),
+// pressed as a reader follows one from the text: the page's own router answers it
+const follow = async (page, href) => {
+  await page.evaluate((h) => { const a = document.createElement("a"); a.id = "k-follow"; a.href = h; a.textContent = "go";
+    a.style.cssText = "position:fixed;left:4px;bottom:4px;z-index:2147483647"; document.body.append(a); }, href);
+  await page.click("#k-follow"); await page.evaluate(() => document.getElementById("k-follow")?.remove());
+};
 
 const root = process.argv[2];
 if (!root || !existsSync(join(root, "index.html"))) { console.error("usage: node tests/web/home.mjs <site dir>"); process.exit(2); }
@@ -130,8 +137,7 @@ for (const [w, h] of [[375, 812], [390, 844], [320, 640], [1280, 800]]) {
 // 3. verify (in the bar's menu, the same on every page), and the check of agent work, one press away
 {
   const { ctx, page } = await open(375, 812, "off");
-  await page.click("#menu"); await page.click("#more-button");       // a phone: the bar's menu, How we verify under More
-  await page.click('#nav a[href="#verify"]');
+  await follow(page, "#verify");                                        // a phone: How we verify, from a link to it
   await page.waitForFunction(() => document.documentElement.dataset.ready === "verify", null, { timeout: 10000 }).catch(() => {});
   const v = await page.evaluate(() => ({ shown: document.getElementById("view-verify").checkVisibility(), home: document.getElementById("view-home").checkVisibility(),
     h1: document.getElementById("verify-h").textContent, items: [...document.querySelectorAll(".verify-list li h2")].map((e) => e.textContent),
@@ -139,7 +145,7 @@ for (const [w, h] of [[375, 812], [390, 844], [320, 640], [1280, 800]]) {
   ok("verify: How we verify is its own page, in plain lines of twelve words at most", v.shown && !v.home && v.h1 === "How we verify" && v.items.length >= 5 && v.long.length === 0, v);
   await page.goto(`${base}#check`, { waitUntil: "load" });
   await page.waitForTimeout(500);
-  ok("#check: the check of agent work keeps its first screen", await page.isVisible("#front-door") && !(await page.isVisible("#view-home")) && (await page.textContent("h1")).trim() === "Check an AI agent's pull request before it is paid.");
+  ok("#check: the check of agent work keeps its first screen", await page.isVisible("#front-door") && !(await page.isVisible("#view-home")) && (await page.textContent("#check")).trim() === "Check an AI agent's pull request before it is paid.");
   await ctx.close();
 }
 

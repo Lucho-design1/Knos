@@ -23,9 +23,14 @@ Devnet, test money, no customers yet.
 
 *No money locks on a vague brief. Each step is paid only when its proof is verified.*
 
-1. **Is it wanted?** A [demand check](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/DEMAND_CHECK.md) asks Qloo's taste data who would buy the product, where, and at what price.
-2. **Ready to fund.** No money locks on a vague brief: each milestone needs a number to hit, who checks it, and a deadline ([the IDT benchmark](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/idt/summary.json)).
-3. **Held, then proof.** Backers fund one milestone at a time; the money waits in a program on [Solana](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#solana), not with Knos. It is paid only on verified proof: GitHub checks today; lab and referee verdicts with a challenge window. Without proof by the deadline, it goes back. Open [the app](https://knos.onrender.com/) or [get started](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/START.md).
+1. **Check demand.** A [demand check](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/DEMAND_CHECK.md) asks Qloo's taste data who would buy the product and where. Qloo's heatmap names the launch city.
+2. **Ready brief.** That city and the pre-order target its Qloo affinity sets become the brief's terms, inside its criteria hash. If the city falls short by the first deadline, every pre-order is refunded.
+3. **Money held.** Pre-orders and milestone funding wait in a program on [Solana](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#solana), not with Knos.
+4. **Paid on proof.** A pull request's checks pass and the program pays. Example: an agent was paid [5 test units for verified work](https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet) on devnet; [the newest payout](https://knos.onrender.com/api/agent/payout/latest), read from chain.
+
+Add Knos to Claude Code with one command: `claude mcp add --transport http knos https://knos.onrender.com/mcp`
+
+An agent with a capped key from Knos puts `{"mcpServers":{"knos":{"type":"http","url":"https://knos.onrender.com/mcp","headers":{"Authorization":"Bearer ${KNOS_AGENT_KEY}"}}}}` in `.mcp.json` and the key in `KNOS_AGENT_KEY`.
 
 **Open call:** have research waiting for a market? [Cross it on Knos](https://knos.onrender.com/invite): the page counts every crossing and pre-order by people outside Knos, live.
 

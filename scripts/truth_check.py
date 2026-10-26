@@ -80,6 +80,7 @@ class Statement:
     file: str
     line: int
     text: str
+    links: tuple[str, ...] = ()       # a site line's href targets: the tags are dropped from its text, its sources are not
 
 
 @dataclass(frozen=True)
@@ -109,6 +110,7 @@ def files(root: Path = ROOT, docs: Iterable[str] = DOCS) -> list[str]:
 
 
 _TAG = re.compile(r"<[^>]+>")
+_HREF = re.compile(r'href="(https?://[^"]+)"')
 _END = re.compile(r"(?<=[.!?])[\"')*]*\s+(?=[A-Z`*\[(])")
 
 
@@ -121,7 +123,7 @@ def statements_of(rel: str, text: str) -> list[Statement]:
         for n, line in enumerate(lines, 1):
             s = _TAG.sub(" ", line).strip()
             if s and not s.startswith(("//", "*", "/*", "<!--")):
-                out.append(Statement(rel, n, s))
+                out.append(Statement(rel, n, s, tuple(_HREF.findall(line))))
         return out
     block: list[tuple[int, str]] = []
 
@@ -561,7 +563,7 @@ def word_problems(stmts: list[Statement]) -> list[Problem]:
         if m := ALWAYS.search(s.text):
             out.append(Problem("word", s.file, s.line, s.text, f'no Knos document says "{m.group(0)}"'))
         m = MONEY_WORDS.search(s.text) or MONEY_ABBR.search(s.text)
-        near = [x.text for x in stmts[max(0, i - 4):i + 1] if x.file == s.file]   # the sources a sentence follows
+        near = [x.text for x in stmts[max(0, i - 4):i + 1] if x.file == s.file] + list(s.links)   # the sources a sentence follows
         if s.text.startswith("|"):                           # a table row: any row of its table may carry the link
             near += [x.text for x in stmts[i + 1:i + 9] if x.file == s.file and x.text.startswith("|")]
         if m and not any(SOURCED.search(x) for x in near):

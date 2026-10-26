@@ -3,6 +3,7 @@ the same commit, and the app keeps the repository rules it had as a repository o
 from __future__ import annotations
 
 import os
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -32,4 +33,7 @@ def test_the_qloo_rule_holds_in_the_monorepo():
     ignored = (APP / ".gitignore").read_text(encoding="utf-8").split()
     assert ".cache/" in ignored and "probe.json" in ignored and ".env" in ignored
     tracked = subprocess.run(["git", "ls-files", "apps/wanted"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split()
-    assert not [p for p in tracked if p.endswith(".json")], "no recorded Qloo body (or any JSON) is kept under apps/wanted"
+    # one public file stands: the Census Bureau's metro shapes, which name their own source (no Qloo answer is in it)
+    census = "apps/wanted/knos_wanted/data/cbsa_msa_2023.json"
+    assert json.loads((ROOT / census).read_text(encoding="utf-8"))["source"].startswith("US Census Bureau, TIGER/Line")
+    assert not [p for p in tracked if p.endswith(".json") and p != census], "no recorded Qloo body (or any JSON) is kept under apps/wanted"

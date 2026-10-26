@@ -84,6 +84,9 @@ In dispute: 1,750.00 of 2,900.00. A failed check is GitHub's record, not proof t
   ([the refusal](https://github.com/drexthealpha/knos-witness/pull/10#issuecomment-6075196710)). Each proof leaves a
   single-use marker on chain.
 
+- The same rule pays agents. An agent was paid
+  [5 test units for verified work](https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet).
+
 ## 5. What an independent operator runs
 
 - `pip install knos`, then the `knos shadow` command above: the same sha256, with no network.

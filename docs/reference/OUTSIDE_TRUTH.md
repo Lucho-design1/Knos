@@ -86,7 +86,9 @@ Numbers: [qloo_lift_ranked.json](qloo_lift_ranked.json). Run it again: `python s
 
 **In plain words.** For 30 kinds of local business, each side named the 5 large US metros where that business is most
 common per person. Census County Business Patterns 2023 gives the true top 10. Claude alone did better than Knos with
-Qloo, and the interval stays below zero. A heatmap of taste says where fans of a product cluster, which is a different
+Qloo, and the interval stays below zero.
+
+A heatmap of taste says where fans of a product cluster, which is a different
 thing from where shops of that kind are dense.
 
 | Measure (n=30 business types) | Value |
@@ -107,7 +109,9 @@ Numbers and every metro named: [where_truth.json](where_truth.json). Run it agai
 
 **In plain words.** For 30 films, each side named the 5 films that the film's fans most likely also love. The truth
 comes from MovieLens 32M: the films those fans rated highly far more often than everyone else did. This is the
-question behind "they also love" in every Knos result. Knos with Qloo scored a little higher than Claude alone, and
+question behind "they also love" in every Knos result.
+
+Knos with Qloo scored a little higher than Claude alone, and
 the interval spans zero, so this test cannot tell them apart.
 
 | Measure (n=30 films) | Value |

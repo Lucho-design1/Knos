@@ -444,7 +444,9 @@ def test_the_site_says_nothing_it_may_not():
     app = (WEB / "app.js").read_text(encoding="utf-8")
     banned = "|".join(("cla" "ude", "anthro" "pic", "hack" "athon", "win" "ner", "assis" "tant"))     # in pieces: no file spells them out
     stale = rf"\b(veto|no admin|nobody can (?:change|upgrade)|no one can change|never be changed|one-hour|hour later|about a minute|{banned})\b"
-    assert not re.search(stale, words, re.I), re.search(stale, words, re.I).group(0)
+    # a command a reader copies (`claude mcp add ...`, the client's own name) is code, not the page's words
+    prose = re.sub(r"`[^`]*`", " ", words)
+    assert not re.search(stale, prose, re.I), re.search(stale, prose, re.I).group(0)
     assert not re.search(stale, app, re.I), re.search(stale, app, re.I).group(0)
     # the second deployment is never called immutable: the page says how it can be upgraded. The one place the word
     # stands is the name of the state the page shows for a program whose upgrade authority the chain says is gone.
@@ -463,7 +465,9 @@ def test_the_site_says_nothing_it_may_not():
 def test_the_site_asks_nobody_but_github_and_devnet():
     # and Knos's own app, which answers the front door's demand check (web/privacy.html: what you type goes there on Check)
     hosts = {"api.github.com", "api.devnet.solana.com", "github.com", "explorer.solana.com", "faucet.circle.com", "drexthealpha.github.io",
-             "knos.onrender.com"}
+             "knos.onrender.com",
+             # a result's launch map: OpenStreetMap's tiles, and its credit link that the tiles' licence asks for
+             "tile.openstreetmap.org", "www.openstreetmap.org"}
     # The facts for search engines (JSON-LD, tests/test_seo.py) name schema.org's vocabulary, the licence and the package's
     # page: identifiers a search engine reads, which no browser asks for. They are held to exactly these three hosts, and
     # everything else on the page to the list above (tests/web/seo.mjs counts the requests the pages make in a browser).

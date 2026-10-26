@@ -832,8 +832,10 @@ function initBar() {
   const toDemo = () => { demo.scrollIntoView?.({ block: "start" }); (demo.querySelector(".kd-go:not([hidden])") || demo.querySelector("button:not([hidden]), a[href], input"))?.focus({ preventScroll: true }); };
   // the skip link: to the first screen if another page is shown, and the cursor into the invoice box
   document.querySelector(".k-skip")?.addEventListener("click", (ev) => { ev.preventDefault(); if (pageNow() !== "check") go("#check"); $("fd-in")?.focus(); });
-  for (const a of document.querySelectorAll('a[href="#demo"], #go-check')) a.addEventListener("click", (ev) => {
-    if (ev.button || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+  // one listener for every such link, those a later script adds included
+  document.addEventListener("click", (ev) => {
+    const a = ev.target instanceof Element && ev.target.closest('a[href="#demo"], #go-check');
+    if (!a || ev.button || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
     ev.preventDefault();
     const toBox = () => { go("#check-a-pull-request"); $("front-door")?.scrollIntoView?.({ block: "center" }); $("fd-in")?.focus({ preventScroll: true }); };
     if (a.id === "go-check" || !demo) return toBox();

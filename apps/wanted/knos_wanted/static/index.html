@@ -283,15 +283,17 @@ ${src(h, price.src)}</section>
   form.addEventListener("submit", (ev) => { ev.preventDefault(); ask(q.value); });
   // below the first screen: the newest payout to an agent, as the chain has it, and the usage counter (checks and
   // briefs from the app's store, the payment program's devnet transactions). The build wrote both into the page
-  // (scripts/live_snapshot.py); they are asked again with the reader's first move, as the product list is (web/home.js)
+  // (scripts/live_snapshot.py); they are asked again after the reader's first move, as the product list is (web/home.js)
   let moved = false;
   const later = (f) => { const go = () => { if (moved) return; moved = true; f(); };
     for (const t of ["pointermove", "pointerdown", "touchstart", "keydown", "scroll", "focusin"]) addEventListener(t, go, { once: true, passive: true, capture: true }); };
-  later(() => {
+  // and only once Paid on proof is in view: the first screen asks nobody
+  later(() => seen(document.getElementById("paid-on-proof") || root, () => {
     const paid = document.getElementById("k-paid"), use = document.getElementById("k-usage"), oidc = document.getElementById("k-oidc");
     // the newest signature check knos_oidc ran on devnet (the program reads GitHub's signature itself), from devnet
-    if (oidc) fetch("https://api.devnet.solana.com", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getSignaturesForAddress", params: ["FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W", { limit: 20, commitment: "confirmed" }] }) })
+    // the program's address is read from the program_ids.json the build ships, never typed into the page
+    if (oidc) fetch("program_ids.json").then((r) => r.json()).then((ids) => fetch("https://api.devnet.solana.com", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getSignaturesForAddress", params: [ids.knos_oidc, { limit: 20, commitment: "confirmed" }] }) }))
       .then((r) => r.json()).then((j) => {
         const x = (j.result || []).find((t) => t.err === null);
         if (!x) return;
@@ -313,7 +315,7 @@ ${src(h, price.src)}</section>
       use.hidden = !line;
       use.dataset.live = "1";
     }).catch(() => {});
-  });
+  }));
 
   // the fold "Claude alone": filled when it is first opened, from the published table, beside this card's answer
   slot.addEventListener("toggle", async (ev) => {

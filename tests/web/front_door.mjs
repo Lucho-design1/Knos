@@ -176,12 +176,13 @@ async function page() {
       return out;
     });
     ok(`${width}px: the first screen says 56 words at most`, first.length <= 56 && first.length >= 15, [first.length, first.join(" ")]);
-    const hero = await p.evaluate(() => ({ h1: document.querySelector("h1").textContent.trim(), fact: document.getElementById("hero-fact").textContent.trim(),
+    // the page's one h1 is the demand check's mission (d6b6360); this use heads its own section, #check
+    const hero = await p.evaluate(() => ({ h1: document.getElementById("check").textContent.trim(), fact: document.getElementById("hero-fact").textContent.trim(),
       controls: [...document.querySelectorAll(".hero input, .hero textarea, .hero select, .hero button, .hero-words a:not(.k-num):not(#hero-board a)")].map((e) => e.dataset.fd || e.id),
       below: Boolean(document.querySelector(".hero ~ #how-it-works ~ #demo")), boxTop: document.querySelector("#front-door [data-fd=run]").getBoundingClientRect().bottom, fold: innerHeight }));
     ok(`${width}px: the outcome, then the number`, hero.h1 === "Check an AI agent's pull request before it is paid." && hero.fact === "Of 241 merged agent “tests pass” pull requests: 9 failed a test, build, lint or type check." && words(hero.fact) <= 18, hero);
     // under the outcome (the h1): who it is for, then the sentence; then the number. An orphan: a last line of one word.
-    const outcome = await p.evaluate(() => { const o = document.getElementById("hero-outcome"), h = document.querySelector("h1"), f = document.getElementById("hero-fact"), w = document.getElementById("hero-who");
+    const outcome = await p.evaluate(() => { const o = document.getElementById("hero-outcome"), h = document.getElementById("check"), f = document.getElementById("hero-fact"), w = document.getElementById("hero-who");
       const lastLine = (el) => { const r = document.createRange(); r.selectNodeContents(el); const rects = [...r.getClientRects()].filter((x) => x.width > 1), last = rects.at(-1).top;
         const t = el.textContent.trim().split(/\s+/), probe = document.createRange(), node = el.lastChild.nodeType === 3 ? el.lastChild : el.lastChild.lastChild; let n = 0;
         for (let i = node.textContent.length; i > 0; i--) { probe.setStart(node, i - 1); probe.setEnd(node, i); if (Math.abs(probe.getBoundingClientRect().top - last) > 4) break; n++; }

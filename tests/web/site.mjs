@@ -19,6 +19,13 @@ const root = process.argv[2];
 // the menu of this build (tests/web/overflow.mjs menuOf): a page added by name (web/views.js ADDED) has a link, and one
 // added to the bar takes its words from Docs, Install and Check
 const MENU = menuOf(root || ".");
+// a link to a page the bar no longer lists (8e29789: "More" holds seven items, the others keep their own addresses),
+// pressed as a reader follows one from the text: the page's own router answers it
+const follow = async (page, href) => {
+  await page.evaluate((h) => { const a = document.createElement("a"); a.id = "k-follow"; a.href = h; a.textContent = "go";
+    a.style.cssText = "position:fixed;left:4px;bottom:4px;z-index:2147483647"; document.body.append(a); }, href);
+  await page.click("#k-follow"); await page.evaluate(() => document.getElementById("k-follow")?.remove());
+};
 // the page shown, as web/front.js marks it once drawn (data-ready): most pages have no link of their own in the bar
 const isShown = (p, name) => p.waitForFunction((n) => document.documentElement.dataset.ready === n, name, { timeout: 8000 }).then(() => true, () => false);
 const here = dirname(fileURLToPath(import.meta.url));
@@ -388,7 +395,7 @@ await reset();
   await visit(page);
   const SHORT = "Check an AI agent's pull request before it is paid.";
   const LEAD = "A work order is a task, its budget and the terms that decide when it is done. All three are fixed before work starts. A bounty on an issue is the smallest work order. When the work is merged, GitHub signs which checks ran. A Solana program checks that signature before it pays. No person holds the money in between.";
-  check("front door renders: the outcome, then what a work order is", (await text(page, "h1")) === SHORT && (await text(page, "#view-check .lede")) === LEAD);
+  check("front door renders: the outcome, then what a work order is", (await text(page, "#check")) === SHORT && (await text(page, "#view-check .lede")) === LEAD);
   // the title is the line under the sentence, for a person searching (scripts/public_face.py `title`); every description begins with the sentence
   const TITLE = "Knos. Research to products people want, paid on proof.";
   const ONE = "Knos carries research across the valley of death: each step is paid only on verified proof.";        // the sentence: every description begins with it
@@ -461,11 +468,11 @@ await reset();
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => r())));
       check("  the bar fitted again with an added link under More: the same bar, and nothing thrown", (await bar()).join() === MENU.bar.join() && errors.length === before, { bar: await bar(), thrown: errors.slice(before) });
     }
-    await page.click("#more-button"); await page.click('#more-list a[href="#records"]');
+    await follow(page, "#records");
     await page.waitForSelector("#view-records", { state: "visible" });
-    check("  a link of it goes to its page, closes the list, and More is marked as holding the page shown", (await under()).length === 0 && await page.$eval("#more", (e) => e.classList.contains("current")) && (await isShown(page, "records")));
+    check("  a link to a page the bar does not list goes to its page, with More closed", (await under()).length === 0 && (await isShown(page, "records")));
     await visit(page, "");
-    check("  and is not marked on a page of the bar's own", !(await page.$eval("#more", (e) => e.classList.contains("current"))));
+    check("  and More is not marked on a page of the bar's own", !(await page.$eval("#more", (e) => e.classList.contains("current"))));
     const phone = await (await world({ width: 390 })).newPage();
     await visit(phone, "#check");
     await phone.click("#menu");
@@ -498,7 +505,7 @@ await reset();
   await page.mouse.move(3, 3); await page.waitForSelector("#demo .kd-go");                  // the round is mounted (web/demo.js); a build without it leaves the mount empty, as here
   await page.evaluate(() => { document.getElementById("demo").innerHTML = ""; });
   await page.waitForSelector("#demo", { state: "hidden" });
-  await page.click("#more-button"); await page.click('#more-list a[href="#demo"]');          // Demo is under More
+  await follow(page, "#demo");                                                               // a link to Demo
   check("  Demo, while the demo's mount is empty, puts the cursor in the box that checks a pull request", await page.evaluate(() => document.activeElement.id === "fd-in") && await page.isHidden("#demo"));
   await page.evaluate(() => { document.activeElement.blur(); document.getElementById("demo").innerHTML = "<p>Filled</p>"; });
   await page.waitForSelector("#demo", { state: "visible" });
@@ -506,7 +513,7 @@ await reset();
   check("  the demo's mount, once filled, is shown under the front door, How it works and the one transaction, and Demo goes to it", await page.isVisible("#view-check") && await page.$eval("#demo", (d) => d.parentElement.id === "view-check"
     && d.previousElementSibling.id === "one-transaction" && d.previousElementSibling.previousElementSibling.classList.contains("sides")
     && d.parentElement.querySelector(".hero ~ #how-it-works ~ .how ~ .sides ~ #one-transaction ~ #demo") === d));
-  await page.click("#more-button"); await page.click('#more-list a[href="#demo"]');          // Demo is under More
+  await follow(page, "#demo");                                                               // a link to Demo
   check("    and the cursor stays out of the box", await page.evaluate(() => document.activeElement.id !== "fd-in" && location.hash === "#demo"));
   await page.evaluate(() => { document.getElementById("demo").replaceChildren(); });
   await visit(page);
@@ -549,9 +556,9 @@ await reset();
   }
   // what fills them in this build: Install is in the page, Capabilities is the manifest the build copied, Buy is web/buyer.js when there is one
   await visit(page, "");
-  await settled(); await page.click("#more-button"); await page.click('#more-list a[href="#install"]');
+  await settled(); await follow(page, "#install");
   await page.waitForSelector("#install-repo", { state: "visible" });
-  check("install: Install, under More, lands on the Install page, shown alone, with the box to write a repository in", await page.isVisible("#install") && await page.isHidden("#view-check") && (await page.evaluate(() => document.body.dataset.page)) === "install"
+  check("install: a link to Install lands on the Install page, shown alone, with the box to write a repository in", await page.isVisible("#install") && await page.isHidden("#view-check") && (await page.evaluate(() => document.body.dataset.page)) === "install"
     && (await isShown(page, "install")) && (await text(page, "#install h2")) === "Install with one pull request");
   await page.fill("#install-repo", "octo/widgets");
   check("  a repository gives the link that opens GitHub's editor there, and the five terms templates are under it", (await page.getAttribute("#install-open", "href")).startsWith("https://github.com/octo/widgets/new/main?filename=.github%2Fworkflows%2Fknos.yml&value=")
@@ -1334,7 +1341,7 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   // the Console's sample approvals name where each was made: a comment in this project's own playground repository, never an account that is somebody else's
   check("links: the Console's sample is in the project's own playground repository", hrefs.some((h) => /^https:\/\/github\.com\/drexthealpha\/Knos\/issues\/\d+#issuecomment-\d+$/.test(h)) && !(await page.content()).includes("github.com/acme/"));
   const bad = hrefs.filter((h) => !(h.startsWith("#") ? ["check", "fd-in", "check-a-pull-request", "protect", "fund", "claim", "pricing", "records", "network", "build", "rank", "buy", "install", "capabilities", "status", "index", "pilot", "reproduce", "demo", "shadow", "verifier", "playground", "terms", "supplier", "invoice-statement", "story", "keyholder", "sample", "record", "home", "verify", ...MENU.added.map((a) => a.name)].includes(h.slice(1).split("=")[0])
-    : h === TEMPLATE_LINK || h === JUDGE_TEMPLATE_LINK || h === "https://drexthealpha.github.io/Knos/" || /^https:\/\/explorer\.solana\.com\/(tx\/[1-9A-HJ-NP-Za-km-z]{64,90}|address\/[1-9A-HJ-NP-Za-km-z]{32,44})\?cluster=devnet$/.test(h) || /^https:\/\/github\.com\/drexthealpha\/|^https:\/\/faucet\.circle\.com\/$|^(index|stats|operations|agent_weekly|records|statement_sample)\.json$|^(\.\/)?(privacy|faq|wanted)\.html$|^wanted\.html#(projects|buy|fund|contribute|make|teams|agents|signin|research)$|^wanted\.html\?to=\/(with-without|qloo-safe-use|invite|verify|fields|money|companies)$|^wanted\.html#(back|fund|contribute)=[a-z0-9-]{3,64}$|^wanted\.html#(research|verify)$|^check\/$|^terms\/(?:3\/)?[\w-]+\/\d+\.json$/.test(h) || issuerDocs.includes(h)));
+    : h === TEMPLATE_LINK || h === JUDGE_TEMPLATE_LINK || h === "https://drexthealpha.github.io/Knos/" || /^https:\/\/explorer\.solana\.com\/(tx\/[1-9A-HJ-NP-Za-km-z]{64,90}|address\/[1-9A-HJ-NP-Za-km-z]{32,44})\?cluster=devnet$/.test(h) || /^https:\/\/github\.com\/drexthealpha\/|^https:\/\/faucet\.circle\.com\/$|^(index|stats|operations|agent_weekly|records|statement_sample)\.json$|^(\.\/)?(privacy|faq|wanted|pricing|how-we-test)\.html$|^wanted\.html#(projects|buy|fund|contribute|make|teams|agents|signin|research)$|^wanted\.html\?to=\/(with-without|qloo-safe-use|invite|verify|fields|money|companies)$|^wanted\.html#(back|fund|contribute)=[a-z0-9-]{3,64}$|^wanted\.html#(research|verify)$|^check\/$|^terms\/(?:3\/)?[\w-]+\/\d+\.json$/.test(h) || issuerDocs.includes(h)));
   check("links: every link goes to a view, to the site's own address, to the project's own GitHub, to a transaction or an address on devnet's explorer, to Circle's devnet faucet, to a file of the site or to an issuer's own documentation (the verifier's table)", bad.length === 0, bad);
   check("  a link that opens a new tab does not hand over the page", await page.$$eval('a[target="_blank"]', (a) => a.every((x) => /noopener/.test(x.rel))));
   await page.close();
@@ -2868,12 +2875,11 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
   await page.click("#demo .kd-go");
   check("  one press agrees the terms and funds the recorded order, and links its transaction", (await text(page, "#demo .kd-say")) === `Agreed and funded: ${demo.fund.amount} test USDC held.` && (await text(page, "#demo .kd-scene [data-fee-rule]")) === `fee ${demo.fund.fee}, the fee the program charged then (before the upgrade)` && (await page.getAttribute("#demo .kd-scene a", "href")) === `https://explorer.solana.com/tx/${demo.fund.tx}?cluster=devnet`);
   check("  the front door is above the round once it is mounted", await page.isVisible("#front-door [data-fd=run]") && (await overflow(page)) <= 1);
-  for (const from of ['#more-list a[href="#demo"]', "#hero-cue"]) {
+  for (const from of ["#demo", "#hero-cue"]) {
     await page.evaluate(() => { document.activeElement.blur(); scrollTo(0, 0); });
-    if (from !== "#hero-cue") await page.click("#more-button");
-    await page.click(from);
+    if (from === "#demo") await follow(page, "#demo"); else await page.click(from);
     const there = await page.waitForFunction(() => { const top = document.getElementById("demo").getBoundingClientRect().top; return document.activeElement?.classList.contains("kd-go") && top >= 0 && top < innerHeight / 3; }, null, { timeout: 5000 }).then(() => true, () => false);
-    check(`  ${from === "#hero-cue" ? "the cue at the foot of the hero" : "Demo, under More,"} brings the round under the bar and puts the focus on its first action`, there && await page.evaluate(() => location.hash === "#demo"),
+    check(`  ${from === "#hero-cue" ? "the cue at the foot of the hero" : "a link to Demo"} brings the round under the bar and puts the focus on its first action`, there && await page.evaluate(() => location.hash === "#demo"),
       await page.evaluate(() => [document.activeElement?.className, document.getElementById("demo").getBoundingClientRect().top]));
   }
   check("  the cue is an arrow with a name, no word of the forty, and stays inside the hero", (await text(page, "#hero-cue")).trim() === "" && (await page.getAttribute("#hero-cue", "aria-label")) === "The demo, below" && await page.evaluate(() => { scrollTo(0, 0); const c = document.getElementById("hero-cue").getBoundingClientRect(), h = document.querySelector(".hero").getBoundingClientRect(), b = document.querySelector(".hero .actions").getBoundingClientRect(); return c.bottom <= h.bottom + 1 && c.top >= b.bottom; }));

@@ -20,7 +20,8 @@ def read(rel: str) -> str:
 def test_the_first_screen_and_the_story_say_the_same_things():
     page = read("web/index.html")
     hero = page.split('<div class="hero-words">')[1].split("</form>")[0]
-    assert hero.index("<h1") < hero.index(OUTCOME) < hero.index('id="hero-fact"') < hero.index('id="front-door"')
+    assert page.count("<h1") == 1 and '<h1 id="k-mission"' in page        # one h1: the demand check's mission (d6b6360)
+    assert hero.index('<h2 id="check"') < hero.index(OUTCOME) < hero.index('id="hero-fact"') < hero.index('id="front-door"')
     story = read("docs/STORY.md")
     titles = re.findall(r"(?m)^\d\. \*\*(.+?)\*\*", story.split("## The ask")[0])
     assert titles == ["Buyer and supplier agree one task.", "A claimed success fails the condition.", "Valid work passes.",

@@ -36,6 +36,13 @@ const server = createServer((req, res) => {
 });
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const base = `http://127.0.0.1:${server.address().port}/`;
+// a link to a page the bar no longer lists (8e29789: "More" holds seven items, the others keep their own addresses),
+// pressed as a reader follows one from the text: the page's own router answers it
+const follow = async (page, href) => {
+  await page.evaluate((h) => { const a = document.createElement("a"); a.id = "k-follow"; a.href = h; a.textContent = "go";
+    a.style.cssText = "position:fixed;left:4px;bottom:4px;z-index:2147483647"; document.body.append(a); }, href);
+  await page.click("#k-follow"); await page.evaluate(() => document.getElementById("k-follow")?.remove());
+};
 const world = async (o = {}) => {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: "dark", ...o });
   await ctx.route("**/*", (route) => (route.request().url().startsWith(base) ? route.continue() : route.abort()));
@@ -111,14 +118,14 @@ const table = {};
   };
 
   await time("open a view", () => window.__answer(["click"], () => "morph" in document.documentElement.dataset || !document.getElementById("view-pricing").hidden),
-    async () => { await page.click("#more-button"); await page.click('#more-list a[href="#pricing"]'); },
+    () => follow(page, "#pricing"),
     async () => { await page.waitForFunction(() => !document.getElementById("view-pricing").hidden && document.getElementById("view-check").hidden && !("morph" in document.documentElement.dataset));
       await page.evaluate(() => { location.hash = "#check"; }); await page.waitForFunction(() => !document.getElementById("view-check").hidden); });
 
   // the press is answered by the pending state (above); the new page itself is held to the same limit: the page is
   // swapped in the task of the press, and only the heading and the mark are pictured for the crossing (web/motion.js)
   await time("open a view: the new page drawn", () => window.__answer(["click"], () => !document.getElementById("view-pricing").hidden),
-    async () => { await page.click("#more-button"); await page.click('#more-list a[href="#pricing"]'); },
+    () => follow(page, "#pricing"),
     async () => { await page.waitForFunction(() => !("morph" in document.documentElement.dataset)); await page.evaluate(() => { location.hash = "#check"; }); await page.waitForFunction(() => !document.getElementById("view-check").hidden); });
 
   // a page whose code has not been asked for yet: its section is shown at once, with grey bars until the code has run.

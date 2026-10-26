@@ -19,6 +19,9 @@ KEEP_WHOLE = ("docs/reference/LOAD.md", "docs/reference/BENCH.md",
               # written whole by their generators (each has its own --check): changed there, never here
               "docs/reference/MANIFEST.md", "docs/reference/SOLANA-COVERAGE.md",
               "docs/reference/QLOO-COVERAGE.md")
+# a test's plan is committed with its sha256 before the test runs (scripts/test_taste_truth.py, test_where_truth.py):
+# its bytes stay as recorded, so it is neither split nor counted
+FIXED_PLANS = ("docs/reference/taste_truth_plan.md", "docs/reference/where_truth_plan.md")
 SENT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\[(`\"'0-9])")
 
 
@@ -82,6 +85,7 @@ def main(argv: list[str]) -> int:
     check = "--check" in argv
     if "--strict" in argv:
         files = [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md")), *sorted((ROOT / "docs" / "reference").glob("*.md"))]
+        files = [f for f in files if f.relative_to(ROOT).as_posix() not in FIXED_PLANS]
         bad = [(f.relative_to(ROOT).as_posix(), n, w) for f in files for n, w in long_paragraphs(f.read_text(encoding="utf-8"))]
         for f, n, w in bad:
             print(f"{f}:{n}: {w} words")
@@ -90,7 +94,7 @@ def main(argv: list[str]) -> int:
     files = [Path(a) for a in argv if not a.startswith("--")] or [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md")),
                                                                      *sorted((ROOT / "docs" / "reference").glob("*.md"))]
     off = []
-    files = [f.resolve() for f in files if f.resolve().relative_to(ROOT).as_posix() not in KEEP_WHOLE]
+    files = [f.resolve() for f in files if f.resolve().relative_to(ROOT).as_posix() not in KEEP_WHOLE + FIXED_PLANS]
     for f in files:
         s = f.read_text(encoding="utf-8")
         new = fix(s)

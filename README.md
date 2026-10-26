@@ -35,17 +35,9 @@ flowchart TB
 3. **Money held.** Pre-orders and milestone funding wait in a program on [Solana](docs/WORDS.md#solana), not with Knos.
 4. **Paid on proof.** A pull request's checks pass and the program pays. Example: an agent was paid [5 test units for verified work](https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet) on devnet; [the newest payout](https://knos.onrender.com/api/agent/payout/latest), read from chain.
 
-Add Knos to Claude Code with one command:
+Add Knos to Claude Code with one command: `claude mcp add --transport http knos https://knos.onrender.com/mcp`
 
-```
-claude mcp add --transport http knos https://knos.onrender.com/mcp
-```
-
-An agent with a capped key from Knos puts this in `.mcp.json` and the key in `KNOS_AGENT_KEY`:
-
-```json
-{"mcpServers":{"knos":{"type":"http","url":"https://knos.onrender.com/mcp","headers":{"Authorization":"Bearer ${KNOS_AGENT_KEY}"}}}}
-```
+An agent with a capped key from Knos puts `{"mcpServers":{"knos":{"type":"http","url":"https://knos.onrender.com/mcp","headers":{"Authorization":"Bearer ${KNOS_AGENT_KEY}"}}}}` in `.mcp.json` and the key in `KNOS_AGENT_KEY`.
 
 **Open call:** have research waiting for a market? [Cross it on Knos](https://knos.onrender.com/invite): the page counts every crossing and pre-order by people outside Knos, live.
 

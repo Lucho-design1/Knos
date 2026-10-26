@@ -123,9 +123,11 @@ for (const [how, scheme, theme] of [["system", "dark", null], ["system", "light"
   const found = await page.evaluate(() => ({ labels: [...document.querySelectorAll(".k-pal li")].map((o) => o.firstChild.textContent), says: document.querySelector(".k-pal [role=status]").textContent, typed: document.querySelector(".k-pal input").value }));
   check("palette: \"/\" opens it too, empty; typing narrows the list, and the count is said", found.typed === "pric" && found.labels[0] === "Pricing" && found.labels.length < roles.options && /^\d+ results?$/.test(found.says), found);
   await page.keyboard.press("Enter");
-  await page.waitForFunction(() => location.hash === "#pricing" && !document.getElementById("view-pricing").hidden);
+  // Pricing is the bar's own page since 8e29789 (pricing.html); on a build without it, the #pricing view
+  await page.waitForFunction(() => /\/pricing\.html$/.test(location.pathname) || (location.hash === "#pricing" && !document.getElementById("view-pricing").hidden));
   // a change of page moves the focus as a link to it does (the browser's own rule for a fragment): it is not left in the dialog
-  check("palette: Enter goes to the page and closes", await page.evaluate(() => !document.querySelector("dialog.k-pal").open && !document.activeElement.closest(".k-pal")));
+  check("palette: Enter goes to the page and closes", await page.evaluate(() => !document.querySelector("dialog.k-pal")?.open && !document.activeElement.closest(".k-pal")));
+  if (await page.evaluate(() => /\/pricing\.html$/.test(location.pathname))) { await page.goto(base); await page.waitForSelector("#theme:not([hidden])"); }
   await page.keyboard.press("Control+k"); await page.waitForSelector("dialog.k-pal[open]");
   await page.keyboard.type("zzzz");
   check("palette: with nothing to offer it says so", await page.evaluate(() => document.querySelectorAll(".k-pal li").length === 0 && document.querySelector(".k-pal [role=status]").textContent === "Nothing matches" && !document.querySelector(".k-pal input").hasAttribute("aria-activedescendant")));

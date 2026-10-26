@@ -41,7 +41,7 @@ def solver():
 
 def tx(rpc: str, sig: str) -> dict | None:
     body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "getTransaction",
-                       "params": [sig, {"encoding": "jsonParsed", "commitment": "confirmed", "maxSupportedTransactionVersion": 0}]}).encode()
+                       "params": [sig, {"encoding": "jsonParsed", "commitment": "confirmed", "maxSupportedTransactionVersion": 1}]}).encode()
     with urllib.request.urlopen(urllib.request.Request(rpc, body, {"Content-Type": "application/json"}), timeout=60) as r:
         return json.loads(r.read()).get("result")
 

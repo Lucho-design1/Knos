@@ -251,7 +251,8 @@ def test_the_one_sentence_leads_the_readme_and_the_site_and_the_readmes_first_sc
     # the check of agent work (one use of Knos) leads with what it does, says it is one use, then Knos in a few words and
     # the number; the one sentence is folded under "What is here", before what a work order is
     use, short = "Check an AI agent's pull request before it is paid.", "Research to products people want, paid on proof."
-    assert f">{use}</h1>" in hero and 'id="hero-who"' in hero and f">{short}</p>" in hero
+    # one h1 on the page, the demand check's mission; this use heads its own section under it (d6b6360)
+    assert f">{use}</h2>" in hero and 'id="hero-who"' in hero and f">{short}</p>" in hero
     assert hero.index(use) < hero.index('id="hero-who"') < hero.index(short) < hero.index('id="hero-fact"')
     one_use = readme.split("\n## One use: paying AI agents for verified pull requests\n", 1)[1].split("\n## ", 1)[0]
     assert "`/knos fund " in one_use and "```mermaid" in one_use and number not in first          # the number: below, in "The number"

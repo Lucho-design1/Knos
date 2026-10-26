@@ -11,6 +11,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SENTENCE = "Knos carries research across the valley of death: each step is paid only on verified proof."
+# what the MCP registry and Gemini CLI list (docs/facts.json registry_sentence): 100 characters at most there
+REGISTRY = "Checks who wants a product with Qloo taste data and pays devnet money only when the proof passes."
 FACES = ("docs/facts.json", "pyproject.toml", "server.json", "gemini-extension.json", "plugin/.claude-plugin/plugin.json",
          "plugin/.codex-plugin/plugin.json", ".claude-plugin/marketplace.json", "sdk/settle/package.json", "sdk/settle/README.md", "action.yml", "web/index.html", "README.md")
 
@@ -43,8 +45,8 @@ def test_this_tree_says_the_one_sentence_everywhere_it_describes_itself():
     assert pf.main(["--check"], say=said.append) == 0 and said == [f"every description says: {SENTENCE}"]
     assert re.search(r'(?m)^description = "([^"]*)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8")).group(1) == SENTENCE
     for rel in ("server.json", "gemini-extension.json"):
-        assert json.loads((ROOT / rel).read_text(encoding="utf-8"))["description"] == SENTENCE
-    assert len(SENTENCE) <= 100                                           # the MCP registry refuses a longer description
+        assert json.loads((ROOT / rel).read_text(encoding="utf-8"))["description"] == REGISTRY
+    assert len(REGISTRY) <= 100 and pf.registry_sentence() == REGISTRY   # the MCP registry refuses a longer description
     for rel in ("plugin/.claude-plugin/plugin.json", "plugin/.codex-plugin/plugin.json", ".claude-plugin/marketplace.json"):
         assert json.loads((ROOT / rel).read_text(encoding="utf-8"))["description"].startswith(SENTENCE + " ")
 
@@ -53,7 +55,7 @@ def test_any_other_description_of_the_product_fails_the_check_place_by_place(tmp
     pf, root = _tool(), _copy(tmp_path)
     assert pf.problems(root) == []
     _sub(root / "pyproject.toml", SENTENCE, SENTENCE + " And an escrow.")
-    _sub(root / "server.json", SENTENCE, "Bounties that pay when the pull request is merged.")
+    _sub(root / "server.json", REGISTRY, "Bounties that pay when the pull request is merged.")
     _sub(root / "plugin" / ".claude-plugin" / "plugin.json", SENTENCE, "A plugin.")
     _sub(root / "action.yml", "description: ", "description: One shared memory for every coding agent. ")
     _sub(root / "web" / "index.html", f"<title>{pf.title(SENTENCE)}</title>", "<title>Knos: bounties</title>")
@@ -70,7 +72,7 @@ def test_any_other_description_of_the_product_fails_the_check_place_by_place(tmp
 def test_write_puts_the_sentence_back_keeps_what_a_plugin_adds_and_drops_an_older_products_words(tmp_path):
     pf, root = _tool(), _copy(tmp_path)
     _sub(root / "pyproject.toml", SENTENCE, "Bounties that pay when the pull request is merged. An escrow.")
-    _sub(root / "gemini-extension.json", SENTENCE, "Something else.")
+    _sub(root / "gemini-extension.json", REGISTRY, "Something else.")
     _sub(root / "plugin" / ".codex-plugin" / "plugin.json", SENTENCE, "Bounties that pay when merged. Attested by a GitHub-signed workflow run, verified on Solana.")
     before = (root / "server.json").read_bytes()
     assert sorted(pf.write(root)) == ["gemini-extension.json", "plugin/.codex-plugin/plugin.json", "pyproject.toml"]

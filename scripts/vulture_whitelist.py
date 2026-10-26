@@ -34,7 +34,7 @@ _.not_before, _.vetoes, _.done, _.exp, _.review, _.token_funded, _.funder_id, _.
 # a fee; tests/test_oidc2_chain.py and tests/test_idl.py call them all.
 from knos.settle.v2 import oidc as settle_oidc2
 
-settle_oidc2.GUARDIAN, settle_oidc2.refresh_ix, settle_oidc2.approve_ix, settle_oidc2.revoke_ix, settle_oidc2.read_key, settle_oidc2.key_usable
+settle_oidc2.GUARDIAN, settle_oidc2.KEY_ADMIN, settle_oidc2.refresh_ix, settle_oidc2.approve_ix, settle_oidc2.revoke_ix, settle_oidc2.read_key, settle_oidc2.key_usable
 # any RS256 issuer and private keys (knos-oidc 2.1): builders and readers for whoever admits or reads such a key
 settle_oidc2.register_issuer_key_ix, settle_oidc2.register_private_key_ix, settle_oidc2.iss_pda, settle_oidc2.read_iss, settle_oidc2.token_issuer
 settle_oidc2.Key.issuer_hash, settle_oidc2.Key.private, settle_oidc2.Key.registrant
