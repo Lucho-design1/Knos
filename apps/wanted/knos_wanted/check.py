@@ -8,7 +8,7 @@ The Qloo calls (every number in the report names the call that produced it, by i
   /v2/tags                the idea's own taste tags (tag search on its content words, tags of that kind)
   /v2/insights urn:demographics   WHO: age and gender affinity of the matched products (at the place, when given)
   /v2/insights urn:heatmap + urn:entity:place   WHERE: the areas and named places where that taste clusters
-  /v2/insights urn:audience       audience segments ranked by affinity
+  /v2/insights urn:entity:audience audience segments ranked by affinity
   /v2/trending            weekly population percentile of the leader (Qloo's series ends ~24 Jul 2026: "data through")
   /v2/analysis/compare    the idea's other matches (a) vs the leader (b): shared taste tags = overlap; else the
                           leader's own audience segments vs the idea's (one more /v2/insights call)
@@ -290,7 +290,7 @@ class _Run:
         m = re.search(r"HTTP (\d{3})", str(err))
         code = m.group(1) if m else ""
         short = ("Qloo refused this server's API key (HTTP %s): no Qloo data was used" % code if code in ("401", "403") else
-                 "Qloo's rate limit for this key was reached (HTTP 429, after one retry): try again in a minute" if code == "429" else
+                 "Qloo's rate limit for this key was reached (HTTP 429): Knos waits as long as Qloo asks before asking again" if code == "429" else
                  f"Qloo could not answer this part (HTTP {code})" if code else
                  "Qloo's monthly call budget is spent" if "budget" in str(err) else
                  "Qloo did not answer in time" if "did not answer" in str(err) else "Qloo could not be reached")
@@ -455,7 +455,7 @@ def _recommend(run: _Run, kind: str, signal: dict, known: set, tags: list[dict] 
 
 
 def _audience(run: _Run, signal: dict, what: str, take: int = 6) -> tuple[list[dict], int | None]:
-    body, src = run.get("/v2/insights", {"filter.type": "urn:audience", "take": take, **signal}, what)
+    body, src = run.get("/v2/insights", {"filter.type": "urn:entity:audience", "take": take, **signal}, what)
     rows = [{"name": a.get("disambiguation") or a.get("name"), "id": a.get("entity_id") or a.get("id"),
              "affinity": (a.get("query") or {}).get("affinity"), "src": src}
             for a in (((body or {}).get("results") or {}).get("entities") or [])[:take] if safe_segment(a)]
@@ -498,7 +498,7 @@ def _who_wants(run: _Run, tags: list[dict], ents: list[dict], kind: str = "urn:e
                 known.add(e["entity_id"])
                 asks.append(("tag", {"name": e.get("name"), "id": e["entity_id"]}, t))
     asks = asks[:6]
-    run.prefetch([("/v2/insights", {"filter.type": "urn:audience", "take": per, "signal.interests.entities": m["id"]}) for _, m, _ in asks])
+    run.prefetch([("/v2/insights", {"filter.type": "urn:entity:audience", "take": per, "signal.interests.entities": m["id"]}) for _, m, _ in asks])
     out, seen = [], set()
     for how, m, tag in asks:
         rows, src = _audience(run, {"signal.interests.entities": m["id"]}, f"who wants it: audiences of the product {m.get('name')}"
@@ -689,7 +689,7 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         # not on their sum; the in-order calls below are then answered from the cache, numbered as always
         run.prefetch([("/v2/insights", {"filter.type": "urn:demographics", **signal}), ("/v2/insights", q6), ("/v2/insights", q6_broad),
                       ("/v2/insights", q7), ("/v2/insights", q11), ("/v2/insights", q10),
-                      ("/v2/insights", {"filter.type": "urn:audience", "take": 20, **signal})])
+                      ("/v2/insights", {"filter.type": "urn:entity:audience", "take": 20, **signal})])
         run.prefetch(_also_love_q(sig_ents, "signal.interests.entities"))
     elif ev["tags"]:
         run.prefetch([("/v2/insights", _tag_map_q(ev["tags"][0]["id"], place))])

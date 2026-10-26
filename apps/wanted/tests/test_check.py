@@ -58,7 +58,7 @@ class FakeQloo:
             return {"results": {"heatmap": [{"location": {"latitude": 6.5, "longitude": 3.4}, "query": {"affinity": 1}}]}}
         if t == "urn:entity:place":
             return {"results": {"entities": [{"name": "Synthetic Gym", "properties": {"geocode": {"name": "Lekki"}, "price_level": 3}, "query": {"affinity": 0.9}}]}}
-        if t == "urn:audience":
+        if t == "urn:entity:audience":
             v = 0.5 if self.flat else self.affinity
             rows = [{"name": f"Segment {i} (synthetic)", "types": "urn:audience", "query": {"affinity": v}} for i in range(p.get("take", 6))]
             if self.group_aff is not None:
@@ -180,7 +180,7 @@ def test_partial_evidence_retried_without_the_refused_part():
 
 
 def test_an_essential_call_failing_means_cannot_decide_without_raw_errors():
-    r = run(fail="urn:audience")[0]
+    r = run(fail="urn:entity:audience")[0]
     d = r["decision"]
     assert d["verdict"] == "CANNOT_DECIDE" and d["reasons"][0] == check.NO_EVIDENCE and d["target_units"] is None
     assert "partial" in r["label"] and all("{" not in x for x in d["reasons"])

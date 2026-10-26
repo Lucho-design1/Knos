@@ -14,7 +14,9 @@ to fund. Nothing moves money inside the assistant. A pre-order, a funding or a p
 |---|---|---|
 | `knos_demand_check` | who wants a product idea, where to launch it and at what price tier, from Qloo's taste data, with Knos's verdict | yes |
 | `knos_ready` | whether a brief is Ready to fund: each milestone needs a measured target, a verifier and a deadline | yes |
-| `qloo_*` | Qloo's own harness workflows (describe, find tags, where popular, trends, compare, rank, recommend) | yes |
+
+Qloo's own harness tools (`qloo_*`) are not listed here: on `https://knos.onrender.com/mcp` they answer an agent key only
+(Authorization: Bearer), each call counted on that key's own budget, so Knos's Qloo key is lent to no anonymous caller.
 
 Every tool declares a title and `readOnlyHint` / `destructiveHint` annotations.
 

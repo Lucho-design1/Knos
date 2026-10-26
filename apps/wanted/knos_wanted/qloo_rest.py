@@ -40,6 +40,29 @@ HEATMAP_KEEP = 50          # a heatmap answer's points kept: the app reads at mo
 LIVE_LABEL = "LIVE Qloo data (Qloo REST API, read for this report, cached privately on the server for up to 7 days)"
 
 
+RETRY_AFTER_DEFAULT_S = 300  # Qloo's 429 without a Retry-After: nothing is sent to Qloo for five minutes
+_hold = {"until": 0.0}        # after a 429: no Qloo request at all before this time (time.time()), for the whole process
+
+
+def retry_after(value, now: float | None = None) -> float:
+    """Seconds to wait from a Retry-After header: delay-seconds or an HTTP date; RETRY_AFTER_DEFAULT_S when absent or unreadable."""
+    import email.utils
+    now = time.time() if now is None else now
+    v = str(value or "").strip()
+    if v.isdigit():
+        return float(v)
+    try:
+        when = email.utils.parsedate_to_datetime(v)
+        return max(0.0, when.timestamp() - now)
+    except (TypeError, ValueError, IndexError, OverflowError):
+        return float(RETRY_AFTER_DEFAULT_S)
+
+
+def held(now: float | None = None) -> float:
+    """Seconds left before Qloo may be asked again after its last 429 (0 when it may)."""
+    return max(0.0, _hold["until"] - (time.time() if now is None else now))
+
+
 class QlooError(RuntimeError):
     """Qloo could not answer (no key, network, HTTP error, budget). The message never contains the key."""
 
@@ -223,6 +246,8 @@ class Client:
         ok, why = self.ready()
         if not ok:
             raise NoKey(why)
+        if held():                                          # Qloo said 429: nothing is sent until its Retry-After has passed
+            raise QlooError(f"{method} {path}: HTTP 429: Qloo asked for a pause; no request sent for {held():.0f} s more")
         self._count_one()
         self.bucket.take()
         m = qloo_harness.mapped(path, params) if self.harness and method == "GET" else None
@@ -250,7 +275,12 @@ class Client:
                 body = json.loads(raw or b"{}")
                 break
             except urllib.error.HTTPError as e:
-                if e.code in (429, 500, 502, 503, 504) and attempt == 0:
+                if e.code == 429:                            # never asked again at once: wait what Qloo says (Retry-After)
+                    wait = retry_after(e.headers.get("Retry-After") if e.headers else None)
+                    _hold["until"] = max(_hold["until"], time.time() + wait)
+                    print(f"knos qloo: HTTP 429 on {method} {path}; no Qloo request for {wait:.0f} s"
+                          f" ({'Retry-After' if e.headers and e.headers.get('Retry-After') else 'no Retry-After: the default'})", flush=True)
+                if e.code in (500, 502, 503, 504) and attempt == 0:
                     time.sleep(1.0)
                     continue
                 self.live_calls += 1
@@ -258,7 +288,7 @@ class Client:
                 if e.code in (401, 403):                     # said plainly, never a silent fallback (kit docs/API_ACCESS.md)
                     msg += ": Qloo refused this server's API key (missing, wrong or expired); no Qloo data was used"
                 elif e.code == 429:
-                    msg += ": Qloo's rate limit for this key was reached (after one retry); try again in a minute"
+                    msg += f": Qloo's rate limit for this key was reached; nothing is sent to Qloo for {held():.0f} s"
                 if 400 <= e.code < 500 and e.code != 429:
                     self._store(k, None, error=msg)  # a refused question is not asked again for a day
                 raise QlooError(msg) from None

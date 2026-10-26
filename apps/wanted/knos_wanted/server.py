@@ -1075,14 +1075,9 @@ def serve(host: str | None = None, port: int | None = None) -> None:
     valley.start_sweeper()                 # missed milestone deadlines: refund + reopen, every KNOS_VALLEY_SWEEP_S seconds
     from . import qloo_harness
     threading.Thread(target=qloo_harness.harness().warm, daemon=True, name="qloo-harness-warm").start()
-
-    def fill():                                          # the sample chips' last real cards, in memory: one probe first
-        from . import recorded
-        said = recorded.fill_at_boot(state.rest, lambda idea: check.demand_check(idea, client=state.rest),
-                                     lambda ref: agent.start(state, ref=ref))
-        print(f"knos recorded: {said}", flush=True)
-    threading.Thread(target=fill, daemon=True, name="knos-recorded").start()   # Qloo's harness, started before the first check
-    front.start(state)                     # the seeded research products (a wiped disk never shows an empty app)
+    # no sample idea is run at boot: each chip's recorded card is the first real answer a reader's own press gets
+    # (recorded.keep), so a restart asks Qloo nothing
+    # the seeded research products cross on the first request for the board (front.board), never at boot
     httpd = ThreadingHTTPServer((host, port), make_handler(state))
     rest_ok, rest_why = state.rest.ready()
     print(f"Knos demand check on http://{host}:{port}  Qloo REST: {'on' if rest_ok else 'off (' + rest_why + ')'}  "

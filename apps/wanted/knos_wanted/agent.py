@@ -433,6 +433,18 @@ def _caller(args: dict) -> dict | None:
     return who or (auth.who("Bearer " + str(args.get("session"))) if args.get("session") else None)
 
 
+def _agent() -> dict | None:
+    """The agent key the HTTP header carries (Bearer), or None: no header, a person's session, or a dead key. The qloo_*
+    tools answer only such a caller (Qloo's terms: no Qloo credential behind a public MCP)."""
+    from . import agentkeys, auth, outside
+    headers = getattr(outside.CTX, "headers", None)
+    try:
+        who = agentkeys.principal(headers.get("Authorization"), count=False) if headers is not None else None
+    except auth.AuthError:
+        return None
+    return who if who and who.get("kind") == "agent" else None
+
+
 def _product_tools() -> set:
     """The names product_routes.MCP_TOOLS lists, each answered by product_routes.mcp_call."""
     from .product_routes import MCP_TOOLS
@@ -447,7 +459,7 @@ READ_ONLY = {"knos_research_card", "knos_demand_check", "knos_crossings", "knos_
              "knos_memory_recall", "knos_templates", "knos_projects", "knos_openapi", "knos_ready", "knos_usage",
              "knos_milestone_prompt"}
 MONEY = {"knos_preorder"}
-STORE = {"knos_ready", "knos_demand_check"}           # with every qloo_* tool
+STORE = {"knos_ready", "knos_demand_check"}           # no qloo_* tool: those answer an agent key only
 STORE_DAILY_CAP = 2000                                 # tool calls a day through /mcp/store, all callers together
 _store_day = {"day": "", "n": 0}
 
@@ -461,7 +473,7 @@ def annotate(tool: dict) -> dict:
 
 
 def in_store(name: str) -> bool:
-    return name in STORE or name.startswith("qloo_")
+    return name in STORE
 
 
 def store_spend() -> bool:
@@ -511,6 +523,8 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
     if method == "tools/list":
         extra = []
         try:
+            if store or not _agent():                    # Qloo's tools are listed to an agent key only
+                raise LookupError
             from .qloo_mcp import WORKFLOWS
             mode = getattr(state.q, "mode", "mock")
             extra = [{"name": n, "title": n.replace("_", " "),
@@ -529,6 +543,16 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
             from .qloo_mcp import WORKFLOWS, QlooUnavailable
             if name not in ("qloo_capabilities",) + WORKFLOWS:
                 return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": f"unknown tool {name}"}}
+            agent_who = _agent()
+            if not agent_who:
+                from . import agentkeys, tasks
+                return ok({"isError": True, "content": [{"type": "text", "text": f"{name} answers an agent key only (Authorization: Bearer); "
+                           + agentkeys.needs(name, tasks.public_base())}]})
+            from . import agentkeys, valley
+            try:
+                agentkeys.take_qloo(agent_who["agent_key"])
+            except valley.Refused as why:
+                return ok({"isError": True, "content": [{"type": "text", "text": str(why)[:300]}]})
             import json as _json
             if name == "qloo_capabilities":            # not a workflow: what the qloo server said at its handshake
                 got = {"mode": getattr(state.q, "mode", "mock"), "server": getattr(state.q, "server", None),

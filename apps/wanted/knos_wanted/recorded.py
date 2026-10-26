@@ -1,6 +1,7 @@
 """When Qloo is not answering, the card says so. A failed Qloo call (HTTP 429, a 5xx, or no answer in time) marks the
 report `qloo_down` with its code, and the card's first line says it; for the 8 sample chips the last real full card
-is shown instead, marked `stale` with the time it was made. Those last real cards live in this process's memory only:
+is shown instead, marked `stale` with the time it was made. Each chip's card is its first real answer to a reader's
+press (nothing is run at boot) and is kept with no expiry. Those last real cards live in this process's memory only:
 never in the repository, the Pages build, a file, or any store copied to devnet."""
 from __future__ import annotations
 
@@ -70,22 +71,3 @@ def honest(text: str, rep: dict) -> dict:
                 "stale": {"code": code, "from": rec.get("made")}}
     return {**rep, "qloo_down": {"code": code}}
 
-
-def fill_at_boot(client, run_check, start_crossing=None) -> str:
-    """One probe of Qloo; when it answers, one run of each chip (in this thread: call it from a background thread)."""
-    try:
-        client.get("/search", {"query": "coffee", "types": "urn:entity:brand", "take": 1})
-    except Exception as why:  # noqa: BLE001
-        return f"probe: Qloo not answering ({type(why).__name__}); no chip run"
-    n = 0
-    for chip in CHIPS:
-        try:
-            if chip.startswith("10."):
-                if start_crossing:
-                    start_crossing(chip)
-                continue
-            keep(chip, run_check(chip))
-            n += 1
-        except Exception:  # noqa: BLE001
-            continue
-    return f"probe: Qloo answering; {n} chip check(s) run"

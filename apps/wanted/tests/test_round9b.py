@@ -123,9 +123,14 @@ def test_sibyl_is_the_shared_memory_with_tiers_and_conflict_refusal(monkeypatch)
     assert any("Synthetic landmark" in json.dumps(r, default=str) for r in got["rows"]), got["said"]
 
 
-def test_memory_search_over_http_and_the_harness_proxy(app):
+def test_memory_search_over_http_and_the_harness_proxy(app, monkeypatch):
     base, _ = app
     assert call(base, "/api/memory/search")[0] == 400
+    st, lst = call(base, "/mcp", {"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+    assert not [t for t in lst["result"]["tools"] if t["name"].startswith("qloo_")]          # no agent key: no Qloo tool
+    from knos_wanted import agent, agentkeys
+    monkeypatch.setattr(agent, "_agent", lambda: {"kind": "agent", "agent_key": "k1"})       # an agent key's caller
+    monkeypatch.setattr(agentkeys, "take_qloo", lambda kid: None)
     st, lst = call(base, "/mcp", {"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
     qloo_tools = [t for t in lst["result"]["tools"] if t["name"].startswith("qloo_")]
     assert len(qloo_tools) == 10 and all("MOCK" in t["description"] for t in qloo_tools)   # labelled: this state is mock

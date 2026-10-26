@@ -173,6 +173,8 @@ def product(state, rep: dict, slug: str, project_id: str | None) -> dict:
 def board(state, n: int = 6) -> dict:
     """The products open for backing now: the seeds first (in their order), then every other OPEN crossing, newest first."""
     from . import agent, valley
+    if not seeded():
+        start(state)                      # the seeds cross when a reader first asks for the board, never at boot
     out, seen = [], set()
     by_report = {p.get("report"): p["id"] for p in valley._all("projects") if p.get("report")}
     def listed(rep) -> bool:             # OPEN on LIVE Qloo evidence: the only decisions pre-orders open on
