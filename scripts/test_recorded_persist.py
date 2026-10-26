@@ -43,7 +43,9 @@ def secret_strings(cards: dict) -> list[str]:
         for p in rep.get("persona") or []:
             if len(str(p.get("name") or "")) >= 12:
                 out.add(str(p["name"]))
-    return sorted(out)
+    # a line Knos's own code writes into a card (check.py: "answer received" when a call answered) is not Qloo's
+    own = " ".join(f.read_text(encoding="utf-8") for f in (ROOT / "apps" / "wanted" / "knos_wanted").glob("*.py"))
+    return sorted(m for m in out if m not in own)
 
 
 def main(file: str, site: str, sha: str) -> int:
