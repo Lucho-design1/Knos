@@ -557,7 +557,7 @@ ${src(h, price.src)}</section>
     if (paid) get("/api/agent/payout/latest").then((x) => {
       if (!x || !x.found || !(x.units > 0)) return;
       const day = String(x.at || "").slice(0, 10);
-      paid.innerHTML = `Agent paid <b>${esc(x.units)} test units</b> for verified work${day ? `, ${esc(day)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">the transaction</a>`;
+      paid.innerHTML = `Agent paid <b>${esc(x.units)} test units</b> for verified work${day ? `, ${esc(day)}` : ""}${x.released ? ` · ${esc(x.released)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">the transaction</a>`;
       paid.hidden = false;
       paid.dataset.live = "1";
     }).catch(() => {});
@@ -617,7 +617,7 @@ ${src(h, price.src)}</section>
     <li><h3>Money held</h3><p>Pre-orders wait in a program until the target is met.</p></li>
     <li id="paid-on-proof"><h3>Paid on proof</h3><p data-keep>GitHub signs which checks ran, and a Solana program checks that signature itself before it pays.</p>
       <p class="k-paid" id="k-oidc" data-not-prose>Latest signature check on devnet, 2026-10-25 · <a href="https://explorer.solana.com/tx/pCpGcxBNpazogpF1qio85u4wC7ygeNGaJ6TcXDgat84jEPcJQz9bne4giqHXM4Ym8YSKjU7AQQxtb21eYeG8qq8?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
-      <p class="k-paid" id="k-paid" data-not-prose>Agent paid <b>5 test units</b> for verified work, 2026-10-24 · <a href="https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
+      <p class="k-paid" id="k-paid" data-not-prose>Agent paid <b>5 test units</b> for verified work, 2026-10-24 · Released by the referee's verdict · <a href="https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
       <details class="k-more" id="agent-key" data-not-prose><summary>Agents with a key</summary><p class="fine">Put this in .mcp.json and the key in KNOS_AGENT_KEY:</p><pre><code>{"mcpServers":{"knos":{"type":"http","url":"https://knos.onrender.com/mcp","headers":{"Authorization":"Bearer ${KNOS_AGENT_KEY}"}}}}</code></pre></details>
       <p class="fine"><a href="#check-a-pull-request" id="steps-check">Check a pull request</a> · <a href="pricing.html">Pricing</a> · <a href="how-we-test.html">How we test Knos</a></p></li>
   </ol>

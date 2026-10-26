@@ -218,6 +218,21 @@ def memory_now(st) -> dict:
 
 
 _payout_cache: dict = {"at": 0.0, "v": None}
+REFEREE = "Released by the referee's verdict"
+GITHUB = "Released by GitHub's signed check, verified on Solana"
+OIDC_V2 = "FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W"
+
+
+def released_by(tx: dict | None) -> str | None:
+    """What released a payout, read from its own transaction: the referee's signed verdict (knos_pay's `knos3:verdict`
+    log) or GitHub's signed check (knos-oidc verifying the token in the same transaction). None when neither."""
+    meta = (tx or {}).get("meta") or {}
+    logs = meta.get("logMessages") or []
+    if any("knos3:verdict" in line for line in logs):
+        return REFEREE
+    if any(line.startswith(f"Program {OIDC_V2} invoke") for line in logs):
+        return GITHUB
+    return None
 
 
 def latest_agent_payout() -> dict:
@@ -254,7 +269,7 @@ def latest_agent_payout() -> dict:
                 return sum(float((b.get("uiTokenAmount") or {}).get("uiAmount") or 0) for b in rows or [] if b.get("owner") == wallet)
             units = held(meta.get("postTokenBalances")) - held(meta.get("preTokenBalances"))
             out = {"found": bool(tx) and meta.get("err") is None and units > 0, "signature": sig, "units": round(units, 6), "at": at, "project": title,
-                   "slot": (tx or {}).get("slot"), "explorer": escrow.explorer(sig)}
+                   "slot": (tx or {}).get("slot"), "explorer": escrow.explorer(sig), "released": released_by(tx)}
             if out["found"] and (not kept or kept.get("signature") != sig):
                 valley._save("pages", "latest-agent-payout", {"at": at, "signature": sig, "wallet": wallet, "project": title})
         except Exception as why:  # noqa: BLE001 - the chain did not answer: said, not guessed

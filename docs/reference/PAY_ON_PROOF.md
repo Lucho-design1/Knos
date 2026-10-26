@@ -196,8 +196,10 @@ Clients: `src/knos/proof/issuers.py`, `src/knos/platform/verdict.py`.
 ## 8. Devnet
 
 The sBPF v3 deploy build (executable hash `9ae13fb9ae35262a959a903fae7b742e07a425ab97fc05fcf38b7db1bd1f0c62`, 413,400 bytes) runs at a TEST
-program id the build agent owns (the chain records when), `FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4` (deploy
+program id the build agent deployed, `FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4` (deploy
 `3vuk1dtYquZf4jinzXcu7h36MAQs2n4X8k5NKec9U1q14oqSwXUJUFcjCrSNLoG8LXbKgRk3C3F9qayLiiMCSM6w`; bytes read back equal to the build).
+Its upgrade authority moved from that agent's key to the Squads vault `CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2` on 26 Oct 2026
+([the transaction](https://explorer.solana.com/tx/5j6WHnmt6qRD3KwafVYDQJLqzEPTZeZsyUimQwk6ccoaTUPJxCGWHHdvM1eT9JN7PgTtQZEe8ZPkmrjXcP2ZXYL8?cluster=devnet)): an upgrade now waits out the vault's 8-day time lock.
 
 Labelled internal dogfooding: a test mint of the agent's own (6 decimals, no value), synthetic evidence, three fresh referee keys, payee named by
 ORCID's example iD with an address.

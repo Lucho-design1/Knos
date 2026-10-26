@@ -1,0 +1,102 @@
+{
+ "read_at": "2026-10-26",
+ "rpc": "https://api.devnet.solana.com",
+ "vault": "CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2",
+ "programs": [
+  {
+   "address": "FaMHCjzyUexFncZrmNyFQNz3gBdsLbhTLke7QBFykJY4",
+   "name": "knos-pay 0.3.34: the app's live program (0.3.34)",
+   "used_for": "every pre-order, milestone payout and agent payout of the app",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "8iZ3b2hLKr6149LRCxaD9GjuAmKuFL4bAkMMfvJkHiZt",
+   "authority": "CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2"
+  },
+  {
+   "address": "FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W",
+   "name": "knos-oidc 2.2: the verifier of GitHub's signed checks",
+   "used_for": "pay on merge, the site's signature line",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "9tqAQLKPvthKcdj1Tk9bPDPGNWesPK39bS6q4atoRiLw",
+   "authority": "CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2"
+  },
+  {
+   "address": "5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k",
+   "name": "knos-pay 2.2: the payment program",
+   "used_for": "pay on merge, the site's work orders",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "9GaiLgcz6y1dqKRo3KygEhiRavi9juLLHENyHLARPcFp",
+   "authority": "CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2"
+  },
+  {
+   "address": "FUMKkcE95x2kZUj1zZTCbgcYBmJ3WXPHL8pyA8J6anX",
+   "name": "knos-meter: the count",
+   "used_for": "the meter on the site",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "Fx1QSiecoV4ckUmDeC5Dn8k2fHqTzWg3EawS2275Sogt",
+   "authority": "CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2"
+  },
+  {
+   "address": "FQPX9i5kQxLYKZyyPgM2fVK9am3w1LSk1Cuoer1sSY85",
+   "name": "knos-passkey: a wallet from a passkey",
+   "used_for": "passkey wallets in the app",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "DHcvEL7xynzvuXS81rGBfQu8FzW8NYw76ZnuBQZEJ7c7",
+   "authority": "CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2"
+  },
+  {
+   "address": "AFQFtodihz5jAHpVBUk87AkH8FJsQdmHt8Z5NKLWRj1T",
+   "name": "knos-hook: the transfer hook",
+   "used_for": "the app's Token-2022 project credits",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "uLvZZED2u4DFjzhmUqhb3u8YNzQWp6d5gJbafE1Kcv7",
+   "authority": "CKCrTBN542pVhizxuSPVg8tvdnPooNxt9B7o97VuTjz2"
+  },
+  {
+   "address": "vpWym9azbPU5f2PH2a6n8c4RfmsyUeW2dMuWr1DSHcE",
+   "name": "knos-oidc, first deployment",
+   "used_for": "the site's history of the first deployment",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "A7kaehSyopBXcjJY1Sbb5jzGwF1uUiUYLGtyjLwbNQoJ",
+   "authority": null
+  },
+  {
+   "address": "9UzPFbh2A4e4sEPgngKG523FfYLnQ3qPfFVfFTTAdfDi",
+   "name": "knos-pay, first deployment",
+   "used_for": "the site's history of the first deployment",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "AAMDwNaak25Hf49ZNNV2F4UBrCtQZGf7kgZiWdCeB8YS",
+   "authority": null
+  },
+  {
+   "address": "recr1L3PCGKLbckBqMNcJhuuyU1zgo8nBhfLVsJNwr5",
+   "name": "SPL Record (Solana)",
+   "used_for": "the app's chain-state records",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "2sCyyjQHA5Pw3xjhji51TLix8y58jG1b4CQqUW3fbhFf",
+   "authority": "7VaWK6qq7WLBiMQ8TTAGwrFJfAekAwra4UPKr4S5UNjB"
+  },
+  {
+   "address": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+   "name": "SPL Memo (Solana)",
+   "used_for": "the app's fee estimate and its notes on chain",
+   "loader": "BPFLoader2111111111111111111111111111111111",
+   "authority": null
+  },
+  {
+   "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+   "name": "Token-2022 (Solana)",
+   "used_for": "the app's project credits",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "DoU57AYuPFu2QU514RktNPG22QhApEjnKxnBcu4BHDTY",
+   "authority": "3URRPr96EV2wuNRgQKwQpuZitHHsVyDUen1eRSvEun9G"
+  },
+  {
+   "address": "SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf",
+   "name": "Squads multisig",
+   "used_for": "the upgrade and guardian vaults",
+   "loader": "BPFLoaderUpgradeab1e11111111111111111111111",
+   "programdata": "Fy3YMJCvwbAXUgUM5b91ucUVA3jYzwWLHL3MwBqKsh8n",
+   "authority": "HM5y4mz3Bt9JY9mr1hkyhnvqxSH4H2u2451j7Hc2dtvK"
+  }
+ ]
+}

@@ -283,7 +283,9 @@ def test_the_one_sentence_leads_the_readme_and_the_site_and_the_readmes_first_sc
     # 190: the eight questions people search (tests/test_seo.py) add 34 lines below the first screen, which holds its
     # sixty-four words above; the readability tests hold the whole page (tests/test_readme_plain.py)
     # blank lines between blocks are free: the bound counts the lines a reader reads
-    assert len([line for line in readme.splitlines() if line.strip()]) < 145 and "first milestone" not in readme
+    # the table of every program and its upgrade authority is written from devnet (scripts/program_authorities.py): not counted
+    read = readme.split("<!-- authorities:start -->")[0] + readme.split("<!-- authorities:end -->")[1]
+    assert len([line for line in read.splitlines() if line.strip()]) < 145 and "first milestone" not in readme
     assert "](docs/README.md)" in parts["Read more"] and "](docs/NUMBERS.md)" in readme and "](docs/reference/CAPABILITIES.md)" in readme
     # what the front page no longer lists is on the map of the documents
     docs_map = (ROOT / "docs" / "reference" / "README.md").read_text(encoding="utf-8")
