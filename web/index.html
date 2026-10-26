@@ -559,10 +559,11 @@ ${src(h, price.src)}</section>
       paid.hidden = false;
       paid.dataset.live = "1";
     }).catch(() => {});
+    // outside use only, this week against the last: a line only for real growth from at least 10, else nothing
     if (use) get("/api/usage").then((u) => {
-      if (!u || u.payouts == null) return;
-      use.innerHTML = `<b data-n="checks">${esc(u.checks)}</b> demand checks · <b data-n="briefs">${esc(u.briefs)}</b> Ready briefs since ${esc(u.since)} · <b data-n="payouts">${esc(u.payouts)}</b> payment program transactions on devnet`;
-      use.hidden = false;
+      const line = u && u.trend && u.trend.line;
+      use.textContent = line || "";
+      use.hidden = !line;
       use.dataset.live = "1";
     }).catch(() => {});
   });

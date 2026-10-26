@@ -35,10 +35,10 @@ def paid_html(x: dict) -> str:
             f'<a href="{html.escape(x["explorer"])}" target="_blank" rel="noopener">the transaction</a>')
 
 
-def usage_html(u: dict) -> str:
-    e = lambda v: html.escape(str(v))  # noqa: E731
-    return (f'<b data-n="checks">{e(u["checks"])}</b> demand checks · <b data-n="briefs">{e(u["briefs"])}</b> Ready briefs since {e(u["since"])} · '
-            f'<b data-n="payouts">{e(u["payouts"])}</b> payment program transactions on devnet')
+def usage_html(u: dict) -> str | None:
+    """The trend line of outside use, when the app gives one (real growth from at least 10); else none."""
+    line = (u.get("trend") or {}).get("line")
+    return html.escape(line) if line else None
 
 
 def oidc_latest() -> tuple[str, str] | None:
@@ -76,10 +76,13 @@ def main(path: str) -> int:
         s, n = re.subn(r'(<p class="k-paid" id="k-oidc" data-not-prose>).*?(</p>)', lambda m: m[1] + oidc_html(*sig) + m[2], s, count=1, flags=re.S)
         print(f"live_snapshot: knos_oidc {sig[0][:8]}... ({n} line)")
     u = get("/api/usage")
-    if u and isinstance(u.get("payouts"), int):
+    line = usage_html(u) if u else None
+    if line:
         s, n = re.subn(r'<p class="fine" id="k-usage" data-not-prose hidden></p>',
-                       lambda _: f'<p class="fine" id="k-usage" data-not-prose>{usage_html(u)}</p>', s, count=1)
-        print(f"live_snapshot: usage {u['checks']} checks, {u['briefs']} briefs, {u['payouts']} transactions ({n} line)")
+                       lambda _: f'<p class="fine" id="k-usage" data-not-prose>{line}</p>', s, count=1)
+        print(f"live_snapshot: usage trend line ({n} line)")
+    elif u:
+        print(f"live_snapshot: no usage line ({(u.get('trend') or {}).get('this_week')} outside checks this week)")
     p.write_text(s, encoding="utf-8")
     return 0
 
