@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knos. The demo, in four steps</title>
+<meta name="description" content="Four live steps: a demand check on Qloo, a hashed Ready brief, money held on Solana devnet, and its release on proof.">
+<link rel="canonical" href="https://drexthealpha.github.io/Knos/demo/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#07080c">
+<meta name="theme-color" content="#f4f4f0" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="../brand/tokens.css">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="icon" href="../favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="../brand/apple-touch-icon.png">
+<!-- THE DEMO: four steps, each a live object (a card the app draws, a page of the crossing, two devnet transactions).
+     Steps 2 to 4 are one crossing: scripts/crossing_page.py wrote its page, web/crossing/<id>/. -->
+<style>body{margin:0;background:var(--paper);color:var(--ink);font:400 var(--s0)/1.5 var(--text)}
+main{max-width:1080px;margin:0 auto;padding:12px 16px 40px}
+.top{display:flex;gap:16px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+h1{font:600 var(--s3)/1.15 var(--head);margin:8px 0 16px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));counter-reset:s}
+.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.steps li::before{content:counter(s);display:inline-block;font:600 var(--s1)/1 var(--head);color:var(--accent);margin-bottom:6px}
+.steps h2{font:600 var(--s1)/1.25 var(--head);margin:0 0 6px}.steps p{margin:0 0 4px}
+.mono{font-family:var(--mono);overflow-wrap:anywhere;font-size:var(--s-1)}.fine{color:var(--muted);font-size:var(--s-1)}
+a{color:var(--accent)}</style>
+</head>
+<body>
+<main>
+<div class="top"><p class="fine"><a href="../">Knos</a></p><p class="fine">Devnet, test money.</p></div>
+<h1>From an idea to a payout</h1>
+<ol class="steps">
+  <li id="step-demand"><h2>Check demand</h2><p><a href="../?q=a%20probiotic%20kombucha%20brand">A kombucha brand</a>: who wants it and where, with each Qloo call listed.</p></li>
+  <li id="step-brief"><h2>Ready brief</h2><p><a href="../crossing/7b4ed16b8c2903dc/">10 pre-orders from Boulder, CO</a></p><p class="mono">d1aac7d477e69d13…</p></li>
+  <li id="step-held"><h2>Money held</h2><p><a href="https://explorer.solana.com/tx/2Dx6uVPQ8WhfzQTyVgdmNNhTyUsAVohEwJZbZ7dbSL2GZhmbwwxcxctbypt8SVCHXXGyjkUieVWsMbva9Y2txThj?cluster=devnet">A pre-order held on devnet</a>, one of 10.</p></li>
+  <li id="step-paid"><h2>Paid on proof</h2><p><a href="https://explorer.solana.com/tx/zCxgsXmAYzDJTwGtg9hvEWZEikRzT15LUbGht7VA8vnpSKt3jLyiWycS8UzRT8k29UmBgvHnmWckjCtqpdsKW4F?cluster=devnet">Released by the referee's verdict</a></p><p><a href="../crossing/7b4ed16b8c2903dc/">The whole crossing</a></p></li>
+</ol>
+</main>
+</body>
+</html>
