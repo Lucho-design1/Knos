@@ -5,7 +5,7 @@ that history makes required.
     observe(...)  later evidence about a commit, e.g. CI failed at 54ce98ad (entity `proof_outcome`)
     lint()        claims the evidence contradicts: "shipped" at a commit whose CI failed
     learn()       each contradiction becomes a required check (entity `proof_rule`): from then on, a claim of that kind
-                  runs that check whatever the message says. Sibyl's own MemoryClient.learn() runs too when the
+                  runs that check whatever the message says. (Sibyl's own self-learning, a paid feature, is not called;
                   account has Sibyl Pro (playbooks across the journal); the rules here need no tier. Each flagged PR
                   (a repo-rule violation) becomes a `repo_rule`, required as `rule:<id>` on every claim after.
     repo_rules()  the repo's own rules: CONTRIBUTING.md parsed into machine-checkable rules (stored in Sibyl the first
@@ -405,13 +405,9 @@ def learn(store, flagged: list["RuleViolation"] | None = None) -> list[dict]:
             store.put("proof_rule", _id(kind, x.failed), {"when": kind, "require": x.failed,
                                                           "because": f"{x.sha[:8]} was claimed ({kind}) and its "
                                                                      f"{x.failed} failed"})
-    try:   # Sibyl Pro's own self-learning over the journal, when the account has it; never required
-        store.client.learn()
-    except Exception:  # noqa: BLE001 - free tier, or a NullStore
-        pass
-    finally:
-        if hasattr(store, "_release"):
-            store._release()
+    # Sibyl's own self-learning is a paid feature and is not called: the rules above are Knos's, written to Sibyl
+    if hasattr(store, "_release"):
+        store._release()
     return rules(store)
 
 

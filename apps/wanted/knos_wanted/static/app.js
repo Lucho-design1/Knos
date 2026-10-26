@@ -250,12 +250,14 @@ async function loadProduct(h) {
       ((r.preorders || []).map((o) => `<li>${esc(o.units)} · <b>${esc(o.status)}</b> · <a href="${X(o.order, "address")}" target="_blank" rel="noopener">${short(o.order)}</a></li>`).join("") || `<li class="muted">${t("empty")}</li>`);
   } catch (e) { err(e); }
 }
+// what Sibyl keeps of the receipt's record line: its tier and the verdict Sibyl's search gives for it (valley.remembered)
+const sibylLine = (s) => (s && s.tier ? `<p class="small" data-sibyl>Remembered by Sibyl: ${esc(s.tier)}, verdict ${esc(s.verdict || "none")}</p>` : "");
 function receipt(p) {
   const sigs = p.signatures || {};
   $("receipt").innerHTML = `<div class="decision open"><h3>${t("receipt_t")}</h3><p class="testmoney">${t("test_money")}</p><p>${esc(p.units)} · <a href="${X(p.commitment, "address")}" target="_blank" rel="noopener">${short(p.commitment)}</a></p>` +
     Object.entries(sigs).map(([k, s]) => `<p class="small">${esc(k.replace(/_/g, " "))}: <a href="${X(s)}" target="_blank" rel="noopener">${short(s)}</a>${p.finality && p.finality[k] ? ` <span class="muted">· final in ${p.finality[k].final_ms} ms (${esc(p.finality[k].commitment)})</span>` : ""}</p>`).join("") +
     (p.verified && p.verified.chain_pin ? `<p class="small">${t("evidence_pin")}: <span class="mono">${esc(p.verified.chain_pin.slice(0, 16))}…</span><br>${t("page_sha")}: <span class="mono">${esc((p.verified.sha256 || "").slice(0, 16))}…</span></p>` : "") +
-    (p.verifier ? `<p class="small muted">${esc(p.verifier)}</p>` : "") +
+    (p.verifier ? `<p class="small muted">${esc(p.verifier)}</p>` : "") + sibylLine(p.sibyl) +
     `<p class="small muted">${t("claim_id")}: <span class="mono">${esc(p.claim_id)}</span></p></div>` +
     `<p class="small" id="receipt-final" aria-live="polite"></p>`;
   const lock = sigs.lock || sigs.preorder || sigs.fund || Object.values(sigs)[0];
@@ -297,7 +299,7 @@ function inCard(b, fn) {
 const tx = (sig) => (sig ? ` · <a href="${X(sig)}" target="_blank" rel="noopener">tx ${short(sig)} ↗</a>` : "");
 async function fundMilestone(p, units) {
   const got = await KnosPasskey.approve(await api("/api/project/fund", { passkey: true, project: p.project, milestone: p.first_milestone, units, kind: "funder" }), api);
-  return `✓ ${esc(got.units)} ${t("escrow_l")} · <a href="${esc(got.explorer)}" target="_blank" rel="noopener">money held ${short(got.order)} ↗</a>${tx((got.signatures || {}).lock)} · <a href="#projects=${esc(p.project)}">${t("open_project")}</a>`;
+  return `${sibylLine(got.sibyl)}✓ ${esc(got.units)} ${t("escrow_l")} · <a href="${esc(got.explorer)}" target="_blank" rel="noopener">money held ${short(got.order)} ↗</a>${tx((got.signatures || {}).lock)} · <a href="#projects=${esc(p.project)}">${t("open_project")}</a>`;
 }
 async function loadFund(focus) {
   try {

@@ -120,8 +120,24 @@ def _journal(kind: str, data: dict, tenant: dict | None = None) -> dict:
     if tenant and tenant.get("user"):
         claims.append(company.claim_id("user:" + tenant["user"]))
     body = {**data, "cluster": "devnet", "money": "devnet test units", **({"tenant": {"project": tenant["project"]}} if tenant else {})}
-    return company._safe(lambda: {"recorded": True, "seq": [rec.append(kind, body, claim=c, domain=company.DOMAIN, root=company.root())["seq"]
-                                                            for c in claims][0]})
+
+    def write() -> dict:
+        lines = [rec.append(kind, body, claim=c, domain=company.DOMAIN, root=company.root()) for c in claims]
+        return {"recorded": True, "seq": lines[0]["seq"], "sibyl": remembered(lines[0])}
+    return company._safe(write)
+
+
+def remembered(entry: dict) -> dict:
+    """What Sibyl keeps of a line just written: its tier, and the verdict code Sibyl's own search gives for the line's
+    hash (sibyl_memory_client verdicts: why it returned what it did), as the receipt's "Remembered by Sibyl" line."""
+    code = None
+    try:
+        from knos.record import search as rsearch
+        got = rsearch.search(entry["hash"][:16], root=company.root(), limit=1)
+        code = (got.get("verdict") or {}).get("code")
+    except Exception:  # noqa: BLE001 - a search Sibyl cannot answer is said as none, never guessed
+        code = None
+    return {"tier": entry.get("tier"), "verdict": code, "hash": entry.get("hash")}
 
 
 # ---- templates -------------------------------------------------------------------------------------------------------
@@ -291,7 +307,7 @@ def resolve(word: str, reading: str, target: str, user: dict | None = None) -> d
         rows = [x for x in got.get(word, []) if x[1] != target]
         got[word] = [[reading, target]] + rows[:4]
         (_dir("patterns") / "resolved.json").write_text(json.dumps(got, indent=1), encoding="utf-8")
-    _journal("reference", {"what": "ambiguity pattern resolved", "word": word, "reading": reading, "target": target})
+    _journal("verdict", {"what": "ambiguity pattern resolved", "word": word, "reading": reading, "target": target})
     return {"word": word, "patterns": got[word]}
 
 
@@ -490,7 +506,7 @@ def archive(pid: str) -> dict:
         return {"archived": False}
     p["archived"] = _now()
     _save("projects", pid, p)
-    return _journal("archive", {"project": pid, "what": "project archived", "status": p.get("status"),
+    return _journal("verdict", {"project": pid, "what": "project archived", "status": p.get("status"),
                                 "versions": [v["criteria_hash"] for v in p.get("versions") or []]}, tenant_of(p))
 
 
@@ -621,7 +637,7 @@ def _safe_order(oid: str) -> dict | None:
 def _order_public(o: dict) -> dict:
     return {k: o.get(k) for k in ("order", "project", "milestone", "units", "unit_price", "kind", "funder", "grant", "pool", "referral",
                                   "status", "signatures", "made", "deadline_s", "claim_id", "criteria_hash", "kill_fee", "receipt", "finality",
-                                  "private")} | ({"units": None} if o.get("private") else {}) | {
+                                  "private", "sibyl")} | ({"units": None} if o.get("private") else {}) | {
         "explorer": escrow.explorer(o["order"], "address"), "trust": _trust(o)}
 
 
@@ -817,9 +833,14 @@ def confirm(order: str, signature: str | None = None, led=None) -> dict:
             _save("projects", p["id"], p)
         if not o.get("private"):                # a private order's amount goes on chain only encrypted (private_pledge)
             _receipt_async("pledge", order, o.get("claim_id") or "", o["units"], o["project"])
-        _journal("funding", {"project": o["project"], "milestone": o["milestone"], "order": order, "kind": o["kind"],
-                             "amount_units": o["units"], "signature": o["signatures"].get("lock"), "grant": o.get("grant"),
-                             "criteria_hash": o.get("criteria_hash")}, tenant_of(p))
+        j = _journal("funding", {"project": o["project"], "milestone": o["milestone"], "order": order, "kind": o["kind"],
+                                 "amount_units": o["units"], "signature": o["signatures"].get("lock"), "grant": o.get("grant"),
+                                 "criteria_hash": o.get("criteria_hash")}, tenant_of(p))
+        if j.get("sibyl"):                    # kept on the order (read again: the receipt's thread may have saved it)
+            with _lock:
+                o = _safe_order(order) or o
+                o["sibyl"] = j["sibyl"]
+                _save("orders", order, o)
     return _order_public(o)
 
 
@@ -1246,11 +1267,11 @@ def _settle(pid: str, key: str, attempt: str, paid: list[dict], led, review) -> 
     if aa.get("agent_key") and aa["status"] == "paid":
         from . import agentkeys
         agentkeys.spent(aa["agent_key"], _paid_units(pid, key, paid, collected))
-    _journal("payout", {"project": pid, "milestone": key, "attempt": attempt, "orders": paid, "amc": collected,
-                        "evidence_sha256": [a["result"]["sha256"], a["check"]["sha256"]]}, tenant_of(p))
+    j = _journal("payout", {"project": pid, "milestone": key, "attempt": attempt, "orders": paid, "amc": collected,
+                            "evidence_sha256": [a["result"]["sha256"], a["check"]["sha256"]]}, tenant_of(p))
     att = _attest(p, key, aa, paid, led) if m["status"] == "released" else []
     archive(pid)
-    return {"released": paid, "amc_collected": collected, "milestone": m["status"], "attestations": att,
+    return {"released": paid, "amc_collected": collected, "milestone": m["status"], "attestations": att, "sibyl": j.get("sibyl"),
             "review_sha256": hashlib.sha256(review.read_bytes()).hexdigest() if review is not None else None}
 
 
@@ -1339,8 +1360,9 @@ def sweep(led=None, refund_fn=None) -> dict:
         done.append({"order": o["order"], "status": o["status"], "signature": o["signatures"].get("refund"), "reopened": reopened})
         if o["status"] == "refunded":
             _receipt_async("refund", o["order"])
-        _journal("refund", {"project": o["project"], "milestone": o["milestone"], "order": o["order"],
-                            "signature": o["signatures"].get("refund"), "why": "deadline passed; milestone reopened"})
+        j = _journal("refund", {"project": o["project"], "milestone": o["milestone"], "order": o["order"],
+                                "signature": o["signatures"].get("refund"), "why": "deadline passed; milestone reopened"})
+        done[-1]["sibyl"] = j.get("sibyl")
     return {"swept": done, "at": _now()}
 
 
