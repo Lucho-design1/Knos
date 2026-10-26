@@ -275,13 +275,13 @@ def latest_agent_payout() -> dict:
                 att = agents.get(what.rsplit(" ", 1)[-1])
                 sigs = [s for o in h.get("orders") or [] for s in o.get("signatures") or []]
                 if att and sigs and (best is None or h.get("at", "") > best[0]):
-                    best = (h.get("at", ""), sigs[0], att.get("wallet"), p.get("title") or p.get("id"))
+                    best = (h.get("at", ""), sigs[0], att.get("wallet"), p.get("title") or p.get("id"), (att.get("result") or {}).get("url"))
     out: dict = {"found": False}
     kept = valley._safe_load("pages", "latest-agent-payout")      # the last one read back confirmed: a redeploy keeps it
     if kept and (best is None or kept.get("at", "") > best[0]):
-        best = (kept.get("at", ""), kept.get("signature"), kept.get("wallet"), kept.get("project"))
+        best = (kept.get("at", ""), kept.get("signature"), kept.get("wallet"), kept.get("project"), kept.get("result"))
     if best:
-        at, sig, wallet, title = best
+        at, sig, wallet, title, result = best
         try:
             from knos import chain
             tx = chain.call(escrow.ledger().url, "getTransaction", [sig, {"encoding": "jsonParsed", "commitment": "confirmed",
@@ -291,9 +291,10 @@ def latest_agent_payout() -> dict:
                 return sum(float((b.get("uiTokenAmount") or {}).get("uiAmount") or 0) for b in rows or [] if b.get("owner") == wallet)
             units = held(meta.get("postTokenBalances")) - held(meta.get("preTokenBalances"))
             out = {"found": bool(tx) and meta.get("err") is None and units > 0, "signature": sig, "units": round(units, 6), "at": at, "project": title,
-                   "slot": (tx or {}).get("slot"), "explorer": escrow.explorer(sig), "released": released_by(tx)}
+                   "slot": (tx or {}).get("slot"), "explorer": escrow.explorer(sig), "released": released_by(tx),
+                   "result": result}             # the address of the work it paid for (a pull request, for an agent)
             if out["found"] and (not kept or kept.get("signature") != sig):
-                valley._save("pages", "latest-agent-payout", {"at": at, "signature": sig, "wallet": wallet, "project": title})
+                valley._save("pages", "latest-agent-payout", {"at": at, "signature": sig, "wallet": wallet, "project": title, "result": result})
         except Exception as why:  # noqa: BLE001 - the chain did not answer: said, not guessed
             out = {"found": False, "why": f"{type(why).__name__}: {str(why)[:120]}"}
     _payout_cache.update(at=time.time(), v=out)
@@ -509,6 +510,11 @@ def make_handler(state: State):
             if u.path == "/api/proof":                       # the latest real verdict, drawn first on both front doors
                 from . import vectors
                 return self._send(200, vectors.proof())
+            if u.path == "/api/ready":                       # the Ready check is a POST: GET says how
+                return self._send(200, {"what": "Ready to fund: is a brief clear enough to lock money on", "free": True, "stored": "nothing",
+                                        "how": "POST /api/ready with a JSON body {\"brief\": {...}} (or the brief itself)",
+                                        "answers": "ready (true or false), what is unclear, the criteria hash, and the intent sketch",
+                                        "also": "the knos_ready tool on https://knos.onrender.com/mcp"})
             if u.path == "/api/ready/card":
                 from . import track
                 h = (qs.get("hash") or [""])[0]

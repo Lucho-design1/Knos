@@ -24,18 +24,51 @@ h1{font:600 var(--s3)/1.15 var(--head);margin:8px 0 16px}
 .steps li::before{content:counter(s);display:inline-block;font:600 var(--s1)/1 var(--head);color:var(--accent);margin-bottom:6px}
 .steps h2{font:600 var(--s1)/1.25 var(--head);margin:0 0 6px}.steps p{margin:0 0 4px}
 .mono{font-family:var(--mono);overflow-wrap:anywhere;font-size:var(--s-1)}.fine{color:var(--muted);font-size:var(--s-1)}
-a{color:var(--accent)}</style>
+a{color:var(--accent)}
+.lede{margin:0 0 12px;max-width:60ch}.box{margin:24px 0 0;max-width:72ch}.box h2{font:600 var(--s1)/1.25 var(--head);margin:0 0 8px}
+.facts{display:grid;grid-template-columns:minmax(0,max-content) minmax(0,1fr);gap:4px 16px;margin:0 0 8px}.facts dd{margin:0}
+.formula{font-family:var(--mono);font-size:var(--s-1);overflow-wrap:anywhere;margin:0 0 4px}.nums{padding-left:1.1em;margin:0}.nums li{margin:0 0 6px}
+#demo-limits{border-left:3px solid var(--line);padding-left:12px}</style>
 </head>
 <body>
 <main>
 <div class="top"><p class="fine"><a href="../">Knos</a></p><p class="fine">Devnet, test money.</p></div>
 <h1>From an idea to a payout</h1>
+<p class="lede" id="demo-qloo">Qloo sets where a product launches and how many pre-orders prove demand, before any money is held.</p>
 <ol class="steps">
   <li id="step-demand"><h2>Check demand</h2><p><a href="../?q=a%20probiotic%20kombucha%20brand">A kombucha brand</a>: who wants it and where, with each Qloo call listed.</p></li>
   <li id="step-brief"><h2>Ready brief</h2><p><a href="../crossing/7b4ed16b8c2903dc/">10 pre-orders from Boulder, CO</a></p><p class="mono">d1aac7d477e69d13…</p></li>
   <li id="step-held"><h2>Money held</h2><p><a href="https://explorer.solana.com/tx/2Dx6uVPQ8WhfzQTyVgdmNNhTyUsAVohEwJZbZ7dbSL2GZhmbwwxcxctbypt8SVCHXXGyjkUieVWsMbva9Y2txThj?cluster=devnet">A pre-order held on devnet</a>, one of 10.</p></li>
   <li id="step-paid"><h2>Paid on proof</h2><p><a href="https://explorer.solana.com/tx/zCxgsXmAYzDJTwGtg9hvEWZEikRzT15LUbGht7VA8vnpSKt3jLyiWycS8UzRT8k29UmBgvHnmWckjCtqpdsKW4F?cluster=devnet">Released by the referee's verdict</a></p><p><a href="../crossing/7b4ed16b8c2903dc/">The whole crossing</a></p></li>
 </ol>
+<section class="box" id="demo-target" aria-labelledby="demo-target-h">
+  <h2 id="demo-target-h">The target, worked through</h2>
+  <dl class="facts" data-not-prose>
+    <dt>Idea</dt><dd><a href="../crossing/7b4ed16b8c2903dc/">a graphene-coated cycling jacket</a></dd>
+    <dt>City</dt><dd><a href="https://docs.qloo.com/reference/insights-api-deep-dive" rel="noopener">Boulder, CO</a>, the metro with the highest mean affinity on Qloo's heatmap (<code>filter.type=urn:heatmap</code>)</dd>
+    <dt>Mean affinity</dt><dd><a href="https://docs.qloo.com/reference/insights-api-deep-dive" rel="noopener" class="k-num" id="demo-affinity">0.9986</a> over 3 heatmap cells</dd>
+    <dt>Population</dt><dd><a href="https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/metro/totals/cbsa-est2023-alldata.csv" rel="noopener" class="k-num" id="demo-pop">326,831</a> (Census, 2023)</dd>
+  </dl>
+  <p class="formula" data-not-prose><a href="https://github.com/drexthealpha/Knos/blob/main/apps/wanted/knos_wanted/metros.py" rel="noopener">target = max(10, round(POP / 100,000 &times; mean affinity))</a></p>
+  <p class="formula" data-not-prose>= max(10, round(326,831 / 100,000 &times; 0.9986)) = max(10, round(3.26)) = max(10, 3) = <b id="demo-t">10</b> pre-orders</p>
+</section>
+<section class="box" id="demo-without" aria-labelledby="demo-without-h">
+  <h2 id="demo-without-h">The same idea without Qloo</h2>
+  <p><b>Cannot decide.</b> With every Qloo answer removed there is no launch city and no pre-order target, so pre-orders cannot open.</p>
+  <p class="fine">Each card on the <a href="../?q=a%20graphene-coated%20cycling%20jacket">front door</a> has this switch.</p>
+</section>
+<aside class="box" id="demo-limits" aria-labelledby="demo-limits-h">
+  <h2 id="demo-limits-h">What this does not establish</h2>
+  <p>Qloo's figures are aggregate affinities of many people, never a person's behaviour. This is directional demand evidence, not a sales forecast. <a href="https://knos.onrender.com/qloo-safe-use">How Knos uses Qloo safely</a></p>
+</aside>
+<section class="box" id="demo-numbers" aria-labelledby="demo-numbers-h">
+  <h2 id="demo-numbers-h">Money already paid on proof</h2>
+  <ul class="nums">
+    <li><a href="https://www.effra.eu/news/the-2025-eu-industrial-rd-investment-scoreboard/" rel="noopener"><b>EUR 1,446 billion</b></a> of R&amp;D by the world's top 2,000 R&amp;D spenders in 2024 (EU Industrial R&amp;D Investment Scoreboard)</li>
+    <li><a href="https://www.royaltypharma.com/news/royalty-pharma-reports-q4-and-full-year-2025-results/" rel="noopener"><b>$271 million</b></a> in milestone payments by Royalty Pharma in 2025</li>
+    <li><a href="https://frontierclimate.com/writing/new-members" rel="noopener"><b>Over $1 billion</b></a> committed through Frontier, whose offtakes pay only for carbon removal delivered and verified</li>
+  </ul>
+</section>
 </main>
 </body>
 </html>

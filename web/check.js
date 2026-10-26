@@ -57,6 +57,16 @@ export async function readPr(ref, signal) {
   return out;
 }
 
+// the newest payout Knos released to an agent (the app's GET /api/agent/payout/latest, which names the work it paid for):
+// shown under a passed check when that work is this pull request; the request names no pull request
+const norm = (u) => String(u || "").toLowerCase().split(/[?#]/)[0].replace(/\/+$/, "");
+async function paidFor(url) {
+  try {
+    const x = await (await fetch("https://knos.onrender.com/api/agent/payout/latest", { cache: "no-store" })).json();
+    return x && x.found && norm(x.result) === norm(url) && /^https:\/\/explorer\.solana\.com\/tx\//.test(x.explorer) ? x : null;
+  } catch { return null; }
+}
+
 const STEPS = [["read", "Description"], ["checks", "Checks at the head commit"], ["verdict", "Verdict"]];
 
 function answerHtml(r) {
@@ -107,6 +117,8 @@ export function renderCheck(el, ctx = {}) {
       if (mine !== run) return null;
       step("read", "done"); step("checks", r.cls === "failed" ? "bad" : "done"); step("verdict", r.cls === "failed" && r.claim ? "bad" : "done");
       out.innerHTML = answerHtml(r);
+      if (r.cls === "passed") paidFor(r.url).then((x) => { if (x && mine === run && el.contains(out)) out.insertAdjacentHTML("beforeend",
+        `<p class="fine" id="check-tx">Paid on devnet for this pull request · <a href="${escHtml(x.explorer)}" target="_blank" rel="noopener">${escHtml(x.released || "the transaction")}</a></p>`); });
       el.dispatchEvent(new CustomEvent("knos:check", { bubbles: true, detail: r }));
       // shared only while the address is still a check's and still the one this run began at: a reader who has left
       // #check, or followed another #check= link whose hashchange (a later task) has not reached the page yet, is not

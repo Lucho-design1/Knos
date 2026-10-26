@@ -63,13 +63,15 @@ await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const origin = `http://127.0.0.1:${server.address().port}`;
 
 const browser = await chromiumOrSkip();
-const hosts = new Set();
+const hosts = new Set(), knos = new Set();
 async function open(options = {}, late = 0) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, ...options });
   await ctx.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     hosts.add(url.host);
     if (url.origin === origin) return route.continue();
+    // after a passed check, the app's newest payout (it names no pull request in the request): none in this test
+    if (url.host === "knos.onrender.com") { knos.add(url.pathname + url.search); return route.fulfill({ status: 200, contentType: "application/json", body: '{"found":false}' }); }
     if (url.host !== "api.github.com") return route.abort();
     if (late) await new Promise((r) => setTimeout(r, late));
     const path = url.pathname + url.search;
@@ -184,7 +186,8 @@ const verdictOf = (page) => page.waitForSelector("#check-verdict", { timeout: 15
   ok("late share: link 2 is the one checked", second, await page.textContent("#check-verdict"));
   await ctx.close();
 }
-ok("hosts: only the page's own and api.github.com", [...hosts].every((h) => h === new URL(origin).host || h === "api.github.com"), [...hosts]);
+ok("hosts: only the page's own, api.github.com and the app's newest payout", [...hosts].every((h) => h === new URL(origin).host || h === "api.github.com" || h === "knos.onrender.com")
+  && [...knos].every((p) => p === "/api/agent/payout/latest"), [...hosts, ...knos]);
 
 await browser.close(); server.close();
 console.log(failed ? `${failed} failed` : "all passed");

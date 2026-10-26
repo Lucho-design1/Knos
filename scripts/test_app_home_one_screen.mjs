@@ -1,4 +1,4 @@
-// test_app_home_one_screen, live: the app's home (https://knos.onrender.com/) is the front door's hero and result card,
+// test_app_home_one_screen, live: the app's home (https://knos.onrender.com/app/) is the front door's hero and result card,
 // and its rendered text names no passkey wallet, company single sign-on or accounting export ("passkey", "SSO",
 // "SAML", "Xero", "QuickBooks"). "More" holds at most 7 items and the top navigation at most 6. Every item taken out of
 // "More" still answers at its own address (HTTP 200); each is listed with its URL.

@@ -76,7 +76,7 @@ def main() -> int:
        "the table names FaMHCjzy...JY4 as the app's live program (0.3.34)")
     surfaces = [("README.md (main)", (ROOT / "README.md").read_text(encoding="utf-8"), False),
                 ("front door https://drexthealpha.github.io/Knos/", get("https://drexthealpha.github.io/Knos/"), True),
-                ("app home https://knos.onrender.com/", get("https://knos.onrender.com/app/"), True)]
+                ("app home https://knos.onrender.com/app/", get("https://knos.onrender.com/app/"), True)]
     seen = 0
     for name, text, is_html in surfaces:
         for b in blocks(text, is_html):
