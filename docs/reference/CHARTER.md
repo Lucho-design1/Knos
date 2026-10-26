@@ -62,4 +62,4 @@ Read this first. It limits every line below.
 
 ---
 
-sha256 of everything above this line: `b61eb4013164d62c0cba19a683edeba11011c8e569570d1c86f5bd5784167b80`. Check it yourself: `sed '/^---$/,$d' docs/reference/CHARTER.md | sha256sum`. `tests/test_neutrality.py` checks it on every change.
+sha256 of everything above this line: `a93407339bddb93dcfed10de779ebaaf41675e12c27b6014f84761ad3533bf51`. Check it yourself: `sed '/^---$/,$d' docs/reference/CHARTER.md | sha256sum`. `tests/test_neutrality.py` checks it on every change.
