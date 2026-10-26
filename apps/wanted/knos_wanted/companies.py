@@ -97,7 +97,7 @@ def need(sentence: str, user: dict, open_: bool, state) -> dict:
     return {"field": field, "proof": FIELDS[field]["proof"], "challenge_hours": CHALLENGE_S // 3600,
             "brief": brief, "ready": r.get("ready"), "missing": r.get("missing") or [], "criteria_hash": r.get("criteria_hash"),
             "demand": {"hash": rep.get("hash"), "verdict": d.get("verdict"), "reasons": (d.get("reasons") or [])[:2], "private": not open_},
-            "project": {"id": project["id"], "page": f"/#projects={project['id']}", "open": open_,
+            "project": {"id": project["id"], "page": f"/app/#projects={project['id']}", "open": open_,
                         "milestone": (project.get("milestones") or [{}])[0].get("key")} if project else None,
             "ready_card": card, "steps": 3, "elapsed_ms": round((time.perf_counter() - t0) * 1000)}
 

@@ -70,7 +70,7 @@
   <!-- HOME: the research products open for backing now, each with its three one-tap actions -->
   <section id="v-home" class="view" aria-labelledby="k-mission">
 <!-- k-hero -->
-<div class="k-hero" id="k-hero" data-api="" data-app="/">
+<div class="k-hero" id="k-hero" data-api="" data-app="/app/">
   <h1 id="k-mission" class="k-mission">See who wants your product, and where, before you build it</h1>
   <form class="k-ask" id="k-ask" autocomplete="off" role="search" aria-label="Check demand">
     <input id="k-q" name="q" type="text" aria-label="What are you about to build? An idea, or a paper's DOI" maxlength="500" placeholder="What are you about to build?" enterkeyhint="go" spellcheck="false">
@@ -224,7 +224,7 @@
     const rows = (r.calls || []).map((c) => { const p = c.params || {};
       const keys = Object.keys(p).filter((k) => p[k] != null && p[k] !== "").map((k) => `${k}=${String(p[k]).slice(0, 40)}`).join(", ");
       return `<li data-call="${esc(c.n)}"><a href="${esc(API)}/trace.html?hash=${encodeURIComponent(r.hash || "")}#call-${esc(c.n)}" target="_blank" rel="noopener">#${esc(c.n)}</a> ${
-        esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${esc(c.ms ?? "?")} ms · ${c.cached ? "cached" : "live"}${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || "the verdict")}</li>`; });
+        esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${esc(c.ms ?? "?")} ms · ${c.cached ? "cached" : "live"}${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || String(c.effect || "").slice(0, 60) || "the verdict")}</li>`; });
     return rows.length ? `<details class="k-calls" data-part="calls"><summary>Qloo calls (${rows.length})</summary><ol>${rows.join("")}</ol></details>` : "";
   }
 

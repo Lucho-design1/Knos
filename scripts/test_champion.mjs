@@ -16,7 +16,7 @@
 // without it (CI) the run waits the limit out.
 import { chromium } from "playwright";
 
-const SITE = process.env.SITE_URL || "https://drexthealpha.github.io/Knos/", APP = (process.env.APP_URL || "https://knos.onrender.com/").replace(/\/$/, "");
+const SITE = process.env.SITE_URL || "https://drexthealpha.github.io/Knos/", APP = (process.env.APP_URL || "https://knos.onrender.com/app/").replace(/\/$/, "");
 const what = { test_fields_matrix: "fields", test_value_vectors: "vectors", test_proof_first: "proof", test_money_page: "money",
                test_companies_mode: "companies" }[process.argv[2]] || process.argv[2];        // a CI job is named after its test
 let fails = 0;

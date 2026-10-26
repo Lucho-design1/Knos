@@ -144,7 +144,7 @@ def handle_get(h, state, u, qs) -> bool:
             code = p[3:]
             r = valley.load_referral(code)
             kind, _, val = r["target"].partition("=")
-            to = f"/?ref={code}#" + (f"buy={val}" if kind == "b" else f"projects={val}")
+            to = f"/app/?ref={code}#" + (f"buy={val}" if kind == "b" else f"projects={val}")
             h.send_response(302)
             h.send_header("Location", to)
             h.send_header("Content-Length", "0")
@@ -163,7 +163,7 @@ def handle_get(h, state, u, qs) -> bool:
             try:
                 return h._redirect(enterprise.sso_start(q("tenant"), h._base(), next_page=q("next", "/"))) or True
             except enterprise.SSOError as why:
-                return h._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120])) or True
+                return h._redirect("/app/#signin_error=" + urllib.parse.quote(str(why)[:120])) or True
         if p == "/auth/sso/metadata":
             from . import saml_sp
             return h._send(200, saml_sp.metadata(h._base()), "application/samlmetadata+xml") or True
@@ -172,7 +172,7 @@ def handle_get(h, state, u, qs) -> bool:
                 s = enterprise.sso_callback(q("code"), q("state"))
                 return h._redirect(s.get("next", "/") + "#session=" + s["token"]) or True
             except enterprise.SSOError as why:
-                return h._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120])) or True
+                return h._redirect("/app/#signin_error=" + urllib.parse.quote(str(why)[:120])) or True
         if p == "/api/companies":
             return h._send(200, {"companies": enterprise.companies()}) or True
         if p == "/api/company/export":
@@ -255,7 +255,7 @@ def handle_post(h, state, path: str) -> bool:
                 s = enterprise.saml_finish((form.get("SAMLResponse") or [""])[0], (form.get("RelayState") or [""])[0], h._base())
                 return h._redirect(s.get("next", "/") + "#session=" + s["token"]) or True
             except enterprise.SSOError as why:
-                return h._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120])) or True
+                return h._redirect("/app/#signin_error=" + urllib.parse.quote(str(why)[:120])) or True
         b = h._json()
         if path == "/api/project/archive":
             admin = _admin(h.headers.get("X-Knos-Admin"))

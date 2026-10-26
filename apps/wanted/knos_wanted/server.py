@@ -106,7 +106,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
               "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funders' held money",
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/mcp/store": "The app-store MCP profile: read-only tools, no sign-in, a daily call cap (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
-              "/": "The app", "/status/qloo": "The last answer Qloo gave this server, from its own traffic", "/paid": "Paid on proof: the passkey wallet, pre-orders, pools, company sign-in and accounting files", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/taste/movie": "The films a film's fans also love, from Qloo (?title=&year=): names and years only", "/api/products": "Listed products", "/api/quote": "Fee quote",
+              "/": "301 to the front door, https://drexthealpha.github.io/Knos/", "/app": "301 to /app/", "/app/": "The app", "/status/qloo": "The last answer Qloo gave this server, from its own traffic", "/paid": "Paid on proof: the passkey wallet, pre-orders, pools, company sign-in and accounting files", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/taste/movie": "The films a film's fans also love, from Qloo (?title=&year=): names and years only", "/api/products": "Listed products", "/api/quote": "Fee quote",
               "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
               "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
               "/api/receivables": "Receivables a lender can finance (passkey wallets: advance rate, fee, due date)",
@@ -593,10 +593,14 @@ def make_handler(state: State):
             if u.path == "/auth/orcid/callback":
                 try:
                     s_ = auth.orcid_callback((qs.get("code") or [""])[0], (qs.get("state") or [""])[0], self._base() + "/auth/orcid/callback")
-                    return self._redirect("/#session=" + s_["token"])
+                    return self._redirect("/app/#session=" + s_["token"])
                 except auth.AuthError as why:
-                    return self._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120]))
-            if u.path in ("/", "/index.html", "/paid"):
+                    return self._redirect("/app/#signin_error=" + urllib.parse.quote(str(why)[:120]))
+            if u.path == "/":                                 # one front door: the Pages site
+                return self._send(301, b"", "text/plain; charset=utf-8", {"Location": "https://drexthealpha.github.io/Knos/"})
+            if u.path == "/app":
+                return self._send(301, b"", "text/plain; charset=utf-8", {"Location": "/app/"})
+            if u.path in ("/app/", "/app/index.html", "/index.html", "/paid"):
                 from . import vectors
                 page = (STATIC / "index.html").read_text(encoding="utf-8")
                 page = page if u.path == "/paid" else home_page(page)

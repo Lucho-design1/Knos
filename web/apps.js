@@ -2,7 +2,7 @@
 // The app runs on a free instance that sleeps. Nothing is asked of it until the link is pressed (this site asks no
 // host but GitHub and Solana on its own); then, if the app answers within a moment, the press goes straight to it, and
 // otherwise to the wake page (wanted.html), which waits for it and forwards.
-const APP = "https://knos.onrender.com/";
+const APP = "https://knos.onrender.com/app/";
 
 export function renderApps(el) {
   el.innerHTML = `<h2>Back proven research products</h2>

@@ -33,7 +33,7 @@ def call(base, path, body=None):
 
 def test_page_and_status(app):
     base, _ = app
-    st, page = call(base, "/")
+    st, page = call(base, "/app/")
     assert st == 200 and b"Knos" in page and b"not a sales forecast" in page and b"not a prediction about one person" in page
     assert b"Knos Wanted" not in page                     # no sub-brand: it is Knos's demand check
     st, s = call(base, "/api/status")

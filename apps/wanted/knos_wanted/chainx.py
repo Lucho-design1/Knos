@@ -269,7 +269,7 @@ def _receipt_mint(led) -> str:
     if st.get("mint"):
         return st["mint"]
     payer, mint = _payer(), Keypair()
-    name, symbol, uri = "Knos pledge receipt", "KNOSP", "https://knos.onrender.com/#projects"
+    name, symbol, uri = "Knos pledge receipt", "KNOSP", "https://knos.onrender.com/app/#projects"
     meta_len = 32 + 32 + 4 + len(name) + 4 + len(symbol) + 4 + len(uri) + 4
     space = _tlv(32, 1, 32, 64)            # MintCloseAuthority, DefaultAccountState, PermanentDelegate, MetadataPointer
     ixs = [_create(payer.pubkey(), mint.pubkey(), space, led.rent(space + 4 + meta_len), TOKEN22),

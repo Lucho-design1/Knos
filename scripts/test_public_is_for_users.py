@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PATH_WORDS = re.compile(r"submission|devpost|hackathon", re.I)
 TEXT_WORDS = re.compile(r"hackathon|devpost|judging period|SUBMISSION\.md", re.I)
 GONE = ["SUBMISSION.md", "docs/submission", ".github/workflows/fresh-setup.yml"]
-LIVE = ["https://drexthealpha.github.io/Knos/", "https://drexthealpha.github.io/Knos/faq.html", "https://knos.onrender.com/",
+LIVE = ["https://drexthealpha.github.io/Knos/", "https://drexthealpha.github.io/Knos/faq.html", "https://knos.onrender.com/app/",
         "https://knos.onrender.com/with-without", "https://knos.onrender.com/qloo-safe-use", "https://knos.onrender.com/invite",
         "https://knos.onrender.com/trace.html", "https://knos.onrender.com/verify.html"]
 

@@ -7,11 +7,12 @@
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const [SHA, REC] = process.argv.slice(2);
 const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_qloo_depth.txt`;
 const SITE = "https://drexthealpha.github.io/Knos/", API = "https://knos.onrender.com";
-const PY = process.env.KNOS_PY || ".venv/Scripts/python.exe";
+const PY = process.env.KNOS_PY || fileURLToPath(new URL("../.venv/Scripts/python.exe", import.meta.url));
 const lines = []; let fails = 0;
 const ok = (c, what) => { lines.push(`${c ? "ok  " : "FAIL"} ${what}`); if (!c) fails++; };
 const sh = (cmd, args, opts = {}) => { try { return { out: execFileSync(cmd, args, { encoding: "utf8", maxBuffer: 1 << 26, ...opts }), code: 0 }; } catch (e) { return { out: String(e.stdout || ""), code: e.status || 1 }; } };

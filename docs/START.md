@@ -2,7 +2,7 @@
 
 # Start here: Knos in five minutes
 
-**In plain words.** Knos takes research to a product people want: check demand and write a Ready brief in [the app](https://knos.onrender.com/). To pay for code the same way, check a pull request, then put test money on a task with one comment. Last, add Knos to your coding agent with one command.
+**In plain words.** Knos takes research to a product people want: check demand and write a Ready brief in [the app](https://knos.onrender.com/app/). To pay for code the same way, check a pull request, then put test money on a task with one comment. Last, add Knos to your coding agent with one command.
 
 ```mermaid
 flowchart TB

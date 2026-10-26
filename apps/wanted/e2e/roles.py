@@ -146,7 +146,7 @@ class Run:
         """A passkey made and used on the virtual authenticator: the one sign-in. `view` None: where the page is."""
         p = self.page[role]
         if view is not None:
-            p.goto(self.base + "/#" + view, wait_until="domcontentloaded")
+            p.goto(self.base + "/app/#" + view, wait_until="domcontentloaded")
         p.wait_for_function("() => typeof api === 'function'", timeout=30_000)
         p.click("#whoBtn")
         dead = p.evaluate("() => [...document.querySelectorAll('#signin button')].filter((b) => b.disabled && b.offsetParent !== null).length")
@@ -401,7 +401,7 @@ def funder_funds(r: Run, st: dict):
 def lender_offers(r: Run, st: dict):
     """Tap one of two: "Offer cash now" on the buyer's receivable (the advance rate is the lender's choice)."""
     p = r.page["funder"]
-    p.goto(r.base + "/#fund", wait_until="domcontentloaded")
+    p.goto(r.base + "/app/#fund", wait_until="domcontentloaded")
     p.wait_for_function("() => typeof api === 'function'", timeout=30_000)
     sel = f".lendGo[data-go='quote'][data-c='{st['order']}']"
     p.wait_for_selector(sel, timeout=90_000)
@@ -417,7 +417,7 @@ def lender_offers(r: Run, st: dict):
 
 def maker_sells(r: Run, st: dict):
     p = r.page["maker"]
-    p.goto(r.base + "/#make", wait_until="domcontentloaded")
+    p.goto(r.base + "/app/#make", wait_until="domcontentloaded")
     sel = f".acBtn[data-c='{st['order']}']"
     p.wait_for_selector(sel, timeout=90_000)
     r.click_until("maker", sel, "() => /✓|[1-9A-HJ-NP-Za-km-z]{8}…/.test(document.querySelector('#receipt') ? document.querySelector('#receipt').innerText : '')", "sell the receivable", timeout=400)
@@ -430,7 +430,7 @@ def maker_sells(r: Run, st: dict):
 def lender_advances(r: Run, st: dict):
     """Tap two of two: "Send the advance" (the lender's passkey pays the maker)."""
     p = r.page["funder"]
-    p.goto(r.base + "/#fund", wait_until="domcontentloaded")
+    p.goto(r.base + "/app/#fund", wait_until="domcontentloaded")
     p.reload(wait_until="domcontentloaded")
     sel = f".lendGo[data-go='advance'][data-c='{st['order']}']"
     p.wait_for_selector(sel, timeout=90_000)
@@ -480,7 +480,7 @@ def maker_proves(r: Run, st: dict):
     elif not r.args.evidence_url_template:
         url = url.rstrip("/") + "/"
     r.hook("hook_before_post")
-    p.goto(r.base + "/#make", wait_until="domcontentloaded")
+    p.goto(r.base + "/app/#make", wait_until="domcontentloaded")
     sel = f".ev[data-c='{st['order']}']"
     p.wait_for_selector(sel, timeout=60_000)
     p.fill(sel, url)
@@ -506,7 +506,7 @@ def maker_proves(r: Run, st: dict):
 
 def lender_collects(r: Run, st: dict):
     p = r.page["funder"]
-    p.goto(r.base + "/#fund", wait_until="domcontentloaded")
+    p.goto(r.base + "/app/#fund", wait_until="domcontentloaded")
     p.reload(wait_until="domcontentloaded")
     sel = f".lendGo[data-go='collect'][data-c='{st['order']}']"
     p.wait_for_selector(sel, timeout=90_000)

@@ -9,7 +9,7 @@
 import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 
-const FRONT = "https://drexthealpha.github.io/Knos/", APP = "https://knos.onrender.com/";
+const FRONT = "https://drexthealpha.github.io/Knos/", APP = "https://knos.onrender.com/app/";
 const WORLD = process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`;
 const HEAD = "See who wants your product, and where, before you build it";
 const BANNED = /\b(valley|escrow|devnet|solana|kardashev|proof|milestone|referee)\b/gi;

@@ -86,7 +86,7 @@ FIELDS = {
    "title": "Milestone money, held",
    "idea": "milestone money held until a lab's proof passes, then paid to the lab",
    "status": "live",
-   "feature": "/#projects",
+   "feature": "/app/#projects",
    "unlock": "DeSci, tokenized IP-NFTs and DAOs crowdsource risk capital; milestone-based smart contracts bypass legacy VC and bank timelines."
   },
   {

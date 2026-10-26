@@ -1314,7 +1314,7 @@ def _onchain(p: dict, key: str, a: dict, rows: list[dict], release_sig: str, led
     m = _milestone(p, key)
     crit = (p.get("frozen") or {}).get("criteria_hash") or ""
     brief = hashlib.sha256(json.dumps(_brief(p), sort_keys=True).encode()).hexdigest()
-    steps = {"badge": lambda: chainx.badge(p["id"], p["title"], key, m["name"], a["wallet"], f"https://knos.onrender.com/#projects={p['id']}", led=led),
+    steps = {"badge": lambda: chainx.badge(p["id"], p["title"], key, m["name"], a["wallet"], f"https://knos.onrender.com/app/#projects={p['id']}", led=led),
              "log": lambda: chainx.log_leaf(f"{p['id']}|{key}|{a['id']}|{','.join(r['attestation'] for r in rows)}", led=led),
              "memo": lambda: {"signature": chainx.memo(f"knos release {release_sig} brief sha256:{brief} criteria sha256:{crit}", led=led)},
              "rent": lambda: chainx.rent_returned(release_sig) if release_sig else None}

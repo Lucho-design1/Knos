@@ -19,7 +19,7 @@ const judge = (name, heads, under) => {
 };
 const browser = await chromium.launch();
 try {
-  for (const [name, url] of [["front door", "https://drexthealpha.github.io/Knos/"], ["live app home", "https://knos.onrender.com/"]]) {
+  for (const [name, url] of [["front door", "https://drexthealpha.github.io/Knos/"], ["live app home", "https://knos.onrender.com/app/"]]) {
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "load", timeout: 120000 });
     const g = await page.evaluate(() => ({ heads: [...document.querySelectorAll("#k-steps .k-step-list > li > h3")].map((h) => h.textContent.trim()),

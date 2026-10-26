@@ -53,7 +53,7 @@ def test_projects_over_http(app):
     try:
         opener.open(req, timeout=10)
     except urllib.error.HTTPError as e:
-        assert e.code == 302 and e.headers["Location"] == f"/?ref={ref['code']}#projects={p['id']}"
+        assert e.code == 302 and e.headers["Location"] == f"/app/?ref={ref['code']}#projects={p['id']}"
     st, csv = call(base, f"/api/company/export?project={p['id']}&format=xero")
     assert st == 200 and csv.startswith(b"*ContactName")
     assert call(base, "/api/project/fund", {"project": p["id"], "milestone": "design", "units": 5, "account": "x"})[0] in (400, 503)
@@ -75,7 +75,7 @@ def test_openapi_and_mcp(app):
 
 def test_pages_have_the_views(app):
     base, _ = app
-    st, page = call(base, "/")
+    st, page = call(base, "/app/")
     assert st == 200 and b'id="v-projects"' in page and b'id="v-teams"' in page and b"/static/valley.js" in page
     st, js = call(base, "/static/valley.js")
     assert st == 200 and b"KNOS_VIEW" in js

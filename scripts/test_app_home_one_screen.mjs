@@ -7,7 +7,7 @@
 import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 
-const APP = "https://knos.onrender.com/", FRONT = "https://drexthealpha.github.io/Knos/";
+const APP = "https://knos.onrender.com/app/", FRONT = "https://drexthealpha.github.io/Knos/";
 const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_app_home_one_screen.txt`;
 const WORDS = ["passkey", "SSO", "SAML", "Xero", "QuickBooks"];
 // taken out of "More" (web/brand/bar.html) on 25 Oct 2026, each still at its own address

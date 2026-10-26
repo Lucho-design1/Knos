@@ -15,10 +15,10 @@ import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { chromium } from "playwright";
 
-const SITE = process.env.SITE_URL || "https://drexthealpha.github.io/Knos/", APP = (process.env.APP_URL || "https://knos.onrender.com/").replace(/\/?$/, "/");
+const SITE = process.env.SITE_URL || "https://drexthealpha.github.io/Knos/", APP = (process.env.APP_URL || "https://knos.onrender.com/app/").replace(/\/?$/, "/");
 const DOORS = { "front door": SITE, app: APP };
 const PAGES = JSON.parse(readFileSync(new URL("./public_pages.json", import.meta.url), "utf8")).pages
-  .map((u) => u.replace("https://drexthealpha.github.io/Knos/", SITE).replace("https://knos.onrender.com/", APP));
+  .map((u) => u.replace("https://drexthealpha.github.io/Knos/", SITE).replace("https://knos.onrender.com/app/", APP));
 const what = process.argv[2];
 let fails = 0;
 const ok = (c, msg, extra) => { console.log((c ? "ok   " : "FAIL ") + msg + (extra === undefined ? "" : " " + JSON.stringify(extra))); if (!c) fails += 1; };

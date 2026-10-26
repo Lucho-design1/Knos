@@ -49,7 +49,7 @@ export function initHome(doc = document) {
     ev.preventDefault();
     const late = new Promise((res) => setTimeout(() => res(false), 1500));
     const ping = fetch(`${APP}/healthz`, { mode: "no-cors", cache: "no-store" }).then(() => true, () => false);
-    Promise.race([ping, late]).then((awake) => { location.href = awake ? `${APP}/${a.dataset.app}` : a.getAttribute("href"); });
+    Promise.race([ping, late]).then((awake) => { location.href = awake ? `${APP}/app/${a.dataset.app}` : a.getAttribute("href"); });
   });
   // the live list is asked for with the reader's first move (a touch, a scroll, a key, the pointer), as the round under
   // the check's first screen is: the snapshot is the page until then, and a page nobody touches asks no other host

@@ -42,7 +42,7 @@ def test_the_verify_page_and_the_app_page_are_served(app):
     base, _ = app
     st, page, h = call(base, "/verify")
     assert st == 200 and b"How we verify" in page and b"review_evidence" in page and b"no real funds" in page
-    st, page, _ = call(base, "/")
+    st, page, _ = call(base, "/app/")
     for needle in (b"Knos", b"not a sales forecast", b"not a prediction about one person", b'id="lang"',
                    b"v-fund", b"v-contribute", b"v-agents", b"/verify"):
         assert needle in page, needle
@@ -127,7 +127,7 @@ def test_the_pages_home_links_the_app_prominently():
     # the site declares the app as a page added by name (its link under More, its section, its lazy module)
     assert 'apps: { file: "./apps.js", draw: "renderApps", nav: "Research products" }' in views
     mod = (web / "apps.js").read_text(encoding="utf-8")
-    assert "export function renderApps" in mod and 'href="wanted.html"' in mod and "https://knos.onrender.com/" in mod
+    assert "export function renderApps" in mod and 'href="wanted.html"' in mod and "https://knos.onrender.com/app/" in mod
     assert "healthz" in mod and "test money" in mod and "click" in mod   # on press: straight to the app when awake; the wake page otherwise
 
 

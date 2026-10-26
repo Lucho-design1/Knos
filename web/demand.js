@@ -43,7 +43,7 @@ export async function renderDemand(el) {
       const src = window.KnosDemand.src(APP, rep.hash);              // each Qloo-derived value links to its trace on the app
       out.innerHTML = `<div class="card"><h3 data-qloo>${esc(d.verdict === "OPEN" ? "Open for pre-orders" : d.verdict === "REFUSE" ? "Not yet" : "Cannot decide")}${src}</h3>
         ${(d.reasons || []).slice(0, 3).map((x) => `<p class="small" data-qloo>${esc(x)}${src}</p>`).join("")}${window.KnosDemand.answers(rep, APP)}
-        <p><a class="k-btn" href="${APP}/#buy=${esc(rep.hash)}">Open it in the app →</a></p></div>`;
+        <p><a class="k-btn" href="${APP}/app/#buy=${esc(rep.hash)}">Open it in the app →</a></p></div>`;
     } catch (e) { out.innerHTML = `<p class="status">The demand check did not answer: ${esc(e.message)}</p>`; }
     go.disabled = false;
   });

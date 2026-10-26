@@ -30,7 +30,7 @@ def _routes():
 def document(base: str = "https://knos.onrender.com") -> dict:
     paths: dict = {}
     for method, path, signed, summary, fields in _routes():
-        op = {"summary": summary, "operationId": (method.lower() + path.replace("/", "_").replace("{", "").replace("}", "")).strip("_"),
+        op = {"summary": summary, "operationId": (method.lower() + path.replace("/", "_").replace("{", "").replace("}", "")).strip("_") + ("_page" if len(path) > 1 and path.endswith("/") else ""),
               "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"type": "object"}}}},
                             "400": {"description": "refused, with the reason in `error`"},
                             "429": {"description": "rate limited"}}}

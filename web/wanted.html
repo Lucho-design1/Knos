@@ -58,12 +58,12 @@ h1 { font-size: 28px; } a { color: var(--accent); } .muted { color: var(--muted)
   <div class="wake" aria-hidden="true"><i></i></div>
   <p>Waking the server. A free instance sleeps when nobody uses it; the first visit can take up to a minute.</p>
   <p class="muted" id="state" role="status"></p>
-  <p class="muted">Not moving? Open <a id="direct" href="https://knos.onrender.com/">the app directly</a>.</p>
+  <p class="muted">Not moving? Open <a id="direct" href="https://knos.onrender.com/app/">the app directly</a>.</p>
 </main>
 <script>
 "use strict";
 const APP = "https://knos.onrender.com";
-const PAGES = ["/", "/with-without", "/qloo-safe-use", "/invite", "/verify", "/trace.html", "/fields", "/money", "/companies"];
+const PAGES = ["/app/", "/with-without", "/qloo-safe-use", "/invite", "/verify", "/trace.html", "/fields", "/money", "/companies"];
 const start = Date.now();
 async function ping() {
   try {
@@ -71,8 +71,8 @@ async function ping() {
     await fetch(APP + "/healthz?t=" + Date.now(), { mode: "no-cors", cache: "no-store" });
     document.getElementById("state").textContent = "Awake. Taking you to the app...";
     // ?to= one of the app's own pages (the bar's links to them come through here), else its home; the hash goes along
-    const to = new URLSearchParams(location.search).get("to") || "/";
-    location.replace(APP + (PAGES.includes(to) ? to : "/") + location.hash);
+    const to = new URLSearchParams(location.search).get("to") || "/app/";
+    location.replace(APP + (PAGES.includes(to) ? to : "/app/") + location.hash);
   } catch (e) {
     const s = Math.round((Date.now() - start) / 1000);
     document.getElementById("state").textContent = "Still waking (" + s + " s).";

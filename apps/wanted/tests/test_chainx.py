@@ -50,7 +50,7 @@ def chain(monkeypatch, tmp_path):
 def test_a_badge_is_non_transferable_has_its_metadata_and_is_a_member_of_the_project_group(chain):
     mk = Keypair()
     maker = mk.pubkey()
-    b = chainx.badge("p" * 16, "Sweat glucose watch", "assay", "Glucose assay on 12 samples", str(maker), "https://knos.onrender.com/#projects=pppp",
+    b = chainx.badge("p" * 16, "Sweat glucose watch", "assay", "Glucose assay on 12 samples", str(maker), "https://knos.onrender.com/app/#projects=pppp",
                      led=chain.led)
     mint = chain.led.account(b["mint"])
     assert b"Knos: Glucose assay on 12 sampl" in mint and b"KNOSV" in mint            # TokenMetadata on the mint itself

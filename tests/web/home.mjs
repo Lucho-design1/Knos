@@ -117,7 +117,7 @@ for (const [w, h] of [[375, 812], [390, 844], [320, 640], [1280, 800]]) {
   // one tap: the app is awake, so the press goes straight to it, at that action
   await page.click('#home-products li[data-slug="sweat-glucose-watch"] a[data-app="#back=sweat-glucose-watch"]');
   await page.waitForURL((u) => String(u).startsWith(APP), { timeout: 10000 }).catch(() => {});
-  ok("one tap: Back it opens the app at #back=<slug> when it is awake", page.url() === `${APP}/#back=sweat-glucose-watch`, page.url());
+  ok("one tap: Back it opens the app at #back=<slug> when it is awake", page.url() === `${APP}/app/#back=sweat-glucose-watch`, page.url());
   await ctx.close();
 }
 {

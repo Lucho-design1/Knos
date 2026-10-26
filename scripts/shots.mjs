@@ -2,7 +2,7 @@
 import { chromium } from "playwright";
 
 const OUT = process.argv[2] || ".";
-const PAGES = { site: process.env.SITE_URL || "https://drexthealpha.github.io/Knos/", app: process.env.APP_URL || "https://knos.onrender.com/" };
+const PAGES = { site: process.env.SITE_URL || "https://drexthealpha.github.io/Knos/", app: process.env.APP_URL || "https://knos.onrender.com/app/" };
 const browser = await chromium.launch();
 for (const [name, url] of Object.entries(PAGES)) {
   for (const [w, h] of [[375, 812], [1280, 800]]) {

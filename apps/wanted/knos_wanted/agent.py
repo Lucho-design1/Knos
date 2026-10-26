@@ -614,7 +614,7 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
                 units = int(args.get("units") or 0)
                 if not 5 <= units <= 1000 or (rep.get("decision") or {}).get("verdict") != "OPEN":
                     raise ValueError("units: 5 to 1000, on a report whose decision is OPEN")
-                out = {"needs": "the buyer's own passkey: an agent cannot sign for its human", "approve_at": f"/#buy={rep['hash']}",
+                out = {"needs": "the buyer's own passkey: an agent cannot sign for its human", "approve_at": f"/app/#buy={rep['hash']}",
                        "units": units, "how": "open the page, sign in with a passkey, press 'Pre-order with my passkey'",
                        "money": "devnet test money", "by": f"{who.get('kind')}: {who.get('label')}"}
             elif name == "knos_evidence":

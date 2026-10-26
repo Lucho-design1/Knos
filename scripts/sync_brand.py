@@ -55,7 +55,7 @@ PAGES = {
     WEB / "404.html": (SITE, SITE, SITE + WAKE, "brand/tokens.css", True),        # its <base href="/Knos/"> holds at any depth
     WEB / "wanted.html": ("./", "./", WAKE, "brand/tokens.css", True),
     STATIC / "index.html": ("", SITE, "", "/static/brand/tokens.css", True),
-    **{STATIC / n: ("/", SITE, "/", "/static/brand/tokens.css", True)
+    **{STATIC / n: ("/app/", SITE, "/app/", "/static/brand/tokens.css", True)
        for n in ("trace.html", "with_without.html", "qloo_safe_use.html", "invite.html", "verify.html", "ready.html",
                  "fields.html", "money.html", "companies.html")},
 }
@@ -65,13 +65,13 @@ HERO = re.compile(r"<!-- k-hero -->.*?<!-- /k-hero -->", re.S)
 VECTORS = re.compile(r"<!-- k-vectors -->.*?<!-- /k-vectors -->", re.S)
 STEPS = re.compile(r"<!-- k-steps -->.*?<!-- /k-steps -->", re.S)
 # the two front doors' first screens: (the app's address for the API, the app's address for its pages, hero.js)
-HEROES = {WEB / "index.html": ("@app", WAKE, "brand/hero.js"), WEB / "home.html": ("@app", WAKE, "brand/hero.js"), STATIC / "index.html": ("", "/", "/static/brand/hero.js")}
+HEROES = {WEB / "index.html": ("@app", WAKE, "brand/hero.js"), WEB / "home.html": ("@app", WAKE, "brand/hero.js"), STATIC / "index.html": ("", "/app/", "/static/brand/hero.js")}
 
 
 def bar(home: str, site: str, app: str) -> str:
     t = (WEB / "brand" / "bar.html").read_text(encoding="utf-8").strip()
-    # a page of the app is at the app's root, a page of the site at the site's: {AP}/{SP} start a page's address
-    pages = app + "?to=/" if app.endswith(WAKE) else (app or "/")
+    # the app's other pages are at the app's root (its home at /app/), a page of the site at the site's: {AP}/{SP} start a page's address
+    pages = app + "?to=/" if app.endswith(WAKE) else "/"
     return t.replace("{H}", home).replace("{SP}", site or "./").replace("{S}", site).replace("{AP}", pages).replace("{A}", app)
 
 
