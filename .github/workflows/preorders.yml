@@ -1,0 +1,36 @@
+name: preorders
+
+# The check a launch milestone names (apps/wanted metros.brief: verifier test_preorders_from_city). Started by hand for
+# one project: it passes when the milestone holds its brief's pre-order target of locked pre-orders, each an order
+# account on devnet under the app's payment program (scripts/preorders_check.py). Its check run on this repository's
+# default branch is what the app's CI release (POST /api/project/ci) reads before any money moves.
+#
+# No secret: it reads the app's public project and devnet's public RPC.
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "the project id (64 hex)"
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  test_preorders_from_city:
+    name: test_preorders_from_city
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: the pre-orders the brief asks for are locked on devnet
+        env:
+          PROJECT: ${{ inputs.project }}
+        run: |
+          case "$PROJECT" in *[!0-9a-f]*|"") echo "project: 64 hex"; exit 1;; esac
+          python3 scripts/preorders_check.py "$PROJECT"
