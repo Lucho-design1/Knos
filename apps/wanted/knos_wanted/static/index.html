@@ -49,6 +49,7 @@
 <!-- /k-bar -->
 
 <main id="main" class="wrap">
+<!-- paid:start -->
   <section id="signin" class="card" hidden aria-labelledby="signinH">
     <div class="row spread"><h2 id="signinH" data-i18n="sign_in">Sign in</h2>
       <button id="signinClose" class="quiet" type="button" aria-label="Close">✕</button></div>
@@ -62,6 +63,7 @@
     </div>
   </section>
 
+<!-- paid:end -->
   <div id="err" class="note err" role="alert" hidden></div>
   <p id="slow" class="note row" role="status" hidden><span class="spin" aria-hidden="true"></span><span id="slowText"></span></p>
 
@@ -407,7 +409,7 @@ ${src(h, price.src)}</section>
       <p class="k-paid" id="k-oidc" data-not-prose>Latest signature check on devnet, 2026-10-25 · <a href="https://explorer.solana.com/tx/pCpGcxBNpazogpF1qio85u4wC7ygeNGaJ6TcXDgat84jEPcJQz9bne4giqHXM4Ym8YSKjU7AQQxtb21eYeG8qq8?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
       <p class="k-paid" id="k-paid" data-not-prose>Agent paid <b>5 test units</b> for verified work, 2026-10-24 · Released by the referee's verdict · <a href="https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
       <details class="k-more" id="agent-key" data-not-prose><summary>Agents with a key</summary><p class="fine">Put this in .mcp.json and the key in KNOS_AGENT_KEY:</p><pre><code>{"mcpServers":{"knos":{"type":"http","url":"https://knos.onrender.com/mcp","headers":{"Authorization":"Bearer ${KNOS_AGENT_KEY}"}}}}</code></pre></details>
-      <p class="fine"><a href="https://drexthealpha.github.io/Knos/#check-a-pull-request" id="steps-check">Check a pull request</a> · <a href="https://drexthealpha.github.io/Knos/pricing.html">Pricing</a> · <a href="https://drexthealpha.github.io/Knos/how-we-test.html">How we test Knos</a></p></li>
+      <p class="fine"><a href="https://drexthealpha.github.io/Knos/check/" id="steps-check">Check a pull request</a> · <a href="https://drexthealpha.github.io/Knos/pricing.html">Pricing</a> · <a href="https://drexthealpha.github.io/Knos/how-we-test.html">How we test Knos</a></p></li>
   </ol>
   <p class="fine" id="k-usage" data-not-prose hidden></p>
 </section>
@@ -448,6 +450,7 @@ ${src(h, price.src)}</section>
     </section>
   </section>
 
+<!-- paid:start -->
   <!-- BUYER -->
   <section id="v-buy" class="view" hidden>
     <div id="productCard" class="card"></div>
@@ -470,6 +473,7 @@ ${src(h, price.src)}</section>
     <section id="tracker" class="card" hidden><h2 data-i18n="goal_l">Funding goal</h2><ul id="trackList" class="list"></ul></section>
   </section>
 
+<!-- paid:end -->
   <!-- FUNDER -->
   <section id="v-fund" class="view" hidden>
     <div class="row spread"><h1 data-i18n="fund_t">Back a milestone</h1><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
@@ -502,11 +506,13 @@ ${src(h, price.src)}</section>
       <div class="row spread"><h1>Projects</h1><span class="testmoney">Devnet test money — no real funds</span></div>
       <p>A product's road, milestone by milestone. Each is paid only on proof.</p>
       <ul id="projList" class="plist"></ul>
+<!-- paid:start -->
       <section id="poolBox" class="card" hidden aria-labelledby="poolH"><h2 id="poolH">Pool across milestones</h2>
         <p class="small">One amount over several milestones. Each is held on its own.</p>
         <div id="poolPick"></div>
         <label for="poolUnits">Test units in total</label><input id="poolUnits" type="number" min="10" value="20" inputmode="numeric">
         <button type="button" id="poolBtn">Pool with my passkey</button><p id="poolOut" class="small" aria-live="polite"></p></section>
+<!-- paid:end -->
       <form class="card" id="newProject" onsubmit="return false" aria-labelledby="npH">
         <h2 id="npH">Open a project</h2>
         <fieldset class="opts"><legend>Template</legend><div id="tplPick"></div></fieldset>
@@ -519,6 +525,7 @@ ${src(h, price.src)}</section>
     <div id="projDetail" hidden><div id="projHead"></div><ul id="msList" class="plist"></ul></div>
   </section>
 
+<!-- paid:start -->
   <!-- TEAMS: SSO, a company's own multisig, ERP export, sandbox, OpenAPI -->
   <section id="v-teams" class="view" hidden>
     <h1>For teams and companies</h1>
@@ -549,6 +556,7 @@ ${src(h, price.src)}</section>
     <p class="small">Developers: <a href="/openapi.json">OpenAPI</a> · <a href="/mcp">MCP</a> · <a href="/api/attest/key">attestation key</a></p>
   </section>
 
+<!-- paid:end -->
   <!-- AGENTS -->
   <section id="v-agents" class="view" hidden>
     <h1 data-i18n="agents_t">For agents</h1>

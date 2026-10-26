@@ -46,7 +46,9 @@ def environ(env: dict, first=()) -> dict:
     """`env` for a script run by bash(): PATH is the folders of `first` (a test's stand-ins), then, on Windows, the
     folder of that bash (cp, sed, grep, tr: what the runner has in /usr/bin), then the PATH of `env` or of this process."""
     parts = [str(p) for p in first] + ([str(Path(bash()).parent)] if os.name == "nt" else [])
-    return {**env, "PATH": os.pathsep.join([*parts, env.get("PATH", os.environ.get("PATH", ""))])}
+    # scripts/build_site.sh keeps the one-page app at index.html for the tests that open it there (the front door's
+    # split is held by tests/web/one_front_door.mjs, on a build without this)
+    return {"KNOS_SPA_AT_ROOT": "1", **env, "PATH": os.pathsep.join([*parts, env.get("PATH", os.environ.get("PATH", ""))])}
 
 
 def path(p) -> str:

@@ -229,7 +229,7 @@ jobs:
       - name: the site, built (both parts drive it)
         run: |
           {
-          bash scripts/build_site.sh "$RUNNER_TEMP/site" "$(printf 'c%.0s' $(seq 40))"   # the commit the mocked chain pins
+          KNOS_SPA_AT_ROOT=1 bash scripts/build_site.sh "$RUNNER_TEMP/site" "$(printf 'c%.0s' $(seq 40))"   # the commit the mocked chain pins
           } 2>&1 | tee -a "$WEB_LOG"
       - if: matrix.part == 1
         name: the built site in headless Chromium (mocked GitHub and Solana)

@@ -46,7 +46,8 @@ def icons(s: str, root: str, preconnect: bool = False) -> str:
     return s.replace("</head>", block + "</head>", 1)
 # page: (its home, the front door, the app, its tokens link, loads web/brand/bar.js)
 PAGES = {
-    WEB / "index.html": ("", "", WAKE, "brand/tokens.css", False),        # web/front.js runs this bar
+    WEB / "index.html": ("", "", WAKE, "brand/tokens.css", False),        # web/front.js runs this bar (the build's app.html)
+    WEB / "home.html": ("./", "./", WAKE, "brand/tokens.css", True),      # the front door: the build's index.html
     WEB / "faq.html": ("./", "./", WAKE, "brand/tokens.css", True),
     WEB / "how-we-test.html": ("./", "./", WAKE, "brand/tokens.css", True),
     WEB / "pricing.html": ("./", "./", WAKE, "brand/tokens.css", True),
@@ -64,7 +65,7 @@ HERO = re.compile(r"<!-- k-hero -->.*?<!-- /k-hero -->", re.S)
 VECTORS = re.compile(r"<!-- k-vectors -->.*?<!-- /k-vectors -->", re.S)
 STEPS = re.compile(r"<!-- k-steps -->.*?<!-- /k-steps -->", re.S)
 # the two front doors' first screens: (the app's address for the API, the app's address for its pages, hero.js)
-HEROES = {WEB / "index.html": ("@app", WAKE, "brand/hero.js"), STATIC / "index.html": ("", "/", "/static/brand/hero.js")}
+HEROES = {WEB / "index.html": ("@app", WAKE, "brand/hero.js"), WEB / "home.html": ("@app", WAKE, "brand/hero.js"), STATIC / "index.html": ("", "/", "/static/brand/hero.js")}
 
 
 def bar(home: str, site: str, app: str) -> str:

@@ -105,7 +105,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos
               "/api/tasks": "Open contributor rounds (knos.game)", "/api/memory/search": "Search the agent's memory (Sibyl)",
               "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funders' held money",
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/mcp/store": "The app-store MCP profile: read-only tools, no sign-in, a daily call cap (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
-              "/": "The app", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/taste/movie": "The films a film's fans also love, from Qloo (?title=&year=): names and years only", "/api/products": "Listed products", "/api/quote": "Fee quote",
+              "/": "The app", "/paid": "Paid on proof: the passkey wallet, pre-orders, pools, company sign-in and accounting files", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/taste/movie": "The films a film's fans also love, from Qloo (?title=&year=): names and years only", "/api/products": "Listed products", "/api/quote": "Fee quote",
               "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
               "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
               "/api/receivables": "Receivables a lender can finance (passkey wallets: advance rate, fee, due date)",
@@ -218,6 +218,27 @@ def memory_now(st) -> dict:
 
 
 _payout_cache: dict = {"at": 0.0, "v": None}
+# The app's home holds the demand check and the research products. The money and the company tools (passkey sign-in,
+# pre-orders, pools, single sign-on, a company's multisig, accounting files) are the Paid on proof page, /paid: on the
+# home each such block (<!-- paid:start --> to <!-- paid:end --> in static/index.html) leaves only an empty, hidden
+# element per id, so the page's scripts still find what they bind to, and an address of a moved view goes to /paid.
+PAID_BLOCK = re.compile(r"<!-- paid:start -->.*?<!-- paid:end -->", re.S)
+MOVED_VIEWS = ("signin", "buy", "teams")
+_VOID = {"input", "img", "br", "hr", "meta", "link"}
+TO_PAID = ('<script>(() => { const go = () => { const v = location.hash.slice(1).split("=")[0]; '
+           f'if ({list(MOVED_VIEWS)!r}.includes(v)) location.replace("/paid" + location.hash); }}; go(); '
+           'addEventListener("hashchange", go); })();</script>')
+
+
+def home_page(page: str) -> str:
+    """static/index.html as the home serves it: each paid block as hidden, empty stand-ins of its ids."""
+    def stubs(m: re.Match) -> str:
+        tags = re.findall(r'<([a-z][a-z0-9]*)\b[^>]*\bid="([^"]+)"', m.group(0))
+        inner = "".join(f'<{t} id="{i}" hidden>' if t in _VOID else f'<{t} id="{i}" hidden></{t}>' for t, i in tags)
+        return f'<div hidden data-moved="/paid">{inner}</div>'
+    return PAID_BLOCK.sub(stubs, page).replace("</head>", TO_PAID + "\n</head>", 1)
+
+
 REFEREE = "Released by the referee's verdict"
 GITHUB = "Released by GitHub's signed check, verified on Solana"
 OIDC_V2 = "FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W"
@@ -574,9 +595,10 @@ def make_handler(state: State):
                     return self._redirect("/#session=" + s_["token"])
                 except auth.AuthError as why:
                     return self._redirect("/#signin_error=" + urllib.parse.quote(str(why)[:120]))
-            if u.path in ("/", "/index.html"):
+            if u.path in ("/", "/index.html", "/paid"):
                 from . import vectors
                 page = (STATIC / "index.html").read_text(encoding="utf-8")
+                page = page if u.path == "/paid" else home_page(page)
                 pr = vectors.proof().get("proof")
                 if pr:                                        # the proof shown first, in the page itself (at the first paint)
                     data = json.dumps(pr, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")

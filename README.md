@@ -57,11 +57,11 @@ flowchart TB
 
 ## Try it in ten seconds
 
-Open [the check](https://drexthealpha.github.io/Knos/check/) in your browser. Paste the link to an AI agent's pull request. It tells you whether the agent's checks really passed.
+Open [the demand check](https://drexthealpha.github.io/Knos/) in your browser. Type what you are about to build, or press one of the samples. Qloo's taste data says who wants it, where to launch it and at what price.
 
-No pull request at hand? On [the front page](https://drexthealpha.github.io/Knos/), press **Try a sample invoice**. It checks a made-up bill from an AI agent.
+To check an AI agent's pull request instead, [it has its own page](https://drexthealpha.github.io/Knos/check/).
 
-There is nothing to install, no sign-up, and nothing is sent to Knos.
+There is nothing to install and no sign-up.
 
 ## Why nobody can fudge the count
 

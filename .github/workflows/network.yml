@@ -39,11 +39,11 @@ jobs:
       - name: site = the web app, at the commit it was built from
         run: bash scripts/build_site.sh _site "$GITHUB_SHA"
       - name: The proof shown first, from the app (its latest real check; none when it does not answer)
-        run: python scripts/proof_snapshot.py _site/index.html
+        run: python scripts/proof_snapshot.py _site/index.html && python scripts/proof_snapshot.py _site/app.html
       - name: The newest agent payout and the usage counter, from the app (the committed line stays when it does not answer)
-        run: python scripts/live_snapshot.py _site/index.html
+        run: python scripts/live_snapshot.py _site/index.html && python scripts/live_snapshot.py _site/app.html
       - name: The public pages' stylesheets in the page (no render-blocking request before the first paint)
-        run: python scripts/inline_css.py _site/index.html _site/wanted.html _site/faq.html _site/privacy.html _site/404.html
+        run: python scripts/inline_css.py _site/index.html _site/app.html _site/wanted.html _site/faq.html _site/privacy.html _site/404.html
       - name: the history the last build read, so this one reads only what is new
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:

@@ -21,6 +21,14 @@ case "$sha" in *[!0-9a-f]*|"") echo "the commit must be a full sha"; exit 1;; es
 [ "${#sha}" = 40 ] || { echo "the commit must be a full sha"; exit 1; }
 mkdir -p "$out"
 cp -r web/. "$out/"
+# THE FRONT DOOR is the demand check alone (web/home.html, written as index.html); the rest of the site, every page of
+# the one-page app, is app.html (web/index.html). An old address of the root (#records, #check...) is sent on from the
+# front door's head. KNOS_SPA_AT_ROOT=1 (the tests that drive the app's pages, tests/_posix.py and the web job) keeps the
+# app at index.html, where those tests open it; tests/web/one_front_door.mjs holds the split itself.
+if [ "${KNOS_SPA_AT_ROOT:-}" != 1 ]; then
+  mv "$out/index.html" "$out/app.html"
+  mv "$out/home.html" "$out/index.html"
+fi
 # the documents the command palette can open (web/palette.js reads it; without it the palette has no documents)
 "${PYTHON:-python3}" scripts/docs_index.py "$out/docs_index.json"
 # The name in the bar, the favicon and the card of a shared link are files of web/ (web/brand/, written by
