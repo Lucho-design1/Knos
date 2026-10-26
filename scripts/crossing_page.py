@@ -26,6 +26,31 @@ DEMAND = {"7b4ed16b8c2903dc": {"idea": "a graphene-coated cycling jacket", "city
                                "script": "https://github.com/drexthealpha/Knos/blob/main/scripts/test_qloo_sets_terms.py"}}
 
 
+# Qloo's launch cities for the idea as the D2 run kept them (its log keeps each idea's top metro only), and the second
+# worked example: of the D2 run's ideas, the largest target at or below 200 where the floor of 10 does not bind
+LAUNCH = {"7b4ed16b8c2903dc": [{"city": "Boulder, CO", "affinity": 0.9986, "cells": 3, "population": 326_831}]}
+SECOND = {"idea": "a smart water bottle that glows to remind you to drink", "city": "New York-Newark-Jersey City, NY-NJ",
+          "affinity": 0.9984, "cells": 3, "population": 19_498_249}
+
+
+def target(population: int, affinity: float) -> tuple[int, int]:
+    """D2's pre-order target, max(10, round(population / 100,000 x mean affinity)), and the formula's own value."""
+    raw = round(population / 100_000 * affinity)
+    return max(10, raw), raw
+
+
+def targets_table(rows: list[dict]) -> str:
+    """One row per launch city: its mean affinity, population and target; "floor" where max(10, ...) binds."""
+    body = []
+    for r in rows:
+        t, raw = target(r["population"], r["affinity"])
+        mark = f' <span class="floor" title="the formula gives {raw}; the floor of 10 binds">floor</span>' if raw < 10 else ""
+        body.append(f'<tr data-pop="{r["population"]}" data-aff="{r["affinity"]}" data-t="{t}"><td>{html.escape(r["city"])}</td>'
+                    f'<td>{r["affinity"]}</td><td>{r["population"]:,}</td><td><b>{t}</b>{mark}</td></tr>')
+    return ('<div class="tw"><table class="targets"><thead><tr><th scope="col">Launch city</th><th scope="col">Mean affinity</th>'
+            f'<th scope="col">Population</th><th scope="col">Target</th></tr></thead><tbody>{"".join(body)}</tbody></table></div>')
+
+
 def get(url: str) -> dict:
     with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "knos-crossing-page"}), timeout=120) as r:
         return json.loads(r.read())
@@ -80,7 +105,7 @@ def page(f: dict) -> str:
 <link rel="icon" href="../../icon.svg" type="image/svg+xml">
 <style>body{{margin:0;background:var(--paper);color:var(--ink);font:400 var(--s0)/1.5 var(--text)}}main{{max-width:960px;margin:0 auto;padding:16px 16px 48px}}
 h1{{font:600 var(--s3)/1.15 var(--head);margin:8px 0 12px}}h2{{font:600 var(--s1)/1.3 var(--head);margin:28px 0 8px}}.mono{{font-family:var(--mono);overflow-wrap:anywhere}}
-table{{border-collapse:collapse;width:100%;font-size:var(--s-1)}}td,th{{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}}.tw{{overflow-x:auto}}.fine{{color:var(--muted);font-size:var(--s-1)}}</style>
+table{{border-collapse:collapse;width:100%;font-size:var(--s-1)}}td,th{{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}}.tw{{overflow-x:auto}}.floor{{font-size:var(--s-1);padding:1px 6px;border:1px solid var(--line);border-radius:99px;margin-left:4px}}.fine{{color:var(--muted);font-size:var(--s-1)}}</style>
 </head>
 <body>
 <main>
@@ -95,6 +120,10 @@ Target = max(10, round({d["population"]:,} / 100,000 × {d["affinity"]})) = <b>{
 <li><h2>Money held</h2><p>{len(f["orders"])} pre-orders of 5 test units each, from {len(f["wallets"])} test wallets of Knos, held on Solana devnet.</p></li>
 <li><h2>Paid on proof</h2><p>The check counted them on devnet{f' at <span class="mono">{e(f["ci_commit"])}</span>' if f["ci_commit"] else ""}{f' (<a href="{e(run)}">the signing run</a>)' if run else ""}. Milestone: {e(f["status"])}.</p></li>
 </ol>
+<section id="targets"><h2>Targets in Qloo's launch cities</h2>{targets_table(LAUNCH.get(f["project"], []))}
+<p class="fine">The run kept the top launch city for each idea. A larger city raises the target: the same formula in the next example.</p>
+<h3>{e(SECOND["idea"])}</h3>{targets_table([SECOND])}
+<p class="fine">Target = max(10, round({SECOND["population"]:,} / 100,000 × {SECOND["affinity"]})) = {target(SECOND["population"], SECOND["affinity"])[0]}, from the same run.</p></section>
 <div class="tw"><table><thead><tr><th>#</th><th>Wallet</th><th>Units</th><th>Held</th><th>Released</th></tr></thead><tbody>{rows}</tbody></table></div>
 <p class="fine">Devnet, test money. The wallets are Knos's own test wallets; where their owners live is not checked on chain.</p>
 </main>
@@ -105,6 +134,12 @@ Target = max(10, round({d["population"]:,} / 100,000 × {d["affinity"]})) = <b>{
 
 def main(pid: str, check: bool = False) -> int:
     f = facts(pid)
+    old = ROOT / "web" / "crossing" / pid / "facts.json"
+    if old.is_file():                                 # a signing run the app no longer holds (a redeploy) stays as published
+        was = {o["order"]: o for o in json.loads(old.read_text(encoding="utf-8")).get("orders") or []}
+        for o in f["orders"]:
+            if not o.get("check_run") and (was.get(o["order"]) or {}).get("check_run"):
+                o["check_run"] = was[o["order"]]["check_run"]
     ok = (f["criteria_hash"] == f["recomputed"] and all(r["lock_ok"] for r in f["orders"])
           and all(r["release_ok"] and r["released_by"] for r in f["orders"]) and f["status"] == "released")
     out = ROOT / "web" / "crossing" / pid / "index.html"

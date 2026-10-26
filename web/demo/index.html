@@ -28,7 +28,9 @@ a{color:var(--accent)}
 .lede{margin:0 0 12px;max-width:60ch}.box{margin:24px 0 0;max-width:72ch}.box h2{font:600 var(--s1)/1.25 var(--head);margin:0 0 8px}
 .facts{display:grid;grid-template-columns:minmax(0,max-content) minmax(0,1fr);gap:4px 16px;margin:0 0 8px}.facts dd{margin:0}
 .formula{font-family:var(--mono);font-size:var(--s-1);overflow-wrap:anywhere;margin:0 0 4px}.nums{padding-left:1.1em;margin:0}.nums li{margin:0 0 6px}
-#demo-limits{border-left:3px solid var(--line);padding-left:12px}</style>
+#demo-limits{border-left:3px solid var(--line);padding-left:12px}
+.tw{overflow-x:auto}.targets{border-collapse:collapse;width:100%;font-size:var(--s-1)}.targets td,.targets th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.floor{font-size:var(--s-1);padding:1px 6px;border:1px solid var(--line);border-radius:99px;margin-left:4px}#demo-cities h3{font:600 var(--s0)/1.3 var(--head);margin:16px 0 6px}</style>
 </head>
 <body>
 <main>
@@ -51,6 +53,14 @@ a{color:var(--accent)}
   </dl>
   <p class="formula" data-not-prose><a href="https://github.com/drexthealpha/Knos/blob/main/apps/wanted/knos_wanted/metros.py" rel="noopener">target = max(10, round(POP / 100,000 &times; mean affinity))</a></p>
   <p class="formula" data-not-prose>= max(10, round(326,831 / 100,000 &times; 0.9986)) = max(10, round(3.26)) = max(10, 3) = <b id="demo-t">10</b> pre-orders</p>
+</section>
+<section class="box" id="demo-cities" aria-labelledby="demo-cities-h">
+  <h2 id="demo-cities-h">The target in each launch city</h2>
+  <div class="tw"><table class="targets"><thead><tr><th scope="col">Launch city</th><th scope="col">Mean affinity</th><th scope="col">Population</th><th scope="col">Target</th></tr></thead><tbody><tr data-pop="326831" data-aff="0.9986" data-t="10"><td>Boulder, CO</td><td>0.9986</td><td>326,831</td><td><b>10</b> <span class="floor" title="the formula gives 3; the floor of 10 binds">floor</span></td></tr></tbody></table></div>
+  <p class="fine">The run kept the top launch city for each idea. In Boulder the formula gives 3, so the floor of 10 sets the target.</p>
+  <h3 id="demo-second">a smart water bottle that glows to remind you to drink</h3>
+  <div class="tw"><table class="targets"><thead><tr><th scope="col">Launch city</th><th scope="col">Mean affinity</th><th scope="col">Population</th><th scope="col">Target</th></tr></thead><tbody><tr data-pop="19498249" data-aff="0.9984" data-t="195"><td>New York-Newark-Jersey City, NY-NJ</td><td>0.9984</td><td>19,498,249</td><td><b>195</b></td></tr></tbody></table></div>
+  <p class="formula" data-not-prose>= max(10, round(19,498,249 / 100,000 &times; 0.9984)) = <b>195</b> pre-orders</p>
 </section>
 <section class="box" id="demo-without" aria-labelledby="demo-without-h">
   <h2 id="demo-without-h">The same idea without Qloo</h2>
