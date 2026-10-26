@@ -101,3 +101,20 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+
+  # after a deploy from a push: the live front door in Chromium. Every page beside it raises no page error, and each of
+  # the 8 chips, pressed at 390 and 1280 px, draws a verdict card within 20 s (scripts/test_front_door_live.mjs).
+  live:
+    needs: deploy
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "22"
+      - run: npm install --no-save --no-audit --no-fund playwright@1.56.0
+      - run: npx playwright install --with-deps chromium
+      - name: the live front door, its 8 chips at 390 and 1280 px
+        run: node scripts/test_front_door_live.mjs --ci

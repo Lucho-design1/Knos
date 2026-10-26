@@ -39,7 +39,21 @@ def _load() -> None:
         if not _runs:
             _runs.extend(doc.get("runs") or [])
         if _proof is None and public(doc.get("proof") or {}):
-            _proof = doc.get("proof")
+            _proof = shape(doc.get("proof"))
+
+
+CALL_KEYS = ("n", "call", "params", "cached", "ms", "at", "effect", "error")
+
+
+def shape(p: dict | None) -> dict | None:
+    """A proof as the front doors read it: `calls` a list of calls (their requests, never Qloo's answers) and `n_calls`
+    their count. A proof saved before held the count in `calls`: it becomes `n_calls`, with no list."""
+    if not isinstance(p, dict):
+        return p
+    calls = p.get("calls")
+    rows = [{k: c.get(k) for k in CALL_KEYS if k in c} for c in calls if isinstance(c, dict)] if isinstance(calls, list) else []
+    n = len(calls) if isinstance(calls, list) else calls if isinstance(calls, int) else len(rows)
+    return {**p, "calls": rows, "n_calls": n}
 
 
 _public: set[str] = set()
@@ -69,7 +83,7 @@ def _card(rep: dict) -> dict:
     return {"hash": rep.get("hash"), "idea": rep.get("idea"), "label": rep.get("label"), "made": rep.get("made"),
             "decision": {"verdict": d.get("verdict"), "reasons": (d.get("reasons") or [])[:2], "plan": d.get("plan")},
             "who": rep.get("who"), "audiences": (rep.get("audiences") or [])[:3], "cities": (rep.get("cities") or [])[:5],
-            "price": rep.get("price"), "calls": len(rep.get("calls") or []),
+            "price": rep.get("price"), "calls": shape({"calls": rep.get("calls") or []})["calls"], "n_calls": len(rep.get("calls") or []),
             "leader": {k: (rep.get("leader") or {}).get(k) for k in ("name", "id")} if isinstance(rep.get("leader"), dict) else None}
 
 
@@ -150,7 +164,7 @@ def vectors() -> dict:
 def proof() -> dict:
     _load()
     with _lock:
-        p = dict(_proof) if _proof else None
+        p = shape(dict(_proof)) if _proof else None
     return {"proof": p, "label": "A real check this server ran" if p else "No real check yet"}
 
 

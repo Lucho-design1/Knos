@@ -472,7 +472,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     (r.persona || []).forEach((t) => add(t.src, "taste persona")); (r.ladder || []).forEach((b) => add(b.src, "brand ladder"));
     add(r.versus && r.versus.src, "room against the leader"); add(r.recommended && r.recommended.src, "next to it");
     (r.cities || []).filter((c) => (c.because || []).length).forEach((c) => add(c.src, "because"));
-    const rows = (r.calls || []).map((c) => { const p = c.params || {};
+    const rows = (Array.isArray(r.calls) ? r.calls : []).map((c) => { const p = c.params || {};
       const keys = Object.keys(p).filter((k) => p[k] != null && p[k] !== "").map((k) => `${k}=${String(p[k]).slice(0, 40)}`).join(", ");
       return `<li data-call="${esc(c.n)}"><a href="${esc(API)}/trace.html?hash=${encodeURIComponent(r.hash || "")}#call-${esc(c.n)}" target="_blank" rel="noopener">#${esc(c.n)}</a> ${
         esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${esc(c.ms ?? "?")} ms · ${c.cached ? "cached" : "live"}${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || String(c.effect || "").slice(0, 60) || "the verdict")}</li>`; });
@@ -592,10 +592,6 @@ ${src(h, price.src)}</section>
     slot.dataset.past = "1";
     try { performance.mark("knos-proof-shown"); } catch { /* old browsers */ }   // when the past result was drawn
   };
-  let carried = null;
-  try { carried = JSON.parse(document.getElementById("k-proof")?.textContent || "null"); } catch { carried = null; }
-  if (carried) draw(carried);                                  // in the page: at the first paint
-  else seen(root, () => get("/api/proof").then((p) => draw(p && p.proof)).catch(() => {}));
   form.addEventListener("submit", (ev) => { ev.preventDefault(); ask(q.value); });
   // below the first screen: the newest payout to an agent, as the chain has it, and the usage counter (checks and
   // briefs from the app's store, the payment program's devnet transactions). The build wrote both into the page
@@ -667,6 +663,13 @@ ${src(h, price.src)}</section>
       ask(slot.dataset.idea || q.value, { exclude: all });
     }
   });
+  // the past result, drawn last: every chip and the box already answer, and a snapshot the card cannot read leaves
+  // the first screen as it is (the chips still check)
+  const shown = (r) => { try { draw(r); } catch (e) { console.warn("knos: the past result was not drawn", e); } };
+  let carried = null;
+  try { carried = JSON.parse(document.getElementById("k-proof")?.textContent || "null"); } catch { carried = null; }
+  if (carried) shown(carried);                                 // in the page: at the first paint
+  else seen(root, () => get("/api/proof").then((p) => shown(p && p.proof)).catch(() => {}));
 })();
 </script>
   <p class="k-agent" data-not-prose><code>claude mcp add --transport http knos https://knos.onrender.com/mcp</code></p>

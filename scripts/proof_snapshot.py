@@ -28,6 +28,15 @@ def fetch(app: str) -> dict | None:
     return None
 
 
+def shape(p: dict) -> dict:
+    """`calls` a list (each call's request only) and `n_calls` its count, whatever shape the app sent: an app from
+    before held the count in `calls`, which the front door's calls panel cannot draw."""
+    calls = p.get("calls")
+    keys = ("n", "call", "params", "cached", "ms", "at", "effect", "error")
+    rows = [{k: c.get(k) for k in keys if k in c} for c in calls if isinstance(c, dict)] if isinstance(calls, list) else []
+    return {**p, "calls": rows, "n_calls": len(calls) if isinstance(calls, list) else calls if isinstance(calls, int) else 0}
+
+
 def main(argv: list[str]) -> int:
     page, app = Path(argv[0]), (argv[1] if len(argv) > 1 else "https://knos.onrender.com").rstrip("/")
     html = page.read_text(encoding="utf-8")
@@ -38,6 +47,7 @@ def main(argv: list[str]) -> int:
     if p is None:
         print("proof snapshot: the app gave none; the page asks for it when shown")
         return 0
+    p = shape(p)
     data = json.dumps(p, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     page.write_text(html.replace(SLOT, f'<script type="application/json" id="k-proof">{data}</script>', 1), encoding="utf-8", newline="\n")
     print(f"proof snapshot: {p.get('idea')!r}, checked {p.get('checked_at')}")
