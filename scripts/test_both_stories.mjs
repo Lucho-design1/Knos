@@ -64,9 +64,12 @@ try {
       await page.waitForSelector("#view-check", { state: "visible", timeout: 30000 });
       const head = await page.evaluate(() => { const e = document.getElementById("check"); return e ? [e.tagName, e.textContent.trim()] : null; });
       ok(head && head[0] === "H2", "the checker opens, its heading an h2", head);
+      await page.waitForSelector("#fd-in", { state: "visible", timeout: 30000 });
+      await page.waitForTimeout(1500);                       // the checker's own script is ready before the press
       await page.fill("#fd-in", PR);
       await page.click('#front-door button[data-fd="run"]');
-      const done = await page.waitForSelector("#check-verdict", { state: "visible", timeout: 120000 }).then(() => true).catch(() => false);
+      const done = await page.waitForFunction(() => { const v = document.getElementById("check-verdict");
+        return v && v.checkVisibility() && v.textContent.trim().length > 0; }, null, { timeout: 90000 }).then(() => true).catch(() => false);
       const res = done ? await page.evaluate(() => { const v = document.getElementById("check-verdict"); return [v.dataset.verdict, v.textContent.trim().slice(0, 120)]; }) : [];
       ok(done, `the public pull request is checked (${PR})`, res);
     }
