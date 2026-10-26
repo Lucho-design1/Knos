@@ -76,6 +76,12 @@ def main(path: str) -> int:
     if sig:
         s, n = re.subn(r'(<p class="k-paid" id="k-oidc" data-not-prose>).*?(</p>)', lambda m: m[1] + oidc_html(*sig) + m[2], s, count=1, flags=re.S)
         print(f"live_snapshot: knos_oidc {sig[0][:8]}... ({n} line)")
+    q = get("/api/qloo/status")                     # while Qloo limits the key: its line above the chips, in the page
+    if q and q.get("limited") and q.get("line"):
+        a = f'<a href="{APP}/status/qloo">{html.escape(q["line"])}</a>'
+        s, n = re.subn(r'<p class="k-fine k-limit" data-qloo-limit hidden></p>',
+                       lambda _: f'<p class="k-fine k-limit" data-qloo-limit>{a}</p>', s, count=1)
+        print(f"live_snapshot: Qloo limiting line ({n} line)")
     u = get("/api/usage")
     line = usage_html(u) if u else None
     if line:

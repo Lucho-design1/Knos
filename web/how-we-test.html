@@ -21,7 +21,8 @@
 <link rel="stylesheet" href="app.css">
 <style>.tests .t { margin: 32px 0 0; } .tests .t-n { font-size: var(--s1); margin: 4px 0; }</style>
 <script>document.documentElement.classList.add("js");try { const t = localStorage.getItem("knos-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
-<style id="t-stack">@media (max-width: 479.98px) {
+<style id="t-stack">:where(a[href]){padding-block:max(0px,calc((24px - 1em) / 2))}:where(summary){min-height:24px}
+@media (max-width: 479.98px) {
   .t .k-table { overflow: visible; }
   .t .k-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .t .k-table table, .t .k-table tbody, .t .k-table tr, .t .k-table td { display: block; min-width: 0; width: auto; }

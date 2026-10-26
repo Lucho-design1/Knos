@@ -327,13 +327,6 @@ ${src(h, price.src)}</section>
   // the past result, drawn last: every chip and the box already answer, and a snapshot the card cannot read leaves
   // the first screen as it is (the chips still check)
   const shown = (r) => { try { draw(r); } catch (e) { console.warn("knos: the past result was not drawn", e); } };
-  // while Qloo limits the key, one line above the chips (this server's own traffic, GET /api/qloo/status), after the paint
-  const limited = () => get("/api/qloo/status").then((d) => {
-    const chips = root.querySelector(".k-try");
-    if (!d || !d.limited || !d.line || !chips || root.querySelector("[data-qloo-limit]")) return;
-    chips.insertAdjacentHTML("beforebegin", `<p class="k-fine k-limit" data-qloo-limit><a href="${esc(API)}/status/qloo">${esc(d.line)}</a></p>`);
-  }).catch(() => {});
-  if (document.readyState === "complete") setTimeout(limited, 0); else addEventListener("load", () => setTimeout(limited, 0), { once: true });
   let carried = null;
   try { carried = JSON.parse(document.getElementById("k-proof")?.textContent || "null"); } catch { carried = null; }
   if (carried) shown(carried);                                 // in the page: at the first paint

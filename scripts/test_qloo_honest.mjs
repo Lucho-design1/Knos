@@ -1,6 +1,6 @@
 // test_qloo_honest, live: /status/qloo, in the app's stylesheet, shows today's calls, the last success, the last 429 and
 // the cache hit rate; the front door's line above the chips agrees with it (shown exactly while Qloo limits requests);
-// every calls row on the 6 recorded chips shows its milliseconds or "recorded <date>", with K1(d)'s five fields.
+// (the line is written into the page by the build from the app's status); every calls row on the 6 recorded chips shows its milliseconds or "recorded <date>", with K1(d)'s five fields.
 //   node scripts/test_qloo_honest.mjs <commit sha under test> <private recordings file>
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
@@ -35,7 +35,7 @@ try {
   const land = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await land.goto(SITE + "?t=" + Date.now(), { waitUntil: "load" });
   await land.waitForTimeout(4000);
-  const banner = await land.evaluate(() => { const e = document.querySelector("[data-qloo-limit]"); if (!e) return null;
+  const banner = await land.evaluate(() => { const e = document.querySelector("[data-qloo-limit]:not([hidden])"); if (!e) return null;
     const chips = document.querySelector(".k-try"); return { text: e.textContent.trim(), href: e.querySelector("a")?.href || "", above: !!(chips && e.compareDocumentPosition(chips) & Node.DOCUMENT_POSITION_FOLLOWING) }; });
   const agree = d.limited ? !!banner && banner.text === d.line && banner.above && banner.href.startsWith(`${API}/status/qloo`) && s.limited === d.line : !banner;
   ok(agree, `the front door agrees with /status/qloo: limited ${d.limited}, line "${d.line || ""}", banner ${banner ? `"${banner.text}"` : "none"}`);
