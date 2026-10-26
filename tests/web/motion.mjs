@@ -122,11 +122,13 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   check("  the pointer over it turns nothing", (await page.$eval("#mark3d", (e) => e.getAttribute("style"))) === null && (await page.evaluate(() => document.getAnimations().length)) === 0);
   check("  nothing is held back to be revealed", await page.evaluate(() => !document.documentElement.classList.contains("k-motion") && [...document.querySelectorAll("main .card")].every((c) => getComputedStyle(c).opacity === "1")));
   await page.evaluate(() => { window.transitions = 0; if (document.startViewTransition) { const real = document.startViewTransition.bind(document); document.startViewTransition = (f) => { window.transitions++; return real(f); }; } });
-  await page.click("#more-button"); await page.click('#more-list a[href="#pricing"]');     // Pricing is under More
-  await page.waitForFunction(() => location.hash === "#pricing" && !document.getElementById("view-pricing").hidden);
-  check("  a change of page changes at once", await page.isVisible("#view-pricing") && await page.isHidden("#view-check") && (await page.evaluate(() => window.transitions + document.getAnimations().length)) === 0);
+  await page.click(".brand"); await page.waitForSelector("#view-home", { state: "visible" });          // the wordmark goes home
+  // "Check a pull request" is under More, a link to a view of this page (#check-a-pull-request)
+  await page.click("#more-button"); await page.click("#more-list a#go-check");
+  await page.waitForFunction(() => !document.getElementById("view-check").hidden && document.getElementById("view-home").hidden);
+  check("  a change of page changes at once", await page.isVisible("#view-check") && await page.isHidden("#view-home") && (await page.evaluate(() => window.transitions + document.getAnimations().length)) === 0);
   const still = await page.evaluate(async () => {
-    const m = await import("./motion.js"), a = document.querySelector("#view-pricing h2"), b = document.querySelector("#view-pricing table"), token = document.createElement("i");
+    const m = await import("./motion.js"), a = document.querySelector("#view-check h2"), b = document.querySelector("#view-check .how"), token = document.createElement("i");
     const before = document.body.childElementCount;
     await m.travel(token, a, b, 480); await m.raven(a, b);
     return { reduced: m.prefersReduced(), added: document.body.childElementCount - before, running: document.getAnimations().length };
@@ -241,20 +243,23 @@ for (const [width, height] of [[1280, 800], [390, 844], [1440, 900]]) {
   // a change of page morphs
   await page.evaluate(() => { scrollTo(0, 0); window.transitions = 0; const real = document.startViewTransition.bind(document); document.startViewTransition = (f) => { window.transitions++; return real(f); }; });
   // a page opened for the first time is shown in the task of the press, its code still on its way: nothing to cross to yet
-  await page.click("#more-button"); await page.click('#more-list a[href="#pricing"]');     // Pricing is under More
-  await page.waitForSelector("#view-pricing", { state: "visible" });
-  check("  a page's first opening is no view transition: it is shown at once, and its code comes after", (await page.evaluate(() => window.transitions)) === 0 && await page.isHidden("#view-check") && (await page.evaluate(() => location.hash)) === "#pricing");
+  // (#pricing, never opened in this page: More no longer links it, so its hash is set)
+  await page.evaluate(() => { location.hash = "#pricing"; }); await page.waitForSelector("#view-pricing", { state: "visible" });
+  check("  a page's first opening is no view transition: it is shown at once, and its code comes after", (await page.evaluate(() => window.transitions)) === 0 && await page.isHidden("#view-check") && (await page.evaluate(() => location.hash)) === "#pricing", await page.evaluate(() => [window.transitions, location.hash]));
   await page.waitForFunction(() => document.documentElement.dataset.ready === "pricing");
-  await page.click(".brand"); await page.waitForSelector("#view-home", { state: "visible" });          // the wordmark goes home: the research products
+  await settle(page);
+  // "Check a pull request" is under More: a link to the checker, a jump within this page (#check-a-pull-request)
+  await page.click("#more-button"); await page.click("#more-list a#go-check"); await page.waitForSelector("#view-check", { state: "visible" });
   await page.waitForFunction(() => !("morph" in document.documentElement.dataset));
   const crossed = await page.evaluate(() => window.transitions);
-  // the first screen is let rest before the next press, as a reader's would: pressed while its entrance still runs, the
-  // browser's picture of it costs more than MORPH_BUDGET_MS on a slow runner (160-210 ms against 135-150 rested, measured
-  // in WSL), web/motion.js then rightly stops crossing, and the crossing below has nothing to show (seen: [])
+  // the page is let rest before the next press, as a reader's would: pressed while an entrance still runs, the browser's
+  // picture of it costs more than MORPH_BUDGET_MS on a slow runner (160-210 ms against 135-150 rested, measured in WSL),
+  // web/motion.js then rightly stops crossing, and the crossing below has nothing to show (seen: [])
   await settle(page);
-  await page.click("#more-button"); await page.click('#more-list a[href="#pricing"]');     // Pricing is under More
-  await page.waitForSelector("#view-pricing", { state: "visible" });
-  check("  from then on a link to another page is a view transition, and the page asked for is shown", crossed === 1 && (await page.evaluate(() => window.transitions)) === 2 && await page.isHidden("#view-check") && (await page.evaluate(() => location.hash)) === "#pricing");
+  await page.click(".brand"); await page.waitForSelector("#view-home", { state: "visible" });          // the wordmark goes home: the research products
+  check("  from then on a link to another page is a view transition, and the page asked for is shown", (await page.evaluate(() => window.transitions)) === crossed + 1 && await page.isHidden("#view-check") && await page.isHidden("#view-pricing") && (await page.evaluate(() => location.hash)) === "#home", await page.evaluate(() => [window.transitions, location.hash]).then((x) => [crossed, ...x]));
+  await settle(page);
+  await page.evaluate(() => { location.hash = "#pricing"; }); await page.waitForSelector("#view-pricing", { state: "visible" });   // where the crossings below start
   await settle(page);
   // the heading and the mark cross by name, and the names are gone when it is over
   // each crossing from a page at rest: the first screen's own entrance, still running when the second press came, cost
