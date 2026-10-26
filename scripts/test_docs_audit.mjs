@@ -48,10 +48,13 @@ try {
   // the README's two diagrams on GitHub's rendered page
   const gh = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await gh.goto(`https://github.com/drexthealpha/Knos/blob/${SHA}/README.md`, { waitUntil: "load", timeout: 90000 });
-  await gh.waitForTimeout(3000);
-  const pics = await gh.evaluate(() => [...document.querySelectorAll("article img, .markdown-body img")].filter((i) => /diagrams\/readme-\d\.svg/.test(i.getAttribute("src") || i.dataset.canonicalSrc || "") || /readme-\d\.svg/.test(i.src))
-    .map((i) => ({ src: i.src.slice(-40), loaded: i.complete && i.naturalWidth > 0 })));
-  ok(pics.length === 2 && pics.every((x) => x.loaded), `the README's diagrams render on GitHub: ${JSON.stringify(pics)}`);
+  await gh.waitForFunction(() => document.querySelectorAll(".js-render-target.mermaid.is-render-ready iframe").length >= 2, null, { timeout: 30000 }).catch(() => {});
+  await gh.waitForTimeout(2000);
+  // GitHub draws each ```mermaid block in a frame of its own: ready, and taller than an empty one
+  const pics = await gh.evaluate(() => [...document.querySelectorAll(".js-render-target.mermaid")].map((e) => ({
+    ready: e.classList.contains("is-render-ready"), height: Math.round(e.querySelector("iframe")?.getBoundingClientRect().height || 0) })));
+  const blocks = (readme.match(/^```mermaid$/gm) || []).length;
+  ok(blocks === 2 && pics.length === 2 && pics.every((x) => x.ready && x.height > 100), `the README's ${blocks} diagrams render on GitHub: ${JSON.stringify(pics)}`);
   await gh.close();
 } finally {
   await browser.close();
