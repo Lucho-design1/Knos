@@ -25,7 +25,7 @@ def get(url: str, body: dict | None = None) -> dict:
 def main(pid: str, app: str = "https://knos.onrender.com") -> int:
     p = get(f"{app}/api/project?id={pid}")
     m = next(x for x in p["milestones"] if (x.get("verifier") or {}).get("check") == "test_preorders_from_city")
-    launch = ((p.get("versions") or [{}])[-1].get("brief") or {}).get("launch") or {}
+    launch = p.get("launch") or {}                                  # the brief's launch terms, inside its criteria hash
     target = int(launch.get("target") or 0)
     locked = [o for o in m.get("orders") or [] if o.get("status") == "locked"]
     on_chain, funders = 0, set()

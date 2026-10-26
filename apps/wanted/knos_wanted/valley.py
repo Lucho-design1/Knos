@@ -218,14 +218,16 @@ def _create_custom(user: dict, title: str, brief: dict, report: str | None, team
     share = 10_000 // len(rows)
     ms = [{"key": n["key"], "name": n["name"] or n["key"], "kind": "build", "share_bps": share, "route": "none", "game": False,
            "deadline_s": n["deadline_s"] or ready.MIN_DEADLINE_S, "target": n["target"], "verifier": n["verifier"]} for n in rows]
-    return _open(user, "custom", "Your brief", title, [], report, team, ms, False, ready.terms(brief))
+    lt = ready.launch(brief)                  # the launch terms Qloo set (metros.brief): kept, and hashed with the milestones
+    return _open(user, "custom", "Your brief", title, [], report, team, ms, False, {**ready.terms(brief), **({"launch": lt} if lt else {})})
 
 
 def _brief(p: dict) -> dict:
     """The project's brief in the ready module's shape: its milestones' criteria, the kill fee and the challenge window."""
     return {"milestones": [{"key": m["key"], "name": m["name"], "target": m.get("target", ""), "verifier": m.get("verifier") or {},
                             "deadline_s": m["deadline_s"]} for m in p["milestones"]],
-            "kill_fee_bps": p.get("kill_fee_bps", 0), "challenge_s": p.get("challenge_s", _ready().DEFAULT_CHALLENGE_S)}
+            "kill_fee_bps": p.get("kill_fee_bps", 0), "challenge_s": p.get("challenge_s", _ready().DEFAULT_CHALLENGE_S),
+            **({"launch": p["launch"]} if p.get("launch") else {})}
 
 
 def _ready():
@@ -258,7 +260,7 @@ def _open(user, template, template_name, title, regulatory, report, team, ms, sa
          "team": (team or "").strip()[:80] or None, "owner": _user_key(user), "owner_label": str(user.get("label") or "")[:80],
          "made": _now(), "milestones": ms, "cluster": "devnet", "money": "devnet test units of this app's test mint: no real money",
          "sandbox": sandbox, "kill_fee_bps": t["kill_fee_bps"], "challenge_s": t["challenge_s"], "frozen": None, "changes": [],
-         "status": "open"}
+         "status": "open", **({"launch": t["launch"]} if t.get("launch") else {})}
     _version(p, "opened")
     _save("projects", pid, p)
     _journal("experiment", {"project": pid, "what": "project opened", "template": template, "regulatory": regulatory, "milestones": len(ms)},
