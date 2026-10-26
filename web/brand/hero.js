@@ -90,7 +90,7 @@
     const vs = r.versus || null, persona = r.persona || [], ladder = r.ladder || [], rec = (r.recommended && r.recommended.items) || [];
     const parts = [];
     if (because.length) parts.push(`<section class="k-part" data-part="because" data-qloo><h3>Because</h3><ul class="k-vals">${because.map((c) =>
-      val(c.src, `<b>${esc(c.name)}</b> <span class="k-fine">tied by ${esc(c.because.map((id) => ids[id] || id).join(", "))}</span>`)).join("")}</ul>${src(h, because[0].src)}</section>`);
+      val(c.src, `<b>${esc(c.name)}</b> <span class="k-fine">because ${esc(c.because.map((id) => ids[id] || id).join(", "))}</span>`)).join("")}</ul>${src(h, because[0].src)}</section>`);
     if (vs && (vs.whitespace || []).length) parts.push(`<section class="k-part" data-part="whitespace" data-qloo><h3>Room against ${esc(vs.leader)}</h3><ul class="k-vals">${
       vs.whitespace.slice(0, 6).map((w) => val(vs.src, esc(w))).join("")}</ul><p class="k-fine">overlap ${Math.round((vs.overlap || 0) * 100)}%</p>${src(h, vs.src)}</section>`);
     if (persona.length) parts.push(`<section class="k-part" data-part="persona" data-qloo><h3>Taste persona</h3><ul class="k-vals">${
@@ -101,6 +101,21 @@
       rec.slice(0, 6).map((x) => val(r.recommended.src, esc(x.name))).join("")}</ul>${src(h, r.recommended.src)}</section>`);
     return parts.join("");
   }
+  // the leader's weekly trend from /v2/trending (check.py _trend): its direction and the last week Qloo has
+  const trendLine = (r) => { const t = r.trend || {};
+    return t.data_through && t.direction ? `<p class="k-fine" data-part="trend">Trend of ${esc(t.entity || "the leader")}: ${esc(t.direction)}, data through ${esc(t.data_through)}${src(r.hash, t.src)}</p>` : ""; };
+  // the same card with every Qloo answer removed, by the check's rule (check.py decide: no live Qloo evidence, no
+  // verdict): no launch city, no pre-order target, and pre-orders cannot open. From the card's own data, offline.
+  const without = (r) => `<article class="k-card k-unknown" data-verdict="CANNOT_DECIDE" data-without-qloo data-not-prose>
+  <header class="k-card-head"><p class="k-kick">${esc(r.idea || "")} · without Qloo</p><h2 class="k-verdict">${esc(WORD.CANNOT_DECIDE[0])}</h2>
+  <p class="k-why">With every Qloo answer removed there is no launch city and no pre-order target, so pre-orders cannot open.</p>
+  <button type="button" class="k-chip" data-without aria-pressed="true">Without Qloo</button></header></article>`;
+  slot.addEventListener("click", (ev) => {
+    const b = ev.target instanceof Element && ev.target.closest("[data-without]");
+    if (!b || !slot.last) return;
+    slot.innerHTML = b.getAttribute("aria-pressed") === "true" ? card(slot.last) : without(slot.last);
+    slot.querySelector("[data-without]")?.focus();
+  });
   // every Qloo call behind the card: what it asked, how long it took and which part of the card it fed
   // the lists and the calls panel are styled when a card first needs them: the first screen's stylesheet stays within its
   // weight (tests/web/perf.mjs)
@@ -116,11 +131,10 @@
     (r.persona || []).forEach((t) => add(t.src, "taste persona")); (r.ladder || []).forEach((b) => add(b.src, "brand ladder"));
     add(r.versus && r.versus.src, "room against the leader"); add(r.recommended && r.recommended.src, "next to it");
     (r.cities || []).filter((c) => (c.because || []).length).forEach((c) => add(c.src, "because"));
-    const KEY = ["filter.type", "filter.location.query", "signal.interests.entities", "signal.interests.tags", "take", "query"];
     const rows = (r.calls || []).map((c) => { const p = c.params || {};
-      const keys = KEY.filter((k) => p[k] != null && p[k] !== "").map((k) => `${k}=${String(p[k]).slice(0, 40)}`).join(", ");
+      const keys = Object.keys(p).filter((k) => p[k] != null && p[k] !== "").map((k) => `${k}=${String(p[k]).slice(0, 40)}`).join(", ");
       return `<li data-call="${esc(c.n)}"><a href="${esc(API)}/trace.html?hash=${encodeURIComponent(r.hash || "")}#call-${esc(c.n)}" target="_blank" rel="noopener">#${esc(c.n)}</a> ${
-        esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${esc(c.ms ?? "?")} ms${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || "the verdict")}</li>`; });
+        esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${esc(c.ms ?? "?")} ms · ${c.cached ? "cached" : "live"}${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || "the verdict")}</li>`; });
     return rows.length ? `<details class="k-calls" data-part="calls"><summary>Qloo calls (${rows.length})</summary><ol>${rows.join("")}</ol></details>` : "";
   }
 
@@ -138,6 +152,7 @@
     // the cities of Qloo's heatmap, each a Census metro (apps/wanted metros.py); else Qloo's destinations
     const heat = ((terms && terms.metros) || []).map((m) => ({ name: m.city, lat: m.lat, lon: m.lon, src: (r.where || [])[0]?.src }));
     const cities = (heat.length ? heat : (r.cities || []).length ? r.cities : launch.cities || []).slice(0, 5);
+    const matched = Object.fromEntries((r.matches || []).filter((m) => m && m.id).map((m) => [m.id, m.name]));   // explainability's ids, named
     const where = ((r.where || []).length ? r.where : launch.where || []).slice(0, 8), also = (r.also_love && r.also_love.domains) || [];
     const price = r.price || {}, tier = String(price.tier || "").toLowerCase();
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
@@ -156,7 +171,8 @@
     return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}" data-not-prose>
   ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}
   <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
-  ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}</header>
+  ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}${trendLine(r)}
+  ${r.decision ? `<button type="button" class="k-chip" data-without aria-pressed="false">Without Qloo</button>` : ""}</header>
   ${empty && r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}
   ${empty && !r.qloo_down ? `<p class="k-next" data-part="next">Qloo has no taste data for this yet. Name who it is for and what it is like, as in "a vegan meal kit for students, like HelloFresh". Science, B2B or lab work: <a href="${esc(API)}/companies">companies mode</a>.</p>
   <form class="k-like" data-like><label>Most like <input name="like" maxlength="80" placeholder="a product or brand you know" aria-label="What is it most like?"></label> <button type="submit">Check</button></form>` : `<div class="k-parts">`}
@@ -166,7 +182,8 @@
         a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}${a.tie.via ? `, through ${esc(a.tie.via)}` : ""}</span></li>`).join("")}</ul>`
         : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
     <section class="k-part k-where" data-part="cities" data-qloo data-heat="${heat.length}"><h3>Where to launch</h3>
-      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}</li>`).join("")}</ol>` : r.stage === "verdict" ? `<p class="k-none" data-pending>Qloo's map is on its way.</p>` : `<p class="k-none">Qloo named no launch city.</p>`}${terms ? `<p class="k-terms">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders, all refunded if it falls short.</p>` : r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}${src(h, cities[0]?.src)}</section>
+      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}${
+        (c.because || []).length ? `<br><span class="k-fine" data-because>because ${esc(c.because.map((id) => matched[id] || id).join(", "))}</span>` : ""}</li>`).join("")}</ol>` : r.stage === "verdict" ? `<p class="k-none" data-pending>Qloo's map is on its way.</p>` : `<p class="k-none">Qloo named no launch city.</p>`}${terms ? `<p class="k-terms">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders, all refunded if it falls short.</p>` : r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}${src(h, cities[0]?.src)}</section>
     ${also.length ? `<section class="k-part" data-part="also" data-qloo><h3>They also love</h3>${also.map((d) =>
       `<p class="k-also" data-domain="${esc(d.domain)}"><b>${esc(d.domain === "music" ? "Music" : d.domain === "film" ? "Film" : d.domain)}</b> ${
       d.items.map((x) => esc(x.name)).join(", ")}${src(h, d.src)}</p>`).join("")}</section>` : ""}

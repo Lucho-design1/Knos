@@ -27,7 +27,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from . import qloo_harness
+from . import qloo_guard, qloo_harness
 
 TTL_S = 7 * 86_400
 ERROR_TTL_S = 86_400          # a 4xx answer (Qloo refused the question) is remembered for a day
@@ -42,6 +42,11 @@ LIVE_LABEL = "LIVE Qloo data (Qloo REST API, read for this report, cached privat
 
 RETRY_AFTER_DEFAULT_S = 300  # Qloo's 429 without a Retry-After: nothing is sent to Qloo for five minutes
 _hold = {"until": 0.0}        # after a 429: no Qloo request at all before this time (time.time()), for the whole process
+LAST: dict = {}               # the last answer Qloo itself gave this process (its time, HTTP status and path): /status/qloo
+
+
+def _seen(status, path: str) -> None:
+    LAST.update(at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), status=status, path=path)
 
 
 def retry_after(value, now: float | None = None) -> float:
@@ -232,6 +237,10 @@ class Client:
     def _get(self, path: str, params: dict | None = None) -> dict:
         """One Qloo call. GET, except when a parameter Qloo takes only in a JSON body is set (POST_ONLY): then POST."""
         params = {k: v for k, v in (params or {}).items() if v is not None and v != ""}
+        try:                                                # every parameter documented by Qloo for this endpoint and filter.type,
+            qloo_guard.check(path, params)                  # or nothing is sent (knos_wanted.qloo_guard)
+        except qloo_guard.InvalidParameter as why:
+            raise QlooError(str(why)) from None
         method = "POST" if any(k in POST_ONLY for k in params) else "GET"
         if forced():
             raise QlooError(f"{method} {path}: HTTP {forced()} (test mode)")
@@ -273,8 +282,10 @@ class Client:
                 if len(raw) > MAX_BYTES:
                     raise QlooError(f"{method} {path}: answer larger than {MAX_BYTES} bytes")
                 body = json.loads(raw or b"{}")
+                _seen(200, path)
                 break
             except urllib.error.HTTPError as e:
+                _seen(e.code, path)
                 if e.code == 429:                            # never asked again at once: wait what Qloo says (Retry-After)
                     wait = retry_after(e.headers.get("Retry-After") if e.headers else None)
                     _hold["until"] = max(_hold["until"], time.time() + wait)

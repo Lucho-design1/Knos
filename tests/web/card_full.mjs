@@ -25,7 +25,8 @@ function report(i) {
     persona: [{ name: `Tag A${i}`, src: 4 }, { name: `Tag B${i}`, src: 4 }],
     ladder: [{ name: `Brand X${i}`, affinity: 0.91, src: 5 }, { name: `Brand Y${i}`, affinity: 0.82, src: 5 }],
     recommended: { items: [{ name: `Rec ${i}` }, { name: `Rec ${i}b` }], src: 6 },
-    versus: { leader: `Leader ${i}`, overlap: 0.4, whitespace: [`Room ${i}`, `Room ${i}b`], src: 7 }, calls };
+    versus: { leader: `Leader ${i}`, overlap: 0.4, whitespace: [`Room ${i}`, `Room ${i}b`], src: 7 },
+    trend: { entity: `Leader ${i}`, direction: "flat", data_through: "2026-05-07", src: 1 }, calls };
 }
 
 const browser = await chromiumOrSkip();
@@ -59,15 +60,23 @@ const browser = await chromiumOrSkip();
         }));
         const panel = card.querySelector('[data-part="calls"]');
         const rows = panel ? [...panel.querySelectorAll("li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()) : [];
-        return { parts, rows, summary: panel?.querySelector("summary")?.textContent };
+        return { parts, rows, summary: panel?.querySelector("summary")?.textContent, trend: card.querySelector('[data-part="trend"]')?.textContent.trim(),
+          city: card.querySelector(".k-cities li [data-because]")?.textContent.trim() };
       });
-      const want = { because: [[`City ${i} tied by Match ${i}`, "3", true]], whitespace: [[`Room ${i}`, "7", true], [`Room ${i}b`, "7", true]],
+      const want = { because: [[`City ${i} because Match ${i}`, "3", true]], whitespace: [[`Room ${i}`, "7", true], [`Room ${i}b`, "7", true]],
         persona: [[`Tag A${i}`, "4", true], [`Tag B${i}`, "4", true]], ladder: [[`Brand X${i} 0.91`, "5", true], [`Brand Y${i} 0.82`, "5", true]],
         recommendations: [[`Rec ${i}`, "6", true], [`Rec ${i}b`, "6", true]] };
       for (const [p, rows] of Object.entries(want))
         ok(`report ${i}: "${p}" renders each value, linked to the call it came from in the trace`, JSON.stringify(got.parts[p]) === JSON.stringify(rows), got.parts[p]);
       const fed = { 3: ["launch cities", "because"], 4: ["taste persona"], 5: ["brand ladder"], 6: ["next to it"], 7: ["room against the leader"], 2: ["who wants it"] };
-      ok(`report ${i}: the calls panel lists 7 calls`, got.summary === "Qloo calls (7)" && got.rows.length === 7, got.summary);
+      ok(`report ${i}: the calls panel lists 7 calls, each live or cached`, got.summary === "Qloo calls (7)" && got.rows.length === 7 && got.rows.every((r) => / \u00b7 (live|cached)( \u00b7 |$)/.test(r)), got.summary);
+      ok(`report ${i}: the trend line and "because" under the launch city`, got.trend === `Trend of Leader ${i}: flat, data through 2026-05-07 source` && got.city === `because Match ${i}`, [got.trend, got.city]);
+      await page.click("#k-card [data-without]");
+      const off = await page.evaluate(() => ({ v: document.querySelector("#k-card [data-without-qloo]")?.dataset.verdict, cities: document.querySelectorAll("#k-card .k-cities li").length,
+        said: document.querySelector("#k-card [data-without-qloo] .k-why")?.textContent }));
+      ok(`report ${i}: Without Qloo: no verdict, no launch city, no target, pre-orders closed`, off.v === "CANNOT_DECIDE" && off.cities === 0 && /no launch city and no pre-order target/.test(off.said || ""), off);
+      await page.click("#k-card [data-without]");
+      ok(`report ${i}: switched back, the card is whole again`, await page.evaluate(() => !!document.querySelector('#k-card [data-part="persona"]')));
       for (const [n, names] of Object.entries(fed)) {
         const row = got.rows.find((r) => r.startsWith(`#${n} `)) || "";
         const ms = n === "7" ? "90 ms" : `${100 + Number(n)} ms`, key = n === "7" ? "" : "filter.type=";
