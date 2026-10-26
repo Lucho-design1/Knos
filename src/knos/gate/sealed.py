@@ -16,7 +16,7 @@
 What the sandbox does not stop: the pull request's code runs in the same process as the hidden tests, so it can read
 them while they run and can try to fake their result (its exit code and its report both come from that process). It has no network and no token to send them anywhere, its
 output is never shown, and the cheat library refuses the edits that fake a result (runner_tampering,
-runner_forgery). docs/reference/PR_GATE.md says this in its limits."""
+runner_forgery). docs/reference/REFEREE.md says this in its limits."""
 from __future__ import annotations
 
 import base64

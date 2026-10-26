@@ -50,6 +50,6 @@ The first line is a finding, not a pass: every skip case in the red-team set is 
 red-team gate cannot see that `skip_added` went blind. The founder's signature stays required for exactly this.
 
 These runs were made before the review fixes: candidate code ran in Gate's network-only sandbox as the operator,
-not yet in the loop's jail (docs/reference/SELF.md, "The jail").
+not yet in the loop's jail.
 
 Audit tier (never used for merging), run after the iterations on the accepted versions: v1 passed 3/3, v3 passed 3/3.

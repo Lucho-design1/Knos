@@ -1,4 +1,4 @@
-"""The private-repository path (src/knos/private.py, examples/private, docs/reference/PRIVATE.md): what may leave a customer's
+"""The private-repository path (src/knos/private.py, examples/private, docs/reference/COMPANIES.md#private-repositories): what may leave a customer's
 network, who both parties approved, what two attestors amount to, and the rules of the workflow a customer installs.
 Tokens are signed with the tests' key, not by any forge: no private-repository customer has run this."""
 from __future__ import annotations
@@ -126,8 +126,6 @@ def test_what_the_receipt_records_of_each_arrangement_and_where_its_comparison_s
     two_instances_equal_ids = [judge("attestor", 1, 5, 9), judge("neutral", 1, 5, 9)]            # owner 5 on one server and owner 5 on another are two accounts
     assert receipt.independence_of(two_instances_equal_ids)[0] is True and "numbers its own accounts" in private.receipt_shows(two_instances_equal_ids)
     assert judge("attestor", 1, 500, 21)["independent_of_buyer"] is False and judge("attestor", 1, 11, 700)["independent_of_seller"] is False
-    page = (ROOT / "docs" / "reference" / "PRIVATE.md").read_text(encoding="utf-8")
-    assert all(a in page for a in private.ARRANGEMENTS) and "same_controller" in page and "numbers its own accounts" in page
 
 
 def test_the_workflow_signs_in_a_job_that_runs_no_pull_request_code_and_uploads_only_the_record_and_the_token():
@@ -168,15 +166,6 @@ def test_the_two_commands_the_workflow_runs_write_a_record_and_check_it(tmp_path
     (tmp_path / "terms.json").write_bytes(b"other")
     bad = run("check", "--record", "record.json", "--token", "token.jwt", "--attestors", str(EX / "attestors.json"), "--terms", "terms.json")
     assert bad.returncode == 1 and bad.stdout.startswith("not done: the terms given are not the ones")
-
-
-def test_the_page_says_how_an_enterprise_issuer_is_admitted_who_opens_sealed_evidence_and_that_nobody_has_run_it():
-    page = (ROOT / "docs" / "reference" / "PRIVATE.md").read_text(encoding="utf-8")
-    for words in ("https://HOSTNAME/_services/token", "/.well-known/openid-configuration", "oauth/discovery/keys", "jwks_uri", "register_private_key_ix",
-                  "[VERIFIER.md](VERIFIER.md)", "../examples/issuers", "No private-repository customer has run this", "not legal advice",
-                  "examples/private/knos-private.yml", "knos vault open", "test USDC", "ci_id_tokens_issuer_url"):
-        assert words in page, words
-    assert not re.search(r"\b(trustless|bulletproof|immutable)\b", page)
 
 
 # ---- the whole path as one command, against a simulator (0.3.20) --------------------------------------------------------
@@ -281,5 +270,5 @@ def test_the_run_refuses_what_the_path_refuses_and_takes_a_real_verdict_and_a_gi
     got = private.run(EX, tmp_path / "gl.json", tmp_path / "o3", verdict=VERDICT, terms=TERMS, now=NOW, seed="gl", say=lambda _l: None)
     assert (got["record"]["assurance"], got["record"]["checks_sha256"], got["arrangement"]["arrangement"]) == ("hermetic", "c" * 64, "one attestor")
     assert "project_id" in private._claims(got["token"]) and got["record"]["terms_sha256"] == hashlib.sha256(TERMS).hexdigest()
-    page = (ROOT / "docs" / "reference" / "PRIVATE.md").read_text(encoding="utf-8")
-    assert "python -m knos.private run --repo" in page and "No private customer has run it" in page and "gh workflow run knos-private.yml" in page
+    page = (ROOT / "docs" / "reference" / "COMPANIES.md").read_text(encoding="utf-8")
+    assert "python -m knos.private run" in page and "No customer has run the workflow" in page

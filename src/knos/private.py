@@ -29,7 +29,7 @@ every record, and the token's audience is the record's hash, so the issuer signs
 What a receipt (knos.receipt, read here and not changed) shows of each is in `receipt_shows`, with the limit that
 matters across instances: a receipt compares account ids, and ids are numbered by each forge for itself.
 
-`python -m knos.private record|check` are the two commands the workflow in examples/private runs. docs/reference/PRIVATE.md
+`python -m knos.private record|check` are the two commands the workflow in examples/private runs. docs/reference/COMPANIES.md#private-repositories
 is the page. Nobody with a private repository has run this path: it is tested here with keys this repository holds.
 
 `python -m knos.private run --repo FOLDER --attestors FILE` is the whole path as one command, against a simulator: the
@@ -78,7 +78,7 @@ def attestors_of(doc) -> dict:
         assert len({a["name"] for a in doc["attestors"]}) == len(doc["attestors"])
     except Exception:  # noqa: BLE001
         raise ValueError("an attestors file is {type: knos.attestors, version: 1, parties: [two names], attestors: [{name, issuer (https), issuer_run_by: "
-                         "buyer, supplier or third party, repository_id, workflow, administrator, approved_by: [parties]}]} (docs/reference/PRIVATE.md)") from None
+                         "buyer, supplier or third party, repository_id, workflow, administrator, approved_by: [parties]}]} (docs/reference/COMPANIES.md#private-repositories)") from None
     return doc
 
 

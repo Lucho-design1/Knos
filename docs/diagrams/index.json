@@ -4,20 +4,14 @@
   {
    "source": "README.md",
    "block": 1,
-   "sha256": "45f562a95e92818e7e70edd281537999a66fd091bc471486b9f11a3024a37d0d",
+   "sha256": "799d2aea16d23287b3f2e96536b8fba19ce46040410614a6ee6e2d80fc518e9f",
    "svg": "docs/diagrams/readme-1.svg"
   },
   {
    "source": "README.md",
    "block": 2,
-   "sha256": "1659343c061cfaf8405c1cef1e51ae6e061ed55a77833eb907c23c24a534d397",
+   "sha256": "5d9b7cd0b85e8dccbdb234feae1294a05f08a7136690c49b0b5bf3a513bf668d",
    "svg": "docs/diagrams/readme-2.svg"
-  },
-  {
-   "source": "README.md",
-   "block": 3,
-   "sha256": "20e3fbbb9900ac529f5ca3214ccb2d8f12105b042e896d07ce17f019711bc24d",
-   "svg": "docs/diagrams/readme-3.svg"
   },
   {
    "source": "docs/INDEX_METHOD.md",
@@ -46,7 +40,7 @@
   {
    "source": "docs/START.md",
    "block": 1,
-   "sha256": "b53fd4b495da4fa2f6e734b7dffcebe82223e2fc9b4a33720589b1f9dd4243c5",
+   "sha256": "a4e2eaea720fb1f0f973f0bf1c09e5735bedb55f95af1ddf9bde663ce3af49d2",
    "svg": "docs/diagrams/docs-start-1.svg"
   },
   {
@@ -64,7 +58,7 @@
   {
    "source": "docs/TRUST.md",
    "block": 1,
-   "sha256": "23859c41963b380d9a568aba46b7d06ef60f648172fbd5363b36425ebb8545b0",
+   "sha256": "9488c5514605bc385ba8cc5f909f50dde1bc3ea3280be748150b74b79b8e67fb",
    "svg": "docs/diagrams/docs-trust-1.svg"
   },
   {
@@ -80,22 +74,10 @@
    "svg": "docs/diagrams/docs-reference-charter-1.svg"
   },
   {
-   "source": "docs/reference/FLOWS.md",
-   "block": 1,
-   "sha256": "887b77ca85d2b3f4a819ddf732a89320183a7ff4c35f66614067e9b2a0e7052d",
-   "svg": "docs/diagrams/docs-reference-flows-1.svg"
-  },
-  {
    "source": "docs/reference/GOVERNANCE.md",
    "block": 1,
-   "sha256": "1374ba1a3373cdfffb504e8ce4eaac96e14144be1764498d7a107e9a88c6e433",
+   "sha256": "39353607f973680413ad3f7e1e39227e6d9c27ee9c0da26a50b352994816cec8",
    "svg": "docs/diagrams/docs-reference-governance-1.svg"
-  },
-  {
-   "source": "docs/reference/KEYS.md",
-   "block": 1,
-   "sha256": "0ffb8f1c877558eeaa026c70ea4e334e5074487cb17282557edd62bad3e96ded",
-   "svg": "docs/diagrams/docs-reference-keys-1.svg"
   },
   {
    "source": "docs/reference/METER.md",
@@ -104,46 +86,10 @@
    "svg": "docs/diagrams/docs-reference-meter-1.svg"
   },
   {
-   "source": "docs/reference/PILOT.md",
-   "block": 1,
-   "sha256": "6e39a659a0446ea1a317b3543cd1ffaaf8678dbfa3c2bc4d83178557dfb74f2a",
-   "svg": "docs/diagrams/docs-reference-pilot-1.svg"
-  },
-  {
-   "source": "docs/reference/PROPOSAL-2.3.md",
-   "block": 1,
-   "sha256": "b80b3ea2f1f95d4d1ab81d8db1fea5c63c4ebe0474fe6e2b18e0b471a537efd4",
-   "svg": "docs/diagrams/docs-reference-proposal-2-3-1.svg"
-  },
-  {
-   "source": "docs/reference/PROPOSAL-2.3.md",
-   "block": 2,
-   "sha256": "34d02c3521d6091a304cb6766a0702488241976db4cd76ef49fae3993948caf8",
-   "svg": "docs/diagrams/docs-reference-proposal-2-3-2.svg"
-  },
-  {
    "source": "docs/reference/README.md",
    "block": 1,
    "sha256": "81d8f99f5c0a0b32566f1a617eedb4a5f8b45864ce42e63b54f33f6bb4af3a46",
    "svg": "docs/diagrams/docs-reference-readme-1.svg"
-  },
-  {
-   "source": "docs/reference/SELFHOST.md",
-   "block": 1,
-   "sha256": "501bd0ed68601ec9df3b671047ef10465dfe28134d8ac861b085b679575b97ba",
-   "svg": "docs/diagrams/docs-reference-selfhost-1.svg"
-  },
-  {
-   "source": "docs/reference/SOURCES.md",
-   "block": 1,
-   "sha256": "6e83a3e80fda34104413fea903224cd990711c44d170290046c0b6c49478d9f9",
-   "svg": "docs/diagrams/docs-reference-sources-1.svg"
-  },
-  {
-   "source": "docs/reference/STANDARD.md",
-   "block": 1,
-   "sha256": "8a1a64b856e67fb4716dd06e3c5e984b9005d3e4ff79fbbab08dc243e07cc593",
-   "svg": "docs/diagrams/docs-reference-standard-1.svg"
   }
  ]
 }

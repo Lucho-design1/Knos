@@ -2,7 +2,7 @@
 
 A transaction normally names a recent blockhash and dies with it, about 33 s on devnet today (knos.platform.blockhash).
 That is too short for a funder whose approver signs on another machine, a financier who signs an assignment
-(ADVANCE.md), a hardware or cold wallet, or an agent that prepares a funding while its owner approves it. A durable
+a hardware or cold wallet, or an agent that prepares a funding while its owner approves it. A durable
 nonce replaces the blockhash with a value stored in a nonce account; the transaction stays good until that value is
 advanced, and the first instruction of the transaction advances it, so the same bytes can land once and never again
 (https://solana.com/docs/advanced/confirmation, durable transaction nonces; SIMD-0242 "Static Nonce Account Only" is
@@ -18,7 +18,7 @@ Here:
 
 `python -m knos.platform.nonce` does the same from a shell: `create`, `show`, `cosign` (add one signature to a
 transaction file) and `send`. The relay never holds a funder's key: it signs as fee payer, or not at all. The devnet
-run in scripts/capabilities_devnet.py funds a knos_pay order this way (docs/reference/DURABLE_NONCES.md).
+run in scripts/capabilities_devnet.py funds a knos_pay order this way (docs/reference/PLATFORM.md).
 """
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""The devnet runs behind docs/reference/DURABLE_NONCES.md, SAS_INPUTS.md, X402_UPTO.md and SPENDING_LIMITS.md.
+"""The devnet runs behind docs/reference/PLATFORM.md, docs/reference/TERMS.md and docs/reference/X402.md, and a Squads spending limit.
 
     PYTHONPATH=src python scripts/capabilities_devnet.py KEYDIR [mint|nonce|sas|upto|squads ...] [--out FILE]
 

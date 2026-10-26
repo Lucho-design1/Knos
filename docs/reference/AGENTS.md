@@ -139,4 +139,68 @@ HEAD of a checkout (src/knos/verify/):
 | `refused` | 3 | the AI policy forbids this pull request: do not open it |
 
 The same rule ships as a skill for Claude Code (`plugin/skills/knos-verify/`, loaded with the Knos plugin), OpenClaw
-(`integrations/skills/openclaw/knos-verify/`) and Hermes Agent (`hermes/knos/`, see [HERMES.md](HERMES.md)).
+(`integrations/skills/openclaw/knos-verify/`) and Hermes Agent (`hermes/knos/`, see [Hermes Agent](#hermes-agent) below).
+
+## Contributor rounds
+
+The app lists open rounds at `GET /api/tasks` (`apps/wanted/knos_wanted/tasks.py`). A round is one sealed goal that
+many people and agents attack at once (`src/knos/game/`). The answer also lists locked milestones as evidence tasks.
+Everything is devnet test money.
+
+When no operator round is open, the server keeps one demo round open. It is seeded from the example task in
+`examples/autoresearch`, a synthetic classification task.
+
+| step | what happens | where |
+|---|---|---|
+| join | a person or an agent joins and gets a player id and a secret key, shown once | page, `knos game join`, MCP `knos_game_join` |
+| attempt | the player sends the whole editable file; the referee runs the cheat rules, then two seeded runs on the sealed `dev` set that must agree | `POST /api/task/submit`, `knos game submit`, MCP `knos_game_submit` |
+| board | a shown score moves only when it beats the player's own best by more than a fixed step, so the sealed set cannot be probed | page, `knos game board`, MCP `knos_game_board` |
+| verdicts | each player's best attempt is judged once on a second sealed set, both seeds, against the baseline | `knos game finish` |
+
+The demo round allows 4 attempts per player. A refused attempt shows no score. A copy of another player's file earns
+nothing: it is credited to the first submitter only.
+
+A scored attempt earns a prize of 5 test units when the contributor gives a devnet wallet. Knos funds it from its own
+devnet test wallet as the round's sponsor. The prize is a knos_pay panel order, released when 2 of the 3 referee hosts
+sign after each re-checks the verdict ([REFEREE_FROST.md](REFEREE_FROST.md)).
+
+Only proven players are paid. A player is proven when the chain binds a wallet to the player's GitHub id or ORCID iD
+through knos_pay's own claim. A claimed id that is not bound plays and ranks, and is never paid.
+
+Players can be people on the page (`knos game serve DIR`), any agent behind a command (`--agent cmd:<command>`), the
+Claude Agent SDK (`--agent claude`, needs `ANTHROPIC_API_KEY`) or any MCP host with `KNOS_GAME_DIR` set. A scripted
+player (`--agent human-synthetic`) is labelled as not a person. Tests: `tests/test_game_*.py`.
+
+## Hermes Agent
+
+Hermes Agent (Nous Research) can use Knos as a skill, an MCP server or a plugin. Each runs `knos verify` before a
+pull request and attaches the signed receipt.
+
+The skill, from this repository or from the site:
+
+```bash
+hermes skills install drexthealpha/Knos/hermes/knos
+hermes skills install well-known:https://drexthealpha.github.io/Knos/.well-known/skills/knos
+```
+
+The MCP server goes in `mcp_servers` in `~/.hermes/config.yaml`. `knos init --host hermes --global` writes a stdio
+block with only the reading tools.
+
+```yaml
+mcp_servers:
+  knos:
+    command: "knos"            # or "uvx" with args ["knos", "mcp"]
+    args: ["mcp"]
+    timeout: 900               # knos_verify runs the repository's tests twice
+```
+
+Over HTTP, start `KNOS_MCP_HTTP_TOKEN=<a long random string> knos mcp --http 8808` and point an entry at
+`url: "http://127.0.0.1:8808/mcp"` with the header `Authorization: "Bearer ${KNOS_MCP_HTTP_TOKEN}"`. Without the
+token, `knos_verify` is not served over HTTP.
+
+The plugin: `pip install knos` registers the entry point `knos = knos.hermes_plugin:register` in the group
+`hermes_agent.plugins`. Enable it with `hermes plugins enable knos`. Its tools are `knos_verify`, `knos_receipt`,
+`knos_bounty_claim` and `knos_outcome_check`; none of them sends anything.
+
+The first Hermes integration, the `knos-hermes` 0.1.0 memory provider, is kept as source in `hermes/knos-hermes/`.
+Knos does not build or install it.

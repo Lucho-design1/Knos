@@ -8,7 +8,7 @@ import json
 
 from . import CHECK_NAME, MARKER
 
-INSTALL = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/PR_GATE.md#install"
+INSTALL = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/REFEREE.md"
 
 
 def title(v: dict) -> str:

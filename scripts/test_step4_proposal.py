@@ -1,4 +1,4 @@
-"""test_step4_proposal, live and read only: KEYS.md step 4 is proposed. program.yml passed on the commit that carries
+"""test_step4_proposal, live and read only: key step 4 (the key admin moves to the upgrade vault) is proposed. program.yml passed on the commit that carries
 the change and its release record (deploy/upgrade-step4/HASHES-v3.txt), and the upgrade multisig's proposal that
 deploys that build is Approved by at least 2 of its 3 members, waiting on the multisig's time lock. Read from GitHub's
 record of the run and from the proposal's Squads v4 account on devnet.

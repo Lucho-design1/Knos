@@ -133,7 +133,7 @@ facts and one plain line under `says`.
 | `deliverable` | What is one deliverable? | its `kind` (`pull-request`, `batch`, `resolution`) and what there is one of it for; the line says how a retry is told from a new deliverable |
 | `evidence` | Whose signature counts? | `sources`: each an `issuer` and a `workflow` |
 | `checks` | What decides? | `mode`, the `deciding` checks, the acceptance suite's hash, and `authority`: where the authoritative copy lives. Optional (0.3.21): `min_assurance`, one of `reported`, `rerun`, `agreed`: nothing is paid on a receipt below that level ([RECEIPT.md](RECEIPT.md), assurance), and the funding workflow sends no payment its evaluator cannot reach it with. Terms without the key keep the hash they had |
-| `window` | How long can it be reopened? | `warranty_days` and `holdback_percent`; both zero, or both not. Optional (0.3.21): `period_close`, with `buyer_key` and `supplier_key` (two different Ed25519 keys, in base 58) and `silence_days`: a month closes when both keys signed its last line, or one did and closed it alone after that many days of silence ([EVENTS.md](EVENTS.md)). Terms without the key keep the hash they had |
+| `window` | How long can it be reopened? | `warranty_days` and `holdback_percent`; both zero, or both not. Optional (0.3.21): `period_close`, with `buyer_key` and `supplier_key` (two different Ed25519 keys, in base 58) and `silence_days`: a month closes when both keys signed its last line, or one did and closed it alone after that many days of silence (`src/knos/events.py`). Terms without the key keep the hash they had |
 | `changes` | What may change? | `paths` allowed, `protected` paths, and `may_add`: what a contributor may add without asking |
 | `dispute` | Who may appeal, and to whom? | `who` (the supplier), the `evaluator` (one of `evaluators.list`, or `arbiter`), `within_days`, where the `money` stays, and what happens with `no_answer` |
 | `evaluators` | Who may judge? | `quorum`, and a `list`: each a `name`, an `issuer`, a `repository`, a `workflow` and an `owner`. Optional: `related`, the accounts the parties declare to be one party, as groups of numeric account ids (`[[7001, 8002]]`); two evaluators declared related never count as two ([RECEIPT.md](RECEIPT.md), assurance). Terms without the key keep the hash they had |
@@ -245,3 +245,39 @@ which checks decide today. The date of the last merge is in every proposal and i
 - The time to appeal (`dispute.within_days`): `/knos appeal` refuses a late appeal of such an order and says why,
   counting from the rejection the judge's memory holds. `knos appeal open` on the command line does not check it.
 - `support-resolution` cannot be used. No system of record signs that a ticket was resolved.
+
+## Attestations as inputs: pay when an issuer you trust has attested a fact
+
+Knos writes its acceptance receipts as Solana Attestation Service attestations ([RECEIPT.md](RECEIPT.md)). This page is
+the other direction: an attestation someone else signed is a condition Knos checks before it counts evidence or
+releases money. An accreditation body attests that a lab is accredited; a core facility attests that a sample was run;
+a reviewer panel attests a result.
+
+None of them needs GitHub or CI, only a key its credential authorizes.
+
+`knos.platform.sas.check(ledger, credential, schema, subject, expect=...)` follows the service's own verification rules
+([README, "Verifying an attestation from another program"](https://github.com/solana-foundation/solana-attestation-service),
+read 14 Oct 2026):
+
+1. the account is at `["attestation", credential, schema, subject]` under `22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG`;
+2. that program owns it and its discriminator is 2;
+3. its credential and schema are the ones the order names ("the credential you pass is the issuer you trust");
+4. its expiry is 0 or later than the cluster's clock (never the local one);
+5. Knos's own stricter rule: its signer is still one of the credential's authorized signers.
+
+A closed attestation has no account, which is how revocation shows. The data is decoded with the schema's layout and
+compared with `expect`. Layouts come from `program/src/state/{credential,schema,attestation}.rs`.
+
+### On devnet (14 Oct 2026, a synthetic test issuer of the build's own key)
+
+- Credential `9TwiHfDULBwYidMLRazc5znK75FREK2m516L4JmGYqbp` and schema `H9MgrAFSX3c1R1hwBPbfKtMz4XmVTZTuUwtN4PgoxPDz`
+  (lab, standard, accredited),
+  [`Ju9E1sYd…`](https://explorer.solana.com/tx/Ju9E1sYdihwKAmoh1RDBxBztJpkxdLCQ8JquiWWoRa1p68nagA4TtVwTAgAh87TGMhQdj9hqgmww23yjVUCoqGh?cluster=devnet).
+- Attestation `Cena75W2HEEWekVSNK3342mdepBDKCRvHUDWRwHWzPka` for a synthetic lab,
+  [`RjbWqeJ2…`](https://explorer.solana.com/tx/RjbWqeJ2XASak37Soi57QBoUtSNJdtwUYPbJYW9VDstFbXg9DyJmVNzU8QPuWFwKXRnyHN2AyEczXbFfsuhzEbT?cluster=devnet).
+- `check` accepted it with its fields, refused a subject with no attestation and refused a wrong field value.
+
+What it is not: proof that the lab did good work. It is proof that the issuer the order trusts said so, on chain, with
+a key it controls. Which issuers an order trusts is the funder's choice, written in its terms.
+
+Tests: `tests/test_platform_sas_v34.py`.

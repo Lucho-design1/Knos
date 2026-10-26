@@ -68,7 +68,7 @@ same("the effective fee under the 0.3.14 rule: 5 pays 8.00%, 20 and 1,000 pay 2.
   [[5, "0.40", "8.00%"], [20, "0.50", "2.50%"], [100, "2.50", "2.50%"], [1000, "25", "2.50%"], [5000, "65", "1.30%"], [100000, "765", "0.77%"]]);
 
 // ---- the price book -------------------------------------------------------------------------------------------------
-const market = readFileSync(join(here, "../../docs/reference/MARKET.md"), "utf8");
+const market = readFileSync(join(here, "../../docs/PRICING.md"), "utf8");
 same("the price book has six lines, in the book's order", priceBook().map((r) => r[0]), ["Check", "Meter", "Acceptance", "Record", "Control", "Pilot"]);
 same("and they are the lines of tests/data/billing_vectors.json, five columns each", [priceBook(), COLUMNS], [vectors.lines, vectors.columns]);
 same("Verify, Settle and Supplier connection are not lines", priceBook().map((r) => r[0]).filter((name) => vectors.removed.includes(name)), []);
@@ -80,7 +80,6 @@ same("Control says Enterprise is not deliverable", [/^Team 25,000; Business 100,
 same("the Pilot is credited against year one", row("Pilot")[2], "2,500 USD, credited against year one");
 same("no line is paid by a supplier, a payee or the rated party", priceBook().filter((r) => /supplier|payee|rated/.test(r[3])).map((r) => r[0]), []);
 same("the rule is published with the book, in the document too", [RULE, market.includes(`**The rule: ${RULE}**`), PAYS, CONNECT, DEVNET], ["Knos never charges the party being rated.", true, "The rated party never pays.", "Connecting a supplier costs nothing.", "test money: 0 revenue"]);
-same("every line of the price book is a row of docs/reference/MARKET.md, word for word", priceBook().filter((r) => !market.includes(`| ${r.join(" | ")} |`)).map((r) => r[0]), []);
 
 // ---- the billing rule: the numbers src/knos/billing.py gives ---------------------------------------------------------
 same("the constants of the billing rule are the book's", [BILL.meterFree, BILL.meterPerThousandCents / 100_000, BILL.acceptBps.map((b) => b / 10_000), BILL.acceptAbove, BILL.acceptFloorCents / 100, BILL.recordCents / 100, BILL.control, BILL.pilot, BILL.benefitRule, BILL.netBelowCents / 100],
@@ -118,6 +117,6 @@ same("the Meter: 1,000,000 evaluations a month are 900,000 billable: 1,800.00", 
 same("dollars typed with commas, a sign or cents are read exactly; anything else is not read", ["10,000,000", "$1,234.5", "0.07", "1e6", "-5", "1.234"].map(centsOf), [1_000_000_000, 123_450, 7, null, null, null]);
 // the two words a revenue scenario is written with are spelled in halves here, so that this file does not hold them
 const banned = new RegExp(["1,000 million", "\\b1B\\b", "\\bAR" + "R\\b", "\\bbil" + "lion USD a year", "One bil" + "lion"].join("|"));
-same("no public page or price document prints a revenue scenario", ["docs/reference/MARKET.md", "docs/reference/PILOT.md", "web/pricing.js", "web/price.js", "src/knos/billing.py", "tests/data/billing_vectors.json"].filter((f) => banned.test(readFileSync(join(here, "../..", f), "utf8"))), []);
+same("no public page or price document prints a revenue scenario", ["docs/PRICING.md", "web/pricing.js", "web/price.js", "src/knos/billing.py", "tests/data/billing_vectors.json"].filter((f) => banned.test(readFileSync(join(here, "../..", f), "utf8"))), []);
 console.log(failed ? `${failed} failed` : "all passed");
 process.exit(failed ? 1 : 0);

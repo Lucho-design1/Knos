@@ -12,7 +12,7 @@ Three ways in; any one is enough.
    `url: http://127.0.0.1:8808/mcp`. Set `KNOS_MCP_HTTP_TOKEN` on the server and send it as a bearer header;
    without it `knos_verify` is not served over HTTP.
 
-The exact configuration blocks are in the Knos repository, docs/reference/HERMES.md.
+The exact configuration blocks are in the Knos repository, docs/reference/AGENTS.md.
 
 | Tool | Arguments | Returns | Sends |
 | --- | --- | --- | --- |

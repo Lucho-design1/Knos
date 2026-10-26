@@ -65,8 +65,8 @@ funded itself". The files are [`tasks/outside/`](outside/); `knos task kinds` pr
 | `install` | install the check in a repository you own and let it finish once | the default branch calls the public pinned check, and one finished run ([INSTALL.md](../docs/reference/INSTALL.md)) | outside repositories |
 | `judge` | host a judge from the template `examples/host_a_judge` | one GitHub-signed attestation run in a repository you own | judges hosted outside |
 | `compose` | build a program on the published crate `knos-oidc-interface = "0.3.14"` ([reader template](../examples/reader_template)) and read the verifier from it on devnet | one devnet transaction of your program that reads a token `knos-oidc` verified | outside programs reading the verifier |
-| `gate` | put a program of yours behind the upgrade gate ([GATE.md](../docs/reference/GATE.md)) | your gate's build record on devnet, and `adopt.py check` exiting 0 | programs behind the gate outside |
-| `keyholder` | offer a key through the key holder issue ([KEYHOLDER.md](../docs/reference/KEYHOLDER.md)) | an issue your account opened from that template, naming a public key | key offers (never holders until seated) |
+| `gate` | put a program of yours behind the upgrade gate ([examples/upgrade_gate](../examples/upgrade_gate/README.md)) | your gate's build record on devnet, and `adopt.py check` exiting 0 | programs behind the gate outside |
+| `keyholder` | offer a key through the key holder issue ([TRUST.md](../docs/TRUST.md)) | an issue your account opened from that template, naming a public key | key offers (never holders until seated) |
 | `tamper` | write a submission meant to fool the judge on a task ([TAMPER.md](../docs/reference/TAMPER.md)) | a judge verdict of accepted on work that does not do what the task asks; refused is not paid | cheats written outside |
 | `witness` | run one transaction start to end in a repository of yours ([examples/witnessed](../examples/witnessed)) | `witness.json`: funding, a refused run, the payment, a refused replay, two statements with one hash, the verifier's result | witnessed transactions |
 

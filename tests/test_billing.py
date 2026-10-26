@@ -40,9 +40,6 @@ def test_the_constants_are_the_price_book():
     assert (b.RECORD_PRICE, b.PILOT, b.BENEFIT_RULE, b.NET_BELOW) == (D(book["record_price"]), D(book["pilot"]), book["benefit_rule"], D(book["net_below"]))
     assert min(rate for _start, rate in b.ACCEPT_TIERS) == D("0.0020") and b.RECORD_PRICE == D("0.10")      # the 0.10% tier is withdrawn
     assert [list(row) for row in b.BOOK] == VECTORS["lines"]
-    market = (ROOT / "docs" / "reference" / "MARKET.md").read_text(encoding="utf-8")
-    for row in b.BOOK:                                  # and the document prints the same six lines, word for word
-        assert "| " + " | ".join(row) + " |" in market, row[0]
 
 
 def test_no_price_book_names_a_0_10_percent_tier():

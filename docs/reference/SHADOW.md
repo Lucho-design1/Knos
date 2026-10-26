@@ -32,7 +32,7 @@ The amount in dispute is what the failed, not merged and twice-billed lines bill
 and from the browser. Both sides compare one sha256 to confirm they hold the same statement.
 
 With `--out`, a resume file is kept (a second run asks GitHub only about unfinished lines) and `evidence.json`, from which
-`knos statement make` writes the approver's statement as JSON, CSV and PDF ([FINANCE.md](FINANCE.md), section 4a).
+`knos statement make` writes the approver's statement as JSON, CSV and PDF ([COMPANIES.md](COMPANIES.md#statements), section 4a).
 
 ## The sample, read from live GitHub
 
@@ -54,6 +54,5 @@ read on 2026-10-05 in 18 requests: 4 verified clean (325.00), 2 failed check at 
 
 ## From a shadow run to a Pilot
 
-A shadow run costs nothing. The first statement that names a disputed line is the reason to talk: the Pilot
-([PILOT.md](PILOT.md)) puts the same count where both sides see it before the invoice is written, for one buyer and its
+A shadow run costs nothing. The first statement that names a disputed line is the reason to talk: a pilot would put the same count where both sides see it before the invoice is written, for one buyer and its
 suppliers, for 30 days. Nobody has run shadow mode on a real invoice yet, and nobody has bought a Pilot.

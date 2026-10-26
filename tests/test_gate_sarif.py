@@ -1,5 +1,5 @@
 """Gate's refused cheats in GitHub's own places: a SARIF 2.1.0 log for code scanning, check-run annotations (App mode),
-`::error` workflow commands (Action mode), and the artifact attestation step of the Action (docs/reference/CODE_SCANNING.md)."""
+`::error` workflow commands (Action mode), and the artifact attestation step of the Action (docs/reference/REFEREE.md)."""
 from __future__ import annotations
 
 import base64

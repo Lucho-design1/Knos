@@ -8,7 +8,7 @@ commitment, and a budget reserved before work starts.
     knos boundary release  --db FILE --request ID   |   knos boundary spend --db FILE --request ID
     knos boundary status   --db FILE --budget NAME
 
-What holds, and by what (docs/reference/BOUNDARY.md says it for a reader; knos.enforce cell by cell):
+What holds, and by what (knos.enforce says it cell by cell):
 
 - The money is in a Squads v4 vault (program SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf, built and deployed by
   Squads, not by Knos; Squads publishes its own security reviews, and Knos has not checked them; Knos changes nothing in

@@ -18,4 +18,4 @@ Run the measurement yourself on made-up data, with no network:
     knos outcome lock examples/outcomes/measured-support/outcome.yaml.in --no-orders --out /tmp/lock.json
     knos outcome measure examples/outcomes/measured-support/outcome.yaml.in --lock /tmp/lock.json --data tickets.csv
 
-The page in plain words: [docs/reference/MEASURED.md](../../../docs/reference/MEASURED.md).
+The page in plain words: [docs/reference/OUTCOMES.md](../../../docs/reference/OUTCOMES.md).

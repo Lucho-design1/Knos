@@ -1,4 +1,4 @@
-"""Never asleep (docs/reference/KEEPALIVE.md): every run of the always-on worker's chain pings the app's health check in
+"""Never asleep (.github/workflows/worker.yml): every run of the always-on worker's chain pings the app's health check in
 a job of its own, and the chain's own watchdog is what keeps that going. Here: chain.py's `healthz` against a local
 server that fails first, and the job's shape in worker.yml."""
 from __future__ import annotations

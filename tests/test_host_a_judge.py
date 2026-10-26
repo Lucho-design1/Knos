@@ -187,7 +187,7 @@ def test_the_page_says_what_a_host_is_paid_and_what_they_can_and_cannot_do():
     assert "A host can:" in said and "A host cannot:" in said and "count twice" in said and "No outside account has hosted a judge yet" in readme
     for word in ("rerun", "agreed", "reported", "needs no secret"):
         assert word in readme
-    for page in ("ATTESTOR.md", "OPERATOR.md"):
+    for page in ("ATTESTOR.md",):
         assert "host_a_judge" in (ROOT / "docs" / "reference" / page).read_text(encoding="utf-8")
 
 

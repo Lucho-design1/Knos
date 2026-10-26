@@ -40,7 +40,7 @@ the PDF are written from `cells`, so they say the same thing in the same words, 
 
 Approvals and payment status are appended to `<name>.status.json`, never to the statement: the statement does not
 change after it is made. Nothing here moves money. A payment made by bank is recorded with the payer's own reference, or
-through the payment file and the bank's answer to it (knos.rails; docs/reference/RAILS.md).
+through the payment file and the bank's answer to it (knos.rails; docs/reference/COMPANIES.md#bank-transfers).
 """
 from __future__ import annotations
 

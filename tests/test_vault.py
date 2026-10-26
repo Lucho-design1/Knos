@@ -247,11 +247,7 @@ def test_keygen_writes_a_key_once_and_open_gives_the_bundle_back(tmp_path):
     assert no.exit_code == 1 and "was not sealed to that key" in no.output and "buyer (" in no.output
 
 
-def test_the_documents_say_the_format_the_vector_and_the_limits():
+def test_the_drills_say_what_a_vault_export_restores():
     docs = Path(__file__).parents[1] / "docs"
-    page = (docs / "reference" / "VAULT.md").read_text(encoding="utf-8")
-    assert VECTOR["sealed_sha256"] in page and VECTOR["checkpoint_root"] in page and "tests/data/vault_v1.json" in page
-    assert all(word in page for word in (vault.KEM, vault.AEAD, vault.WRAP_INFO.decode(), vault.ANCHOR, "not constant-time", "RFC 7748", "RFC 8439", "RFC 5869"))
-    assert all(f"knos vault {c}" in page for c in ("keygen", "seal", "open", "export", "restore", "retain", "checkpoint", "verify"))
     assert "devnet is reset and the operator's copies are deleted" in (docs / "reference" / "DRILLS.md").read_text(encoding="utf-8")
-    assert "VAULT.md" in (docs / "reference" / "PRIVACY.md").read_text(encoding="utf-8") and "VAULT.md" in (docs / "reference" / "drills_recovery.md").read_text(encoding="utf-8")
+    assert "knos vault export" in (docs / "reference" / "drills_recovery.md").read_text(encoding="utf-8")

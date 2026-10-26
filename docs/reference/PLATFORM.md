@@ -9,7 +9,7 @@ transaction instead of two (measured on devnet: 882,519 compute units); today's 
 multiply, so it keeps two.
 
 The new builds are written to devnet and handed to the
-upgrade multisig; they replace the live programs only when the founder's Squads proposal passes its 8-day time lock.
+upgrade multisig; they replace the live programs only when a Squads proposal passes its 8-day time lock.
 Nothing on this page has replaced a live program yet.
 
 ## 1. What devnet runs (13 Oct 2026)
@@ -217,7 +217,7 @@ transaction does not run.
 - **Finality.** `KNOS_COMMITMENT` = processed, confirmed or finalized (`knos.platform.finality`). Unset, Knos asks
   each cluster `getAgGenesisCert` once: a certificate (Alpenglow) means `finalized`, null or "Method not found" means
   `confirmed` as before. Every wait and read in `knos.chain`, the fan-out ledger and the readers uses it. See
-  [ALPENGLOW.md](ALPENGLOW.md).
+  [PLATFORM.md](PLATFORM.md).
 
 ## 7. The upgrade
 
@@ -240,3 +240,234 @@ already deployed keep running.
   fallback).
 - Per-claim accounts: the 2.0 job instructions keep the per-mint vault (orders do not use it); moving jobs to per-job
   token accounts is a program change to the money path, left for a reviewed release.
+
+## Alpenglow: paid and final
+
+**In plain words.** Solana devnet now runs Alpenglow, a new way for validators to agree. A payment there is final
+about a second after Knos sends it, not 13 seconds later. Knos asks each cluster which way it runs and, on Alpenglow,
+waits until a payment is final before it says "paid".
+
+On a cluster that has not moved yet, nothing changes.
+
+### How Knos tells
+
+Knos asks the cluster's RPC `getAgGenesisCert` once per RPC address (`knos.platform.finality`):
+
+| The answer | What it means | What Knos waits for |
+| --- | --- | --- |
+| a certificate `{block: {slot, blockId}, signature: {signature, bitmap}}` | Alpenglow is active | `finalized` |
+| `null` | the cluster still runs TowerBFT | `confirmed`, as before |
+| error -32601 "Method not found" | a node older than Agave 4.3, which cannot run Alpenglow | `confirmed`, as before |
+| no answer | nothing is known | `confirmed`, asked again after 60 s |
+
+Knos never decides by a date or a version string. A certificate is kept for the life of the process; a `null` is
+asked again after 10 minutes, so a relay that runs through a migration switches by itself.
+`KNOS_COMMITMENT` still wins when it is set; `KNOS_ALPENGLOW=on|off` lets an operator override the detection.
+
+Sources, read 14 Oct 2026: the method page [solana.com/docs/rpc/http/getaggenesiscert](https://solana.com/docs/rpc/http/getaggenesiscert)
+(no parameters; `null` while the cluster runs TowerBFT; -32601 on a node older than Agave 4.3); Agave `rpc/src/rpc.rs`
+`get_ag_genesis_cert` at commit 722c8f4b, which reads the finalized bank; `@solana/kit` `packages/rpc-api/src/getAgGenesisCert.ts`.
+
+Also read: [solana.com/upgrades/alpenglow](https://solana.com/upgrades/alpenglow) (under Alpenglow `confirmed` and `finalized` are the same state,
+new code should use `finalized`, and `confirmed` will be deprecated and removed; target finality about 150 ms, "an expectation, not a
+constant").
+
+**What devnet said** (14 Oct 2026, `api.devnet.solana.com`, solana-core 4.4.0-beta.0): a certificate for block slot
+504,148,999, block id `13f09ed2…de31677`, signed by 13 validators (the bitmap's set bits). Mainnet-beta (4.3.0)
+answered `null`; testnet answered a certificate.
+
+### What switched to `finalized` on Alpenglow
+
+Every place Knos waited or read at a hard-coded `confirmed` now asks `knos.platform.finality`:
+
+- sending and waiting: `knos.chain.Ledger` (blockhash, preflight, the wait, reads), `chain.wait` / `wait_all`, the
+  fan-out ledger the relays use (release of held money, payouts, Gate bounty payments, refunds), the WebSocket wait;
+- Knos Record anchors (`knos.record.anchoring`), x402 settlement confirmation (`knos.money.x402_exact`), the faucet;
+- the readers: receipts rebuilt from the chain (`knos.receipt`, `knos.bundle`), statements, audit, observe and the
+  ZK client ask the cluster once; the plan floor reads at its ledger's commitment; a ledger that only reads, the
+  payment history reader (`knos.records`) and the mainnet check never add a request of their own and read at
+  `finalized` once the process knows the cluster runs Alpenglow (`finality.cached`), else at `confirmed`, which is
+  the same state there.
+
+The other `confirmed` words in the code are names of states (the relay queue's "confirmed", the five payment states)
+or texts about spreadsheet formats; they are not commitments and did not change.
+
+### Waits retuned
+
+- The first look at a payment just sent comes after 0.25 s on Alpenglow (0.5 s on TowerBFT). Later looks stay at
+  0.5 s: the public devnet RPC takes 40 requests of one method per 10 s.
+- After a payment is reported, the job waits at most 10 s for `finalized` on Alpenglow (40 s, `FINAL_WAIT`, on
+  TowerBFT). A payment Knos already waited for at `finalized` is final at once: nothing is asked again.
+- The wait for a sent transaction keeps its own ceiling (`knos.chain.wait`), which is not the blockhash's life: with
+  200 ms slots (SIMD-0525) a blockhash lasts about 33 s on devnet, measured on 14 Oct 2026 as lastValidBlockHeight
+  minus the `confirmed` block height over the block rate ([PLATFORM.md](PLATFORM.md),
+  `python -m knos.platform.blockhash`). A transaction that must wait for another signer uses a durable nonce instead.
+
+### "Paid and final in N ms"
+
+The payment comment on a pull request adds one line once the payment is final:
+`Paid and final in N ms after it was sent to Solana.` A Record anchor keeps `commitment` and `final_ms`. The site's
+live page and `stats.json` (`finality`) show the cluster's consensus and the measured figures below.
+
+### Measured on devnet
+
+Our own test traffic, labelled "internal dogfooding" everywhere (`docs/finality.json`, every signature listed there).
+`scripts/alpenglow_latency.py` signs each transaction, subscribes to it at `confirmed` and at `finalized` over one
+WebSocket, sends it through Knos's ledger, then runs Knos's own wait. 49 transactions on 14 Oct 2026, one machine,
+the public RPC:
+
+| Transactions | n | send to finalized, p50 | p95 |
+| --- | --- | --- | --- |
+| all | 49 | 1,205 ms | 2,449 ms |
+| Knos Record anchors | 30 | 1,213 ms | 3,040 ms |
+| funding held money (knos_pay FundWallet, 60 s deadline, test mint) | 15 | 1,134 ms | 2,449 ms |
+| refund of held money after the deadline | 4 | 1,249 ms | 1,322 ms |
+
+The `confirmed` and `finalized` notifications came at the same moment for every one of the 49, which is the "same
+state" the Alpenglow page describes. The figure includes the trip to the RPC and its notification, not only the
+validators' vote. Knos's own polling wait returned at p50 1,852 ms and p95 3,798 ms (`KNOS_WS=1` waits on the
+WebSocket instead).
+
+No payout is in the sample: a payout needs a GitHub OIDC token of a signed workflow run. Of 15 test jobs, 4 were
+refunded by this script and 11 by another relayer first.
+
+### Transaction counts and slot streams
+
+Knos's dashboards count Knos's own programs' transactions (`scripts/network_stats.py`), never the cluster's
+transaction count, so vote transactions leaving blocks under Alpenglow change none of its numbers. Knos does not
+stream slots, blocks, shreds or Geyser updates (it reads single transactions and uses `signatureSubscribe` only), so
+there is no per-(slot, bank_id) buffer to add and no ticks are counted.
+
+## Durable nonces: sign a funding now, send it later
+
+A Solana transaction names a recent blockhash and is refused once the cluster's block height passes the
+`lastValidBlockHeight` that came with it ([confirmation docs](https://solana.com/docs/advanced/confirmation): the most
+recent 151 stored hashes).
+
+The window is counted in blocks, so it shrank in seconds when devnet moved to 200 ms slots (SIMD-0525,
+`proposals/0525-reduce-slot-times.md`: "any user-facing ... behavior measured in number of slots may become shorter in
+wall-clock time").
+
+**Measured on devnet, 14 Oct 2026** (`python -m knos.platform.blockhash`, raw output kept by the build): the
+`confirmed` block height was 134 to 146 blocks (mean 143) below `lastValidBlockHeight` while it rose 232 blocks in
+54.0 s (4.297 a second; `getRecentPerformanceSamples` gave 236 to 240 ms a slot).
+
+A blockhash fetched at `confirmed`
+therefore had **about 33 s** left, not the minute older pages assumed.
+
+That is too short for a funder whose approver signs on another machine, a hardware or cold wallet, or an agent whose owner approves its funding.
+
+A durable nonce replaces the blockhash with a value kept in a nonce account; the transaction's first instruction
+advances it, so the signed bytes stay good until they land, and land once.
+
+### Use
+
+| step | call | who signs |
+|---|---|---|
+| make a nonce account | `python -m knos.platform.nonce create PAYER_KEY NONCE_KEY [AUTHORITY]` | the payer and the new nonce key |
+| build the message | `knos.platform.nonce.message(ixs, fee_payer, nonce, authority, value, v1=True)` | nobody yet |
+| first signature | `nonce.sign_part(msg, [funder])`, written with `nonce.encode` | the funder, on their machine |
+| more signatures | `python -m knos.platform.nonce cosign TX_FILE KEY` | each co-signer, when they can |
+| send | `python -m knos.platform.nonce send TX_FILE` (refused while a signature is missing) | nobody: the bytes are complete |
+
+`nonce.still_good(ledger, tx)` says whether the nonce still holds the value the transaction signed over; once the
+transaction lands it does not, so the same bytes can never pay twice. Messages are v1 by default (SIMD-0385: the
+compute limit in the message, 4,096 bytes, no lookup tables, so the nonce account is always a static key as SIMD-0242
+requires).
+
+### On devnet (14 Oct 2026, own test keys, synthetic Token-2022 mint `4Fx2QgywyiAyHTMqkFRLEnF2hPW89MfWi9TEqwXjEYSa`)
+
+`scripts/capabilities_devnet.py KEYDIR nonce` made nonce account `7XD6BDC2G676KQ85vkp34vgrSy8whk5EsvAGJJj9SZZJ`
+([`5s2w28fa…`](https://explorer.solana.com/tx/5s2w28fa1B9wp2qdMaC8Jh5UQWyj2XJm1GRxXzeYjY38rstgpbstRB2TA4uZhemnJqYUw7oeUXPnKAfJKFcc8bWB?cluster=devnet)),
+then had the funder sign a knos_pay `FundOrderWallet` alone and the relay add its fee-payer signature and send it 56.9 s later, well past any
+blockhash's life:
+[`3LT3NScV…`](https://explorer.solana.com/tx/3LT3NScVpHQLbrh7n1A7y7aFta8ZVm2aUUq3bifEk8pzwd2yYBm6Yy54N5dHjTwcQxq4mcoAULBwR5qM5wvcWibq?cluster=devnet)
+funded order `GNqQRH9mZabN43vynzgFoJFRq7ETpuY8eujQYEGM8uyv`.
+
+A second run 59.0 s apart,
+[`618qYsba…`](https://explorer.solana.com/tx/618qYsba2M4EcAgk8kdVpVokTzVszH2zN4z1BhfqEn5d8NQFKkf3twpjebD1D3PQ8NXX6QzqAtvL3Nn9MrjK6Smg?cluster=devnet),
+then read the nonce back: it had moved on, so those bytes can never land again.
+
+Both orders hold 5 synthetic test units in a Token-2022 mint with no extensions (`python -m knos.platform.token22` passes it) and are refunded at their
+deadline.
+
+Tests: `tests/test_platform_nonce_v34.py`.
+
+## Priority fees sized to the work, and a WebSocket wait
+
+Two switches for whoever runs a Knos relay or sends Knos transactions (`src/knos/platform/priority.py`). Both are off
+unless set, so nothing changes for anyone who does not ask.
+
+| variable | what it does |
+| --- | --- |
+| `KNOS_PRIORITY=auto` | before a transaction is sent: a simulation measures the compute units it uses, the limit is set to that plus 15%, and the price is the 75th percentile of `getRecentPrioritizationFees` for the accounts it writes |
+| `KNOS_PRIORITY=<number>` | the same limit, at that many micro-lamports a compute unit |
+| `KNOS_PRIORITY_MAX` | the most it will pay a unit (default 200,000 micro-lamports) |
+| `KNOS_WS=1` | wait for confirmation with one `signatureSubscribe` over the cluster's WebSocket, after one status read, instead of asking `getSignatureStatuses` every 0.4 s; falls back to asking if the WebSocket cannot be used |
+
+Why the limit matters: a priority fee is paid on the compute-unit LIMIT, not on what was used ([compute
+budget](https://solana.com/docs/core/fees/compute-budget), read 14 Oct 2026). Knos's default limit is the most a
+transaction may use, 1,400,000 units.
+
+On a v1 transaction the two compute budget instructions do nothing; `knos.chain.message_v1` already reads their
+values into the message's own limit and priority fee, so the same setting serves both formats.
+
+Why the WebSocket matters: the public devnet endpoint allows 100 requests in 10 seconds per address
+([clusters](https://solana.com/docs/references/clusters)); polling a slow payout spends that allowance.
+
+### On devnet (14 Oct 2026, memo transactions from a test wallet, synthetic text)
+
+| setting | transaction | fee (lamports) | units used |
+| --- | --- | --- | --- |
+| `auto` (the devnet estimate was 0: limit only) | `5DQE7BExKrFDLz1MpxF8bs5PTcaRvJrDq784QE7JavGqq6pt1Cdhq2U5JDjfJsntmPfVfVpfUyctQYvAhLuqzMPH` | 5,000 | 34,772 |
+| `5000` micro-lamports a unit | `3fbKZsan5n4Fto5o4AnE8vvisYcvYYHyaW4jR9CkWpvTWRmkttR9GXQXvy2UPsqacA2SFjZiHW3L7JheehxV2Wvg` | 5,202 | 34,922 |
+
+The second paid 202 lamports of priority fee on a limit of about 40,400 units. At the same price on the old limit of
+1,400,000 units it would have paid 7,000. A `signatureSubscribe` over `wss://api.devnet.solana.com` for
+`2YzenZTX7aAUFoWeF3sm5jEXkpbqSxbeBgc7Gb1D29r8gRHwKsBA1EASwSPQAZA2nJUtz3XLPBUXp6kX9QG8QoLW` was notified 1.6 seconds
+after the transaction was sent (one run, not a benchmark).
+
+## Token safety: mints that can be held, accounts a payout can reach
+
+knos_pay holds a bounty in a token account of its own and pays it with one transfer. Token-2022 lets a mint carry
+extensions that change what a transfer does, and some of them let somebody other than the funder and the judge decide
+what happens to held money.
+
+Since 0.3.31 Knos reads a mint's extensions before it holds a bounty in it (`knos fund-wallet` refuses), and anyone
+can check a mint or a payee's token account first (`src/knos/platform/token22.py`). The extensions are described at
+[solana.com/docs/tokens/extensions](https://solana.com/docs/tokens/extensions) (read 14 Oct 2026).
+
+| extension | on | why it matters to held money | Knos |
+| --- | --- | --- | --- |
+| PermanentDelegate | mint | the delegate can move or burn the tokens in any account, the payment program's too | refuses to fund |
+| Pausable | mint | the pause authority can stop every transfer, the payout's too | refuses to fund |
+| TransferHook | mint | every transfer runs another program with accounts the payout does not pass | refuses to fund |
+| NonTransferable | mint | the tokens cannot move | refuses to fund |
+| TransferFeeConfig (a fee above 0) | mint | the payee receives less than the terms say | refuses to fund |
+| DefaultAccountState frozen | mint | a payee's new account starts frozen | refuses to fund |
+| ConfidentialTransferMint, MintCloseAuthority, InterestBearingConfig, ScaledUiAmount | mint | amounts can move encrypted afterwards, the mint can be closed at zero supply, or wallets show a different number | warns |
+| MemoTransfer (required) | payee's account | an incoming transfer needs a Memo instruction right before it; the payout carries none | the account cannot receive a payout |
+| frozen | payee's account | a frozen account receives nothing | the account cannot receive a payout |
+
+Classic SPL Token mints (test USDC among them) have no extensions; nothing changes for them.
+
+### Check one
+
+```
+python -m knos.platform.token22 MINT_OR_TOKEN_ACCOUNT [...]      # one JSON line each; exit 1 when one is refused
+```
+
+An agent reads the same answer from the MCP resource `knos://token/{address}` ([MCP_SERVER.md](MCP_SERVER.md)).
+
+### On devnet (14 Oct 2026, mints made for this test, synthetic)
+
+| address | made with `spl-token` 5.3.0 | what the check says |
+| --- | --- | --- |
+| `DCtFdxWfiEPFp3TP4HqQ4N3LYvi7VXYA44D3HdshrTqX` | Token-2022, no extension | ok |
+| `EtbPvaxwXBKUvcjfU5yAxNckzKAxSkifCwQkjVdcTxfS` | `--enable-permanent-delegate` | refused: PermanentDelegate; `knos fund-wallet ... --mint` stops before anything is sent |
+| `EQcDmUQXjjbtbnSH7GcKzM1vkP1kKTLR4tkj22YF7aXH` | a 50 basis point transfer fee | refused: TransferFeeConfig |
+| `CU3aX9mni6T3WPwHqgWHuSmKmgVgGWoNJUYsWebeo36W` | a token account with `enable-required-transfer-memos` (transaction `4r2pAwf8cTD86EPf2wcBj26Kne6PjStYNEQ1Q3i6NCruYPqcZzetMoxtAaAsjvQc4cS6NAkfHnSLztXiLo8su4TL`) | cannot receive a payout: MemoTransfer |
+
+The payout's failure on a memo-required account follows from the Token-2022 rule (the Memo must be the instruction
+right before the transfer, at the same level) and from knos_pay issuing no Memo; a payout into such an account was not
+attempted on devnet.

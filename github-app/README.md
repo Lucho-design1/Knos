@@ -1,7 +1,7 @@
 # Knos Gate: the GitHub App
 
 Not registered. Registering it is the founder's step: see
-[docs/reference/PR_GATE.md](../docs/reference/PR_GATE.md#register-the-app).
+[docs/reference/REFEREE.md](../docs/reference/REFEREE.md).
 
 - `app-manifest.json`: the App manifest (permissions: checks write, pull requests write, issues write, actions write,
   contents read, metadata read; events: pull_request, workflow_run, check_run).

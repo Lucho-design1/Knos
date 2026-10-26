@@ -1,6 +1,6 @@
 """A supplier's public record, the badge it gives, and the receipt a supplier sends with an invoice.
 
-    knos record build <supplier>      writes docs/records/<slug>.json (docs/reference/RECORD.md): what is on record for one agent
+    knos record build <supplier>      writes docs/records/<slug>.json (docs/reference/SUPPLIER.md): what is on record for one agent
                                       builder, agency or vendor, each figure with its sample, period and category
     knos badge record <slug>          an SVG from that file, and the Markdown that links it to the record's page
     knos record receipt <receipt>     one PDF page and its JSON for an acceptance receipt (docs/reference/RECEIPT.md): what was
@@ -21,7 +21,7 @@ A record has two parts, kept apart and each labelled with where it came from:
               Knos orders. The interval and the dispute link stay beside the rate.
 
 Nothing here is a score, and nothing here reads a payment to Knos: the supplier never pays for a record and cannot
-pay to change one. The file is not signed; the evidence each count links to is (docs/reference/RECORD.md says which).
+pay to change one. The file is not signed; the evidence each count links to is (docs/reference/SUPPLIER.md says which).
 
 Standard library only at import: the script that writes the index (scripts/agent_pr_board.py) imports this module.
 """
@@ -202,7 +202,7 @@ def build(supplier: str, *, index: dict | None = None, log=None, supplier_ids=()
     doc = {"schema": SCHEMA, "supplier": who, "name": str(supplier), "as_of": day, "rule": RULE, "not_a_score": NOT_A_SCORE,
            "orders": orders, "public": public, "limits": list(LIMITS),
            "links": {"page": page_url(who), "file": f"{RAW}/{who}.json", "dispute": dispute_url(who, public["week"] if public else None),
-                     "specification": f"{REPO}/blob/main/docs/reference/RECORD.md"}}
+                     "specification": f"{REPO}/blob/main/docs/reference/SUPPLIER.md"}}
     return {**doc, "sha256": hashlib.sha256(canon(doc).encode()).hexdigest()}
 
 

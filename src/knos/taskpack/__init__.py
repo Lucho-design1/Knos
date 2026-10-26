@@ -4,7 +4,7 @@
     knos taskpack verify PACK | grade PACK --patch FILE --repo-dir CLONE | rows PACK... --out tasks.jsonl
 
 knos.taskpack.export builds and checks packages; knos.taskpack.grade grades a candidate patch (cheat rules, then the hidden
-tests); knos.taskpack.atropos turns packages into training rows and a referee spec. docs/reference/TASK_PACKAGES.md.
+tests); knos.taskpack.atropos turns packages into training rows and a referee spec. docs/reference/REFEREE.md.
 """
 from __future__ import annotations
 

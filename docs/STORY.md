@@ -94,7 +94,7 @@ Which build each public program id runs is in [MANIFEST.md](reference/MANIFEST.m
 2. Needed: first buyers to run a shadow count. None has run.
 3. Needed: an outside review of the programs. None is commissioned.
 
-What each would do is in [GOVERNANCE.md](reference/GOVERNANCE.md), [PILOT.md](reference/PILOT.md) and
+What each would do is in [GOVERNANCE.md](reference/GOVERNANCE.md), [SHADOW.md](reference/SHADOW.md) and
 [ASSURANCE.md](reference/ASSURANCE.md).
 
 ## Limits

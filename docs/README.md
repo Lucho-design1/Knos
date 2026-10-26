@@ -25,9 +25,9 @@ flowchart TB
 | page | what it answers |
 |---|---|
 | [STORY.md](STORY.md) | one task in seven steps, each with its evidence |
-| [START.md](START.md) | five minutes: check a pull request, fund a task, get paid, install the command |
+| [START.md](START.md) | five minutes: check demand, write a Ready brief, check a pull request, fund a task |
 | [PRICING.md](PRICING.md) | what it costs: the check is free; the fee on a paid task; the meter |
-| [TRUST.md](TRUST.md) | who holds the keys today, what is tested, and how to check a program yourself |
+| [TRUST.md](TRUST.md) | who holds the keys today, how to ask for one, and what is tested |
 | [NUMBERS.md](NUMBERS.md) | nine numbers about use by anyone outside, zeros included |
 | [TRANSACTION.md](TRANSACTION.md) | one order told end to end, from its terms to the payment |
 | [WORDS.md](WORDS.md) | every technical word in one plain line |

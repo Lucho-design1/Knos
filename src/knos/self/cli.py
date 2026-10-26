@@ -25,7 +25,7 @@ def _print(obj) -> None:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="knos self", description="Knos builds Knos: safe recursive self-improvement (docs/reference/SELF.md)")
+    ap = argparse.ArgumentParser(prog="knos self", description="Knos builds Knos: safe recursive self-improvement (targets.yml)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("targets")
     s.add_argument("--root", default=None)
@@ -137,7 +137,7 @@ def register(app, help_lines: list | None = None) -> None:
         help_lines.append(("self", "For a repository's workflows", "Knos builds Knos: agents improve product code, judged by the referee from main, paid on devnet."))
 
     def self_(ctx) -> None:
-        """Knos builds Knos: targets, the loop, the archive, audits, rollback, referee changes (docs/reference/SELF.md)."""
+        """Knos builds Knos: targets, the loop, the archive, audits, rollback, referee changes (targets.yml)."""
         raise typer.Exit(main(list(ctx.args) or ["--help"]))
     self_.__annotations__["ctx"] = typer.Context       # named here: this module's annotations are text, and typer is not a global
     app.command("self", context_settings={"allow_extra_args": True, "ignore_unknown_options": True, "help_option_names": []})(self_)

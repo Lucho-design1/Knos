@@ -107,7 +107,6 @@ def test_robotics_live_without_an_install_says_how_to_install(monkeypatch, capsy
 def test_the_install_script_is_one_command_into_its_own_venv():
     text = (ROOT / "scripts" / "install_pylabrobot.sh").read_text(encoding="utf-8")
     assert '"pylabrobot==0.2.2"' in text and "-m venv" in text and "export KNOS_PYLABROBOT_PYTHON=" in text
-    assert "install_pylabrobot.sh" in (ROOT / "docs" / "reference" / "LABS.md").read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("field", sorted(devnet.FIELDS))

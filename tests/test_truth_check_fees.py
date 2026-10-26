@@ -57,6 +57,6 @@ def test_a_decided_fee_passes_and_a_rate_no_line_sets_is_found(tmp_path):
 def test_a_release_named_beside_a_program_is_not_its_build():
     tool = _tool()
     data = {"programs": {"knos_pay": {"on_chain": "2.2"}}}
-    said = [tool.Statement("docs/GAME.md", 1, "Shown on devnet: V34PAY's knos_pay 0.3.34 test program is live there."),
-            tool.Statement("docs/GAME.md", 2, "Shown on devnet: knos_pay 2.1 is live there.")]
+    said = [tool.Statement("docs/reference/AGENTS.md", 1, "Shown on devnet: V34PAY's knos_pay 0.3.34 test program is live there."),
+            tool.Statement("docs/reference/AGENTS.md", 2, "Shown on devnet: knos_pay 2.1 is live there.")]
     assert [(p.rule, p.line) for p in tool.version_problems(said, data)] == [("version", 2)]

@@ -202,7 +202,7 @@ def test_the_committed_table_has_a_row_for_every_drill_and_none_of_them_failed()
     assert all(rows[name].endswith("| pass |") for name, how, needs, _f in drills.DRILLS if not needs and how != drills.PERSON)
     # the one row no script runs: a second person's, and it says nobody has run it
     assert [name for name, how, *_ in drills.DRILLS if how == drills.PERSON] == ["second operator"]
-    assert "| not run: not yet run by a second person" in rows["second operator"] and "## The drill: `second operator`" in (docs / "reference" / "OPERATOR.md").read_text(encoding="utf-8")
+    assert "| not run: not yet run by a second person" in rows["second operator"]
     for p in BUILDS:
         assert pay.IDS[p] in doc
     logged = drills.upgrade_rows(docs / "drill_upgrade.log", lambda _line: None)

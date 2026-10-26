@@ -17,7 +17,7 @@ of Knos to be read again:
               its age. Nothing is deleted here: the report is for the person who does.
 
 No archive is written that its own verifier does not pass. What a root proves and does not, and who keeps what, is in
-docs/reference/RETENTION.md.
+docs/reference/KNOS_RECORD.md.
 """
 from __future__ import annotations
 

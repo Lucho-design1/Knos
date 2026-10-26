@@ -17,29 +17,29 @@ SRC = ROOT / "src"
 # network (tests/test_private_path.py runs it the same way).
 # knos.host_judge: `python -m knos.host_judge link|editor|level|says`, what docs/reference/ATTESTOR.md gives a host (tests/test_host_a_judge.py);
 # the round `judge` of scripts/exercise_rounds/ reads a host's level through it.
-# knos.sources.sigstore: the adapter docs/reference/SOURCES.md gives a caller to use in its own code (verify, then knos.sources.line);
+# knos.sources.sigstore: the adapter docs/reference/VERIFIER.md gives a caller to use in its own code (verify, then knos.sources.line);
 # nothing in the package calls it yet, and tests/test_sources.py holds it to two recorded npm build records.
 # knos.outcomes.__main__: `python -m knos.outcomes measure|audiences|check-audience`, what .github/workflows/knos-outcome.yml runs
 # with the standard library alone (tests/test_outcome_workflow.py runs it the same way).
-# knos.autoresearch.__main__: `python -m knos.autoresearch run <task>`, the autoresearch loop (docs/reference/AUTORESEARCH.md)
-# knos.record.__main__, knos.self.__main__: `python -m knos.record|self ...` (docs/reference/KNOS_RECORD.md, SELF.md)
-# knos.gate.app: the GitHub App's webhook handler that github-app/server.py runs (docs/reference/PR_GATE.md)
+# knos.autoresearch.__main__: `python -m knos.autoresearch run <task>`, the autoresearch loop (examples/autoresearch/README.md)
+# knos.record.__main__, knos.self.__main__: `python -m knos.record|self ...` (docs/reference/KNOS_RECORD.md, targets.yml)
+# knos.gate.app: the GitHub App's webhook handler that github-app/server.py runs (docs/reference/REFEREE.md)
 # knos.hermes_plugin: the `hermes_agent.plugins` entry point in pyproject.toml; knos.verify.sealed: the sealed scorer that
-# hermes/gepa and hermes/atropos import (docs/reference/HERMES.md)
+# hermes/gepa and hermes/atropos import (docs/reference/AGENTS.md)
 # knos.money.x402: `python -m knos.money.x402`, the x402 endpoint; knos.money.revenue: writes the revenue data (--out);
 # knos.graduation.devnet: the devnet demo of the escrow and pre-order pool (docs/reference/MONEY.md)
-# knos.zk.__main__: `python -m knos.zk verify DIR`, the Groth16 checker (docs/reference/ZK.md)
+# knos.zk.__main__: `python -m knos.zk verify DIR`, the Groth16 checker (src/knos/zk)
 # knos.platform.claims: the per-claim account check a relay calls before batching claims (docs/reference/PLATFORM.md)
 # knos.repro.example: `python -m knos.repro.example`, the synthetic example repository (docs/reference/REPRODUCED.md)
-# knos.nebius.__main__: `python -m knos.nebius status|demo|rerun|job`, Knos on Nemotron (docs/reference/NEBIUS.md)
-# knos.money.business: `python -m knos.money.business`, writes the prices JSON (--out; docs/reference/TEAMS.md)
+# knos.nebius.__main__: `python -m knos.nebius status|demo|rerun|job`, Knos on Nemotron (examples/nebius/README.md)
+# knos.money.business: `python -m knos.money.business`, writes the prices JSON (--out; src/knos/money/teams.py)
 # knos.game.__main__, knos.game.devnet, knos.game.local_agent: `python -m knos.game ...` (= `knos game`), the game's devnet
-# round, and the no-model agent behind the command protocol (docs/reference/GAME.md)
+# round, and the no-model agent behind the command protocol (docs/reference/AGENTS.md)
 # knos.ideas.devnet / devnet_panel: the devnet demos of docs/reference/IDEAS.md; knos.ideas.tools: the opt-in MCP tools (KNOS_MCP_TOOLS=ideas)
 # knos.demand_tool: the opt-in MCP tool knos_demand_check (KNOS_MCP_TOOLS=demand), loaded by name from knos.mcp
-# knos.labs.*: one adapter per lab, loaded by name (python -m knos.labs; docs/reference/LABS.md); knos.a2a: `python -m knos.a2a serve`;
+# knos.labs.*: one adapter per lab, loaded by name (python -m knos.labs; src/knos/labs); knos.a2a: `python -m knos.a2a serve`;
 # knos.claude.managed, knos.money.cctp, knos.money.kora: designs callers import (CAPABILITIES-GAP); knos.platform.verdict: the off-chain
-# mirror of the m-of-n verdict release (docs/reference/PAY_ON_PROOF.md)
+# mirror of the m-of-n verdict release (docs/reference/REFEREE_FROST.md)
 # knos.threshold.__main__ / knos.threshold.session: `python -m knos.threshold` (the FROST referee hosts: referee.yml, the PC
 # daemon) and the coordinator the web app runs (apps/wanted/knos_wanted/referee.py; docs/reference/REFEREE_FROST.md);
 # knos.threshold.codeattest: `python -m knos.threshold.codeattest post` (referee.yml, job attest) and the app server's /api/referee/attest;

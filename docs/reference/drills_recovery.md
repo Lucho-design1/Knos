@@ -50,7 +50,7 @@ reset. None has been walked through with the steps above.
 ### B. The relay's GitHub account is suspended
 
 The public relay, the published workflows and the rotate workflow are in repositories of one personal GitHub
-account ([GOVERNANCE.md](GOVERNANCE.md), section 9). If GitHub suspends it, comments stop being answered, no new
+account ([GOVERNANCE.md](GOVERNANCE.md), section 6). If GitHub suspends it, comments stop being answered, no new
 token is signed for an order that pinned the published workflows, and nobody carries tokens to the chain.
 
 1. **Notice it.** A `/knos` comment gets no reply; the repository's Actions tab shows the Knos job failing to
@@ -115,7 +115,7 @@ refresh on devnet by an account other than Knos's; and the state with every key 
 
 ### D. Knos's operator is gone, and devnet with it
 
-What you need beforehand: an export archive (`knos vault export`, [VAULT.md](VAULT.md)) kept somewhere of your own,
+What you need beforehand: an export archive (`knos vault export`) kept somewhere of your own,
 and the `knos` package. Nothing else.
 
 ```

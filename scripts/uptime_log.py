@@ -3,7 +3,7 @@
     python scripts/uptime_log.py [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--markdown]     (default: the last 14 days)
 
 .github/workflows/keepalive.yml pings https://knos.onrender.com/healthz every 5 minutes, and every run of the always-on
-worker (worker.yml) pings it before it relays (docs/reference/KEEPALIVE.md). A green run is a ping the app answered. This
+worker (worker.yml) pings it before it relays (.github/workflows/worker.yml). A green run is a ping the app answered. This
 script lists those runs for the window, from the GitHub API (`gh api`), and says: how many ran, how many answered,
 and the longest stretch with no green ping, which is the longest the app may have slept. Nothing is written by hand.
 """

@@ -42,8 +42,6 @@ This part gives the prices the programs on [devnet](WORDS.md#devnet) charge toda
 
 **Every price here is in [test USDC](WORDS.md#test-usdc), so Knos's revenue is zero.**
 
-Anything else is marked PROPOSED: it is a plan, and nobody pays it.
-
 ## The check is free
 
 Checking a pull request costs nothing, and stays free.
@@ -89,19 +87,24 @@ The [meter](WORDS.md#meter) counts each time a buyer's tests judge a piece of wo
 As deployed, `knos_meter` gives each owner 10,000 evaluations a month for free. After that, each costs 0.05 test
 USDC, paid from the buyer's prepaid credits.
 
-PROPOSED: 100,000 free a month, then 0.002 each. Nobody pays this price.
+## Two rules
 
-## The rest of the price book: PROPOSED
+**The rule: Knos never charges the party being rated.** A supplier pays nothing to be counted or to keep its ledger. It pays
+nothing to appear in the Agent PR Index either. The buyer pays, or nobody does.
 
-None of these lines is deployed, and nobody has bought one.
+**Connecting a supplier costs nothing.** There is no fee per supplier, at any number of suppliers.
 
-| Line | PROPOSED price | Who would pay |
-|---|---|---|
-| Record | 0.10 USD for each lookup of a supplier's record by a machine | the caller |
-| Control | per year: Team 25,000 USD, Business 100,000, Enterprise from 400,000 | the buyer |
-| Pilot | 2,500 USD for one buyer, two suppliers and 30 days | the buyer |
+## What devnet can show
 
-Control cannot be delivered yet: it needs single sign-on, private deployment and support that do not exist.
+Devnet is Knos's test mode. Every fee the program takes there is test money, so revenue is zero. A receipt verifies
+from GitHub's signatures with no chain ([RECEIPT.md](reference/RECEIPT.md)), so a record a customer keeps does not
+depend on devnet's history.
+
+Until settlement is real, a customer pays its suppliers through its bank as it does now. Knos has no token and plans
+none.
+
+Holding money until the proof passes and paying it out for others may be money transmission. Legal advice is needed
+before any real money moves, and none has been taken ([DISCLOSURE.md](reference/DISCLOSURE.md)).
 
 ## Where the prices are fixed
 
@@ -117,6 +120,5 @@ The site's [price page](https://drexthealpha.github.io/Knos/#pricing) reads the 
 
 ## Read more
 
-- [The full price book](reference/MARKET.md): every line, and what devnet can and cannot show.
 - [The meter](reference/METER.md): what is counted, and who can check it.
 - [Start here](START.md): check, fund and get paid in five minutes.

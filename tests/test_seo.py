@@ -166,7 +166,7 @@ def test_the_answers_agree_with_the_tree():
     from knos.settle.v2 import pay
     assert "0.30%, at least 0.05 test USDC" in answers["What does Knos cost?"]
     assert pay.FEE_BPS == 30 and pay.order_fee(100_000_000) == 300_000 and pay.order_fee(5_000_000) == 50_000 == pay.fee_of(5_000_000)
-    assert "| Check | pull request or artifact checked | free, forever |" in (ROOT / "docs" / "reference" / "MARKET.md").read_text(encoding="utf-8")
+    assert "Checking a pull request costs nothing, and stays free." in (ROOT / "docs" / "PRICING.md").read_text(encoding="utf-8")
     assert answers["What is Knos?"] == "Knos takes research from a paper to a product people want. It pays each step only on verified proof."
     assert "valley of death" in sentence() and "verified proof" in sentence()                 # the one sentence, as two short answers
     readme = (ROOT / "README.md").read_text(encoding="utf-8")

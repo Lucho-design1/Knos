@@ -23,7 +23,7 @@ def _script(name: str):
 
 
 dc = _script("doc_claims")
-CRITERIA, DEMO, WHY = "docs/reference/PILOT.md", "docs/reference/MANIFEST.md", "docs/reference/WHY.md"      # a page with no count; a page with a stage table
+CRITERIA, DEMO, WHY = "docs/reference/REFUSE.md", "docs/reference/MANIFEST.md", "docs/reference/WHY.md"      # a page with no count; a page with a stage table
 
 
 @pytest.fixture()
@@ -120,8 +120,8 @@ def test_a_count_or_a_stage_that_is_not_the_manifests_fails(tree):
     # a contradiction between two pages: one lists the exercised ones, another says there are none
     _add(tree, WHY, "Nothing in the manifest is recorded as exercised or reproduced yet.")
     _found(tree, WHY, "says nothing is exercised")
-    _add(tree, "docs/reference/MARKET.md", "What this release adds is tested locally and is not on devnet yet.")
-    _found(tree, "docs/reference/MARKET.md", "gives a whole release one stage")
+    _add(tree, "docs/PRICING.md", "What this release adds is tested locally and is not on devnet yet.")
+    _found(tree, "docs/PRICING.md", "gives a whole release one stage")
     # which ids they ran on is the manifest's too: a run is never said to be a staging one when it was public, nor the other way
     _add(tree, "docs/reference/SECURITY.md", f"Of the {n} capabilities exercised on devnet, {n} ran on the public program ids.")
     assert not any("docs/reference/SECURITY.md" in line for line in dc.problems(tree))
@@ -178,8 +178,8 @@ def test_no_document_names_a_time_for_the_pending_upgrade_that_the_upgrade_recor
     # a time the record does not have at all (the scheduled run, ten minutes later), a day, another way to write it
     _add(tree, "docs/reference/SECURITY.md", "The four proposals execute on 2026-10-06 at 22:13 UTC.")
     _found(tree, "docs/reference/SECURITY.md", "names 2026-10-06 22:13 UTC", "has no such time")
-    _add(tree, "docs/reference/TEAM.md", "The upgrade cannot execute until 5 Oct.")
-    _found(tree, "docs/reference/TEAM.md", "names 2026-10-05 as a day an upgrade runs")
+    _add(tree, "docs/TRUST.md", "The upgrade cannot execute until 5 Oct.")
+    _found(tree, "docs/TRUST.md", "names 2026-10-05 as a day an upgrade runs")
     _add(tree, WHY, "The pending upgrade can run from 6 Oct 2026, 07:17 UTC.")
     _found(tree, WHY, "names 2026-10-06 07:17 UTC")
     # the history may keep the withdrawn times, in words that say they are history, and only there
@@ -199,8 +199,8 @@ def test_no_document_names_a_time_for_the_pending_upgrade_that_the_upgrade_recor
 def test_the_release_needs_no_time_that_exists_only_after_the_push():
     bd = _script("bench_docs")
     assert not [name for name in bd.SLOTS if "upgrade" in name] and not hasattr(bd, "WHEN")
-    release = " ".join((ROOT / "docs" / "reference" / "RELEASE.md").read_text(encoding="utf-8").split())
-    assert "## Nothing after the push goes into a commit" in (ROOT / "docs" / "reference" / "RELEASE.md").read_text(encoding="utf-8")
+    release = " ".join((ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8").split())
+    assert "## Nothing after the push goes into a commit" in (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
     assert "never by a second commit" in release and "upgrade_proposed" not in release and "--set upgrade" not in release
     for doc in ("README.md", "docs/reference/SECURITY.md"):                # where the time used to be stamped: they point at the record
         text = " ".join((ROOT / doc).read_text(encoding="utf-8").split())
@@ -211,8 +211,8 @@ def test_the_release_needs_no_time_that_exists_only_after_the_push():
 def test_a_fee_maximum_or_the_old_limit_said_as_current_fails(tree):
     _add(tree, WHY, "The fee is 2.5%, at least 0.40 and at most 25 USDC.")
     _found(tree, WHY, "gives the fee a maximum")
-    _add(tree, "docs/reference/MARKET.md", "Knos's fee is already 2.5% (capped).")
-    _found(tree, "docs/reference/MARKET.md", "gives the fee a maximum")
+    _add(tree, "docs/PRICING.md", "Knos's fee is already 2.5% (capped).")
+    _found(tree, "docs/PRICING.md", "gives the fee a maximum")
     _add(tree, "docs/reference/METER.md", "An order holds between 5 and 500 USDC.")
     _found(tree, "docs/reference/METER.md", "gives the old limit of 500 as current")
     _add(tree, "docs/reference/SECURITY.md", "The fee is at least 0.40 and has no maximum. An order holds at most 100,000 on devnet (it was 500 before 0.3.14).")
@@ -245,8 +245,8 @@ def test_an_unfilled_slot_two_values_for_one_fact_and_an_undated_total_fail(tree
     _swap(tree, "docs/reference/SECURITY.md", f"\n{paid:,} tasks had been paid on the second deployment.\n", "")
     assert dc.problems(tree) == []
     # a total of payments is a reading of one day: it says the day, and two documents do not give two totals
-    _add(tree, "docs/reference/MARKET.md", "Knos's two deployments show 15 payments on devnet.")
-    _found(tree, "docs/reference/MARKET.md", "gives a total of 15 payments on devnet without the day it was read")
+    _add(tree, "docs/PRICING.md", "Knos's two deployments show 15 payments on devnet.")
+    _found(tree, "docs/PRICING.md", "gives a total of 15 payments on devnet without the day it was read")
     _add(tree, "docs/reference/METER.md", "By 5 Oct 2026 the two deployments had made 52 payments.")
     _found(tree, "the total of payments on devnet has 2 values")
 

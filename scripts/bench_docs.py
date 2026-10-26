@@ -72,9 +72,9 @@ DOCS = ["README.md", "docs/reference/BENCH.md", "docs/NUMBERS.md"]
 PITCH = ["README.md", "web/index.html"]
 # The other files that may carry slots. Everything a reader opens first states a release-measured fact through one, so that the
 # release fills them all in one run and no document is left with an older number.
-SLOTTED = ["README.md", "CHANGELOG.md", "docs/reference/DISCLOSURE.md", "docs/reference/WHY.md", "docs/reference/MARKET.md",
+SLOTTED = ["README.md", "CHANGELOG.md", "docs/reference/DISCLOSURE.md", "docs/reference/WHY.md", "docs/PRICING.md",
            "docs/reference/SECURITY.md", "docs/reference/ASSURANCE.md", "docs/reference/BENCH.md", "docs/reference/RELAY.md", "docs/NUMBERS.md", "docs/TRANSACTION.md",
-           "docs/reference/FLOWS.md", "docs/reference/DEPENDENCY.md"]
+           "docs/START.md", "docs/TRUST.md"]
 UNMEASURED = "measured at release"
 SLOT = re.compile(r"(?<!`)\[\[stat: ([a-z][a-z_]*)\]\]")      # not one quoted as code: that is the docs naming the syntax
 # The rows of the `devnet` block: (what was measured, its path in stats.json).
@@ -253,7 +253,7 @@ def outside_rows(src: dict, repo: dict) -> list[tuple[str, object, str]]:
         ("Outside programs reading the verifier", (repo.get("outside_programs_reading_the_verifier") or [None])[0],
          by_hand + "; the examples in [COMPOSE.md](reference/COMPOSE.md) are Knos's own"),
         ("Shadow counts published: a neutral count printed beside a supplier's own invoice count, with every mismatch",
-         (repo.get("shadow_counts_published") or [None])[0], by_hand + "; [PILOT.md](reference/PILOT.md), \"How it starts: shadow mode\""),
+         (repo.get("shadow_counts_published") or [None])[0], by_hand + "; [SHADOW.md](reference/SHADOW.md)"),
     ]
     return rows
 
@@ -318,7 +318,7 @@ def stage_rows(caps: list[dict]) -> list[tuple[str, str, str]]:
 TODAY_NOTES = {3: ", on tasks Knos funded itself", 4: ", on tasks Knos funded itself"}     # by row of NUMBERS.md
 TODAY_LAST = [
     ("Paying customers", "0", "[docs/reference/DISCLOSURE.md](docs/reference/DISCLOSURE.md)"),
-    ("Revenue", "0; test USDC is not money", "[docs/reference/MARKET.md](docs/reference/MARKET.md)"),
+    ("Revenue", "0; test USDC is not money", "[docs/PRICING.md](docs/PRICING.md)"),
     ("Outside security review", "none", "[docs/reference/ASSURANCE.md](docs/reference/ASSURANCE.md)"),
     ("Key holders", "one person holds every key; an upgrade waits 8 days in public", "[docs/reference/GOVERNANCE.md](docs/reference/GOVERNANCE.md)"),
     ("Network and money", "Solana devnet, test USDC; mainnet is not touched", "[docs/reference/SECURITY.md](docs/reference/SECURITY.md)"),

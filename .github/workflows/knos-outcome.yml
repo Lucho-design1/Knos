@@ -1,6 +1,6 @@
 name: knos outcome measure
 
-# Measures one outcome (docs/reference/MEASURED.md): reads the spec and the lock at the commit this run is on, fetches
+# Measures one outcome (docs/reference/OUTCOMES.md): reads the spec and the lock at the commit this run is on, fetches
 # the window's data, recomputes the control group from the public salt, computes treated against control, the lift
 # and its bootstrap lower bound (the seed is the spec's and is logged), runs the cheat checks, uploads the result
 # JSON, and passes only when the bound reached the spec's success.min_lift.

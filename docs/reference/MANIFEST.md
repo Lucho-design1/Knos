@@ -365,18 +365,18 @@ From [DISCLOSURE.md](DISCLOSURE.md), one line each.
 - **No buyer has been interviewed.** Every statement here about what a buyer wants is reasoning from public sources.
 - **No letter of intent.** Nobody has written that they would use or buy Knos.
 - **No paying customer.** No price in the price book has been charged to anyone.
-- **No pilot.** The [Pilot](PILOT.md) is an offer; nobody has bought it or been offered it.
+- **No pilot.** Nobody has run a pilot.
 - **No outside funder.** Knos's own account funded every task, in test money. Since 0.3.11, 3 payments have gone to another GitHub account, for three pull requests it wrote.
-- **Outside key holders today: 0.** Both multisigs are 2-of-3 and one person holds all three keys ([KEYHOLDER.md](KEYHOLDER.md) says what changes it).
-- **One founder, pseudonymous:** the GitHub account drexthealpha; no legal name is published.
-- **No co-founder,** employee or adviser ([TEAM.md](TEAM.md)).
+- **Outside key holders today: 0.** Both multisigs are 2-of-3 and one person holds all three keys ([TRUST.md](../TRUST.md) says what changes it).
+- **One person, pseudonymous:** no legal name is published.
+- **No co-founder,** employee or adviser ([TRUST.md](../TRUST.md)).
 - **No legal entity.** Nothing can sign a contract, send an invoice or be sued as Knos, and there are no terms of service.
-- **No legal advice taken.** [REGULATION.md](REGULATION.md) is what the founder read.
+- **No legal advice taken.** The section "Regulation" below is what the author read.
 - **No outside review,** of the programs, the workflows, the relay, the clients, the site or the documents ([ASSURANCE.md](ASSURANCE.md)).
 - **No shadow count.** The meter has never run beside anyone's invoices but Knos's own examples.
 - **No outside program is known to read the verifier.** The interface and the examples are Knos's own ([COMPOSE.md](COMPOSE.md)).
 - **No independent reproduction.** Nobody outside Knos has reported rebuilding the programs to the deployed hash, rerunning the benchmarks or running the drills.
 - **No mainnet deployment.** Solana devnet and test USDC only; no real money has moved.
-- **No second operator.** If the founder is unavailable, nobody answers a report, approves a key or cancels a proposal ([OPERATOR.md](OPERATOR.md)).
-- **No organisation account.** The pinned workflows and the relay live in one personal GitHub account ([GOVERNANCE.md](GOVERNANCE.md), section 9).
+- **No second operator.** If that one person is unavailable, nobody answers a report or cancels a proposal.
+- **No organisation account.** The pinned workflows and the relay live in one GitHub account ([GOVERNANCE.md](GOVERNANCE.md), section 6).
 - **The first deployment cannot be changed,** so its known limits stay ([SECURITY.md](SECURITY.md)); the second changes only through a multisig with a public 8-day delay.

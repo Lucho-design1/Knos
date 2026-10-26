@@ -36,7 +36,7 @@
 //                               sends nothing. With --send it creates that proposal and approves it with the member keys given; then
 //                               `execute <upgrade|guardian> <index>` runs it, after the time lock (691200 s) on the upgrade multisig. A new key
 //                               is an outside holder's unless --founder is passed; it gets the permission to vote and no other
-//                               unless --permissions says so. docs/reference/KEYHOLDER.md is the page for whoever holds the new key.
+//                               unless --permissions says so. docs/TRUST.md is the page for whoever holds the new key.
 //   node scripts/governance.mjs derive                          the addresses the create keys give (no network)
 //   node scripts/governance.mjs inner guardian approve|revoke <issuer> <key hash>, inner guardian pause <seconds>,
 //                               inner upgrade <program> <buffer>   the instruction a proposal would carry, as JSON (no network)

@@ -10,10 +10,10 @@ it must be one a fact in docs/facts.json says ("say"), and every fact must hold:
     {"say": ["21"], "what": "...", "file": "docs/reference/TAMPER.md", "has": "fooled 17/21"}
     {"say": ["1,470"], "what": "...", "source": "https://...", "read": "2026-10-02"}      an outside number, cited
     {"say": [...], "what": "...", "live": "immutable"}                                   checked on devnet (see LIVE)
-    {"say": ["4.03"], "what": "...", "doc": "docs/reference/MARKET.md", "source": "https://...", "read": "..."}   said in a document
+    {"say": ["4.03"], "what": "...", "doc": "docs/PRICING.md", "source": "https://...", "read": "..."}   said in a document
     {"say": ["16"], "what": "...", "claim": "capabilities.exercised"}                    a registered fact (scripts/doc_claims.py)
 
-A fact with "doc" backs a number in a document that is not front-facing (docs/reference/MARKET.md, docs/reference/REGULATION.md, ...): the
+A fact with "doc" backs a number in a document that is not front-facing (docs/PRICING.md, docs/reference/DISCLOSURE.md, ...): the
 document must still say every number the fact lists, and the fact must hold like any other. Its numbers may be used in
 the front-facing text too, so a number has one fact wherever it is said.
 

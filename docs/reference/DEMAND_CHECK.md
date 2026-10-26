@@ -205,7 +205,7 @@ browser --> Knos server (Python) --JSON lines--> apps/wanted/bridge/qloo_bridge.
 
 - Only Qloo's supported stack: `qloo mcp`, the canonical local MCP server of the public harness, started from the
   backend with the official MCP SDK, as Qloo's starter `starter/mcp-client/backend.mjs` does
-  ([qloo-hackathon-kit](https://github.com/qloo/qloo-hackathon-kit)). Not used: hosted MCP endpoints (there are
+  (Qloo's public examples). Not used: hosted MCP endpoints (there are
   none), the integrate/plan/build modes. In this flow `qloo api` is not needed: the nine workflows
   cover every question below (the decision check above uses `qloo api mcp`).
 - Why a Node sidecar and not a Python MCP client: it is the SDK and version Qloo's starter pins, the harness

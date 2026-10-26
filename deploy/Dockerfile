@@ -1,4 +1,4 @@
-# Knos in the buyer's own cloud: one image, three roles (record, relay, site). docs/reference/SELFHOST.md.
+# Knos in the buyer's own cloud: one image, three roles (record, relay, site). deploy/knos.example.toml.
 #
 #   KNOS_COMMIT=$(git rev-parse HEAD) docker compose -f deploy/compose.yaml build
 #

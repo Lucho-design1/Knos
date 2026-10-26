@@ -46,7 +46,7 @@ def register(app, help_lines: list | None = None) -> None:
 
     if help_lines is not None:
         help_lines.append(("taskpack", "For money", "A merged issue + pull request as a sealed, verified task package (maintainer opt-in)."))
-    group = typer.Typer(help="Task packages: a merged fix's hidden tests sealed, with the issue, scope, judge and cheat rules (docs/reference/TASK_PACKAGES.md).", no_args_is_help=True)
+    group = typer.Typer(help="Task packages: a merged fix's hidden tests sealed, with the issue, scope, judge and cheat rules (docs/reference/REFEREE.md).", no_args_is_help=True)
     app.add_typer(group, name="taskpack")
 
     @group.command("export")

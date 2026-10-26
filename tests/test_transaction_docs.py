@@ -66,7 +66,7 @@ def test_the_transaction_page_and_the_changelog_say_which_build_runs_now_and_tha
     if "**State: in force since 11 Oct 2026.**" in flat("docs/reference/GOVERNANCE.md"):
         top = flat("CHANGELOG.md").split("## 0.3.28 ")[1].split("## 0.3.27 ")[0]
         assert "**In short:** the 8-day time lock is in force: every program change now waits 8 days in public." in top
-        for rel in ("docs/TRUST.md", "docs/reference/GOVERNANCE.md", "docs/reference/CHARTER.md", "docs/reference/KEYS.md", "docs/reference/ROLLBACK.md"):
+        for rel in ("docs/TRUST.md", "docs/reference/GOVERNANCE.md", "docs/reference/CHARTER.md", "CONTRIBUTING.md"):
             page = flat(rel)
             assert "not yet applied" not in page and "not yet in force" not in page and "approved, not applied" not in page, rel
             assert "691,200 s, in force since 11 Oct 2026" in page or "in force since 11 Oct 2026" in page, rel
@@ -110,7 +110,7 @@ def test_no_page_or_site_says_the_lock_in_force_is_two_days_once_it_is_8_days():
     # vectors and web/buyer_templates.json) keeps "public 48-hour delay", and dated history says "48 hours then"
     if "**State: in force since 11 Oct 2026.**" not in " ".join((ROOT / "docs" / "reference" / "GOVERNANCE.md").read_text(encoding="utf-8").split()):
         return
-    kept = {"docs/reference/RECEIPT.md", "docs/reference/TEAM.md"}   # TEAM.md: the dated 0.3.12 row (3 Oct 2026)
+    kept = {"docs/reference/RECEIPT.md"}
     files = [ROOT / "README.md", ROOT / "README.pypi.md", *sorted((ROOT / "docs").rglob("*.md")),
              *sorted(p for p in (ROOT / "web").rglob("*") if p.suffix in (".html", ".js", ".md", ".txt") and "node_modules" not in p.parts)]
     said = []

@@ -45,7 +45,7 @@ def _tree(tmp_path: Path, **docs: str) -> Path:
              "src/knos/settle/v2/pay.py": "FEE_BPS = 30\n", "src/knos/approvals.py": "def gate():\n    return True\n",
              "src/knos/flow.py": "from knos import approvals\n\nok = approvals.gate()\n",
              "README.md": "**Knos.**\n\nFour programs on Solana devnet.\n", "pyproject.toml": '[project]\nname = "knos"\nversion = "0.3.21"\n'}
-    names = {"readme": "README.md", "market": "docs/reference/MARKET.md", "controls": "docs/reference/CONTROLS.md", "disclosure": "docs/reference/DISCLOSURE.md",
+    names = {"readme": "README.md", "market": "docs/PRICING.md", "controls": "docs/reference/SECURITY.md", "disclosure": "docs/reference/DISCLOSURE.md",
              "pitch": "docs/STORY.md", "page": "web/index.html", "script": "web/price.js", "caps": "docs/capabilities.json",
              "compare": "docs/reference/COMPARE.md", "compose": "docs/reference/COMPOSE.md", "assurance": "docs/reference/ASSURANCE.md"}
     files.update({names[k]: v for k, v in docs.items()})
@@ -78,7 +78,7 @@ def test_not_built_said_of_a_capability_that_is_tested_is_found_in_every_kind_of
                  pitch="The check is free. Record: the public record is free; a hosted lookup is priced, not built.\n",
                  script='const rows = [\n  ["Record", "lookup", "API (not built: a static file today)"],\n];\n',
                  controls="Nothing here.\n\n`private_work` is planned, not shipped.\n\n`sketch` is not built past a first module.\n")
-    assert _found(root) == [("stage", "docs/reference/CONTROLS.md", 3), ("stage", "docs/reference/MARKET.md", 5), ("stage", "docs/STORY.md", 1),
+    assert _found(root) == [("stage", "docs/PRICING.md", 5), ("stage", "docs/reference/SECURITY.md", 3), ("stage", "docs/STORY.md", 1),
                             ("stage", "web/price.js", 2)]                # `sketch` is only implemented: "not built past" contradicts nothing
 
 
@@ -99,7 +99,7 @@ def test_nothing_calls_it_said_of_a_function_the_source_calls_is_found_also_in_a
                  caps=json.dumps(caps, indent=1))
     tc = _tool()
     found = [p for p in tc.problems(root) if p.rule == "calls"]
-    assert [(p.file, p.line) for p in found] == [("docs/reference/CONTROLS.md", 4), ("docs/capabilities.json", found[1].line)]
+    assert [(p.file, p.line) for p in found] == [("docs/reference/SECURITY.md", 4), ("docs/capabilities.json", found[1].line)]
     assert all("src/knos/flow.py calls approvals.gate()" in p.against for p in found)
     (root / "src" / "knos" / "flow.py").write_text("ok = True\n", encoding="utf-8")      # with no caller the sentence is true of the source
     assert [p for p in tc.problems(root) if p.rule == "calls"] == []
@@ -113,7 +113,7 @@ def test_a_price_that_is_not_the_price_books_is_found_and_a_past_price_or_a_cost
                  page="<p>Team 25,000</p>\n<td>0.10 USD a lookup</td>\n")
     tc = _tool()
     found = [p for p in tc.problems(root) if p.rule == "price"]
-    assert [(p.file, p.line) for p in found] == [("docs/reference/MARKET.md", 3), ("docs/reference/MARKET.md", 4), ("docs/reference/MARKET.md", 6), ("docs/reference/MARKET.md", 8), ("docs/reference/MARKET.md", 10)]
+    assert [(p.file, p.line) for p in found] == [("docs/PRICING.md", 3), ("docs/PRICING.md", 4), ("docs/PRICING.md", 6), ("docs/PRICING.md", 8), ("docs/PRICING.md", 10)]
     assert "0.10 USD, and this says 0.25" in found[0].against and "0.2 or 0.3%" in found[4].against
 
 
@@ -135,10 +135,10 @@ def test_two_documents_that_count_differently_are_found_and_a_count_of_capabilit
                  market="On CI 3,412 passed.\n\nKnos lists 9 capabilities.\n\nTwo programs were made immutable in the first deployment on devnet.\n")
     tc = _tool()
     found = tc.problems(root)
-    assert [(p.rule, p.file, p.line) for p in found] == [("count", "docs/reference/MARKET.md", 3), ("count", "docs/STORY.md", 1),
+    assert [(p.rule, p.file, p.line) for p in found] == [("count", "docs/PRICING.md", 3), ("count", "docs/STORY.md", 1),
                                                          ("count", "docs/STORY.md", 3)]
     assert "has 6 capabilities, and this says 9" in found[0].against and "README.md:3 counts 4 programs" in found[1].against
-    assert "docs/reference/MARKET.md:1 counts 3412 tests passed" in found[2].against
+    assert "docs/PRICING.md:1 counts 3412 tests passed" in found[2].against
     said: list[str] = []
     assert tc.main(["--json"], say=said.append, root=root) == 1 and len(json.loads(said[0])) == 3
 
@@ -152,7 +152,7 @@ def test_a_paragraphs_sentences_carry_the_line_they_start_on_and_a_fenced_block_
 def test_the_checker_reads_this_tree_and_every_file_it_names_exists():
     tc = _tool()
     names = tc.files()
-    assert {"README.md", "docs/reference/CAPABILITIES.md", "docs/reference/MARKET.md", "docs/reference/CONTROLS.md", "docs/reference/DISCLOSURE.md", "web/index.html"} <= set(names)
+    assert {"README.md", "docs/reference/CAPABILITIES.md", "docs/PRICING.md", "docs/reference/SECURITY.md", "docs/reference/DISCLOSURE.md", "web/index.html"} <= set(names)
     assert any(n.startswith("web/") and n.endswith(".js") for n in names)
     book = tc.price_book()
     assert book["record"] == "0.10" and book["meter"] == "0.002" and book["team"] == "25000" and book["pilot"] == "2500" and book["acceptance"] == "0.20,0.30"
@@ -203,7 +203,7 @@ def test_a_package_knos_published_said_to_be_unpublished_is_found_with_its_insta
 
 
 def test_none_published_and_neither_has_been_published_are_found_too(tmp_path):
-    """docs/reference/RELEASE.md said "Three packages, none published yet" and "Neither has been published" after all three were
+    """CONTRIBUTING.md said "Three packages, none published yet" and "Neither has been published" after all three were
     on their registries (8 Oct 2026): the words slipped past "not published". A sentence about the past still passes."""
     root = _tree(tmp_path, compose="Three packages, none published yet: the crates and `knos-settle`.\n\n"
                                    "The crates and the npm client: neither has been published.\n\n"
@@ -261,7 +261,7 @@ def test_words_no_document_uses_are_found_and_a_sourced_figure_about_another_com
                  compose="# Programs\n\nThe second deployment is immutable.\n\nThe first deployment is immutable.\n\n"
                          "Delivery has zero latency.\n")
     found = [(p.file, p.line) for p in _tool().problems(root) if p.rule == "word"]
-    assert found == [("docs/reference/COMPOSE.md", 3), ("docs/reference/COMPOSE.md", 7), ("docs/reference/MARKET.md", 3), ("docs/reference/MARKET.md", 5)]
+    assert found == [("docs/reference/COMPOSE.md", 3), ("docs/reference/COMPOSE.md", 7), ("docs/PRICING.md", 3), ("docs/PRICING.md", 5)]
 
 
 def test_the_sdk_readme_claims_no_attestation_but_may_name_the_attest_command(tmp_path):

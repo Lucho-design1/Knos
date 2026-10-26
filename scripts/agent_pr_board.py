@@ -17,7 +17,7 @@ A row can be disputed (.github/ISSUE_TEMPLATE/dispute-index-row.yml). docs/index
                    "outcome": "<what was found, in words>" or null,
                    "changed": [{"field": "failed_at_merge", "from": 10, "to": 9}]}]}
 
-Beside the feed it writes one record file an agent, docs/records/<agent>.json (knos.record_page, docs/reference/RECORD.md): the
+Beside the feed it writes one record file an agent, docs/records/<agent>.json (knos.record_page, docs/reference/SUPPLIER.md): the
 agent's row as the public part of its record, labelled as coming from public pull requests and not from Knos orders.
 
 An open dispute marks its row, with the link, on the board of its week and of every later one. A resolved dispute

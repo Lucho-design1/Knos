@@ -2821,8 +2821,6 @@ const BAL = await k.balance(7000001, WALLET, USDC), BALTOK = await k.baltok(BAL)
     && (await text(page, "#pilot-price-words")) === bookRow[2] && bookRow[2].startsWith("2,500 USD, credited against year one") && (await text(page, "#pilot-price dd")) === "one buyer, two suppliers, 30 days, one reconciled invoice");
   check("  it says plainly that nobody has bought or run it", (await text(page, "#pilot-honest")) === "An offer. Nobody has bought or run it yet." && (await text(page, "#pilot-limits")).includes("Not included:"));
   check("  no form and nothing to type into: the page collects nothing", (await page.$$eval("#pilot form, #pilot input, #pilot textarea, #pilot select, #pilot button:not(.copy)", (l) => l.length)) === 0 && !/customer|pilot is running|signed up/i.test(await text(page, "#pilot")));
-  const pilotDoc = readFileSync(join(here, "..", "..", "docs", "reference", "PILOT.md"), "utf8").replace(/\s+/g, " ");
-  check("  its deliverables are the four of docs/reference/PILOT.md, by name", lib.PILOT_DELIVERABLES.every(([name]) => pilotDoc.includes(`**${name}**`)) && pilotDoc.includes("2,500 USD for one buyer and two suppliers, for 30 days"));
   check("  nothing runs off the side at any width", (await overflow(page)) <= 1, await overflow(page));
 
   // Reproduce: the three lines, and the count of what the build carries

@@ -90,7 +90,7 @@ def test_the_docs_this_gate_covers_name_outside_repositories_and_never_knos_itse
     assert uc.repos_in([page]) == ["fresh/repo", "quiet/repo"]
     page.write_text("[a](https://github.com/fresh/repo)\n<!-- not-active -->\n[c](https://github.com/quiet/repo)\n<!-- /not-active -->\n", encoding="utf-8")
     assert uc.repos_in([page]) == ["fresh/repo"] and uc.repos_in([page], marked=True) == ["fresh/repo", "quiet/repo"]
-    listed = run("--docs", str(ROOT / "docs" / "reference" / "INTEGRATIONS.md"), str(ROOT / "docs" / "reference" / "X402.md"), "--list")
+    listed = run("--docs", str(ROOT / "docs" / "reference" / "X402.md"), "--list")
     names = listed.stdout.split()
     assert listed.returncode == 0 and "x402-foundation/x402" in names
     assert not [n for n in names if n.startswith("drexthealpha/")] and len(names) == len(set(names))

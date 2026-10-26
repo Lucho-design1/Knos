@@ -446,9 +446,9 @@ check("  a line says how the other party recomputes it", (await text(page, "#ost
   check("  a payment on devnet is a demonstration in test money, never called paid", chips.some(([chip]) => chip === "devnet demonstration") && !chips.some(([chip]) => /^paid$|paid on/.test(chip)) && Object.values(con.CHIP).every((w) => WORDS.includes(w))
     && Object.keys(con.CHIP).sort().join() === [...fd.SETTLEMENTS].sort().join());
   const offered = await page.$$eval("#ost-exports [data-export]", (l) => l.map((b) => [b.dataset.export, b.textContent, b.nextElementSibling?.dataset.unverified === b.dataset.export ? b.nextElementSibling.textContent : ""]));
-  check("  five files for a finance system: the generic one, then NetSuite, SAP, Coupa and QuickBooks, each of those four marked best effort, unverified (docs/reference/FINANCE.md)",
+  check("  five files for a finance system: the generic one, then NetSuite, SAP, Coupa and QuickBooks, each of those four marked best effort, unverified (docs/reference/COMPANIES.md#statements)",
     offered.map((o) => o[0]).sort().join() === "coupa,generic,netsuite,quickbooks,sap" && offered[0][0] === "generic" && offered.every(([fmt, , mark]) => (fmt === "generic" ? mark === "" : mark === "best effort, unverified"))
-    && Object.entries(fd.FORMATS).every(([fmt, f]) => f.unverified === (fmt !== "generic")) && /best effort|unverified/i.test(readFileSync(new URL("../../docs/reference/FINANCE.md", import.meta.url), "utf8")), JSON.stringify(offered));
+    && Object.entries(fd.FORMATS).every(([fmt, f]) => f.unverified === (fmt !== "generic")) && /best effort|unverified/i.test(readFileSync(new URL("../../docs/reference/COMPANIES.md", import.meta.url), "utf8")), JSON.stringify(offered));
   const shownHead = await text(page, "#ost-head");
   for (const fmt of ["generic", "netsuite"]) {
     const [download] = await Promise.all([page.waitForEvent("download"), page.click(`#ost-exports [data-export="${fmt}"]`)]);

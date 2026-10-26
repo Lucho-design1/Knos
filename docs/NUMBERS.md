@@ -40,7 +40,7 @@ when the other party agrees to be counted.
 | 6 | Letters of intent | 0 | `docs/facts.json`, `by_hand`: a person changes it; [DISCLOSURE.md](reference/DISCLOSURE.md) says the same |
 | 7 | Reproductions signed by GitHub: files in `reproductions/` from a run in someone else's repository | 0 | the report files of [`reproductions/`](../reproductions/README.md) |
 | 8 | Outside programs reading the verifier | 0 | `docs/facts.json`, `by_hand`: a person changes it; [DISCLOSURE.md](reference/DISCLOSURE.md) says the same; the examples in [COMPOSE.md](reference/COMPOSE.md) are Knos's own |
-| 9 | Shadow counts published: a neutral count printed beside a supplier's own invoice count, with every mismatch | 0 | `docs/facts.json`, `by_hand`: a person changes it; [DISCLOSURE.md](reference/DISCLOSURE.md) says the same; [PILOT.md](reference/PILOT.md), "How it starts: shadow mode" |
+| 9 | Shadow counts published: a neutral count printed beside a supplier's own invoice count, with every mismatch | 0 | `docs/facts.json`, `by_hand`: a person changes it; [DISCLOSURE.md](reference/DISCLOSURE.md) says the same; [SHADOW.md](reference/SHADOW.md) |
 <!-- /bench:outside-use -->
 
 ## What they show, and what they do not

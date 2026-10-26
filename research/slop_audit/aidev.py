@@ -2,7 +2,7 @@
 
 Only column subsets are read, through DuckDB, and the one large table (pr_commit_details, ~1.3 GB) is streamed in
 record batches with a memory cap, so the audit runs in well under 2 GB of RAM. The dataset is never copied into the
-repository: `--data` points at a local download (see docs/reference/SLOP_AUDIT.md for the exact files and revision).
+repository: `--data` points at a local download (see docs/reference/BENCH.md for the exact files and revision).
 """
 
 from __future__ import annotations

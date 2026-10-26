@@ -98,7 +98,7 @@ What counts the work both sides agree on. Neither side keeps that count alone.
 
 ### Money held until the proof passes
 
-Money a program on Solana keeps for a task. It pays when the proof passes, or goes back.
+Money a program on Solana keeps for a task: held money. It pays on proof, or goes back.
 
 ### Multisig
 

@@ -4,7 +4,7 @@ A claimed new material is checked against what the Materials Project has compute
 "is it on or near the convex hull?", "is its band gap what the claim says?". Nothing is bought: the "order" is a
 query, and the results are the documents the API returned, hashed.
 
-Read 14 Oct 2026 (sources in docs/reference/LABS.md):
+Read 14 Oct 2026:
   base     https://api.materialsproject.org
   auth     X-API-KEY header (OpenAPI securitySchemes.ApiKeyAuth, api.materialsproject.org/openapi.json). A key is
            REQUIRED: an unauthenticated GET /materials/summary/ answered 401 {"message": "No API key found in request"}.

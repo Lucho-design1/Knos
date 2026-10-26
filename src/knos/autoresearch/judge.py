@@ -20,7 +20,7 @@ For each candidate (a dict of files the agent submits):
                                  referee's runner hands it (sandbox.py). An outside judge read the sealed seed through a
                                  path built with chr(); this rule refuses that, and the namespace mask hides the file.
 
-LIMIT (said in docs/reference/AUTORESEARCH.md): these rules are a static filter, not an OS sandbox. The candidate runs as
+LIMIT: these rules are a static filter, not an OS sandbox. The candidate runs as
 the referee's own user; a determined candidate may still find a path the filter misses and read any file that user can
 (for example the demo's sealed seed). Labels are never on disk in the sandbox, but for real money the referee must run
 candidates on a machine or account that holds neither the sealed file nor the hidden labels.

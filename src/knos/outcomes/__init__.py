@@ -7,6 +7,6 @@
     sign      both parties sign the spec's hash; the hash goes on the orders' issue
     recordio  Knos Record entries for every measurement, cheat, payment and refund
 
-docs/reference/MEASURED.md says it in plain words. Modules are imported on use: `measure` needs nothing beyond the
+docs/reference/OUTCOMES.md says it in plain words. Modules are imported on use: `measure` needs nothing beyond the
 standard library, so the reusable workflow's measuring job installs nothing else.
 """

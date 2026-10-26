@@ -1,4 +1,4 @@
-"""The release order with one commit and one push (docs/reference/RELEASE.md): the wheel is built once, before the commit of the
+"""The release order with one commit and one push (CONTRIBUTING.md): the wheel is built once, before the commit of the
 pinned workflows exists, the lock names it, the workflows are built with that lock, their commit is stamped into the
 tree, and the wheel built again from the stamped tree is the same file. Run here on a copy of this tree, with the real
 build."""
@@ -169,7 +169,7 @@ def test_the_lock_is_the_last_line_of_sign_txt_and_the_rest_is_the_third_party_l
 
 
 def test_the_plan_names_every_step_in_the_order_the_tools_enforce():
-    plan = (ROOT / "docs" / "reference" / "RELEASE.md").read_text(encoding="utf-8")
+    plan = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8").split("\n## How a Knos release is made\n", 1)[1].split("\n## Rollback", 1)[0]
     # PyPI before the workflows: their cutoff is written from the time PyPI took the wheel (pinned_workflows.py cutoff)
     order = ["scripts/bump_version.py --check", "scripts/release.py wheel", "pinned_workflows.py lock", "scripts/release.py publish", "pinned_workflows.py cutoff",
              "scripts/release.py workflows", "pinned_workflows.py stamp", "scripts/small_repos.py build", "scripts/release.py verify", "git commit",

@@ -227,110 +227,39 @@
   {
    "say": [
     "0.30%",
-    "0.20%",
     "0.05"
    ],
-   "doc": [
-    "docs/reference/MARKET.md",
-    "docs/PRICING.md"
-   ],
-   "what": "the price book, Acceptance: 0.30% of a dollar released or reconciled against a signed acceptance, paid by the funder on top; by contract 0.20% of a month's value above 1M, marginal, and never lower; outcomes under 20 USD netted into one release per payee per period with the 0.05 floor once; no cap. It replaces the Settle and Verify lines of the last price book; the row every document and the pricing page repeat (src/knos/billing.py BOOK, tests/data/billing_vectors.json)",
-   "file": "docs/reference/MARKET.md",
-   "has": "| Acceptance | dollar released or reconciled against a signed acceptance | 0.30%; by contract 0.20% on monthly value above 1M (the rate never goes below 0.20%); small tickets are netted: outcomes under 20 USD accumulate and settle as one release per payee per period, charged 0.30% of the netted amount with the 0.05 floor once per release; no cap | funder, on top of the amount | knos_pay at release (on chain: 0.30% and the floor; volume rates are a rebate by contract, off chain) |"
-  },
-  {
-   "say": [
-    "0.002",
-    "100,000"
-   ],
-   "doc": [
-    "docs/reference/MARKET.md",
-    "docs/PRICING.md"
-   ],
-   "what": "the proposed price book, Meter: an organisation's first 100,000 evaluations in a month free, then 0.002 USD each, from prepaid credits. It is proposed: nobody pays it. The deployed knos_meter on devnet charges 0.05 per evaluation after the first 10,000 of a month, in test USDC",
-   "file": "docs/reference/MARKET.md",
-   "has": "| Meter | evaluation | 100,000 a month free per organisation, then 0.002 USD | buyer | prepaid credits |"
+   "doc": "docs/PRICING.md",
+   "what": "the fee the program takes at release: 0.30% of the amount, at least 0.05, paid by the funder on top (knos_pay FEE_BPS and FEE_MIN)",
+   "file": "programs-v2/knos_pay/src/lib.rs",
+   "has": "pub const FEE_BPS: u64 = 30;"
   },
   {
    "say": [
     "0.05",
     "10,000"
    ],
-   "doc": [
-    "docs/reference/MARKET.md",
-    "docs/PRICING.md"
-   ],
+   "doc": "docs/PRICING.md",
    "what": "the Meter as deployed: knos_meter on devnet charges 0.05 per evaluation after an owner's first 10,000 of a month, in test USDC (FEE and FREE_PER_MONTH)",
    "file": "programs-v2/knos_meter/src/lib.rs",
    "has": "pub const FREE_PER_MONTH: u64 = 10_000;"
   },
   {
    "say": [
-    "25,000",
-    "100,000",
-    "400,000"
-   ],
-   "doc": [
-    "docs/reference/MARKET.md",
-    "docs/PRICING.md"
-   ],
-   "what": "the price book, Control, per organisation per year: Team 25,000 USD, Business 100,000, Enterprise from 400,000 (not deliverable yet); a contract price, enforced by nothing on chain; nobody has bought it",
-   "file": "docs/reference/MARKET.md",
-   "has": "| Control | organisation, per year | Team 25,000; Business 100,000; Enterprise from 400,000 (not deliverable yet: it needs single sign-on, private deployment and support that do not exist) | buyer | contract |"
-  },
-  {
-   "say": [
     "3.00",
     "15.00"
    ],
-   "doc": [
-    "docs/reference/MARKET.md",
-    "docs/PRICING.md"
-   ],
+   "doc": "docs/PRICING.md",
    "what": "the fee the program takes at release, one rate and a floor, worked by hand in tests/data/billing_vectors.json and by tests/web/price.mjs: 1,000 pays 3.00; 5,000 pays 15.00; 100,000, the most an order holds on devnet, pays 300.00",
    "file": "tests/data/billing_vectors.json",
    "has": "[\"1000.00\", \"3.00\"], [\"5000.00\", \"15.00\"], [\"100000.00\", \"300.00\"]"
   },
   {
    "say": [
-    "2,500",
-    "30"
-   ],
-   "doc": [
-    "docs/reference/MARKET.md",
-    "docs/PRICING.md"
-   ],
-   "what": "the price book, Pilot: one buyer and two suppliers for 30 days and one reconciled invoice, 2,500 USD, credited against year one; nobody has bought it and there is no legal entity to invoice from",
-   "file": "docs/reference/MARKET.md",
-   "has": "| Pilot | one buyer, two suppliers, 30 days, one reconciled invoice | 2,500 USD, credited against year one | buyer | contract |"
-  },
-  {
-   "say": [
-    "0.99"
-   ],
-   "doc": "docs/reference/MARKET.md",
-   "what": "Intercom's Fin: \"From $0.99 per Fin outcome\" (Intercom's pricing page)",
-   "source": "https://www.intercom.com/pricing",
-   "read": "2026-10-04"
-  },
-  {
-   "say": [
-    "21,702.10"
-   ],
-   "doc": [
-    "docs/reference/MARKET.md",
-    "docs/reference/WHY.md"
-   ],
-   "what": "completed work Bountysource left unpaid, at least (boehs.org, 3 May 2024)",
-   "source": "https://boehs.org/node/bountysource",
-   "read": "2026-10-03"
-  },
-  {
-   "say": [
     "2,000",
     "$2,000"
    ],
-   "doc": "docs/reference/REGULATION.md",
+   "doc": "docs/reference/DISCLOSURE.md",
    "what": "Form 1099-NEC is filed for each person paid at least 2,000 USD in the course of business during the year, for tax years beginning after 2025 (IRS instructions for Forms 1099-MISC and 1099-NEC, the IRS's own edition label (12/2026), read 10 Oct 2026)",
    "source": "https://www.irs.gov/instructions/i1099mec",
    "read": "2026-10-10"
@@ -347,22 +276,10 @@
   },
   {
    "say": [
-    "0.10%"
-   ],
-   "doc": "docs/reference/MARKET.md",
-   "what": "the price book, Acceptance under a contract: a Plan can lower the program's rate for one owner, to 0.10% at the least (10 basis points; tests/data/billing_vectors.json on_chain.plan_bps_min). No such contract exists",
-   "file": "tests/data/billing_vectors.json",
-   "has": "\"plan_bps_min\": 10"
-  },
-  {
-   "say": [
     "1.00%",
     "16.67"
    ],
-   "doc": [
-    "docs/reference/MARKET.md",
-    "docs/PRICING.md"
-   ],
+   "doc": "docs/PRICING.md",
    "what": "what the program takes at release, shown before funding: fee = max(0.05, floor(amount x 30 / 10,000)); 5 pays 0.05 (1.00%), 20 pays 0.06, 100 pays 0.30, 1,000 pays 3, 5,000 pays 15, 100,000 pays 300 (0.30% each); a release under 16.67 pays the floor. The relayer's tip comes out of the fee",
    "file": "tests/web/price.mjs",
    "has": "[[5, \"0.05\", \"1.00%\"], [20, \"0.06\", \"0.30%\"]"
@@ -376,38 +293,6 @@
    "path": "release.claim_parser_executions.value",
    "equals": 5410436,
    "doc": "docs/reference/ASSURANCE.md"
-  },
-  {
-   "say": [
-    "1,000,000"
-   ],
-   "doc": "docs/reference/MARKET.md",
-   "what": "the billing rule's volume rates, by contract and marginal: the first 1,000,000 USD of a month's accepted value pays 0.30% and what lies above it pays 0.20%, never less, value released on chain lying first; a proposal nobody has bought (src/knos/billing.py computes it)",
-   "file": "src/knos/billing.py",
-   "has": "ACCEPT_TIERS = ((Decimal(0), ACCEPT_RATE), (Decimal(1_000_000), Decimal(\"0.0020\")))"
-  },
-  {
-   "say": [
-    "0.10"
-   ],
-   "doc": [
-    "docs/reference/MARKET.md",
-    "docs/PRICING.md"
-   ],
-   "what": "the price book, Record: 0.10 USD a lookup of a supplier's delivery record through the machine-priced API, paid per call by the caller; the public record page and its file stay free; the lookup is `knos record serve`, which anyone runs and Knos hosts none of, budgeted at zero revenue. (The last price book's fee for connecting a supplier is gone: connecting a supplier costs nothing.)",
-   "file": "docs/reference/MARKET.md",
-   "has": "| Record | lookup of a supplier's delivery record through the machine-priced API | 0.10 USD a lookup, paid per call by the caller (an agent, a marketplace, an underwriter) through the knos-order/x402 flow; the public record page and its file stay free | the buyer, marketplace or insurer reading it | `knos record serve` (anyone runs it; Knos hosts none) |"
-  },
-  {
-   "say": [
-    "0.7%"
-   ],
-   "doc": [
-    "docs/reference/MARKET.md"
-   ],
-   "what": "Stripe Billing's pay-as-you-go price: \"0.7% of Billing volume\" (Stripe's pricing page)",
-   "source": "https://stripe.com/billing/pricing",
-   "read": "2026-10-05"
   },
   {
    "say": [
@@ -801,15 +686,6 @@
   },
   {
    "say": [
-    "0.7%"
-   ],
-   "doc": "docs/reference/MARKET.md",
-   "what": "Stripe Billing, pay as you go: 0.7% of billing volume; basic usage-based billing through its Meters API is part of that price, with up to 100M events a month included",
-   "source": "https://stripe.com/billing/pricing",
-   "read": "2026-10-07"
-  },
-  {
-   "say": [
     "2.2",
     "0.40"
    ],
@@ -838,9 +714,7 @@
    "say": [
     "180"
    ],
-   "doc": [
-    "docs/START.md"
-   ],
+   "doc": "docs/START.md",
    "what": "days at most that a proven job's money waits for its payee to bind a wallet (HOLD in knos_pay)",
    "file": "programs-v2/knos_pay/src/lib.rs",
    "has": "pub const HOLD: i64 = 180 * 86_400;"
@@ -850,10 +724,7 @@
     "1,000",
     "5,000"
    ],
-   "doc": [
-    "docs/PRICING.md",
-    "docs/reference/MARKET.md"
-   ],
+   "doc": "docs/PRICING.md",
    "what": "the amounts of the fee's worked examples: 1,000 pays 3.00 and 5,000 pays 15.00, both 0.30% (tests/data/billing_vectors.json, on_chain.fees)",
    "file": "tests/data/billing_vectors.json",
    "has": "[\"1000.00\", \"3.00\"], [\"5000.00\", \"15.00\"]"

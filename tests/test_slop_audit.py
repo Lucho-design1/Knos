@@ -1,5 +1,5 @@
 """The slop audit (research/slop_audit): its rules on known cases, its table on the committed SYNTHETIC fixture, and the
-published table: reproducible from the committed output, and every number docs/reference/SLOP_AUDIT.md prints is in it.
+published table: reproducible from the committed output, and every number docs/reference/BENCH.md prints is in it.
 
 The dataset itself is not needed here (and not in the repository): the fixture holds eight made-up pull requests in the
 shape of AIDev rows, one per rule."""
@@ -20,7 +20,7 @@ from research.slop_audit import __main__ as cli  # noqa: E402
 from research.slop_audit import audit, rules  # noqa: E402
 
 OUT = ROOT / "research" / "slop_audit" / "out"
-DOC = ROOT / "docs" / "reference" / "SLOP_AUDIT.md"
+DOC = ROOT / "docs" / "reference" / "BENCH.md"
 
 
 @pytest.mark.parametrize("path,test", [
@@ -108,7 +108,7 @@ def test_the_published_table_is_consistent_and_its_csv_is_its_json():
 
 
 def test_every_number_the_document_prints_is_in_the_published_table():
-    """docs/reference/SLOP_AUDIT.md marks its measured numbers as `k/n` with a percentage; each pair is a k and n of
+    """docs/reference/BENCH.md marks its measured numbers as `k/n` with a percentage; each pair is a k and n of
     one share in the table, and each percentage is that share, rounded as printed."""
     t = _published()
     pairs = set()
@@ -120,7 +120,7 @@ def test_every_number_the_document_prints_is_in_the_published_table():
             for x in v.values():
                 walk(x)
     walk(t)
-    doc = DOC.read_text(encoding="utf-8")
+    doc = DOC.read_text(encoding="utf-8").split("\n## Slop audit:", 1)[1]          # the audit's own section of BENCH.md
     found = re.findall(r"\b([\d,]+) of ([\d,]+) \((\d+(?:\.\d)?)%\)", doc)
     assert len(found) >= 8, "the document prints its measured shares as 'k of n (p%)'"
     for k, n, pct in found:

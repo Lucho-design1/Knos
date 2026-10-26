@@ -36,7 +36,7 @@ def test_sign_and_verify():
     env, kp = envelope()
     got = core.verify(env)
     assert got["valid"] and got["digest"] == core.digest(env["receipt"]) and got["issuer"] is None
-    assert env["receipt"]["links"]["install"].endswith("PR_GATE.md#install")
+    assert env["receipt"]["links"]["install"].endswith("REFEREE.md#install")
     assert env["receipt"]["runner"]["run_url"] == "https://github.com/owner/demo/actions/runs/42"
 
 

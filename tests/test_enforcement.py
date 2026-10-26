@@ -143,22 +143,22 @@ def test_a_workflow_cell_names_a_job_of_a_workflow_and_every_function_named_anyw
 
 
 def test_the_page_and_the_json_are_the_table(capsys):
-    assert enforce.main(["--check"]) == 0, "run: python -m knos.enforce --write"
+    assert enforce.main(["--check"]) == 0
     assert enforce.main(["--json"]) == 0
     doc = json.loads(capsys.readouterr().out.split("\n", 1)[1])
     assert [r["id"] for r in doc["routes"]] == list(enforce.CELLS) and [x["id"] for x in doc["restrictions"]] == [x for x, _n in enforce.RESTRICTIONS]
     assert set(doc["cells"]["comment"]["approvers"]) == {"class", "by", "test"} and doc["cells"]["comment"]["approvers"]["class"] == "workflow"
     assert all(doc["cells"][r["id"]][x["id"]]["class"] in enforce.CLASSES for r in doc["routes"] for x in doc["restrictions"])
-    page = (ROOT / enforce.DOC).read_text(encoding="utf-8")
+    page = enforce.render()
     assert page.count("\n## ") == 2 + len(enforce.ROUTES) and "| [Funding by comment](#comment) | program | program | program | workflow | advisory |" in page
     assert enforce.main(["--nothing"]) == 2 and enforce.main([]) == 0 and "Funding by comment" in capsys.readouterr().out
 
 
-def test_the_controls_page_says_what_the_source_does_about_the_gate():
-    text = (ROOT / "docs/reference/CONTROLS.md").read_text(encoding="utf-8")
+def test_the_companies_page_says_what_the_source_does_about_the_gate():
+    text = (ROOT / "docs/reference/COMPANIES.md").read_text(encoding="utf-8")
     for false in ("nothing calls it today", "does not ask it yet", "not asked by the funding workflow yet", "a workflow would ask"):
         assert false not in text, false
-    assert "ENFORCEMENT.md" in text and "approvals.gate_order" in text and "flow._gated" in text
+    assert "approvals.gate_order" in text and "flow._gated" in text
     source = (ROOT / "src/knos/flow.py").read_text(encoding="utf-8")
     assert source.count("_gated(run, rp, cmd, commenter") == 3 and "approvals.gate(" in source and "approvals.gate_order(" in source
 

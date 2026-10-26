@@ -171,7 +171,7 @@ def test_the_site_and_the_python_say_the_fee_in_the_same_words():
 
 def test_every_document_that_states_the_fee_says_both_sides_and_what_an_older_order_keeps():
     keeps = "funded before the upgrade keep the rate fixed at their funding"
-    for rel in ("docs/reference/SECURITY.md", "docs/reference/INSTALL.md", "docs/reference/X402.md", "docs/reference/CONSOLE.md", "docs/reference/CONTROLS.md", "sdk/settle/README.md"):
+    for rel in ("docs/reference/SECURITY.md", "docs/reference/INSTALL.md", "docs/reference/X402.md", "sdk/settle/README.md"):
         text = " ".join((ROOT / rel).read_text(encoding="utf-8").split())
         assert keeps in text, rel
         assert "0.30%" in text and "0.05" in text, rel                                  # the 0.3.18 fee

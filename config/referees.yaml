@@ -1,5 +1,5 @@
 # Knos's published referee registry: the public keys whose m-of-n signatures Knos's client tools accept as a panel
-# for an order judged by referees (knos_pay 0.3.34 PANEL orders, docs/reference/PAY_ON_PROOF.md "Trust model").
+# for an order judged by referees (knos_pay 0.3.34 PANEL orders, docs/reference/REFEREE_FROST.md "Trust model").
 #
 # Who holds these keys decides the money of every panel order drawn from them. A panel that is not drawn from this
 # list, or that holds the funder's or a payee's own key, is refused by verdict.check, the idea panel tools and the
@@ -7,8 +7,7 @@
 # "UNLISTED PANEL".
 #
 # test: true marks a DEVNET TEST key: made by the build agent V34PAY, its secret kept in that agent's own devnet wallet
-# folder, never a founder or member key, for test money only. Knos has published NO production referee key yet:
-# adding one (and who holds it) is a founder decision.
+# folder, never a member key, for test money only. Knos has published NO production referee key yet.
 version: 1
 referees:
   - key: 2DxGapgF7bScgxWTexTtmmzb9RmYc69Mnd4WjRCjPyNK
@@ -24,7 +23,7 @@ referees:
     label: Knos devnet TEST referee 3 (test money only)
     test: true
   # The FROST group key (config/referee-frost.json): ONE Ed25519 key no machine holds; 2 of its 3 key shares (the
-  # Render app server, GitHub Actions, the founder's PC) sign together. Pinned as a 1-of-1 panel (knos.threshold).
+  # Render app server, GitHub Actions, a third machine the operator runs) sign together. Pinned as a 1-of-1 panel (knos.threshold).
   - key: CZ599fmDD6ATkRsbUbdZiAQE7uF9sJrGFmJ6k54ujb4E
     name: knos-devnet-referee-frost-group
     label: Knos devnet TEST referee group, FROST 2 of 3 hosts (test money only)

@@ -2,7 +2,7 @@ name: knos supplier check (reusable workflow)
 
 # A reusable workflow for a supplier's own repository: the free check on every pull request, its result posted once,
 # and its receipt kept as an artifact. No bounty, no money, no chain, no secret. A repository calls it with one line
-# (examples/knos-supplier.yml, docs/reference/RECORD.md):
+# (examples/knos-supplier.yml, docs/reference/SUPPLIER.md):
 #
 #     uses: drexthealpha/Knos/.github/workflows/supplier.yml@<a release tag, or its full commit sha>
 #

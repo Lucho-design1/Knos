@@ -1,6 +1,6 @@
 """Token-2022 extensions that would break an escrow's promise (knos.platform.token22): read from synthetic account bytes
 laid out as the Token-2022 program lays them out, and the refusal `knos fund-wallet` gives for such a mint. The devnet
-mints these mirror are in docs/reference/TOKEN_SAFETY.md."""
+mints these mirror are in docs/reference/PLATFORM.md."""
 from __future__ import annotations
 
 import pytest

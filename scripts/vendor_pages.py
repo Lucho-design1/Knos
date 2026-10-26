@@ -2,8 +2,9 @@
 """vendor_pages.py -- one page for each agent vendor the Agent PR Index rates: its numbers, its reply, its disputes and
 what it can do to earn the supplier badge. From the published files alone; no network, no clock.
 
-    python scripts/agent_pr_index.py vendors           # write docs/reference/VENDORS.md and docs/vendors.json
-    python scripts/agent_pr_index.py vendors --check   # write nothing; exit 1 when either differs
+    python scripts/agent_pr_index.py vendors           # write docs/vendors.json (the site's #vendor= pages read it)
+    python scripts/agent_pr_index.py vendors --check   # write nothing; exit 1 when it differs
+    python scripts/agent_pr_index.py vendors --doc F   # also write the same as one Markdown page to F
 
 What a vendor gets, for each row:
 
@@ -13,7 +14,7 @@ What a vendor gets, for each row:
                docs/index_replies.json and printed beside the row word for word, as the vendor wrote it
     disputes   one click opens the "Dispute a row" form with the agent and the week filled in; every dispute of the
                row, open or closed, with what was found (docs/index_disputes.json)
-    badge      the two steps that turn the vendor's record from grey to green (docs/reference/RECORD.md): the free check on its
+    badge      the two steps that turn the vendor's record from grey to green (docs/reference/SUPPLIER.md): the free check on its
                own pull requests, and accepted work under a funded order, which writes a signed delivery record
 
     docs/index_replies.json:
@@ -47,7 +48,7 @@ NOT = [
 ]
 BADGE_STEPS = [
     {"step": "Run the free check on your own pull requests",
-     "how": f"One line in your repository's workflow: `{INSTALL}` (docs/reference/RECORD.md, section 3)",
+     "how": f"One line in your repository's workflow: `{INSTALL}` (docs/reference/SUPPLIER.md)",
      "gives": "a check receipt for each pull request; the badge stays grey"},
     {"step": "Deliver accepted work under a funded order",
      "how": "A buyer funds an order; the work passes the terms fixed at funding and is paid on a token the forge signed",
@@ -132,7 +133,7 @@ def _row_line(row: dict[str, Any]) -> str:
 
 
 def markdown(doc: dict[str, Any]) -> str:
-    """docs/reference/VENDORS.md."""
+    """The vendor pages as one Markdown page (`vendors --doc FILE`)."""
     lines = ["# Vendors in the Agent PR Index", "",
              "<!-- written by scripts/agent_pr_index.py vendors; do not edit by hand -->", "",
              f"One section for each agent the [Agent PR Index](INDEX.md) counts, week of {doc['week']} (read {doc['read']}): its "
@@ -143,7 +144,7 @@ def markdown(doc: dict[str, Any]) -> str:
     lines += ["", f"**The rule.** {doc['rule']} A reply or a dispute costs nothing and changes no number by itself; a "
               "dispute that finds a miscount changes the row, and the change is listed in the changelog of "
               "[INDEX.md](INDEX.md).", "",
-              "**Earn the supplier badge.** The badge is the vendor's own record ([RECORD.md](RECORD.md)), apart from its "
+              "**Earn the supplier badge.** The badge is the vendor's own record ([SUPPLIER.md](SUPPLIER.md)), apart from its "
               "index row.", ""]
     lines += [f"{i}. **{s['step']}.** {s['how']}. Gives {s['gives']}." for i, s in enumerate(doc["badge"], 1)]
     for v in doc["vendors"]:
@@ -161,12 +162,14 @@ def markdown(doc: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main(series_path: str, disputes_path: str | None, replies_path: str | None, doc_path: str, data_path: str, check: bool = False) -> int:
+def main(series_path: str, disputes_path: str | None, replies_path: str | None, doc_path: str | None, data_path: str, check: bool = False) -> int:
     with open(series_path, encoding="utf-8") as f:
         series = json.load(f)
     agents = list(series["agents"])
     doc = build(series, agent_pr_board.load_disputes(disputes_path, agents), load_replies(replies_path, agents))
-    want = {doc_path: markdown(doc), data_path: json.dumps(doc, ensure_ascii=False, indent=1) + "\n"}
+    want = {data_path: json.dumps(doc, ensure_ascii=False, indent=1) + "\n"}
+    if doc_path:
+        want[doc_path] = markdown(doc)
     stale = []
     for path, text in want.items():
         try:

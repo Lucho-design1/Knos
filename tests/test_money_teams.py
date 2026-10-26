@@ -22,7 +22,7 @@ def cfg():
 def test_the_verified_merge_is_a_decided_starting_price_with_the_first_verification_free(cfg):
     vm = cfg.doc["fees"]["verified_merge"]
     assert (vm["status"], vm["usd_each"], vm["free_first"], vm["label"]) == ("decided", "1.00", 1, "starting price")
-    assert vm["decided"] == "14 Oct 2026" and "founder decision 14 Oct 2026" in vm["source"] and "Airwallex" in vm["collected"]
+    assert vm["decided"] == "14 Oct 2026" and "price set 14 Oct 2026" in vm["source"] and "Airwallex" in vm["collected"]
     assert cfg.price("verified_merge", 3) == 3 * 1_000_000
     assert any(x.startswith("fees.verified_merge.usd_each = 1.00") for x in cfg.decided())
     # the other decided prices this page shows are the ones decided before
@@ -48,7 +48,7 @@ def test_the_outside_figures_carry_their_page_and_day(cfg):
     assert "Visual Studio Magazine, 30 Jun 2026" in s["github_merges"]["source"] and "read 14 Oct 2026" in s["github_merges"]["source"]
     assert "more than 90 million" in s["github_merges"]["said"]
     assert s["epoch_tasks"]["source"].startswith("Epoch AI, 12 Jan 2026") and "epoch.ai/gradient-updates/state-of-rl-envs" in s["epoch_tasks"]["source"]
-    audit = (ROOT / "docs" / "reference" / "SLOP_AUDIT.md").read_text(encoding="utf-8")
+    audit = (ROOT / "docs" / "reference" / "BENCH.md").read_text(encoding="utf-8")
     assert "1,119 of 3,736" in audit and "6,059 of 8,954" in audit
     assert "1,119 of 3,736" in s["slop_audit"]["said"] and "6,059 of the 8,954" in s["slop_audit"]["said"]
 

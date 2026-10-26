@@ -44,7 +44,7 @@ def test_codeowners_and_targets_core_are_the_same_list():
     ("src/knos/gate/sealed.py", "core"), ("programs-v2/knos_pay/src/lib.rs", "core"), (".github/workflows/tests.yml", "core"),
     ("config/fees.yaml", "core"), ("targets.yml", "core"), ("CODEOWNERS", "core"), ("uv.lock", "core"),
     ("crates/knos-pay-interface/Cargo.lock", "core"), ("src/knos/self/loop.py", "core"), ("tests/bench_tamper/attacks.py", "core"),
-    ("src/knos/mcp.py", "product"), ("docs/reference/SELF.md", "product"), ("web/app.js", "product"), ("tests/test_mcp.py", "product"),
+    ("src/knos/mcp.py", "product"), ("docs/reference/REFEREE.md", "product"), ("web/app.js", "product"), ("tests/test_mcp.py", "product"),
     ("random/elsewhere.txt", "outside")])
 def test_every_path_is_core_product_or_outside(path, kind):
     assert config.classify(path, config.load(ROOT)) == kind
@@ -114,7 +114,7 @@ def test_the_implausible_gain_check_fails_closed():
     assert rules.implausible(97, 0, 0.6) is False
 
 
-@pytest.mark.skipif(os.name == "nt", reason="the jail is a Linux mount namespace (docs/reference/SELF.md, The jail): its script names POSIX paths")
+@pytest.mark.skipif(os.name == "nt", reason="the jail is a Linux mount namespace: its script names POSIX paths")
 def test_the_jail_masks_the_state_the_wallets_and_the_other_tree(monkeypatch, tmp_path):
     from knos.self import tiers
     monkeypatch.setattr(tiers, "jail_available", lambda: True)

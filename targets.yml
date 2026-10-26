@@ -1,4 +1,4 @@
-# Knos builds Knos: what `knos self` works on (docs/reference/SELF.md).
+# Knos builds Knos: what `knos self` works on (targets.yml).
 #
 # FOUNDER-OWNED. This file is trusted core (CODEOWNERS names the founder for it): no agent pull request may change it,
 # and the loop reads it only from main, never from a candidate. Every number below is a setting the founder chose for

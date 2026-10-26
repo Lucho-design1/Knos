@@ -4,7 +4,7 @@ A chain is public and permanent. Nothing written to it can be erased or correcte
 asking. This page says, for each way of using Knos, what a stranger can learn, so a buyer can decide before the
 first order. Everything here is on Solana devnet with test USDC.
 
-[SECURITY.md](SECURITY.md) section 12 and [CONTROLS.md](CONTROLS.md) hold the same facts with the tests that
+[SECURITY.md](SECURITY.md) section 12 and [SECURITY.md](SECURITY.md) hold the same facts with the tests that
 check them.
 
 ## 1. What a payment reveals, even for a private repository
@@ -51,7 +51,7 @@ receipt, under "What trust remains".
 
 A buyer who cannot let even an attestor's tokens name its repositories, or a supplier who will not rely on a judge the
 buyer alone controls, has another path: the acceptance runs on a runner inside the network, only a verdict, hashes and
-the forge's signed token leave, and the evidence is sealed to both parties ([PRIVATE.md](PRIVATE.md)).
+the forge's signed token leave, and the evidence is sealed to both parties ([COMPANIES.md](COMPANIES.md#private-repositories)).
 
 No customer has run it.
 
@@ -86,7 +86,7 @@ two numbers; which evaluations differ is in the ledgers only.
 | Closed accounts | An order's or a token's account can be closed and its rent returned. The transactions that created it, with their data and logs, stay. | nobody |
 | The receipt mirror | Until whoever serves it removes a file. `knos receipt mirror` never removes one. A copy someone else took is theirs. | the mirror's owner |
 | Evidence bundles | Until each holder deletes its copy. A bundle holds the signed token, so treat it as you treat the token's claims. | each holder |
-| Sealed bundles (the vault) | As long as the retention policy file says: N years of 365 days from sealing, then the sealed file is deleted, or removed with its hash kept. `knos vault retain --policy FILE --dry-run` prints what would go. A copy another recipient holds is theirs. ([VAULT.md](VAULT.md)) | whoever holds the vault folder |
+| Sealed bundles (the vault) | As long as the retention policy file says: N years of 365 days from sealing, then the sealed file is deleted, or removed with its hash kept. `knos vault retain --policy FILE --dry-run` prints what would go. A copy another recipient holds is theirs. (`src/knos/vault.py`) | whoever holds the vault folder |
 | Batch ledgers | As long as the party who keeps them decides. Knos keeps none. | the buyer and the seller, each for its own |
 | The host | Workflow logs, check runs and comments follow GitHub's or GitLab's retention and the repository's settings. | the repository's owner |
 

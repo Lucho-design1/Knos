@@ -137,6 +137,6 @@ class JLCPCB(Adapter):
         self.mode, self.base, self._key, self.fixtures, self.transport = mode, self.BASE, key, None, transport
 
     def _stub(self, *a, **k):
-        raise LabError("jlcpcb: a stub. JLCPCB's API is granted on application (api.jlcpcb.com); docs/reference/LABS.md has the steps")
+        raise LabError("jlcpcb: a stub. JLCPCB's API is granted on application (api.jlcpcb.com)")
 
     quote = order = status = results = _stub

@@ -25,7 +25,7 @@ from pathlib import Path
 from . import ed25519
 
 TYPE, VERSION = "knos.pr-receipt", 1
-INSTALL = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/PR_GATE.md#install"
+INSTALL = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/REFEREE.md#install"
 _SECRET = [re.compile(p) for p in (
     r"gh[pousr]_[A-Za-z0-9]{20,}", r"github_pat_[A-Za-z0-9_]{20,}", r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
     r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.", r"\[\s*(?:\d{1,3}\s*,\s*){63}\d{1,3}\s*\]",

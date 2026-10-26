@@ -95,7 +95,7 @@ BIND = "`knos claim <their Solana address>` in a terminal, or https://drexthealp
 
 def _bind(login: str) -> str:
     """How a payee whose money is held binds a wallet: the payout page for their login (a passkey wallet, no seed
-    phrase; docs/reference/PAYEE.md), or `knos claim` in a terminal."""
+    phrase; docs/reference/SUPPLIER.md), or `knos claim` in a terminal."""
     return f"https://drexthealpha.github.io/Knos/#payee={login.lstrip('@')} in the browser, or `knos claim <their Solana address>` in a terminal"
 OPEN = ("A wallet opens one for that id with `knos balance open`, lists the GitHub ids that may spend it, and adds money "
         "with `knos balance deposit`.")

@@ -789,7 +789,7 @@
      "names": "test_an_assignment_before_acceptance_pays_the_financier_at_acceptance_and_at_release_and_never_the_seller"
     }
    },
-   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet. What the financier pays the seller is a plain transfer off the order, and Knos charges nothing for one. One advance has run on devnet, between two wallets of Knos's own (docs/reference/ADVANCE.md); no outside advancer exists."
+   "note": "In knos_pay 2.2 and knos_oidc 2.2, which the public ids run since 9 Oct 2026 (proposals 8 and 7, executed; web/upgrades.json). Not exercised there yet. What the financier pays the seller is a plain transfer off the order, and Knos charges nothing for one. One advance has run on devnet, between two wallets of Knos's own; no outside advancer exists."
   },
   {
    "id": "standing_order",
@@ -1922,7 +1922,7 @@
      "names": "test_the_script_gives_a_verdict_from_githubs_record_of_the_commit"
     }
    },
-   "note": "Tested with a stand-in for GitHub's API. docs/reference/RELEASE.md has the first real run as a step after the push."
+   "note": "Tested with a stand-in for GitHub's API. CONTRIBUTING.md has the first real run as a step after the push."
   },
   {
    "id": "webhook_verifier",
@@ -1938,7 +1938,7 @@
      "names": "test_the_typescript_verifier_answers_every_case_as_the_python_one_does"
     }
    },
-   "note": "No platform uses it (docs/reference/INTEGRATIONS.md)."
+   "note": "No platform uses it (integrations/README.md)."
   },
   {
    "id": "agent_host_routes",
@@ -2771,7 +2771,7 @@
      "names": "export function renderKeyholder"
     }
    },
-   "note": "Outside key holders: 0. One person, the founder, holds every member key of both multisigs (docs/reference/KEYHOLDER.md, docs/reference/GOVERNANCE.md); nobody has asked."
+   "note": "Outside key holders: 0. One person holds every member key of both multisigs (docs/TRUST.md, docs/reference/GOVERNANCE.md); nobody has asked."
   },
   {
    "id": "fee_one_rate",
@@ -3061,7 +3061,7 @@
      "names": "test_a_thousand_outcomes_settle_as_one_release_on_the_programs_as_they_are"
     }
    },
-   "note": "`knos net`. Tested in the simulator with the test builds; never run on devnet. The cap, the release, the root and the fee are enforced on chain; each line, the link from the release to the batch, and the buyer's credit inside the period are not (docs/reference/NETTING.md)."
+   "note": "`knos net`. Tested in the simulator with the test builds; never run on devnet. The cap, the release, the root and the fee are enforced on chain; each line, the link from the release to the batch, and the buyer's credit inside the period are not (docs/reference/COMPANIES.md#netting-and-reserves)."
   },
   {
    "id": "third_party_advance",
@@ -3077,7 +3077,7 @@
      "names": "test_the_take_is_whole_or_nothing_no_assignment_without_the_payment_and_no_payment_without_the_assignment"
     }
    },
-   "note": "`knos advance`, on the program's Assign. Knos lends nothing and charges nothing for it. Tested in the simulator. No advancer exists; one advance ran on devnet at the public ids between two wallets of Knos's own release run (0.3.19), with no outside party (docs/reference/ADVANCE.md)."
+   "note": "`knos advance`, on the program's Assign. Knos lends nothing and charges nothing for it. Tested in the simulator. No advancer exists; one advance ran on devnet at the public ids between two wallets of Knos's own release run (0.3.19), with no outside party."
   },
   {
    "id": "record_lookup_paid",
@@ -3221,7 +3221,7 @@
      "names": "test_every_statement_line_says_its_level_and_a_note_matches_three_legs_or_says_the_mismatch"
     }
    },
-   "note": "`knos statement grn`. No buyer's accounts-payable system has taken one (docs/reference/FINANCE.md)."
+   "note": "`knos statement grn`. No buyer's accounts-payable system has taken one (docs/reference/COMPANIES.md#statements)."
   },
   {
    "id": "supplier_completes",
@@ -3237,7 +3237,7 @@
      "names": "test_the_supplier_is_paid_on_the_forges_signature_while_the_buyer_does_nothing"
     }
    },
-   "note": "The path that exists in knos_pay, walked in the simulator with the test build; with no accepted work by the deadline the money returns to its funder (docs/reference/FINANCE.md, \"When the buyer goes quiet\")."
+   "note": "The path that exists in knos_pay, walked in the simulator with the test build; with no accepted work by the deadline the money returns to its funder (docs/reference/COMPANIES.md#statements, \"When the buyer goes quiet\")."
   },
   {
    "id": "upgrade_gate_adoption",
@@ -3253,7 +3253,7 @@
      "names": "test_record_and_check_against_the_gate_program"
     }
    },
-   "note": "Tested against the gate's test build in the simulator. The adopters list has zero rows (docs/reference/GATE.md, docs/reference/COMPOSE.md)."
+   "note": "Tested against the gate's test build in the simulator. The adopters list has zero rows (docs/reference/COMPOSE.md)."
   },
   {
    "id": "registry_plan",
@@ -3365,7 +3365,7 @@
      "names": "test_the_five_steps_run_in_order_with_the_operators_own_key_and_fork"
     }
    },
-   "note": "docs/reference/OPERATOR.md gives the command and its expected output. Nobody but the founder has run it: second operators 0. A run with --simulate is not a drill and says so."
+   "note": "`python scripts/second_operator.py --help` gives the command. No second person has run it: second operators 0. A run with --simulate is not a drill and says so."
   },
   {
    "id": "bank_rail",
@@ -3461,7 +3461,7 @@
      "names": "test_a_plain_fund_cannot_go_round_the_approval_a_standing_offer_needs"
     }
    },
-   "note": "`knos controls matrix`, docs/reference/ENFORCEMENT.md and the site's #enforcement page. Each enforced cell names a test that tries to get round it. Workflow-enforced means the pinned workflow refuses: a repository that runs another workflow is stopped only by what the program enforces, and the table says which cells those are."
+   "note": "`knos controls matrix`, docs/reference/COMPANIES.md#enforcement and the site's #enforcement page. Each enforced cell names a test that tries to get round it. Workflow-enforced means the pinned workflow refuses: a repository that runs another workflow is stopped only by what the program enforces, and the table says which cells those are."
   },
   {
    "id": "archive_standalone",
@@ -4114,7 +4114,7 @@
      "names": "test_compose_parses_and_names_only_pinned_images"
     }
    },
-   "note": "Never deployed: not run in any cloud. Single sign-on through any OpenID Connect provider, tested against a stand-in provider only (sso_oidc; docs/reference/SELFHOST.md)."
+   "note": "Never deployed: not run in any cloud. Single sign-on through any OpenID Connect provider, tested against a stand-in provider only (sso_oidc; deploy/knos.example.toml)."
   },
   {
    "id": "contention_scenarios",
@@ -4273,7 +4273,7 @@
      "names": "test_the_page_in_a_browser_with_a_virtual_passkey"
     }
    },
-   "note": "Not exercised on public ids. 8 clicks, 4 with knos-claim already created; one click needs a program change (docs/reference/PAYEE.md)."
+   "note": "Not exercised on public ids. 8 clicks, 4 with knos-claim already created; one click needs a program change (docs/reference/SUPPLIER.md)."
   },
   {
    "id": "pypi_description_links",
@@ -4433,7 +4433,7 @@
      "names": "test_each_privacy_line_agrees_with_the_code"
     }
    },
-   "note": "No lawyer has read it (docs/reference/REGULATION.md)."
+   "note": "No lawyer has read it (docs/reference/DISCLOSURE.md)."
   },
   {
    "id": "site_share_tags",
@@ -4545,7 +4545,7 @@
      "names": "test_the_same_list_and_seed_give_the_same_bytes_and_another_seed_another_draw"
     }
    },
-   "note": "A plan on paper (docs/reference/PILOT.md): no pilot has run, no buyer has seen it, and nobody outside has agreed to run the analysis again."
+   "note": "A plan on paper: no pilot has run, no buyer has seen it, and nobody outside has agreed to run the analysis again."
   },
   {
    "id": "judged_files_refused",
@@ -4653,7 +4653,7 @@
      "names": "test_no_cutoff_in_this_tree_is_earlier_than_the_release_it_names"
     }
    },
-   "note": "Each release run writes the cutoff after its upload (docs/reference/RELEASE.md)."
+   "note": "Each release run writes the cutoff after its upload (CONTRIBUTING.md)."
   },
   {
    "id": "seo_pages",
@@ -4685,7 +4685,7 @@
      "names": "test_the_two_recorded_bundles_verify"
     }
    },
-   "note": "Tested on two real npm records recorded here (knos-settle 0.3.25 and sigstore 3.0.0); no outside source feeds a meter yet (docs/reference/SOURCES.md)."
+   "note": "Tested on two real npm records recorded here (knos-settle 0.3.25 and sigstore 3.0.0); no outside source feeds a meter yet (docs/reference/VERIFIER.md)."
   },
   {
    "id": "sso_oidc",
@@ -4701,7 +4701,7 @@
      "names": "test_whole_flow_over_the_loopback"
     }
    },
-   "note": "Tested against a stand-in provider only: no real provider has been tried, and the bundle has never been deployed (docs/reference/SELFHOST.md)."
+   "note": "Tested against a stand-in provider only: no real provider has been tried, and the bundle has never been deployed (deploy/knos.example.toml)."
   }
  ],
  "public_round": {

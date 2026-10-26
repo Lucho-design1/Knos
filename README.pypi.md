@@ -56,17 +56,13 @@ GitHub (where your code lives) [signs](https://github.com/drexthealpha/Knos/blob
 
 A workflow is the script that runs your checks. A commit is one saved version of the code.
 
-![GitHub signs which workflow ran, on which commit. Both sides rebuild the same bill, and a program pays.](https://raw.githubusercontent.com/drexthealpha/Knos/v0.4.0/docs/diagrams/readme-3.svg)
-
-*GitHub signs which workflow ran, on which commit. Both sides rebuild the same bill, and a program pays.*
-
 You and the other side each keep a copy of those signed runs. Each side rebuilds the bill from its own copy (the command is `knos meter reconcile`).
 
 **The two bills match line for line, so neither side can change the count alone.**
 
 The money waits in a program on [Solana](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#solana), not with Knos. That program checks GitHub's signature before it pays. Today one person can still change that program, after a public wait ([who holds the keys](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/TRUST.md)).
 
-Today Knos earns its fee only when work is accepted. When you get a refund, the fee goes back to you. So Knos gains when work passes, and the meter is not yet fully neutral ([the plan to fix it](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/CHARTER.md)).
+Today Knos earns its fee only when work is accepted. When you get a refund, the fee goes back to you. So Knos gains when work passes, and the meter is not yet fully neutral ([what is enforced and what is a promise](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/CHARTER.md)).
 
 Why Solana: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public. A custodian is a company that holds your money for you.
 
@@ -97,7 +93,7 @@ One person holds every key today. Any change to the programs waits in public for
 | Outside programs reading the verifier | 0 | [docs/NUMBERS.md](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/NUMBERS.md), row 8 |
 | Shadow counts published | 0 | [docs/NUMBERS.md](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/NUMBERS.md), row 9 |
 | Paying customers | 0 | [docs/reference/DISCLOSURE.md](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/DISCLOSURE.md) |
-| Revenue | 0; test USDC is not money | [docs/reference/MARKET.md](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/MARKET.md) |
+| Revenue | 0; test USDC is not money | [docs/PRICING.md](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/PRICING.md) |
 | Outside security review | none | [docs/reference/ASSURANCE.md](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/ASSURANCE.md) |
 | Key holders | one person holds every key; an upgrade waits 8 days in public | [docs/reference/GOVERNANCE.md](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/GOVERNANCE.md) |
 | Network and money | Solana devnet, test USDC; mainnet is not touched | [docs/reference/SECURITY.md](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/SECURITY.md) |
@@ -155,13 +151,13 @@ Neither side alone. A program checks GitHub's [signature](https://github.com/dre
 
 ### How do I try Knos?
 
-Open [the check](https://drexthealpha.github.io/Knos/check/) and paste an AI agent's pull request. It answers within ten seconds, with no sign-up.
+Open [the front door](https://drexthealpha.github.io/Knos/) and type the product you want to build. It says who wants it and where, with no sign-up.
 
 ## Read more
 
 `uvx knos shadow invoice.csv`: the same check from a terminal, on a bill of your own (it needs uv, a tool for Python).
 
-- [Get started](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/START.md): check a pull request, fund a task, get paid, install the tools.
+- [Get started](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/START.md): check demand, write a Ready brief, then check a pull request and fund a task.
 
 - [Pricing](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/PRICING.md): what Knos costs. Demand checks are free, 10 a month. The solver keeps 100%; the company pays the 1% release fee and the payment costs on top. Nobody is charged today.
 

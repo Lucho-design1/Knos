@@ -1,7 +1,7 @@
 # A supplier's record as a paid lookup: pay, then the JSON
 
 A small server anyone can run. **Knos hosts none**: whoever runs it is its seller, and its price is its own. It
-sells one thing, the lookup of a supplier's record ([docs/reference/RECORD.md](../../docs/reference/RECORD.md)), for 0.10 test USDC,
+sells one thing, the lookup of a supplier's record ([docs/reference/SUPPLIER.md](../../docs/reference/SUPPLIER.md)), for 0.10 test USDC,
 paid through `knos-order`, Knos's proposed scheme for x402 (paying over HTTP with status 402), as in
 [`examples/x402_attested`](../x402_attested)
 ([docs/reference/X402.md](../../docs/reference/X402.md), "Record: a lookup priced for machines"). The record file itself stays free.
@@ -24,7 +24,7 @@ stays held until its deadline, because no judge for lookups exists.
 
 ## What the paid answer adds
 
-The free file is unsigned and says the day it was built. The paid answer ([docs/reference/RECORD.md](../../docs/reference/RECORD.md),
+The free file is unsigned and says the day it was built. The paid answer ([docs/reference/SUPPLIER.md](../../docs/reference/SUPPLIER.md),
 section 5) adds three things, and `knos record verify answer.json` checks it with no network:
 
 - **Signed freshness.** With `--key` the operator signs the record's hash, the cluster time and slot it read, and an

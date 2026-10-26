@@ -5,7 +5,7 @@
 // organisation's budget would let this funding through and which rule decides, any earlier order or payment for the
 // same issue, and what a supplier can and cannot do alone when the repository is private. After: the receipt's five
 // parts, who answers when the service fails, and the orders that wait for a person. The words and the rules of those
-// panels are web/console.js; this file reads the chain and draws. docs/reference/CONSOLE.md is the operator's guide.
+// panels are web/console.js; this file reads the chain and draws. docs/reference/COMPANIES.md#the-console is the operator's guide.
 // renderBuyer(el, env) draws it into `el`. The page sends nothing to Solana: the passkey signs one intent
 // (passkey_fund.js) and the page shows the one line `/knos passkey-fund ...` to post on the issue, which a relay
 // carries and pays for. It asks GitHub for the repository's id and the issue, devnet for the wallet and the order, and

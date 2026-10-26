@@ -24,7 +24,7 @@ Every endpoint and field below was read on 14 Oct 2026 from Adaptyv's own docs a
 
 Terms that shape this adapter (docs.adaptyvbio.com/api-reference/integrator-partner-guide): BYOK is required, "you must
 not 'bundle' user orders under your own key"; keys are not stored in plain text (Knos does not store them at all);
-resellers and distributors must join the Partner Program (docs/reference/LABS.md has the founder's steps).
+resellers and distributors must join the Partner Program (not joined).
 
 What is Knos's and not Adaptyv's: the run mapping (one run per sequence, controls marked) and the QC rule (the positive
 control bound, every sequence reported, results complete). Fixture mode replays fixtures/adaptyv.json: responses built

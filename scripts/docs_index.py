@@ -3,7 +3,7 @@
     python scripts/docs_index.py <out file>
 
 One entry a Markdown file directly under docs/ or docs/reference/: its first `# ` heading and its path under docs/
-(`STORY.md`, `reference/MARKET.md`), the front pages first, each folder sorted by file name. A file
+(`STORY.md`, `reference/BENCH.md`), the front pages first, each folder sorted by file name. A file
 with no such heading is left out. Nothing else is read and nothing is fetched.
 """
 from __future__ import annotations

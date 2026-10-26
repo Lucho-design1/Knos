@@ -23,7 +23,7 @@ from . import CHECK_NAME
 from .cheatlib import RULES, changed_files
 
 SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
-INFO = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/PR_GATE.md"
+INFO = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/REFEREE.md"
 CATEGORY = "knos-gate"                 # runAutomationDetails.id: Gate's analyses stay apart from CodeQL's
 MAX_ANNOTATIONS = 50                   # the Checks API takes at most 50 annotations a request
 FINGERPRINT = "knosFinding/v1"

@@ -178,17 +178,8 @@ def test_a_closed_reserved_period_is_sold_once_the_draws_pay_the_financier_and_a
     assert c.balance(financier_tok) == paid_out - 39_200_000 and c.balance(pay.ata(seller2_key.pubkey(), c.usdc)) == 39_200_000
 
 
-def test_the_documents_say_who_carries_which_risk_and_how_a_reserve_returns_word_for_word():
-    from pathlib import Path
-
+def test_who_carries_which_risk_and_how_a_reserve_returns_are_said_in_the_code():
     from knos import advance, netting
 
-    docs = Path(__file__).resolve().parent.parent / "docs"
-    said = " ".join((docs / "reference" / "ADVANCE.md").read_text(encoding="utf-8").split())
     assert [w for w, _t in advance.WHO_CARRIES] == ["buyer", "supplier", "financier", "Knos"]
-    for who, what in advance.WHO_CARRIES:
-        assert f"| {who} | {what} |" in said
-    net = " ".join((docs / "reference" / "NETTING.md").read_text(encoding="utf-8").split())
-    for words in ("`RefundOrder` (knos_pay instruction 22)", "`Cancel` (instruction 21)", "`Withdraw`, instruction 2", "funded = brought + consumed + free"):
-        assert words in net
     assert "RefundOrder (knos_pay instruction 22)" in netting.REFUND and "Cancel (instruction 21)" in netting.REFUND and "Withdraw, instruction 2" in netting.NOT_LOCKED

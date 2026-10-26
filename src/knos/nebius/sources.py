@@ -1,5 +1,4 @@
-"""Every provider fact this package uses, with the page it was read from and the day (docs/reference/NEBIUS.md cites
-the same pages). Nothing here is guessed: a fact the pages did not give is not used.
+"""Every provider fact this package uses, with the page it was read from and the day. Nothing here is guessed: a fact the pages did not give is not used.
 
 Model ids and prices: the Token Factory model catalog, read 14 Oct 2026. The catalog spells the two ids differently
 (lower case for Super, mixed case for Ultra); they are copied exactly. `GET /v1/models` on the live API is the check.

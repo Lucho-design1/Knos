@@ -1,5 +1,5 @@
-"""scripts/second_operator.py: the second operator's drill as one command. Tested against canned answers: nobody but
-the founder has run the real one, and docs/reference/OPERATOR.md and docs/reference/DRILLS.md say so."""
+"""scripts/second_operator.py: the second operator's drill as one command. Tested against canned answers: no second person
+has run the real one, and docs/reference/DRILLS.md says so."""
 from __future__ import annotations
 
 import importlib.util
@@ -80,10 +80,3 @@ def test_the_founders_repository_is_not_a_fork_of_ones_own_and_a_simulation_is_n
     assert so.main(["--fork", "you/Knos"]) == 1
 
 
-def test_the_page_gives_the_command_its_expected_output_and_says_nobody_has_run_it():
-    page = (ROOT / "docs" / "reference" / "OPERATOR.md").read_text(encoding="utf-8")
-    assert "python scripts/second_operator.py --fork YOU/Knos --key relay.json" in page and "Not yet run by a second person" in page
-    for line in ("1 status     ok", "2 fee payer  ok", "3 relay      ok", "4 the fork   ok", "5 the chain  ok"):
-        assert line in page
-    assert "gh workflow run worker.yml -R YOU/Knos" in page and "gh secret set KNOS_RELAY_KEY -R YOU/Knos < relay.json" in page
-    assert "host_a_judge" in page

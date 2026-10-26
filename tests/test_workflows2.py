@@ -189,7 +189,7 @@ def test_every_action_is_a_commit_listed_in_action_pins_and_every_called_workflo
     for path in _files():
         for name, ref, tag in re.findall(r"^\s*(?:- )?uses:\s*(\S+?)@(\S+)(?:\s+#\s*(\S+))?", path.read_text(encoding="utf-8"), re.M):
             if name == SUPPLIER:     # (tested first: since the cutover the supplier's file and the published set share a home)
-                # the supplier's one line calls Knos's own repository at the tag of a release (docs/reference/RECORD.md, section 3): the
+                # the supplier's one line calls Knos's own repository at the tag of a release (docs/reference/SUPPLIER.md, section 3): the
                 # tag names a commit in scripts/action_pins.json, and the release moves both
                 assert path.name == "knos-supplier.yml" and re.fullmatch(r"v\d+\.\d+\.\d+", ref), (path.name, name, ref)
                 assert any(re.fullmatch(r"drexthealpha/Knos@v\d+\.\d+\.\d+", k) and re.fullmatch(SHA, v) for k, v in pins.items()), "no commit is listed for a Knos tag"
@@ -732,7 +732,7 @@ def test_the_signing_list_is_hash_locked_holds_solders_and_nothing_the_command_l
 
 
 def test_the_release_uploads_no_wheel_but_the_locked_one_and_attaches_the_lock_to_the_release(tmp_path, monkeypatch, capsys):
-    """The order of docs/reference/RELEASE.md: the wheel is built ONCE, before the commit; its sha256 is the last line of
+    """The order of CONTRIBUTING.md: the wheel is built ONCE, before the commit; its sha256 is the last line of
     requirements/sign.txt; scripts/release.py uploads that file to PyPI before the push. So release.yml writes no lock
     and uploads no wheel to PyPI. It builds the wheel again only to hold the commit to its lock, holds PyPI to the
     same lock, and attaches that wheel and the commit's own sign.txt to the GitHub release."""

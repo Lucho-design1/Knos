@@ -28,7 +28,7 @@ task board therefore funds only where the repository calls the public pinned wor
 
 TASKS THAT ARE NOT CODE PUZZLES (KINDS; tasks/outside/<kind>.json holds the same text). Each has evidence a
 machine checks (`accepts`) and one counter it can move. `keyholder` counts an OFFER of a key, never a holder: a key
-is held only once the multisig seats it (docs/reference/KEYHOLDER.md). `witness` is the whole transaction, end to end, in a
+is held only once the multisig seats it (docs/TRUST.md). `witness` is the whole transaction, end to end, in a
 repository of the stranger's own (examples/witnessed). A counter moves only when the account that did it is not one
 of Knos's own (scripts/own_github_ids.json; scripts/outsiders.py `task_counts` counts, never this module). Every one is
 paid in test USDC from a task Knos funded itself, and every count that comes from them carries that label. None is an
@@ -333,12 +333,12 @@ KINDS: dict[str, dict] = {
                   "authority to a Squads multisig, and let your build workflow record one build.",
                   "a devnet transaction in which your gate wrote the record [\"build\", program, executable hash] on a token "
                   "from a workflow of a repository your account owns, and `adopt.py check` on the program exiting 0",
-                  "gates", ("actor_id", "repository_owner_id", "program_id", "gate_id", "record_tx", "checked"), "docs/reference/GATE.md"),
+                  "gates", ("actor_id", "repository_owner_id", "program_id", "gate_id", "record_tx", "checked"), "examples/upgrade_gate/README.md"),
     "keyholder": _kind("Offer to hold one key of the upgrade multisig",
                        "Open the Key holder request issue (.github/ISSUE_TEMPLATE/key_holder.md) on drexthealpha/Knos with your public "
                        "key, a name or handle, and how to reach you. An offer is counted as an offer; a key is held only once it is seated.",
                        "an issue your account opened on drexthealpha/Knos from the key holder template, naming a Solana public key",
-                       "key_offers", ("actor_id", "issue", "public_key", "contact"), "docs/reference/KEYHOLDER.md"),
+                       "key_offers", ("actor_id", "issue", "public_key", "contact"), "docs/TRUST.md"),
     "tamper": _kind("Fool the judge on a task",
                     "Write a submission meant to make the judge accept work that does not do what the task asks. If the judge "
                     "accepts it, the cheat joins the tamper set as a case written outside Knos. If the judge refuses it, nothing is paid.",

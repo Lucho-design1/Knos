@@ -1,7 +1,7 @@
 // Price book 3.1 and the arithmetic of the calculators. Pure functions: nothing here reads the page or the network.
 //
 // WHERE THE NUMBERS COME FROM, in one place.
-//   BILL      the price book's own numbers (docs/reference/MARKET.md, "The price book"; src/knos/billing.py holds the same):
+//   BILL      the price book's own numbers (docs/PRICING.md, "The price book"; src/knos/billing.py holds the same):
 //             Meter, Acceptance and its volume rates, Record, Control, Pilot. Contract prices, typed once, here.
 //   on chain  what knos_pay takes at release, in millionths of a whole unit of the mint (USDC has six decimals), as
 //             the program holds it. priceConstants() takes each constant from what sdk/settle exports (settle.js in
@@ -138,7 +138,7 @@ const thousands = (n) => n.toLocaleString("en-US");
 function rate(bps) { return `${(bps / 100).toFixed(2)}%`; }
 const short = (n) => (n >= 1_000_000 ? `${n / 1_000_000}M` : thousands(n));
 export const COLUMNS = Object.freeze(["Line", "Unit", "Price", "Who pays", "Where it is enforced"]);
-// The price book, row by row, in the words of docs/reference/MARKET.md and of src/knos/billing.py (BOOK): the five COLUMNS.
+// The price book, row by row, in the words of docs/PRICING.md and of src/knos/billing.py (BOOK): the five COLUMNS.
 export function priceBook() {
   const k = BILL.control, [r0, r1] = BILL.acceptBps, [, a1] = BILL.acceptAbove, floor = (BILL.acceptFloorCents / 100).toFixed(2), record = (BILL.recordCents / 100).toFixed(2);
   return [
@@ -152,7 +152,7 @@ export function priceBook() {
     ["Pilot", "one buyer, two suppliers, 30 days, one reconciled invoice", `${thousands(BILL.pilot)} USD, credited against year one`, "buyer", "contract"],
   ];
 }
-// The rule the book is published with (docs/reference/MARKET.md, section 3), and the same in five words.
+// The rule the book is published with (docs/PRICING.md, section 3), and the same in five words.
 export const RULE = "Knos never charges the party being rated.";
 export const PAYS = "The rated party never pays.";
 export const CONNECT = "Connecting a supplier costs nothing.";

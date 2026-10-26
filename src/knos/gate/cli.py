@@ -47,7 +47,7 @@ def register(app, help_lines: list | None = None) -> None:
     typer = importlib.import_module("typer")
     if help_lines is not None:
         help_lines.append(("gate", "For a repository's workflows","Knos Gate: sealed hidden tests and cheat checks on outside pull requests, one check, one comment, a signed receipt."))
-    gate = typer.Typer(add_completion=False, help="Knos Gate: a maintainer's check on outside pull requests (docs/reference/PR_GATE.md)")
+    gate = typer.Typer(add_completion=False, help="Knos Gate: a maintainer's check on outside pull requests (docs/reference/REFEREE.md)")
     app.add_typer(gate, name="gate")
     receipt = typer.Typer(add_completion=False, help="Knos Receipt: signed, offline-verifiable, counts only")
     gate.add_typer(receipt, name="receipt")

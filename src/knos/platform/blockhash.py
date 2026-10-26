@@ -10,7 +10,7 @@ wall-clock time").
 Measured on devnet on 14 Oct 2026 at 19:59 UTC (v0329/agents/V34CAP/bh-measure.txt): lastValidBlockHeight minus the
 `confirmed` block height was 134 to 146 blocks (mean 143) while the block height rose 232 blocks in 54.0 s (4.297 a
 second; getRecentPerformanceSamples: 236 to 240 ms a slot), so a blockhash fetched at `confirmed` had about 33 s left.
-Docs that said "about a minute" (ADVANCE.md) or "60 to 90 seconds" were written for 400 ms slots.
+Docs that said "about a minute" or "60 to 90 seconds" were written for 400 ms slots.
 
 What follows from it in Knos: a transaction two parties sign on two machines, or one an approver signs later, does not
 wait on a blockhash at all: it uses a durable nonce (knos.platform.nonce). `life` measures the window again whenever a

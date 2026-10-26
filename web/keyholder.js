@@ -13,7 +13,7 @@
 // The key is made in this page and goes nowhere: no request carries it, nothing is stored, and the page forgets the
 // private half once the file has been saved. The only request the page makes is for keyholders.json, to this site. The
 // issue carries the PUBLIC key and what the person typed, and is opened by the person, on GitHub, in a new tab.
-// docs/reference/KEYHOLDER.md is this page at length; docs/reference/GOVERNANCE.md says what the multisig is today.
+// docs/TRUST.md is this page at length; docs/reference/GOVERNANCE.md says what the multisig is today.
 export const REPO = "drexthealpha/Knos";
 export const ISSUE_TITLE = "Key holder request";
 export const KEY_FILE = "knos-member.json";
@@ -95,11 +95,11 @@ export function renderKeyholder(el, ctx = {}) {
         <li>Change an order's terms. The program has no such instruction.</li>
         <li>Block a refund. A refund needs no key.</li>
         <li>Approve an upgrade alone. Two votes are needed.</li>
-        <li>Block an upgrade alone. Today the founder holds every key.</li>
+        <li>Block an upgrade alone. Today one person holds every key.</li>
       </ul></div>
     </div>
     <p class="fine">It costs you nothing: this is devnet. Check four things per upgrade.
-      <a href="${esc(`${DOCS}/KEYHOLDER.md`)}" target="_blank" rel="noopener">Read the page</a></p></details>
+      <a href="${esc(`${DOCS}/TRUST.md#ask-to-hold-a-key`)}" target="_blank" rel="noopener">Read the page</a></p></details>
     <ol>
       <li class="k-step" data-kh="s1" data-state="live"><h3>Make a key</h3>
         <p class="kh-row"><button type="button" class="k-btn" data-kh="make">Make a key here</button></p>

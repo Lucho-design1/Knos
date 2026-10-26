@@ -19,7 +19,7 @@
 
 Unproven players play and are ranked; they are never paid. The referee keys are the game operator's: a funder who
 also holds them could pay itself, so the panel's holders are named in the game state for every funder to see before
-it funds (docs/reference/GAME.md).
+it funds (docs/reference/AGENTS.md).
 """
 from __future__ import annotations
 

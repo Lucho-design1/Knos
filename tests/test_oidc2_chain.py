@@ -814,7 +814,7 @@ def test_no_token_outlives_its_key_by_more_than_25_hours_whatever_expiry_it_carr
 
 
 def test_only_the_guardian_approves_and_revokes_and_it_can_do_nothing_else():
-    c = Chain2("knos_oidc_v2_0335_test.so")      # the source's testkeys build: the key admin of step 4 (KEYS.md)
+    c = Chain2("knos_oidc_v2_0335_test.so")      # the source's testkeys build: the key admin of key step 4
     key, n = new_key()
     assert c.register(GH, n, c.attest(GH, n)), c.err
     kp = oidc.key_pda(GH, n)
@@ -828,7 +828,7 @@ def test_only_the_guardian_approves_and_revokes_and_it_can_do_nothing_else():
             assert not c.send([Instruction(oidc.OIDC_ID, tag, [AccountMeta(who, False, False), AccountMeta(kp, False, True)])]) and code(c) == 79
     k = c.key(GH, n)
     assert not k.approved and not k.revoked
-    # the key admin is the upgrade multisig's vault (KEYS.md step 4): an address no key signs for. With signature
+    # the key admin is the upgrade multisig's vault (key step 4): an address no key signs for. With signature
     # checking off (as the vault's signature by a cross-program call would look to this program) it approves and
     # revokes; the real guardian (a brake, with no time lock) and a stranger sent the same way do not
     assert oidc.GUARDIAN == Pubkey.from_string("AT1aKj1DpgaWerxmS4YjDkNpWPNUtCCKVDvxLhFxg5Jc") and not oidc.GUARDIAN.is_on_curve()

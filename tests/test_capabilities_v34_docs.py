@@ -1,5 +1,6 @@
-"""The stale blockhash fact is gone from the pages that said it, the new pages name their sources and tests, and the
-Agent Card file is where A2A looks for one. Reads files only."""
+"""The stale blockhash fact is gone from the page that holds it (docs/reference/PLATFORM.md, where the durable nonce and
+Alpenglow pages were merged), the pages that took the 0.3.34 platform work name their sources and tests, and the Agent
+Card file is where A2A looks for one. Reads files only."""
 from __future__ import annotations
 
 import json
@@ -8,22 +9,21 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REF = ROOT / "docs" / "reference"
-NEW = ["DURABLE_NONCES.md", "X402_UPTO.md", "SAS_INPUTS.md", "SPENDING_LIMITS.md", "KORA_CCTP.md", "A2A.md", "CLAUDE_AGENTS.md"]
+PAGES = ["PLATFORM.md", "X402.md", "TERMS.md", "A2A.md"]
 
 
 def test_no_page_says_a_blockhash_lives_a_minute_any_more():
-    for name in ("ALPENGLOW.md", "ADVANCE.md"):
-        text = (REF / name).read_text(encoding="utf-8")
-        for sentence in re.split(r"(?<=[.:;])\s", text):
-            if "blockhash" in sentence.lower():
-                assert not re.search(r"\b60 s\b|about a minute|60 to 90", sentence), (name, sentence)
-        assert "33 s" in text and "DURABLE_NONCES.md" in text
+    text = (REF / "PLATFORM.md").read_text(encoding="utf-8")
+    for sentence in re.split(r"(?<=[.:;])\s", text):
+        if "blockhash" in sentence.lower():
+            assert not re.search(r"\b60 s\b|about a minute|60 to 90", sentence), sentence
+    assert "33 s" in text and "Durable nonces" in text
 
 
-def test_each_new_page_cites_its_sources_and_its_tests():
-    for name in NEW:
+def test_each_page_cites_its_sources_and_its_tests():
+    for name in PAGES:
         text = (REF / name).read_text(encoding="utf-8")
-        assert "14 Oct 2026" in text and "https://" in text, name
+        assert "https://" in text, name
         for t in re.findall(r"`(tests/test_[a-z0-9_]+\.py)`", text):
             assert (ROOT / t).is_file(), (name, t)
 

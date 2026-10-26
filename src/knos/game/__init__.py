@@ -19,7 +19,7 @@ calls, judged by the SAME referee, with funders pooling one pot across every att
                         Knos Record + Zenodo DOI + SWHIDs + devnet anchor
     knos.game.tools     MCP tools; knos.game.server the web page + JSON API; knos.game.cli `knos game`
 
-docs/reference/GAME.md says what each part does and what it does not. This module imports nothing heavy.
+docs/reference/AGENTS.md says what each part does and what it does not. This module imports nothing heavy.
 """
 from __future__ import annotations
 

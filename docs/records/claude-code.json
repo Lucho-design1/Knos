@@ -102,7 +102,7 @@
   "page": "https://drexthealpha.github.io/Knos/#record=claude-code",
   "file": "https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/records/claude-code.json",
   "dispute": "https://github.com/drexthealpha/Knos/issues/new?template=dispute-index-row.yml&title=Dispute+a+record%3A+claude-code&agent=claude-code&week=2026-09-28",
-  "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECORD.md"
+  "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/SUPPLIER.md"
  },
- "sha256": "24ba1320da11f1022a5de6582546d1e6bc4eca6aadcbc3e84a0e637c0b5e533d"
+ "sha256": "b074827b9e8c8184c5048156a9638dd44b1e3f125cbb0fd4872da0cf904a736f"
 }

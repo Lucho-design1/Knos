@@ -78,7 +78,7 @@ def test_every_placeholder_is_listed_and_marked(cfg):
     assert all(cfg.doc["fees"][k]["status"] == "live" for k in ("payout", "bounty", "funding"))
 
 
-def test_the_decided_prices_are_the_founders_with_their_sources(cfg):
+def test_the_decided_prices_carry_the_day_they_were_set_and_their_sources(cfg):
     f = cfg.doc["fees"]
     assert (f["bounty_platform"]["rate_bps"], f["lab_order"]["rate_bps"], f["graduation"]["rate_bps"], f["task_package"]["knos_bps"]) == (500, 300, 50, 1000)
     assert f["x402_check"]["usd_each"] == "0.02" and "devnet USDC" in f["x402_check"]["mint"]
@@ -86,8 +86,8 @@ def test_the_decided_prices_are_the_founders_with_their_sources(cfg):
     assert cfg.doc["cloud"]["bonus_bps"] == 1000
     lines = [f[k] for k in ("bounty_platform", "lab_order", "graduation", "task_package", "x402_check")] + [cfg.doc["splits"], cfg.doc["cloud"]]
     for line in lines:
-        assert line["status"] == "decided" and line["decided"] == "14 Oct 2026" and "founder decision 14 Oct 2026" in line["source"], line
-    # an outside figure only with its page and the date it was read; Algora's page could not be read, so no Algora number
+        assert line["status"] == "decided" and line["decided"] == "14 Oct 2026" and "price set 14 Oct 2026" in line["source"], line
+    # an outside figure only with its page and the date it was read
     assert "https://www.scientist.com/scipay/ (read 14 Oct 2026)" in f["lab_order"]["source"]
     assert "9%" not in CONFIG.read_text(encoding="utf-8")
     d = cfg.decided()
@@ -102,7 +102,7 @@ def test_the_product_prices_of_23_oct_are_decided_and_the_program_still_charges_
     assert (f["demand_check"]["free_a_month"], f["deep_demand_check"]["usd_each"], f["ready_brief"]["usd_each"], f["proof_page"]["usd_each"]) == (10, "500", "0", "0")
     assert f["release"]["rate_bps"] == 100 and "company" in f["release"]["payer"] and "100%" in f["release"]["what"]
     for k in ("demand_check", "deep_demand_check", "ready_brief", "proof_page", "release"):
-        assert f[k]["status"] == "decided" and f[k]["decided"] == "23 Oct 2026" and "founder decision 23 Oct 2026" in f[k]["source"], k
+        assert f[k]["status"] == "decided" and f[k]["decided"] == "23 Oct 2026" and "price set 23 Oct 2026" in f[k]["source"], k
     # the 1% is not live: the deployed program charges its compiled payout fee until the timelocked upgrade
     assert f["payout"]["status"] == "live" and f["payout"]["rate_bps"] == pay.FEE_BPS == 30 and "timelocked" in f["release"]["collected"]
     assert "nobody is charged today" in f["deep_demand_check"]["collected"]

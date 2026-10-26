@@ -1,6 +1,6 @@
 name: prove
 
-# The buyer's prove.yml for a measured outcome (docs/reference/MEASURED.md), kept as prove.yml.in so that it is not read
+# The buyer's prove.yml for a measured outcome (docs/reference/OUTCOMES.md), kept as prove.yml.in so that it is not read
 # as a workflow of this repository. Install it as .github/workflows/prove.yml,
 # beside outcome.yaml and outcome.lock.json, commit, and fund one order per tier pinned to that commit
 # (knos_pay requires the token's workflow file to be prove.yml at the pinned commit).

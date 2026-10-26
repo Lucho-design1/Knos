@@ -96,7 +96,7 @@ def test_the_release_fills_a_slot_once_with_its_number_and_a_fact(tmp_path, monk
     facts = json.loads((ROOT / "docs" / "facts.json").read_text(encoding="utf-8"))["facts"]
     _copy(tmp_path, {*cc.PITCH, *bd.DOCS, "docs/facts.json", "docs/bench.json", "docs/backtest.json",
                      *({f.get("json") or f.get("file") for f in facts} - {None}), *cc.docs_of(facts)})
-    sample = tmp_path / "docs" / "reference" / "DEPENDENCY.md"       # one of SLOTTED: only this test's file holds slots;
+    sample = tmp_path / "docs" / "TRUST.md"       # one of SLOTTED: only this test's file holds slots;
     for rel in bd.SLOTTED:                              # the other documents that may carry them say "not measured"
         if (tmp_path / rel).is_file():
             (tmp_path / rel).write_text(bd.SLOT.sub("not measured", (tmp_path / rel).read_text(encoding="utf-8")), encoding="utf-8")
@@ -289,7 +289,7 @@ def test_the_one_sentence_leads_the_readme_and_the_site_and_the_readmes_first_sc
     assert "](docs/README.md)" in parts["Read more"] and "](docs/NUMBERS.md)" in readme and "](docs/reference/CAPABILITIES.md)" in readme
     # what the front page no longer lists is on the map of the documents
     docs_map = (ROOT / "docs" / "reference" / "README.md").read_text(encoding="utf-8")
-    for doc in ("SHADOW", "PLAYGROUND", "VERIFIER", "FINANCE", "TERMS", "PROVENANCE", "CONFORMANCE", "UNWRAPS", "CAPABILITIES"):
+    for doc in ("SHADOW", "PLAYGROUND", "VERIFIER", "COMPANIES", "TERMS", "PROVENANCE", "CONFORMANCE", "UNWRAPS", "CAPABILITIES"):
         assert f"]({doc}.md)" in docs_map, doc
 
 

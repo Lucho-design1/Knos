@@ -290,7 +290,7 @@ def remote(said: str, fetch: Callable[[str], Any] = _get) -> list[dict]:
         row("GitHub About: homepage", repo.get("homepage") or None, f"gh repo edit {REPO} --homepage {SITE}", ok=repo.get("homepage") == SITE)
         row("GitHub About: topics", topics, f"gh repo edit {REPO} {adds} {drops}".strip(), ok=not adds and not drops)
     for package, fix in (("knos", "PyPI shows the summary of the newest upload and it cannot be edited: `python scripts/release.py publish` "
-                                  "(docs/reference/RELEASE.md) uploads this version, whose pyproject description is the sentence"),
+                                  "(CONTRIBUTING.md) uploads this version, whose pyproject description is the sentence"),
                          ("knos-hermes", "the old package: upload one last version whose summary is \"Renamed: install knos. " + said
                                          + "\", or yank its releases at https://pypi.org/manage/project/knos-hermes/releases/")):
         got = ask(f"https://pypi.org/pypi/{package}/json")

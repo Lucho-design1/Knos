@@ -10,7 +10,7 @@
 #
 # Keep the job's name starting with "knos": by that name Knos tells its own run from the checks it judges. Keep this
 # a workflow file of its own: Knos never counts the jobs of its own run as evidence.
-# The record, the badge and the receipt to send with an invoice: docs/reference/RECORD.md in drexthealpha/Knos.
+# The record, the badge and the receipt to send with an invoice: docs/reference/SUPPLIER.md in drexthealpha/Knos.
 name: knos supplier check
 
 on:

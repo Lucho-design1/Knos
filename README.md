@@ -21,11 +21,13 @@ Devnet, test money, no customers yet.
 ```mermaid
 flowchart TB
     idea["A paper or an idea"] --> demand["Demand check on Qloo: who wants it, where, at what price"]
-    demand --> ready["A Ready brief: each milestone has a number, who checks it, and a deadline"]
-    ready --> held["Backers fund milestones; the money is held on Solana until the proof passes"]
-    held --> proof["The maker posts a result; a check judges it"]
+    demand --> ready["Ready brief: each milestone has a target, a checker and a deadline, locked by a hash"]
+    ready --> held["Backers pre-order or fund milestones; the money is held on Solana until the proof passes"]
+    held --> proof["The maker sends the proof: GitHub-signed checks, verified on chain, or 2 of 3 referees"]
     proof -->|verified| paid["The maker is paid for that milestone"]
-    proof -->|not verified by the deadline| back["Nobody is paid; the money goes back to the backers"]
+    proof -->|not verified in time| back["Nobody is paid; the money goes back to the backers"]
+    paid --> record["Each payment and refund is kept in the public Knos record"]
+    back --> record
 ```
 
 *No money locks on a vague brief. Each step is paid only when its proof is verified.*
@@ -47,10 +49,10 @@ The same held money pays for code. One comment on a GitHub issue posts the task,
 
 ```mermaid
 flowchart TB
-    task["You post a task, your rules for done, and the money"] --> work["An AI agent or a person does the work"]
-    work --> checks["GitHub runs your checks"]
-    checks -->|pass| paid["The worker is paid automatically, once you merge the work"]
-    checks -->|fail| back["Nobody is paid. At the deadline, the money comes back to you"]
+    task["You post a task, your checks and the pay; the money is held on Solana"] --> work["An AI agent or a person sends a pull request"]
+    work --> checks["GitHub runs your checks and signs what ran"]
+    checks -->|pass, and you merge| paid["A program on Solana checks GitHub's signature and pays the worker"]
+    checks -->|fail| back["Nobody is paid; at the deadline the money comes back to you"]
 ```
 
 *You set the rules first. The money moves only when the work passes them.*
@@ -69,22 +71,13 @@ GitHub (where your code lives) [signs](docs/WORDS.md#signed) a [token](docs/WORD
 
 A workflow is the script that runs your checks. A commit is one saved version of the code.
 
-```mermaid
-flowchart TB
-    money["The money waits on Solana, not with Knos"] --> run["GitHub runs your checks and signs what ran"]
-    run --> copies["You and they each keep a copy"] --> bill["Both copies give the same bill"]
-    run --> pay["A program checks the signature, then pays"]
-```
-
-*GitHub signs which workflow ran, on which commit. Both sides rebuild the same bill, and a program pays.*
-
 You and the other side each keep a copy of those signed runs. Each side rebuilds the bill from its own copy (the command is `knos meter reconcile`).
 
 **The two bills match line for line, so neither side can change the count alone.**
 
 The money waits in a program on [Solana](docs/WORDS.md#solana), not with Knos. That program checks GitHub's signature before it pays. Today one person can still change that program, after a public wait ([who holds the keys](docs/TRUST.md)).
 
-Today Knos earns its fee only when work is accepted. When you get a refund, the fee goes back to you. So Knos gains when work passes, and the meter is not yet fully neutral ([the plan to fix it](docs/reference/CHARTER.md)).
+Today Knos earns its fee only when work is accepted. When you get a refund, the fee goes back to you. So Knos gains when work passes, and the meter is not yet fully neutral ([what is enforced and what is a promise](docs/reference/CHARTER.md)).
 
 Why Solana: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public. A custodian is a company that holds your money for you.
 
@@ -115,7 +108,7 @@ One person holds every key today. Any change to the programs waits in public for
 | Outside programs reading the verifier | 0 | [docs/NUMBERS.md](docs/NUMBERS.md), row 8 |
 | Shadow counts published | 0 | [docs/NUMBERS.md](docs/NUMBERS.md), row 9 |
 | Paying customers | 0 | [docs/reference/DISCLOSURE.md](docs/reference/DISCLOSURE.md) |
-| Revenue | 0; test USDC is not money | [docs/reference/MARKET.md](docs/reference/MARKET.md) |
+| Revenue | 0; test USDC is not money | [docs/PRICING.md](docs/PRICING.md) |
 | Outside security review | none | [docs/reference/ASSURANCE.md](docs/reference/ASSURANCE.md) |
 | Key holders | one person holds every key; an upgrade waits 8 days in public | [docs/reference/GOVERNANCE.md](docs/reference/GOVERNANCE.md) |
 | Network and money | Solana devnet, test USDC; mainnet is not touched | [docs/reference/SECURITY.md](docs/reference/SECURITY.md) |
@@ -173,13 +166,13 @@ Neither side alone. A program checks GitHub's [signature](docs/WORDS.md#signed) 
 
 ### How do I try Knos?
 
-Open [the check](https://drexthealpha.github.io/Knos/check/) and paste an AI agent's pull request. It answers within ten seconds, with no sign-up.
+Open [the front door](https://drexthealpha.github.io/Knos/) and type the product you want to build. It says who wants it and where, with no sign-up.
 
 ## Read more
 
 `uvx knos shadow invoice.csv`: the same check from a terminal, on a bill of your own (it needs uv, a tool for Python).
 
-- [Get started](docs/START.md): check a pull request, fund a task, get paid, install the tools.
+- [Get started](docs/START.md): check demand, write a Ready brief, then check a pull request and fund a task.
 
 - [Pricing](docs/PRICING.md): what Knos costs. Demand checks are free, 10 a month. The solver keeps 100%; the company pays the 1% release fee and the payment costs on top. Nobody is charged today.
 

@@ -85,7 +85,7 @@ def test_the_cited_witness_record_is_in_knos_and_the_documents_link_it():
     record = json.loads((ROOT / "evidence" / "knos-witness-acaa854d" / "witness.json").read_text(encoding="utf-8"))
     assert record
     rel = "evidence/knos-witness-acaa854d/witness.json"
-    for doc in ("README.md", "docs/TRANSACTION.md", "docs/reference/FLOWS.md"):
+    for doc in ("README.md", "docs/TRANSACTION.md", "docs/START.md"):
         text = (ROOT / doc).read_text(encoding="utf-8")
         assert rel in text, doc
         assert "knos-witness/blob/" not in text, doc
@@ -96,7 +96,7 @@ def test_the_outcome_demo_names_its_commits_and_they_are_here():
     data = _load(ROOT / "evidence" / "knos-v0329-outcomes-b59b30f3" / "SOURCE.json")
     demo = json.loads((ROOT / "examples" / "outcomes" / "measured-support" / "demo.json").read_text(encoding="utf-8"))
     assert demo["pinned_commit"] == pinned["commit"] and demo["data_commit"] == data["commit"]
-    page = (ROOT / "docs" / "reference" / "MEASURED.md").read_text(encoding="utf-8")
+    page = (ROOT / "docs" / "reference" / "OUTCOMES.md").read_text(encoding="utf-8")
     assert "evidence/knos-v0329-outcomes" in page and "evidence/knos-v0329-outcomes-b59b30f3" in page
 
 
@@ -108,4 +108,4 @@ def test_knos_hermes_is_source_here_not_a_second_package():
     assert "drexthealpha/knos-hermes" not in urls and "https://github.com/drexthealpha/Knos/tree/knos-0.3.34/hermes/knos-hermes" in urls
     root = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     assert 'packages = ["src/knos"]' in root and "knos_hermes" not in root      # Knos builds one package
-    assert "hermes/knos-hermes" in (ROOT / "docs" / "reference" / "HERMES.md").read_text(encoding="utf-8")
+    assert "hermes/knos-hermes" in (ROOT / "docs" / "reference" / "AGENTS.md").read_text(encoding="utf-8")

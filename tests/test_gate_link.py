@@ -64,10 +64,3 @@ def test_the_whole_workflow_passes_actionlint(tmp_path):
     assert run.returncode == 0, run.stdout + run.stderr
 
 
-def test_the_page_opens_with_the_three_lines_the_link_and_what_it_proves():
-    page = (ROOT / "docs" / "reference" / "GATE.md").read_text(encoding="utf-8")
-    head = page.split("## Three commands")[0]
-    three = re.search(r"```rust\n(.*?)```", head, flags=re.S).group(1).splitlines()
-    assert [line.split("(")[0].split("=")[0].strip() for line in three] == [
-        "solana_program::declare_id!", "pub const KNOS_REPO_ID: u64", "pub const WORKFLOW: &[u8]"]
-    assert "--link OWNER/REPO" in head and "installLink" in head and "What each record proves" in head

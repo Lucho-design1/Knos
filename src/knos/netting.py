@@ -26,7 +26,7 @@ order under 5.00. So small outcomes accumulate off chain and one release per pay
                 whole value of an unsecured one until the supplier writes it `settled`. `open --max-exposure` bounds
                 it over the whole book, and `add` refuses the line that would pass it.
 
-What the chain enforces and what it does not is ENFORCED below and docs/reference/NETTING.md, word for word.
+What the chain enforces and what it does not is ENFORCED below and docs/reference/COMPANIES.md#netting-and-reserves, word for word.
 
 Standard library only at import; the fee is knos.settle.v2.pay's own function, asked for when a fee is computed.
 """

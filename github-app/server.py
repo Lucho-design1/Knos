@@ -1,6 +1,6 @@
 """Knos Gate as a GitHub App: a small webhook server (standard library HTTP, `cryptography` for the App's JWT).
 
-NOT REGISTERED. docs/reference/PR_GATE.md ("Register the App") lists the founder's steps. Once registered:
+NOT REGISTERED. docs/reference/REFEREE.md ("Register the App") lists the founder's steps. Once registered:
 
     export KNOS_APP_ID=<the App's id>
     export KNOS_APP_KEY_FILE=/path/to/the-app.private-key.pem      # never committed

@@ -225,7 +225,7 @@ def test_the_tree_id_is_the_one_the_pinned_workflows_script_computes(name):
 
 
 def test_the_release_plan_rebuilds_after_the_stamp_every_repository_that_calls_the_pinned_workflows():
-    pub, plan = _script("pinned_workflows"), (ROOT / "docs" / "reference" / "RELEASE.md").read_text(encoding="utf-8")
+    pub, plan = _script("pinned_workflows"), (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
     [step] = [ln for ln in plan.splitlines() if ln.startswith("python scripts/small_repos.py build ")]
     [fold] = [ln for ln in plan.splitlines() if ln.startswith("python scripts/small_repos.py fold")]
     callers = [name for name in r.REPOS if any(pub.NAMED.search(data.decode("utf-8")) for data in r.files(name).values())]

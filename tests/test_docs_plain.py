@@ -20,9 +20,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PLAIN = "**In plain words.**"
 # each document, and the kind of diagram it holds (None: none)
 DOCS = {"docs/README.md": "flowchart", "docs/STORY.md": "flowchart",
-        "docs/reference/GOVERNANCE.md": "flowchart", "docs/reference/METER.md": "flowchart", "docs/reference/FINANCE.md": None,
+        "docs/reference/GOVERNANCE.md": "flowchart", "docs/reference/METER.md": "flowchart", "docs/reference/COMPANIES.md": None,
         "docs/TRANSACTION.md": "flowchart",
-        "docs/reference/FLOWS.md": "flowchart"}
+        "docs/START.md": "flowchart"}
 MERMAID = re.compile(r"(?ms)^```mermaid\n(.*?)^```[ \t]*\n(.*?)$")
 WORD = re.compile(r"[A-Za-z]+(?:['’][A-Za-z]+)*|\d[\d,.]*\d|\d")
 END = re.compile(r"[.!?](?=\s|$)")
@@ -95,8 +95,7 @@ def test_each_diagram_is_mermaid_with_no_colours_and_an_italic_caption(rel):
 
 def test_the_map_lists_the_new_documents_and_draws_the_six_questions():
     page = read("docs/reference/README.md")         # the map of every document; docs/README.md holds the eight front pages
-    for name in ("PILOT.md", "PROPOSAL-2.3.md", "KEYS.md"):
-        assert f"| [{name}]({name}) |" in page, name
+    assert "| [COMPANIES.md](COMPANIES.md) |" in page
     assert "| [WORDS.md](../WORDS.md) |" in page
     body = MERMAID.findall(page)[0][0]
     for n, question in enumerate(("Does it work?", "Why does it matter?", "What is new?", "How do I use it?",

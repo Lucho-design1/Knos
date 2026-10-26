@@ -1,5 +1,5 @@
 """Knos Record: what Knos verified, refused, caught and paid, as one public, append-only, hash-chained JSON Lines file,
-held in Sibyl's memory engine tier by tier and anchored on Solana devnet by Merkle root (docs/RECORD.md).
+held in Sibyl's memory engine tier by tier and anchored on Solana devnet by Merkle root (docs/reference/KNOS_RECORD.md).
 
     from knos import record
     record.claim("claim-42", {"title": "...", "spec_hash": "..."}, domain="ml")         WARM  (a research claim)

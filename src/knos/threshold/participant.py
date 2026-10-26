@@ -134,9 +134,9 @@ def sign_session(share: dict, client, sid: str, led, *, fetcher=None, timeout: f
 
 def serve(share: dict, client, led, *, every: float = 30.0, once: bool = False, on_verdict=None,
           healthz_every: float = 0.0, clock=time.time, sleep=time.sleep, log=print) -> None:
-    """The PC daemon: poll the coordinator for open sessions and take part in each once. healthz_every > 0: also GET
-    the app's /healthz that often (the PC is the second pinger beside the GitHub Actions chain; docs/reference/
-    KEEPALIVE.md) and log one JSON line per ping."""
+    """Host 3's daemon: poll the coordinator for open sessions and take part in each once. healthz_every > 0: also GET
+    the app's /healthz that often (host 3 is the second pinger beside the GitHub Actions chain;
+    .github/workflows/worker.yml) and log one JSON line per ping."""
     seen: set[str] = set()
     last_ping = None
     while True:

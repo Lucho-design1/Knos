@@ -103,7 +103,7 @@ NOT_PINNED = ("CHANGELOG.md", "programs/", "scripts/bump_version.py", "requireme
 # scripts/action_pins.json lists the commit of each Knos tag a workflow or a document names. A commit cannot name
 # itself, so the tag of the release being made has no commit yet: a bump adds its key with SELF_PIN as the value and
 # leaves every earlier key alone (an earlier tag's commit never changes, and .github/workflows/supplier.yml runs the
-# action at one). The first commit after the tag writes the tag's commit there (docs/reference/RELEASE.md, "After the tag").
+# action at one). The first commit after the tag writes the tag's commit there (CONTRIBUTING.md, "After the tag").
 SELF_PINS = "scripts/action_pins.json"
 SELF_PIN = "KNOS_RELEASE_SHA"
 SELF_KEY = re.compile(r'^(\s*)"drexthealpha/Knos@v' + V + r'": "([^"]*)",?\r?\n', re.M)
@@ -307,7 +307,7 @@ def disagreements(version: str | None = None, root: Path = ROOT, changelog: bool
 def unlock(version: str, root: Path = ROOT) -> bool:
     """requirements/sign.txt ends with the hash of one release's wheel once that release is locked. A wheel of another
     version has another hash, so the line of an earlier release is removed, never renamed: the next release locks its
-    own wheel (docs/reference/RELEASE.md). True when a line was removed."""
+    own wheel (CONTRIBUTING.md). True when a line was removed."""
     path = root / "requirements" / "sign.txt"
     text = _text(path) or ""
     m = LOCK.search(text)

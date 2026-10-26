@@ -50,11 +50,11 @@ export const WORDS = { disputed: "disputed", duplicate: "duplicate", insufficien
 export const COLUMNS = [["supplier", "Supplier"], ["po", "Authorisation"], ["deliverable", "Agreed deliverable"], ["evidence", "Acceptance evidence"],
   ["amount", "Amount to approve"], ["exception", "Exception"], ["payment", "Payment status"]];
 export const PARTS = ["identity", "execution", "acceptance", "consequence", "assurance"];
-export const PRIVATE_PATH = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/PRIVATE.md";
+export const PRIVATE_PATH = "https://github.com/drexthealpha/Knos/blob/main/docs/reference/COMPANIES.md#private-repositories";
 // The sample's purchase orders: made up, like its invoice. Both limits cover what is agreed, so the sample can be paid.
 export const SAMPLE_ORDERS = "pull_request,po_number,po_amount\nexample-co/storefront#101,PO-1001,1500.00\nexample-co/storefront#102,PO-1001,1500.00\nexample-co/storefront#103,PO-1001,1500.00\n"
   + "example-co/storefront#104,PO-1001,1500.00\nexample-co/storefront#105,PO-1001,1500.00\nexample-co/billing-internal#7,PO-1002,500.00\n";
-// the accounting systems a bill-import file is written for (web/finance_data.js statementExport; docs/reference/FINANCE.md)
+// the accounting systems a bill-import file is written for (web/finance_data.js statementExport; docs/reference/COMPANIES.md#statements)
 const SYSTEMS = { quickbooks: "QuickBooks", netsuite: "NetSuite" };
 const REMEDY = { disputed: "Send the passing run for this change, or appeal.", duplicate: "Withdraw the line, or name the separate deliverable it is for.",
   replayed: "Withdraw the line: an earlier invoice was agreed for this deliverable.", insufficient_evidence: "Send evidence that this line was accepted.",
@@ -140,7 +140,7 @@ function rowsFrom(lines, scale, orders, receipts, limit = null) {
       parts: receipt ? receipt.parts : null, ln };
   });
 }
-// SINGLE SIGN-ON (docs/reference/SELFHOST.md, section 4). Served by the self-host bundle with [sso], each approval and each export
+// SINGLE SIGN-ON (deploy/knos.example.toml, [sso]). Served by the self-host bundle with [sso], each approval and each export
 // is written to the audit log: POST /sso/act, with the form token GET /sso/me gives. Sign-in sets the cookie
 // knos_signed_in (it holds no secret); without it (the public site, a page opened from disk, a bundle without [sso])
 // nothing is sent and nothing changes. `signedIn()` reads that cookie when it is asked.

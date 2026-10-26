@@ -28,7 +28,7 @@ flowchart LR
 
 Read this first. It limits every line below.
 
-- One person, the founder, holds every key that can change the [programs](../WORDS.md#program) (the code that holds the
+- One person holds every key that can change the [programs](../WORDS.md#program) (the code that holds the
   money).
 - A program change now waits 8 days in public (Squads time lock 691,200 s, in force since 11 Oct 2026). During that
   wait you can see it coming. Before that the wait was 48 hours ([GOVERNANCE.md](GOVERNANCE.md), section 2).
@@ -48,12 +48,11 @@ Read this first. It limits every line below.
 | The payee of a job pays no fee. Today a job (the older kind of bounty) takes its fee out of the amount. Changing that needs an upgrade. | not held | Promise, not yet enforced |
 | The party being rated never pays for its rating. Every invoice line is the buyer's. | `src/knos/billing.py` (off chain; nothing has been sold) | Enforced by `tests/test_billing.py::test_the_rated_party_never_pays_no_line_is_ever_addressed_to_a_supplier` |
 | Two judges run by one person count as one judge. The program counts repository owners. The relay also refuses two runs started by one account. The one exception is a test round in which every account is the operator's own; such a round is labelled "own". | `knos_pay` 2.2 (owners); the relay, off chain (the account that started a run) | Enforced by `tests/test_quorum_controller.py::test_runs_that_share_an_owner_or_a_starter_are_one_controller` and `tests/test_quorum_controller.py::test_the_relay_does_not_carry_a_quorum_two_runs_of_one_starter_would_complete` and `tests/test_quorum_controller.py::test_the_relay_carries_an_own_round_and_says_so` |
-| The fee does not depend on the verdict. Today a refunded order gets its fee back, so Knos earns only on yes. The fix is written in [PROPOSAL-2.3.md](PROPOSAL-2.3.md). | not held | Promise, not yet enforced |
+| The fee does not depend on the verdict. Today a refunded order gets its fee back, so Knos earns only on yes. | not held | Promise, not yet enforced |
 | You can leave an open order before any upgrade runs. A cancelled order is refunded after at most 7 days and 2 hours of notice, and a program change waits 8 days. | the upgrade multisig's time lock (Squads, 691,200 s, in force since 11 Oct 2026) | Enforced by `tests/test_timelock_plan.py::test_an_order_cancelled_at_the_approval_is_refunded_before_an_upgrade_under_the_planned_lock` |
 | You can leave an order held for a payee, or a holdback in its warranty, before any upgrade runs. Today they wait up to 180 and 90 days, longer than the 8-day wait. | not held | Promise, not yet enforced |
 | A second person, outside Knos, can block a change. Today there are 0 such key holders. | not held | Promise, not yet enforced |
 
-The rules that grow from these rights are in [STANDARD.md](STANDARD.md).
 
 ## How to check this page
 

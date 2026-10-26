@@ -2,7 +2,7 @@
 
     a month's invoice = Control + Meter + Acceptance on value reconciled off chain + Record lookups
 
-The price book: PROPOSED prices, nothing sold (docs/reference/MARKET.md, section 3; BOOK below is the same six lines, five columns
+The price book: PROPOSED prices, nothing sold (docs/PRICING.md, section 3; BOOK below is the same six lines, five columns
 each):
 
     Check       free, forever

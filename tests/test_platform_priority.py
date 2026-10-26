@@ -1,5 +1,5 @@
 """Priority fees sized to the work (knos.platform.priority) and the WebSocket wait for a signature. Devnet proof in
-docs/reference/PRIORITY_FEES.md: the same memo at 5,000 micro-lamports a unit paid 202 lamports of priority fee with
+docs/reference/PLATFORM.md: the same memo at 5,000 micro-lamports a unit paid 202 lamports of priority fee with
 the right-sized limit, where the old 1,400,000-unit limit would have paid 7,000."""
 from __future__ import annotations
 

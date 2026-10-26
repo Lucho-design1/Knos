@@ -13,7 +13,7 @@
                               tests and is merged; failing claims are closed (knos.gate.bounty)
 
 Two ways to run it: the GitHub Action (actions/gate, a `pull_request_target` job named "Knos Gate") or the GitHub
-App (github-app/, which owns the check run and the comment and dispatches the same workflow). docs/GATE.md is the page.
+App (github-app/, which owns the check run and the comment and dispatches the same workflow). docs/reference/REFEREE.md is the page.
 Nothing here needs a wallet, a token on chain or an escrow unless bounties mode is on.
 
 Not the same thing as knos.verdict_gate (the hand-off between two jobs of prove.yml), knos.settle.v2.gate (the

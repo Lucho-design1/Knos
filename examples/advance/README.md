@@ -8,7 +8,7 @@ It uses one instruction the payment program already has: `Assign` (instruction 2
 Any third party can make one with the program as it is. Knos charges nothing for it and takes no part in the deal between the seller and the
 financier. `tests/test_advance.py` runs every step below in the Solana runtime (LiteSVM, a local Solana simulator), with test USDC.
 
-[docs/reference/ADVANCE.md](../../docs/reference/ADVANCE.md) is the whole of it: `knos advance offer | take | status`, the one
+[src/knos/advance.py](../../src/knos/advance.py) is the whole of it: `knos advance offer | take | status`, the one
 transaction that pays the seller and assigns the order together, and the three ends (accepted, rejected, expired).
 This page covers the case that page leaves out: an order with a holdback, where the financier pays the seller in a
 separate transfer.
@@ -61,16 +61,16 @@ The seller should assign only to a financier it trusts to make the off-order pay
 
 ## A netting period instead of one order
 
-A supplier paid by netted periods ([docs/reference/NETTING.md](../../docs/reference/NETTING.md)) sells a closed period the same way, when
+A supplier paid by netted periods ([docs/reference/COMPANIES.md#netting-and-reserves](../../docs/reference/COMPANIES.md#netting-and-reserves)) sells a closed period the same way, when
 the buyer locked a reserve for it: `knos advance quote advance-offer.json --period BOOK` prices the period's draws on
 its reserve order, and the take assigns that order. The financier then carries the wait for the draws, and the loss
 if none is signed before the reserve's deadline; an unsecured period is refused, because no order holds its money.
-Who carries what, in four rows: [docs/reference/ADVANCE.md](../../docs/reference/ADVANCE.md#who-carries-which-risk).
+Who carries what, in four rows: [src/knos/advance.py](../../src/knos/advance.py).
 
 ## What is not built
 
 - An assignment of only the holdback after acceptance. The program would have to let the recorded wallet of a
   holdback hand it on.
 - Held money for the advance. `knos advance take` puts the financier's payment and the assignment in one transaction,
-  which lands whole or not at all ([docs/reference/ADVANCE.md](../../docs/reference/ADVANCE.md)); nothing holds the money longer than that.
+  which lands whole or not at all ([src/knos/advance.py](../../src/knos/advance.py)); nothing holds the money longer than that.
 - Nobody has financed an order this way; no financier exists.

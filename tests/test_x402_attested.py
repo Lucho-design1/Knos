@@ -1,6 +1,6 @@
 """examples/x402_attested and docs/reference/X402.md: the proposed x402 "knos-order" scheme. The chain the example replays is what
 the test build of knos_pay does now (the fixture is current), the example's own tests pass (a server and a client over
-HTTP), the page states plainly that it is a proposal, and the messages it prints are the example's."""
+HTTP), the page states plainly that it is not part of x402, and the messages it prints are the example's."""
 from __future__ import annotations
 
 import json
@@ -32,9 +32,9 @@ def test_the_replayed_chain_is_what_knos_pay_does():
     assert fx["refunded"]["logs"] == [f"knos3:refunded order={fx['order']['address']} amount={fx['amount'] + fx['fee']}"]
 
 
-def test_the_page_says_it_is_a_proposal_and_prints_the_examples_messages():
+def test_the_page_says_it_is_not_part_of_x402_and_prints_the_examples_messages():
     page = (ROOT / "docs" / "reference" / "X402.md").read_text(encoding="utf-8")
-    assert "**This is a proposal. It is not part of x402**" in page.split("##")[0]
+    assert "**`knos-order` is not part of x402.**" in page.split("##")[0]
     blocks = {m.group(1): json.loads(m.group(2)) for m in re.finditer(r"<!-- message: (\w+) -->\s*```json\n(.*?)\n```", page, re.S)}
     assert blocks == json.loads((HERE / "messages.json").read_text(encoding="utf-8")) and len(blocks) == 5
     req = blocks["paymentRequired"]["accepts"][0]

@@ -8,7 +8,7 @@ It states what the code does today (`src/knos/appeal.py`, `src/knos/flow.py`, th
 and where the code does less than the terms say, it says so.
 
 Money on devnet is test USDC. This page describes mechanisms. It is not a contract and not legal advice
-([LIABILITY.md](LIABILITY.md)).
+([DISCLOSURE.md](DISCLOSURE.md)).
 
 ## Knos is paid on acceptance, and does not decide it
 
@@ -159,7 +159,7 @@ A buyer cannot appeal an acceptance. What they have is fixed at funding:
 | supplier | their record in a repository: accepted, rejected, appealed, overturned | `knos appeal --record <login> --repo <owner/name>` |
 | either | the terms the order was funded on, and which published version they are | `knos terms verify <file or hash>` |
 | either | the neutral judge's verdict and its run log | the run's page on GitHub; `verdict.json` in its artifacts |
-| either | a month's statement with every disputed line marked | `knos statement make`, then `knos statement export` ([FINANCE.md](FINANCE.md)) |
+| either | a month's statement with every disputed line marked | `knos statement make`, then `knos statement export` ([COMPANIES.md](COMPANIES.md#statements)) |
 | anyone | what the order held, paid and returned | the order's account and the program's log lines on Solana devnet |
 
 ## What is not built

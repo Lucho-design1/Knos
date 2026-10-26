@@ -17,7 +17,7 @@ smallest case, paid work for strangers on public issues, because that is where t
 measured.
 
 An invoice priced per merged change has the same shape: the seller's word, and the seller's count.
-[MARKET.md](MARKET.md) has the prices. Nobody has bought anything.
+[PRICING.md](../PRICING.md) has the prices. Nobody has bought anything.
 
 The promise is two-sided. Buyers can defend the bill; suppliers can defend what they are owed. Each side keeps its
 own ledger, computes the same statement from evidence neither side signed, and can prove it later without the other
@@ -64,9 +64,6 @@ bad wares as good wares tends to drive out the legitimate business"
 ([The Market for "Lemons"](https://www.sfu.ca/~allen/Ackerlof.pdf), Quarterly Journal of Economics 84). It is
 happening to paid open-source work now:
 
-- On the Algora board, settled payouts fell from 1,470 in 2025 to 175 in 2026 up to 10 Aug, with 2 in the 30 days
-  before that date ([incubagent, 10 Aug 2026](https://incubagent.com/research/agent-bounty-market/); in its words,
-  "one venue on one date").
 - curl ended its bug bounty on 31 Jan 2026, after 87 confirmed vulnerabilities and over 100,000 USD paid. The share
   of reports that were real fell from "north of 15%" to "below 5%" in 2025
   ([Stenberg, 26 Jan 2026](https://daniel.haxx.se/blog/2026/01/26/the-end-of-the-curl-bug-bounty/)).
@@ -140,31 +137,7 @@ That is why the
 default also asks for a person's merge, and why a funder can keep part of the money back for a warranty period,
 set at funding and public before the work starts.
 
-### Held money in marketplaces, and where disputes arise
-
-A stand-alone service that holds the money lost to payment built into the marketplace. In 2001 "only 6% of online auction buyers" had paid through one.
-
-The largest such service charged 3% by cheque or money order and 6% by card, and the authors found that a stand-alone service "may have difficulty surviving" where expected fraud is low ([Hu, Lin,
-Whinston and Zhang, Information Systems Research 15(3), 2004](https://doi.org/10.1287/isre.1040.0027)).
-
-What won was a payment inside the marketplace's own flow: in July 2002 "about 60 percent of PayPal's business" came from eBay users ([Associated Press, 8 Jul
-2002](https://www.paypalobjects.com/html/press/070802APEbayBuys.html)).
-
-Held money inside a marketplace moves the dispute to the moment of release. On Upwork a fixed-price dispute opens in
-two cases: a client ends a contract "with a deposited balance and requests a refund", or the freelancer "submitted
-work for a contract or milestone, but the client hasn't released the payment". A party has "seven calendar days"
-to file.
-
-An agent then gives "a non-binding resolution", and the last step is "a binding arbitration service" that the
-parties buy ([Upwork](https://support.upwork.com/hc/en-us/articles/211068528-Dispute-a-fixed-price-contract)).
-Both cases have one cause: the money is held, and what counts as done was left to a person to decide
-afterwards.
-
-Where the buyer decides alone, the seller carries the risk. On Mechanical Turk, "Requesters have the right to reject a Turker's completed work without
-payment" while "retaining ownership rights to the rejected work", and the platform "is not involved in resolving any labor disputes".
-
-Workers answer by avoiding requesters they do not know and by choosing tasks with concrete criteria ([McInnis, Cosley, Nam and Leshed, CHI
-2016](https://bpb-us-w2.wpmucdn.com/sites.coecis.cornell.edu/dist/1/6/files/2016/06/p2271-mcinnis-16rd8kx.pdf); 437 comments from 391 workers).
+### Done is defined before the work
 
 The rules Knos takes:
 
@@ -184,14 +157,7 @@ The rules Knos takes:
 What Knos does not fix: before the merge a maintainer can still read a pull request, decline it and write the same
 change. The merge button stays with the buyer.
 
-### Bountysource: the custodian was the risk
-
-Bountysource announced terms, to start on 1 Jul 2020, under which a bounty with no accepted solution after two
-years "will be retained by Bountysource"; it withdrew them after protest ([borg issue
-5230](https://github.com/borgbackup/borg/issues/5230)). From June 2023 payout requests went unanswered.
-
-At least 21,702.10 USD of completed work was left unpaid, and its owner announced bankruptcy in 2023
-([boehs.org, 3 May 2024](https://boehs.org/node/bountysource)).
+### No company holds the money
 
 The rule: no company holds the money. It sits in a program. Money with no payment returns to the funder at the
 deadline, without a token and without an operator. A payment held for a payee who gave no address returns after
@@ -253,11 +219,10 @@ The rule: the default acceptance is the merge. Checks are necessary and not suff
 In one line: Money is released with no custodian, and neither buyer nor supplier can change the count. One person holds every upgrade key today; a program change waits 8 days in public.
 A receipt verifies with no chain; the chain is for the money and for the root.
 
-A chain gives this three things a company cannot promise. The money is committed before the work, in a program and not in a company's account
-(Bountysource). The payee needs no account with a payment company, only a GitHub account and an address, which can be a wallet made from a passkey.
+A chain gives this three things a company cannot promise. The money is committed before the work, in a program and not in a company's account. The payee needs no account with a payment company, only a GitHub account and an address, which can be a wallet made from a passkey.
 
 And the verifier is a program any other program can call ([OIDC.md](OIDC.md)). A company running the same payment program would be one more party to trust. Until an
-outside review Knos is still such a party, through its multisig (section 4, Bountysource).
+outside review Knos is still such a party, through its multisig (section 4).
 
 Solana, for two reasons. Verifying GitHub's RSA-2048 signature on chain takes 2 transactions, each within Solana's
 computing limit, and on the first deployment carrying a whole token took 7 transactions and 35,000 lamports of fees

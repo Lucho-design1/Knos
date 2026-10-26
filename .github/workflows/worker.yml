@@ -412,7 +412,7 @@ jobs:
   # in every run of the chain (each run is started by the one before it, `workflow_dispatch`), in a job of its own:
   # NO secret is named here, so the fee key is never in the job that may write to pull requests, and this job's
   # permissions are its own and not the workflow's.
-  # THE APP IS KEPT AWAKE BY THE CHAIN (docs/reference/KEEPALIVE.md). Render's free tier puts the app to sleep after 15
+  # THE APP IS KEPT AWAKE BY THE CHAIN (.github/workflows/worker.yml). Render's free tier puts the app to sleep after 15
   # minutes without a request, and GitHub's timer alone is not to be trusted with that: keepalive.yml's 5-minute cron
   # went more than four hours without a run on 18 Oct 2026. Every run of the chain (each one starts the next about
   # every 4.5 minutes; the watchdog brings a stopped chain back) pings the health check once, in a job of its own with

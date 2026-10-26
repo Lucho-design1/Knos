@@ -528,7 +528,7 @@ PHASES = {"apart": "no account written by two relays", "shared": "every transact
 REDUCES = [
     ("Several fee payers", "exists: `KNOS_RELAY_KEYS` (docs/reference/RELAY.md). Each owner's tokens always pay from the same one of the keys, so the relays stop "
                            "sharing the one account that pays the fees: the per-relayer ceiling of section 3 is per key."),
-    ("One release for many small outcomes", "exists: `knos net` (docs/reference/NETTING.md) settles outcomes under 20 USD as one release per payee per period, so "
+    ("One release for many small outcomes", "exists: `knos net` (docs/reference/COMPANIES.md#netting-and-reserves) settles outcomes under 20 USD as one release per payee per period, so "
                                             "the fee account is written once per payee per period and not once per outcome."),
     ("One transaction for many evaluations", "exists: the meter's RecordBatch counts a period's evaluations in one transaction and moves no money, so it "
                                              "does not write the fee account at all."),

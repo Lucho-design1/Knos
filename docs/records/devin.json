@@ -102,7 +102,7 @@
   "page": "https://drexthealpha.github.io/Knos/#record=devin",
   "file": "https://raw.githubusercontent.com/drexthealpha/Knos/main/docs/records/devin.json",
   "dispute": "https://github.com/drexthealpha/Knos/issues/new?template=dispute-index-row.yml&title=Dispute+a+record%3A+devin&agent=devin&week=2026-09-28",
-  "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECORD.md"
+  "specification": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/SUPPLIER.md"
  },
- "sha256": "aa049c8f25ca177b9bc11c4baf8b66745a9d1434fefdf5cbb685812ca00d03a1"
+ "sha256": "3aae1f1cc77b1bb411ac6f022c3b5d681747d7b0c7f6b11c2a835926b83e1486"
 }

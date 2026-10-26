@@ -5,7 +5,7 @@
 # acme/knos-private), with three files beside it that buyer and supplier agreed on:
 #
 #     terms.json        the order's terms (knos terms show; the bytes whose hash both sides hold)
-#     attestors.json    the attestors BOTH parties approved (examples/private/attestors.json; docs/reference/PRIVATE.md)
+#     attestors.json    the attestors BOTH parties approved (examples/private/attestors.json; docs/reference/COMPANIES.md#private-repositories)
 #     .knos/acceptance/<issue>/   in the target repository's default branch: the acceptance checks
 #
 # What leaves the network, and nothing else:

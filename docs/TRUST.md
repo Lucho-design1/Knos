@@ -2,11 +2,11 @@
 
 # Trust: who holds the keys, and what is tested
 
-**In plain words.** Today one person, the founder, holds every key that can change the programs. A change must wait 8 days in public before it can run. Nobody outside Knos has checked the code, and it runs only with test money.
+**In plain words.** Today one person holds every key that can change the programs. A change must wait 8 days in public before it can run. Nobody outside Knos has checked the code, and it runs only with test money.
 
 ```mermaid
 flowchart TB
-    founder["The founder holds all three keys"]
+    founder["One person holds all three keys today"]
     vote["Two of the three keys approve a change"]
     wait["The change waits 8 days, where anyone can see it"]
     run["Then the change can run"]
@@ -16,7 +16,7 @@ flowchart TB
 
 ## Who holds the keys today
 
-**One person, the founder, holds every key.** No one else holds a key yet.
+**One person holds every key today.** No one else holds a key yet. **Outside key holders today: 0.**
 
 The [programs](WORDS.md#program) that hold the money obey two [multisigs](WORDS.md#multisig). A multisig acts
 only when enough of its keys agree.
@@ -27,11 +27,34 @@ only when enough of its keys agree.
 | The guardian multisig, the same 3 keys | Pause new funding for 7 days at most, and approve or refuse a GitHub signing key |
 | `FEE_OWNER` | Receive the fees, and lower one owner's fee rate until a date |
 | The deploy key | Write a new build for the upgrade multisig to vote on |
+| The GitHub account of the pinned workflows | Publish the workflows every order pins |
 
-All three member keys are the founder's. So "2 of 3" does not mean two people: one person can act alone.
+All three member keys belong to that one person. So "2 of 3" does not mean two people: one person can act alone.
 
-One machine holds all three member keys and the deploy key. [Keys](reference/KEYS.md) has the plan to add other
-key holders. Nobody has been asked yet.
+One machine holds all three member keys and the deploy key. No key here can move an order's money to itself. The
+upgrade multisig can change the code, and new code can do anything.
+
+## Ask to hold a key
+
+A first outside key holder would hold 1 key of 3. That person could vote on every upgrade and check each build in
+public. One key of three cannot approve or block an upgrade alone.
+
+To ask, make a key on your own machine (`solana-keygen new --outfile knos-member.json`) or on the site's Hold a key
+page. Keep the file to yourself. Then open a [Key holder request](https://github.com/drexthealpha/Knos/issues/new?template=key_holder.md)
+with your public key and a way to reach you.
+
+The change that adds your key is public on chain, and on the upgrade multisig it waits 8 days. Afterwards
+[`web/keyholders.json`](../web/keyholders.json) lists your key, and the count above becomes 1.
+
+## One GitHub account
+
+The pinned workflows, the key-rotation workflow, the relay and the site all live in one GitHub account. If it were
+suspended or lost, funded orders could only be refunded: a refund needs no GitHub and no action by Knos.
+
+## Who builds Knos
+
+One person builds Knos, under a pseudonymous GitHub account. No legal name is published. Nobody else works on
+it, and there is no legal entity. No legal advice has been taken ([DISCLOSURE.md](reference/DISCLOSURE.md)).
 
 ## How a change to the programs happens
 
@@ -67,8 +90,8 @@ The same person wrote the code and the tests. A test is evidence, not proof.
 None of these covers everything. No model checker has been run on the verifier, the program that checks GitHub's
 signatures.
 
-The founder also read the verifier and the payment program line by line, as an attacker would. That is his own
-check, not an audit.
+One person, the author, read the verifier and the payment program line by line, as an attacker would. That is
+the author's own check. It is no audit.
 
 [Assurance](reference/ASSURANCE.md) lists each rule, the test that holds it, and what is not covered.
 
@@ -100,6 +123,5 @@ The two hashes must be the same. The steps for the verifier, `knos_oidc`, are in
 ## Read more
 
 - [Security](reference/SECURITY.md): who is trusted for what, and every known limit.
-- [Governance](reference/GOVERNANCE.md): who can change what, and the plans that are not done.
-- [Keys](reference/KEYS.md): every key, who holds it, and the plan to share them.
+- [Governance](reference/GOVERNANCE.md): who can change what today.
 - [Assurance](reference/ASSURANCE.md): the tests, the fuzzing and the proofs, and how to run them.

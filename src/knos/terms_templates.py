@@ -93,7 +93,7 @@ OUTCOMES = {t.name: t for t in (       # the comment that funds each example of 
 ALL = {**TEMPLATES, **OUTCOMES}
 
 
-# ---- the supplier's menu: three tiers a supplier may ask a buyer to fund (docs/reference/STANDARD.md, "The supplier's menu") ----
+# ---- the supplier's menu: three tiers a supplier may ask a buyer to fund ----
 # A tier is a template plus what holds its promise. Standard and Assured are whole on chain: the holdback and its
 # warranty are options of the order (pay.opts), which the fund token signs and knos_pay keeps. Bonded adds a stake
 # the supplier puts up; knos_pay has no field for a supplier's stake, so that part is off chain only: a promise

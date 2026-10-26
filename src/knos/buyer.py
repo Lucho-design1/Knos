@@ -1,5 +1,5 @@
 """Post a task as a buyer: one command from a written spec and a folder of hidden tests to an issue, a seal and the
-exact funding command (`knos task post`, docs/reference/BUYER.md).
+exact funding command (`knos task post`, docs/START.md).
 
 What a buyer needs before work starts, in order, and which existing piece does each:
 

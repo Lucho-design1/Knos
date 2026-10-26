@@ -7,7 +7,7 @@
     GET /orders/<order>         how many lookups an order has bought and used
     GET /health                 whether it can answer, whether it signs, and what its operator promises (nothing)
 
-What the paid answer adds to the free file (knos.record_answer, docs/reference/RECORD.md section 5): the operator's signature
+What the paid answer adds to the free file (knos.record_answer, docs/reference/SUPPLIER.md section 5): the operator's signature
 over the record's hash, the time and slot the chain was read and an expiry (`knos record verify` checks it with no
 network); a summary computed the same way for every supplier; and the supplier's history, field by field, only to a
 reader the supplier granted (header Record-Grant). Without a grant the answer says "not granted". With no signing

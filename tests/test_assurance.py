@@ -241,9 +241,6 @@ def test_the_documents_say_the_levels_the_declared_list_and_the_note():
         assert f"`{level}`" in doc
     for said in ("## Version 5", "computed from the evidence", "declared_related", "no receipt may say `attested`", "vectors.v5.json", "acceptance-receipt.v5.schema.json"):
         assert said in doc, said
-    fin = (ROOT / "docs" / "reference" / "FINANCE.md").read_text(encoding="utf-8")
-    for said in ("knos statement grn", "three-way match", "po_reference", "grn_reference", "assurance", "file export, not an integration"):
-        assert said in fin, said
 
 
 if __name__ == "__main__" and "--write" in sys.argv:

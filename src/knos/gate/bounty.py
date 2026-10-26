@@ -15,7 +15,7 @@ payment and holds no key. What Gate adds:
     treasury(mint, ...)   the fee's destination: a token account of FEE_OWNER, Knos's Squads vault (a program-derived
                           address of the Squads program), for that mint
 
-Fiat on-ramps and off-ramps are a founder decision (docs/reference/PR_GATE.md)."""
+Fiat on-ramps and off-ramps are a founder decision (docs/reference/REFEREE.md)."""
 from __future__ import annotations
 
 import re

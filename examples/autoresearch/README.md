@@ -19,4 +19,4 @@ With a coding agent proposing instead (its own login/key; Knos neither reads nor
     PYTHONPATH=src python -m knos.autoresearch run examples/autoresearch --proposer "cmd:claude -p"
 
 Outputs: `/tmp/ar/results.tsv` (one row per experiment), `/tmp/ar/best_train.py`, `/tmp/ar/summary.json`, and the
-record in `/tmp/ar/record/`. How it works and a measured run: [docs/reference/AUTORESEARCH.md](../../docs/reference/AUTORESEARCH.md).
+record in `/tmp/ar/record/`.

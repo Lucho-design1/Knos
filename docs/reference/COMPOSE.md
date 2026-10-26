@@ -125,8 +125,8 @@ whole path in a simulator, and its README the four commands to devnet.
 ## Who uses the upgrade gate
 
 **Programs outside this repository behind the upgrade gate: 0.** Knos's own four programs are behind it.
-[GATE.md](GATE.md) is the page: three commands put a program of yours behind a public delay and a record of which
-commit GitHub's runner built its bytes from.
+[`examples/upgrade_gate`](../../examples/upgrade_gate) has the three commands that put a program of yours behind a
+public delay and a record of which commit GitHub's runner built its bytes from.
 
 | program id | cluster | its gate | a gated upgrade (the transaction that executed it) | source |
 |---|---|---|---|---|

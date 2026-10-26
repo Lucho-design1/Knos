@@ -232,7 +232,7 @@ export function renderOrderStatement(el, env = {}) {
       <div id="ost-objects"></div>
       <h4>For your finance system</h4>
       <p id="ost-exports">${Object.entries(FORMATS).sort(([, a], [, b]) => Number(a.unverified) - Number(b.unverified)).map(([fmt, f]) => `<button type="button" class="ghost small" data-export="${esc(fmt)}" title="${esc(f.name)}">${esc(EXPORT_NAMES[fmt] || fmt)}</button>${f.unverified ? ` <span class="fine" data-unverified="${esc(fmt)}">${esc(UNVERIFIED)}</span>` : ""}`).join(" ")}</p>
-      <p class="fine">Accepted deliverables only. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/FINANCE.md" target="_blank" rel="noopener">What each file holds, and what nobody has imported yet.</a></p>
+      <p class="fine">Accepted deliverables only. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/COMPANIES.md#statements" target="_blank" rel="noopener">What each file holds, and what nobody has imported yet.</a></p>
       <p class="fine" id="ost-recompute" data-fold="How the other party recomputes it">How the other party recomputes it: <code>${esc(command)}</code> reads the same period from the chain and prints the same bytes as Export CSV
         (<code>--format json</code> for Export JSON). Compare one hash, the head: <span class="mono" id="ost-head">${esc(head)}</span>. <code>knos audit verify &lt;file&gt;</code>
         checks every row's hash, the totals and the head of a file someone sent you. Test USDC on devnet: not an invoice for real money.</p></div>`;
@@ -278,7 +278,7 @@ export function renderOrderStatement(el, env = {}) {
 }
 
 // ---- the statement of one invoice, for whoever approves it ------------------------------------------------------------------------------------
-// A statement file (`knos statement make`, docs/reference/FINANCE.md) opened in this browser and sent nowhere: its own sha256 is
+// A statement file (`knos statement make`, docs/reference/COMPANIES.md#statements) opened in this browser and sent nowhere: its own sha256 is
 // checked, every line shows its state, and the two buttons give the CSV the command line writes (byte for byte:
 // tests/web/statement.mjs) and the browser's print dialog, which saves a PDF. Printing shows the statement alone
 // through the print rules scoped to .k-statement in web/app.css.

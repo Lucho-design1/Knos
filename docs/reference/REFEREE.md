@@ -7,7 +7,7 @@ want it, and can it be made at a profit. A verdict passes only when all three do
 
 The person or agent doing the work
 cannot see the tests that judge it, cannot change the judge, and is refused when it tries one of the known cheats.
-Every verdict and every cheat caught can be written to Knos Record ([RECORD.md](RECORD.md)).
+Every verdict and every cheat caught can be written to Knos Record ([SUPPLIER.md](SUPPLIER.md)).
 
 Code: `src/knos/referee/` and `src/knos/cheats/`. Tests: `tests/test_referee_*.py`.
 
@@ -93,7 +93,7 @@ script.
 A rule that crashes, or a diff header that cannot be read, is a refusing `rule_error` finding: the library fails
 closed, never open.
 
-Changed in v0.3.31: two rules refused honest work, and both were narrowed. Per [SELF.md](SELF.md), `cheats/` is trusted
+Changed in v0.3.31: two rules refused honest work, and both were narrowed. `cheats/` is trusted
 core, so a referee change waits for the signature on the release. What changed:
 
 - `hardcoded_answers` counts a visible test line only when the test holding that line exercises the changed file.
@@ -161,3 +161,284 @@ Install: add the Knos check workflow from [INSTALL.md](INSTALL.md), give the job
 
 The decision is made by `knos referee maintainer --base DIR --diff FILE --mode MODE`; the action applies it with
 the job's own token.
+
+## Knos Gate in GitHub's own places: code scanning, annotations, attestations, a required check
+
+Knos Gate refuses a pull request that cheats (edits a test, touches a workflow, writes outside the scope the
+maintainer set). Since 0.3.31 each refused finding also appears where a maintainer already looks on GitHub, and a
+maintainer can make the check required in one command.
+
+Everything here is off unless you turn it on, except the line annotations, which cost nothing.
+
+| what | where it shows | how to turn it on | GitHub documentation (read 14 Oct 2026) |
+| --- | --- | --- | --- |
+| line annotations | on the "Knos Gate" check, at the first line the pull request changed in each refused file | on by default (Action: `::error` workflow commands; App: `output.annotations` of the check run, 50 per request) | [Checks API](https://docs.github.com/en/rest/checks/runs) |
+| code-scanning alerts | the Security tab and the pull request's "Code scanning" section | Action input `code-scanning: "true"` and `permissions: security-events: write`; the App uploads when it holds `security_events: write` (in its manifest since 0.3.31) | [SARIF upload](https://docs.github.com/en/rest/code-scanning/code-scanning#upload-an-analysis-as-sarif-data), [SARIF support](https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/sarif-support-for-code-scanning) |
+| receipt attestation | `gh attestation verify receipt.json -R OWNER/REPO` | Action input `attest: "true"` and `permissions: id-token: write, attestations: write` (public repositories, or private ones on GitHub Enterprise Cloud) | [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds) |
+| required check | the branch's merge box: "Knos Gate" must pass | `knos gate require OWNER/REPO --apply` (a token with administration on the repository; without `--apply` it prints the ruleset and changes nothing) | [Rulesets](https://docs.github.com/en/rest/repos/rules) |
+
+### What is in the SARIF log
+
+`knos gate run` writes `knos-gate.sarif` (SARIF 2.1.0) and `annotations.json` beside `verdict.json`
+(`src/knos/gate/sarif.py`). One result per finding whose severity is `refuse`, at the first line the pull request
+added in that file (line 1 for a file it only removed from).
+
+Each result carries `partialFingerprints.knosFinding/v1`, a hash of the rule and the path, so the same cheat on the
+next push stays the same alert. A passing run uploads an empty log, which closes the alerts an earlier push opened.
+The log's `automationDetails.id` is `knos-gate/`, so Gate's analyses never mix with CodeQL's.
+
+Nothing in the log is new information: it holds the rule, the category, the path and the sentence the comment
+already shows. Like the comment, its text is checked against the hidden tests' lines before it is written; a log that
+would quote one is replaced by an empty one.
+
+### The attestation
+
+With `attest: "true"` the Action runs `actions/attest` (pinned to v4.2.2) with the signed receipt as both subject and
+predicate (predicate type `https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECEIPT.md#knos-receipt-v1`).
+The receipt's own ed25519 signature says which key signed it; the attestation adds a Sigstore record that this
+repository's workflow produced exactly these bytes. Anyone checks it with:
+
+```
+gh attestation verify receipt.json -R OWNER/REPO --predicate-type https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECEIPT.md#knos-receipt-v1
+```
+
+### Not shown live
+
+These features were tested against recorded GitHub request shapes (`tests/test_gate_sarif.py`), not by uploading to a
+live repository: the Knos rules for this version allow writes only to branches, pull requests and issues of the test
+repository. The first maintainer who turns on `code-scanning` is the first live run.
+
+## Knos Gate: hidden tests on every outside pull request
+
+**In plain words.** You keep some tests secret. Knos Gate runs them on each pull request from outside and says pass or fail in one check and one comment. The author never sees the secret tests, only how many passed.
+
+1. An outside pull request arrives.
+2. Cheat checks run on the diff: test edits, scope, data, workflows.
+3. The sealed hidden tests run in a sandbox with no network and no token.
+4. Gate posts one check and one comment, edited in place.
+5. A signed receipt that anyone can verify offline.
+*One pull request through Gate. A refused cheat stops it before any of its code runs.*
+
+This section is not the upgrade gate for a Solana program ([`examples/upgrade_gate`](../../examples/upgrade_gate)).
+
+### Why
+
+Maintainers are closing their doors because checking work now costs more than producing it (sources as of 13 Oct 2026):
+curl ended its bug bounty on 31 Jan 2026 after valid reports fell below 5%; Google stopped OSS VRP submissions on 1 Oct
+2026 ("vast majority not valid"); Sovereign Tech paused its bounty (790+ reports, about 80 accepted).
+
+Others: tldraw auto-closes external pull requests; Ghostty bans drive-by AI pull requests and
+uses Vouch; GitHub shipped settings to disable or cap outside pull requests (13 Feb and 17 Jun 2026).
+
+Every filter shipped so far judges WHO sent the work (Vouch, collaborator-only, pull request caps). None checks whether
+the work is CORRECT against tests the sender could not see. Gate does that, and works beside those filters: a passing
+Gate check can be the bypass signal a maintainer opts into (`pass_label`).
+
+Unsolicited bot pull requests are merged far less often (Greenkeeper 32%, ASE 2017) than opted-in ones (Dependabot
+about 70%, median about 4 hours, arXiv 2206.07230). Gate is opt-in by the maintainer and needs no wallet, no token and
+no held money.
+
+### Install
+
+Two files and two secrets, all in your repository:
+
+1. `.knos/gate.yml` (`knos gate init` writes a starting one). The schema is `src/knos/gate/gate.schema.json`; an
+   example is `actions/gate/example/.knos/gate.yml`.
+2. Seal your hidden tests: `knos gate seal path/to/hidden-tests --secret-out hidden.b64` prints the sha256 for
+   `hidden_tests.sha256`; store the bundle with `gh secret set KNOS_GATE_HIDDEN < hidden.b64` and delete the file.
+   A secret holds at most 48 KB; a larger suite goes in a private repository (`source: repo`, pinned `ref`).
+3. Copy `actions/gate/knos-gate.yml` to `.github/workflows/knos-gate.yml` and pin the action to a full commit sha.
+4. Optional: a receipt key, `knos gate receipt keygen key.json` then `gh secret set KNOS_RECEIPT_KEY < key.json`.
+
+The GitHub App (two clicks: install, pick repositories) is built but not registered: see "Register the App" below.
+
+### What it checks, in order
+
+| step | runs pull request code? | refuses when |
+|---|---|---|
+| config | no | `.knos/gate.yml` on the BASE commit is missing or invalid |
+| outside only | no | (an owner, member or collaborator is not judged with `outside_only: true`; the check says so) |
+| cheat checks | no | a rule of the cheat library refuses (REFEREE's `knos.cheats` when installed, else Gate's local rules: test edited, workflow edited, `.knos/` edited, hidden folder written, runner tampering, out of scope, data tampering, core path, no change) |
+| hidden tests | yes, sandboxed | the bundle is not the sealed one, or a hidden test fails, or the re-run disagrees |
+| public tests | yes, sandboxed | a public test fails |
+
+`on_fail` decides what a refusal does: `comment`, `label` or `close`. In bounties mode a failing claim is always closed.
+
+### What leaves the runner
+
+Counts only: total, passed, failed, errors, skipped. Never a test's name, message or output. The suites' output and
+reports are deleted before the artifact is uploaded, and every text Gate posts is checked against the hidden files'
+lines first; a text that would quote one is not posted (`gate.leak_guard`).
+
+### The sandbox, and its limits
+
+The hidden tests run as a user of their own (`knos-sandbox`) in a network namespace with no network, with an
+environment of PATH, HOME and LANG only: no GitHub token and no secret. That user cannot write the runner's files, so
+it cannot reach `$GITHUB_ENV` or the Knos install that computes the verdict.
+
+`setup` runs from the base commit before the pull request's code is on disk.
+
+The Action fails closed: when the runner cannot make this sandbox (passwordless sudo and `unshare`), Gate stops with
+exit 2 and runs nothing. The sandbox writes only a fresh folder of its own; the runner reads its report there without
+following links and writes its own files elsewhere. A pass needs exit code 0 AND a report with no failure.
+
+What it does not stop: the pull request's code runs in the same process as the hidden tests, so it can read them while they run and can try to fake their result, because the exit
+code and the report both come from that process.
+
+It cannot send them anywhere (no network, no token, no output shown), and the cheat library refuses the edits that fake a result (test runner configuration, `conftest.py`, `.pth`
+files). A maintainer who needs more runs the hidden tests in a separate process or machine; that is not built in this version.
+
+### Knos Receipt
+
+Each run writes a receipt (`knos.receipt2`): the repository, pull request and commits; `mode` (hidden, or "public tests
+only", said in words); the seal of the hidden tests; counts; the cheat library and its rules; the runner as the run's
+environment reports it (not signed by GitHub in this receipt); the re-run; the verdict and its rule.
+
+It is signed with Ed25519. `knos gate receipt verify FILE` checks it with Python's standard library alone
+(`src/knos/receipt2/ed25519.py`, RFC 8032), from the JSON or from the saved receipt page. A valid signature by a key not
+in `src/knos/receipt2/issuers.json` shows only that its holder signed.
+
+The one listed key was generated for the v0.3.29 demo. It holds no money.
+
+An author can get a receipt for their own pull request to a repository without Gate: `knos gate receipt self` runs the
+repository's own public tests and the cheat checks and signs with the author's own key. That receipt says "public
+tests only" and that the author issued it.
+
+### Bounties mode
+
+`bounties.enabled: true` adds two things. A pull request that says it closes an issue ("Fixes #12") and fails Gate is
+closed.
+
+The payment program is the existing knos_pay one on Solana devnet (`knos fund-wallet OWNER/REPO#N AMOUNT`): the program pays the
+merged pull request whose GitHub-signed run met the terms, and takes its fee for the treasury, a token account of Knos's
+Squads vault.
+
+`knos gate bounty quote AMOUNT` reads the fee from `config/fees.yaml` (through `knos.money.fees_config`) and `knos gate
+bounty treasury MINT` names the fee account. Gate signs no payment and holds no key. There is no fiat on-ramp or
+off-ramp.
+
+### The demo, 13 Oct 2026 (synthetic tasks, devnet test tokens)
+
+In the owner's new private test repository `drexthealpha/knos-v0329-gate` (a synthetic `slug()` task, three hidden
+tests), with the Action alone. Every run used the `nonet,user` sandbox:
+
+| pull request | Gate | run |
+|---|---|---|
+| #2 edits the public test | refused, `gate.test_edited`, closed; no test ran | [run 38432746562](https://github.com/drexthealpha/knos-v0329-gate/actions/runs/38432746562) |
+| #3 correct fix plus `setup.py` | refused, `gate.out_of_scope`, closed | [run 38432754483](https://github.com/drexthealpha/knos-v0329-gate/actions/runs/38432754483) |
+| #4 passes the public test only (claims #1) | refused, `gate.hidden_tests_failed` (1 of 3 hidden passed), closed | [run 38432762375](https://github.com/drexthealpha/knos-v0329-gate/actions/runs/38432762375) |
+| #5 correct fix, then a second commit | passed (3/3 hidden, 1/1 public, re-run agreed), signed receipt; one comment, edited in place | [run 38432780017](https://github.com/drexthealpha/knos-v0329-gate/actions/runs/38432780017) |
+
+The repository is private, so those links open for its owner only; its files (its main, ccf45c30) are in Knos as
+[evidence/knos-v0329-gate](../../evidence/knos-v0329-gate) (with the demo pull requests' heads in its SOURCE.json).
+
+The bounty ran in the public test repository `drexthealpha/knos-e2e`, issue [#273](https://github.com/drexthealpha/knos-e2e/issues/273), with a test token minted on
+devnet (no value), whose terms require the `Knos Gate` check and allow only `gate_slug.py`:
+
+| step | evidence |
+|---|---|
+| 5.00 held from the Gate demo wallet `H3iUwqY9aKKD1H9m5MmTYNcwcv8xUkGDDDfps6XjXtBP` | [funding transaction](https://explorer.solana.com/tx/4xurN74ZuqE8Uz9dqUhomSLMA5ko8LAr1gnS2Btafe9oiUHJwz2StfmF6dWBxGqX7VDDr9J1iKc2d242LiTV33fG?cluster=devnet) |
+| a claim that fails the hidden tests is closed | [#274](https://github.com/drexthealpha/knos-e2e/pull/274), [run 38433820579](https://github.com/drexthealpha/knos-e2e/actions/runs/38433820579) |
+| the correct claim passes Gate and is merged | [#275](https://github.com/drexthealpha/knos-e2e/pull/275), [run 38433833108](https://github.com/drexthealpha/knos-e2e/actions/runs/38433833108) |
+| paid 51 s after the merge: 4.95 to the author's bound wallet, 0.05 fee to the treasury account `DkEX9RMi4NvJJTTr8463hctJo2tnS83g9Ti6sqEPCHT9` (owner: the Squads vault) | [payment transaction](https://explorer.solana.com/tx/2MbUhEUKdzLvyHe4WEd8cLqv1HGcKV91GGTNqF8y8EWN4jYTAw36n2nvsLBTsCw8ep9BBZLs3279TaN9Zobt9h1x?cluster=devnet) |
+
+The author of both claims is the repository's owner (`outside_only: false` for the demo); there is no outside user.
+
+### Register the App
+
+The App's code is `github-app/server.py` (logic: `src/knos/gate/app.py`) and its manifest is
+`github-app/app-manifest.json`. Nobody has registered it. To run it yourself:
+
+1. Choose the host that will serve `https://<host>/webhook` and replace `REPLACE-WITH-YOUR-HOST` in the manifest.
+2. Create the App from the manifest (GitHub: Settings, Developer settings, GitHub Apps, or the manifest flow
+   `https://github.com/settings/apps/new?manifest=...`). Choose its name.
+3. Download the App's private key and set a webhook secret. Keep both off the repository.
+4. On the host: `pip install knos -r github-app/requirements.txt`, set `KNOS_APP_ID`, `KNOS_APP_KEY_FILE`,
+   `KNOS_APP_WEBHOOK_SECRET_FILE`, run `python github-app/server.py --port 8787` behind TLS.
+5. A repository using the App adds `github-app/knos-gate.yml` as `.github/workflows/knos-gate.yml` and its secrets.
+
+### Commands
+
+`knos gate init | validate | schema | seal | run`, `knos gate receipt verify | keygen | page | self`,
+`knos gate bounty quote | treasury`.
+
+## Task packages: a merged fix as a sealed, verified task
+
+**In plain words.** When a maintainer merges a pull request that fixes an issue and adds tests, that pair is a good
+task: a real problem, a real fix, and tests that tell right from wrong. `knos taskpack export` packs it. The tests are
+sealed, so a solver cannot see them.
+
+Knos checks that the tests fail before the fix and pass after it. Anyone holding
+the package can then grade a new attempt, and attempts that edit the tests or wander outside the fix's files are refused.
+
+Only the maintainer opts a task in. Nothing here offers or sells a task package.
+
+### Why
+
+AI labs buy software tasks to train and test agents. Epoch AI reported prices of $200 to $2,000 per task, and that
+resistance to reward hacking is the first thing buyers ask for (Epoch AI, 12 Jan 2026).
+
+A task whose hidden tests come from the fix that was actually merged, with cheat rules applied before any test runs,
+is that kind of task.
+
+### Export
+
+```
+knos taskpack export owner/repo#PR --repo-dir CLONE [--opt-in --maintainer LOGIN] [--encrypt] [--price MICRO_USDC]
+```
+
+- Reads the pull request and the issue it closes from GitHub (or offline: `--merge SHA --issue N --issue-title ...`).
+- **Opt-in**: `.knos/taskpack.yml` with `export: true` at the merge commit, or `--opt-in` from the maintainer running it.
+  Without either, nothing is exported.
+- Splits the fix into test files (sealed) and the rest (the reference fix, sealed too).
+- Runs the tests at the base commit (they must FAIL) and at the merge (they must PASS), each in a copy unpacked with
+  `git archive`. The clone is only read.
+- Reads the licence (`LICENSE` / `COPYING`). No licence: the package is for the copyright holder's own use and is marked
+  not sellable.
+- Fee: the split of a sale comes from the one fee config, `config/fees.yaml`, through `knos.money.fees_config`
+  (`task_package`). No price is set, so without `--price` only the source is recorded.
+
+```
+<task_id>/public/task.json        manifest: source, licence, opt-in, statement, scope, judge, sealed hashes, the check, fee
+<task_id>/public/statement.md     what the solver reads
+<task_id>/sealed/tests.tar        the hidden tests (with --encrypt: tests.tar.enc, ChaCha20-Poly1305, key written beside the package as `<task_id>.key`, never inside it)
+<task_id>/sealed/reference.patch  the merged fix without its tests
+```
+
+The task id comes from the spec hash: sha256 of the manifest, which commits to the sealed files' hashes.
+`knos taskpack verify PACK` recomputes both. Nothing in `public/` shows a hidden test's name or content.
+
+### Grade
+
+```
+knos taskpack grade PACK --patch candidate.patch --repo-dir CLONE
+```
+
+Cheat rules first, and no candidate code runs when one fires: `test_edited`, `out_of_scope` (outside the folders the
+fix touched), `workflow_edited` (`.github/`, `.knos/`), `no_change`. When the referee's cheat library is installed
+(`knos.cheats.scan_diff`) its findings count too. Then the hidden tests run at the base commit with the patch applied.
+The output names counts and rules, never a hidden test.
+
+Reward on the referee's scale: 1.0 pass, 0.0 fail, -1.0 cheat.
+
+### For training environments and the referee
+
+`knos taskpack rows PACK... --out tasks.jsonl` writes one row per package: the statement, repository, base commit,
+scope and sealed hashes. `knos.taskpack.atropos.score(row, clone, patch)` returns the reward, for a Hermes Atropos
+environment. `knos.taskpack.atropos.referee_spec(pack)` gives the referee the spec hash, hidden-test hash, judge and
+rules. Devnet and demo use only.
+
+### Shown on the owner's own repository
+
+On 13 Oct 2026, on a read-only clone of `drexthealpha/knos-e2e`, pull request #272 (closes #271):
+
+- without opt-in: refused;
+- with `--opt-in --maintainer drexthealpha`: package `knos-task-9f777dfb79758fdd`, 1 hidden test file, failing before
+  the fix and passing after it; no licence file, so marked not sellable;
+- grading: the merged fix 1.0, a patch that rewrites the test -1.0 (`test_edited`), a wrong fix 0.0.
+
+The manifest, the three candidate patches, their grading output, the training row and `run.sh` are in
+[evidence/repro-0329/](evidence/repro-0329/run.sh). Grading runs the candidate's code on the grading machine without a
+sandbox: grade untrusted patches inside a disposable container or VM. A training row holds no path to the package.
+
+Source: `src/knos/taskpack/`, tests `tests/test_taskpack_*.py`.

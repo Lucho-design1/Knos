@@ -20,7 +20,7 @@ Two services, two adapters:
                  buyer brings back (LC-MS traces, NMR, yield).
 
 Compound sourcing with a full documented quote/order/status API also exists (Molport, api.molport.com/openapi.json;
-Mcule, doc.mcule.com): listed in docs/reference/LABS.md as the next chemistry rail. IBM RXN for Chemistry is not used:
+Mcule, doc.mcule.com): the next chemistry rail. IBM RXN for Chemistry is not used:
 its README says the hosted service reaches end of service on 28 Oct 2026.
 """
 from __future__ import annotations

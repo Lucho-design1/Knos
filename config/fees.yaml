@@ -6,12 +6,12 @@
 #                (knos.settle.v2.pay: FEE_BPS, FEE_MIN, TIP, TIP_FIRST, ORDER_MIN_AMOUNT, MAX_PAYEES); this file mirrors
 #                them and the loader REFUSES the file when one differs, so the two cannot drift apart.
 #   proposed     the price book (knos.billing, docs/PRICING.md): a plan nobody pays yet. The loader refuses a mismatch.
-#   decided      a price the founder set: the starting prices of 14 Oct 2026, and the product's prices of 23 Oct 2026
+#   decided      a price Knos set: the starting prices of 14 Oct 2026, and the product's prices of 23 Oct 2026
 #                (demand checks, Ready briefs, proof pages, the 1% release fee). Nobody pays it yet, and it is NOT
 #                compiled into knos_pay: the deployed program charges only its live payout fee (0.30%). Each line's
 #                `collected` says how the rest is taken; a higher rate on chain waits for a timelocked program upgrade.
 #                Every decided line carries `decided`, `rationale` and `source`; the loader refuses one without them.
-#   placeholder  a number only the founder can set. It is here so the code, the quotes and the dashboard have a shape;
+#   placeholder  a number not set yet. It is here so the code, the quotes and the dashboard have a shape;
 #                it is not a price. `knos.money.fees_config.load().placeholders()` lists every one.
 #
 # Money is a decimal string in USD (one test USDC on devnet), never a float. Rates are basis points (1 bps = 0.01%).
@@ -56,8 +56,8 @@ fees:
     beyond: "not set by the decision"
     today: "free; the monthly count is not enforced yet"
     decided: "23 Oct 2026"
-    rationale: "the founder's product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company"
-    source: "founder decision 23 Oct 2026"
+    rationale: "the product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company"
+    source: "price set 23 Oct 2026"
   deep_demand_check:
     status: "decided"
     what: "a deep demand check, paid by card"
@@ -65,22 +65,22 @@ fees:
     payer: "the company"
     collected: "by card, from the day the company exists; no company is formed yet, so nobody is charged today, and card payment is not built"
     decided: "23 Oct 2026"
-    rationale: "the founder's product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company"
-    source: "founder decision 23 Oct 2026"
+    rationale: "the product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company"
+    source: "price set 23 Oct 2026"
   ready_brief:
     status: "decided"
     what: "a Ready brief: free"
     usd_each: "0"
     decided: "23 Oct 2026"
-    rationale: "the founder's product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company"
-    source: "founder decision 23 Oct 2026"
+    rationale: "the product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company"
+    source: "price set 23 Oct 2026"
   proof_page:
     status: "decided"
     what: "a proof page: free"
     usd_each: "0"
     decided: "23 Oct 2026"
-    rationale: "the founder's product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company"
-    source: "founder decision 23 Oct 2026"
+    rationale: "the product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company"
+    source: "price set 23 Oct 2026"
   release:
     status: "decided"
     what: "the release fee: 1% of the money held until the proof passes and then released, paid by the company (the funder) on top; the solver keeps 100% of what they are paid"
@@ -92,8 +92,8 @@ fees:
     today: "the deployed knos_pay charges its live payout fee, 0.30% (at least 0.05), in test money on devnet"
     collected: "on chain by knos_pay once the timelocked program upgrade through the Squads vault carries it; no company is formed yet, so nobody is charged today"
     decided: "23 Oct 2026"
-    rationale: "the founder's product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company"
-    source: "founder decision 23 Oct 2026"
+    rationale: "the product prices: 10 demand checks a month free; Ready briefs and proof pages free; a deep demand check 500 USD; a 1% release fee paid by the company"
+    source: "price set 23 Oct 2026"
   payout:
     status: "live"
     what: "the fee on every release of held money to a payee (the Acceptance line): the funder pays it on top of the amount"
@@ -115,7 +115,7 @@ fees:
     collected: "the program takes the on-chain bounty fee at payout; the rest (5% minus that fee) is invoiced off chain, because knos_pay's fee is compiled into the program (0.30%) and charging 5% on chain needs a program upgrade through the Squads vault"
     decided: "14 Oct 2026"
     rationale: "5% of the bounty: a starting price, to revisit once the cost per verification is measured"
-    source: "founder decision 14 Oct 2026 (DECISIONS.md item 2). The comparison with Algora's fee to organisations is the founder's; Algora's pricing page (algora.io/pricing) answered 404 on 14 Oct 2026, so no Algora figure is stated here"
+    source: "price set 14 Oct 2026"
   lab_order:
     status: "decided"
     what: "the Knos fee on a lab order paid through Knos, the money held until the proof passes (the lab is paid when its protocol and QC verdict passes): 3% of the order; the on-chain payout fee (0.30%, at least 0.05) is part of it, not added to it"
@@ -124,7 +124,7 @@ fees:
     collected: "the program takes the payout fee at release; the rest (3% minus that fee) is invoiced off chain until a program upgrade carries it. Who bears it (the buyer on top, or deducted from the lab's payment) is not set by the decision"
     decided: "14 Oct 2026"
     rationale: "labs already pay 2% to 3% of an invoice just to be paid sooner; Knos's 3% buys payment of the held money on a verdict"
-    source: "founder decision 14 Oct 2026 (DECISIONS.md item 2). Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45), 2.00% (NET60), https://www.scientist.com/scipay/ (read 14 Oct 2026)"
+    source: "price set 14 Oct 2026. Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45), 2.00% (NET60), https://www.scientist.com/scipay/ (read 14 Oct 2026)"
   funding:
     status: "live"
     what: "holding money until the proof passes (a graduation milestone or a pre-order): the program holds the payout fee with the money and takes it only at release"
@@ -136,7 +136,7 @@ fees:
     collected: "by contract, off chain, until a knos_pay build carries it (a program upgrade); on chain today only the payout fee is taken"
     decided: "14 Oct 2026"
     rationale: "0.5% of money raised: a starting price, to revisit once the cost per verification is measured"
-    source: "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
+    source: "price set 14 Oct 2026"
   task_package:
     status: "decided"
     what: "Knos's share of a sale of a sealed task package (issue + hidden tests + cheat rules); the maintainer keeps the rest"
@@ -145,17 +145,17 @@ fees:
     collected: "off chain, by contract (a sale of a task package is not a knos_pay order today)"
     decided: "14 Oct 2026"
     rationale: "the maintainer who wrote the task keeps 90%; Knos keeps 10%"
-    source: "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
+    source: "price set 14 Oct 2026"
   verified_merge:
     status: "decided"
     what: "one pull request the Knos referee verified (sealed tests passed, no cheat rule fired, the re-run agreed) for a team running coding agents, billed to the team per verified merge"
     usd_each: "1.00"
     free_first: 1
     label: "starting price"
-    collected: "invoiced from the team's usage record checked against the chain (knos.money.teams); paid in USDC on Solana (x402 exact through the x402.org facilitator, or a knos_pay escrow); card and bank through Airwallex later (not built)"
+    collected: "invoiced from the team's usage record checked against the chain (knos.money.teams); paid in USDC on Solana (x402 exact through the x402.org facilitator, or a knos_pay order that holds the money until the proof passes); card and bank through Airwallex later (not built)"
     decided: "14 Oct 2026"
     rationale: "1.00 USD per verified merge is a STARTING PRICE for teams, to revisit once the cost per verification is measured; the first verification of every team is free, so a team sees a verdict before it pays"
-    source: "founder decision 14 Oct 2026 (TASK-ALPENGLOW-NEBIUS.md, Part 3: the 1.00 USD per verified merge decided 14 Oct as a starting price)"
+    source: "price set 14 Oct 2026"
   x402_check:
     status: "decided"
     what: "a paid check bought by an agent over x402, in devnet USDC (test money): one check by the standard exact scheme (x402.org facilitator), or a pack by the knos-order scheme (the smallest order is 5.00)"
@@ -163,7 +163,7 @@ fees:
     mint: "devnet USDC (test money) until the cost per verification is measured"
     decided: "14 Oct 2026"
     rationale: "a per-check price for agents paying over x402, apart from the hosted Meter line of the price book (0.002 after the free month)"
-    source: "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
+    source: "price set 14 Oct 2026"
 
 splits:
   status: "decided"
@@ -171,7 +171,7 @@ splits:
   rounding: "each share is rounded down; the last payee receives what is left, exactly as knos_pay pays (order_pay.rs)"
   decided: "14 Oct 2026"
   rationale: "60 researcher / 25 agents / 10 labs / 5 referees"
-  source: "founder decision 14 Oct 2026 (DECISIONS.md item 2)"
+  source: "price set 14 Oct 2026"
   roles:
     researcher: 6000
     agent: 2500
@@ -185,14 +185,14 @@ game_pot:
   partial_bps: 3000
   max_paid: 4
   fee_line: "bounty_platform"
-  note: "winner_bps and partial_bps are placeholders until the founder sets them; nobody pays a pot on devnet but test money"
+  note: "winner_bps and partial_bps are placeholders until they are set; nobody pays a pot on devnet but test money"
 
 cloud:
   status: "decided"
   what: "Knos Cloud: paid credits for hosted verification (runners, sealed-test storage, receipts, Gate for private repositories). Everything stays open source (MIT) and self-hosting stays free."
   decided: "14 Oct 2026"
   rationale: "three monthly tiers of 20, 100 and 200 USD, each with 10% bonus credit (22, 110 and 220 USD of credit a month)"
-  source: "founder decision 14 Oct 2026 (DECISIONS.md item 2), on the Nous Portal pattern (see shape_from); the 10% bonus is the founder's, not a sourced Nous figure"
+  source: "price set 14 Oct 2026, on the Nous Portal pattern (see shape_from); the 10% bonus is Knos's own, not a sourced Nous figure"
   bonus_bps: 1000
   units_status: "placeholder"
   units_what: "what one credit is worth and what each use consumes are not decided: credit_usd, consumes and so each tier's credit count are placeholders"
@@ -216,7 +216,7 @@ cloud:
       credit_usd_month: "220"
       credits_month: 110000
   enterprise: "by contract (the Control line of the price book)"
-  shape_from: "Nous Research's Portal sells $20/$100/$200 monthly tiers (TechCrunch, 7 Oct 2026, citing the WSJ; unaudited). Knos's tier prices match it by founder decision (14 Oct 2026); the credit unit is a placeholder."
+  shape_from: "Nous Research's Portal sells $20/$100/$200 monthly tiers (TechCrunch, 7 Oct 2026, citing the WSJ; unaudited). Knos's tier prices match it (price set 14 Oct 2026); the credit unit is a placeholder."
 
 sources:
   nous:
@@ -233,7 +233,7 @@ sources:
     audited: false
   slop_audit:
     said: "of agent pull requests whose description said tests pass and whose CI finished, 1,119 of 3,736 (30%) had a failing check at the head commit; 6,059 of the 8,954 agent pull requests that fail a measured Knos check were merged anyway"
-    source: "docs/reference/SLOP_AUDIT.md (Knos's own audit of the hao-li/AIDev dataset, GitHub check records read 13 Oct 2026)"
+    source: "docs/reference/BENCH.md (Knos's own audit of the hao-li/AIDev dataset, GitHub check records read 13 Oct 2026)"
     audited: false
   scipay:
     said: "Scientist.com SciPay: suppliers pay 3.00% (NET30), 2.50% (NET45) or 2.00% (NET60) to be paid early, plus 0.75% for currencies other than USD"

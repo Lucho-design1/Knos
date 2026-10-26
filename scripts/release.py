@@ -1,5 +1,5 @@
 """The parts of a release that have an order, each as one command that says what it did and can be run again.
-docs/reference/RELEASE.md is the plan; this is what it runs.
+CONTRIBUTING.md is the plan; this is what it runs.
 
     python scripts/release.py wheel             build the wheel and the sdist ONCE, reproducibly, into dist/
     python scripts/release.py wheel --check     build them again and exit 1 unless the wheel is the locked one
@@ -397,7 +397,7 @@ def registry_plan(registry: str, name: str, tag: str, held_at: str | None, fetch
     except (OSError, ValueError, KeyError) as failed:
         return 1, f"::error title={where}::The registry did not answer for {name} ({failed}): run this job again.", False
     if have is None:
-        return 0, (f"::notice title={where}::Skipped: {name} is not on {where} yet. Its first version is published by hand (docs/reference/RELEASE.md); "
+        return 0, (f"::notice title={where}::Skipped: {name} is not on {where} yet. Its first version is published by hand (CONTRIBUTING.md); "
                    f"after that this job publishes.{why}"), False
     if version in have:
         return 0, f"::notice title={where}::Skipped: {where} already has {name} {version}{why}. Nothing to publish.", False
@@ -531,7 +531,7 @@ def registry_overview(online: bool = False, fetch=None, run=subprocess.run, root
 def publish_cmd() -> int:
     locked = lock_hash()
     if locked is None:
-        raise SystemExit("refused: requirements/sign.txt holds no line for the knos wheel. Lock the release first (docs/reference/RELEASE.md).")
+        raise SystemExit("refused: requirements/sign.txt holds no line for the knos wheel. Lock the release first (CONTRIBUTING.md).")
     version, want = locked
     wheel, sdist = (ROOT / "dist" / n for n in names(version))
     if not wheel.is_file() or sha256(wheel) != want:
@@ -566,7 +566,7 @@ def _pushable() -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="The ordered parts of a release (docs/reference/RELEASE.md).")
+    ap = argparse.ArgumentParser(description="The ordered parts of a release (CONTRIBUTING.md).")
     sub = ap.add_subparsers(dest="command", required=True)
     sub.add_parser("wheel", help="build the wheel and the sdist reproducibly into dist/").add_argument("--check", action="store_true", help="exit 1 unless the wheel is the locked one")
     wf = sub.add_parser("workflows", help="write the pinned workflows into a detached worktree at the latest workflows-<sha12> tag, commit, tag, push the tag")

@@ -40,6 +40,6 @@ def test_nobody_outside_holds_a_key_and_every_page_that_counts_says_zero() -> No
     """web/keyholders.json is the count; the documents that state it must agree with it."""
     listed = json.loads((ROOT / "web" / "keyholders.json").read_text(encoding="utf-8"))["outside"]
     said = f"Outside key holders today: {len(listed)}"
-    for name in ("KEYHOLDER.md", "GOVERNANCE.md", "TEAM.md", "DISCLOSURE.md"):
-        text = " ".join((ROOT / "docs" / "reference" / name).read_text(encoding="utf-8").replace("**", "").split())
+    for name in ("docs/TRUST.md", "docs/reference/GOVERNANCE.md", "docs/reference/DISCLOSURE.md"):
+        text = " ".join((ROOT / name).read_text(encoding="utf-8").replace("**", "").split())
         assert said in text, name

@@ -1,6 +1,6 @@
 """The two interface crates and the JavaScript client can be published as they are: the metadata each registry asks
 for is there, nothing depends on a path, the release publishes them without a stored secret once their first version
-exists, and docs/reference/RELEASE.md says how that first version gets there. `cargo publish --dry-run` and `npm publish
+exists, and CONTRIBUTING.md says how that first version gets there. `cargo publish --dry-run` and `npm publish
 --dry-run` themselves are run when the tools are on PATH and KNOS_PUBLISH_DRY_RUN=1 (they compile; minutes)."""
 from __future__ import annotations
 
@@ -88,7 +88,7 @@ def test_the_release_publishes_all_three_without_a_stored_secret_once_a_first_ve
         # rule's (scripts/release.py registry-plan: tests/test_release_gate.py runs it)
         assert "python3 scripts/release.py registry-plan " in job and "published by hand" in job
     plan = (ROOT / "scripts" / "release.py").read_text(encoding="utf-8")
-    assert "Its first version is published by hand (docs/reference/RELEASE.md)" in plan and "already has {name} {version}" in plan
+    assert "Its first version is published by hand (CONTRIBUTING.md)" in plan and "already has {name} {version}" in plan
     pins = json.loads((ROOT / "scripts" / "action_pins.json").read_text(encoding="utf-8"))["pins"]
     sha = pins["rust-lang/crates-io-auth-action@v1.0.5"]
     assert f"uses: rust-lang/crates-io-auth-action@{sha} # v1.0.5" in crates and "CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}" in crates
@@ -100,7 +100,7 @@ def test_the_release_publishes_all_three_without_a_stored_secret_once_a_first_ve
 
 
 def test_the_release_page_gives_the_first_publish_and_says_each_package_is_published():
-    page = (ROOT / "docs" / "reference" / "RELEASE.md").read_text(encoding="utf-8")
+    page = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
     part = page.split("## Publishing the crates and the npm package")[1].split("\n## ")[0]
     for line in ("cargo login", "(cd crates/knos-oidc-interface && cargo publish --locked)", "(cd crates/knos-pay-interface  && cargo publish --locked)",
                  "npm login", "(cd sdk/settle && node test.mjs && npm publish --access public)", "cargo publish --dry-run --locked", "npm publish --dry-run"):

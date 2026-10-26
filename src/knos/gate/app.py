@@ -1,6 +1,6 @@
 """The Knos Gate GitHub App: webhooks in, ONE check run and ONE comment out. github-app/server.py serves it.
 
-NOT REGISTERED. Registering a GitHub App is a founder step (docs/reference/PR_GATE.md, "Register the App"):
+NOT REGISTERED. Registering a GitHub App is a founder step (docs/reference/REFEREE.md, "Register the App"):
 github-app/app-manifest.json is the manifest, and this code runs once its id, private key and webhook secret exist.
 
     pull_request (opened, reopened, synchronize, ready_for_review)
@@ -40,7 +40,7 @@ PR_ACTIONS = ("opened", "reopened", "synchronize", "ready_for_review")
 
 MANIFEST = {
     "name": "Knos Gate",
-    "url": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/PR_GATE.md",
+    "url": "https://github.com/drexthealpha/Knos/blob/main/docs/reference/REFEREE.md",
     "description": "Runs a maintainer's sealed hidden tests and the Knos cheat checks on every outside pull request. One check, one comment, a signed receipt.",
     "hook_attributes": {"url": "https://REPLACE-WITH-YOUR-HOST/webhook", "active": True},
     "redirect_url": "https://REPLACE-WITH-YOUR-HOST/registered",

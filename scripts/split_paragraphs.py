@@ -17,7 +17,7 @@ SKIP = ("|", "#", "<", "- ", "* ", "+ ", ">", "![", "    ", "\t", "[[")      # a
 # documents whose figures must stay in the paragraph that carries their sample, ids and date (scripts/rate_claims.py)
 KEEP_WHOLE = ("docs/reference/LOAD.md", "docs/reference/BENCH.md",
               # written whole by their generators (each has its own --check): changed there, never here
-              "docs/reference/MANIFEST.md", "docs/reference/SOLANA-COVERAGE.md",
+              "docs/reference/MANIFEST.md",
               "docs/reference/QLOO-COVERAGE.md")
 # a test's plan is committed with its sha256 before the test runs (scripts/test_taste_truth.py, test_where_truth.py):
 # its bytes stay as recorded, so it is neither split nor counted

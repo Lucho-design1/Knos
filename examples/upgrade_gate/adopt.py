@@ -1,4 +1,4 @@
-"""Put YOUR Solana program behind the upgrade gate. docs/reference/GATE.md is the page; this is what it runs.
+"""Put YOUR Solana program behind the upgrade gate. examples/upgrade_gate/README.md is the page; this is what it runs.
 
     python examples/upgrade_gate/adopt.py init --repo-id N --workflow OWNER/REPO/.github/workflows/FILE.yml --gate-id ADDRESS [--out DIR]
         Writes a gate program of your own into DIR (default: my_gate): this folder's crate with three lines changed
@@ -18,11 +18,11 @@
         Before any vote. --buffer: does the gate hold a record for the bytes in this buffer? --multisig: the same
         question for every pending upgrade of the program in a Squads v4 multisig, with the time each can run.
         Exit 0 only when every build asked about is recorded; 1 otherwise; 2 when the cluster did not answer.
-        --json writes what was found as a file a page can show (GATE.md has the banner that reads it).
+        --json writes what was found as a file a page can show.
 
 The gate is two things that already exist and one you deploy: a Squads v4 multisig with a time lock holds your program's
 upgrade authority (the delay); knos-oidc on devnet verifies GitHub's signature (nothing to deploy); your copy of this
-program records which commit GitHub's runner built a given executable from. What it cannot do is in docs/reference/GATE.md.
+program records which commit GitHub's runner built a given executable from. What it cannot do is in examples/upgrade_gate/README.md.
 """
 from __future__ import annotations
 
@@ -71,7 +71,7 @@ JOB = """\
 # The same job as a whole workflow of its own, for a team that adopts the gate in one pull request: it builds the program
 # on GitHub's runner and records that build, so the bytes signed for are the bytes this run built from this commit.
 WHOLE = """\
-# {file}: the upgrade gate (docs/reference/GATE.md in drexthealpha/Knos). On main and on release tags it builds your program on a
+# {file}: the upgrade gate (examples/upgrade_gate/README.md in drexthealpha/Knos). On main and on release tags it builds your program on a
 # GitHub-hosted runner, asks GitHub to sign gate:<program>:<hash of the build>, and has your gate {gate} record it.
 # Propose an upgrade only from the artifact "program" of a run of this file: the record is of those bytes.
 name: knos gate
@@ -281,7 +281,7 @@ def check(account: Callable, gate_id: str, program: str, buffer: str | None = No
 
 
 def parser() -> argparse.ArgumentParser:
-    ap = argparse.ArgumentParser(description="Put your Solana program behind the upgrade gate (docs/reference/GATE.md).")
+    ap = argparse.ArgumentParser(description="Put your Solana program behind the upgrade gate (examples/upgrade_gate/README.md).")
     sub = ap.add_subparsers(dest="command", required=True)
     a = sub.add_parser("init", help="write a gate program of your own, and the job your build workflow adds")
     a.add_argument("--repo-id", type=int, required=True, help="your repository's number: gh api repos/OWNER/REPO --jq .id")

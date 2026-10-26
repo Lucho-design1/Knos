@@ -1,4 +1,4 @@
-"""The adapters (examples/adapters/, docs/reference/ADAPTERS.md): workflow files that turn another system's event into the run that
+"""The adapters (examples/adapters/): workflow files that turn another system's event into the run that
 attests a work order.
 
 An adapter signs nothing. It writes one commit status and starts the repository's own Knos workflow by hand, which is
@@ -6,7 +6,7 @@ the pinned prove.yml (or, for the meter, the pinned attest.yml). So three things
 workflow GitHub accepts (YAML, actionlint), it is safe to install (no token of GitHub's signature, nothing of an event
 inside a script), and the run it starts is one the programs accept: the pinned workflow runs its signing job on that
 event, and knos_pay takes that run's token, in LiteSVM. The same harness shows what is refused, with the program's own
-error, for the direct paths docs/reference/ADAPTERS.md lists under "needs a program change".
+error, for the direct paths that need a program change.
 """
 
 from __future__ import annotations
@@ -26,7 +26,6 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTERS = ROOT / "examples" / "adapters"
-DOC = ROOT / "docs" / "reference" / "ADAPTERS.md"
 FILES = sorted(ADAPTERS.glob("*.yml"))
 PAY = ("deployment.yml", "release.yml", "workflow-run.yml", "attestation.yml", "linear.yml", "jira.yml", "notion.yml")
 # the events each file runs on: what another system's event arrives as
@@ -108,7 +107,7 @@ def test_a_pay_adapter_starts_the_repositorys_own_knos_workflow_which_settles_on
     signing = doc(ROOT / ".github" / "workflows" / "prove.yml")["jobs"]["settle"]
     assert signing["permissions"]["id-token"] == "write" and "github.event_name == 'workflow_dispatch'" in _if(signing)
     for event in EVENTS[name] - {"workflow_dispatch", "schedule"}:
-        assert event not in _if(signing), event      # why an adapter cannot call prove.yml on its own event: docs/reference/ADAPTERS.md says so
+        assert event not in _if(signing), event      # why an adapter cannot call prove.yml on its own event
     # the status is not one Knos would ignore as its own, and it can be named in an order's terms
     from knos import terms
     context = job["env"]["CONTEXT"]
@@ -134,13 +133,13 @@ def test_the_meter_adapter_starts_the_repositorys_own_attest_workflow_with_an_ev
 
 # ---- and one the program accepts: knos_pay 2.1 in LiteSVM ---------------------------------------------------------------
 
-def test_the_rules_the_document_quotes_are_the_programs():
+def test_the_rules_an_adapter_relies_on_are_the_programs():
     judge = (ROOT / "programs-v2" / "knos_pay" / "src" / "order_judge.rs").read_text(encoding="utf-8")
     for quoted in ('fn by_hand(g: &Gh) -> bool { g.event == b"workflow_dispatch" && g.actor_id != 0 && g.actor_id == g.owner_id }',
                    "if own && g.wf_file == PROVE { return Ok(Judge::Own); }",
                    "if named && (g.wf_file == PROVE || g.wf_file == ATTEST) { return Ok(Judge::Private); }",
                    "let neutral = o.is(F_NEUTRAL) && !o.is(F_PRIVATE) && by_hand(g);"):
-        assert quoted in judge and quoted in DOC.read_text(encoding="utf-8"), quoted
+        assert quoted in judge, quoted
     gh = (ROOT / "programs-v2" / "knos_pay" / "src" / "gh.rs").read_text(encoding="utf-8")
     assert "let signed = v.issuer == knos_oidc::pins::ISSUER_GITHUB || knos_oidc::registrant(&d).is_some_and(ours);" in gh
 
@@ -309,15 +308,3 @@ def test_a_tracker_adapter_asks_the_tracker_and_believes_only_its_answer(tmp_pat
 
 # ---- the document -----------------------------------------------------------------------------------------------------
 
-def test_the_document_lists_every_adapter_with_what_is_authenticated_and_its_status():
-    text = DOC.read_text(encoding="utf-8")
-    rows = [[c.strip() for c in ln.strip().strip("|").split("|")] for ln in text.splitlines() if ln.startswith("| ") and "examples/" in ln]
-    listed = {m for r in rows for m in re.findall(r"examples/adapters/([\w-]+\.yml)", r[1])}
-    assert listed == {p.name for p in FILES}
-    assert all(len(r) == 5 and r[4] in ("works with 2.2 as built", "needs a program change") for r in rows), [r for r in rows if len(r) != 5]
-    assert any("examples/gitlab" in r[1] for r in rows)
-    assert "## Needs a program change" in text
-    for word in ("E_WORKFLOW", "E_CLAIMS", "HMAC", "Sigstore", "test USDC"):
-        assert word in text, word
-    for link in re.findall(r"\]\((\.\./[^)#]+)", text):
-        assert (DOC.parent / link).exists(), link

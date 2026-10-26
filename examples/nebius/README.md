@@ -4,7 +4,7 @@ Agents write, run and test code in Token Factory. Knos is the whole product here
 
 The problem, measured: in the public AIDev dataset, **1,119 of 3,736** agent pull requests (30%) that said tests pass
 had a failing check at their head commit, and **6,059 of 8,954** agent pull requests that fail a measured Knos check
-were merged anyway ([docs/reference/SLOP_AUDIT.md](../../docs/reference/SLOP_AUDIT.md)). A coding agent needs a judge
+were merged anyway ([docs/reference/BENCH.md](../../docs/reference/BENCH.md)). A coding agent needs a judge
 it cannot talk round, and the people who pay for its work need to pay only for work that passed.
 
 ## The one flow: post a task, the agent codes on Nemotron, the referee judges, the agent is paid
@@ -28,7 +28,7 @@ python -m knos.nebius flow --out /tmp/knos-flow
 A committed devnet run is in [flow-run/](flow-run/): [flow.json](flow-run/flow.json), [flow.html](flow-run/flow.html)
 and the team's usage record [usage.jsonl](flow-run/usage.jsonl) (two runs, labelled internal dogfooding). Its devnet
 transactions (the funding of the held money and the x402 check, each finalized; the cluster answered `getAgGenesisCert` with a
-certificate, so Alpenglow) are listed in [docs/reference/TEAMS.md](../../docs/reference/TEAMS.md). The model replies in
+certificate, so Alpenglow) are listed in [src/knos/money/teams.py](../../src/knos/money/teams.py). The model replies in
 that run are MOCK (no key on the build machine), and the payout is LiteSVM; both are labelled in the files.
 
 ## Setup
@@ -63,14 +63,14 @@ The client is `src/knos/nebius/tokenfactory.py`: the OpenAI-compatible API at `h
 Token Factory model catalog; `GET /v1/models` lists what a live account can call. Prices used for cost (USD per 1M
 tokens, input / output, catalog read 14 Oct 2026): Super 0.30 / 0.90, Ultra 1.00 / 3.00. Tavily: 1 credit per basic
 search, USD 0.008 per credit on pay-as-you-go. Every source and its date is in
-[docs/reference/NEBIUS.md](../../docs/reference/NEBIUS.md).
+[`src/knos/nebius/sources.py`](../../src/knos/nebius/sources.py).
 
 ## Who pays, how much
 
 Starting prices from [config/fees.yaml](../../config/fees.yaml) (decided 14 Oct 2026; nobody pays them yet, devnet
 revenue is 0): **1.00 USD per verified merge** for a team (the first verification free), **0.02 USD per raw agent
 check** over x402, **5% bounty fee**, verified task packages for labs split **maintainer 90 / Knos 10**. Paid in USDC
-on Solana. The prices and the revenue model (labelled a model): [docs/reference/TEAMS.md](../../docs/reference/TEAMS.md).
+on Solana. The prices and the revenue model (labelled a model): [src/knos/money/teams.py](../../src/knos/money/teams.py).
 
 ## The other demo: Knos builds Knos on Nemotron
 

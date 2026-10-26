@@ -21,7 +21,7 @@ After that the order has one of three ends, and each pays exactly one party once
     expired        the deadline passes; anyone sends RefundOrder and the funder is refunded.
 
 In the last two the advancer has paid and collects nothing. It has no recourse on chain: the program gives it no
-claim on the supplier or on the funder. docs/reference/ADVANCE.md says what to check before advancing.
+claim on the supplier or on the funder. src/knos/advance.py says what to check before advancing.
 
 A netting period is financed the same way, and only when a reserve secures it: the receivable is the period's draws
 on its reserve order, the supplier assigns that order's payments, and the financier collects the draws. WHO_CARRIES
@@ -42,7 +42,7 @@ ANY = "*"
 MAX_RATE_BPS = 5_000
 NOT_KNOS = "Not offered by Knos: a third party can do this today with the program as it is."
 RECOURSE = "none on chain: the program gives the advancer no claim on the supplier or on the funder"
-CHECK_FIRST = ("the supplier's record (knos record build <supplier>; docs/reference/RECORD.md)",
+CHECK_FIRST = ("the supplier's record (knos record build <supplier>; docs/reference/SUPPLIER.md)",
                "the order's terms, by their hash: what the judge will accept",
                "the deadline: an order nobody accepted goes back to its funder then",
                "the judge the order pins: the workflow repository and its commit")
@@ -283,7 +283,7 @@ def register(app: Any, help_lines: list | None = None) -> None:
     typer = importlib.import_module("typer")
     if help_lines is not None:
         help_lines.append(("advance", "For money", "An advance by a third party against a funded order or a reserved netting period. Knos lends nothing and charges nothing."))
-    group = typer.Typer(help="Get paid early: a third party pays the supplier now and collects the order's payment later (docs/reference/ADVANCE.md). " + NOT_KNOS, no_args_is_help=True)
+    group = typer.Typer(help="Get paid early: a third party pays the supplier now and collects the order's payment later (src/knos/advance.py). " + NOT_KNOS, no_args_is_help=True)
     app.add_typer(group, name="advance", rich_help_panel="For money")
 
     def _stop(said: str, fix: str = ""):

@@ -4,7 +4,7 @@
                                    to that repository, in which money, as of which day
     knos badge <owner/repo>#<pr>   an SVG: what that pull request was paid, in which money, on which day
     knos record <login or id>      knos_pay's reputation account for a payee (state.rs R_*), with its caveats
-    knos record build <supplier>   a supplier's public record file, docs/records/<slug>.json (knos.record_page, docs/reference/RECORD.md)
+    knos record build <supplier>   a supplier's public record file, docs/records/<slug>.json (knos.record_page, docs/reference/SUPPLIER.md)
     knos record receipt <file>     an acceptance receipt as one PDF page and JSON, to send with an invoice
     knos record serve <offer>      the paid lookup as a server anyone runs; --health says whether it can answer (knos.record_api)
     knos record verify <answer>    a paid answer checked with no network: fresh, stale, unsigned or invalid (knos.record_answer)
@@ -345,7 +345,7 @@ def register(app) -> None:
                     cli.out.print(f"Wrote {pdf_path} and {json_path}: {doc['accepted']['words']}, receipt {doc['receipt_sha256']}.", markup=False)
                     cli.out.print(f"Whoever receives it checks the receipt file with no network: {doc['verify']['command']}", markup=False)
             except (OSError, ValueError) as why:
-                raise cli.Stop(f"Nothing was written: {why}", "The record's inputs and the receipt's are described in docs/reference/RECORD.md.") from None
+                raise cli.Stop(f"Nothing was written: {why}", "The record's inputs and the receipt's are described in docs/reference/SUPPLIER.md.") from None
             return
         from .settle.v2 import pay
         uid = int(who) if who.isdigit() else int(cli._github(f"users/{who}")["id"])

@@ -10,7 +10,7 @@ restarted it. Two things here, both with nothing but the standard library (the w
                                                             replaces a run with no heartbeat in time
     python -m knos.proof.chain healthz [--url U]            one ping of the app's health check (every run of the chain
                                                             does it, job `healthz`: so the app is woken about every
-                                                            4.5 minutes for as long as the chain lives; docs/reference/KEEPALIVE.md)
+                                                            4.5 minutes for as long as the chain lives; .github/workflows/worker.yml)
 
 GitHub may take a start and still answer with an error. So before a start is asked again the runs are listed, and a
 run that already took over ends the asking. When the listing fails too the start is asked again all the same: of

@@ -248,7 +248,7 @@ devnet, pays 300.00.
   under `knos_pay` 2.1 (2.5% of the first 1,000, 1% to 50,000, 0.5% above, at least 0.40) pays, refunds
   and reverts with that fee; a top-up of it is charged at 0.30% and never less than the fee already there. A Plan set
   under 2.1 (0.5% to 2.5%) is read as 0.30%: no rate is above the standard one.
-- **Volume rates are not on chain.** The proposed price list ([MARKET.md](MARKET.md)) offers 0.20% on monthly value
+- **Volume rates are not on chain.** The proposed price list ([PRICING.md](../PRICING.md)) offers 0.20% on monthly value
   above 1,000,000 USD; that would be a rebate under a contract, not a rule of the program.
   The program knows 0.30%, the floor, and a Plan's rate for one repository owner.
 - **Checked by:** the unit tests of `order_fee` and `fee_of` in [`lib.rs`](../../programs-v2/knos_pay/src/lib.rs) and
@@ -335,7 +335,7 @@ The invariants above are about one order on chain. A deliverable can also meet a
 a warranty, a payment in parts, and a second way to pay (a "rail"): a bank transfer. Each row says what identifies the payment, what makes
 it once, and the test that checks it.
 
-An on-chain "paid once" does not cover a bank transfer by itself: the last row is the bank rail's own rule ([RAILS.md](RAILS.md), "An answer
+An on-chain "paid once" does not cover a bank transfer by itself: the last row is the bank rail's own rule ([COMPANIES.md](COMPANIES.md#bank-transfers), "An answer
 that is not clear is never a no"). [`invariants.json`](../invariants.json) has the same rows under `economic_idempotency`.
 
 | through | its identity | made once by | checked by |

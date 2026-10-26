@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 FLOOR_BPS = 20             # the contract floor (price book 3.1); the program's own floor is PLAN_BPS_MIN = 10
-DOC = "the program allows 10 bps; Knos signs no Plan below 20 bps; the check proves which Plans exist."     # pinned to docs/reference/ENFORCEMENT.md (knos.enforce)
+DOC = "the program allows 10 bps; Knos signs no Plan below 20 bps; the check proves which Plans exist."     # pinned to the enforcement table (knos.enforce)
 
 
 class Refused(ValueError):

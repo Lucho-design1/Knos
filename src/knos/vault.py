@@ -14,7 +14,7 @@ supplier and an auditor each hold a key of their own; any one of them opens the 
     knos vault checkpoint   one hash over every bundle hash, signed when a key is given: anchor it anywhere
     knos vault verify       a checkpoint against a vault, an export or a folder of bundles: no chain, no network
 
-The sealed file, version 1 (docs/reference/VAULT.md has every field and a test vector; tests/data/vault_v1.json is the vector):
+The sealed file, version 1 (tests/data/vault_v1.json is the test vector):
 
     one content key (32 random bytes) encrypts the bundle with ChaCha20-Poly1305 under a random 12-byte nonce.
     one ephemeral X25519 key per file. For each recipient: shared = X25519(ephemeral, recipient's public key),
@@ -153,7 +153,7 @@ def header(blob: bytes) -> dict:
           and type(doc.get("size")) is int and type(doc.get("sealed_at")) is int
           and all(isinstance(r, dict) and set(r) == {"id", "label", "public", "wrapped"} and isinstance(r["label"], str) for r in doc["recipients"]))
     if not ok or set(doc) != {*_HEAD, "recipients", "nonce", "ciphertext"}:
-        raise ValueError("the sealed file's header is not the one version 1 has (docs/reference/VAULT.md)")
+        raise ValueError("the sealed file's header is not the one version 1 has")
     return doc
 
 

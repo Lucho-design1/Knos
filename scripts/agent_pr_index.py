@@ -23,8 +23,8 @@ Steps, so the Pages build never scans:
                                                                # offline: add that week to the published series
     python scripts/agent_pr_index.py board [--check]           # offline: the leaderboard into docs/reference/INDEX.md, docs/index.json and
                                                                # docs/index.atom, with the disputes (agent_pr_board.py)
-    python scripts/agent_pr_index.py vendors [--check]         # offline: a page per vendor into docs/reference/VENDORS.md and
-                                                               # docs/vendors.json: numbers, reply, disputes, badge (vendor_pages.py)
+    python scripts/agent_pr_index.py vendors [--check]         # offline: a page per vendor into docs/vendors.json, which the
+                                                               # site's #vendor= pages read: numbers, reply, disputes, badge (vendor_pages.py)
     python scripts/agent_pr_index.py scan --end <Sunday> --days 14 --per-agent N --rows rows.json
     python scripts/agent_pr_index.py weekly --rows rows.json --add-sample docs/agent_weekly.json --doc docs/reference/INDEX.md
                                                                # a capped sample of recent weeks, cut by week and
@@ -1098,7 +1098,7 @@ def main():
         return agent_pr_board.main(a.series, a.disputes, a.doc or "docs/reference/INDEX.md", a.feed, a.atom, a.check)
     if a.step == "vendors":
         import vendor_pages
-        return vendor_pages.main(a.series, a.disputes, a.replies, a.doc or "docs/reference/VENDORS.md", "docs/vendors.json", a.check)
+        return vendor_pages.main(a.series, a.disputes, a.replies, a.doc, "docs/vendors.json", a.check)
     if a.step == "sample":
         monday = last_week() if (a.week or "last") == "last" else a.week
         pace = a.pace if a.pace is not None else 0.8 * a.max_minutes * 60 / max(1, a.max_requests)

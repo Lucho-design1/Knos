@@ -45,7 +45,7 @@ def _agent(spec: str):
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="knos game", description="A Knos game: people and AI scientists attack one sealed goal (docs/reference/GAME.md)")
+    ap = argparse.ArgumentParser(prog="knos game", description="A Knos game: people and AI scientists attack one sealed goal (docs/reference/AGENTS.md)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("new")
     s.add_argument("dir")
@@ -240,7 +240,7 @@ def register(app, help_lines: list | None = None) -> None:
         help_lines.append(("game", "For a repository's workflows", "Many attempts at once: people and AI scientists play one sealed goal; funders pool a pot."))
 
     def game_(ctx) -> None:
-        """A Knos game: one sealed goal, people and AI scientists, one referee, a pooled pot (docs/reference/GAME.md)."""
+        """A Knos game: one sealed goal, people and AI scientists, one referee, a pooled pot (docs/reference/AGENTS.md)."""
         raise typer.Exit(main(list(ctx.args) or ["--help"]))
     game_.__annotations__["ctx"] = typer.Context       # named here: this module's annotations are text, and typer is not a global
     app.command("game", context_settings={"allow_extra_args": True, "ignore_unknown_options": True, "help_option_names": []})(game_)

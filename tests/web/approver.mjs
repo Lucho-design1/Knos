@@ -177,7 +177,7 @@ async function page() {
     const timed = async (step, fn) => { const t = Date.now(); await fn(); steps.push({ step, ms: Date.now() - t }); };
     ok("the empty screen says there is no account and that it works signed out", (await said(p, "account")) === "There are no accounts: this screen works without signing in.");
     if (existsSync(TIME)) ok("the screen states the time the script measured, and that no person was timed", (await said(p, "time")) === `Scripted first comparison: ${(JSON.parse(readFileSync(TIME, "utf8")).total_ms / 1000).toFixed(1)} s. No person was timed.`, await said(p, "time"));
-    ok("the private path is one link", (await p.getAttribute(".approver a[href*='PRIVATE.md']", "href")) === "https://github.com/drexthealpha/Knos/blob/main/docs/reference/PRIVATE.md");
+    ok("the private path is one link", (await p.getAttribute(".approver a[href*='COMPANIES.md']", "href")) === "https://github.com/drexthealpha/Knos/blob/main/docs/reference/COMPANIES.md#private-repositories");
     await timed("drop the invoice and the statement", async () => { await dropFiles(p, [["invoice.csv", INVOICE], ["sept.json", read("sept.json")]]); await p.waitForSelector("tr.ap-row[data-line='5']"); });
     let got;
     await timed("read the result", async () => {

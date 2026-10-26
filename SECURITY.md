@@ -8,7 +8,7 @@ channel", with no detail, and the maintainer will turn private reporting on and 
 Anything else (a question, a bug that is not a vulnerability, an idea): open an issue on this repository.
 
 Who you must trust, what a payment's signed record proves and does not prove, and every known limit:
-[docs/reference/SECURITY.md](docs/reference/SECURITY.md). How a bad release is taken back: [docs/reference/ROLLBACK.md](docs/reference/ROLLBACK.md).
+[docs/reference/SECURITY.md](docs/reference/SECURITY.md). How a bad release is taken back: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Knos runs on Solana devnet only, and the money is test USDC. There are two deployments, and a report is handled
 differently for each:

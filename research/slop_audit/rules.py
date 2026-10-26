@@ -7,7 +7,7 @@ The description is read by Knos's own reader (`knos.proof.claims.read`, the one 
 "claims tests pass" means here exactly what it means at the gate. The cheat signals are the static subset of the
 gate's cheat rules that a diff alone can show: a test file deleted, assertions taken out of an existing test, a skip or
 focus marker added, a CI step made unable to fail. They are signals, not verdicts: a maintainer may delete an obsolete
-test on purpose. docs/SLOP_AUDIT.md says what each one can and cannot show.
+test on purpose. docs/reference/BENCH.md says what each one can and cannot show.
 """
 
 from __future__ import annotations

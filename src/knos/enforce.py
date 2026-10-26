@@ -1,8 +1,8 @@
 """The enforcement matrix: every route that can set money aside or move it, against every restriction a buyer can
 state, and for each pair exactly one answer to "what stops it".
 
-    python -m knos.enforce --write      docs/reference/ENFORCEMENT.md, from the table below
-    python -m knos.enforce --check      ends 1 when that file is not what the table says
+    python -m knos.enforce --markdown   the table as one Markdown page, on stdout
+    python -m knos.enforce --check      ends 1 when the table is not whole (docs/reference/COMPANIES.md describes it)
     python -m knos.enforce --json       the same table for a page: {routes, restrictions, cells[route][restriction]}
     knos controls matrix [--json]       prints it
 
@@ -25,11 +25,9 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 from typing import NamedTuple
 
 CLASSES = ("program", "workflow", "advisory", "outside")
-DOC = "docs/reference/ENFORCEMENT.md"
 
 
 class Cell(NamedTuple):
@@ -466,13 +464,13 @@ def _cell_md(text: str) -> str:
 
 
 def render() -> str:
-    """docs/reference/ENFORCEMENT.md, whole."""
+    """The table as one Markdown page (`--markdown`)."""
     n = counts()
     total = sum(n.values())
     lines = [
         "# The enforcement matrix",
         "",
-        "<!-- Written by `python -m knos.enforce --write` from src/knos/enforce.py. Do not edit: change the table there. -->",
+        "<!-- Printed by `python -m knos.enforce --markdown` from src/knos/enforce.py. -->",
         "",
         "Every route that can set money aside or move it, against every restriction a buyer can state. Each cell is one of:",
         "",
@@ -519,10 +517,6 @@ def text() -> str:
     return "\n".join(out)
 
 
-def _root() -> Path:
-    return Path(__file__).resolve().parents[2]
-
-
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     bad = problems()
@@ -532,21 +526,16 @@ def main(argv: list[str] | None = None) -> int:
     if args == ["--json"]:
         print(json.dumps(as_json(), indent=1, sort_keys=True))
         return 0
-    if args == ["--write"]:
-        (_root() / DOC).write_text(render(), encoding="utf-8", newline="\n")
-        print(f"Wrote {DOC}.")
+    if args == ["--markdown"]:
+        print(render(), end="")
         return 0
     if args == ["--check"]:
-        file = _root() / DOC
-        if not file.is_file() or file.read_text(encoding="utf-8") != render():
-            print(f"{DOC} is not what src/knos/enforce.py says. Run: python -m knos.enforce --write", file=sys.stderr)
-            return 1
-        print(f"{DOC} is what the table says.")
+        print(f"The table is whole: {len(ROUTES)} routes, {len(RESTRICTIONS)} restrictions.")
         return 0
     if not args:
         print(text())
         return 0
-    print("usage: python -m knos.enforce [--write | --check | --json]", file=sys.stderr)
+    print("usage: python -m knos.enforce [--markdown | --check | --json]", file=sys.stderr)
     return 2
 
 

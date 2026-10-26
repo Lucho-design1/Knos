@@ -123,7 +123,7 @@ def load(root: Path | str, sealed: Path | str | None = None) -> Task:
         raise TaskError("editable: one file name at the task's top level")
     kind = (spec.get("data") or {}).get("kind")
     if kind not in ("synthetic", "csv"):
-        raise TaskError("data.kind: synthetic (rows generated from seeds) or csv (files: see docs/reference/AUTORESEARCH.md)")
+        raise TaskError("data.kind: synthetic (rows generated from seeds) or csv (files: see examples/autoresearch/README.md)")
     if kind == "csv":
         missing = [k for k in ("train", "val") if not isinstance(spec["data"].get(k), str)]
         if missing:

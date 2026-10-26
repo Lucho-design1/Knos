@@ -380,7 +380,7 @@ receipt attached to the run, adds one workflow file ([examples/knos-supplier.yml
 whose job is one line: `uses: drexthealpha/Knos/.github/workflows/supplier.yml@v0.4.0`.
 
 It needs no secret, moves no money and reads no chain. The record, the badge and the receipt to send with an invoice
-are in [RECORD.md](RECORD.md), section 3.
+are in [SUPPLIER.md](SUPPLIER.md), section 3.
 
 ### Terms from a template
 

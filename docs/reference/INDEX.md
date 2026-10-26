@@ -370,5 +370,5 @@ interval whiskers, a "Dispute this row" link and a badge for each row.
 - [CONFORMANCE.md](CONFORMANCE.md): Knos's formats with test vectors, for a team that implements them itself.
 - [OUTCOMES.md](OUTCOMES.md): what "paid on a black-box check" means, the condition of the table's last count, shown
   on three outcomes that are not a merged pull request.
-- [CONSOLE.md](CONSOLE.md): the operator's screen, where a buyer sees for one deliverable what this index counts
+- [COMPANIES.md](COMPANIES.md#the-console): the operator's screen, where a buyer sees for one deliverable what this index counts
   across many: the claim, the checks GitHub recorded, and whether it was accepted.

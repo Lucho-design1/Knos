@@ -89,6 +89,6 @@
  ],
  "verify": {
   "says": "Stand-alone verifier on the sample archive: 3 checks hold, 2 notes.",
-  "link": "docs/reference/RETENTION.md"
+  "link": "docs/reference/KNOS_RECORD.md"
  }
 }

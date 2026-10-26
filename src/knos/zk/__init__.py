@@ -9,8 +9,7 @@ program checks the proof on Solana with the alt_bn128 syscalls and records a ver
   groth16.verify(vk, proof, inputs)            # off chain, pure Python
   client.verify_ix(program, proof, inputs)     # on chain
 
-docs/reference/ZK.md says what is proven, the measured compute units, the devnet deployment and the limits (a TOY
-setup: devnet only).
+A TOY setup: devnet only.
 """
 
 from . import bn254, client, groth16, mimc  # noqa: F401

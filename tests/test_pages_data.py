@@ -421,8 +421,6 @@ def test_with_no_data_the_operations_document_says_so_and_shows_nothing_invented
     md = pages_data.render_operations_md(pages_data.operations_json(None, 0, OWN, {"source": {"summary": ""}, "generated": None}))
     assert "No measurement has been made yet" in md and "No runs to show." in md and "No outside issue or pull request to show." in md
     assert not any(ch.isdigit() for ch in md.split("## How these are counted")[0].replace("30 minutes", "").replace("0.3", "").replace(pages_data.CANARY_REPO, ""))      # the repository's name has a digit; no number is a measurement
-    committed = (ROOT / "docs" / "reference" / "OPERATIONS.md").read_text(encoding="utf-8")
-    assert committed == md, "docs/reference/OPERATIONS.md is the document for no data: run python scripts/pages_data.py --docs docs/reference/OPERATIONS.md --empty --out <dir> with nothing measured"
 
 
 def test_the_operations_document_says_the_relays_attempts_with_the_askers_own_apart_from_failures():

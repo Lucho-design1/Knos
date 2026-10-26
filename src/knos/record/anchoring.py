@@ -7,7 +7,7 @@ appended to the record. Anyone can then read the memo back (`chain_memo`) and ho
 No program of Knos's is needed or changed: the Memo program is Solana's own. Devnet (or a localnet) only; mainnet is
 refused, as everywhere in Knos. A send needs a funded devnet wallet (`--keypair`, or the file named by KNOS_RECORD_KEY).
 Anchoring is never automatic: whoever keeps a record decides when, and pays the fee (5,000 lamports a signature on
-devnet as of this writing; see docs/RECORD.md).
+devnet as of this writing; see docs/reference/KNOS_RECORD.md).
 """
 
 from __future__ import annotations

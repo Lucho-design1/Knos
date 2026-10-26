@@ -209,7 +209,7 @@ def summarize(events: list[dict], own: frozenset = OWN, own_wallets: frozenset =
         "apart": {"own": sides["own"], "self": sides["self"], "test": sides["test"]},
         # who outside Knos took part, whichever kind the job is: three numbers that are never added to each other
         "outsiders": outsiders(jobs, own, own_wallets, owner_of=owner_of),
-        # the network loop, link by link: three counters over the same records (docs/reference/MARKET.md, section 7)
+        # the network loop, link by link: three counters over the same records (scripts/network_loop.py)
         "loop": loop(jobs, own, own_wallets, owner_of=owner_of),
         "totals": {"funded": len(jobs), "completed": len(done) + other["unmatched_paid"], "open": state("open") + state("proven"),
                    "held": state("held"), "funded_amount": sum(j["amount"] for j in jobs), "paid_amount": sum(j["net"] for j in done), **other},

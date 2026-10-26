@@ -1,5 +1,5 @@
 // A supplier's public record, as a page: #record=<slug>. The file is docs/records/<slug>.json (knos.supplier-record/1,
-// docs/reference/RECORD.md), written by `knos record build`; the build puts it at records/<slug>.json beside the site.
+// docs/reference/SUPPLIER.md), written by `knos record build`; the build puts it at records/<slug>.json beside the site.
 //
 //   renderSupplierRecord(el, ctx)   draws the record the address names (or ctx.slug) and follows the address when it
 //                                   changes. ctx: { slug, fetch, base, doc }. Returns { loaded, show }.
@@ -89,7 +89,7 @@ export function recordHtml(doc) {
     <p class="sr-row"><button type="button" class="k-btn quiet" data-sr="copy">Copy badge Markdown</button></p>
     <p class="fine">Add the free check with one line.</p>
     <pre><code data-sr="install">${esc(INSTALL)}</code></pre>
-    <p class="fine" data-sr="limits">Counts with samples, never a score. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/RECORD.md" target="_blank" rel="noopener">Read the limits.</a></p>
+    <p class="fine" data-sr="limits">Counts with samples, never a score. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/SUPPLIER.md" target="_blank" rel="noopener">Read the limits.</a></p>
   </section>`;
 }
 

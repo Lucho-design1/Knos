@@ -129,7 +129,7 @@ ghwords_.program_code                               # tests/test_refusals.py
 ledger_.billed_once                                 # conformance/impl/knos_python.py (conformance/vectors/ids.v1.json, ids.billed_once)
 ledger_.reopened, ledger_.reopened_key              # docs/reference/METER.md; tests/test_verdicts_ids.py
 pdf_.A4                                             # tests/test_statement.py
-private_.receipt_shows                              # docs/reference/PRIVATE.md; tests/test_private_path.py
+private_.receipt_shows                              # docs/reference/COMPANIES.md#private-repositories; tests/test_private_path.py
 receipt_.exposed                                    # docs/reference/RECEIPT.md (the six questions); tests/test_verdicts_ids.py
 relayq_.EVENT_TYPE                                  # the repository_dispatch type worker.yml listens for; tests/test_relayq.py holds the two together
 
@@ -205,7 +205,7 @@ _.complete_                     # knos.statement.register: knos statement comple
 # Public functions with no caller inside src/knos or scripts, each held by the tests that name it.
 _.relative_left                                     # scripts/bump_version.py: no link of README.pypi.md leans on the repository; tests/test_pypi_readme.py
 
-# 0.3.26. knos.sources: a library a caller uses in its own code (docs/reference/SOURCES.md); nothing in the package calls it yet.
+# 0.3.26. knos.sources: a library a caller uses in its own code (docs/reference/VERIFIER.md); nothing in the package calls it yet.
 from knos import sources as sources_
 from knos.sources import der as der_
 
@@ -273,10 +273,10 @@ from knos.taskpack import atropos as atropos_
 from knos.verify import sealed as sealed_
 from knos.zk import bn254 as bn254_, client as zk_client_
 
-managed_.agent_spec                                 # what client.beta.agents.create takes (docs/reference/CLAUDE_AGENTS.md); tests/test_claude_agents_v34.py
+managed_.agent_spec                                 # what client.beta.agents.create takes (src/knos/claude); tests/test_claude_agents_v34.py
 gate_app_.verify_signature, gate_app_.app_jwt       # tests/test_gate_app.py
 gate_app_.installation_token                        # github-app/server.py, the GitHub App's webhook server
-graduation_.graduation_message                      # docs/reference/PAY_ON_PROOF.md; tests/test_verdict_trust.py
+graduation_.graduation_message                      # docs/reference/REFEREE_FROST.md; tests/test_verdict_trust.py
 ideas_.FIXTURES_ENV, ideas_.intake                  # tests/test_ideas_sources.py, tests/test_ideas_contract.py
 ideas_wanted_.ORACLE                                # tests/test_ideas_commit.py
 _.OPT_IN_ENV, _.OPT_IN_WORD                         # knos.ideas.tools: the opt-in of the idea tools on `knos mcp` (KNOS_MCP_TOOLS=ideas); tests/test_ideas_tools.py
@@ -285,8 +285,8 @@ _.lab_quote                                         # knos.labs.adaptyv.Adaptyv;
 _.box_number, _.due_orders                          # knos.leitner; tests/test_leitner.py
 cctp_.attestation                                   # Circle's attestation of a burn; tests/test_money_kora_cctp.py
 _.from_env                                          # knos.money.kora.Kora.from_env; tests/test_money_kora_cctp.py
-kora_.gasless_ixs, kora_.send_gasless               # docs/reference/KORA_CCTP.md; send_gasless: tests/test_money_kora_cctp.py
-x402_upto_.withdraw_payer_ix                        # docs/reference/X402_UPTO.md: the payer's way out of a channel
+kora_.gasless_ixs, kora_.send_gasless               # src/knos/money/kora.py; send_gasless: tests/test_money_kora_cctp.py
+x402_upto_.withdraw_payer_ix                        # docs/reference/X402.md: the payer's way out of a channel
 outcome_stats_.tiers_passed                         # tests/test_outcome_stats.py
 outcome_synth_.drop_treated_failures, outcome_synth_.relabel, outcome_synth_.example_spec      # tests/test_outcome_measure.py, examples/outcomes/measured-support/demo.py
 platform_claims_.shared_writable, platform_claims_.per_block      # docs/reference/PLATFORM.md; tests/test_platform_claims.py
@@ -299,10 +299,10 @@ issuers_.cs_claims, issuers_.orcid_claims, issuers_.judge_of, issuers_.pay_order
 receipt2_ed25519_.b58encode                         # tests/test_receipt2_sign.py
 anchoring_.parse_memo                               # tests/test_record_verify.py, tests/test_record_devnet.py
 repro_publish_.verify_signed                        # docs/reference/REPRODUCED.md; tests/test_repro_privacy.py
-atropos_.referee_spec                               # docs/reference/TASK_PACKAGES.md; tests/test_taskpack_export.py
+atropos_.referee_spec                               # docs/reference/REFEREE.md; tests/test_taskpack_export.py
 sealed_.load_tasks, sealed_.public_prompt           # tests/test_hermes_gepa.py
-bn254_.pairing, bn254_.G1_GEN, bn254_.G2_GEN        # docs/reference/ZK.md; tests/test_zk_groth16.py
-zk_client_.DEVNET_PROGRAM_ID                        # the reserved devnet program id (docs/reference/ZK.md); tests/test_zk_client.py
+bn254_.pairing, bn254_.G1_GEN, bn254_.G2_GEN        # src/knos/zk; tests/test_zk_groth16.py
+zk_client_.DEVNET_PROGRAM_ID                        # the reserved devnet program id (src/knos/zk); tests/test_zk_client.py
 
 # knos.settle.v2.passkey_smart: the LazorKit passkey wallet client. Its callers are the web app (apps/wanted/knos_wanted/
 # wallets.py, preorder.py), outside vulture's scan (src/knos scripts); the constants mirror LazorKit's program (commit,

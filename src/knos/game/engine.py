@@ -18,7 +18,7 @@ shared knos.cheats library) before any code runs, two seeded runs that must agre
 seal (judge drift is refused). A refused attempt shows no score; a player refused `max_refusals` times is out of the
 game (a cheat must never be worth more than an honest failure: knos.referee.reward gives -1, 0 and 1).
 
-LIMIT: the static rules are a filter, not an operating-system sandbox (docs/reference/AUTORESEARCH.md says so too). A
+LIMIT: the static rules are a filter, not an operating-system sandbox. A
 game open to strangers must judge on a machine that holds neither the sealed file nor anything else of value.
 """
 from __future__ import annotations

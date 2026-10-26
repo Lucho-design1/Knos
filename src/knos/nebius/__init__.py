@@ -9,5 +9,5 @@ Tavily for provenance and new cheat patterns. The models propose and explain; th
     rerun          Nebius Serverless Job when the operator opts in and the CLI is there, else the local sandbox
     panel, demo    the live panel and the golden path (`python -m knos.nebius demo`)
 
-docs/reference/NEBIUS.md cites every provider fact with the page and the day it was read.
+src/knos/nebius/sources.py cites every provider fact with the page and the day it was read.
 """

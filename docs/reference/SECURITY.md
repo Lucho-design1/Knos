@@ -360,7 +360,7 @@ funder's steps.
 **Refresh by anyone still needs one account to exist.** The pinned rotate workflow is a file in a repository of
 the account drexthealpha. A run "by anyone" calls that file. If the account were suspended, GitHub could not fetch
 it, nobody could make the attestation, and every key would expire within 30 days
-([GOVERNANCE.md](GOVERNANCE.md), section 9).
+([GOVERNANCE.md](GOVERNANCE.md), section 6).
 
 ## 6. The guardian
 
@@ -399,7 +399,7 @@ The upgrade authority of all four programs is the vault of a Squads multisig
   subscribe once instead of looking ([`scripts/upgrade_feed.py`](../../scripts/upgrade_feed.py)). The feed is
   rewritten when the site is built. Nothing is pushed beyond that: no comment is posted on repositories with open
   orders. The notice protects someone who looks or who subscribed.
-- **Today every member key is the founder's.** The multisig is 2-of-3 and one person holds all three keys. So the
+- **Today one person holds every member key.** The multisig is 2-of-3 and one person holds all three keys. So the
   delay gives notice, not independent oversight: nobody else must agree and nobody else can refuse
   ([GOVERNANCE.md](GOVERNANCE.md) has what an independent signer would check and how one would be added; none has
   agreed).
@@ -454,7 +454,7 @@ Mainnet will be different program ids and Circle's mint. Nothing is deployed the
 | The upgrade keys are stolen | a hostile upgrade is public for 8 days before it can run. The members can cancel it | withdrawals of Balances at once; orders as section 7 says |
 | The buyer's repository deletes its workflow after a merge | nothing, by itself. In a public repository the seller starts the neutral run (section 2) | the payment |
 | Knos's public relay stops | tokens wait as comments | anyone can relay with `knos relay`, and a payment tips whoever does; a repository with a relay key relays its own |
-| Knos's GitHub account is suspended | the published workflows cannot be fetched, so no new token is signed for an order that pinned them; no key can be refreshed | refunds, withdrawals, settlements to a bound wallet, releases. A funded order can only be refunded ([GOVERNANCE.md](GOVERNANCE.md), section 9) |
+| Knos's GitHub account is suspended | the published workflows cannot be fetched, so no new token is signed for an order that pinned them; no key can be refreshed | refunds, withdrawals, settlements to a bound wallet, releases. A funded order can only be refunded ([GOVERNANCE.md](GOVERNANCE.md), section 6) |
 | Devnet is reset | every account is gone: programs, orders, Balances, keys, the multisigs | nothing on chain. It is test money. The programs are deployed again and funders fund again ([DRILLS.md](DRILLS.md)) |
 | Knos disappears | no new key can be approved. Keys GitHub still publishes are kept alive by anyone | payments under those keys; refunds and withdrawals, for ever |
 
@@ -1133,14 +1133,38 @@ this tree. [INVARIANTS.md](INVARIANTS.md) lists them with the other adversarial 
 
 ## Before mainnet
 
-- **Every gate is in [MAINNET.md](MAINNET.md).** Mainnet is not planned for this release.
+- **Mainnet is not planned for this release.**
 - **An outside review first.** `knos mainnet-check` prints every gate with its evidence. The last one, an outside
   review of the bytes on chain, fails today, on purpose.
 - **Different program ids, Circle's mint, no faucet.** The released programs are devnet builds.
 - **The cap** is 100,000 per order on devnet. A mainnet build decides its own; none is decided.
 - **After the review** the verifier, `knos-oidc`, is frozen: its upgrade authority is removed. The payment program,
   `knos-pay`, stays upgradeable only through the multisig with its public 8-day delay, so that a defect in the
-  program that holds money can be fixed in place. [GOVERNANCE.md](GOVERNANCE.md), section 7, says what that costs.
+  program that holds money can be fixed in place.
+
+## What does not exist
+
+For a security or procurement review. Each line is something a reviewer asks for that Knos does not have today.
+
+- **No SOC 2 report, no ISO 27001 certificate, no penetration test and no outside audit.** No security firm has
+  audited anything.
+- **One operator.** One person writes the code and holds every member key of the upgrade multisig. The same person
+  runs the relay, and no second person reviews a change.
+- **Devnet only.** The money is test USDC. Nothing here has run with real money.
+- **No contract.** There is no named legal entity, no terms of service, no data-processing agreement and no
+  service-level agreement.
+- **No support contract.** Today one person answers; there is no support contract and no on-call team.
+- **No single sign-on on the public site.** It is a static page anyone can open, and Knos has no accounts of its
+  own. A company that enforces SAML single sign-on on its GitHub organisation gets it for every comment and run there.
+- **No screen that sets a Balance's limits.** The limits are set from the command line (`knos budget set`).
+- **No roles in the program beyond owner and spender.** An approver role lives in the buyer's own files
+  (`.knos/procurement/policy.yaml`), judged by [`src/knos/approvals.py`](../../src/knos/approvals.py). Nothing on chain
+  checks it.
+- **No connection to a finance system.** `knos audit export --format ...` writes files. Nothing sends them, and no
+  import has been tried in any finance product ([COMPANIES.md](COMPANIES.md)).
+- **No alerts** when a limit is near or a refusal happens. A refusal is a comment on the issue and a failed
+  transaction.
+- **No second person** reviews code or holds a key.
 
 ## Known limits
 
@@ -1154,8 +1178,8 @@ The first three cannot be removed. They come with the design.
    it until the key is revoked or expires. If GitHub is down, tokens wait.
 4. **Nobody outside Knos has reviewed the security of anything:** not the programs, the workflows, the relay, the
    clients, the site or these documents.
-5. **One person can change the programs, after 8 days.** Both multisigs are 2-of-3 and every member key is the
-   founder's. No independent signer exists ([GOVERNANCE.md](GOVERNANCE.md)).
+5. **One person can change the programs, after 8 days.** Both multisigs are 2-of-3 and one person holds every
+   member key today. No independent signer exists ([GOVERNANCE.md](GOVERNANCE.md)).
 6. **An upgrade's notice is pulled, not pushed.** A banner, `knos status` and a feed to subscribe to; no comment on
    repositories with open orders (section 7).
 7. **New keys need one account and the guardian.** Keys GitHub still publishes can be kept alive by anyone. A key
@@ -1193,9 +1217,9 @@ The first three cannot be removed. They come with the design.
     what is not; its section "Fuzzing, mutation testing and model checking: the state of each" has the differential
     test of the verifier and the fuzz targets, and [`fuzz.json`](../fuzz.json) is the recorded run.
 28. **Devnet only, and no outside buyer.** By 3 Oct 2026 no outside repository had funded a task.
-29. **Everything depends on one personal GitHub account** that hosts the pinned workflows, the rotate workflow and
+29. **Everything depends on one GitHub account** that hosts the pinned workflows, the rotate workflow and
     the relay. If it is suspended, funded orders can only be refunded and keys run out within 30 days
-    ([GOVERNANCE.md](GOVERNANCE.md), section 9). The move to an organisation account is planned and not done.
+    ([GOVERNANCE.md](GOVERNANCE.md), section 6).
 30. **A meter batch's Merkle root is not checked on chain** (section 18).
 31. **The feed of upgrade proposals is as fresh as the site's last build** (section 7).
 32. **Every stated invariant has a test, and the tests leave things out;** [INVARIANTS.md](INVARIANTS.md), "Not yet

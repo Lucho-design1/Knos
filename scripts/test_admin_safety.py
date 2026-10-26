@@ -135,7 +135,7 @@ def held_by(what: str, authority: str | None, pda_of: str | None = None) -> None
 
 
 def oidc_key_admin_live() -> bool:
-    """Whether the deployed knos_oidc refuses the guardian key approval (KEYS.md step 4: Approve and Revoke take the
+    """Whether the deployed knos_oidc refuses the guardian key approval (key step 4: Approve and Revoke take the
     upgrade vault). Simulated on the cluster with signature checking off, as the vault's signature by a cross-program
     call looks to the program: Approve (6) signed by the guardian answers Custom(79) only when the guardian may not
     approve; the build before step 4 takes the guardian and fails later, on the key account, with another error."""
@@ -214,7 +214,7 @@ def main() -> int:
         check("pins agree", guardians == {IDS["guardian"]} and fee_owners == {IDS["fee_owner"]},
               f"GUARDIAN {sorted(map(str, guardians))}, FEE_OWNER {sorted(map(str, fee_owners))} in knos_pay, knos_oidc, knos_meter")
         if oidc_key_admin_live():
-            # KEYS.md step 4 is deployed: knos_oidc's Approve and Revoke take the upgrade vault (behind its 8-day lock), and
+            # key step 4 is deployed: knos_oidc's Approve and Revoke take the upgrade vault (behind its 8-day lock), and
             # the guardian signs knos_pay's Pause alone, a brake that ends by itself and never moves money: no wait for it
             ms = STATE["guardian"]
             ok = ms["threshold"] >= MIN_THRESHOLD and ms["config_authority"] == SYSTEM

@@ -1,5 +1,4 @@
-"""The upgrade gate for another team's program (docs/reference/GATE.md, examples/upgrade_gate/adopt.py): the commands the page
-gives exist and parse; `init` writes this repository's gate with exactly three lines changed; `record` and `check`
+"""The upgrade gate for another team's program (examples/upgrade_gate/adopt.py): `init` writes this repository's gate with exactly three lines changed; `record` and `check`
 work against the gate program in LiteSVM; the adopters' list is empty and says how to add a row. And the registry plan
 of scripts/release.py: what would be published where, with no network. Nothing here opens a network connection."""
 from __future__ import annotations
@@ -15,7 +14,6 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-GATE_DOC = (ROOT / "docs" / "reference" / "GATE.md").read_text(encoding="utf-8")
 ME = "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"        # an address that is nobody's: the page's placeholders stand for one
 
 
@@ -36,38 +34,6 @@ def commands(text: str) -> list[str]:
     blocks = [line.strip() for block in re.findall(r"```bash\n(.*?)```", text, flags=re.S) for line in block.splitlines() if line.strip()]
     inline = [part.strip() for code in re.findall(r"`([^`\n]+)`", text) for part in code.split(" && ")]
     return blocks + inline
-
-
-def test_every_command_the_page_gives_exists_and_parses():
-    lines = commands(GATE_DOC)
-    ours = [c for c in lines if c.startswith("python examples/upgrade_gate/adopt.py ")]
-    assert {c.split()[2] for c in ours} == {"init", "expect", "check"}, ours
-    p = adopt.parser()
-    for c in ours:
-        argv = [ME if re.fullmatch(r"[A-Z_]+_ADDRESS", a) else a for a in c.split()[2:]]
-        got = p.parse_args(argv)                                  # argparse exits 2 on a flag or a command that does not exist
-        assert got.command == argv[0]
-    # the three numbered commands, in order: make the gate, hand over the authority, check before a vote
-    three = re.findall(r"(?m)^\*\*(\d)\. [^\n]+\n\n```bash\n([^\n]+)\n```", GATE_DOC)
-    assert [n for n, _ in three] == ["1", "2", "3"]
-    assert [c.split()[2] for _, c in three] == ["init", "set-upgrade-authority", "check"]
-    # the Solana commands and their flags are the ones scripts/deploy_v2.sh itself runs
-    deploy = (ROOT / "scripts" / "deploy_v2.sh").read_text(encoding="utf-8")
-    solana = [c for c in lines if c.startswith("solana program ")]
-    assert {c.split()[2] for c in solana} == {"set-upgrade-authority", "write-buffer", "set-buffer-authority", "deploy"}
-    for c in solana:
-        assert f"program {c.split()[2]} " in deploy, c
-        for flag in re.findall(r"--[a-z-]+", c):
-            assert flag in deploy or flag == "--program-id" or flag == "-u", (c, flag)
-    assert "--program-id" in (ROOT / "examples" / "reader_template" / "README.md").read_text(encoding="utf-8")
-    # what the page says Knos runs for itself is in those scripts' own usage
-    mjs = (ROOT / "scripts" / "governance.mjs").read_text(encoding="utf-8")
-    assert "bash scripts/deploy_v2.sh --propose" in lines and "--propose [--replace] [--ungated]" in deploy
-    assert "node scripts/governance.mjs upgrade execute <index>" in lines and "governance.mjs upgrade execute <index>" in mjs
-    assert "timeLock: lockNow(name)" in mjs and "timeLock: 172_800" in mjs and "PLANNED_TIME_LOCK = 691_200;" in mjs and "Knos uses 691,200 s, 8 days" in GATE_DOC
-    # the three scripts the page links to, and the test it names, are files
-    for rel in re.findall(r"\]\((\.\./[^)#]+)\)", GATE_DOC):
-        assert (ROOT / "docs" / "reference" / rel).resolve().exists(), rel
 
 
 def test_init_writes_this_gate_with_three_lines_changed_and_refuses_what_is_not_an_adopter(tmp_path):
@@ -176,26 +142,13 @@ def test_check_reads_every_pending_upgrade_of_a_multisig_as_devnet_held_them():
         adopt.check(account, str(gate.GATE_ID), ids["knos_pay"], multisig=ME)
 
 
-def test_the_adopters_list_is_empty_and_the_pages_point_at_each_other():
+def test_the_adopters_list_is_empty_and_says_how_to_add_a_row():
     compose = (ROOT / "docs" / "reference" / "COMPOSE.md").read_text(encoding="utf-8")
     part = compose.split("## Who uses the upgrade gate")[1].split("\n## ")[0]
     rows = [r for r in re.findall(r"(?m)^\|(.+)\|$", part) if not set(r) <= set("|- ")]
     assert len(rows) == 2 and rows[1].split("|")[0].strip() == "none yet"          # the header and no adopter
     assert "outside this repository behind the upgrade gate: 0." in part and "open a pull request that adds one row" in part
-    assert "(GATE.md)" in part and "time lock above zero" in part
-    gov = (ROOT / "docs" / "reference" / "GOVERNANCE.md").read_text(encoding="utf-8")
-    use = gov.split("## Use the gate")[1].split("\n## ")[0]
-    assert "(GATE.md)" in use and "Teams that have done it: 0" in use
-    assert 'Adopters today: 0 ([COMPOSE.md](COMPOSE.md), "Who uses the upgrade gate")' in GATE_DOC
-    assert "| [GATE.md](GATE.md) |" in (ROOT / "docs" / "reference" / "README.md").read_text(encoding="utf-8")
-    # the two things the page says the gate has shown are in the files it cites
-    feed = json.loads((ROOT / "web" / "upgrades.json").read_text(encoding="utf-8"))
-    late = [e["since"] - e["earliest_execution"] for e in feed["entries"] if e["index"] in (3, 4, 5, 6)]
-    assert len(late) == 4 and all(e > 5 * 3600 for e in late) and max(late) < 5.5 * 3600 and "about five hours" in GATE_DOC
-    assert "withdrawn before it could run" in (ROOT / "CHANGELOG.md").read_text(encoding="utf-8").split("## 0.3.14")[1].split("\n## ")[0]
-    # no word the project does not use for itself
-    for word in ("trustless", "bulletproof", "immutable", "audited"):
-        assert word not in GATE_DOC.lower()
+    assert "examples/upgrade_gate" in part and "time lock above zero" in part
 
 
 def test_the_registry_plan_says_what_would_be_published_where_and_publishes_nothing(tmp_path):

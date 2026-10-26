@@ -719,10 +719,9 @@ def a_key_is_refreshed(new, tokens: list[Captured]) -> str:
 
 
 def second_operator(_svm, _tokens) -> str:
-    """Not a drill this script can run: someone who is not the founder follows docs/reference/OPERATOR.md from a clean clone until
-    their own relay key has paid or refunded one devnet order. Its definition and what is recorded are in that page
-    ("The drill"); until a result is recorded there, the row says so."""
-    raise Skipped("not yet run by a second person (docs/reference/OPERATOR.md, \"The drill\", says who runs it and when it passes)")
+    """Not a drill this script can run: someone else runs Knos's relay from a clean clone until their own relay key has
+    paid or refunded one devnet order (scripts/second_operator.py). Until a result is recorded, the row says so."""
+    raise Skipped("not yet run by a second person")
 
 
 DRILLS: list[tuple[str, str, bool, Callable]] = [       # (name, how its signatures come about, needs tokens, the drill)
@@ -1190,7 +1189,7 @@ def restore_from_export() -> Outage:
                   "nothing from Knos answers: no cluster holds the payment and no operator holds the evidence",
                   "`knos vault restore knos-evidence.tar --to DIR` writes every bundle back, each checked against the archive's checkpoint; "
                   "`knos bundle verify --no-chain --no-network FILE` then passes on every receipt, from the issuer's signature and the archived copy "
-                  "of the chain record inside the bundle ([VAULT.md](VAULT.md))",
+                  "of the chain record inside the bundle (`src/knos/vault.py`)",
                   f"0 s for the record: {len(back)} of {len(blobs)} bundle{'s' if len(blobs) != 1 else ''} restored byte for byte from the export alone, "
                   f"{checks} statements sorted with no chain and no network, the checkpoint's root recomputed. The test chain holds one order, so one "
                   "bundle; the open orders and the money are not recovered")
@@ -1383,7 +1382,7 @@ def document(programs: list[Program], rows: list[Row], rpc: str, cluster: str, n
               "with `--from-devnet`, devnet's bytes of both programs and both multisig accounts, each member's key replaced by a key made "
               "for the drill (the members' real keys are not used). "
               + (f"This run read those rows from `{upgrade_log}`." if upgrade_log else "This run was given no log of it, so these rows were not run."), "",
-              f"- **{PERSON}**: no script runs this row. Someone who is not the founder follows [OPERATOR.md](OPERATOR.md) from a clean "
+              f"- **{PERSON}**: no script runs this row. Someone else runs Knos's relay from a clean "
               "clone, and the row passes when a transaction their own relay key sent has paid or refunded one devnet order. "
               "Nobody has done it yet.", "",
               "Money in the rows without tokens is a 6-decimal SPL Token mint made in the simulator, standing in for test USDC. The rows "

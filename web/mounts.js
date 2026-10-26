@@ -5,7 +5,7 @@
 //                when the page is opened: a reader with no login gets 60 answers an hour from GitHub, and a page nobody
 //                looks at should use none of them.
 //   #index       the Agent PR Index by week (web/index_board.js), from agent_weekly.json, the build's copy of docs/.
-//   #pilot       the one thing offered for money, in the words of docs/reference/PILOT.md and the price book: who it is for,
+//   #pilot       the one thing offered for money, in the words of the price book: who it is for,
 //                what the buyer gets, what it costs, and that nobody has bought it. No form: the page collects nothing.
 //   #reproduce   the three lines of docs/reference/REPRODUCE.md, and how many reproductions people outside have sent: the names
 //                in reproductions.json, which the build writes from the repository's reproductions/ folder.
@@ -195,7 +195,7 @@ export function renderIndex(el, weekly, esc = escHtml, feed = null) {
 }
 
 // ---- Pilot ------------------------------------------------------------------------------------------------------------
-// docs/reference/PILOT.md, shortened. The price is the price book's Pilot row (price.js), so the page and the book cannot differ.
+// The Pilot offer. The price is the price book's Pilot row (price.js), so the page and the book cannot differ.
 export const PILOT_DELIVERABLES = [
   ["One reconciled invoice", "The buyer's accepted work for the 30 days, from both suppliers, set against what each billed, as one list of deliverables: the order, the milestone, the artifact, the policy version that judged it and the verdict. A deliverable is counted once, whatever number of pull requests carried it."],
   ["A mismatch list", "Every difference between what was accepted and what was billed, named: billed and not accepted; accepted and not billed; billed twice; judged differently by the two sides. A mismatch is a dispute line, never an invoice line."],
@@ -226,7 +226,7 @@ export function renderPilot(el, esc = escHtml) {
     </div>
     <div class="card" id="pilot-limits">
       <p class="fine">Not included: private repositories under a contract, single sign-on tried with a real provider, a service-level agreement, Knos paying the suppliers (the buyer pays from its own bank; mainnet is not touched), or an outside security review of Knos.</p>
-      <p class="fine">This page has no form and collects nothing. What the buyer and each supplier do, what is measured and how: <a href="${DOCS}/PILOT.md" target="_blank" rel="noopener">docs/reference/PILOT.md</a>.</p>
+      <p class="fine">This page has no form and collects nothing.</p>
     </div>`;
   return el;
 }

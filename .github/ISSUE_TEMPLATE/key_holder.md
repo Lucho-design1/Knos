@@ -21,4 +21,4 @@ How to reach me:
 
 I made this key on my own machine. Nobody else has its file.
 
-<!-- What this is and what happens next: docs/reference/KEYHOLDER.md. This issue is public: write nothing here you would not publish. -->
+<!-- What this is and what happens next: docs/TRUST.md. This issue is public: write nothing here you would not publish. -->
