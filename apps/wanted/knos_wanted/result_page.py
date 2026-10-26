@@ -22,14 +22,15 @@ SAY = {"empty": "Qloo matched no product to this idea, so there is nothing to me
 
 
 def find(state, rid: str) -> dict | None:
-    """The kept report whose hash starts with rid: in memory, a recorded sample card, or a report file."""
-    with state.lock:
-        for h, rep in state.reports.items():
-            if isinstance(h, str) and h.startswith(rid):
-                return rep
+    """The kept report whose hash starts with rid: a recorded sample card first (the real answer; a press while Qloo was
+    down keeps a copy of it marked stale under the same hash), then this server's memory, then a report file."""
     with recorded._lock:
         for rep in recorded._last.values():
             if str(rep.get("hash") or "").startswith(rid):
+                return rep
+    with state.lock:
+        for h, rep in state.reports.items():
+            if isinstance(h, str) and h.startswith(rid):
                 return rep
     d = escrow._state_dir() / "reports"
     for f in sorted(d.glob(f"{rid}*.report")) if d.is_dir() else []:
@@ -80,7 +81,7 @@ def page(rep: dict | None, url: str, rid: str) -> str:
     else:
         idea = str(rep.get("idea") or "this idea")
         word = WORD.get(str((rep.get("decision") or {}).get("verdict") or ""), "Qloo cannot decide this one")
-        t = terms_of(rep) if st is None else None
+        t = terms_of(rep) if st in (None, "outage") else None     # an outage card is the last real answer: its terms hold
         made = str(rep.get("made") or "")[:10]
         # the launch city and target as the card has them; with no terms those rows are left out (the sentence says why)
         rows = ([("Launch city", e(t["city"])), ("Pre-order target", f"{t['target']}, all refunded if it falls short")] if t else []) + [
