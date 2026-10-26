@@ -172,7 +172,8 @@ def test_each_privacy_line_agrees_with_the_code() -> None:
     assert "document.cookie" not in code and "cookieStore" not in code                       # no cookies
     hosts = set(re.findall(r'fetch\(\s*[`"](https://[A-Za-z0-9.-]+)', code))                # whom the pages fetch from
     # (every host a page asks is also refused and counted in the browser: tests/web/launch.mjs "nothing outside the site")
-    assert hosts <= {"https://api.github.com", "https://api.devnet.solana.com"}, hosts
+    # and the Knos app ("Sends what you type to the Knos app on Check"): /check/ also reads its newest payout, sending nothing
+    assert hosts <= {"https://api.github.com", "https://api.devnet.solana.com", "https://knos.onrender.com"}, hosts
     for tracker in ("google-analytics", "googletagmanager", "plausible", "segment.com", "posthog", "mixpanel", "sentry"):
         assert tracker not in code.lower(), tracker
     assert "sessionStorage" in (WEB / "cache.js").read_text(encoding="utf-8")               # this tab, until it closes

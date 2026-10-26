@@ -68,7 +68,8 @@ def test_a_bad_key_or_the_rate_limit_is_said_plainly_never_a_silent_fallback(tmp
 def test_retries_are_bounded(tmp_path, monkeypatch):
     monkeypatch.setattr(qloo_rest.time, "sleep", lambda s: None)
     op = Opener(error=503)
-    with pytest.raises(qloo_rest.QlooError):
+    with monkeypatch.context() as m, pytest.raises(qloo_rest.QlooError):
+        m.setattr(qloo_rest, "held", lambda now=None: 0.0)  # another test's background thread may meet a 429 at any time
         client(tmp_path, op).get("/search", {"query": "burger", "take": 5})
     assert op.n == 2                                                                       # one try, one retry, then a clear error
     qloo_rest._hold["until"] = 0.0                         # (another test's background thread may have met a 429 meanwhile)
