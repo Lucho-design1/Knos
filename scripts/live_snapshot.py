@@ -31,9 +31,9 @@ def get(path: str) -> dict | None:
 
 def paid_html(x: dict) -> str:
     day = str(x.get("at") or "")[:10]
-    said = f' · {html.escape(x["released"])}' if x.get("released") else ""
-    return (f'Agent paid <b>{html.escape(str(x["units"]))} test units</b> for verified work{", " + html.escape(day) if day else ""}{said} · '
-            f'<a href="{html.escape(x["explorer"])}" target="_blank" rel="noopener">the transaction</a>')
+    said = html.escape(x.get("released") or "the transaction")        # what released it links its transaction
+    return (f'Agent paid <b>{html.escape(str(x["units"]))} test units</b>{", " + html.escape(day) if day else ""} · '
+            f'<a href="{html.escape(x["explorer"])}" target="_blank" rel="noopener">{said}</a>')
 
 
 def usage_html(u: dict) -> str | None:

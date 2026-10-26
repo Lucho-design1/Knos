@@ -84,7 +84,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
 <link rel="alternate" type="application/atom+xml" title="Knos: upgrade proposals of the programs" href="upgrades.xml">
 <link rel="alternate" type="application/atom+xml" href="index.atom" title="Agent PR Index">
 <!-- The first screen: the outcome as the h1, then who it is for, then the sentence, then the number. Styled here because app.css is at its size limit (tests/web/motion.mjs). From 900 px the top margin is 36 px, so the upgrade line sits 4 px down and 24 px tall, clear of the sentence. -->
-<style>.hero .hero-fact { text-wrap: pretty; } .hero .hero-outcome { font-size: var(--s2); line-height: 1.35; font-weight: 500; color: var(--ink); max-width: 26em; margin: 0 0 8px; text-wrap: balance; } .hero .hero-who { color: var(--ink); max-width: 34em; margin: 0 0 6px; text-wrap: pretty; } .hero .hero-fact { margin-bottom: 12px; } .hero .hero-board { margin-top: 12px; } .hero h1 { margin-bottom: 12px; } .hero .hero-fact .k-num { color: var(--ink); font-weight: 600; } #how-it-works { margin-top: 64px; scroll-margin-top: 80px; } @media (max-width: 360px) { .hero h1 { margin-bottom: 6px; } .hero .hero-fact { margin-bottom: 8px; } .hero .hero-outcome { margin-bottom: 6px; } } @media (min-width: 900px) { .hero { padding-top: 36px; } .hero-upgrades { top: 4px; } .hero-upgrades > summary { padding-block: 2px; } }</style>
+<style>.hero .hero-fact { text-wrap: pretty; } .hero .hero-outcome { font-size: var(--s2); line-height: 1.35; font-weight: 500; color: var(--ink); max-width: 26em; margin: 0 0 8px; text-wrap: balance; } .hero .hero-who { color: var(--ink); max-width: 34em; margin: 0 0 6px; text-wrap: pretty; } .hero .hero-fact { margin-bottom: 12px; } .hero .hero-board { margin-top: 12px; } .hero h1, .hero #check { margin-top: 0; margin-bottom: 12px; } .hero .hero-fact .k-num { color: var(--ink); font-weight: 600; } #how-it-works { margin-top: 64px; scroll-margin-top: 80px; } @media (max-width: 360px) { .hero h1, .hero #check { margin-bottom: 6px; } .hero .hero-fact { margin-bottom: 8px; } .hero .hero-outcome { margin-bottom: 6px; } .hero .hero-board { margin-top: 6px; } } @media (min-width: 900px) { .hero { padding-top: 36px; } .hero-upgrades { top: 4px; } .hero-upgrades > summary { padding-block: 2px; } }</style>
 <link rel="preconnect" href="https://drexthealpha.github.io" crossorigin>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
@@ -443,7 +443,12 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     return parts.join("");
   }
   // every Qloo call behind the card: what it asked, how long it took and which part of the card it fed
+  // the lists and the calls panel are styled when a card first needs them: the first screen's stylesheet stays within its
+  // weight (tests/web/perf.mjs)
+  const style = () => { if (document.getElementById("k-card-css")) return;
+    document.head.insertAdjacentHTML("beforeend", `<style id="k-card-css">.k-vals{margin:0;padding-left:1.1em}.k-vals li{margin:0 0 4px}.k-val{color:inherit;text-decoration:none}.k-val:hover{text-decoration:underline}.k-calls{margin:var(--sp-3) var(--sp-5);font-size:var(--s-1)}.k-calls ol{margin:var(--sp-2) 0 0;padding-left:1.1em}.k-calls li{margin:0 0 4px;overflow-wrap:anywhere}</style>`); };
   function calls(r) {
+    style();
     const fed = {}, add = (n, part) => { if (n != null) (fed[n] ||= new Set()).add(part); };
     (r.cities || []).forEach((c) => add(c.src, "launch cities"));
     (r.where || []).forEach((c) => add(c.src, "map"));
@@ -598,7 +603,8 @@ ${src(h, price.src)}</section>
     if (paid) get("/api/agent/payout/latest").then((x) => {
       if (!x || !x.found || !(x.units > 0)) return;
       const day = String(x.at || "").slice(0, 10);
-      paid.innerHTML = `Agent paid <b>${esc(x.units)} test units</b> for verified work${day ? `, ${esc(day)}` : ""}${x.released ? ` · ${esc(x.released)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">the transaction</a>`;
+      // what released it is the link to its transaction: twelve words at most for the line (tests/test_site_overflow.py)
+      paid.innerHTML = `Agent paid <b>${esc(x.units)} test units</b>${day ? `, ${esc(day)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">${esc(x.released || "the transaction")}</a>`;
       paid.hidden = false;
       paid.dataset.live = "1";
     }).catch(() => {});
@@ -658,7 +664,7 @@ ${src(h, price.src)}</section>
     <li><h3>Money held</h3><p>Pre-orders wait in a program until the target is met.</p></li>
     <li id="paid-on-proof"><h3>Paid on proof</h3><p data-keep>GitHub signs which checks ran, and a Solana program checks that signature itself before it pays.</p>
       <p class="k-paid" id="k-oidc" data-not-prose>Latest signature check on devnet, 2026-10-25 · <a href="https://explorer.solana.com/tx/pCpGcxBNpazogpF1qio85u4wC7ygeNGaJ6TcXDgat84jEPcJQz9bne4giqHXM4Ym8YSKjU7AQQxtb21eYeG8qq8?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
-      <p class="k-paid" id="k-paid" data-not-prose>Agent paid <b>5 test units</b> for verified work, 2026-10-24 · Released by the referee's verdict · <a href="https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet" target="_blank" rel="noopener">the transaction</a></p>
+      <p class="k-paid" id="k-paid" data-not-prose>Agent paid <b>5 test units</b>, 2026-10-24 · <a href="https://explorer.solana.com/tx/53pd6Rfdtcj34rHUtV7UnCQyfFRVXe5Vot2ujFCXR6dcrHeziwQRyry2ekeph5iHKX9L7ALc3W4GjhVSN5LLMGw7?cluster=devnet" target="_blank" rel="noopener">Released by the referee's verdict</a></p>
       <details class="k-more" id="agent-key" data-not-prose><summary>Agents with a key</summary><p class="fine">Put this in .mcp.json and the key in KNOS_AGENT_KEY:</p><pre><code>{"mcpServers":{"knos":{"type":"http","url":"https://knos.onrender.com/mcp","headers":{"Authorization":"Bearer ${KNOS_AGENT_KEY}"}}}}</code></pre></details>
       <p class="fine"><a href="check/" id="steps-check">Check a pull request</a> · <a href="pricing.html">Pricing</a> · <a href="how-we-test.html">How we test Knos</a></p></li>
   </ol>
@@ -687,7 +693,7 @@ ${src(h, price.src)}</section>
     <p class="lede">Every claim below opens its own evidence.</p>
     <ol class="verify-list">
       <li><h2>Money held until the proof passes</h2><p>A Solana program holds each payment until proof arrives. <a href="#records">The public record</a></p></li>
-      <li><h2>Three referee hosts run by Knos release it</h2><p>Two of three separate hosts re-check the proof and sign. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/REFEREE_FROST.md">The referee group</a></p></li>
+      <li><h2>Referees release it</h2><p>Three referee hosts run by Knos; two must sign the proof. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/REFEREE_FROST.md">The referee group</a></p></li>
       <li><h2>Demand comes from live taste data</h2><p>Qloo's data decides who wants it, where, and the price. Code decides, not a person.</p></li>
       <li><h2>Upgrades wait in public</h2><p>A program change waits eight days, in public. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/GOVERNANCE.md">Who can change the programs</a></p></li>
       <li><h2>Check it yourself</h2><p><a href="#verifier">Verifier</a> · <a href="#network">Numbers</a></p></li>

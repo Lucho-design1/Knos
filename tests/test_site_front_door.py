@@ -81,5 +81,5 @@ def test_every_button_the_documents_say_to_press_is_on_the_site():
     pages = ["README.md", "README.pypi.md", "docs/START.md", "docs/reference/FLOWS.md", "docs/reference/FINANCE.md"]
     asked = [(rel, label) for rel in pages
              for label in re.findall(r"(?i)\bpress \*\*([^*]+)\*\*", (ROOT / rel).read_text(encoding="utf-8"))]
-    assert ("README.md", "Try a sample invoice") in asked and ("README.pypi.md", "Try a sample invoice") in asked
+    assert ("docs/reference/FLOWS.md", "Try a sample invoice") in asked     # README's ten-second try opens the demand check now
     assert [(rel, label) for rel, label in asked if label not in shown] == []

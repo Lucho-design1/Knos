@@ -102,7 +102,12 @@
     return parts.join("");
   }
   // every Qloo call behind the card: what it asked, how long it took and which part of the card it fed
+  // the lists and the calls panel are styled when a card first needs them: the first screen's stylesheet stays within its
+  // weight (tests/web/perf.mjs)
+  const style = () => { if (document.getElementById("k-card-css")) return;
+    document.head.insertAdjacentHTML("beforeend", `<style id="k-card-css">.k-vals{margin:0;padding-left:1.1em}.k-vals li{margin:0 0 4px}.k-val{color:inherit;text-decoration:none}.k-val:hover{text-decoration:underline}.k-calls{margin:var(--sp-3) var(--sp-5);font-size:var(--s-1)}.k-calls ol{margin:var(--sp-2) 0 0;padding-left:1.1em}.k-calls li{margin:0 0 4px;overflow-wrap:anywhere}</style>`); };
   function calls(r) {
+    style();
     const fed = {}, add = (n, part) => { if (n != null) (fed[n] ||= new Set()).add(part); };
     (r.cities || []).forEach((c) => add(c.src, "launch cities"));
     (r.where || []).forEach((c) => add(c.src, "map"));
@@ -257,7 +262,8 @@ ${src(h, price.src)}</section>
     if (paid) get("/api/agent/payout/latest").then((x) => {
       if (!x || !x.found || !(x.units > 0)) return;
       const day = String(x.at || "").slice(0, 10);
-      paid.innerHTML = `Agent paid <b>${esc(x.units)} test units</b> for verified work${day ? `, ${esc(day)}` : ""}${x.released ? ` · ${esc(x.released)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">the transaction</a>`;
+      // what released it is the link to its transaction: twelve words at most for the line (tests/test_site_overflow.py)
+      paid.innerHTML = `Agent paid <b>${esc(x.units)} test units</b>${day ? `, ${esc(day)}` : ""} · <a href="${esc(x.explorer)}" target="_blank" rel="noopener">${esc(x.released || "the transaction")}</a>`;
       paid.hidden = false;
       paid.dataset.live = "1";
     }).catch(() => {});

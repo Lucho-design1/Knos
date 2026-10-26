@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORLD = Path(os.environ.get("KNOS_WORLD") or Path(os.environ.get("KNOS_PRIVATE_DIR", ".")) / "v0328" / "world")
 OUT = WORLD / "test_sibyl_visible.txt"
 APP = "https://knos.onrender.com"
-BRIEF = "autoresearch"
+BRIEF = "autoresearch_round"           # the referee-judged brief scripts/test_agent_solver.py funds the same way
 
 
 def http(path: str, body: dict | None = None, headers: dict | None = None, timeout: float = 600) -> tuple[int, dict]:
@@ -47,11 +47,14 @@ def main(sha: str) -> int:
     ok(st == 200 and isinstance(sc.get("verdict"), dict) and sc.get("verdict_code") == sc["verdict"].get("code"),
        f"knos_memory_search: Sibyl's verdict object {json.dumps(sc.get('verdict'))[:200]}, code {sc.get('verdict_code')!r}")
     admin = {"X-Knos-Admin": os.environ["KNOS_ADMIN_KEY"]}
-    pid = next((p["id"] for p in http("/api/projects?take=100")[1].get("projects", []) if p.get("solver_brief") == BRIEF), None)
+    pid = next((p["id"] for p in http("/api/projects?take=100")[1].get("projects", []) if p.get("solver_brief") == BRIEF
+                and ((p.get("milestones") or [{}])[0].get("status") in (None, "", "open", "funded", "locked"))), None)
     if pid is None:
         opened = http("/api/project/operator", {"action": "solver_open", "which": [BRIEF]}, admin)[1]
         pid = ((opened.get("projects") or [{}])[0]).get("id")
     st, fund = http("/api/project/operator", {"action": "solver_fund", "project": pid, "units": 5}, admin)
+    if not fund.get("sibyl"):
+        lines.append(f"     the operator's answer: HTTP {st} {json.dumps(fund)[:300]}")
     s = fund.get("sibyl") or {}
     ok(st == 200 and fund.get("status") == "locked" and s.get("tier") and s.get("verdict"),
        f"a real funding receipt (order {str(fund.get('order'))[:12]}..., lock {str((fund.get('signatures') or {}).get('lock'))[:12]}...): sibyl {s}")

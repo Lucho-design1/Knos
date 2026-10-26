@@ -38,7 +38,8 @@ def test_every_view_of_the_app_is_measured():
     app = _list("app")
     js = (ROOT / "apps" / "wanted" / "knos_wanted" / "static" / "app.js").read_text(encoding="utf-8")
     views = re.findall(r'"(\w+)"', re.search(r"const VIEWS = \[(.*?)\];", js)[1])
-    assert {"" if v == "home" else f"#{v}" for v in views} <= set(app) and "verify" in app
+    moved = {"buy", "teams"}                       # the Paid on proof page's views (apps/wanted server.MOVED_VIEWS): at /paid
+    assert {"" if v == "home" else (f"paid#{v}" if v in moved else f"#{v}") for v in views} <= set(app) and "verify" in app
 
 
 def test_the_bar_is_ninety_on_a_phone_and_both_are_served():
