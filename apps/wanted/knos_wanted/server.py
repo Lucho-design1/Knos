@@ -1112,8 +1112,10 @@ def serve(host: str | None = None, port: int | None = None) -> None:
     valley.start_sweeper()                 # missed milestone deadlines: refund + reopen, every KNOS_VALLEY_SWEEP_S seconds
     from . import qloo_harness
     threading.Thread(target=qloo_harness.harness().warm, daemon=True, name="qloo-harness-warm").start()
-    # no sample idea is run at boot: each chip's recorded card is the first real answer a reader's own press gets
-    # (recorded.keep), so a restart asks Qloo nothing
+    # no sample idea is run at boot: each chip's recorded card is its last real answer, read from the private secret
+    # file (recorded.load), else the first real answer a reader's own press gets (recorded.keep); a restart asks Qloo nothing
+    from . import recorded
+    print(f"knos recorded: {recorded.load()} of {len(recorded.CHIPS)} sample chips have a recorded card", flush=True)
     # the seeded research products cross on the first request for the board (front.board), never at boot
     httpd = ThreadingHTTPServer((host, port), make_handler(state))
     rest_ok, rest_why = state.rest.ready()

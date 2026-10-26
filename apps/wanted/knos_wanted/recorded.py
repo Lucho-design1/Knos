@@ -1,21 +1,31 @@
 """When Qloo is not answering, the card says so. A failed Qloo call (HTTP 429, a 5xx, or no answer in time) marks the
 report `qloo_down` with its code, and the card's first line says it; for the 8 sample chips the last real full card
 is shown instead, marked `stale` with the time it was made. Each chip's card is its first real answer to a reader's
-press (nothing is run at boot) and is kept with no expiry. Those last real cards live in this process's memory only:
-never in the repository, the Pages build, a file, or any store copied to devnet."""
+press (nothing is run at boot) and is kept with no expiry. They survive a redeploy in one private place: a Render secret
+file (KNOS_RECORDED_FILE, by default /etc/secrets/knos-recorded.json), read at boot. Never the repository, the Pages
+build, Sibyl, devnet or any public store. A new real card is written back to that file at most once in 10 minutes, and
+only when this server was given the means to (KNOS_RECORDED_UPLOAD_KEY and RENDER_SERVICE_ID); without them it stays in
+memory until the operator uploads the file from their own machine."""
 from __future__ import annotations
 
 import copy
+import json
+import os
 import re
 import threading
+import time
+import urllib.request
 
 # the front door's 8 sample chips (web/brand/hero.html): 7 ideas for the demand check and 1 paper for a crossing
 CHIPS = ("an AI recipe planner for families", "a crypto podcast for beginners", "a quantum physics book for kids",
          "a solar powered music festival", "a probiotic kombucha brand", "a recycled ocean plastic swimwear brand",
          "a tiny home kit for first-time buyers", "10.1038/nature16521")
 TIMEOUT_CODE = 504                       # no answer in time is said as a gateway timeout
+DEFAULT_FILE = "/etc/secrets/knos-recorded.json"
+WRITE_EVERY_S = 600
 _lock = threading.Lock()
 _last: dict[str, dict] = {}
+_write = {"at": 0.0, "timer": None}
 
 
 def key(text: str) -> str:
@@ -45,11 +55,59 @@ def real(rep: dict) -> bool:
             and not rep.get("qloo_down") and not rep.get("stale"))
 
 
+def path() -> str:
+    return os.environ.get("KNOS_RECORDED_FILE") or DEFAULT_FILE
+
+
+def load(file: str | None = None) -> int:
+    """The recorded cards of the private file into memory (at boot); how many chips have one."""
+    try:
+        doc = json.loads(open(file or path(), encoding="utf-8").read())
+    except (OSError, ValueError):
+        return 0
+    cards = {k: v for k, v in (doc.get("cards") or {}).items() if k in CHIP_KEYS and isinstance(v, dict) and real(v)}
+    with _lock:
+        for k, v in cards.items():
+            if k not in _last or (v.get("made") or "") > (_last[k].get("made") or ""):
+                _last[k] = v
+        return len(_last)
+
+
+def _upload() -> None:
+    """Write the recorded cards back to the Render secret file (only with KNOS_RECORDED_UPLOAD_KEY and RENDER_SERVICE_ID)."""
+    k, sid = os.environ.get("KNOS_RECORDED_UPLOAD_KEY"), os.environ.get("RENDER_SERVICE_ID")
+    with _lock:
+        _write.update(at=time.time(), timer=None)
+        doc = {"v": 1, "about": "the sample chips' last real full cards (private: a Render secret file, never public)", "cards": dict(_last)}
+    if not (k and sid):
+        return
+    body = json.dumps({"content": json.dumps(doc, separators=(",", ":"), ensure_ascii=False)}).encode()
+    req = urllib.request.Request(f"https://api.render.com/v1/services/{sid}/secret-files/{os.path.basename(path())}", method="PUT", data=body,
+                                 headers={"Authorization": "Bearer " + k, "Content-Type": "application/json", "Accept": "application/json"})
+    try:
+        urllib.request.urlopen(req, timeout=60).read()
+    except Exception as why:  # noqa: BLE001 - a write that fails keeps the card in memory, said in the log
+        print(f"knos recorded: write-back failed ({type(why).__name__})", flush=True)
+
+
+def _write_soon() -> None:
+    """At most one write-back in WRITE_EVERY_S, after a new real card."""
+    with _lock:
+        if _write["timer"] is not None:
+            return
+        wait = max(0.0, _write["at"] + WRITE_EVERY_S - time.time())
+        _write["timer"] = threading.Timer(wait, _upload)
+        _write["timer"].daemon = True
+        _write["timer"].start()
+
+
 def keep(text: str, rep: dict) -> None:
     k = key(text)
     if k in CHIP_KEYS and real(rep):
         with _lock:
             _last[k] = copy.deepcopy(rep)
+        if os.environ.get("KNOS_RECORDED_UPLOAD_KEY"):
+            _write_soon()
 
 
 def recording(text: str) -> dict | None:
