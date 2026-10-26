@@ -47,38 +47,43 @@ try {
     if (!r.ok) throw new Error(`the test route answered ${r.status}`);
   }
   const page = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
-  await page.goto(BASE + "/", { waitUntil: "load" });
+  await page.goto(BASE + "/", { waitUntil: "domcontentloaded", timeout: 120000 });     // the page itself; a slow first start is waited for
+  await page.waitForSelector("#k-q", { timeout: 120000 });
   let shown = 0, noTaste = 0;
-  const card = async () => {
-    await page.waitForSelector("#k-card [data-qloo-down]", { timeout: 180000 });
+  const card = async (want) => {      // this press's own card: its stub product, or the no-chip line
+    await page.waitForFunction((w) => { const c = document.querySelector("#k-card"); return c?.querySelector("[data-qloo-down]") && c.innerText.includes(w); },
+      want, { timeout: 180000 });
     await page.waitForTimeout(400);
     return page.evaluate(() => ({ first: document.querySelector("#k-card .k-card")?.firstElementChild?.textContent.trim(),
       text: document.querySelector("#k-card").innerText, kick: document.querySelector("#k-card .k-kick")?.textContent || "" }));
   };
   for (const [i, c] of CHIPS.entries()) {
     await page.click(`#k-hero .k-chip[data-q="${c}"]`);
-    const got = await card().catch((e) => ({ first: `(none: ${String(e.message).split("\n")[0].slice(0, 80)})`, text: "", kick: "" }));
+    const got = await card(`Stub product ${i}`).catch((e) => ({ first: `(none: ${String(e.message).split("\n")[0].slice(0, 80)})`, text: "", kick: "" }));
     const good = got.first === STALE && got.text.includes(`Stub product ${i}`);
     shown += good; noTaste += got.text.includes("No taste data from Qloo");
     ok(good, `chip ${i + 1} ${c}: ${good ? "the last card under the exact line" : got.first}`);
   }
   await page.fill("#k-q", "a bamboo bicycle for city commuters");
   await page.click("#k-go");
-  const fresh = await card().catch(() => ({ first: "(none)", text: "" }));
+  const fresh = await card("Try again in a few minutes.").catch(() => ({ first: "(none)", text: "" }));
   noTaste += fresh.text.includes("No taste data from Qloo");
   ok(fresh.first === FRESH, `an idea that is no chip: ${fresh.first}`);
   ok(shown === 8, `${shown} of 8 chips show the last card with the exact first line`);
   ok(noTaste === 0, `${noTaste} cards say "No taste data from Qloo"`);
 } finally {
   await browser.close();
-  server.kill();
-  await new Promise((r) => (server.exitCode !== null ? r() : server.once("exit", r)));   // its files are free before the scan
+  // the venv's python.exe is a launcher: its child serves, so the whole tree is stopped
+  try { execFileSync("taskkill", ["/PID", String(server.pid), "/T", "/F"], { stdio: "ignore" }); } catch { server.kill(); }
+  // its files are free before the scan: wait for the process to exit, up to 20 s
+  await Promise.race([new Promise((r) => (server.exitCode !== null ? r() : server.once("exit", r))), new Promise((r) => setTimeout(r, 20000))]);
 }
 // no last card on disk, and no Qloo response body in the repository or the built site
 const walk = (d) => readdirSync(d).flatMap((n) => { const f = join(d, n); return statSync(f).isDirectory() ? walk(f) : [f]; });
-const onDisk = existsSync(state) ? walk(state).filter((f) => readFileSync(f, "utf8").includes("Stub product")).length : 0;
+const readable = (f) => { try { return readFileSync(f, "utf8"); } catch (e) { lines.push(`note ${e.code} reading ${f}`); return ""; } };
+const onDisk = existsSync(state) ? walk(state).filter((f) => readable(f).includes("Stub product")).length : 0;
 ok(onDisk === 0, `${onDisk} files in the app's state folder hold a last card`);
-rmSync(state, { recursive: true, force: true });
+try { rmSync(state, { recursive: true, force: true }); } catch { /* a file still held: left in the temp folder */ }
 const BODY = /"entity_id"\s*:\s*"[0-9A-F-]{36}"[^}]{0,400}"query"\s*:\s*\{\s*"affinity"/;
 let listed = "";
 try { listed = execFileSync("git", ["grep", "-l", "-E", '"entity_id": ?"[0-9A-F-]{36}"'], { cwd: ROOT, encoding: "utf8" }); } catch { listed = ""; }   // exit 1: no match

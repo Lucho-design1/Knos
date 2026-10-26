@@ -322,6 +322,8 @@ class State:
 
     def keep_check(self, r: dict) -> None:
         self.keep(r)
+        if r.get("stale"):                                # a sample's last real card, shown while Qloo is down: memory only
+            return
         d = escrow._state_dir() / "reports"
         d.mkdir(parents=True, exist_ok=True)
         (d / f"{r['hash']}.report").write_text(json.dumps(r, default=str), encoding="utf-8")
@@ -863,10 +865,11 @@ def make_handler(state: State):
                 if card:
                     rep["research"] = {**card, "why_never_crossed": research.why_never_crossed(card, rep)}
                 rep["elapsed_ms"] = round((time.perf_counter() - t0) * 1000)
-                rep["record"] = company.record_check(rep)          # the decision in the agent's memory (Sibyl)
+                rep["record"] = {"recorded": False, "why": "a last real card, already recorded"} if rep.get("stale") else company.record_check(rep)
                 state.keep_check(rep)
-                from . import vectors
-                vectors.note("check", rep["elapsed_ms"], rep, state)   # speed and cost, measured; a real verdict is the proof shown first
+                if not rep.get("stale"):
+                    from . import vectors
+                    vectors.note("check", rep["elapsed_ms"], rep, state)   # speed and cost, measured; a real verdict is the proof shown first
                 return rep
             if path == "/api/test/record" and os.environ.get("KNOS_TEST_MODE") == "1":   # test mode only: a stub last card
                 from . import recorded
