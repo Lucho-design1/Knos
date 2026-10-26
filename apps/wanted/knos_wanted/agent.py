@@ -210,13 +210,12 @@ def run(job: dict, state) -> None:
         rep["fees"] = preorder.fee_line()
         if card:
             rep["research"] = {**card, "why_never_crossed": research.why_never_crossed(card, rep)}
-        rep["record"] = {"recorded": False, "why": "a last real card, already recorded"} if rep.get("stale") else company.record_check(rep)
+        rep["record"] = company.record_check(rep)
         rep["elapsed_ms"] = round((time.time() - job["started"]) * 1000)      # from the paper asked for to the verdict
         state.keep_check(rep)
         job["report"] = rep["hash"]
-        if not rep.get("stale"):
-            from . import vectors
-            vectors.note("crossing", rep["elapsed_ms"], rep, state)
+        from . import vectors
+        vectors.note("crossing", rep["elapsed_ms"], rep, state)
         d = rep["decision"]
         plan = d.get("plan") or {}
         if plan:
@@ -400,6 +399,27 @@ def _task_submit(args: dict, who: dict) -> dict:
     return {**out, **({"prize": {"paid": False, "why": capped}} if capped else {})}
 
 
+# each tool's description as the MCP registry lists it: one sentence of what it does and returns (under 160 characters);
+# a tool that moves devnet test money ends with "ask your human first"
+DESCRIPTIONS = {
+    "knos_cross": "Turns a paper id (DOI, arXiv, PubMed or OpenAlex) into a research card and a demand check, and returns each step with the Qloo call behind it.",
+    "knos_demand_check": "Checks who wants a product idea with Qloo taste data and returns the verdict with its audience and launch city, each traced to its Qloo call.",
+    "knos_milestones": "Lists every commitment on this server with its held order and its status.",
+    "knos_sign_in": "Returns a guest session token that the tools moving devnet test money accept; ask your human first.",
+    "knos_preorder": "Prepares a pre-order of an OPEN report and returns the page where your human's passkey approves it with devnet test money; ask your human first.",
+    "knos_evidence": "Posts a milestone's public evidence page, whose verified evidence releases the held devnet test money to the maker; ask your human first.",
+    "knos_task_submit": "Submits a whole train.py to the open round's sealed referee and returns its verdict, with a prize in devnet test money when it scores; ask your human first.",
+    "knos_templates": "Returns the brief templates Knos offers, from AI model evals to regulatory milestones taken from OpenRegulatory's open templates.",
+    "knos_project_open": "Opens a project whose milestones each hold devnet test money until a result and an independent check arrive; ask your human first.",
+    "knos_project_claim": "Claims a milestone as its maker and binds the wallet it pays in devnet test money; ask your human first.",
+    "knos_project_post": "Posts a result or a check page for a milestone, and the referee panel releases its devnet test money when both are in; ask your human first.",
+    "knos_milestone_submit": "Sends your whole train.py to a milestone's sealed referee and releases its devnet test money to you when the verdict meets the target; ask your human first.",
+    "knos_ready": "Checks a brief before any money locks and returns Ready, or the missing fields with a rewrite template, sending nothing.",
+    "knos_usage": "Returns how many times each Knos tool was called over MCP since this server started, with the token use recorded for Knos's own goals.",
+    "knos_milestone_prompt": "Returns the locked intent of a milestone you work on, with its criteria hash and the token budget for answering it.",
+}
+
+
 OPEN = {"knos_sign_in"}              # writes nothing anyone relies on: it is how a person gets the session the others need
 
 
@@ -501,7 +521,7 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
         except Exception:  # noqa: BLE001
             extra = []
         from .product_routes import MCP_TOOLS
-        tools = [annotate(t) for t in TOOLS + MCP_TOOLS + extra]
+        tools = [annotate({**t, "description": DESCRIPTIONS.get(t["name"], t["description"])}) for t in TOOLS + MCP_TOOLS + extra]
         return ok({"tools": [t for t in tools if in_store(t["name"])] if store else tools})
     if method == "tools/call":
         name, args = params.get("name"), params.get("arguments") or {}

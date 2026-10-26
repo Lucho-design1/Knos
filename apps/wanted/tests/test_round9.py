@@ -86,7 +86,7 @@ def test_mcp_covers_the_roles_with_a_confirm_convention(app):
             "knos_memory_recall"} | MONEY_TOOLS <= names
     for t in lst["result"]["tools"]:
         if t["name"] in MONEY_TOOLS:
-            assert "CONFIRM FIRST" in t["description"] and "TEST money" in t["description"]
+            assert t["description"].endswith("ask your human first.") and "test money" in t["description"] and len(t["description"]) < 160
         if t["name"] in MONEY_TOOLS - {"knos_sign_in"}:          # a person's session, or a Bearer header alone (T12)
             assert "session" in t["inputSchema"]["properties"] and "session" not in t["inputSchema"]["required"]
     s, x, _ = call(base, "/mcp", {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
