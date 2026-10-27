@@ -474,7 +474,7 @@ def test_knos_invoice_writes_a_page_and_a_csv(capsys, world, tmp_path):
 
 def test_the_records_commands_are_listed_under_money_in_the_help(capsys):
     rc, text, _ = run(capsys, "--help")
-    money = text[text.index("For money"):]
+    money = text[text.index("Paid on proof"):text.index("Run Knos")]
     assert rc == 0 and all(f"│ {name} " in money for name in ("receipts", "statement", "export", "invoice"))
     assert "--meter" in " ".join(money.split())                                     # the meter's statement is named where statements are
     rc, text, _ = run(capsys, "statement", "--help")

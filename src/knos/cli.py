@@ -1210,7 +1210,7 @@ CHECK_DEMAND, HOLD_MONEY, PAID_ON_PROOF, RUN_KNOS = "Check demand", "Hold money"
 FLOW = (CHECK_DEMAND, HOLD_MONEY, PAID_ON_PROOF, RUN_KNOS)
 _HEADINGS = {CHECK_DEMAND: ("demand", "idt", "idea"),
              HOLD_MONEY: ("fund-wallet", "balance", "bounty", "terms", "faucet", "advance", "budget", "boundary", "net", "exit"),
-             PAID_ON_PROOF: ("check", "receipt", "receipts", "record", "statement", "badge", "due", "claim", "settle", "review", "attest",
+             PAID_ON_PROOF: ("check", "receipt", "receipts", "record", "statement", "export", "invoice", "badge", "due", "claim", "settle", "review", "attest",
                              "relay", "work", "task", "proof", "judge", "accept", "verify", "preflight", "keep", "appeal", "outcome",
                              "referee", "cheats", "command", "canary", "mcp", "agent", "gate", "game")}
 
