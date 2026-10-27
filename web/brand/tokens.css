@@ -128,6 +128,7 @@ code, pre, kbd, .mono { font-family: var(--code); }
 .k-for{margin:var(--sp-5) 0 0;font-weight:600;font-size:var(--s1);max-width:40em;}
 .k-for+.k-mission{margin-top:var(--sp-2);}
 .k-wait{flex:none;align-self:center;padding-right:6px;}
+.k-guess{display:block;width:100%;max-width:22em;box-sizing:border-box;margin:0 0 var(--sp-2);padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font:400 var(--s0)/1.3 var(--text);}
 .k-proofs{list-style:none;margin:var(--sp-3) 0 0;padding:0;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:var(--s0);}
 .k-chip{margin:0;min-height:36px;padding:6px 12px;border:1px solid var(--line);border-radius:99px;background:transparent;color:var(--fg);font:500 var(--s0)/1.2 var(--text);cursor:pointer;}
 .k-chip:hover{background:var(--soft);}

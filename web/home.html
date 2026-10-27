@@ -77,6 +77,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
 <div class="k-hero" id="k-hero" data-api="@app" data-app="wanted.html">
   <p class="k-for" id="k-for">For anyone about to build or fund a product: see who wants it and where, then get paid only on proof.</p>
   <h1 id="k-mission" class="k-mission">See who wants your product, and where, before you build it</h1>
+  <input id="k-guess" class="k-guess" type="text" maxlength="60" autocomplete="off" spellcheck="false" placeholder="Where would you launch it? (optional)" aria-label="Where would you launch it? (optional)">
   <form class="k-ask" id="k-ask" autocomplete="off" role="search" aria-label="Check demand">
     <input id="k-q" name="q" type="text" aria-label="What are you about to build? An idea, or a paper's DOI" maxlength="500" placeholder="What are you about to build?" enterkeyhint="go" spellcheck="false">
     <button id="k-go" type="submit">Check demand</button> <span class="k-fine k-wait" data-wait>about 2 s</span>
@@ -259,6 +260,15 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
   const indexer = (ms) => { const a = ms.map((m) => m.affinity).filter(Number.isFinite), lo = Math.min(...a), hi = Math.max(...a);
     return (m) => !Number.isFinite(m && m.affinity) ? null : hi > lo ? Math.round((100 * (m.affinity - lo)) / (hi - lo)) : 100; };
   const INDEX = `<a href="https://qloo.com/use-cases/expand-to-a-new-market" target="_blank" rel="noopener">Qloo concentration index (0-100)</a>`;
+  // the reader's own call, first: "You said <city>. Qloo says <city>." with both cities' concentration indexes
+  const yourCall = (guess, terms, cities) => {
+    if (!terms) return `<p class="k-terms" data-guess>You said ${esc(guess)}. Qloo sets no launch city for this idea.</p>`;
+    const g = guess.toLowerCase().split(",")[0].trim(), mine = cities.find((c) => c.name.toLowerCase().includes(g)), top = cities.find((c) => c.name === terms.city);
+    const diff = mine && top && mine.index != null && top.index != null ? top.index - mine.index : null;
+    return `<p class="k-terms" data-guess${diff == null ? "" : ` data-diff="${diff}"`}>You said ${esc(guess)}. Qloo says ${esc(terms.city)}.${diff == null
+      ? ` Qloo's map has no cells in ${esc(guess)} for this idea.`
+      : mine === top ? ` The same city: index ${esc(top.index)}.` : ` Qloo concentration index: ${esc(top.index)} against ${esc(mine.index)} for ${esc(mine.name)}, ${esc(Math.abs(diff))} ${diff >= 0 ? "higher" : "lower"}.`}</p>`;
+  };
   // the launch terms a card draws (apps/wanted metros.launch_terms): a city only when Qloo matched a product to the idea
   const termsOf = (r) => r && r.terms && r.terms.city && (r.matches || []).length ? r.terms : null;
   const cityList = (r) => { const t = termsOf(r);
@@ -301,6 +311,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
     if (d.verdict === "OPEN" && !terms && (r.stage !== "verdict" || r.no_map)) [word, cls] = ["Not yet: Qloo sets no launch city for this idea", "refuse"];
     // the one city list of a result: the terms' Census metros, the launch city first (the map, the list, Claude alone, /r/)
     const cities = cityList(r);
+    const guess = label ? "" : slot.dataset.guess || "";
     const where = ((r.where || []).length ? r.where : (r.launch || {}).where || []).slice(0, 8), also = (r.also_love && r.also_love.domains) || [];
     const price = r.price || {}, tier = String(price.tier || "").toLowerCase();
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
@@ -319,6 +330,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
       `<button type="button" class="k-chip" data-pick="${esc(m.name)}">${esc(m.name)}</button>`).join(" ")} <button type="button" class="k-chip" data-none="${
       esc([lead.id, ...others.map((m) => m.id)].filter(Boolean).join(","))}">None of these</button>`}</p>` : "";
     return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}" data-not-prose>
+  ${guess ? yourCall(guess, terms, cities) : ""}
   ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}${r.nearest && limit ? `<p class="k-terms" data-qloo-limit-line>${esc(limit)}</p>` : ""}
   <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
   ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders.${chip("rule", "rule-target")} Every pre-order is refunded if the target is missed.</p>${terms.by_population ? `<p class="k-fine" data-part="by-population" data-pop-city="${esc(terms.by_population.city)}" data-pop-target="${esc(terms.by_population.target)}">By population: ${esc(terms.by_population.city)}, ${esc(terms.by_population.target)}.${chip("rule", "rule-population")} By Qloo taste: ${esc(terms.city)}, ${esc(terms.target)}.${chip("rule", "rule-target")}</p>` : ""}` : ""}
@@ -361,6 +373,7 @@ ${src(h, price.src)}</section>
     if (!v) { q.focus(); return; }
     go.disabled = true; root.setAttribute("aria-busy", "true");
     const ref = paper(v), t0 = performance.now();
+    slot.dataset.guess = (document.getElementById("k-guess")?.value || "").trim().slice(0, 60);
     said(ref ? "Reading the paper…" : "Asking Qloo…");
     try {
       // the verdict card first (verdict, matched product, audience); the map, also-loved and the launch terms follow
