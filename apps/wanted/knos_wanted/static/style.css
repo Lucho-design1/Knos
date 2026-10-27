@@ -84,7 +84,7 @@ code.url { background: var(--soft); padding: 3px 8px; border-radius: 6px; font-f
 /* the bar stays one line whatever the fonts: a part that grows (the mode badge's text once the status is read) would
    otherwise wrap Sign in to a second line and push the whole page down (a layout shift of 0.35 in Lighthouse) */
 .bar { flex-wrap: nowrap; } .brand { min-width: 0; }
-#whoBtn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 1 auto; }
+#whoBtn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 0 auto; }
 @media (max-width: 460px) { .badge { display: none; } }
 [dir="rtl"] #whoBtn { direction: rtl; }
 

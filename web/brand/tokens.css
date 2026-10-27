@@ -132,8 +132,7 @@ code, pre, kbd, .mono { font-family: var(--code); }
 .k-proofs{list-style:none;margin:var(--sp-3) 0 0;padding:0;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:var(--s0);}
 .k-chip{margin:0;min-height:36px;padding:6px 12px;border:1px solid var(--line);border-radius:99px;background:transparent;color:var(--fg);font:500 var(--s0)/1.2 var(--text);cursor:pointer;}
 .k-chip:hover{background:var(--soft);}
-.k-slot:empty{display:none;}
-.k-slot{margin-top:var(--sp-5);}
+.k-slot{margin-top:var(--sp-5);min-height:100svh;}   /* the card's room, kept from the first paint: its arrival moves nothing in view */
 .k-status{display:flex;gap:10px;align-items:center;color:var(--muted);}
 .k-spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:k-spin .8s linear infinite;}
 @keyframes k-spin{to{transform:rotate(360deg);}

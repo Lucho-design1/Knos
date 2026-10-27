@@ -22,6 +22,11 @@
     return j;
   };
   const get = async (path) => { const r = await fetch(API + path); if (!r.ok) throw new Error(`the server answered ${r.status}`); return r.json(); };
+  // a map's tiles are asked for when the map comes into view (a card below the screen, or folded, asks for none)
+  const tileIO = "IntersectionObserver" in window ? new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) {
+    tileIO.unobserve(e.target); for (const i of e.target.querySelectorAll("img[data-src]")) { i.src = i.dataset.src; i.removeAttribute("data-src"); } } }) : null;
+  new MutationObserver(() => { for (const m of slot.querySelectorAll(".k-osm:not([data-watched])")) { m.dataset.watched = "";
+    if (tileIO) tileIO.observe(m); else for (const i of m.querySelectorAll("img[data-src]")) i.src = i.dataset.src; } }).observe(slot, { childList: true, subtree: true });
   const said = (t) => { slot.innerHTML = `<p class="k-status" role="status"><span class="k-spin" aria-hidden="true"></span>${esc(t)}</p>`; };
 
   async function crossing(ref) {
@@ -58,7 +63,7 @@
     const n = 2 ** z, tiles = [];
     for (let tx = Math.floor(x0 / T); tx <= Math.floor((x0 + W) / T); tx++)
       for (let ty = Math.max(0, Math.floor(y0 / T)); ty <= Math.min(n - 1, Math.floor((y0 + H) / T)); ty++)
-        tiles.push(`<img class="k-tile" alt="" loading="lazy" src="https://tile.openstreetmap.org/${z}/${((tx % n) + n) % n}/${ty}.png" style="left:${(tx * T - x0).toFixed(0)}px;top:${(ty * T - y0).toFixed(0)}px">`);
+        tiles.push(`<img class="k-tile" alt="" data-src="https://tile.openstreetmap.org/${z}/${((tx % n) + n) % n}/${ty}.png" style="left:${(tx * T - x0).toFixed(0)}px;top:${(ty * T - y0).toFixed(0)}px">`);
     const heat = where.filter((w) => Number.isFinite(w.lat) && Number.isFinite(w.lon)).map((w) => { const [x, y] = px(w.lat, w.lon, z);
       return `<span class="k-heat" style="left:${(x - x0).toFixed(0)}px;top:${(y - y0).toFixed(0)}px"></span>`; }).join("");
     const pins = pts.map((c, i) => `<span class="k-pin" title="${esc(c.name)}" style="left:${(xy[i][0] - x0).toFixed(0)}px;top:${(xy[i][1] - y0).toFixed(0)}px">${i + 1}</span>`).join("");
