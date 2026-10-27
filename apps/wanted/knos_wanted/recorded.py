@@ -145,7 +145,7 @@ def honest(text: str, rep: dict) -> dict:
         from . import qloo_status
         line = qloo_status.limit_line()
         if line:
-            out = {**out, "qloo_limit": line}
+            out = {**out, "qloo_limit": line, "qloo_reset": qloo_status.reset_day()}
     return out
 
 
@@ -168,7 +168,8 @@ def _honest(text: str, rep: dict) -> dict:
         from . import qloo_rest
         qloo_rest._today()["recorded"] = qloo_rest._today().get("recorded", 0) + 1
         return {**n, "stage": n.get("stage") or "full", "qloo_down": {"code": code}, "stale": {"code": code, "from": n.get("made")},
-                "nearest": {"asked": text, "idea": n.get("idea"), "on": str(n.get("made") or "")[:10], "shared": near["count"]}}
+                "nearest": {"asked": text, "idea": n.get("idea"), "on": str(n.get("made") or "")[:10], "shared": near["count"]},
+                "nearest_next": near.get("next") or []}
     if near:
         return {**rep, "qloo_down": {"code": code}, "nearest_options": near["options"], "nearest_shared": near["count"]}
     return {**rep, "qloo_down": {"code": code}}

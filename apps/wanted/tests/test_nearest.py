@@ -30,9 +30,12 @@ def test_the_qloo_tags_names_count_too():
     assert nearest.find("an oral care subscription", ANSWERED)["report"]["idea"] == "a bamboo toothbrush brand"
 
 
-def test_under_2_shared_the_3_nearest_are_offered():
+def test_under_2_shared_only_ideas_sharing_a_stem_are_offered_and_none_shares_none():
     got = nearest.find("a vinyl record shop", ANSWERED)
-    assert "report" not in got and len(got["options"]) == 3
+    assert "report" not in got and got["options"] == [] and got["count"] == 0          # nothing shared: nobody's neighbour
+    got = nearest.find("a hydration tracker", ANSWERED)
+    assert got["options"] == ["a smart water bottle that glows"] and got["count"] == 1  # one stem, through a Qloo tag
+    assert nearest.find("a water bottle for hikers", ANSWERED)["next"] == ["a smart water bottle that glows"]
 
 
 def test_a_429_answers_from_the_nearest_recording(monkeypatch):
@@ -41,8 +44,8 @@ def test_a_429_answers_from_the_nearest_recording(monkeypatch):
     failed = {"idea": "a smart bottle that glows", "calls": [{"n": 1, "error": "HTTP 429: not sent: the month is used up"}], "decision": {"verdict": "CANNOT_DECIDE"}}
     out = recorded.honest("a smart bottle that glows", failed)
     assert out["nearest"] == {"asked": "a smart bottle that glows", "idea": "a smart water bottle that glows", "on": "2026-10-22", "shared": 3}
-    assert out["idea"] == "a smart water bottle that glows" and out["stale"]["code"] == 429
+    assert out["idea"] == "a smart water bottle that glows" and out["stale"]["code"] == 429 and out["nearest_next"] == ["a water bottle that harvests water from air"]
     out = recorded.honest("a vinyl record shop", {**failed, "idea": "a vinyl record shop"})
-    assert len(out["nearest_options"]) == 3 and "nearest" not in out
+    assert out["nearest_options"] == [] and "nearest" not in out
     exact = recorded.honest("a bamboo toothbrush brand", {**failed, "idea": "a bamboo toothbrush brand"})
     assert exact["idea"] == "a bamboo toothbrush brand" and exact["stale"] and "nearest" not in exact

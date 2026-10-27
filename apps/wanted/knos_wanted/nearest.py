@@ -39,11 +39,14 @@ def rank(idea: str, answered: list[dict]) -> list[tuple[int, dict]]:
 
 
 def find(idea: str, answered: list[dict]) -> dict | None:
-    """{"report", "count"} when the nearest shares at least MIN_SHARED stems; else {"options": the 3 nearest ideas}."""
+    """{"report", "count", "next"} when the nearest shares at least MIN_SHARED stems (next: the 3 after it); else
+    {"options": the 3 nearest}. An answered idea that shares no stem with this one is nobody's neighbour: it is never
+    offered, so two ideas with nothing in common with the answers get no options, not the same newest three."""
     ranked = rank(idea, answered)
     if not ranked:
         return None
     n, best = ranked[0]
+    near = [str(r.get("idea") or "") for c, r in ranked if c >= 1]
     if n >= MIN_SHARED:
-        return {"report": best, "count": n}
-    return {"options": [str(r.get("idea") or "") for _, r in ranked[:OFFER]], "count": n}
+        return {"report": best, "count": n, "next": near[1:1 + OFFER]}
+    return {"options": near[:OFFER], "count": n}

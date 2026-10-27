@@ -628,10 +628,14 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
                     out = {**out, "product": None, "suggested_product": None, "product_line": "Name the product this result enables"}
             elif name == "knos_demand_check":
                 opts = {k: args[k] for k in qloo_families.FIELDS if k in args}
-                rep = check.demand_check(str(args.get("idea") or ""), args.get("place"), args.get("leader"), client=state.rest, options=opts)
+                idea = str(args.get("idea") or "")
+                rep = check.demand_check(idea, args.get("place"), args.get("leader"), client=state.rest, options=opts)
+                from . import recorded                   # Qloo not answering: the recording, as the REST route gives it
+                rep = recorded.honest(idea, rep)
                 state.keep_check(rep)
-                out = {"report": rep["hash"], "decision": rep["decision"], "families": rep.get("families") or {},
-                       "grounding": rep.get("grounding") or {}, "calls": rep["calls"]}
+                out = {"report": rep["hash"], "idea": rep.get("idea"), "decision": rep["decision"], "families": rep.get("families") or {},
+                       "grounding": rep.get("grounding") or {}, "calls": rep["calls"],
+                       **{k: rep[k] for k in ("stale", "nearest", "nearest_next", "nearest_options", "qloo_limit", "qloo_reset") if rep.get(k)}}
             elif name == "knos_crossings":
                 out = {"crossings": crossings(state)}
             elif name == "knos_milestones":

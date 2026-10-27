@@ -19,6 +19,15 @@ def _when(at: str | None) -> str | None:
         return at
 
 
+def reset_day() -> str | None:
+    """The day Qloo's month resets, as the card says it ("20 Nov 2026"), from Qloo's own header; None before it is read."""
+    at = str(qloo_rest.LIMITS.get("month_reset_at") or "")
+    try:
+        return time.strftime("%d %b %Y", time.strptime(at[:19], "%Y-%m-%dT%H:%M:%S")).lstrip("0")
+    except ValueError:
+        return None
+
+
 def limit_line() -> str | None:
     """While Qloo's month is used up (its own header says 0 calls left): the sentence every limited answer says."""
     lim = qloo_rest.LIMITS

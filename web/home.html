@@ -295,12 +295,14 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
       <p class="k-fine">Model alone: ${esc(m.model || "Claude")}, asked once with no Qloo data, ${esc(String(m.at || "").slice(0, 10))}.${chip("model", "model")}</p></div>`;
   };
   // Qloo cannot answer and no idea it answered shares 2 words with this one (apps/wanted nearest.py): the 3 nearest
+  const ideaButtons = (list) => (list || []).map((x) => `<button type="button" class="k-chip" data-q="${esc(x)}">${esc(x)}</button>`).join(" ");
   const options = (r) => `<article class="k-card k-unknown" data-nearest-options data-not-prose>
-  <header class="k-card-head"><p class="k-kick">${esc(r.idea || "")}</p><h2 class="k-verdict">No idea Qloo has answered is close to this one yet</h2>
-  <p class="k-why">The nearest ideas Qloo has answered:</p><p>${r.nearest_options.map((x) => `<button type="button" class="k-chip" data-q="${esc(x)}">${esc(x)}</button>`).join(" ")}</p></header></article>`;
+  <header class="k-card-head"><p class="k-kick">${esc(r.idea || "")}</p><h2 class="k-verdict">Qloo has not answered an idea close to this yet.${r.qloo_reset ? ` Its monthly limit resets on ${esc(r.qloo_reset)}.` : ""}</h2>
+  ${(r.nearest_options || []).length ? `<p class="k-why">The closest ideas it has answered:</p><p>${ideaButtons(r.nearest_options)}</p>` : ""}
+  <p class="k-next">A Ready brief needs no Qloo: <a href="${esc(APP)}#projects" data-ready-path>write the brief for this idea</a>.</p></header></article>`;
   function card(r, label) {
     style();
-    if ((r.nearest_options || []).length) return options(r);
+    if (r.nearest_options || (r.qloo_down && !r.stale && !r.nearest)) return options(r);
     const d = r.decision || {}, p = d.plan || {}, h = r.hash;
     rcpt = /^[0-9a-f]{16}/.test(h || "") ? h.slice(0, 16) : "";
     let [word, cls] = WORD[d.verdict] || [String(d.verdict || "No verdict"), "unknown"];
@@ -323,8 +325,10 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
     if (empty && d.verdict !== "OPEN" && !r.qloo_down) [word, cls] = ["No taste data from Qloo", "unknown"];   // a real empty answer only
     // Qloo not answering (apps/wanted recorded.py): said first, with the sample's last real card when there is one
     const at = (t) => String(t || "").replace("T", " ").slice(0, 16) + " UTC";
-    const limit = r.qloo_limit || "";      // Qloo's month used up (apps/wanted qloo_status.limit_line): said instead of "try again"
-    const down = r.nearest ? `Nearest idea Qloo has answered: ${r.nearest.idea}, live on ${r.nearest.on}` : limit ? limit : r.stale ? `Qloo is not answering right now (HTTP ${r.stale.code}). Showing the last real answer from ${at(r.stale.from)}.`
+    // the card's dated label: what Qloo answered, and when; Qloo's month only here (and on /status/), never on the first screen
+    const reset = r.qloo_reset ? ` Qloo's monthly limit resets on ${r.qloo_reset}.` : "";
+    const down = r.nearest ? `Qloo has not answered your exact idea yet. Closest idea it has answered: ${r.nearest.idea}, answered ${r.nearest.on}.`
+      : r.stale && reset ? `Recorded ${String(r.stale.from || r.made || "").slice(0, 10)}.${reset}` : r.stale ? `Qloo is not answering right now (HTTP ${r.stale.code}). Showing the last real answer from ${at(r.stale.from)}.`
       : r.qloo_down ? `Qloo is not answering right now (HTTP ${r.qloo_down.code}). Try again in a few minutes.` : "";
     const undecided = d.verdict === "CANNOT_DECIDE" || (r.qloo_down && !r.stale);   // nothing to share or launch yet
     const others = (r.matches || []).filter((m) => m && m.name && (!lead || m.id !== lead.id)).slice(0, 3);
@@ -333,7 +337,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
       esc([lead.id, ...others.map((m) => m.id)].filter(Boolean).join(","))}">None of these</button>`}</p>` : "";
     return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}" data-not-prose>
   ${guess ? yourCall(guess, terms, cities) : ""}
-  ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}${r.nearest && limit ? `<p class="k-terms" data-qloo-limit-line>${esc(limit)}</p>` : ""}
+  ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}${r.nearest && reset ? `<p class="k-fine k-terms" data-qloo-limit-line>${esc(reset.trim())}</p>` : ""}
   <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
   ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders.${chip("rule", "rule-target")} Every pre-order is refunded if the target is missed.</p>${terms.by_population ? `<p class="k-fine" data-part="by-population" data-pop-city="${esc(terms.by_population.city)}" data-pop-target="${esc(terms.by_population.target)}">By population: ${esc(terms.by_population.city)}, ${esc(terms.by_population.target)}.${chip("rule", "rule-population")} By Qloo taste: ${esc(terms.city)}, ${esc(terms.target)}.${chip("rule", "rule-target")}</p>` : ""}` : ""}
   ${r.signals && r.signals.line ? `<p class="k-fine" data-part="signals">${esc(r.signals.line)}</p>` : ""}
@@ -362,6 +366,7 @@ ${src(h, price.src)}</section>
     ${more(r)}
   </div>`}
   ${calls(r)}
+  ${r.nearest && (r.nearest_next || []).length ? `<p class="k-terms" data-nearest-next>Other ideas Qloo has answered: ${ideaButtons(r.nearest_next)}</p>` : ""}
   <details class="k-claude" data-claude hidden><summary>Claude alone</summary><div class="k-claude-body" data-claude-body></div></details>
   <footer class="k-card-foot">${rcpt ? `<p class="k-fine"><a href="${esc(API)}/receipts/${esc(rcpt)}" target="_blank" rel="noopener" data-receipts>Receipts</a></p>` : ""}<p class="k-fine">Aggregate taste from Qloo: not causal, not a forecast, not about any one person.${
     HEALTH.test(r.idea || "") ? " Not medical advice: Qloo has no medical demand." : ""}</p>
@@ -413,12 +418,7 @@ ${src(h, price.src)}</section>
     const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); then(); } });
     io.observe(el);
   };
-  const banner = (line) => { const p = root.querySelector("[data-qloo-limit]");
-    if (!p || line === undefined) return;
-    p.innerHTML = line ? `<a href="${esc(API)}/status/qloo">${esc(line)}</a>` : "";
-    p.hidden = !line; };
   const draw = (r) => {
-    if (r && "qloo_line" in r) banner(r.qloo_line);
     if (!r || slot.dataset.ms || slot.querySelector(".k-status")) return;
     // a finished real result, whole, before any press: the recorded sample whose verdict is Open (vectors.open_sample),
     // labelled with the day Qloo answered it; else the last real check, folded to one line
@@ -476,25 +476,22 @@ ${src(h, price.src)}</section>
 
   // each Qloo call of the card, in its order, as a row of the timeline: what it asked, what it decides, its ms, live or
   // cached; the counter counts them as they come, and the month's calls left are read once from /api/qloo/status
-  let month = null;
   const play = (box, r) => {
     box.dataset.played = "1";
     const rows = box.querySelector("[data-rows]"), counter = box.querySelector("[data-counter]");
     const decides = new Set((r.signals && r.signals.decides) || []);
     const list = r.calls.filter((c) => c && typeof c === "object");
     let live = 0, cached = 0, i = 0;
-    const left = () => month && month.month_left != null ? ` · Qloo's month: ${Number(month.month_left).toLocaleString("en-US")} of ${Number(month.month_limit).toLocaleString("en-US")} calls left` : "";
     const step = () => {
       if (!box.isConnected || i >= list.length) return;
       const c = list[i++];
       c.cached ? cached++ : live++;
       rows.insertAdjacentHTML("beforeend", `<li data-call="${esc(c.n)}">${esc(c.call || "")} · ${esc(c.what || c.effect || "")} · ${decides.size ? (decides.has(c.n) ? "decides" : "context") : "the verdict"} · ${
         Number.isFinite(c.ms) ? `${esc(c.ms)} ms` : `recorded ${esc(String(r.made || c.at || "").slice(0, 10))}`} · ${c.cached ? "cached" : "live"}</li>`);
-      counter.textContent = `Qloo calls this check: ${i} (live ${live}, cached ${cached})${left()}`;
+      counter.textContent = `Qloo calls this check: ${i} (live ${live}, cached ${cached})`;
       setTimeout(step, 90);
     };
     step();
-    if (!month) get("/api/qloo/status").then((s) => { month = s || {}; if (box.isConnected) counter.textContent = `Qloo calls this check: ${i} (live ${live}, cached ${cached})${left()}`; }).catch(() => {});
   };
   new MutationObserver(() => {
     const box = slot.querySelector("[data-timeline]:not([data-played])");
