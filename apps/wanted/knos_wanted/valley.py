@@ -613,6 +613,21 @@ def summaries_json(take: int = 10) -> bytes:
     return _build_summaries(take)
 
 
+def list_html(take: int = 10) -> str:
+    """The projects list as static/valley.js draws it (#projList), for the page itself: there at the first paint."""
+    from html import escape as e
+    rows = json.loads(summaries_json(take)).get("projects") or []
+    out = []
+    for p in rows:
+        ms = p.get("milestones") or []
+        locked, done = sum(m.get("locked_units") or 0 for m in ms), sum(1 for m in ms if m.get("status") == "released")
+        reg = p.get("regulatory") or []
+        out.append(f'<li class="card pcard"><a href="#projects={e(str(p["id"]))}"><strong>{e(str(p.get("title") or ""))}</strong></a>'
+                   f'<p class="small muted">{e(str(p.get("template_name") or ""))}{" · regulated (" + e(", ".join(reg).upper()) + ")" if reg else ""}'
+                   f'{" · one-day sandbox" if p.get("sandbox") else ""}</p><p class="small">{done} of {len(ms)} milestones released · {locked} test units held</p></li>')
+    return "".join(out)
+
+
 def _build_summaries(take: int) -> bytes:
     rows = [summary(p) for p in _all("projects") if not p.get("unlisted")][:take]
     body = json.dumps({"projects": rows, "take": take, "shape": "summary", "one": "/api/project?id=<id>"}, default=str).encode()

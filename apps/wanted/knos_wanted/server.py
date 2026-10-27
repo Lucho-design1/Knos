@@ -642,6 +642,8 @@ def make_handler(state: State):
                 from . import vectors
                 page = (STATIC / "index.html").read_text(encoding="utf-8")
                 page = page if u.path == "/paid" else home_page(page)
+                # the newest projects in the page itself: /app/#projects shows its list at the first paint
+                page = page.replace('<ul id="projList" class="plist"></ul>', f'<ul id="projList" class="plist">{valley.list_html(10)}</ul>', 1)
                 pr = vectors.proof().get("proof")
                 if pr:                                        # the proof shown first, in the page itself (at the first paint)
                     data = json.dumps(pr, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
