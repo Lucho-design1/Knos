@@ -8,7 +8,6 @@ derived values only (labels, Census metro names, numbers), never a Qloo answer.
 """
 from __future__ import annotations
 
-import copy
 import html
 import json
 import sys
@@ -16,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "apps" / "wanted"), str(ROOT / "src")]
-from knos_wanted import check, metros, signals  # noqa: E402
+from knos_wanted import signals  # noqa: E402
 
 OUT = ROOT / "docs" / "reference" / "qloo_ablation.json"
 PAGE = ROOT / "web" / "how-we-test.html"
@@ -24,31 +23,8 @@ START, END = "<!-- ablation:start -->", "<!-- ablation:end -->"
 FAMILIES = signals.FAMILIES        # one table of call families for this script and the card (knos_wanted.signals)
 
 
-def outcome(rep: dict) -> dict:
-    d = check.decide(rep, True, rep.get("idea") or "")
-    t = metros.terms(rep.get("where") or [])
-    return {"label": d["verdict"], "city": t["city"] if t else None, "target": t["target"] if t else None}
-
-
-def used(rep: dict, fields: dict) -> bool:
-    return any(rep.get(k) not in (None, [], {}) for k in fields)
-
-
 def rows(cards: dict) -> list[dict]:
-    out = []
-    for key in sorted(cards):
-        rep = cards[key]
-        before = outcome(rep)
-        for fam, fields in FAMILIES.items():
-            if not used(rep, fields):
-                continue
-            after = outcome({**copy.deepcopy(rep), **copy.deepcopy(fields)})
-            out.append({"chip": rep.get("idea"), "removed": fam, "city": [before["city"], after["city"]],
-                        "target": [before["target"], after["target"]], "label": [before["label"], after["label"]]})
-        nothing = check.decide(rep, False, rep.get("idea") or "")
-        out.append({"chip": rep.get("idea"), "removed": "every Qloo answer", "city": [before["city"], None], "target": [before["target"], None],
-                    "label": [before["label"], nothing["verdict"]]})
-    return out
+    return [r for key in sorted(cards) for r in signals.ablate(cards[key])]       # the app's own rule (knos_wanted.signals)
 
 
 def table(rs: list[dict]) -> str:

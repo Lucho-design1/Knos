@@ -78,6 +78,8 @@ def load(file: str | None = None) -> int:
     alone = lambda v: {**v, "model_alone": {f: model[key(v.get("idea"))].get(f) for f in MODEL_KEYS}} if key(v.get("idea")) in model else v  # noqa: E731
     cards = {k: alone(v) for k, v in cards.items()}
     answered = {k: alone(v) for k, v in answered.items()}
+    cards = {k: {**v, "gap": signals.gap(v)} for k, v in cards.items()}          # the model's city beside Qloo's, the flip, what was rejected
+    answered = {k: {**v, "gap": signals.gap(v)} for k, v in answered.items()}
     with _lock:
         _model.update(model)
         _answered.update(answered)
