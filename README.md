@@ -20,13 +20,13 @@ Devnet, test money, no customers yet.
 
 ```mermaid
 flowchart TB
-    idea["A paper or an idea"] --> demand["Demand check on Qloo: who wants it, where, at what price"]
+    idea["A paper or an idea"] --> demand["Demand check on Qloo: who wants it, the launch city and the pre-order target"]
     demand --> ready["Ready brief: each milestone has a target, a checker and a deadline, locked by a hash"]
     ready --> held["Backers pre-order or fund milestones; the money is held on Solana until the proof passes"]
     held --> proof["The maker sends the proof: GitHub-signed checks, verified on chain, or 2 of 3 referees"]
     proof -->|verified| paid["The maker is paid for that milestone"]
     proof -->|not verified in time| back["Nobody is paid; the money goes back to the backers"]
-    paid --> record["Each payment and refund is kept in the public Knos record"]
+    paid --> record["Each payment and refund is kept in the Knos record in Sibyl, anchored on Solana"]
     back --> record
 ```
 
