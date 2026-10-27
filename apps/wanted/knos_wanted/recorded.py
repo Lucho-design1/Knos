@@ -26,6 +26,8 @@ WRITE_EVERY_S = 600
 _lock = threading.Lock()
 _last: dict[str, dict] = {}
 _answered: dict[str, dict] = {}          # every other idea Qloo answered, kept the same private way (nearest.py reads them)
+_model: dict[str, dict] = {}             # the model's own answer for an idea, with no Qloo (claude -p), kept the same way
+MODEL_KEYS = ("city", "who", "why", "model", "at")
 _write = {"at": 0.0, "timer": None}
 
 
@@ -72,7 +74,12 @@ def load(file: str | None = None) -> int:
     cards = {k: metros.with_terms(check.retie(check.scrub(v))) for k, v in (doc.get("cards") or {}).items() if k in CHIP_KEYS and isinstance(v, dict) and real(v)}
     cards = {k: {**v, "signals": signals.for_card(v)} for k, v in cards.items()}
     answered = {key(k): metros.with_terms(check.retie(check.scrub(v))) for k, v in (doc.get("answered") or {}).items() if isinstance(v, dict) and real(v)}
+    model = {key(k): v for k, v in (doc.get("model_alone") or {}).items() if isinstance(v, dict) and v.get("city")}
+    alone = lambda v: {**v, "model_alone": {f: model[key(v.get("idea"))].get(f) for f in MODEL_KEYS}} if key(v.get("idea")) in model else v  # noqa: E731
+    cards = {k: alone(v) for k, v in cards.items()}
+    answered = {k: alone(v) for k, v in answered.items()}
     with _lock:
+        _model.update(model)
         _answered.update(answered)
         for k, v in cards.items():
             if k not in _last or (v.get("made") or "") > (_last[k].get("made") or ""):
@@ -85,7 +92,8 @@ def _upload() -> None:
     k, sid = os.environ.get("KNOS_RECORDED_UPLOAD_KEY"), os.environ.get("RENDER_SERVICE_ID")
     with _lock:
         _write.update(at=time.time(), timer=None)
-        doc = {"v": 1, "about": "the sample chips' last real full cards (private: a Render secret file, never public)", "cards": dict(_last), "answered": dict(_answered)}
+        doc = {"v": 1, "about": "the sample chips' last real full cards (private: a Render secret file, never public)", "cards": dict(_last), "answered": dict(_answered),
+               "model_alone": dict(_model)}
     if not (k and sid):
         return
     body = json.dumps({"content": json.dumps(doc, separators=(",", ":"), ensure_ascii=False)}).encode()

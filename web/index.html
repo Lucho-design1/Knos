@@ -461,6 +461,13 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
   <header class="k-card-head"><p class="k-kick">${esc(r.idea || "")} · without Qloo</p><h2 class="k-verdict">${esc(WORD.CANNOT_DECIDE[0])}</h2>
   <p class="k-why">With every Qloo answer removed there is no launch city and no pre-order target, so pre-orders cannot open.</p>
   <button type="button" class="k-chip" data-without aria-pressed="true">Without Qloo</button></header></article>`;
+  slot.addEventListener("click", (ev) => {        // With Qloo / Model alone: the panel beside the card's own answer
+    const v = ev.target instanceof Element && ev.target.closest("[data-view]");
+    if (!v) return;
+    const k = v.closest(".k-card"), model = v.dataset.view === "model";
+    k.querySelectorAll("[data-view]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.view === v.dataset.view)));
+    k.querySelector("[data-model-panel]")?.toggleAttribute("hidden", !model);
+  });
   slot.addEventListener("click", (ev) => {
     const b = ev.target instanceof Element && ev.target.closest("[data-without]");
     if (!b || !slot.last) return;
@@ -471,7 +478,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
   // the lists and the calls panel are styled when a card first needs them: the first screen's stylesheet stays within its
   // weight (tests/web/perf.mjs)
   const style = () => { if (document.getElementById("k-card-css")) return;
-    document.head.insertAdjacentHTML("beforeend", `<style id="k-card-css">.k-vals{margin:0;padding-left:1.1em}.k-vals li{margin:0 0 4px}.k-val{color:inherit;text-decoration:none}.k-val:hover{text-decoration:underline}.k-calls{margin:var(--sp-3) var(--sp-5);font-size:var(--s-1)}.k-calls ol{margin:var(--sp-2) 0 0;padding-left:1.1em}.k-calls li{margin:0 0 4px;overflow-wrap:anywhere}</style>`); };
+    document.head.insertAdjacentHTML("beforeend", `<style id="k-card-css">.k-vals{margin:0;padding-left:1.1em}.k-vals li{margin:0 0 4px}.k-val{color:inherit;text-decoration:none}.k-val:hover{text-decoration:underline}.k-calls{margin:var(--sp-3) var(--sp-5);font-size:var(--s-1)}.k-calls ol{margin:var(--sp-2) 0 0;padding-left:1.1em}.k-calls li{margin:0 0 4px;overflow-wrap:anywhere}.k-switch{display:inline-flex;gap:4px;margin-left:6px}.k-model{margin:var(--sp-3) var(--sp-5)}.k-vs-t{width:100%;border-collapse:collapse;font-size:var(--s0)}.k-vs-t th,.k-vs-t td{text-align:left;vertical-align:top;padding:6px 8px;border-top:1px solid var(--line);overflow-wrap:anywhere}.k-vs-t mark{background:color-mix(in srgb,var(--accent) 22%,transparent);color:inherit;border-radius:3px;padding:0 2px}</style>`); };
   function calls(r) {
     style();
     const fed = {}, add = (n, part) => { if (n != null) (fed[n] ||= new Set()).add(part); };
@@ -498,11 +505,25 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
   const WORD = { OPEN:["Open for pre-orders", "open"], REFUSE: ["Not yet: pre-orders stay closed", "refuse"], CANNOT_DECIDE: ["Qloo cannot decide this one", "unknown"] };
   const TIERS = ["budget", "mid", "premium", "luxury"];
   const HEALTH = /\b(health\w*|patient\w*|medic\w*|clinic\w*|disease\w*|drug\w*|therap\w*|diagnos\w*|supplement\w*|glucose|diabet\w*)\b/i;
+  // the model's own answer for the idea (claude -p, no Qloo, recorded with the card), beside Knos's; what differs is marked
+  const modelPanel = (r, terms, who) => {
+    const m = r.model_alone;
+    if (!m || !m.city) return `<div class="k-model" data-model-panel hidden><p class="k-none" data-model-none>Model-alone answer not recorded for this idea</p></div>`;
+    const city = terms ? terms.city : "no launch city", head = (c) => String(c || "").split(/[-,]/)[0].trim().toLowerCase();
+    const same = terms && head(m.city) === head(city);
+    const cell = (v, diff) => diff ? `<mark>${esc(v)}</mark>` : esc(v);
+    return `<div class="k-model" data-model-panel hidden><table class="k-vs-t" data-not-prose><thead><tr><th scope="col"></th><th scope="col">Knos with Qloo</th><th scope="col">Model alone</th></tr></thead><tbody>
+      <tr data-row="city"><th scope="row">Launch city</th><td data-knos>${cell(city, !same)}</td><td data-model>${cell(m.city, !same)}</td></tr>
+      <tr data-row="who"><th scope="row">Who</th><td data-knos>${cell(who || "Qloo named no audience", true)}</td><td data-model>${cell(m.who || "", true)}</td></tr>
+      <tr data-row="why"><th scope="row">Why</th><td data-knos>${esc(terms ? `Qloo's heatmap: the highest lift, ${terms.cells} cells` : "Qloo's map names no launch city")}</td><td data-model>${esc(m.why || "")}</td></tr></tbody></table>
+      <p class="k-fine">Model alone: ${esc(m.model || "Claude")}, asked once with no Qloo data, ${esc(String(m.at || "").slice(0, 10))}.</p></div>`;
+  };
   // Qloo cannot answer and no idea it answered shares 2 words with this one (apps/wanted nearest.py): the 3 nearest
   const options = (r) => `<article class="k-card k-unknown" data-nearest-options data-not-prose>
   <header class="k-card-head"><p class="k-kick">${esc(r.idea || "")}</p><h2 class="k-verdict">No idea Qloo has answered is close to this one yet</h2>
   <p class="k-why">The nearest ideas Qloo has answered:</p><p>${r.nearest_options.map((x) => `<button type="button" class="k-chip" data-q="${esc(x)}">${esc(x)}</button>`).join(" ")}</p></header></article>`;
   function card(r, label) {
+    style();
     if ((r.nearest_options || []).length) return options(r);
     const d = r.decision || {}, p = d.plan || {}, h = r.hash;
     let [word, cls] = WORD[d.verdict] || [String(d.verdict || "No verdict"), "unknown"];
@@ -538,7 +559,9 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
   ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders. Every pre-order is refunded if the target is missed.</p>${terms.by_population ? `<p class="k-fine" data-part="by-population" data-pop-city="${esc(terms.by_population.city)}" data-pop-target="${esc(terms.by_population.target)}">By population: ${esc(terms.by_population.city)}, ${esc(terms.by_population.target)}. By Qloo taste: ${esc(terms.city)}, ${esc(terms.target)}.</p>` : ""}` : ""}
   ${r.signals && r.signals.line ? `<p class="k-fine" data-part="signals">${esc(r.signals.line)}</p>` : ""}
   ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}${trendLine(r)}
-  ${r.decision ? `<button type="button" class="k-chip" data-without aria-pressed="false">Without Qloo</button>` : ""}</header>
+  ${r.decision ? `<button type="button" class="k-chip" data-without aria-pressed="false">Without Qloo</button>` : ""}
+  ${r.decision ? `<span class="k-switch" role="group" aria-label="With Qloo or the model alone"><button type="button" class="k-chip" data-view="qloo" aria-pressed="true">With Qloo</button><button type="button" class="k-chip" data-view="model" aria-pressed="false">Model alone</button></span>` : ""}</header>
+  ${r.decision ? modelPanel(r, terms, [age, gender].filter(Boolean).join(", ") || segs.join(", ")) : ""}
   ${empty && r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}
   ${empty && !r.qloo_down ? `<p class="k-next" data-part="next">Qloo has no taste data for this yet. Name who it is for and what it is like, as in "a vegan meal kit for students, like HelloFresh". Science, B2B or lab work: <a href="${esc(API)}/companies">companies mode</a>.</p>
   <form class="k-like" data-like><label>Most like <input name="like" maxlength="80" placeholder="a product or brand you know" aria-label="What is it most like?"></label> <button type="submit">Check</button></form>` : `<div class="k-parts">`}

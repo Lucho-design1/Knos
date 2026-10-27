@@ -60,7 +60,8 @@ try {
     const p = await cx.newPage();
     p.on("pageerror", (e) => errors.push(`${w}: ${e.message}`));
     await p.goto(SITE + "?t=" + Date.now(), { waitUntil: "load" });
-    await p.waitForFunction(() => { const b = document.querySelector("[data-qloo-limit]"); return b && !b.hidden && b.textContent.trim(); }, null, { timeout: 30000 }).catch(() => {});
+    // the line comes with the answer drawn at load (GET /api/proof); the page's build-time copy of it can be older
+    await p.waitForSelector("#k-card > .k-card", { timeout: 60000 }).catch(() => {});
     const banner = await p.evaluate(() => document.querySelector("[data-qloo-limit]")?.textContent.trim() || "");
     ok(banner === LINE, `${w} ${scheme}: the banner says "${banner}"`);
     for (const idea of ["a vintage vinyl record shop", "a crypto savings app for students"]) {
@@ -99,7 +100,8 @@ ok(rc.product === null && rc.product_line === "Name the product this result enab
 // no "CHAMPION" in a public answer, nor in the server's source
 const tl = await post("/mcp", { jsonrpc: "2.0", id: 1, method: "tools/list" });
 const answers = [JSON.stringify(us), JSON.stringify(st), JSON.stringify(q), JSON.stringify(tl), JSON.stringify((await getj("/api/usage")).body), JSON.stringify((await getj("/openapi.json")).body)];
-const grep = execFileSync("git", ["-C", ROOT, "grep", "-c", "CHAMPION", "--", "apps/wanted/knos_wanted", "src/knos"], { encoding: "utf8" }).trim();
+let grep = "";                                              // git grep exits 1 when nothing matches
+try { grep = execFileSync("git", ["-C", ROOT, "grep", "-c", "CHAMPION", "--", "apps/wanted/knos_wanted", "src/knos"], { encoding: "utf8" }).trim(); } catch (e) { grep = e.status === 1 ? "" : `git grep failed: ${e.message}`; }
 ok(!answers.some((a) => a.includes("CHAMPION")) && grep === "", `"CHAMPION": ${answers.filter((a) => a.includes("CHAMPION")).length} public answers, git grep in the server's source ${grep || "0"}`);
 lines.push(fails ? `FAIL test_quota_honest: ${fails} check(s) failed`
   : `PASS test_quota_honest: month_left 0 said as "${LINE}" on the banner, the cards, REST, MCP and the CLI, never "few minutes"; /api/status limited; taste 503 JSON; GET /mcp 200; 0 goals, 0 task rows, 0 "CHAMPION"`);
