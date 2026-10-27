@@ -386,8 +386,8 @@ def retie(rep: dict) -> dict:
         return rep
     gone = [m for m in rep["matches"] if m not in keep]
     out = {**rep, "matches": keep,
-           "unrelated": [{"name": m.get("name"), "why": "shares no Qloo tag with the idea and does not name what it is"} for m in gone]
-           + list(rep.get("unrelated") or [])}
+           "unrelated": list(rep.get("unrelated") or [])       # the dropped ones last: the refusal names the nearest results first
+           + [{"name": m.get("name"), "why": "shares no Qloo tag with the idea and does not name what it is"} for m in gone]}
     ids = {m.get("id") for m in keep}
     lead = rep.get("leader") if isinstance(rep.get("leader"), dict) and rep["leader"].get("id") in ids else None
     out["leader"] = lead or (max(keep, key=lambda m: len(m.get("matched_words") or []) + 2 * len(m.get("name_words") or []) + (m.get("popularity") or 0)) if keep else None)
