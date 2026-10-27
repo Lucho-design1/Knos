@@ -246,7 +246,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
     const wants = (r.who_wants || []).filter((a) => a && a.name && a.tie && a.tie.name).slice(0, 4);
     const launch = r.launch || {}, terms = r.terms && r.terms.city ? r.terms : null;
     // Open needs a launch city: with none, pre-orders cannot open (apps/wanted metros.launch_terms is the one answer)
-    if (d.verdict === "OPEN" && !terms && r.stage !== "verdict") [word, cls] = ["Not yet: Qloo sets no launch city for this idea", "refuse"];
+    if (d.verdict === "OPEN" && !terms && (r.stage !== "verdict" || r.no_map)) [word, cls] = ["Not yet: Qloo sets no launch city for this idea", "refuse"];
     // the cities of Qloo's heatmap, each a Census metro (apps/wanted metros.py); else Qloo's destinations
     const heat = ((terms && terms.metros) || []).map((m) => ({ name: m.city, lat: m.lat, lon: m.lon, src: (r.where || [])[0]?.src }));
     heat.sort((x, y) => (y.name === terms?.city) - (x.name === terms?.city));     // the launch city first, as the terms say
@@ -270,7 +270,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
     return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}" data-not-prose>
   ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}
   <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
-  ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders. Every pre-order is refunded if the target is missed.</p>` : ""}
+  ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders. Every pre-order is refunded if the target is missed.</p>${terms.by_population ? `<p class="k-fine" data-part="by-population" data-pop-city="${esc(terms.by_population.city)}" data-pop-target="${esc(terms.by_population.target)}">By population: ${esc(terms.by_population.city)}, ${esc(terms.by_population.target)}. By Qloo taste: ${esc(terms.city)}, ${esc(terms.target)}.</p>` : ""}` : ""}
   ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}${trendLine(r)}
   ${r.decision ? `<button type="button" class="k-chip" data-without aria-pressed="false">Without Qloo</button>` : ""}</header>
   ${empty && r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}

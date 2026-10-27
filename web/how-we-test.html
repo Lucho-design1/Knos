@@ -70,6 +70,15 @@
   <section class="view tests" id="tests">
     <h1>How we test Knos</h1>
     <p class="lede">Every number Knos shows comes from a run you can open.</p>
+    <section class="t" id="qloo-vs-population">
+      <h2>Qloo's city beside population's</h2>
+      <p class="t-n" data-count="1" data-of="2">On 2 recorded cards with a map, Qloo's taste picks a different launch city from population alone on 1.</p>
+      <div class="k-table"><table>
+        <thead><tr><th scope="col">Idea</th><th scope="col">By Qloo taste</th><th scope="col">By population</th></tr></thead>
+        <tbody><tr data-differs="true"><td>a solar powered music festival</td><td>Las Vegas-Henderson-North Las Vegas, NV, 23</td><td>New York-Newark-Jersey City, NY-NJ, 195</td></tr><tr data-differs="false"><td>an ai recipe planner for families</td><td>Richmond, VA, 13</td><td>Richmond, VA, 13</td></tr></tbody>
+      </table></div>
+      <p class="fine">Both targets by the same formula, max(10, round(population / 100,000 × mean affinity)), among the same candidate metros. The D2 run kept each idea's top metro only, so its 15 ideas are counted when Qloo answers again.</p>
+    </section>
     <!-- ablation:start -->
     <section class="t" id="ablation">
       <h2>What each Qloo signal changes</h2>

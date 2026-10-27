@@ -87,6 +87,17 @@ def lift(rows: list[dict]) -> list[dict]:
     return rows
 
 
+def by_population(rows: list[dict]) -> dict | None:
+    """The city population alone would pick: the candidate metro (as lift() counts them) with the largest 2023
+    population, and its target by the same formula, max(10, round(population / 100,000 x its mean affinity))."""
+    cand = [r for r in rows if r.get("population") and r["cells"] >= MIN_CELLS] or [r for r in rows if r.get("population")]
+    if not cand:
+        return None
+    top = max(cand, key=lambda r: (r["population"], r["cbsa"]))
+    return {"city": top["city"], "target": max(MIN_TARGET, round(top["population"] / 100_000 * top["affinity"])),
+            "population": top["population"], "affinity": top["affinity"]}
+
+
 def launch(rows: list[dict]) -> dict | None:
     """The launch city: the candidate metro (lift()) with the highest lift. A metro with no population estimate (Puerto
     Rico) cannot set a target."""
@@ -105,7 +116,7 @@ def terms(cells: list[dict]) -> dict | None:
         return None
     target = max(MIN_TARGET, round(top["population"] / 100_000 * top["affinity"]))
     return {"city": top["city"], "cbsa": top["cbsa"], "affinity": top["affinity"], "lift": top["lift"], "cells": top["cells"], "population": top["population"],
-            "target": target, "heatmap_cells": len(cells), "metros": rows, "method": METHOD,
+            "target": target, "heatmap_cells": len(cells), "metros": rows, "method": METHOD, "by_population": by_population(rows),
             "refund_rule": REFUND.format(target=target, city=top["city"]),
             "source": "Qloo heatmap; Census TIGER/Line 2023 metro boundaries; Census Vintage 2023 population estimates"}
 
@@ -116,7 +127,9 @@ def launch_terms(rep: dict) -> dict | None:
     t = rep.get("terms") if isinstance(rep.get("terms"), dict) and rep["terms"].get("city") else terms(rep.get("where") or [])
     if not t:
         return None
-    return {"city": t["city"], "target": t["target"], "cells": t.get("cells"), "rule": t.get("refund_rule") or REFUND.format(target=t["target"], city=t["city"])}
+    pop = by_population(t.get("metros") or [])
+    return {"city": t["city"], "target": t["target"], "cells": t.get("cells"), "rule": t.get("refund_rule") or REFUND.format(target=t["target"], city=t["city"]),
+            "by_population": pop}
 
 
 def with_terms(rep: dict) -> dict:

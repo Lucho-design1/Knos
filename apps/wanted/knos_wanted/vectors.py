@@ -81,7 +81,7 @@ def _terms(rep: dict) -> dict | None:
     """The report's launch terms with the metros the card maps (metros.terms), by the one rule every page draws."""
     from . import metros
     t = metros.with_terms(rep).get("terms")
-    return {k: t.get(k) for k in ("city", "target", "cells", "refund_rule", "metros")} if t else None
+    return {k: t.get(k) for k in ("city", "target", "cells", "refund_rule", "metros", "by_population")} if t else None
 
 
 def _card(rep: dict) -> dict:
