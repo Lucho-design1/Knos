@@ -25,7 +25,7 @@ def find(state, rid: str) -> dict | None:
     """The kept report whose hash starts with rid: a recorded sample card first (the real answer; a press while Qloo was
     down keeps a copy of it marked stale under the same hash), then this server's memory, then a report file."""
     with recorded._lock:
-        for rep in recorded._last.values():
+        for rep in [*recorded._last.values(), *recorded._answered.values()]:
             if str(rep.get("hash") or "").startswith(rid):
                 return rep
     with state.lock:

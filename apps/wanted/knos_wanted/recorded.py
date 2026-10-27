@@ -25,6 +25,7 @@ DEFAULT_FILE = "/etc/secrets/knos-recorded.json"
 WRITE_EVERY_S = 600
 _lock = threading.Lock()
 _last: dict[str, dict] = {}
+_answered: dict[str, dict] = {}          # every other idea Qloo answered, kept the same private way (nearest.py reads them)
 _write = {"at": 0.0, "timer": None}
 
 
@@ -70,7 +71,9 @@ def load(file: str | None = None) -> int:
     from . import signals                 # and what each Qloo signal changes on it (the published table)
     cards = {k: metros.with_terms(check.retie(check.scrub(v))) for k, v in (doc.get("cards") or {}).items() if k in CHIP_KEYS and isinstance(v, dict) and real(v)}
     cards = {k: {**v, "signals": signals.for_card(v)} for k, v in cards.items()}
+    answered = {key(k): metros.with_terms(check.retie(check.scrub(v))) for k, v in (doc.get("answered") or {}).items() if isinstance(v, dict) and real(v)}
     with _lock:
+        _answered.update(answered)
         for k, v in cards.items():
             if k not in _last or (v.get("made") or "") > (_last[k].get("made") or ""):
                 _last[k] = v
@@ -82,7 +85,7 @@ def _upload() -> None:
     k, sid = os.environ.get("KNOS_RECORDED_UPLOAD_KEY"), os.environ.get("RENDER_SERVICE_ID")
     with _lock:
         _write.update(at=time.time(), timer=None)
-        doc = {"v": 1, "about": "the sample chips' last real full cards (private: a Render secret file, never public)", "cards": dict(_last)}
+        doc = {"v": 1, "about": "the sample chips' last real full cards (private: a Render secret file, never public)", "cards": dict(_last), "answered": dict(_answered)}
     if not (k and sid):
         return
     body = json.dumps({"content": json.dumps(doc, separators=(",", ":"), ensure_ascii=False)}).encode()
@@ -117,7 +120,7 @@ def keep(text: str, rep: dict) -> None:
 def by_hash(h: str) -> dict | None:
     """A recorded sample card by its report hash (a copy), or None."""
     with _lock:
-        r = next((v for v in _last.values() if v.get("hash") == h), None)
+        r = next((v for v in [*_last.values(), *_answered.values()] if v.get("hash") == h), None)
     return copy.deepcopy(r) if r else None
 
 
@@ -134,11 +137,38 @@ def honest(text: str, rep: dict) -> dict:
     if code is None:
         keep(text, rep)
         return rep
-    rec = recording(text)
+    rec = recording(text) or answered(text)
     if rec:
         from . import qloo_rest                     # /status/qloo counts the answers served from recordings today
         qloo_rest._today()["recorded"] = qloo_rest._today().get("recorded", 0) + 1
         return {**rec, "stage": rep.get("stage") or rec.get("stage"), "qloo_down": {"code": code},
                 "stale": {"code": code, "from": rec.get("made")}}
+    near = closest(text)
+    if near and near.get("report"):                 # the nearest idea Qloo has answered, with no Qloo call
+        n = near["report"]
+        from . import qloo_rest
+        qloo_rest._today()["recorded"] = qloo_rest._today().get("recorded", 0) + 1
+        return {**n, "stage": n.get("stage") or "full", "qloo_down": {"code": code}, "stale": {"code": code, "from": n.get("made")},
+                "nearest": {"asked": text, "idea": n.get("idea"), "on": str(n.get("made") or "")[:10], "shared": near["count"]}}
+    if near:
+        return {**rep, "qloo_down": {"code": code}, "nearest_options": near["options"], "nearest_shared": near["count"]}
     return {**rep, "qloo_down": {"code": code}}
+
+
+def answered(text: str) -> dict | None:
+    """An answered idea kept under its own words (a copy), or None."""
+    with _lock:
+        r = _answered.get(key(text))
+    return copy.deepcopy(r) if r else None
+
+
+def closest(text: str) -> dict | None:
+    """The nearest idea Qloo has answered (nearest.find), over the chips' cards and every other answered idea."""
+    from . import nearest
+    with _lock:
+        pool = {key(r.get("idea") or k): r for k, r in {**_answered, **_last}.items()}
+    got = nearest.find(text, list(pool.values()))
+    if got and got.get("report"):
+        got["report"] = copy.deepcopy(got["report"])
+    return got
 

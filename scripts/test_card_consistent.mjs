@@ -52,14 +52,14 @@ try {
     await rp.goto(`${API}/r/${hashes[idea].slice(0, 16)}?t=${Date.now()}`, { waitUntil: "load" });
     const r = await rp.evaluate(() => ({ cities: document.querySelector("[data-cities]")?.textContent.trim() || null }));
     await rp.close();
-    const L = r.cities ? r.cities.split(", ") : [];
-    const panelList = c.panel == null ? null : c.panel === "no cities" ? [] : c.panel.split(", ");
-    const same = (a) => JSON.stringify(a) === JSON.stringify(L);
-    const equal = !!c.verdict && (c.line || null) === (L[0] || null) && same(c.where) && same(c.pins) && (panelList == null || same(panelList));
+    const L = r.cities || "";                                     // the /r/ page lists them joined by ", " (metro names hold commas)
+    const panelList = c.panel == null ? null : c.panel === "no cities" ? "" : c.panel;
+    const same = (a) => (Array.isArray(a) ? a.join(", ") : a) === L;
+    const equal = !!c.verdict && (c.line ? L.startsWith(c.line) : !L) && same(c.where) && same(c.pins) && (panelList == null || same(panelList));
     const noCity = /no launch city/i.test(c.verdict) || /no product/i.test(c.why);
     const bad = noCity && (c.line != null || c.map || c.heading);
     agree += equal; mixed += bad;
-    lines.push(`${equal && !bad ? "ok  " : "FAIL"} ${idea.slice(0, 38).padEnd(38)} "${c.verdict}": line ${c.line || "none"}; where [${c.where.join(" | ")}]; pins ${c.pins.length}; panel ${panelList == null ? "not shown" : `[${panelList.join(" | ")}]`}; /r/ [${L.join(" | ")}]`);
+    lines.push(`${equal && !bad ? "ok  " : "FAIL"} ${idea.slice(0, 38).padEnd(38)} "${c.verdict}": line ${c.line || "none"}; where [${c.where.join(" | ")}]; pins ${c.pins.length}; panel ${panelList == null ? "not shown" : `[${panelList}]`}; /r/ [${L}]`);
   }
   await ctx.close();
   ok(agree === ideas.length, `city lists equal across the launch line, Where to launch, the pins, Claude alone and /r/: ${agree} of ${ideas.length}`);

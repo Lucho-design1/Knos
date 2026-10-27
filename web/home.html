@@ -245,7 +245,12 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
   const WORD = { OPEN:["Open for pre-orders", "open"], REFUSE: ["Not yet: pre-orders stay closed", "refuse"], CANNOT_DECIDE: ["Qloo cannot decide this one", "unknown"] };
   const TIERS = ["budget", "mid", "premium", "luxury"];
   const HEALTH = /\b(health\w*|patient\w*|medic\w*|clinic\w*|disease\w*|drug\w*|therap\w*|diagnos\w*|supplement\w*|glucose|diabet\w*)\b/i;
+  // Qloo cannot answer and no idea it answered shares 2 words with this one (apps/wanted nearest.py): the 3 nearest
+  const options = (r) => `<article class="k-card k-unknown" data-nearest-options data-not-prose>
+  <header class="k-card-head"><p class="k-kick">${esc(r.idea || "")}</p><h2 class="k-verdict">No idea Qloo has answered is close to this one yet</h2>
+  <p class="k-why">The nearest ideas Qloo has answered:</p><p>${r.nearest_options.map((x) => `<button type="button" class="k-chip" data-q="${esc(x)}">${esc(x)}</button>`).join(" ")}</p></header></article>`;
   function card(r, label) {
+    if ((r.nearest_options || []).length) return options(r);
     const d = r.decision || {}, p = d.plan || {}, h = r.hash;
     let [word, cls] = WORD[d.verdict] || [String(d.verdict || "No verdict"), "unknown"];
     const who = r.who || {}, age = (p.who?.age || who.top_age || "").replace(/_/g, " ").replace(" and ", " and "), gender = p.who?.gender || who.top_gender || "";
@@ -262,11 +267,11 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
     // visitor can pick another match, or none of them; the verdict's reason is Knos's rule, apart from Qloo's data
     const lead = r.leader && typeof r.leader === "object" ? r.leader : null, why = (d.reasons || [])[0];
-    const empty = !(age || gender) && !segs.length && !wants.length && !(r.cities || []).length && !cities.length && !tier && !also.length;     // no part answered: one next step, no empty boxes
+    const empty = !r.nearest && !(age || gender) && !segs.length && !wants.length && !(r.cities || []).length && !cities.length && !tier && !also.length;     // no part answered: one next step, no empty boxes
     if (empty && d.verdict !== "OPEN" && !r.qloo_down) [word, cls] = ["No taste data from Qloo", "unknown"];   // a real empty answer only
     // Qloo not answering (apps/wanted recorded.py): said first, with the sample's last real card when there is one
     const at = (t) => String(t || "").replace("T", " ").slice(0, 16) + " UTC";
-    const down = r.stale ? `Qloo is not answering right now (HTTP ${r.stale.code}). Showing the last real answer from ${at(r.stale.from)}.`
+    const down = r.nearest ? `Nearest idea Qloo has answered: ${r.nearest.idea}, live on ${r.nearest.on}` : r.stale ? `Qloo is not answering right now (HTTP ${r.stale.code}). Showing the last real answer from ${at(r.stale.from)}.`
       : r.qloo_down ? `Qloo is not answering right now (HTTP ${r.qloo_down.code}). Try again in a few minutes.` : "";
     const others = (r.matches || []).filter((m) => m && m.name && (!lead || m.id !== lead.id)).slice(0, 3);
     const read = lead ? `<p class="k-read" data-part="match">Read as <b>${esc(lead.name)}</b>${label ? "" : ` · Not it? ${others.map((m) =>
