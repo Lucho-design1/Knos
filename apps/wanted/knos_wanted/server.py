@@ -654,6 +654,17 @@ def make_handler(state: State):
                 if u.path == "/api/receipts":
                     return self._send(200, receipts.doc(rep)) if rep else self._send(404, {"error": "no result has this id"})
                 return self._send(200 if rep else 404, receipts.page(rep, rid).encode("utf-8"), "text/html; charset=utf-8")
+            if re.fullmatch(r"/r/[0-9a-f]{16}\.(pdf|csv|json)", u.path):      # the result's downloads: brief PDF, calls CSV, Ready brief JSON
+                from . import exports, result_page
+                rid, ext = u.path[3:19], u.path[20:]
+                rep = result_page.find(state, rid)
+                if rep is None:
+                    return self._send(404, {"error": "no result has this address"})
+                name = f"knos-{rid}" + {"pdf": "-brief.pdf", "csv": "-calls.csv", "json": "-ready-brief.json"}[ext]
+                body, ctype = {"pdf": lambda: (exports.pdf(rep, self._base() + "/r/" + rid), "application/pdf"),
+                               "csv": lambda: (exports.csv_text(rep).encode("utf-8"), "text/csv; charset=utf-8"),
+                               "json": lambda: (exports.json_text(rep).encode("utf-8"), "application/json")}[ext]()
+                return self._send(200, body, ctype, headers={"Content-Disposition": f'attachment; filename="{name}"'})
             if re.fullmatch(r"/r/[0-9a-f]{16}", u.path):     # a demand result's permanent page, from the reports kept here
                 from . import result_page
                 rid = u.path[3:]
