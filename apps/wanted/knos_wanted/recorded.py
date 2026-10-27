@@ -76,10 +76,20 @@ def load(file: str | None = None) -> int:
     answered = {key(k): metros.with_terms(check.retie(check.scrub(v))) for k, v in (doc.get("answered") or {}).items() if isinstance(v, dict) and real(v)}
     model = {key(k): v for k, v in (doc.get("model_alone") or {}).items() if isinstance(v, dict) and v.get("city")}
     alone = lambda v: {**v, "model_alone": {f: model[key(v.get("idea"))].get(f) for f in MODEL_KEYS}} if key(v.get("idea")) in model else v  # noqa: E731
-    cards = {k: alone(v) for k, v in cards.items()}
-    answered = {k: alone(v) for k, v in answered.items()}
+    # a card recorded under an older cache line says what the cache does today (qloo_rest.LIVE_LABEL)
+    from .qloo_rest import LIVE_LABEL
+    relabel = lambda v: {**v, "label": LIVE_LABEL} if str(v.get("label") or "").startswith("LIVE Qloo data (Qloo REST API") else v  # noqa: E731
+    cards = {k: relabel(alone(v)) for k, v in cards.items()}
+    answered = {k: relabel(alone(v)) for k, v in answered.items()}
     cards = {k: {**v, "gap": signals.gap(v)} for k, v in cards.items()}          # the model's city beside Qloo's, the flip, what was rejected
     answered = {k: {**v, "gap": signals.gap(v)} for k, v in answered.items()}
+    from . import qloo_rest                 # the recorded cards' Qloo calls open the request log (/api/calls), oldest first
+    if not any(x.get("origin") == "recorded" for x in qloo_rest.RECENT):
+        calls = sorted(((c, v) for v in [*cards.values(), *answered.values()] for c in v.get("calls") or [] if isinstance(c, dict)),
+                       key=lambda cv: str(cv[0].get("at") or cv[1].get("made") or ""))
+        for c, v in calls[-200:]:
+            qloo_rest.note(str(c.get("call") or ""), c.get("params") if isinstance(c.get("params"), dict) else {}, "recorded", c.get("ms"),
+                           bool(c.get("cached")), at=str(c.get("at") or v.get("made") or ""), origin="recorded")
     with _lock:
         _model.update(model)
         _answered.update(answered)
@@ -175,6 +185,19 @@ def _honest(text: str, rep: dict) -> dict:
     if near:
         return {**rep, "qloo_down": {"code": code}, "nearest_options": near["options"], "nearest_shared": near["count"]}
     return {**rep, "qloo_down": {"code": code}}
+
+
+def matched(text: str) -> list[str]:
+    """The products Qloo matched to a recorded idea (a chip's card or an answered idea), leader first; [] for any other."""
+    k = key(text)
+    with _lock:
+        r = _last.get(k) or _answered.get(k)
+    if not r:
+        return []
+    lead = r.get("leader")
+    lead = lead.get("name") if isinstance(lead, dict) else lead
+    names = [m.get("name") for m in r.get("matches") or [] if isinstance(m, dict) and m.get("name")]
+    return ([lead] if lead else []) + [n for n in names if n != lead]
 
 
 def answered(text: str) -> dict | None:

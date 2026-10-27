@@ -17,8 +17,10 @@ Rules this module keeps, all server side:
 """
 from __future__ import annotations
 
+import collections
 import hashlib
 import json
+import re
 import os
 import threading
 import time
@@ -134,6 +136,30 @@ def retry_after(value, now: float | None = None) -> float:
 def held(now: float | None = None) -> float:
     """Seconds left before Qloo may be asked again after its last 429 (0 when it may)."""
     return max(0.0, _hold["until"] - (time.time() if now is None else now))
+
+
+# the last 200 Qloo requests this server made or kept (GET /api/calls, the front door's /calls/): no body, no key
+RECENT: collections.deque = collections.deque(maxlen=200)
+_SECRET = re.compile(r"key|token|secret|auth", re.I)
+
+
+def note(call: str, params: dict | None, status, ms: float | None, cached: bool, at: str | None = None, origin: str = "live") -> None:
+    RECENT.append({"at": at or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "call": call,
+                   "params": {k: v for k, v in (params or {}).items() if not _SECRET.search(str(k))},
+                   "status": status, "ms": None if ms is None else round(ms), "cached": bool(cached), "origin": origin})
+
+
+def _status(why: Exception) -> int | str:
+    """A refused or failed call's status in the log: Qloo's HTTP code when it answered one, else "not sent" or "failed"."""
+    text = str(why)
+    if isinstance(why, (NoKey, BudgetExceeded)) or "not sent" in text or "no request sent" in text:
+        return "not sent"
+    code = re.search(r"HTTP (\d{3})", text)
+    return int(code.group(1)) if code else "failed"
+
+
+def recent() -> list[dict]:
+    return list(reversed(RECENT))
 
 
 class QlooError(RuntimeError):
@@ -303,6 +329,19 @@ class Client:
                 flight.pop(key).set()
 
     def _get(self, path: str, params: dict | None = None) -> dict:
+        """One Qloo call, noted in RECENT whatever its end (answered, cached, refused, not sent)."""
+        t0 = time.monotonic()
+        clean = {k: v for k, v in (params or {}).items() if v is not None and v != ""}
+        method = "POST" if any(k in POST_ONLY for k in clean) else "GET"
+        try:
+            got = self._ask(path, params)
+        except QlooError as why:
+            note(f"{method} {path}", clean, _status(why), (time.monotonic() - t0) * 1000, "cached refusal" in str(why))
+            raise
+        note(f"{method} {path}", clean, 200, (time.monotonic() - t0) * 1000, bool(got.get("source", {}).get("cached")))
+        return got
+
+    def _ask(self, path: str, params: dict | None = None) -> dict:
         """One Qloo call. GET, except when a parameter Qloo takes only in a JSON body is set (POST_ONLY): then POST."""
         params = {k: v for k, v in (params or {}).items() if v is not None and v != ""}
         try:                                                # every parameter documented by Qloo for this endpoint and filter.type,

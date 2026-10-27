@@ -549,6 +549,14 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     return g && g.flip ? `<p class="k-fine" data-part="flip">${esc(g.flip.said)}</p><p class="k-fine" data-part="rejected">Options Knos rejected: ${rej.length
       ? rej.map((o) => `<span data-reject data-code="${esc(o.code)}">${esc(o.name)} <abbr title="${esc(o.why)}">${esc(o.code)}</abbr></span>`).join("; ")
       : "none, as Qloo offered no city or product to weigh"}.</p>` : ""; };
+  // the run's Qloo calls in one line: live, cached, and the time the check took (its own clock, else the calls' sum)
+  const callsHead = (r) => { const c = Array.isArray(r.calls) ? r.calls : []; if (!c.length) return "";
+    const ms = Number.isFinite(r.elapsed_ms) ? r.elapsed_ms : c.reduce((n, x) => n + (Number.isFinite(x.ms) ? x.ms : 0), 0);
+    return `<p class="k-fine" data-part="calls-head">Qloo calls: ${c.filter((x) => !x.cached).length} live, ${c.filter((x) => x.cached).length} cached, ${Math.round(ms).toLocaleString("en-US")} ms</p>`; };
+  // before a check runs: the product Qloo matched to this idea, to confirm (Yes runs it; No offers the next 3)
+  const confirmCard = (v, ms) => `<article class="k-card k-unknown" data-confirm data-not-prose><header class="k-card-head"><p class="k-kick">${esc(v)}</p>
+  <h2 class="k-verdict">Is this what you mean? ${esc(ms[0])}</h2>
+  <p data-confirm-row><button type="button" class="k-chip" data-sure>Yes</button> <button type="button" class="k-chip" data-other="${esc(JSON.stringify(ms.slice(1, 4)))}">No</button></p></header></article>`;
   const WORD = { OPEN:["Open for pre-orders", "open"], REFUSE: ["Not yet: pre-orders stay closed", "refuse"], CANNOT_DECIDE: ["Qloo cannot decide this one", "unknown"] };
   const TIERS = ["budget", "mid", "premium", "luxury"];
   const HEALTH = /\b(health\w*|patient\w*|medic\w*|clinic\w*|disease\w*|drug\w*|therap\w*|diagnos\w*|supplement\w*|glucose|diabet\w*)\b/i;
@@ -610,7 +618,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
   ${gapOpen(r)}
   ${guess ? yourCall(guess, terms, cities) : ""}
   ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}${r.nearest && reset ? `<p class="k-fine k-terms" data-qloo-limit-line>${esc(reset.trim())}</p>` : ""}
-  <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
+  <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>${callsHead(r)}
   ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders.${chip("rule", "rule-target")} Every pre-order is refunded if the target is missed.</p>${terms.by_population ? `<p class="k-fine" data-part="by-population" data-pop-city="${esc(terms.by_population.city)}" data-pop-target="${esc(terms.by_population.target)}">By population: ${esc(terms.by_population.city)}, ${esc(terms.by_population.target)}.${chip("rule", "rule-population")} By Qloo taste: ${esc(terms.city)}, ${esc(terms.target)}.${chip("rule", "rule-target")}</p>` : ""}` : ""}
   ${r.signals && r.signals.line ? `<p class="k-fine" data-part="signals">${esc(r.signals.line)}</p>` : ""}${gapClose(r)}
   ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}${trendLine(r)}
@@ -650,6 +658,12 @@ ${src(h, price.src)}</section>
     v = v.trim();
     if (!extra.exclude && !extra.leader) slot.dataset.ex = "[]";
     if (!v) { q.focus(); return; }
+    const { sure, ...send } = extra;
+    extra = send;
+    if (!sure && !extra.leader && !extra.exclude && !paper(v)) {          // a recorded idea: its matched product first
+      const m = await get(`/api/match?idea=${encodeURIComponent(v)}`).catch(() => null);
+      if (m && (m.matches || []).length) { await cardCss(); slot.dataset.idea = v; slot.innerHTML = confirmCard(v, m.matches); return; }
+    }
     go.disabled = true; root.setAttribute("aria-busy", "true");
     const ref = paper(v), t0 = performance.now();
     slot.dataset.guess = (document.getElementById("k-guess")?.value || "").trim().slice(0, 60);
@@ -845,7 +859,15 @@ ${src(h, price.src)}</section>
   });
   root.addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-q]"), pick = ev.target.closest("[data-pick]"), none = ev.target.closest("[data-none]");
-    if (b) { q.value = b.dataset.q; ask(b.dataset.q); }
+    const sure = ev.target.closest("[data-sure]"), other = ev.target.closest("[data-other]");
+    if (sure) ask(slot.dataset.idea || q.value, { sure: true });
+    else if (other) {
+      let next = [];
+      try { next = JSON.parse(other.dataset.other || "[]"); } catch { next = []; }
+      other.closest("[data-confirm-row]").outerHTML = next.length ? `<p data-confirm-next>Which one, then? ${next.map((n) => `<button type="button" class="k-chip" data-pick="${esc(n)}">${esc(n)}</button>`).join(" ")} <button type="button" class="k-chip" data-sure>None of these: check my words</button></p>`
+        : `<p data-confirm-next>Qloo matched nothing else. <button type="button" class="k-chip" data-sure>Check my words</button></p>`;
+    }
+    else if (b) { q.value = b.dataset.q; ask(b.dataset.q); }
     else if (pick) ask(slot.dataset.idea || q.value, { leader: pick.dataset.pick });
     else if (none) {
       let prev = [];
