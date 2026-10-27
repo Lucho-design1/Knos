@@ -55,12 +55,12 @@ const browser = await chromiumOrSkip();
         const card = document.querySelector("#k-card .k-card");
         const parts = Object.fromEntries(["because", "whitespace", "persona", "ladder", "recommendations"].map((p) => {
           const s = card.querySelector(`[data-part="${p}"]`);
-          return [p, s ? [...s.querySelectorAll("li")].map((li) => [li.textContent.trim(), li.dataset.call,
+          return [p, s ? [...s.querySelectorAll("li")].map((li) => [[...li.childNodes].filter((n) => !n.classList?.contains("k-schip")).map((n) => n.textContent).join("").trim(), li.dataset.call,
             li.querySelector("a.k-val")?.getAttribute("href").endsWith(`#call-${li.dataset.call}`)]) : null];
         }));
         const panel = card.querySelector('[data-part="calls"]');
         const rows = panel ? [...panel.querySelectorAll("li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()) : [];
-        return { parts, rows, summary: panel?.querySelector("summary")?.textContent, trend: card.querySelector('[data-part="trend"]')?.textContent.trim(),
+        return { parts, rows, summary: panel?.querySelector("summary")?.firstChild?.textContent.trim(), trend: card.querySelector('[data-part="trend"]')?.textContent.trim(),
           city: card.querySelector(".k-cities li [data-because]")?.textContent.trim() };
       });
       const want = { because: null, whitespace: [[`Room ${i}`, "7", true], [`Room ${i}b`, "7", true]],

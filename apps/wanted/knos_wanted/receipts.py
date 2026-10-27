@@ -82,7 +82,7 @@ def rows(rep: dict) -> list[dict]:
 
 
 def doc(rep: dict) -> dict:
-    return {"report": rep.get("hash"), "idea": rep.get("idea"), "made": rep.get("made"), "rows": rows(rep),
+    return {"report": rep.get("hash"), "idea": rep.get("idea"), "made": rep.get("made"), "verdict": (rep.get("decision") or {}).get("verdict"), "rows": rows(rep),
             "recompute": {"call": "sha256 of canonical JSON (sorted keys, no spaces) of n, call, params, at, body_digest",
                           "brief": "knos.ready.criteria_hash(brief)"}}
 
