@@ -345,6 +345,57 @@ FORM_WORDS = {_norm(w) for w in ("box", "boxes", "kit", "kits", "subscription", 
                                   "stores", "company", "product", "products", "line", "delivery", "platform", "online", "series")}
 
 
+def _cat_stem(w: str) -> str:
+    w = w.lower()
+    for a, b in (("ies", "y"), ("es", ""), ("s", "")):
+        if w.endswith(a) and len(w) > len(a) + 3:
+            return w[: -len(a)] + b
+    return w
+
+
+def _cat_stems(text) -> list[str]:
+    return [_cat_stem(w) for w in re.findall(r"[a-z0-9]+", str(text or "").lower()) if len(w) >= 3]
+
+
+def category_word(idea: str, tags: list[dict]) -> str | None:
+    """What the idea is, in one word: its last word that also names one of the Qloo tags resolved for it (/v2/tags)."""
+    in_tags = {w for t in tags or [] for w in _cat_stems(t.get("name"))}
+    words = [w for w in _cat_stems(idea) if w not in STOP_STEMS]
+    inside = [w for w in words if w in in_tags]
+    return inside[-1] if inside else None
+
+
+STOP_STEMS = {"for", "the", "and", "with", "brand", "kit", "app", "that", "your", "from"}
+
+
+def entity_tied(m: dict, idea: str, tags: list[dict]) -> bool:
+    """A match for the idea only when the entity shares a Qloo tag with the idea's tags, or names its category."""
+    ids = {t.get("id") for t in tags or [] if t.get("id")}
+    if ids & set(m.get("tag_ids") or []):
+        return True
+    cat = category_word(idea, tags)
+    return cat is None or cat in _cat_stems(f"{m.get('name') or ''} {m.get('about') or ''}")
+
+
+def retie(rep: dict) -> dict:
+    """A kept report with the match rule applied (tied): a match that fails it moves to the unrelated, its id leaves
+    the cities' "because", and when the matches change the report is decided again by the same code."""
+    idea, tags = str(rep.get("idea") or ""), rep.get("tags") or []
+    keep = [m for m in rep.get("matches") or [] if entity_tied(m, idea, tags)]
+    if len(keep) == len(rep.get("matches") or []):
+        return rep
+    gone = [m for m in rep["matches"] if m not in keep]
+    out = {**rep, "matches": keep,
+           "unrelated": [{"name": m.get("name"), "why": "shares no Qloo tag with the idea and does not name what it is"} for m in gone]
+           + list(rep.get("unrelated") or [])}
+    ids = {m.get("id") for m in keep}
+    lead = rep.get("leader") if isinstance(rep.get("leader"), dict) and rep["leader"].get("id") in ids else None
+    out["leader"] = lead or (max(keep, key=lambda m: len(m.get("matched_words") or []) + 2 * len(m.get("name_words") or []) + (m.get("popularity") or 0)) if keep else None)
+    out["cities"] = [{**c, "because": [i for i in c.get("because") or [] if i in ids]} for c in rep.get("cities") or []]
+    out["decision"] = decide(out, True, idea)
+    return out
+
+
 def _ent(r: dict, src: int, words: list[str]) -> dict:
     p = r.get("properties") or {}
     geo = p.get("geocode") or {}
@@ -358,7 +409,7 @@ def _ent(r: dict, src: int, words: list[str]) -> dict:
             "about": (p.get("short_description") or p.get("description") or "")[:240], "located": str(where)[:120],
             "address": str(p.get("address") or "")[:160], "matched_words": hits, "name_words": name_hits,
             "relevant": bool(set(hits) - FORM_WORDS) and (len(name_hits) >= 2 or (len(name_hits) >= 1 and len(hits) >= 2) or len(hits) >= 3),
-            "src": src}
+            "tag_ids": [t.get("id") for t in (r.get("tags") or [])[:40] if isinstance(t, dict) and t.get("id")], "src": src}
 
 
 def _dedupe(ms: list[dict]) -> list[dict]:
@@ -664,8 +715,16 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
         found = [m for m in found if _in_place(m, place)]
     ev["excluded"] = [m for m in found if m["id"] in exclude]
     found = [m for m in found if m["id"] not in exclude]
-    ev["matches"] = [m for m in found if m["relevant"]][:6]
-    ev["unrelated"] = [{"name": m["name"], "why": "shares too few content words with the idea"} for m in found if not m["relevant"]][:6]
+    # the idea's own tags first: a match must share one with it, or name what the idea is (tied)
+    body, s4 = run.get("/v2/tags", q_tags, "taste tags: semantic search (typo-tolerant) of the product phrase")
+    if body is not None:
+        for t in ((body or {}).get("results") or {}).get("tags") or []:
+            if t.get("id") and t["id"] not in {x["id"] for x in ev["tags"]} and {_norm(x) for x in tokens(t.get("name"))} & set(words):
+                ev["tags"].append({"name": t.get("name"), "id": t["id"], "popularity": t.get("popularity"), "src": s4})
+    ev["matches"] = [m for m in found if m["relevant"] and entity_tied(m, idea, ev["tags"])][:6]
+    ev["unrelated"] = ([{"name": m["name"], "why": "shares too few content words with the idea"} for m in found if not m["relevant"]]
+                       + [{"name": m["name"], "why": "shares no Qloo tag with the idea and does not name what it is"}
+                          for m in found if m["relevant"] and not entity_tied(m, idea, ev["tags"])])[:6]
     lead = None
     if leader:
         body, s2 = run.get("/search", {"query": leader[:80], "types": kind, "take": 1}, "the named market leader")
@@ -677,11 +736,6 @@ def gather(run: _Run, idea: str, place: str | None, leader: str | None, today: d
     ev["leader"] = lead
     fams, _sf = run.get("/v2/tags/types", q_fams, f"tag families Qloo keeps for {kind.split(':')[-1]}s")
     ev["tag_families"] = [t.get("type") for t in ((fams or {}).get("results") or {}).get("tag_types") or []][:8]
-    body, s4 = run.get("/v2/tags", q_tags, "taste tags: semantic search (typo-tolerant) of the product phrase")
-    if body is not None:
-        for t in ((body or {}).get("results") or {}).get("tags") or []:
-            if t.get("id") and t["id"] not in {x["id"] for x in ev["tags"]} and {_norm(x) for x in tokens(t.get("name"))} & set(words):
-                ev["tags"].append({"name": t.get("name"), "id": t["id"], "popularity": t.get("popularity"), "src": s4})
     sig_ents = [m["id"] for m in near] or ([lead["id"]] if lead else [])
     # every question that needs only the matched products (or, with none, the top tag's map for the retry) goes out now,
     # before "who wants it": the verdict waits on the slowest of them, not on their sum
