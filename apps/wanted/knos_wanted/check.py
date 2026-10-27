@@ -392,6 +392,14 @@ def retie(rep: dict) -> dict:
     lead = rep.get("leader") if isinstance(rep.get("leader"), dict) and rep["leader"].get("id") in ids else None
     out["leader"] = lead or (max(keep, key=lambda m: len(m.get("matched_words") or []) + 2 * len(m.get("name_words") or []) + (m.get("popularity") or 0)) if keep else None)
     out["cities"] = [{**c, "because": [i for i in c.get("because") or [] if i in ids]} for c in rep.get("cities") or []]
+    names = {m.get("name") for m in gone}
+    old = rep.get("leader") if isinstance(rep.get("leader"), dict) else None
+    if old and old.get("id") not in ids:                     # what was measured against a dropped leader goes with it
+        out["versus"], out["trend"] = None, None
+    out["ladder"] = [b for b in rep.get("ladder") or [] if b.get("name") not in names]
+    g = rep.get("grounding")
+    if isinstance(g, dict) and isinstance(g.get("comparables"), list):
+        out["grounding"] = {**g, "comparables": [c for c in g["comparables"] if c not in names]}
     out["decision"] = decide(out, True, idea)
     return out
 

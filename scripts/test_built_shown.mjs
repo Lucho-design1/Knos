@@ -24,7 +24,7 @@ ok(render[1] === "live" && SHA.startsWith(render[2]), `Render live at ${render[2
 // (a)
 const zk = run(PY, ["-I", "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rs", "tests/test_zk_client.py::test_devnet_receipt_is_public_and_consistent"]);
 ok(zk.code === 0 && /1 passed/.test(zk.out) && !/skipped/.test(zk.out), `(a) knos_zk's devnet fixture test: ${(zk.out.trim().split("\n").at(-1) || "").trim()}`);
-const g = run("git", ["grep", "-n", "-i", "not deployed"]).out.split("\n").filter((l) => /zk|5M67Aqw1/i.test(l));
+const g = run("git", ["grep", "-n", "-i", "not deployed", "--", ".", ":!scripts/test_built_shown.mjs"]).out.split("\n").filter((l) => /zk|5M67Aqw1/i.test(l));
 ok(g.length === 0, `(a) git grep "not deployed" for knos_zk: ${g.length}${g.length ? ` ${JSON.stringify(g.slice(0, 2))}` : ""}`);
 // (c)
 const cache = run(PY, ["-I", "-m", "pytest", "-q", "-p", "no:cacheprovider", "tests/test_qloo_rest.py::test_cache_hit_and_ttl"], ROOT + "apps/wanted");

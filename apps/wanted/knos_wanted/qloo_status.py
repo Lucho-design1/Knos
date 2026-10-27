@@ -26,7 +26,11 @@ def doc() -> dict:
     live_at = t.get("last_ok") or made                 # the newest live answer a card can show: today's, else a recording's
     line = f"Qloo is limiting requests right now. Cards show the last live answer from {_when(live_at)}." if t["limited"] and live_at else (
         "Qloo is limiting requests right now." if t["limited"] else None)
-    return {"day": t["day"], "calls": t["calls"], "cache_hits": t["hits"], "recorded": t.get("recorded", 0), "hit_rate": t["hit_rate"], "last_ok": t.get("last_ok"),
+    lim = dict(qloo_rest.LIMITS)
+    return {"month_left": lim.get("x-month-ratelimit-remaining"), "month_limit": lim.get("x-month-ratelimit-limit"),
+            "month_reset": lim.get("x-month-ratelimit-reset"), "second_left": lim.get("x-second-ratelimit-remaining"),
+            "limits_read": lim.get("read"), "day_cap": qloo_rest.DAY_CAP, "month_floor": qloo_rest.MONTH_FLOOR,
+            "day": t["day"], "calls": t["calls"], "cache_hits": t["hits"], "recorded": t.get("recorded", 0), "hit_rate": t["hit_rate"], "last_ok": t.get("last_ok"),
             "last_429": t.get("last_429"), "held_s": t["held_s"], "limited": t["limited"], "live_at": live_at, "line": line,
             "from": "this server's own calls to Qloo since midnight UTC; this answer asks Qloo nothing"}
 
@@ -35,7 +39,8 @@ def page() -> str:
     d, e = doc(), html.escape
     rate = f"{round(d['hit_rate'] * 100)}%" if d["hit_rate"] is not None else "none yet"
     rows = [("Calls sent today", str(d["calls"])), ("Answered from the cache", f"{d['cache_hits']} ({rate})"),
-            ("Served from recordings", str(d["recorded"])), ("Last success", _when(d["last_ok"]) or "none today"), ("Last 429", _when(d["last_429"]) or "none today")]
+            ("Served from recordings", str(d["recorded"])),
+            ("Qloo's month, calls left", f"{d['month_left']} of {d['month_limit']}, resets {d['month_reset']}" if d["month_left"] is not None else "not read yet"), ("Last success", _when(d["last_ok"]) or "none today"), ("Last 429", _when(d["last_429"]) or "none today")]
     now = (f'<p class="k-terms" data-limited>{e(d["line"])}</p>' if d["line"] else '<p class="k-terms" data-limited="no">Qloo is answering.</p>')
     hold = f'<p class="small">Nothing is sent to Qloo for {d["held_s"]} s more, as its Retry-After asks.</p>' if d["held_s"] else ""
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'

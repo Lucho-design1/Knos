@@ -45,6 +45,9 @@ _hold = {"until": 0.0}        # after a 429: no Qloo request at all before this 
 LAST: dict = {}               # the last answer Qloo itself gave this process (its time, HTTP status and path): /status/qloo
 
 
+LIMITS: dict = {}             # Qloo's own limit headers, as its latest answer gave them (x-month-ratelimit-*, x-second-ratelimit-*)
+MONTH_FLOOR = 2_000           # under this many calls left in Qloo's month, nothing is sent (the rest is kept for the reserved run)
+DAY_CAP = 1_500               # this server sends at most this many calls to Qloo on one UTC day
 TODAY: dict = {}              # this process's Qloo traffic on the current UTC day: calls sent, cache hits, last 200, last 429
 
 
@@ -68,6 +71,34 @@ def _seen(status, path: str) -> None:
         t["last_ok"] = LAST["at"]
     elif status == 429:
         t["last_429"] = LAST["at"]
+
+
+def _limits(headers) -> None:
+    """Keep the limit headers of a Qloo answer (a success or a refusal), with when they were read."""
+    if headers is None:
+        return
+    got = {k.lower(): v for k, v in headers.items() if k.lower().startswith(("x-month-ratelimit-", "x-second-ratelimit-"))}
+    if got:
+        LIMITS.clear()
+        LIMITS.update(got, read=_now())
+
+
+def _int(v) -> int | None:
+    try:
+        return int(str(v).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def refusal() -> str | None:
+    """Why nothing may be sent now, by Qloo's month (its own header) and this server's day; None when a call may go."""
+    import os
+    left = _int(LIMITS.get("x-month-ratelimit-remaining"))
+    if left is not None and left < MONTH_FLOOR and os.environ.get("KNOS_QLOO_RESERVE") != "1":
+        return f"Qloo's month has {left} calls left, under {MONTH_FLOOR:,}: they are kept for the reserved run"
+    if _today()["calls"] >= DAY_CAP:
+        return f"this server has sent {DAY_CAP:,} calls to Qloo today, its cap for a UTC day"
+    return None
 
 
 def today() -> dict:
@@ -290,6 +321,9 @@ class Client:
             raise NoKey(why)
         if held():                                          # Qloo said 429: nothing is sent until its Retry-After has passed
             raise QlooError(f"{method} {path}: HTTP 429: Qloo asked for a pause; no request sent for {held():.0f} s more")
+        why = refusal()                                     # Qloo's month (its own header) and this server's day
+        if why:
+            raise QlooError(f"{method} {path}: not sent: {why}")
         self._count_one()
         self.bucket.take()
         m = qloo_harness.mapped(path, params) if self.harness and method == "GET" else None
@@ -312,6 +346,7 @@ class Client:
             try:
                 with self.opener(req, timeout=TIMEOUT_S) as r:
                     raw = r.read(MAX_BYTES + 1)
+                    _limits(getattr(r, "headers", None))
                 if len(raw) > MAX_BYTES:
                     raise QlooError(f"{method} {path}: answer larger than {MAX_BYTES} bytes")
                 body = json.loads(raw or b"{}")
@@ -319,6 +354,7 @@ class Client:
                 break
             except urllib.error.HTTPError as e:
                 _seen(e.code, path)
+                _limits(e.headers)
                 if e.code == 429:                            # never asked again at once: wait what Qloo says (Retry-After)
                     wait = retry_after(e.headers.get("Retry-After") if e.headers else None)
                     _hold["until"] = max(_hold["until"], time.time() + wait)
