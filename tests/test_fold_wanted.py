@@ -36,4 +36,7 @@ def test_the_qloo_rule_holds_in_the_monorepo():
     # one public file stands: the Census Bureau's metro shapes, which name their own source (no Qloo answer is in it)
     census = "apps/wanted/knos_wanted/data/cbsa_msa_2023.json"
     assert json.loads((ROOT / census).read_text(encoding="utf-8"))["source"].startswith("US Census Bureau, TIGER/Line")
-    assert not [p for p in tracked if p.endswith(".json") and p != census], "no recorded Qloo body (or any JSON) is kept under apps/wanted"
+    # and the published table of what each Qloo signal changes (docs/reference/qloo_ablation.json's copy): labels, metro names, numbers
+    table = "apps/wanted/knos_wanted/data/qloo_ablation.json"
+    assert set(json.loads((ROOT / table).read_text(encoding="utf-8"))) == {"about", "rules", "samples", "rows"}
+    assert not [p for p in tracked if p.endswith(".json") and p not in (census, table)], "no recorded Qloo body (or any JSON) is kept under apps/wanted"

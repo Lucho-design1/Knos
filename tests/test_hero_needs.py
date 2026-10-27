@@ -18,7 +18,10 @@ def chips(html: str) -> list[dict]:
 
 @pytest.mark.parametrize("page", ["web/brand/hero.html", "web/index.html"])
 def test_hero_needs(page):
-    c = chips((ROOT / page).read_text(encoding="utf-8"))
-    assert NEEDS <= {x.get("need") for x in c}, page
+    html = (ROOT / page).read_text(encoding="utf-8")
+    c = chips(html)
+    # the 2 chips with no recording wait for Qloo; the line in their place names the needs they bring back
+    waiting = set(" ".join(re.findall(r'data-more-chips data-needs="([^"]*)"', html)).split())
+    assert NEEDS <= {x.get("need") for x in c} | waiting, page
     assert len({x["tech"] for x in c if x.get("tech")}) >= 5, page
     assert all(x.get("q") for x in c)

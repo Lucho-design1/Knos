@@ -474,7 +474,7 @@ attempted on devnet.
 
 ## The hash devnet runs
 
-Rebuild the two programs that hold and pay the money and compare: the hash devnet runs equals the verified build hash recorded for each ([PROVENANCE](PROVENANCE.md)). Read on 27 Oct 2026.
+Rebuild knos_oidc and knos_pay, the programs that check the proof and pay, and compare: the hash devnet runs equals the verified build hash recorded for each ([PROVENANCE](PROVENANCE.md)). Read on 27 Oct 2026.
 
 ```sh
 solana-verify get-program-hash -u devnet FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W   # knos_oidc: a2df952d262c48edacf2f594a01321e805c28f1dc523cb6efa75f2c45f34e632
