@@ -44,11 +44,12 @@ async function settle(confirmPath, idKey, id, sig) {
 // ---- projects --------------------------------------------------------------------------------------------------------
 async function loadProjects() {
   const h = location.hash.match(/^#projects=([0-9a-f]{16})/);
-  if (!V.templates) V.templates = await api("/api/templates").catch(() => null);
-  renderNewForm();
-  if (h) return loadProject(h[1]);
+  // the list and the templates are asked for together: the list is drawn as soon as it comes, the form after it
+  const listing = h ? null : api("/api/projects").catch((e) => { err(e); return { projects: [] }; });
+  const tpl = V.templates ? null : api("/api/templates").catch(() => null);
+  if (h) { if (!V.templates) V.templates = await tpl; renderNewForm(); return loadProject(h[1]); }
   $("projDetail").hidden = true; $("projHome").hidden = false;
-  const got = await api("/api/projects").catch((e) => { err(e); return { projects: [] }; });
+  const got = await listing;
   const box = $("projList");
   box.innerHTML = got.projects.length ? got.projects.map((p) => {
     const locked = p.milestones.reduce((a, m) => a + m.locked_units, 0);
@@ -58,6 +59,8 @@ async function loadProjects() {
       <p class="small">${done} of ${p.milestones.length} milestones released · ${locked} test units held</p></li>`;
   }).join("") : `<li class="muted">No projects yet. Open the first one above.</li>`;
   renderPool(got.projects);
+  if (!V.templates) V.templates = await tpl;
+  renderNewForm();
 }
 function renderNewForm() {
   renderBriefForm();

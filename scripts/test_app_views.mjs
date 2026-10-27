@@ -10,7 +10,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const args = process.argv.slice(2), SHA = args[0];
-const IDLE = Number(args[args.indexOf("--idle-minutes") + 1] || 15) * 60000;
+const IDLE = (args.includes("--idle-minutes") ? Number(args[args.indexOf("--idle-minutes") + 1]) : 15) * 60000;
 const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_app_views.txt`;
 const APP = "https://knos.onrender.com";
 const lines = []; let fails = 0;
@@ -46,10 +46,10 @@ try {
     if (v === "buy") ok(s.url.startsWith("/app/"), `#buy stays under /app/ (${s.url})`);
   }
   await p.goto(`${APP}/app/?t=${Date.now()}#agents`, { waitUntil: "load" });
-  const box = p.locator("#v-agents input").first();
-  await box.waitFor({ timeout: 20000 }).catch(() => {});
+  await p.waitForSelector("#memBox[data-wired]", { state: "attached", timeout: 20000 }).catch(() => {});   // the search is wired
+  const box = p.locator("#memBox input");
   await box.fill("kombucha"); await box.press("Enter");
-  await p.waitForTimeout(4000);
+  await p.waitForFunction(() => document.querySelector("#memBox .memOut p"), null, { timeout: 30000 }).catch(() => {});
   const found = await p.evaluate(() => { const o = document.querySelector("#v-agents"); return { rows: [...o.querySelectorAll("p.small")].filter((x) => /kombucha/i.test(x.textContent)).map((x) => x.textContent.trim()), said: o.textContent.includes("every gate armed") }; });
   ok(found.rows.length >= 1 && !found.said, `#agents search "kombucha": ${found.rows.length} result(s): ${found.rows.slice(0, 2).join(" | ").slice(0, 160)}`);
   // #research: the sample paper, run as a reader would; the verdict comes first and the log is folded under Details
