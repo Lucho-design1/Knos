@@ -106,7 +106,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos
               "/api/x402/report": "A demand report, paid per read over x402", "/api/commitments": "Pre-orders and funders' held money",
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/mcp/store": "The app-store MCP profile: read-only tools, no sign-in, a daily call cap (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
               "/": "301 to the front door, https://drexthealpha.github.io/Knos/", "/app": "301 to /app/",
-              "/quality": "301 to the front door's quality page", "/quality/": "301 to the front door's quality page", "/app/": "The app", "/status/qloo": "Qloo as this server met it today: calls, cache hits, last success, last 429", "/api/qloo/status": "The same as JSON, with the line the front door shows while Qloo limits requests", "/paid": "Paid on proof: the passkey wallet, pre-orders, pools, company sign-in and accounting files", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/taste/movie": "The films a film's fans also love, from Qloo (?title=&year=): names and years only", "/api/products": "Listed products", "/api/quote": "Fee quote",
+              "/quality": "301 to the front door's quality page", "/quality/": "301 to the front door's quality page", "/app/": "The app", "/status/qloo": "Qloo as this server met it today: calls, cache hits, last success, last 429", "/api/qloo/status": "The same as JSON, with the line the front door shows while Qloo limits requests", "/paid": "301 to /app/?all=1: the app with the passkey wallet, pre-orders, pools, company sign-in and accounting files", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/taste/movie": "The films a film's fans also love, from Qloo (?title=&year=): names and years only", "/api/products": "Listed products", "/api/quote": "Fee quote",
               "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
               "/api/receipts": "A result's receipts (?id=, the first 16 hex of its hash): each Qloo call with its time and hash, the target's rule, the model's answer, the brief's criteria hash, the Sibyl record line, devnet transactions",
               "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
@@ -229,7 +229,7 @@ MOVED_VIEWS = ("signin", "buy", "teams")
 _VOID = {"input", "img", "br", "hr", "meta", "link"}
 # the list of what can be pre-ordered stays on the home (#buy); one product's pre-order (#buy=<hash>) is on /paid
 TO_PAID = ('<script>(() => { const go = () => { const h = location.hash.slice(1), v = h.split("=")[0]; '
-           f'if ({list(MOVED_VIEWS)!r}.includes(v) && !(v === "buy" && !h.includes("="))) location.replace("/paid" + location.hash); }}; go(); '
+           f'if ({list(MOVED_VIEWS)!r}.includes(v) && !(v === "buy" && !h.includes("="))) location.replace("/app/?all=1" + location.hash); }}; go(); '
            'addEventListener("hashchange", go); })();</script>')
 
 
@@ -259,7 +259,7 @@ def home_page(page: str) -> str:
     def stubs(m: re.Match) -> str:
         tags = re.findall(r'<([a-z][a-z0-9]*)\b[^>]*\bid="([^"]+)"', m.group(0))
         inner = "".join(f'<{t} id="{i}" hidden>' if t in _VOID else f'<{t} id="{i}" hidden></{t}>' for t, i in tags)
-        return f'<div hidden data-moved="/paid">{inner}</div>'
+        return f'<div hidden data-moved="/app/?all=1">{inner}</div>'
     return PAID_BLOCK.sub(stubs, page).replace("</head>", TO_PAID + "\n</head>", 1)
 
 
@@ -638,10 +638,14 @@ def make_handler(state: State):
                 return self._send(301, b"", "text/plain; charset=utf-8", {"Location": "https://drexthealpha.github.io/Knos/"})
             if u.path == "/app":
                 return self._send(301, b"", "text/plain; charset=utf-8", {"Location": "/app/"})
-            if u.path in ("/app/", "/app/index.html", "/index.html", "/paid"):
+            if u.path == "/index.html":                      # one app, one address: /app/
+                return self._send(301, b"", "text/plain", headers={"Location": "/app/"})
+            if u.path == "/paid":                            # the same app, its money and company tools shown: one address
+                return self._send(301, b"", "text/plain", headers={"Location": "/app/?all=1"})
+            if u.path in ("/app/", "/app/index.html"):
                 from . import vectors
                 page = (STATIC / "index.html").read_text(encoding="utf-8")
-                page = page if u.path == "/paid" else home_page(page)
+                page = page if (qs.get("all") or [""])[0] == "1" else home_page(page)
                 # the newest projects in the page itself: /app/#projects shows its list at the first paint
                 page = page.replace('<ul id="projList" class="plist"></ul>', f'<ul id="projList" class="plist">{valley.list_html(10)}</ul>', 1)
                 pr = vectors.proof().get("proof")

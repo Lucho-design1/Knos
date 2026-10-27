@@ -9,7 +9,7 @@
  "at": "default branch tip",
  "commits_to_here": 225,
  "copied": "2026-10-15",
- "note": "The live public test repository: it stays (TASK-ONE-KNOS). This is its default branch's files when copied; its issues, pull requests and branches stay in drexthealpha/knos-e2e.",
+ "note": "The live public test repository: it stays. This is its default branch's files when copied; its issues, pull requests and branches stay in drexthealpha/knos-e2e.",
  "files": [
   {
    "path": ".github/actions/knos-gate/action.yml",

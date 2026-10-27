@@ -16,7 +16,7 @@
 // program ids replaces it.
 import { prefersReduced } from "./motion.js";
 
-export const SENTENCE = "Knos carries research across the valley of death: each step is paid only on verified proof.";
+export const SENTENCE = "Knos carries research across the valley of death: see who wants it and where, then get paid only on proof.";
 export const MERGED = 241, FAILED = 9;             // docs/backtest.json, reviewed.overall.test_or_build_check_failed (tests/web/story.mjs compares)
 export const REPO = "https://github.com/drexthealpha/Knos/blob/main/";
 export const FRONT = "https://drexthealpha.github.io/Knos/";

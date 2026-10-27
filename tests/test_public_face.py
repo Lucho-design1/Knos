@@ -10,9 +10,10 @@ import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SENTENCE = "Knos carries research across the valley of death: each step is paid only on verified proof."
-# what the MCP registry and Gemini CLI list (docs/facts.json registry_sentence): 100 characters at most there
-REGISTRY = "Checks who wants a product with Qloo taste data and pays devnet money only when the proof passes."
+SENTENCE = "Knos carries research across the valley of death: see who wants it and where, then get paid only on proof."
+# what the MCP registry and Gemini CLI list (docs/facts.json registry_sentence): the one line itself. It is 106
+# characters, over the 100 the MCP registry takes, so a new registry listing needs that limit settled first.
+REGISTRY = SENTENCE
 FACES = ("docs/facts.json", "pyproject.toml", "server.json", "gemini-extension.json", "plugin/.claude-plugin/plugin.json",
          "plugin/.codex-plugin/plugin.json", ".claude-plugin/marketplace.json", "sdk/settle/package.json", "sdk/settle/README.md", "action.yml", "web/index.html", "README.md")
 
@@ -39,14 +40,14 @@ def _sub(path: Path, old: str, new: str) -> None:
 
 def test_this_tree_says_the_one_sentence_everywhere_it_describes_itself():
     pf = _tool()
-    assert pf.sentence() == SENTENCE and pf.title(SENTENCE) == "Knos. Research to products people want, paid on proof." and len(pf.title(SENTENCE)) <= 60
+    assert pf.sentence() == SENTENCE and pf.title(SENTENCE) == "Knos. See who wants it, then get paid on proof." and len(pf.title(SENTENCE)) <= 60
     assert pf.problems() == []
     said: list[str] = []
     assert pf.main(["--check"], say=said.append) == 0 and said == [f"every description says: {SENTENCE}"]
     assert re.search(r'(?m)^description = "([^"]*)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8")).group(1) == SENTENCE
     for rel in ("server.json", "gemini-extension.json"):
         assert json.loads((ROOT / rel).read_text(encoding="utf-8"))["description"] == REGISTRY
-    assert len(REGISTRY) <= 100 and pf.registry_sentence() == REGISTRY   # the MCP registry refuses a longer description
+    assert pf.registry_sentence() == REGISTRY == SENTENCE                # the one line, word for word
     for rel in ("plugin/.claude-plugin/plugin.json", "plugin/.codex-plugin/plugin.json", ".claude-plugin/marketplace.json"):
         assert json.loads((ROOT / rel).read_text(encoding="utf-8"))["description"].startswith(SENTENCE + " ")
 

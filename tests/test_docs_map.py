@@ -75,7 +75,7 @@ def test_the_front_page_has_ten_parts_above_the_line_and_three_links_onward():
     # verified pull requests; the bounty is the smallest example), the ten-second check, why nobody can fudge the
     # count, whether it is real (the table of today's numbers); where to check every claim (the release page), the number, words,
     # the questions people search (tests/test_seo.py)
-    assert re.findall(r"(?m)^## (.+)$", above) == ["How it works", "One use: paying AI agents for verified pull requests", "Try it in ten seconds",
+    assert re.findall(r"(?m)^## (.+)$", above) == ["How it works", "Paid on proof: when the proof is a pull request", "Try it in ten seconds",
                                                     "Why nobody can fudge the count", "Is it real?",
                                                     "Check every claim yourself", "The number", "Words", "Questions", "Read more"]
     more = above.split("## Read more")[1]
@@ -84,7 +84,7 @@ def test_the_front_page_has_ten_parts_above_the_line_and_three_links_onward():
     assert len(real) == 3 and [links(line) for line in real].count(["docs/reference/DISCLOSURE.md"]) == 1      # three plain lines, one link to the limits
     for said in ("devnet", "test USDC", "test money only", "no customers yet", "One person holds every key today"):
         assert said in " ".join(real), said
-    assert above.index("## How it works") < above.index("<!-- bench:today -->") and "`/knos fund " in above.split("## One use: paying AI agents for verified pull requests")[1].split("\n## ")[0]
+    assert above.index("## How it works") < above.index("<!-- bench:today -->") and "`/knos fund " in above.split("## Paid on proof: when the proof is a pull request")[1].split("\n## ")[0]
     table = above[above.index("<!-- bench:today -->"):above.index("<!-- /bench:today -->")]
     numbers = read("docs/NUMBERS.md")
     printed = re.findall(r"(?m)^\| \d \| ([^:|]+)[^|]*\| (\d+) \|", numbers)
@@ -100,7 +100,7 @@ def test_the_story_is_seven_beats_each_with_evidence_that_exists_and_asks_for_th
     story = read("docs/STORY.md")
     lines = [line for line in story.splitlines() if line.strip()]
     assert lines[0].startswith("<img ") and lines[2].startswith("**In plain words.**")      # the mark and the summary (tests/test_docs_plain.py)
-    assert lines[3] == "**Knos carries research across the valley of death: each step is paid only on verified proof.**"
+    assert lines[3] == "**Knos carries research across the valley of death: see who wants it and where, then get paid only on proof.**"
     assert lines[4] == "Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check."
     steps = re.findall(r"(?m)^(\d)\. \*\*(.+?)\*\* (.+)\n   Evidence: \[([^\]]+)\]\(([^)]+)\)", story)
     assert [int(s[0]) for s in steps] == list(range(1, STEPS + 1))

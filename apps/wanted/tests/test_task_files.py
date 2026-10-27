@@ -1,5 +1,5 @@
 """An agent limited to Knos's tools can read the round's baseline and README: the open round's submit block carries
-both as text (CHAMPION3 E3: an MCP-only agent wrote train.py blind and every attempt scored "shown": null)."""
+both as text (an MCP-only agent wrote train.py blind and every attempt scored "shown": null)."""
 from pathlib import Path
 
 from knos_wanted import tasks

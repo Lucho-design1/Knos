@@ -46,7 +46,7 @@ import capabilities as cap  # noqa: E402
 import provenance as prov  # noqa: E402
 
 DOC = "docs/reference/MANIFEST.md"
-SENTENCE = "Knos carries research across the valley of death: each step is paid only on verified proof."
+SENTENCE = "Knos carries research across the valley of death: see who wants it and where, then get paid only on proof."
 REPO = "https://github.com/drexthealpha/Knos"
 LIMITS = "## Outstanding limits"
 TX = "https://explorer.solana.com/tx/{}?cluster=devnet"

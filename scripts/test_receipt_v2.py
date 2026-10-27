@@ -1,4 +1,4 @@
-"""test_receipt_v2 (CHAMPION7 J6): the receipt's trust line says the 8-day time lock. In this repository's numbering
+"""test_receipt_v2: the receipt's trust line says the 8-day time lock. In this repository's numbering
 the new format is receipt version 6 and the kit that adds its vectors is conformance kit 5 (versions 1 to 5 and kit 4
 already existed): new receipts are version 6 with the true line, the vectors of every version pass, and
 test_public_words passes with receipts of versions 1 to 5 as the only places the old delay stands.

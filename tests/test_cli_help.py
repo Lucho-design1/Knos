@@ -13,24 +13,22 @@ def _help(capsys, *args: str) -> tuple[int, str]:
     return rc, capsys.readouterr().out
 
 
-def test_no_argument_and_help_print_the_same_four_user_commands_first_then_the_two_groups(capsys):
+def test_no_argument_and_help_print_the_one_flows_four_headings_in_order(capsys):
     rc, bare = _help(capsys)
     assert rc == 0
     assert _help(capsys, "--help") == (0, bare)
     at = lambda text: bare.index(text)  # noqa: E731
-    first, workflows, money = at("Commands"), at("For a repository's workflows"), at("For money")
-    assert first < workflows < money
-    user = bare[first:workflows]
-    for name in ("check", "init", "claim", "status"):
-        assert f"│ {name} " in user, name
-    assert [user.index(f"│ {n} ") for n in ("check", "init", "claim", "status")] == sorted(user.index(f"│ {n} ") for n in ("check", "init", "claim", "status"))
-    assert not any(f"│ {n} " in user for n in ("command", "settle", "review", "relay", "keys", "bounty", "balance", "mainnet-check"))
-    # what a workflow runs is under its own heading, what moves money under its own
-    for name in ("command", "settle", "review", "attest", "canary", "relay", "mcp", "proof"):
-        assert f"│ {name} " in bare[workflows:money], name
-    assert [bare.index(f"│ {n} ") for n in ("settle", "review", "attest", "canary", "relay")] == sorted(bare.index(f"│ {n} ") for n in ("settle", "review", "attest", "canary", "relay"))
-    for name in ("bounty", "due", "fund-wallet", "balance", "keys", "mainnet-check"):
-        assert f"│ {name} " in bare[money:], name
+    demand, hold, paid, run = at("Check demand"), at("Hold money"), at("Paid on proof"), at("Run Knos")
+    assert demand < hold < paid < run
+    assert [bare.index(f"│ {n} ") for n in ("demand", "idea", "idt")] == sorted(bare.index(f"│ {n} ") for n in ("demand", "idea", "idt"))
+    for name in ("demand", "idt", "idea"):
+        assert demand < at(f"│ {name} ") < hold, name
+    for name in ("fund-wallet", "balance", "bounty", "terms", "faucet"):
+        assert hold < at(f"│ {name} ") < paid, name
+    for name in ("check", "receipt", "record", "claim", "settle", "review", "attest", "canary", "relay", "mcp", "proof"):
+        assert paid < at(f"│ {name} ") < run, name
+    for name in ("status", "init", "keys", "mainnet-check", "observe", "reproduce"):
+        assert run < at(f"│ {name} "), name
     assert "│ hook " not in bare            # the hook's entry point is nobody's command
 
 
@@ -39,7 +37,7 @@ def test_an_organisations_claim_and_the_meters_statement_are_in_the_help(capsys)
     rc, bare = _help(capsys, "--help")
     said = " ".join(bare.replace("│", " ").split())
     assert rc == 0 and "`claim --org`: an organisation's." in said and "`statement --meter`: evaluations billed." in said
-    assert bare.index("--org") < bare.index("For a repository's workflows") < bare.index("For money") < bare.index("--meter")
+    assert bare.index("Paid on proof") < bare.index("--org") < bare.index("--meter") < bare.index("Run Knos")
     rc, text = _help(capsys, "claim", "--help")
     assert rc == 0 and "--org" in text and "organisation" in text
     rc, text = _help(capsys, "statement", "--help")
@@ -117,9 +115,9 @@ def test_init_takes_a_host_and_says_which_hosts_there_are(capsys):
     assert rc == 1 and "cursor" in said and "roo" in said
 
 
-def test_budget_observe_and_reproduce_are_commands_for_money(capsys):
+def test_budget_observe_and_reproduce_are_in_the_help(capsys):
     rc, said = _help(capsys, "--help")
-    money = said[said.index("For money"):]
+    money = said[said.index("Hold money"):]
     assert rc == 0 and all(f" {word} " in money for word in ("budget", "observe", "reproduce"))
     for word, option in (("budget", "show"), ("observe", "--graph"), ("reproduce", "--only")):
         rc, text = _help(capsys, word, "--help")

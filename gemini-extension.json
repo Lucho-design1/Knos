@@ -1,7 +1,7 @@
 {
   "name": "knos",
   "version": "0.4.0",
-  "description": "Checks who wants a product with Qloo taste data and pays devnet money only when the proof passes.",
+  "description": "Knos carries research across the valley of death: see who wants it and where, then get paid only on proof.",
   "mcpServers": {
     "knos": {
       "command": "uvx",

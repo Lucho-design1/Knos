@@ -168,7 +168,7 @@ def test_the_answers_agree_with_the_tree():
     assert pay.FEE_BPS == 30 and pay.order_fee(100_000_000) == 300_000 and pay.order_fee(5_000_000) == 50_000 == pay.fee_of(5_000_000)
     assert "Checking a pull request costs nothing, and stays free." in (ROOT / "docs" / "PRICING.md").read_text(encoding="utf-8")
     assert answers["What is Knos?"] == "Knos takes research from a paper to a product people want. It pays each step only on verified proof."
-    assert "valley of death" in sentence() and "verified proof" in sentence()                 # the one sentence, as two short answers
+    assert "valley of death" in sentence() and "paid only on proof" in sentence()             # the one sentence, as two short answers
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "The money waits in a program on [Solana](docs/WORDS.md#solana), not with Knos." in readme
     assert "Today one person can still change that program, after a public wait" in readme
@@ -235,7 +235,7 @@ def test_the_sitemap_lists_the_pages_to_index_and_each_is_a_file():
 def test_llms_txt_has_the_proposals_shape_and_every_link_leads_somewhere():
     text = (WEB / "llms.txt").read_text(encoding="utf-8")
     lines = text.splitlines()
-    assert lines[0] == "# Knos" and lines[1] == "" and lines[2].startswith(f"> {sentence()} ")
+    assert lines[0] == "# Knos" and lines[1] == "" and lines[2] == f"> {sentence()}"              # the one line opens it
     heads = re.findall(r"(?m)^## (.+)$", text)
     assert heads[-1] == "Optional" and len(heads) >= 2 and not re.search(r"(?m)^#{3,} ", text)
     items = re.findall(r"(?m)^- \[([^\]]+)\]\(([^)]+)\)(?:: .+)?$", text)

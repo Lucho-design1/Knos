@@ -48,7 +48,7 @@ def test_no_recorded_qloo_bodies_in_repo():
 
 
 def test_qloo_is_reached_only_from_the_server_client_and_no_key_in_code():
-    # Qloo is reached server side only: the REST client qloo_rest.py (the hackathon API, key from the environment)
+    # Qloo is reached server side only: the REST client qloo_rest.py (Qloo's API, key from the environment)
     # and the official harness bridge. No other module names the endpoint or the key header, no code assigns a key,
     # and the browser never talks to Qloo.
     rest = ROOT / "knos_wanted" / "qloo_rest.py"

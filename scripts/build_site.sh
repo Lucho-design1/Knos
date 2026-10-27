@@ -25,8 +25,10 @@ cp -r web/. "$out/"
 # the one-page app, is app.html (web/index.html). An old address of the root (#records, #check...) is sent on from the
 # front door's head. KNOS_SPA_AT_ROOT=1 (the tests that drive the app's pages, tests/_posix.py and the web job) keeps the
 # app at index.html, where those tests open it; tests/web/one_front_door.mjs holds the split itself.
+# One app: the published site carries no copy of it. app.html sends an old link on to the app on Render (web/app-moved.html).
 if [ "${KNOS_SPA_AT_ROOT:-}" != 1 ]; then
-  mv "$out/index.html" "$out/app.html"
+  rm "$out/index.html"
+  mv "$out/app-moved.html" "$out/app.html"
   mv "$out/home.html" "$out/index.html"
 fi
 # the documents the command palette can open (web/palette.js reads it; without it the palette has no documents)

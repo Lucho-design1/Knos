@@ -4,7 +4,7 @@
 
 **In plain words.** A buyer puts money on a task, and someone does the work. The money moves only when the work passes the buyer's own tests. This page follows one coding task, one use of Knos, paid in [test money](WORDS.md#test-usdc) in seven steps, each with its proof.
 
-**Knos carries research across the valley of death: each step is paid only on verified proof.**
+**Knos carries research across the valley of death: see who wants it and where, then get paid only on proof.**
 
 Of 241 merged agent pull requests claiming passing tests, 9 failed a test, build, lint or type check.
 

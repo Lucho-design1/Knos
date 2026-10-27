@@ -556,7 +556,7 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
     if method == "initialize":
         return ok({"protocolVersion": PROTOCOL, "capabilities": {"tools": {"listChanged": False}},
                    "serverInfo": {"name": "knos", "version": _knos_version()},
-                   "instructions": "Knos carries research across the valley of death: each step is paid only on verified proof. Start with knos_demand_check (is it wanted: who, where, at what price) or "
+                   "instructions": "Knos carries research across the valley of death: see who wants it and where, then get paid only on proof. Start with knos_demand_check (is it wanted: who, where, at what price) or "
                                                    "knos_cross with a paper id; every step names the Qloo call behind it. knos_ready says whether a brief is "
                                                    "clear enough to lock money on. Devnet, test money, no customers yet."})
     if method == "ping":

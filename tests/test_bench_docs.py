@@ -244,17 +244,17 @@ def test_the_one_sentence_leads_the_readme_and_the_site_and_the_readmes_first_sc
     measured = (f"Ready briefs: {idt['ratio_vague_to_ready']}x fewer output tokens, {round(100 * idt['ready_pass_rate'])}% vs "
                 f"{round(100 * idt['vague_pass_rate'])}% passed ([measured](https://github.com/drexthealpha/Knos/blob/main/docs/idt/summary.json)).")
     assert lines[0] == f"**{cc.SENTENCE}**" and cc.SENTENCE.startswith("Knos carries research ") and len(lines) == 5
-    assert lines[1] == "From a paper or idea to a product people want: a demand check on Qloo, a Ready brief, money held on Solana, paid on proof." and lines[2] == measured
+    assert lines[1] == "A demand check on Qloo sets the terms, and the money waits on Solana until the proof passes." and lines[2] == measured
     assert lines[3] == "Devnet, test money, no customers yet."
     assert lines[4] == "[Check demand](https://drexthealpha.github.io/Knos/#demand) · [Check every claim yourself](docs/reference/MANIFEST.md)"
     hero = (ROOT / "web" / "index.html").read_text(encoding="utf-8").split('<div class="hero-words">')[1].split("</form>")[0]
     # the check of agent work (one use of Knos) leads with what it does, says it is one use, then Knos in a few words and
     # the number; the one sentence is folded under "What is here", before what a work order is
-    use, short = "Check an AI agent's pull request before it is paid.", "Research to products people want, paid on proof."
+    use, short = "Check an AI agent's pull request before it is paid.", "See who wants it, then get paid on proof."
     # one h1 on the page, the demand check's mission; this use heads its own section under it (d6b6360)
     assert f">{use}</h2>" in hero and 'id="hero-who"' in hero and f">{short}</p>" in hero
     assert hero.index(use) < hero.index('id="hero-who"') < hero.index(short) < hero.index('id="hero-fact"')
-    one_use = readme.split("\n## One use: paying AI agents for verified pull requests\n", 1)[1].split("\n## ", 1)[0]
+    one_use = readme.split("\n## Paid on proof: when the proof is a pull request\n", 1)[1].split("\n## ", 1)[0]
     assert "`/knos fund " in one_use and "```mermaid" in one_use and number not in first          # the number: below, in "The number"
     # the ONE command is the first line under "Read more", no longer on the first screen
     command = [line for line in readme.split("\n## Read more\n", 1)[1].splitlines() if line.strip()][0]

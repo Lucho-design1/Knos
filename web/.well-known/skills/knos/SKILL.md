@@ -1,7 +1,7 @@
 ---
 name: knos
-description: Run Knos before opening a pull request - obey the repository's AI policy, run the cheat checks and its tests, and attach a signed receipt.
-version: 0.3.29
+description: Knos carries research across the valley of death: see who wants it and where, then get paid only on proof. Before a pull request is paid, run Knos's checks and attach a signed receipt.
+version: 0.4.0
 author: drexthealpha
 license: MIT
 platforms: [linux, macos, windows]

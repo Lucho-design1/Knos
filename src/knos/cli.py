@@ -43,7 +43,7 @@ from rich.console import Console
 from . import badge, ghwords, version
 
 _app = typer.Typer(add_completion=False, pretty_exceptions_enable=False, no_args_is_help=True,
-                  help="Knos carries research across the valley of death: each step is paid only on verified proof. "
+                  help="Knos carries research across the valley of death: see who wants it and where, then get paid only on proof. "
                        "Start with `knos demand`, `knos check`, `knos init` or `knos status`.")
 
 for _stream in (sys.stdout, sys.stderr):   # a Windows console's code page cannot encode everything a PR says
@@ -1200,9 +1200,24 @@ def load(command: str | None = None) -> None:
             _loaded.add(i)
             _MODULES[i][1]()
     tail = [row for name in ("meter", "audit", "budget", "observe", "reproduce", "shadow", "events", "bill", "preflight", "keep", "appeal", "vault", "archive", "approve", "decide", "net", "advance", "faucet", "controls", "recall", "task", "exit", "boundary", "selfhost", "assurance", "fees", "protect", "referee", "cheats", "outcome", "gate", "verify", "self", "game", "idea", "idt", "demand") for row in _HELP if row[0] == name]   # the lines modules append: in this order always
-    first = [row for name in ("demand", "idt", "idea") for row in _HELP if row[0] == name]      # the product's first steps, first
-    _HELP[:] = first + [row for row in _HELP if row not in tail and row not in first] + [row for row in tail if row not in first]
+    ordered = [row for row in _HELP if row not in tail] + tail
+    # the one flow's headings, in its order; a command keeps its place inside its heading
+    _HELP[:] = sorted(((name, heading(name), short) for name, _p, short in ordered), key=lambda r: FLOW.index(r[1]))
     _arrange()
+
+
+CHECK_DEMAND, HOLD_MONEY, PAID_ON_PROOF, RUN_KNOS = "Check demand", "Hold money", "Paid on proof", "Run Knos"
+FLOW = (CHECK_DEMAND, HOLD_MONEY, PAID_ON_PROOF, RUN_KNOS)
+_HEADINGS = {CHECK_DEMAND: ("demand", "idt", "idea"),
+             HOLD_MONEY: ("fund-wallet", "balance", "bounty", "terms", "faucet", "advance", "budget", "boundary", "net", "exit"),
+             PAID_ON_PROOF: ("check", "receipt", "receipts", "record", "statement", "badge", "due", "claim", "settle", "review", "attest",
+                             "relay", "work", "task", "proof", "judge", "accept", "verify", "preflight", "keep", "appeal", "outcome",
+                             "referee", "cheats", "command", "canary", "mcp", "agent", "gate", "game")}
+
+
+def heading(name: str) -> str:
+    """The heading of the one flow a command sits under in `knos --help`: anything not named is Run Knos."""
+    return next((h for h, names in _HEADINGS.items() if name in names), RUN_KNOS)
 
 
 def __getattr__(name: str):

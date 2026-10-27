@@ -1,4 +1,4 @@
-"""knos - Knos carries research across the valley of death: each step is paid only on verified proof."""
+"""knos - Knos carries research across the valley of death: see who wants it and where, then get paid only on proof."""
 
 
 def version() -> str:

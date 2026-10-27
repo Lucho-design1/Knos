@@ -132,7 +132,7 @@ def sentence(root: Path = ROOT) -> str:
 
 # The sentence in a few words: what a person searching reads first, so it is the title (60 characters at most:
 # tests/test_seo.py).
-OUTCOME = "Research to products people want, paid on proof."
+OUTCOME = "See who wants it, then get paid on proof."
 
 
 def title(said: str) -> str:

@@ -1,6 +1,6 @@
-# Knos for Claude Code
+# Knos for contributors
 
-Knos is one product: idea or paper -> Ready brief -> milestones -> money held until the proof passes -> paid only on verified proof.
+Knos carries research across the valley of death: see who wants it and where, then get paid only on proof.
 Solana devnet only; test units, never real money.
 
 ## Layout
@@ -11,7 +11,6 @@ Solana devnet only; test units, never real money.
 - `tests/`, `apps/wanted/tests/`, `tests/web/*.mjs`: pytest and the site's headless-Chromium tests.
 
 ## Rules
-- Commits by the founder's account only, no co-author or AI trailer. Main branch only.
 - Never print, commit or pass a secret on a command line; read keys from files or env.
 - A change that moves money stays behind the Ready check (`knos.ready.require`).
 - Every number shown to a user is measured or read from chain; nothing is estimated or invented.
@@ -21,9 +20,4 @@ Solana devnet only; test units, never real money.
 ## Checks
 - Quick: `pytest -q tests/test_ready.py tests/test_idt.py apps/wanted/tests/test_valley.py`.
 - Lint as CI: `ruff check .`, `mypy`, `vulture src/knos scripts --min-confidence 60`, `python scripts/deadcode.py`.
-- The full suite is GitHub CI on the push (`.github/workflows/tests.yml`); a slow machine runs it serially.
-- Deploy the app by explicit commit id through the Render API; wait for Pages to publish before live tests.
-
-## Working on a goal
-Use the `knos-goal` skill (`.claude/skills/knos-goal/SKILL.md`): intent sketch first, terse routine edits,
-batch independent commands, recall memory before re-deriving, save and debloat Sibyl at the end.
+- The full suite is GitHub CI on the push (`.github/workflows/tests.yml`).

@@ -1,6 +1,6 @@
 // test_front_door_live: the live front door and the pages beside it raise no page error, and each of the 8 chips,
 // pressed at 390 and 1280 px, draws a verdict card within 20 s. Run by the pages workflow after each deploy (--ci:
-// the deploy is the commit; Render is whatever is live) and as CHAMPION9's L1 with the commit under test.
+// the deploy is the commit; Render is whatever is live) and with the commit under test.
 //   node scripts/test_front_door_live.mjs [commit sha under test | --ci]
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";

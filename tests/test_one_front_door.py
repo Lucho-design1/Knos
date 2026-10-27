@@ -47,9 +47,10 @@ def test_the_root_is_the_demand_check_alone(built):
     assert 'href="./check/#sample" id="steps-check"' in page                     # Paid on proof's link goes to the check's own page
 
 
-def test_the_rest_of_the_site_is_app_html_and_the_check_its_own_page(built):
-    app = (built / "app.html").read_text(encoding="utf-8")
-    assert 'id="view-check"' in app and 'id="view-records"' in app and (built / "check" / "index.html").is_file()
+def test_one_app_app_html_sends_old_links_on_and_the_check_is_its_own_page(built):
+    app = (built / "app.html").read_text(encoding="utf-8")       # one app: knos.onrender.com/app/; no second copy is published
+    assert 'url=https://knos.onrender.com/app/' in app and 'location.replace("https://knos.onrender.com/app/" + location.hash)' in app
+    assert 'id="view-check"' not in app and (built / "check" / "index.html").is_file() and not (built / "app-moved.html").exists()
     head = (built / "index.html").read_text(encoding="utf-8").split("</head>")[0]
     assert 'location.replace("check/"' in head and 'location.replace("app.html" + h)' in head and 'addEventListener("hashchange", go)' in head
 

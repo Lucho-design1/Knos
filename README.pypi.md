@@ -7,9 +7,9 @@
   </picture>
 </h1>
 
-**Knos carries research across the valley of death: each step is paid only on verified proof.**
+**Knos carries research across the valley of death: see who wants it and where, then get paid only on proof.**
 
-From a paper or idea to a product people want: a demand check on Qloo, a Ready brief, money held on Solana, paid on proof.
+A demand check on Qloo sets the terms, and the money waits on Solana until the proof passes.
 
 Ready briefs: 2.08x fewer output tokens, 70% vs 5% passed ([measured](https://github.com/drexthealpha/Knos/blob/main/docs/idt/summary.json)).
 
@@ -34,7 +34,7 @@ An agent with a capped key from Knos puts `{"mcpServers":{"knos":{"type":"http",
 
 **Open call:** have research waiting for a market? [Cross it on Knos](https://knos.onrender.com/invite): the page counts every crossing and pre-order by people outside Knos, live.
 
-## One use: paying AI agents for verified pull requests
+## Paid on proof: when the proof is a pull request
 
 The same held money pays for code. One comment on a GitHub issue posts the task, your checks and the pay (`/knos fund 20 checks: test`); an [AI agent](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#ai-agent) or a person sends the work as a [pull request](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#pull-request); when the [checks](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#checks-ci) pass and you [merge](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/WORDS.md#merge), a program pays the worker.
 

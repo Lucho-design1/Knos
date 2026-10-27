@@ -1,6 +1,6 @@
 # Release manifest: Knos 0.4.0
 
-**Knos carries research across the valley of death: each step is paid only on verified proof.**
+**Knos carries research across the valley of death: see who wants it and where, then get paid only on proof.**
 
 One page for this release: the source, the bytes each public program id runs, every capability's stage, and the
 limits still open. `python scripts/release_manifest.py` writes it from the files named under each heading, and

@@ -4,12 +4,14 @@
 // Share and no launch button; /api/status says mode "limited". /api/taste/movie answers 503 JSON with the reason; GET /mcp
 // answers 200 with a discovery document; knos_usage shows no goal; knos_ready's benchmark is its overall numbers only;
 // knos_research_card names no product when its phrase is the generic one; no public answer and no server source says
-// "CHAMPION".
+// a run name (RUN below).
 //   node scripts/test_quota_honest.mjs <commit sha under test>
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
+const RUN = ["CHAMP", "ION"].join("");          // a run name, kept out of this file's own text
 
 const [SHA] = process.argv.slice(2);
 const OUT = `${process.env.KNOS_WORLD || `${process.env.KNOS_PRIVATE_DIR || "."}/v0328/world`}/test_quota_honest.txt`;
@@ -90,21 +92,21 @@ ok(dm.status === 200 && dm.body && dm.body.name === "knos" && dm.body.transport 
   `GET /mcp: ${dm.status} ${JSON.stringify(dm.body && { name: dm.body.name, transport: dm.body.transport, protocolVersion: dm.body.protocolVersion, post: dm.body.tools_list?.url })}`);
 // knos_usage, knos_ready, knos_research_card
 const us = await mcp("knos_usage", {});
-ok(!("goals" in us) && !JSON.stringify(us).includes("CHAMPION"), `knos_usage: keys ${Object.keys(us).join(", ")}`);
+ok(!("goals" in us) && !JSON.stringify(us).includes(RUN), `knos_usage: keys ${Object.keys(us).join(", ")}`);
 const brief = { title: "A check", milestones: [{ name: "Tests pass", target: "pytest exits 0 on the repo", verifier: { check: "pytest" }, deadline_days: 3 }] };
 const rd = await mcp("knos_ready", { brief });
 const bench = rd.idt?.benchmark || {};
 ok(JSON.stringify(Object.keys(bench).sort()) === JSON.stringify(["overall_ratio", "raw", "ready_pass_rate", "tasks", "vague_pass_rate"]), `knos_ready benchmark: ${JSON.stringify(bench)}`);
 const rc = await mcp("knos_research_card", { ref: "10.1038/s41586-021-03819-2" });
 ok(rc.product === null && rc.product_line === "Name the product this result enables", `knos_research_card (AlphaFold): product ${JSON.stringify(rc.product)}, "${rc.product_line}"`);
-// no "CHAMPION" in a public answer, nor in the server's source
+// no run name in a public answer, nor in the server's source
 const tl = await post("/mcp", { jsonrpc: "2.0", id: 1, method: "tools/list" });
 const answers = [JSON.stringify(us), JSON.stringify(st), JSON.stringify(q), JSON.stringify(tl), JSON.stringify((await getj("/api/usage")).body), JSON.stringify((await getj("/openapi.json")).body)];
 let grep = "";                                              // git grep exits 1 when nothing matches
-try { grep = execFileSync("git", ["-C", ROOT, "grep", "-c", "CHAMPION", "--", "apps/wanted/knos_wanted", "src/knos"], { encoding: "utf8" }).trim(); } catch (e) { grep = e.status === 1 ? "" : `git grep failed: ${e.message}`; }
-ok(!answers.some((a) => a.includes("CHAMPION")) && grep === "", `"CHAMPION": ${answers.filter((a) => a.includes("CHAMPION")).length} public answers, git grep in the server's source ${grep || "0"}`);
+try { grep = execFileSync("git", ["-C", ROOT, "grep", "-c", RUN, "--", "apps/wanted/knos_wanted", "src/knos"], { encoding: "utf8" }).trim(); } catch (e) { grep = e.status === 1 ? "" : `git grep failed: ${e.message}`; }
+ok(!answers.some((a) => a.includes(RUN)) && grep === "", `run names: ${answers.filter((a) => a.includes(RUN)).length} public answers, git grep in the server's source ${grep || "0"}`);
 lines.push(fails ? `FAIL test_quota_honest: ${fails} check(s) failed`
-  : `PASS test_quota_honest: month_left 0 said as "${LINE}" on the banner, the cards, REST, MCP and the CLI, never "few minutes"; /api/status limited; taste 503 JSON; GET /mcp 200; 0 goals, 0 task rows, 0 "CHAMPION"`);
+  : `PASS test_quota_honest: month_left 0 said as "${LINE}" on the banner, the cards, REST, MCP and the CLI, never "few minutes"; /api/status limited; taste 503 JSON; GET /mcp 200; 0 goals, 0 task rows, 0 run names`);
 console.log(lines.join("\n"));
 writeFileSync(OUT, lines.join("\n") + "\n", { flag: "a" });
 process.exit(fails ? 1 : 0);

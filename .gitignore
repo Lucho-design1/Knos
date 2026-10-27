@@ -38,3 +38,5 @@ examples/*/target
 
 examples/target
 mutants/
+# private working notes of this machine
+CLAUDE.local.md
