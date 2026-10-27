@@ -355,6 +355,9 @@ class State:
             f = escrow._state_dir() / "reports" / f"{h}.report"       # a decision report kept across restarts
             if f.exists():
                 got = json.loads(f.read_text(encoding="utf-8"))
+        if got is None and isinstance(h, str):
+            from . import recorded                   # a sample chip's recorded card, by its hash (the trace of a fresh server)
+            got = recorded.by_hash(h)
         return got
 
     def keep_check(self, r: dict) -> None:

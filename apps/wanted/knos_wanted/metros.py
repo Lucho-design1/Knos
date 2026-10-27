@@ -110,6 +110,23 @@ def terms(cells: list[dict]) -> dict | None:
             "source": "Qloo heatmap; Census TIGER/Line 2023 metro boundaries; Census Vintage 2023 population estimates"}
 
 
+def launch_terms(rep: dict) -> dict | None:
+    """The one answer every page draws for a report: {city, target, cells, rule}, from the terms the report holds,
+    else the same rule (terms) over its heatmap cells; None when Qloo's map names no launch city."""
+    t = rep.get("terms") if isinstance(rep.get("terms"), dict) and rep["terms"].get("city") else terms(rep.get("where") or [])
+    if not t:
+        return None
+    return {"city": t["city"], "target": t["target"], "cells": t.get("cells"), "rule": t.get("refund_rule") or REFUND.format(target=t["target"], city=t["city"])}
+
+
+def with_terms(rep: dict) -> dict:
+    """A report kept from before its terms were written in it (a recording) with them written in, by the same rule."""
+    if isinstance(rep.get("terms"), dict) or rep.get("stage") == "verdict":
+        return rep
+    t = terms(rep.get("where") or [])
+    return {**rep, "terms": t, "no_map": None if t else NO_MAP}
+
+
 def brief(idea: str, t: dict, persona: list[str] | None = None) -> dict:
     """The Ready brief whose money terms Qloo set: one pre-order milestone in the launch city. The taste persona's tags
     ride in the launch block, inside the criteria hash."""

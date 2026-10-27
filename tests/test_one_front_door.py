@@ -39,7 +39,7 @@ def test_the_root_is_the_demand_check_alone(built):
     page = raw((built / "index.html").read_text(encoding="utf-8"))
     h1 = re.findall(r"<h1\b[^>]*>(.*?)</h1>", page, re.S)
     assert [re.sub(r"<[^>]+>", "", h).strip() for h in h1] == [MISSION]
-    assert 'id="k-q"' in page and len(re.findall(r'class="k-chip"', page)) == 8 and 'id="k-card"' in page
+    assert 'id="k-q"' in page and len(re.findall(r'class="k-chip"', page)) == 6 and "data-more-chips" in page and 'id="k-card"' in page
     steps = re.search(r'<ol class="k-step-list">(.*?)</ol>', page, re.S).group(1)
     assert len(re.findall(r"<li\b", steps)) == 4 and "See it in 3 clicks" in page
     for gone in ('id="view-check"', 'id="front-door"', "Check an AI agent's pull request", 'id="view-records"', 'id="view-fund"', 'id="hero-fact"'):

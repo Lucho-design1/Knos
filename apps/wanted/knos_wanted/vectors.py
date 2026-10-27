@@ -77,13 +77,20 @@ def public(rep: dict) -> bool:
     return _norm(rep.get("idea")) in _public or _norm(rep.get("ref")) in _public
 
 
+def _terms(rep: dict) -> dict | None:
+    """The report's launch terms with the metros the card maps (metros.terms), by the one rule every page draws."""
+    from . import metros
+    t = metros.with_terms(rep).get("terms")
+    return {k: t.get(k) for k in ("city", "target", "cells", "refund_rule", "metros")} if t else None
+
+
 def _card(rep: dict) -> dict:
     """What a front door draws for a verdict: the decision, who, where (with coordinates), the price tier, the trace."""
     d = rep.get("decision") or {}
     return {"hash": rep.get("hash"), "idea": rep.get("idea"), "label": rep.get("label"), "made": rep.get("made"),
             "decision": {"verdict": d.get("verdict"), "reasons": (d.get("reasons") or [])[:2], "plan": d.get("plan")},
             "who": rep.get("who"), "audiences": (rep.get("audiences") or [])[:3], "cities": (rep.get("cities") or [])[:5],
-            "price": rep.get("price"), "calls": shape({"calls": rep.get("calls") or []})["calls"], "n_calls": len(rep.get("calls") or []),
+            "price": rep.get("price"), "terms": _terms(rep), "no_map": rep.get("no_map"), "calls": shape({"calls": rep.get("calls") or []})["calls"], "n_calls": len(rep.get("calls") or []),
             "leader": {k: (rep.get("leader") or {}).get(k) for k in ("name", "id")} if isinstance(rep.get("leader"), dict) else None}
 
 

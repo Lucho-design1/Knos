@@ -57,8 +57,7 @@ def state_of(rep: dict | None) -> str | None:
 
 def terms_of(rep: dict) -> dict | None:
     """The launch terms the card draws: the report's own, else the check's rule over its heatmap cells."""
-    t = rep.get("terms")
-    return t if isinstance(t, dict) and t.get("city") else metros.terms(rep.get("where") or [])
+    return metros.launch_terms(rep)
 
 
 STYLE = """body{margin:0;background:#f4f4f0;color:#14151a;font:400 16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -81,6 +80,8 @@ def page(rep: dict | None, url: str, rid: str) -> str:
     else:
         idea = str(rep.get("idea") or "this idea")
         word = WORD.get(str((rep.get("decision") or {}).get("verdict") or ""), "Qloo cannot decide this one")
+        if word == WORD["OPEN"] and not terms_of(rep):              # Open needs a launch city, as on the card
+            word = "Not yet: Qloo sets no launch city for this idea"
         t = terms_of(rep) if st in (None, "outage") else None     # an outage card is the last real answer: its terms hold
         made = str(rep.get("made") or "")[:10]
         # the launch city and target as the card has them; with no terms those rows are left out (the sentence says why)

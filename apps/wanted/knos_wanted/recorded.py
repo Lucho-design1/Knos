@@ -66,7 +66,8 @@ def load(file: str | None = None) -> int:
     except (OSError, ValueError):
         return 0
     from . import check                   # a card recorded before a segment's name was known to be sensitive is shown without it
-    cards = {k: check.scrub(v) for k, v in (doc.get("cards") or {}).items() if k in CHIP_KEYS and isinstance(v, dict) and real(v)}
+    from . import metros                  # and its launch terms written in, by the rule every page draws (metros.launch_terms)
+    cards = {k: metros.with_terms(check.scrub(v)) for k, v in (doc.get("cards") or {}).items() if k in CHIP_KEYS and isinstance(v, dict) and real(v)}
     with _lock:
         for k, v in cards.items():
             if k not in _last or (v.get("made") or "") > (_last[k].get("made") or ""):
@@ -109,6 +110,13 @@ def keep(text: str, rep: dict) -> None:
             _last[k] = copy.deepcopy(rep)
         if os.environ.get("KNOS_RECORDED_UPLOAD_KEY"):
             _write_soon()
+
+
+def by_hash(h: str) -> dict | None:
+    """A recorded sample card by its report hash (a copy), or None."""
+    with _lock:
+        r = next((v for v in _last.values() if v.get("hash") == h), None)
+    return copy.deepcopy(r) if r else None
 
 
 def recording(text: str) -> dict | None:

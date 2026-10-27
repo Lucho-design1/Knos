@@ -24,7 +24,7 @@ if (!CI) {
 const R = `${API}/r/14d68eb782caff05`;
 const PAGES = [SITE, SITE + "demo/", SITE + "check/", SITE + "how-we-test.html", R, API + "/app/"];
 const browser = await chromium.launch();
-let chips = 0, pressed = 0;
+let chips = 0, pressed = 0, more = 0;
 try {
   for (const u of PAGES) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -39,6 +39,7 @@ try {
     const probe = await browser.newPage({ viewport: { width: w, height: h } });
     await probe.goto(SITE + "?t=" + Date.now(), { waitUntil: "load" });
     const qs = await probe.$$eval(".k-try .k-chip[data-q]", (b) => b.map((x) => x.dataset.q));
+    more = await probe.$$eval("[data-more-chips]", (e) => e.length);
     await probe.close();
     chips = qs.length;
     for (const q of qs) {
@@ -62,7 +63,8 @@ try {
       await page.close();
     }
   }
-  ok(chips === 8, `the front door holds ${chips} chips`);
+  // 8 chips, or the 6 with a recording and one line for the 2 that wait on Qloo
+  ok(chips === 8 || (chips === 6 && more === 1), `the front door holds ${chips} chips${more ? " and the line for the 2 that wait on Qloo" : ""}`);
 } finally {
   await browser.close();
 }
