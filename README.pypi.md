@@ -105,6 +105,13 @@ Start at [the release page](https://github.com/drexthealpha/Knos/blob/v0.4.0/doc
 
 One task from start to end, on 9 Oct 2026 with Knos 0.3.23, in a repository Knos owns, with test USDC (one step fixed by hand): [funded](https://explorer.solana.com/tx/3UaY22WKexigMpkVhibfeMdNgBiyybWm2Z4LuLskKGbNUDXV34yYWyH42atxFjELbrqSgoVs6TwpFzSQwhfXqzgM?cluster=devnet) · [wrong work refused](https://github.com/drexthealpha/knos-witness/actions/runs/37890511112/job/113690226126) · [paid](https://explorer.solana.com/tx/2PtmKUrQHKPARZE4nr35Te559NGQSG7tSHUfwzcKCAjL7gzvQ76fNTVLMWvq8mcZLxd27tbyTe31mCk2PxEGfAqa?cluster=devnet) (Released by GitHub's signed check, verified on Solana) · [replay paid nothing more](https://github.com/drexthealpha/knos-witness/pull/10#issuecomment-6075196710) · [the record](https://github.com/drexthealpha/Knos/blob/main/evidence/knos-witness-acaa854d/witness.json).
 
+Rebuild the two programs that hold and pay the money and compare: the hash devnet runs equals the verified build hash recorded for each ([PROVENANCE](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/PROVENANCE.md)). Read on 27 Oct 2026.
+
+```sh
+solana-verify get-program-hash -u devnet FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W   # knos_oidc: a2df952d262c48edacf2f594a01321e805c28f1dc523cb6efa75f2c45f34e632
+solana-verify get-program-hash -u devnet 5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k   # knos_pay: 8b3c044024eac6e00cf10930c325465d5682c3fb7273fe2f0d59c6e01f99867c
+```
+
 Every capability, with the file or transaction that shows it: [docs/reference/CAPABILITIES.md](https://github.com/drexthealpha/Knos/blob/v0.4.0/docs/reference/CAPABILITIES.md).
 
 ## The number

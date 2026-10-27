@@ -84,6 +84,44 @@ function answerHtml(r) {
   <p class="fine"><a href="${escHtml(r.url)}/checks" rel="noopener">Open its checks on GitHub</a></p>`;
 }
 
+// the sample: two pull requests of drexthealpha/knos-e2e on one bounty, one Knos paid and one it refused. Each is
+// checked as any pull request is; Knos's own comment on it says what it decided, and a paid one names its devnet
+// transaction, whose log line is read from devnet itself
+export const SAMPLE = [{ owner: "drexthealpha", repo: "knos-e2e", number: 266 }, { owner: "drexthealpha", repo: "knos-e2e", number: 265 }];
+const DEVNET = "https://api.devnet.solana.com";
+async function knosSaid(ref) {
+  const comments = await gh(`/repos/${ref.owner}/${ref.repo}/issues/${ref.number}/comments?per_page=50`).catch(() => []);
+  const c = comments.find((x) => /^(<!-- knos-review -->\s*)?Knos: /.test(x.body || ""));
+  if (!c) return null;
+  const line = c.body.replace(/^<!-- knos-review -->\s*/, "").split("\n")[0].replace(/\[(transaction)\]\([^)]*\)/g, "$1").slice(0, 200);
+  const sig = (/explorer\.solana\.com\/tx\/([1-9A-HJ-NP-Za-km-z]{64,90})/.exec(c.body) || [])[1] || null;
+  let log = null;
+  if (sig) {
+    const r = await fetch(DEVNET, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1,
+      method: "getTransaction", params: [sig, { encoding: "json", maxSupportedTransactionVersion: 1, commitment: "confirmed" }] }) }).then((x) => x.json()).catch(() => ({}));
+    const meta = (r.result || {}).meta || {};
+    log = meta.err === null ? (meta.logMessages || []).find((l) => new RegExp(`:paid .*\\bpr=${ref.number}\\b`).test(l)) || null : null;
+  }
+  return { line, sig, log };
+}
+
+export async function renderSample(el) {
+  el.innerHTML = `<p class="k-fine" role="status">Checking 2 pull requests of drexthealpha/knos-e2e.</p>`;
+  const parts = [];
+  for (const ref of SAMPLE) {
+    try {
+      const [r, said] = await Promise.all([readPr(ref), knosSaid(ref)]);
+      parts.push(`<section class="k-card check-sample" data-sample="${ref.number}"><h3><a href="${escHtml(r.url)}" rel="noopener">${escHtml(`${ref.repo} #${ref.number}`)}</a>: ${escHtml(r.title)}</h3>
+  <p class="verdict ${r.cls === "passed" ? "ok" : r.cls === "failed" ? "bad" : ""}" data-verdict="${escHtml(r.cls)}">${escHtml(r.line)}</p>
+  ${said ? `<p data-knos>${escHtml(said.line)}</p>` : ""}
+  ${said && said.sig && said.log ? `<p class="k-fine" data-tx="${escHtml(said.sig)}"><a href="https://explorer.solana.com/tx/${escHtml(said.sig)}?cluster=devnet" target="_blank" rel="noopener">The devnet transaction</a> · <code data-log>${escHtml(said.log.replace(/^Program log: /, ""))}</code></p>` : ""}</section>`);
+    } catch (e) {
+      parts.push(`<p class="status bad">${escHtml(e instanceof RateLimited ? `GitHub's limit for this address resets at ${e.reset.toLocaleTimeString()}.` : e.message || e)}</p>`);
+    }
+    el.innerHTML = parts.join("");
+  }
+}
+
 export function renderCheck(el, ctx = {}) {
   el.innerHTML = `<h2>Check an agent's pull request</h2>
   <p class="lede">Paste a public GitHub pull request link.</p>

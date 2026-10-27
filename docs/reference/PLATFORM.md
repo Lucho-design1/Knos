@@ -471,3 +471,17 @@ An agent reads the same answer from the MCP resource `knos://token/{address}` ([
 The payout's failure on a memo-required account follows from the Token-2022 rule (the Memo must be the instruction
 right before the transfer, at the same level) and from knos_pay issuing no Memo; a payout into such an account was not
 attempted on devnet.
+
+## The hash devnet runs
+
+Rebuild the two programs that hold and pay the money and compare: the hash devnet runs equals the verified build hash recorded for each ([PROVENANCE](PROVENANCE.md)). Read on 27 Oct 2026.
+
+```sh
+solana-verify get-program-hash -u devnet FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W   # knos_oidc: a2df952d262c48edacf2f594a01321e805c28f1dc523cb6efa75f2c45f34e632
+solana-verify get-program-hash -u devnet 5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k   # knos_pay: 8b3c044024eac6e00cf10930c325465d5682c3fb7273fe2f0d59c6e01f99867c
+```
+
+| program | id | verified build hash, and the hash devnet runs |
+|---|---|---|
+| knos_oidc | `FkwZdsYCmzicJMtHLTkPK76bYNVG4WNwkWJBiVWNtF3W` | `a2df952d262c48edacf2f594a01321e805c28f1dc523cb6efa75f2c45f34e632` |
+| knos_pay | `5y7iWJ1VAMJjnnWbbdo2a2PsWJEwTExSNpzrvQSEnS8k` | `8b3c044024eac6e00cf10930c325465d5682c3fb7273fe2f0d59c6e01f99867c` |

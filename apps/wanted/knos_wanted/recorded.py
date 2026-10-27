@@ -67,7 +67,9 @@ def load(file: str | None = None) -> int:
         return 0
     from . import check                   # a card recorded before a segment's name was known to be sensitive is shown without it
     from . import metros                  # and its launch terms written in, by the rule every page draws (metros.launch_terms)
+    from . import signals                 # and what each Qloo signal changes on it (the published table)
     cards = {k: metros.with_terms(check.retie(check.scrub(v))) for k, v in (doc.get("cards") or {}).items() if k in CHIP_KEYS and isinstance(v, dict) and real(v)}
+    cards = {k: {**v, "signals": signals.for_card(v)} for k, v in cards.items()}
     with _lock:
         for k, v in cards.items():
             if k not in _last or (v.get("made") or "") > (_last[k].get("made") or ""):

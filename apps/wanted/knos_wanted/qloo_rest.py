@@ -10,7 +10,7 @@ Rules this module keeps, all server side:
   an error message, the cache or a report;
 - the base URL comes from QLOO_BASE_URL (the Dockerfile and README set Qloo's API server);
 - answers are cached privately on the server's disk (KNOS_WANTED_CACHE/qloo-rest, one file per sha256 of method + path +
-  sorted params, 7 days), never in the repository (Qloo's rule: cache privately, never publish response bodies);
+  sorted params, with no time limit), never in the repository (Qloo's rule: cache privately, never publish response bodies);
 - at most 4 calls per second across the whole process (a token bucket);
 - a persistent monthly call counter with a hard budget (QLOO_MONTHLY_BUDGET, default 9,000): past it, new uncached calls
   are refused with a clear error, cached answers are still served.
@@ -29,7 +29,7 @@ from pathlib import Path
 
 from . import qloo_guard, qloo_harness
 
-TTL_S = 7 * 86_400
+TTL_S = None                  # a 2xx answer: kept with no time limit (Qloo's guide: private server-side caching, no time limit)
 ERROR_TTL_S = 86_400          # a 4xx answer (Qloo refused the question) is remembered for a day
 SLOW_TTL_S = 3_600           # a question Qloo did not answer within TIMEOUT_S is not asked again for an hour
 RATE_PER_S = 4.0
@@ -37,7 +37,7 @@ DEFAULT_BUDGET = 9_000
 TIMEOUT_S = 45.0
 MAX_BYTES = 4_000_000
 HEATMAP_KEEP = 50          # a heatmap answer's points kept: the app reads at most 8, Qloo sends thousands (6,999 seen)
-LIVE_LABEL = "LIVE Qloo data (Qloo REST API, read for this report, cached privately on the server for up to 7 days)"
+LIVE_LABEL = "LIVE Qloo data (Qloo REST API, read for this report, cached privately on the server)"
 
 
 RETRY_AFTER_DEFAULT_S = 300  # Qloo's 429 without a Retry-After: nothing is sent to Qloo for five minutes
@@ -226,7 +226,7 @@ class Client:
     def status(self) -> dict:
         ok, why = self.ready()
         return {"rest": ok, "reason": why, "calls_this_month": self.used(), "budget": self.budget, "rate_per_s": RATE_PER_S,
-                "cache_ttl_days": TTL_S // 86_400}
+                "cache_ttl_days": None if TTL_S is None else TTL_S // 86_400}
 
     # ---- the call ----------------------------------------------------------------------------------------------------
     def _cached(self, k: str) -> dict | None:
@@ -236,7 +236,7 @@ class Client:
         except (OSError, ValueError):
             return None
         ttl = doc.get("ttl") or (ERROR_TTL_S if doc.get("error") else TTL_S)
-        return doc if self.clock() - doc.get("t", 0) <= ttl else None
+        return doc if ttl is None or self.clock() - doc.get("t", 0) <= ttl else None
 
     def _store(self, k: str, body, error: str | None = None, surface: str | None = None, ttl: int | None = None) -> None:
         d = self.folder / k[:2]

@@ -16,25 +16,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "apps" / "wanted"), str(ROOT / "src")]
-from knos_wanted import check, metros  # noqa: E402
+from knos_wanted import check, metros, signals  # noqa: E402
 
 OUT = ROOT / "docs" / "reference" / "qloo_ablation.json"
 PAGE = ROOT / "web" / "how-we-test.html"
 START, END = "<!-- ablation:start -->", "<!-- ablation:end -->"
-# a Qloo call family -> the report fields its answers fill (check.gather), and what they are when it is removed
-FAMILIES = {
-    "search (the matched products)": {"matches": [], "leader": None, "tags": []},
-    "demographics": {"who": None},
-    "audiences": {"audiences": [], "who_wants": [], "buyer_group": None},
-    "compare (the leader)": {"versus": None},
-    "trending": {"trend": {}},
-    "recommendations": {"recommended": None},
-    "heatmap": {"where": []},
-    "destinations": {"cities": []},
-    "places": {"places": []},
-    "tags (persona)": {"persona": [], "persona_all": []},
-    "brand ladder": {"ladder": []},
-}
+FAMILIES = signals.FAMILIES        # one table of call families for this script and the card (knos_wanted.signals)
 
 
 def outcome(rep: dict) -> dict:
@@ -94,10 +81,12 @@ def main(argv: list[str]) -> int:
         new_page = page.replace(anchor, "    " + table(rs) + "\n" + anchor, 1)
     text = json.dumps(doc, indent=1, ensure_ascii=False) + "\n"
     if "--check" in argv:
-        same = OUT.is_file() and OUT.read_text(encoding="utf-8") == text and new_page == page
+        same = (OUT.is_file() and OUT.read_text(encoding="utf-8") == text and new_page == page
+                and signals.TABLE.is_file() and signals.TABLE.read_text(encoding="utf-8") == text)
         print("ablation table is current" if same else "ablation table differs: run python scripts/qloo_ablation.py <file>")
         return 0 if same else 1
     OUT.write_text(text, encoding="utf-8", newline="\n")
+    signals.TABLE.write_text(text, encoding="utf-8", newline="\n")      # the app's copy (its image holds no docs/)
     PAGE.write_text(new_page, encoding="utf-8", newline="\n")
     print(f"{len(rs)} rows written")
     return 0

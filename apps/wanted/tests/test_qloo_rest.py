@@ -43,8 +43,25 @@ def test_cache_hit_and_ttl(tmp_path):
     a = c.get("/search", {"query": "water bottle", "take": 3})
     b = c.get("/search", {"take": 3, "query": "water bottle"})          # same params, other order: one cache entry
     assert op.n == 1 and a["source"]["cached"] is False and b["source"]["cached"] is True and b["body"] == a["body"]
-    clk.t += qloo_rest.TTL_S + 1
-    c.get("/search", {"query": "water bottle", "take": 3})
+    clk.t += 40 * 86_400                                                 # 40 days on: a 2xx answer has no time limit
+    d = c.get("/search", {"query": "water bottle", "take": 3})
+    assert op.n == 1 and d["source"]["cached"] is True and d["body"] == a["body"] and qloo_rest.TTL_S is None
+
+
+def test_a_refused_question_still_expires_after_a_day(tmp_path):
+    op, clk = Opener(error=400), Clock()
+    c = client(tmp_path, op, clk)
+    for _ in range(2):
+        try:
+            c.get("/search", {"query": "water bottle", "take": 3})
+        except qloo_rest.QlooError:
+            pass
+    assert op.n == 1                                                     # the refusal is remembered for a day
+    clk.t += qloo_rest.ERROR_TTL_S + 1
+    try:
+        c.get("/search", {"query": "water bottle", "take": 3})
+    except qloo_rest.QlooError:
+        pass
     assert op.n == 2
 
 

@@ -44,7 +44,7 @@ def test_the_root_is_the_demand_check_alone(built):
     assert len(re.findall(r"<li\b", steps)) == 4 and "See it in 3 clicks" in page
     for gone in ('id="view-check"', 'id="front-door"', "Check an AI agent's pull request", 'id="view-records"', 'id="view-fund"', 'id="hero-fact"'):
         assert gone not in page, gone
-    assert 'href="./check/" id="steps-check"' in page                     # Paid on proof's link goes to the check's own page
+    assert 'href="./check/#sample" id="steps-check"' in page                     # Paid on proof's link goes to the check's own page
 
 
 def test_the_rest_of_the_site_is_app_html_and_the_check_its_own_page(built):

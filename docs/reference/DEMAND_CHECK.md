@@ -129,7 +129,7 @@ page in that run was an echo service showing the claim id (a demo, not a product
 
 **Two more Qloo calls, used only where they change the target** (never the verdict):
 
-- **Named buyer group** (`/v2/audiences`, all ten audience types, cached 7 days): when a word after "for" in the idea names one of
+- **Named buyer group** (`/v2/audiences`, all ten audience types, cached privately): when a word after "for" in the idea names one of
   Qloo's audience segments ("runners" -> Running, "gamers" -> Video Gamer, "vegans" -> Veganism), the segment is looked
   up in the idea's top 20 ranked segments (`/v2/insights` `urn:audience`).
 
@@ -273,7 +273,7 @@ Qloo result.
   browser, the repository, a log or a recording. The bridge forwards the environment to `qloo mcp` and reads no value.
 - Bounded retries: only when the envelope says `error.retryable`, at most two more, with backoff.
 - Minimal cache: in this flow, live `ok`/`empty` answers only, 15 minutes, at most 200 files, under `.cache/`
-  (git-ignored). The decision check's client (`qloo_rest.py`) keeps an answer 7 days and a refused question 1 day.
+  (git-ignored). The decision check's client (`qloo_rest.py`) keeps an answer with no time limit and a refused question 1 day.
   MOCK answers are never cached. No Qloo response is committed; the tests use synthetic bodies only.
 
 ## What a report does not establish

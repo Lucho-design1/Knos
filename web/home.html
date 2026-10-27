@@ -232,7 +232,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
     const rows = (Array.isArray(r.calls) ? r.calls : []).map((c) => { const p = c.params || {};
       const keys = Object.keys(p).filter((k) => p[k] != null && p[k] !== "").map((k) => `${k}=${String(p[k]).slice(0, 40)}`).join(", ");
       return `<li data-call="${esc(c.n)}"><a href="${esc(API)}/trace.html?hash=${encodeURIComponent(r.hash || "")}#call-${esc(c.n)}" target="_blank" rel="noopener">#${esc(c.n)}</a> ${
-        esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${Number.isFinite(c.ms) ? `${esc(c.ms)} ms` : `recorded ${esc(String(r.made || c.at || "").slice(0, 10))}`} · ${c.cached ? "cached" : "live"}${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || String(c.effect || "").slice(0, 60) || "the verdict")}</li>`; });
+        esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${Number.isFinite(c.ms) ? `${esc(c.ms)} ms` : `recorded ${esc(String(r.made || c.at || "").slice(0, 10))}`} · ${c.cached ? "cached" : "live"}${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || String(c.effect || "").slice(0, 60) || "the verdict")}${r.signals ? ` · <span data-role="${(r.signals.decides || []).includes(c.n) ? "decides" : "context"}">${(r.signals.decides || []).includes(c.n) ? "decides" : "context"}</span>` : ""}</li>`; });
     return rows.length ? `<details class="k-calls" data-part="calls"><summary>Qloo calls (${rows.length})</summary><ol>${rows.join("")}</ol></details>` : "";
   }
 
@@ -273,6 +273,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
   ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}
   <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
   ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders. Every pre-order is refunded if the target is missed.</p>${terms.by_population ? `<p class="k-fine" data-part="by-population" data-pop-city="${esc(terms.by_population.city)}" data-pop-target="${esc(terms.by_population.target)}">By population: ${esc(terms.by_population.city)}, ${esc(terms.by_population.target)}. By Qloo taste: ${esc(terms.city)}, ${esc(terms.target)}.</p>` : ""}` : ""}
+  ${r.signals && r.signals.line ? `<p class="k-fine" data-part="signals">${esc(r.signals.line)}</p>` : ""}
   ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}${trendLine(r)}
   ${r.decision ? `<button type="button" class="k-chip" data-without aria-pressed="false">Without Qloo</button>` : ""}</header>
   ${empty && r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}
@@ -457,7 +458,7 @@ ${src(h, price.src)}</section>
     <li id="step-demand"><h3>Check demand</h3><p><a href="./?q=a%20probiotic%20kombucha%20brand" id="step-chip">A sample: kombucha</a></p></li>
     <li id="step-brief"><h3>Ready brief</h3><p><a href="https://knos.onrender.com/api/ready" id="step-ready">The Ready check</a></p></li>
     <li id="step-held"><h3>Money held</h3><p><a href="./crossing/7b4ed16b8c2903dc/" id="step-crossing">10 pre-orders, Boulder</a></p></li>
-    <li id="paid-on-proof"><h3>Paid on proof</h3><p><a href="./check/" id="steps-check">Check a pull request</a></p>
+    <li id="paid-on-proof"><h3>Paid on proof</h3><p><a href="./check/#sample" id="steps-check">Check a pull request</a></p>
       <p class="k-paid" id="k-paid" data-not-prose><a href="https://explorer.solana.com/tx/zCxgsXmAYzDJTwGtg9hvEWZEikRzT15LUbGht7VA8vnpSKt3jLyiWycS8UzRT8k29UmBgvHnmWckjCtqpdsKW4F?cluster=devnet" target="_blank" rel="noopener">Released by the referee's verdict</a></p></li>
   </ol>
   <p class="fine" id="k-usage" data-not-prose hidden></p>

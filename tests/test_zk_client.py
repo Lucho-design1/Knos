@@ -107,7 +107,7 @@ def test_measured_compute_units_are_recorded():
 
 def test_devnet_receipt_is_public_and_consistent():
     if not (FIX / "devnet.json").exists():
-        pytest.skip("the devnet deploy waits for devnet SOL on the ZK deployer (the deployer has none yet)")
+        pytest.skip("zk/fixtures/score64/devnet.json is written by zk/devnet_read.py from devnet")
     doc = json.loads((FIX / "devnet.json").read_text())
     assert doc["cluster"] == "devnet" and doc["program_id"] == client.DEVNET_PROGRAM_ID and "SYNTHETIC" in doc
     b58 = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{80,90}$")

@@ -27,7 +27,8 @@ ERRORS = {0: "bad instruction data", 1: "proof refused", 2: "wrong verdict addre
           4: "wrong system program"}
 
 # The program id reserved for the devnet deployment (its keypair is in the build's own devnet wallet, not a Knos key).
-# NOT deployed yet: the deploy waits for devnet SOL (the deployer has none yet). TOY verifying key.
+# Deployed on devnet on 14 Oct 2026 (transaction 5Y7hVQqk...); its runs are read back in zk/fixtures/score64/devnet.json
+# (zk/devnet_read.py). TOY verifying key.
 DEVNET_PROGRAM_ID = "5M67Aqw1JHNSVrhFxCSzTmewdpysRKDtBKkTLrb192bk"
 
 

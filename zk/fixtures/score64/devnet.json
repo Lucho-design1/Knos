@@ -1,0 +1,66 @@
+{
+  "SYNTHETIC": "the hidden set is the made-up sample of zk/score_circuit; devnet only; TOY verifying key",
+  "cluster": "devnet",
+  "program_id": "5M67Aqw1JHNSVrhFxCSzTmewdpysRKDtBKkTLrb192bk",
+  "deploy": "5Y7hVQqk7VTLrepWbK9CFkhVmcCX4vTAYKCLMSLY5idoXwwn9z9thKMskJdHAYyb2ipLNj5Jc57XZFkbhwQ6frcU",
+  "verdict_account": "HiqKP8DUFm9y1eybc65vmEabhTs2NhKEEq4JYpcb1w7R",
+  "payable": true,
+  "payable_reasons": [],
+  "read_back": "zk/devnet_read.py, from devnet",
+  "runs": {
+    "verify": {
+      "signature": "4EzR4jrR2bdw88HPnmet5pEZz9Ki2NDEgMTUdpBpW2L8spaQMZYr87Vhjqijuvcmqpov3eHEwPLZz8NeauBuKH5N",
+      "compute_units": 91759,
+      "err": null,
+      "slot": 510840136,
+      "program_log": [
+        "Program log: knos_zk: proof verified",
+        "Program 5M67Aqw1JHNSVrhFxCSzTmewdpysRKDtBKkTLrb192bk consumed 91609 of 399850 compute units"
+      ]
+    },
+    "tampered_threshold": {
+      "signature": "jdnmV8ZBF8WAAT2pp9PuZqGBJurHR4HykLPE3fGLibNaxETVwrMe7S1pYomSdaxcbAf1dYx91Ux1BBKTA5QUPRL",
+      "compute_units": 91572,
+      "err": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "slot": 510840148,
+      "program_log": [
+        "Program 5M67Aqw1JHNSVrhFxCSzTmewdpysRKDtBKkTLrb192bk consumed 91422 of 399850 compute units",
+        "Program 5M67Aqw1JHNSVrhFxCSzTmewdpysRKDtBKkTLrb192bk failed: custom program error: 0x1"
+      ]
+    },
+    "tampered_proof_c": {
+      "signature": "57HjoQzHiN5jfG1tibkW5tAcUeM1G526iFXDHXyAKrK78DktG3kSzm7RyYbhE5jrgcQnvgY79gQJV6ftM1QeHuM8",
+      "compute_units": 91518,
+      "err": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "slot": 510840160,
+      "program_log": [
+        "Program 5M67Aqw1JHNSVrhFxCSzTmewdpysRKDtBKkTLrb192bk consumed 91368 of 399850 compute units",
+        "Program 5M67Aqw1JHNSVrhFxCSzTmewdpysRKDtBKkTLrb192bk failed: custom program error: 0x1"
+      ]
+    },
+    "verify_and_record": {
+      "signature": "5iYyt9DneRCyvLXTspDxFgEzSKRUBhJYDkRi2zc2QmRcfGZnhEGcNtnjWmToQdFE81xtXCzraBD1E4oquJAuD4CT",
+      "compute_units": 101001,
+      "err": null,
+      "slot": 510840173,
+      "program_log": [
+        "Program log: knos_zk: proof verified, verdict recorded",
+        "Program 5M67Aqw1JHNSVrhFxCSzTmewdpysRKDtBKkTLrb192bk consumed 100851 of 399850 compute units"
+      ]
+    }
+  }
+}
