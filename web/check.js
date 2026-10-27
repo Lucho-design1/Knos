@@ -20,6 +20,8 @@ const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;
 export class RateLimited extends Error {
   constructor(reset) { super("rate limited"); this.reset = reset; }
 }
+// one reset time, said the same way everywhere: hours and minutes in UTC
+export const utc = (d) => `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")} UTC`;
 
 async function gh(path, signal) {
   const r = await fetch(API + path, { headers: { Accept: "application/vnd.github+json" }, signal });
@@ -89,36 +91,42 @@ function answerHtml(r) {
 // transaction, whose log line is read from devnet itself
 export const SAMPLE = [{ owner: "drexthealpha", repo: "knos-e2e", number: 266 }, { owner: "drexthealpha", repo: "knos-e2e", number: 265 }];
 const DEVNET = "https://api.devnet.solana.com";
-async function knosSaid(ref) {
+export async function knosSaid(ref, o = { log: true }) {
   const comments = await gh(`/repos/${ref.owner}/${ref.repo}/issues/${ref.number}/comments?per_page=50`).catch(() => []);
   const c = comments.find((x) => /^(<!-- knos-review -->\s*)?Knos: /.test(x.body || ""));
   if (!c) return null;
   const line = c.body.replace(/^<!-- knos-review -->\s*/, "").split("\n")[0].replace(/\[(transaction)\]\([^)]*\)/g, "$1").slice(0, 200);
   const sig = (/explorer\.solana\.com\/tx\/([1-9A-HJ-NP-Za-km-z]{64,90})/.exec(c.body) || [])[1] || null;
-  let log = null;
-  if (sig) {
-    const r = await fetch(DEVNET, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1,
-      method: "getTransaction", params: [sig, { encoding: "json", maxSupportedTransactionVersion: 1, commitment: "confirmed" }] }) }).then((x) => x.json()).catch(() => ({}));
-    const meta = (r.result || {}).meta || {};
-    log = meta.err === null ? (meta.logMessages || []).find((l) => new RegExp(`:paid .*\\bpr=${ref.number}\\b`).test(l)) || null : null;
-  }
-  return { line, sig, log };
+  return { line, sig, log: sig && o.log ? await devnetLog(sig, ref.number) : null };
 }
+// the payment's log line, read from devnet itself: "...:paid ... pr=<number>" in a transaction that succeeded
+async function devnetLog(sig, number) {
+  const r = await fetch(DEVNET, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1,
+    method: "getTransaction", params: [sig, { encoding: "json", maxSupportedTransactionVersion: 1, commitment: "confirmed" }] }) }).then((x) => x.json()).catch(() => ({}));
+  const meta = (r.result || {}).meta || {};
+  return meta.err === null ? (meta.logMessages || []).find((l) => new RegExp(`:paid .*\\bpr=${number}\\b`).test(l)) || null : null;
+}
+// the sample as GitHub showed it, recorded with the site (scripts/check_sample_record.mjs): the page needs GitHub for neither
+let recording = null;
+export const recorded = () => recording ||= fetch(new URL("./check_sample.json", import.meta.url)).then((r) => r.json()).catch(() => null);
+const day = (t) => String(t || "").slice(0, 10);
 
 export async function renderSample(el) {
   el.innerHTML = `<p class="k-fine" role="status">Checking 2 pull requests of drexthealpha/knos-e2e.</p>`;
-  const parts = [];
-  for (const ref of SAMPLE) {
-    try {
-      const [r, said] = await Promise.all([readPr(ref), knosSaid(ref)]);
-      parts.push(`<section class="k-card check-sample" data-sample="${ref.number}"><h3><a href="${escHtml(r.url)}" rel="noopener">${escHtml(`${ref.repo} #${ref.number}`)}</a>: ${escHtml(r.title)}</h3>
+  const rec = await recorded();
+  if (!rec) { el.innerHTML = `<p class="status bad">The recorded sample did not load. Try again.</p>`; return; }
+  // drawn at once from the recording; each payment's log line then comes from devnet
+  el.innerHTML = `<p class="k-fine" data-recorded="${escHtml(rec.recorded)}">Recorded ${escHtml(day(rec.recorded))} from GitHub.</p>` + SAMPLE.map((ref) => {
+    const r = rec.prs[String(ref.number)], said = r && r.said;
+    if (!r) return "";
+    return `<section class="k-card check-sample" data-sample="${ref.number}"><h3><a href="${escHtml(r.url)}" rel="noopener">${escHtml(`${ref.repo} #${ref.number}`)}</a>: ${escHtml(r.title)}</h3>
   <p class="verdict ${r.cls === "passed" ? "ok" : r.cls === "failed" ? "bad" : ""}" data-verdict="${escHtml(r.cls)}">${escHtml(r.line)}</p>
   ${said ? `<p data-knos>${escHtml(said.line)}</p>` : ""}
-  ${said && said.sig && said.log ? `<p class="k-fine" data-tx="${escHtml(said.sig)}"><a href="https://explorer.solana.com/tx/${escHtml(said.sig)}?cluster=devnet" target="_blank" rel="noopener">The devnet transaction</a> · <code data-log>${escHtml(said.log.replace(/^Program log: /, ""))}</code></p>` : ""}</section>`);
-    } catch (e) {
-      parts.push(`<p class="status bad">${escHtml(e instanceof RateLimited ? `GitHub's limit for this address resets at ${e.reset.toLocaleTimeString()}.` : e.message || e)}</p>`);
-    }
-    el.innerHTML = parts.join("");
+  ${said && said.sig ? `<p class="k-fine" data-tx="${escHtml(said.sig)}"><a href="https://explorer.solana.com/tx/${escHtml(said.sig)}?cluster=devnet" target="_blank" rel="noopener">The devnet transaction</a> · <code data-log>reading devnet…</code></p>` : ""}</section>`;
+  }).join("");
+  for (const ref of SAMPLE) {
+    const said = (rec.prs[String(ref.number)] || {}).said, box = said && said.sig && el.querySelector(`[data-sample="${ref.number}"] [data-log]`);
+    if (box) devnetLog(said.sig, ref.number).then((log) => { box.textContent = log ? log.replace(/^Program log: /, "") : "devnet did not answer"; });
   }
 }
 
@@ -169,10 +177,20 @@ export function renderCheck(el, ctx = {}) {
     } catch (e) {
       if (mine !== run) return null;
       for (const [id, s] of Object.entries({ read: "bad", checks: "idle", verdict: "idle" })) step(id, s);
-      const at = e instanceof RateLimited ? e.reset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+      const refused = e instanceof RateLimited || e instanceof TypeError;         // GitHub's limit, or no answer from it at all
       out.innerHTML = e instanceof RateLimited
-        ? `<p class="status bad" id="check-limit">Wait until ${escHtml(at)}: GitHub answers 60 reads an hour per address.</p>`
-        : `<p class="status bad" id="check-error">${escHtml(e.name === "AbortError" ? `GitHub did not answer in ${LIMIT_S} seconds. Try again.` : e.message)}</p>`;
+        ? `<p class="status bad" id="check-limit">GitHub's limit for this address resets at ${escHtml(utc(e.reset))}: it answers 60 reads an hour per address.</p>`
+        : `<p class="status bad" id="check-error">${escHtml(e.name === "AbortError" ? `GitHub did not answer in ${LIMIT_S} seconds. Try again.` : e instanceof TypeError ? "GitHub did not answer from this browser." : e.message)}</p>`;
+      if (refused) {                // the recorded path, labelled: this pull request's recording, else the sample's
+        const rec = await recorded(), mineRec = rec && rec.prs[String(ref.number)];
+        if (mine !== run) return null;
+        if (mineRec && ref.owner === "drexthealpha" && ref.repo === "knos-e2e") {
+          out.insertAdjacentHTML("beforeend", `<p class="k-fine" id="check-recorded">Recorded ${escHtml(day(rec.recorded))} from GitHub:</p>` + answerHtml(mineRec));
+        } else if (rec) {
+          out.insertAdjacentHTML("beforeend", `<p class="k-fine" id="check-recorded">Meanwhile, a recorded check of two pull requests Knos judged:</p><div id="check-recorded-sample"></div>`);
+          renderSample(out.querySelector("#check-recorded-sample"));
+        }
+      }
       return null;
     } finally {
       clearTimeout(late);

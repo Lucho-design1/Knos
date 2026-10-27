@@ -1,0 +1,63 @@
+{
+ "v": 1,
+ "about": "two pull requests of drexthealpha/knos-e2e as GitHub showed them, and Knos's comment on each; the devnet log line is read live",
+ "recorded": "2026-10-27T08:14:57Z",
+ "prs": {
+  "265": {
+   "ref": {
+    "owner": "drexthealpha",
+    "repo": "knos-e2e",
+    "number": 265
+   },
+   "url": "https://github.com/drexthealpha/knos-e2e/pull/265",
+   "title": "Fix is_palindrome with punctuation",
+   "sha": "de90a4daf840a139ceca5d2437cf60d868d8f556",
+   "claim": null,
+   "cls": "failed",
+   "failed": [
+    "knos-verify"
+   ],
+   "split": {
+    "test": [],
+    "other": [
+     "knos-verify"
+    ]
+   },
+   "line": "Claims nothing about tests; only checks that test nothing failed.",
+   "merged": false,
+   "merged_at": null,
+   "said": {
+    "line": "Knos: this pull request does not take the work order on issue #264 (5.00 test USDC) as it stands.",
+    "sig": null
+   }
+  },
+  "266": {
+   "ref": {
+    "owner": "drexthealpha",
+    "repo": "knos-e2e",
+    "number": 266
+   },
+   "url": "https://github.com/drexthealpha/knos-e2e/pull/266",
+   "title": "is_palindrome: ignore punctuation",
+   "sha": "9c90a439567d13d6097a751ea0b641203b7f8ef5",
+   "claim": null,
+   "cls": "failed",
+   "failed": [
+    "knos-verify"
+   ],
+   "split": {
+    "test": [],
+    "other": [
+     "knos-verify"
+    ]
+   },
+   "line": "Claims nothing about tests; only checks that test nothing failed.",
+   "merged": true,
+   "merged_at": "2026-10-11T10:23:09Z",
+   "said": {
+    "line": "Knos: paid. @drexthealpha received 5.00 test USDC for issue #264, in full: its funder paid Knos's fee of 0.05 on top. It went to `9a6RmArU8cfKGqWRfXU2i8xGXsvVFiNs97ZMVuYyozcW`, the wallet bound to @dr",
+    "sig": "54fZKvdnnyTkHwbk7Dz8h9jXTiUPRiAPhnGTea92pWss8bWh6ExV5TPc4bq8ECSg1pPgXxt89s9U8SmoDYbp6mEu"
+   }
+  }
+ }
+}
