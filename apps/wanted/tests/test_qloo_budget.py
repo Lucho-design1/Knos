@@ -24,7 +24,7 @@ class Opener:
 
     def __call__(self, req, timeout=None):
         self.n += 1
-        h = {"x-month-ratelimit-limit": "50000", "x-month-ratelimit-remaining": self.left, "x-month-ratelimit-reset": "2026-11-20",
+        h = {"x-month-ratelimit-limit": "50000", "x-month-ratelimit-remaining": self.left, "x-month-ratelimit-reset": "2066993.99",
              "x-second-ratelimit-remaining": "9"}
         if self.error:
             raise urllib.error.HTTPError(req.full_url, self.error, "err", h, io.BytesIO(b"{}"))
@@ -46,13 +46,14 @@ def test_the_limit_headers_of_every_answer_are_kept(tmp_path):
     op = Opener()
     client(tmp_path, op).get("/search", {"query": "tea", "take": 3})
     assert qloo_rest.LIMITS["x-month-ratelimit-remaining"] == "49000" and qloo_rest.LIMITS["x-second-ratelimit-remaining"] == "9"
+    assert qloo_rest.LIMITS["month_reset_at"] > qloo_rest._now()[:16]          # seconds from now, kept as a time
 
 
 def test_under_2000_left_in_the_month_nothing_is_sent_unless_the_run_is_reserved(tmp_path, monkeypatch):
     op = Opener(left="1999")
     c = client(tmp_path, op)
     c.get("/search", {"query": "tea", "take": 3})                       # the answer that says 1,999 left
-    with pytest.raises(QlooError, match="under 2,000"):
+    with pytest.raises(QlooError, match="HTTP 429: not sent: .*under 2,000"):
         c.get("/search", {"query": "coffee", "take": 3})
     assert op.n == 1
     monkeypatch.setenv("KNOS_QLOO_RESERVE", "1")

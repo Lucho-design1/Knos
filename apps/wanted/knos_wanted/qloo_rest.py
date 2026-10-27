@@ -81,6 +81,11 @@ def _limits(headers) -> None:
     if got:
         LIMITS.clear()
         LIMITS.update(got, read=_now())
+        try:
+            secs = float(got.get("x-month-ratelimit-reset", ""))
+            LIMITS["month_reset_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + secs))
+        except ValueError:
+            pass
 
 
 def _int(v) -> int | None:
@@ -323,7 +328,7 @@ class Client:
             raise QlooError(f"{method} {path}: HTTP 429: Qloo asked for a pause; no request sent for {held():.0f} s more")
         why = refusal()                                     # Qloo's month (its own header) and this server's day
         if why:
-            raise QlooError(f"{method} {path}: not sent: {why}")
+            raise QlooError(f"{method} {path}: HTTP 429: not sent: {why}")
         self._count_one()
         self.bucket.take()
         m = qloo_harness.mapped(path, params) if self.harness and method == "GET" else None
