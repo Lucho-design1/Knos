@@ -68,7 +68,8 @@
 <script type="module">
 // The box and its answer (web/check.js). An address ending #check=owner/repo/123 is checked at once, as on the first screen.
 import { renderCheck } from "../check.js";
-import { renderSample } from "../check.js";
+import { renderSample, recorded } from "../check.js";
+recorded();                    // the sample's recording, asked as the page loads: a press draws it at once
 const asked = /^#check=(.+)$/.exec(location.hash);
 renderCheck(document.getElementById("check-one"), { arg: asked ? decodeURIComponent(asked[1]) : "" });
 // the sample: one paid pull request and one refused; #sample (the front door's fourth step) runs it at once
