@@ -592,7 +592,10 @@ def make_handler(state: State):
             if u.path in ("/mcp", "/mcp/store"):
                 if "text/html" in (self.headers.get("Accept") or ""):
                     return self._send(200, agent.DISCOVERY.encode(), "text/html; charset=utf-8")
-                return self._send(405, {"error": f"POST JSON-RPC messages to {u.path} (MCP Streamable HTTP)"}, headers={"Allow": "POST"})
+                url = tasks.public_base(self._base()) + u.path
+                return self._send(200, {"name": "knos", "transport": "streamable-http", "protocolVersion": agent.PROTOCOL, "url": url,
+                                        "tools_list": {"method": "POST", "url": url, "body": {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}},
+                                        "install": f"claude mcp add --transport http knos {url}"})
             if u.path == "/auth/orcid":
                 try:
                     return self._redirect(auth.orcid_authorize(self._base() + "/auth/orcid/callback"))
@@ -647,7 +650,13 @@ def make_handler(state: State):
                 if not product_routes._admin(self.headers.get("X-Knos-Admin")) and not state.allow(self._client(), "taste"):
                     return self._send(429, {"error": "too many requests from this address; try again in a few minutes"})
                 y = (qs.get("year") or [""])[0]
-                return self._send(200, taste.also_love_movie(state.rest, (qs.get("title") or [""])[0], int(y) if y.isdigit() else None))
+                from .qloo_rest import QlooError
+                try:
+                    return self._send(200, taste.also_love_movie(state.rest, (qs.get("title") or [""])[0], int(y) if y.isdigit() else None))
+                except QlooError as why:                       # Qloo did not answer: 503 with the reason, in one sentence
+                    from . import qloo_status
+                    said = qloo_status.limit_line() if "429" in str(why) else None
+                    return self._send(503, {"error": said or f"Qloo did not answer this time: {str(why)[:160]}"})
             if u.path == "/api/usage":                       # the public counter: checks and briefs from the store, payouts from devnet
                 from . import usage
                 return self._send(200, usage.counts())
@@ -710,7 +719,12 @@ def make_handler(state: State):
             pf = preorder.preflight_status()
             rest = state.rest.status()
             mcp = state.q.status()
-            if rest["rest"]:        # the decision path is Qloo's REST API: when it is live, the server is live
+            from . import qloo_status
+            q = qloo_status.doc()
+            if rest["rest"] and q["limited"]:     # the key is set but Qloo limits it: said, never "live"
+                top = {"mode": "limited", "label": q["line"] or "Qloo is limiting requests right now.", "reason": "Qloo's own limit headers and its last answers",
+                       "mcp_flow": {k: mcp.get(k) for k in ("mode", "label", "reason")}}
+            elif rest["rest"]:        # the decision path is Qloo's REST API: when it is live, the server is live
                 top = {"mode": "live", "label": check.LIVE_LABEL, "reason": "Qloo REST API key configured on this server",
                        "mcp_flow": {k: mcp.get(k) for k in ("mode", "label", "reason")}}
             else:

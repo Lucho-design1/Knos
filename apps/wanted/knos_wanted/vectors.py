@@ -173,7 +173,13 @@ def proof() -> dict:
     _load()
     with _lock:
         p = shape(dict(_proof)) if _proof else None
-    return {"proof": p, "label": "A real check this server ran" if p else "No real check yet", "sample": open_sample()}
+    return {"proof": p, "label": "A real check this server ran" if p else "No real check yet", "sample": open_sample(),
+            "qloo_line": _qloo_line()}
+
+
+def _qloo_line() -> str | None:
+    from . import qloo_status
+    return qloo_status.doc()["line"]
 
 
 def open_sample() -> dict | None:

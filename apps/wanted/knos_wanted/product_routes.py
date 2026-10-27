@@ -449,8 +449,8 @@ MCP_TOOLS = [
      "words are flagged. Returns Ready, or Not ready with the missing fields and a rewrite template. Sends nothing.",
      "inputSchema": _obj({"brief": {"type": "object"}}, ("brief",))},
     {"name": "knos_usage", "title": "What was asked of Knos", "description": "In plain words: which Knos tools were called over MCP "
-     "and how many times since this server started, and the token use recorded for Knos's own goals (shown beside the 2.08x IDT "
-     "ratio). Reads only, except `record`: the operator (its X-Knos-Admin key) records a goal's measured token use.",
+     "and how many times since this server started. Reads only, except `record`: the operator (its X-Knos-Admin key) "
+     "records a measured token use, which stays private.",
      "inputSchema": _obj({"record": {"type": "object", "description": "a goal's measured token use (scripts/goal_usage.py); the operator only"}})},
     {"name": "knos_milestone_prompt", "title": "The brief an agent works from", "description": "For a milestone you work on: the locked "
      "intent (goal, success check, constraints, scope) with its criteria hash, the effort level and output-token budget, and how to "
@@ -489,7 +489,7 @@ def usage(record: dict | None = None) -> dict:
         if not isinstance(keep["goal"], str) or not all(isinstance(keep[k], int) and keep[k] >= 0 for k in ("output_tokens", "input_tokens", "messages")):
             raise ValueError("record: goal, and output_tokens, input_tokens, messages as whole numbers")
         valley._save("pages", "goal_usage", {"goals": {**_goals(), keep["goal"]: keep}})
-    return {"since": "this server started", "calls": dict(rows), "in_words": f"Asked of Knos over MCP: {said}.", "goals": _goals()}
+    return {"since": "this server started", "calls": dict(rows), "in_words": f"Asked of Knos over MCP: {said}."}
 
 
 def _goals() -> dict:

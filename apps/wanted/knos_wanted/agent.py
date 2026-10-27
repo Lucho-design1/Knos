@@ -456,7 +456,7 @@ DESCRIPTIONS = {
     "knos_project_post": "Posts a result or a check page for a milestone, and the referee panel releases its devnet test money when both are in; ask your human first.",
     "knos_milestone_submit": "Sends your whole train.py to a milestone's sealed referee and releases its devnet test money to you when the verdict meets the target; ask your human first.",
     "knos_ready": "Checks a brief before any money locks and returns Ready, or the missing fields with a rewrite template, sending nothing.",
-    "knos_usage": "Returns how many times each Knos tool was called over MCP since this server started, with the token use recorded for Knos's own goals.",
+    "knos_usage": "Returns how many times each Knos tool was called over MCP since this server started.",
     "knos_milestone_prompt": "Returns the locked intent of a milestone you work on, with its criteria hash and the token budget for answering it.",
 }
 
@@ -624,6 +624,8 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
                        "decision": (rep or {}).get("decision")}
             elif name == "knos_research_card":
                 out = research.research_card(str(args.get("ref") or ""))
+                if str(out.get("product_source") or "").startswith("generic phrase"):    # Knos's own guess, not a product
+                    out = {**out, "product": None, "suggested_product": None, "product_line": "Name the product this result enables"}
             elif name == "knos_demand_check":
                 opts = {k: args[k] for k in qloo_families.FIELDS if k in args}
                 rep = check.demand_check(str(args.get("idea") or ""), args.get("place"), args.get("leader"), client=state.rest, options=opts)

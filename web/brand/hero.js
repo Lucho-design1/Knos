@@ -177,14 +177,16 @@
     if (empty && d.verdict !== "OPEN" && !r.qloo_down) [word, cls] = ["No taste data from Qloo", "unknown"];   // a real empty answer only
     // Qloo not answering (apps/wanted recorded.py): said first, with the sample's last real card when there is one
     const at = (t) => String(t || "").replace("T", " ").slice(0, 16) + " UTC";
-    const down = r.nearest ? `Nearest idea Qloo has answered: ${r.nearest.idea}, live on ${r.nearest.on}` : r.stale ? `Qloo is not answering right now (HTTP ${r.stale.code}). Showing the last real answer from ${at(r.stale.from)}.`
+    const limit = r.qloo_limit || "";      // Qloo's month used up (apps/wanted qloo_status.limit_line): said instead of "try again"
+    const down = r.nearest ? `Nearest idea Qloo has answered: ${r.nearest.idea}, live on ${r.nearest.on}` : limit ? limit : r.stale ? `Qloo is not answering right now (HTTP ${r.stale.code}). Showing the last real answer from ${at(r.stale.from)}.`
       : r.qloo_down ? `Qloo is not answering right now (HTTP ${r.qloo_down.code}). Try again in a few minutes.` : "";
+    const undecided = d.verdict === "CANNOT_DECIDE" || (r.qloo_down && !r.stale);   // nothing to share or launch yet
     const others = (r.matches || []).filter((m) => m && m.name && (!lead || m.id !== lead.id)).slice(0, 3);
     const read = lead ? `<p class="k-read" data-part="match">Read as <b>${esc(lead.name)}</b>${label ? "" : ` · Not it? ${others.map((m) =>
       `<button type="button" class="k-chip" data-pick="${esc(m.name)}">${esc(m.name)}</button>`).join(" ")} <button type="button" class="k-chip" data-none="${
       esc([lead.id, ...others.map((m) => m.id)].filter(Boolean).join(","))}">None of these</button>`}</p>` : "";
     return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}" data-not-prose>
-  ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}
+  ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}${r.nearest && limit ? `<p class="k-terms" data-qloo-limit-line>${esc(limit)}</p>` : ""}
   <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
   ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders. Every pre-order is refunded if the target is missed.</p>${terms.by_population ? `<p class="k-fine" data-part="by-population" data-pop-city="${esc(terms.by_population.city)}" data-pop-target="${esc(terms.by_population.target)}">By population: ${esc(terms.by_population.city)}, ${esc(terms.by_population.target)}. By Qloo taste: ${esc(terms.city)}, ${esc(terms.target)}.</p>` : ""}` : ""}
   ${r.signals && r.signals.line ? `<p class="k-fine" data-part="signals">${esc(r.signals.line)}</p>` : ""}
@@ -213,7 +215,7 @@ ${src(h, price.src)}</section>
   <details class="k-claude" data-claude hidden><summary>Claude alone</summary><div class="k-claude-body" data-claude-body></div></details>
   <footer class="k-card-foot"><p class="k-fine">Aggregate taste from Qloo: not causal, not a forecast, not about any one person.${
     HEALTH.test(r.idea || "") ? " Not medical advice: Qloo has no medical demand." : ""}</p>
-    ${d.verdict === "OPEN" ? `<a class="k-cta" href="${esc(APP)}#buy=${esc(h)}">Open pre-orders for it →</a>` : `<a class="k-cta quiet" href="${esc(APP)}#research">Try it with a launch market →</a>`}${/^[0-9a-f]{16}/.test(h || "") ? ` <a class="k-cta quiet" href="${esc(API)}/r/${esc(h.slice(0, 16))}" data-share>Share this result</a>` : ""}</footer>
+    ${undecided ? "" : `${d.verdict === "OPEN" ? `<a class="k-cta" href="${esc(APP)}#buy=${esc(h)}">Open pre-orders for it →</a>` : `<a class="k-cta quiet" href="${esc(APP)}#research">Try it with a launch market →</a>`}${/^[0-9a-f]{16}/.test(h || "") ? ` <a class="k-cta quiet" href="${esc(API)}/r/${esc(h.slice(0, 16))}" data-share>Share this result</a>` : ""}`}</footer>
 </article>`;
   }
 
@@ -259,7 +261,12 @@ ${src(h, price.src)}</section>
     const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); then(); } });
     io.observe(el);
   };
+  const banner = (line) => { const p = root.querySelector("[data-qloo-limit]");
+    if (!p || line === undefined) return;
+    p.innerHTML = line ? `<a href="${esc(API)}/status/qloo">${esc(line)}</a>` : "";
+    p.hidden = !line; };
   const draw = (r) => {
+    if (r && "qloo_line" in r) banner(r.qloo_line);
     if (!r || slot.dataset.ms || slot.querySelector(".k-status")) return;
     // a finished real result, whole, before any press: the recorded sample whose verdict is Open (vectors.open_sample),
     // labelled with the day Qloo answered it; else the last real check, folded to one line

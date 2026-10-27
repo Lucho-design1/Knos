@@ -94,7 +94,7 @@ def test_mcp_over_http_lists_and_calls(http):
     c, x, _ = post(base, "/mcp", call, {"Authorization": "Bearer " + tok})
     sc = x["result"]["structuredContent"]
     assert sc["status"] == "done" and sc["decision"]["verdict"] == "OPEN" and len(sc["steps"]) > 10
-    assert get(base, "/mcp")[0] == 405
+    assert get(base, "/mcp")[0] == 200         # a discovery document (name, transport, where to POST tools/list)
 
 
 def test_the_live_crossing_over_the_web_api(http):

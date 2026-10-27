@@ -55,7 +55,7 @@ def test_no_personal_field_and_no_inference_about_people_reaches_qloo(counted, t
 
 
 @pytest.mark.parametrize("code,said", [(401, "refused this server's API key"), (403, "refused this server's API key"),
-                                       (429, "rate limit for this key was reached")])
+                                       (429, "Qloo is limiting requests right now (HTTP 429)")])
 def test_a_bad_key_or_the_rate_limit_is_said_plainly_never_a_silent_fallback(tmp_path, monkeypatch, code, said):
     monkeypatch.setattr(qloo_rest.time, "sleep", lambda s: None)
     op = Opener(error=code)

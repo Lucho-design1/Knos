@@ -154,7 +154,8 @@ def test_a_project_is_archived_by_its_buyer_or_the_operator_and_stays_readable(a
 
 
 def test_knos_usage_records_a_goals_token_use_only_with_the_operators_key(app, monkeypatch, tmp_path):
-    """M11: the operator records a goal's measured token use through knos_usage; anyone reads it; nobody else writes it."""
+    """M11: the operator records a goal's measured token use through knos_usage; nobody else writes it, and the public
+    answer never shows it (N3: no goal's name in a public answer)."""
     from knos_wanted import escrow
     base, _ = app
     monkeypatch.setattr(escrow, "_state_dir", lambda: tmp_path)
@@ -170,5 +171,6 @@ def test_knos_usage_records_a_goals_token_use_only_with_the_operators_key(app, m
     refused = mcp({"record": rec})
     assert refused.get("isError") and "X-Knos-Admin" in refused["content"][0]["text"]
     got = json.loads(mcp({"record": rec}, "k" * 40)["content"][0]["text"])
-    assert got["goals"]["TASK-X"]["output_tokens"] == 1200
-    assert json.loads(mcp({})["content"][0]["text"])["goals"]["TASK-X"]["messages"] == 9   # anyone reads it
+    assert "goals" not in got and "TASK-X" not in json.dumps(json.loads(mcp({})["content"][0]["text"]))     # kept, never shown
+    from knos_wanted import product_routes
+    assert product_routes._goals()["TASK-X"]["output_tokens"] == 1200

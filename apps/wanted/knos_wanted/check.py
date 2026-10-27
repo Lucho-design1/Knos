@@ -1103,10 +1103,14 @@ def _demand_check(idea: str, place: str | None = None, leader: str | None = None
     decision = decide(ev, live, idea)
     if not ok:
         decision["reasons"].append(why)
+    elif failed and "HTTP 429" in str(failed[0].get("error") or ""):      # Qloo's limit: one plain sentence, the whole reason
+        from . import qloo_status
+        decision["reasons"] = [qloo_status.limit_line() or "Qloo is limiting requests right now (HTTP 429), so it has not answered this idea."]
     elif failed:
         decision["reasons"].append(f"{failed[0]['what']}: {failed[0]['error']}")
     for c in missing:
-        decision["reasons"].append(f"missing evidence (not counted): {c['what']}: {c['error']}")
+        if "HTTP 429" not in str(c.get("error") or ""):
+            decision["reasons"].append(f"missing evidence (not counted): {c['what']}: {c['error']}")
     good = [c for c in run.calls if not c.get("error")]
     label = (LIVE_LABEL + ("; partial: some calls failed" if failed or missing else "")) if good else "NO QLOO EVIDENCE"
     limits = ("Qloo states no prices, no market sizes, no B2B and no medical demand; the only price signals are venue "

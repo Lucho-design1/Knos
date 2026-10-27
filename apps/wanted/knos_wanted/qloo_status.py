@@ -19,19 +19,33 @@ def _when(at: str | None) -> str | None:
         return at
 
 
+def limit_line() -> str | None:
+    """While Qloo's month is used up (its own header says 0 calls left): the sentence every limited answer says."""
+    lim = qloo_rest.LIMITS
+    if str(lim.get("x-month-ratelimit-remaining")) != "0":
+        return None
+    at = str(lim.get("month_reset_at") or "")
+    try:
+        day = time.strftime("%d %b %Y", time.strptime(at[:19], "%Y-%m-%dT%H:%M:%S")).lstrip("0")
+    except ValueError:
+        day = "the month's reset"
+    return f"Qloo's monthly limit for this demo is reached until {day}. Cards show the last live answers."
+
+
 def doc() -> dict:
     t = qloo_rest.today()
     with recorded._lock:
         made = max((str(r.get("made") or "") for r in recorded._last.values()), default="") or None
     live_at = t.get("last_ok") or made                 # the newest live answer a card can show: today's, else a recording's
-    line = f"Qloo is limiting requests right now. Cards show the last live answer from {_when(live_at)}." if t["limited"] and live_at else (
-        "Qloo is limiting requests right now." if t["limited"] else None)
+    month = limit_line()
+    line = month or (f"Qloo is limiting requests right now. Cards show the last live answer from {_when(live_at)}." if t["limited"] and live_at else (
+        "Qloo is limiting requests right now." if t["limited"] else None))
     lim = dict(qloo_rest.LIMITS)
     return {"month_left": lim.get("x-month-ratelimit-remaining"), "month_limit": lim.get("x-month-ratelimit-limit"),
             "month_reset": lim.get("month_reset_at") or lim.get("x-month-ratelimit-reset"), "second_left": lim.get("x-second-ratelimit-remaining"),
             "limits_read": lim.get("read"), "day_cap": qloo_rest.DAY_CAP, "month_floor": qloo_rest.MONTH_FLOOR,
             "day": t["day"], "calls": t["calls"], "cache_hits": t["hits"], "recorded": t.get("recorded", 0), "hit_rate": t["hit_rate"], "last_ok": t.get("last_ok"),
-            "last_429": t.get("last_429"), "held_s": t["held_s"], "limited": t["limited"], "live_at": live_at, "line": line,
+            "last_429": t.get("last_429"), "held_s": t["held_s"], "limited": t["limited"] or bool(month), "live_at": live_at, "line": line,
             "from": "this server's own calls to Qloo since midnight UTC; this answer asks Qloo nothing"}
 
 

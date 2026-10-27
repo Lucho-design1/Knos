@@ -131,6 +131,17 @@ def recording(text: str) -> dict | None:
 
 
 def honest(text: str, rep: dict) -> dict:
+    """The report as the card should show it (_honest), with Qloo's month line on every limited answer."""
+    out = _honest(text, rep)
+    if failure(rep) is not None:
+        from . import qloo_status
+        line = qloo_status.limit_line()
+        if line:
+            out = {**out, "qloo_limit": line}
+    return out
+
+
+def _honest(text: str, rep: dict) -> dict:
     """The report as the card should show it: kept when real; when Qloo failed, the chip's last real card marked stale,
     or the report itself marked qloo_down."""
     code = failure(rep)

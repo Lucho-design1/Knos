@@ -87,7 +87,9 @@ def ask(idea: str, place: str | None, leader: str | None, opts: dict) -> dict:
 
 def summary(rep: dict) -> dict:
     fam = rep.get("families") or {}
-    return {"report": rep.get("hash"), "verdict": (rep.get("decision") or {}).get("verdict"), "label": rep.get("label"),
+    # the reason in one plain sentence: Qloo's month line while it is used up, else the verdict's first reason
+    reason = rep.get("qloo_limit") or next(iter((rep.get("decision") or {}).get("reasons") or []), None)
+    return {"report": rep.get("hash"), "verdict": (rep.get("decision") or {}).get("verdict"), "reason": reason, "label": rep.get("label"),
             "options": rep.get("options"), "grounding": rep.get("grounding"),
             "families": {f: {k: v for k, v in a.items() if k in ("question", "call", "answer", "hot", "by_id", "places", "brand_id")}
                          for f, a in fam.items()},

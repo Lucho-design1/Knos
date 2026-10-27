@@ -67,7 +67,10 @@ for (const t of page.tx) {
   const sigs = await rpc("getSignaturesForAddress", [t.id, { limit: 1000 }]).catch(() => null);
   const n = Array.isArray(sigs) ? sigs.length : null;
   const sig = t.newest ? new URL(t.newest).pathname.split("/").pop() : null;
-  const tx = sig ? await rpc("getTransaction", [sig, { maxSupportedTransactionVersion: 0, commitment: "confirmed" }]).catch(() => null) : null;
+  // the newest transaction is on devnet: its status, searched in devnet's whole history (one paced retry: the public RPC limits bursts)
+  const seen = async () => ((await rpc("getSignatureStatuses", [[sig], { searchTransactionHistory: true }]).catch(() => null))?.value || [])[0] || null;
+  let tx = sig ? await seen() : null;
+  if (sig && !tx) { await new Promise((r) => setTimeout(r, 3000)); tx = await seen(); }
   ok(n != null && Number(t.count) <= n && Number(t.count) >= n - 5 && (!sig || !!tx), `${t.program}: ${t.count} transactions drawn, devnet says ${n}; newest ${sig ? (tx ? "resolves on devnet" : "does not resolve") : "none"}`);
 }
 ok(page.tx.length === 4, `programs with a devnet count: ${page.tx.length} of 4`);
