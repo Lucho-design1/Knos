@@ -29,10 +29,10 @@ if (process.env.KNOS_RENDER_LATEST) {
 // 1. the first screen's CSS: app.css and tokens.css as the front door links them, under 65,000 bytes; docs/perf.json says so
 const front = await (await fetch(`${SITE}?t=${Date.now()}`)).text();
 const sheets = [...front.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)].map((m) => new URL(m[1], SITE).href).filter((u) => u.startsWith(SITE));
-let css = 0;
+let css = [...front.replace(/<script\b[\s\S]*?<\/script>/g, "").matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].reduce((n, m) => n + Buffer.byteLength(m[1]), 0);
 for (const u of sheets) css += (await (await fetch(u)).arrayBuffer()).byteLength;
 const perf = JSON.parse(at("docs/perf.json")).first_screen_bytes;
-ok(css > 0 && css < 65000 && !sheets.some((u) => u.includes("card.css")), `first-screen CSS on the front door: ${css} bytes in ${sheets.length} sheets (under 65,000; card.css not among them)`);
+ok(css > 0 && css < 65000 && !sheets.some((u) => u.includes("card.css")) && !front.includes(".k-card-head{"), `first-screen CSS on the front door: ${css} bytes, in the page and ${sheets.length} linked sheet(s) (under 65,000; card.css not among them)`);
 ok(perf.css < 65000 && perf.budget.css === 65000, `docs/perf.json: ${perf.css} bytes of CSS, budget ${perf.budget.css}`);
 for (const u of [`${SITE}brand/card.css`, `${API}/static/brand/card.css`]) {
   const card = await fetch(u);
@@ -56,6 +56,9 @@ try {
   await p.waitForFunction(() => { const k = document.querySelector("#k-card > .k-card"); return k && !k.closest(".k-past") && /kombucha/i.test(k.textContent); }, null, { timeout: 45000 }).catch(() => {});
   await p.waitForTimeout(600);
   const word = await p.evaluate(() => document.querySelector("#k-card > .k-card .k-verdict")?.textContent.trim() || "");
+  const styled = await p.evaluate(() => { const h = document.querySelector("#k-card > .k-card .k-card-head"), l = document.getElementById("k-card-sheet");
+    return { sheet: l ? l.href : "", loaded: !!(l && l.sheet && l.sheet.cssRules.length), pad: h ? getComputedStyle(h).paddingTop : "" }; });
+  ok(styled.loaded && styled.pad !== "0px" && styled.pad !== "", `the front door's card is drawn with card.css: ${styled.sheet.replace(SITE, "")} loaded ${styled.loaded}, head padding ${styled.pad}`);
   const r = await post("/api/check", { idea: "a probiotic kombucha brand" });
   kombucha = String(r.hash || "").slice(0, 16);
   const res = await fetch(`${API}/api/receipts?id=${kombucha}`, { headers: { Origin: FRONT } });
@@ -70,7 +73,7 @@ try {
   const wide = await w.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
   ok(wide[0] <= wide[1], `/with-without at 390: page ${wide[0]} px wide in a ${wide[1]} px window`);
   // 6. the brief panel: every benchmark field valley.js reads is in /api/ready's answer, and the panel draws with no error
-  const valley = await (await fetch(`${API}/valley.js?t=${Date.now()}`)).text();
+  const valley = await (await fetch(`${API}/static/valley.js?t=${Date.now()}`)).text();
   const used = [...new Set([...valley.matchAll(/t\.benchmark\.([a-z_]+)/g)].map((m) => m[1]))];
   const ready = await post("/api/ready", { brief: { goal: "Ship a CSV export for the projects list", done: "pytest tests/test_export.py passes", budget: "20 USDC", deadline: "2026-11-30" } });
   const bench = (ready.idt || {}).benchmark || {};

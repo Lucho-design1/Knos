@@ -233,7 +233,8 @@
   const cardCss = () => cardSheet || (cardSheet = new Promise((done) => {
     const tokens = document.querySelector('link[rel="stylesheet"][href*="tokens.css"]');
     if (document.getElementById("k-card-sheet")) return done();
-    const href = tokens ? tokens.href.replace(/tokens\.css(\?.*)?$/, "card.css") : "/static/brand/card.css";   // the app writes tokens.css into its page
+    // both front doors write tokens.css into the page (server.inline_css, scripts/inline_css.py): the app's static path, else beside the page
+    const href = tokens ? tokens.href.replace(/tokens\.css(\?.*)?$/, "card.css") : location.pathname.startsWith("/app") ? "/static/brand/card.css" : new URL("brand/card.css", document.baseURI).href;
     const l = Object.assign(document.createElement("link"), { rel: "stylesheet", id: "k-card-sheet", href });
     l.onload = l.onerror = () => done();
     document.head.append(l);
