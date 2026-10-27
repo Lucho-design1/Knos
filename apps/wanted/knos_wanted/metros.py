@@ -122,19 +122,33 @@ def terms(cells: list[dict]) -> dict | None:
 
 
 def launch_terms(rep: dict) -> dict | None:
-    """The one answer every page draws for a report: {city, target, cells, rule}, from the terms the report holds,
-    else the same rule (terms) over its heatmap cells; None when Qloo's map names no launch city."""
+    """The one answer every page draws for a report: {city, target, cells, rule, cities}, from the terms the report
+    holds, else the same rule (terms) over its heatmap cells; None when Qloo matched no product to the idea or its map
+    names no launch city. `cities` is the one city list of a result: the terms' metros, the launch city first, at most 5."""
+    if not rep.get("matches"):
+        return None
     t = rep.get("terms") if isinstance(rep.get("terms"), dict) and rep["terms"].get("city") else terms(rep.get("where") or [])
     if not t:
         return None
     pop = by_population(t.get("metros") or [])
     return {"city": t["city"], "target": t["target"], "cells": t.get("cells"), "rule": t.get("refund_rule") or REFUND.format(target=t["target"], city=t["city"]),
-            "by_population": pop}
+            "by_population": pop, "cities": cities_of(t)}
+
+
+def cities_of(t: dict) -> list[str]:
+    """The metros of the terms, the launch city first, at most 5 (the card's map and list draw the same)."""
+    names = [str(m.get("city")) for m in t.get("metros") or [] if m.get("city")]
+    return sorted(names, key=lambda n: n != t["city"])[:5]
 
 
 def with_terms(rep: dict) -> dict:
-    """A report kept from before its terms were written in it (a recording) with them written in, by the same rule."""
-    if isinstance(rep.get("terms"), dict) or rep.get("stage") == "verdict":
+    """A report kept from before its terms were written in it (a recording) with them written in, by the same rule. With
+    no product matched there is nothing to launch: no terms, and no map line."""
+    if rep.get("stage") == "verdict":
+        return rep
+    if not rep.get("matches"):
+        return {**rep, "terms": None, "no_map": None, "brief": None}
+    if isinstance(rep.get("terms"), dict):
         return rep
     t = terms(rep.get("where") or [])
     return {**rep, "terms": t, "no_map": None if t else NO_MAP}

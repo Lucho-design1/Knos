@@ -1132,8 +1132,9 @@ def _demand_check(idea: str, place: str | None = None, leader: str | None = None
     if ok and not verdict_only and (not cells or metros.flat(cells)) and ev.get("tags"):    # no map: asked once more, by the top matched tag
         cells = _tag_map(run, ev["tags"][0]["id"], place)
         ev["where_by_tag"] = {"tag": ev["tags"][0]["name"], "cells": len(cells)}
-    rep["terms"] = None if verdict_only else metros.terms(cells)
-    rep["no_map"] = None if rep["terms"] or verdict_only else metros.NO_MAP
+    matched = bool(rep.get("matches"))             # no product matched: nothing to launch, so no city and no map line
+    rep["terms"] = None if verdict_only or not matched else metros.terms(cells)
+    rep["no_map"] = None if rep["terms"] or verdict_only or not matched else metros.NO_MAP
     rep["brief"] = metros.brief(idea, rep["terms"], [x["name"] for x in ev.get("persona") or [] if x.get("name")]) if rep["terms"] else None
     rep["stage"] = "verdict" if verdict_only else "full"
     rep["options"] = opts

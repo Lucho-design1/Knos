@@ -417,7 +417,7 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     const c = row && row.claude;
     if (!c) return `<p class="k-none">Claude was not asked about this idea alone.</p>`;
     const side = (who, v) => `<div><h4>${who}</h4><p class="k-big">${esc((WORD[v.verdict] || [v.verdict || "-"])[0])}</p>
-      <p>${esc(v.audience || "no audience")}</p><p>${esc((v.cities || []).join(", ") || "no cities")}</p><p>${esc(v.tier ? "price tier " + v.tier : "no price tier")}</p></div>`;
+      <p>${esc(v.audience || "no audience")}</p><p data-cities>${esc((v.cities || []).join(", ") || "no cities")}</p><p>${esc(v.tier ? "price tier " + v.tier : "no price tier")}</p></div>`;
     return `<div class="k-vs">${side("Claude alone", c)}${side("Knos with Qloo", mine)}</div>${c.why ? `<p class="k-fine">Claude: ${esc(c.why)}</p>` : ""}`;
   }
 
@@ -483,7 +483,13 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     return rows.length ? `<details class="k-calls" data-part="calls"><summary>Qloo calls (${rows.length})</summary><ol>${rows.join("")}</ol></details>` : "";
   }
 
-  const WORD = { OPEN: ["Open for pre-orders", "open"], REFUSE: ["Not yet: pre-orders stay closed", "refuse"], CANNOT_DECIDE: ["Qloo cannot decide this one", "unknown"] };
+  // the launch terms a card draws (apps/wanted metros.launch_terms): a city only when Qloo matched a product to the idea
+  const termsOf = (r) => r && r.terms && r.terms.city && (r.matches || []).length ? r.terms : null;
+  const cityList = (r) => { const t = termsOf(r);
+    const heat = ((t && t.metros) || []).map((m) => ({ name: m.city, lat: m.lat, lon: m.lon, src: (r.where || [])[0]?.src }));
+    heat.sort((x, y) => (y.name === t.city) - (x.name === t.city));
+    return heat.slice(0, 5); };
+  const WORD = { OPEN:["Open for pre-orders", "open"], REFUSE: ["Not yet: pre-orders stay closed", "refuse"], CANNOT_DECIDE: ["Qloo cannot decide this one", "unknown"] };
   const TIERS = ["budget", "mid", "premium", "luxury"];
   const HEALTH = /\b(health\w*|patient\w*|medic\w*|clinic\w*|disease\w*|drug\w*|therap\w*|diagnos\w*|supplement\w*|glucose|diabet\w*)\b/i;
   function card(r, label) {
@@ -493,20 +499,17 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
     const segs = (p.who?.segments || (r.audiences || []).filter((a) => a.tied).map((a) => a.name)).filter(Boolean).slice(0, 3).map(qlabel);
     // Qloo's audiences for the idea's own tags (or products), each naming what ties it: none is unrelated
     const wants = (r.who_wants || []).filter((a) => a && a.name && a.tie && a.tie.name).slice(0, 4);
-    const launch = r.launch || {}, terms = r.terms && r.terms.city ? r.terms : null;
+    const terms = termsOf(r);
     // Open needs a launch city: with none, pre-orders cannot open (apps/wanted metros.launch_terms is the one answer)
     if (d.verdict === "OPEN" && !terms && (r.stage !== "verdict" || r.no_map)) [word, cls] = ["Not yet: Qloo sets no launch city for this idea", "refuse"];
-    // the cities of Qloo's heatmap, each a Census metro (apps/wanted metros.py); else Qloo's destinations
-    const heat = ((terms && terms.metros) || []).map((m) => ({ name: m.city, lat: m.lat, lon: m.lon, src: (r.where || [])[0]?.src }));
-    heat.sort((x, y) => (y.name === terms?.city) - (x.name === terms?.city));     // the launch city first, as the terms say
-    const cities = (heat.length ? heat : (r.cities || []).length ? r.cities : launch.cities || []).slice(0, 5);
-    const matched = Object.fromEntries((r.matches || []).filter((m) => m && m.id).map((m) => [m.id, m.name]));   // explainability's ids, named
-    const where = ((r.where || []).length ? r.where : launch.where || []).slice(0, 8), also = (r.also_love && r.also_love.domains) || [];
+    // the one city list of a result: the terms' Census metros, the launch city first (the map, the list, Claude alone, /r/)
+    const cities = cityList(r);
+    const where = ((r.where || []).length ? r.where : (r.launch || {}).where || []).slice(0, 8), also = (r.also_love && r.also_love.domains) || [];
     const price = r.price || {}, tier = String(price.tier || "").toLowerCase();
     // which product Qloo read the idea as (kit SAFE_USE: ask when that choice changes the result): on a new check the
     // visitor can pick another match, or none of them; the verdict's reason is Knos's rule, apart from Qloo's data
     const lead = r.leader && typeof r.leader === "object" ? r.leader : null, why = (d.reasons || [])[0];
-    const empty = !(age || gender) && !segs.length && !wants.length && !cities.length && !tier && !also.length;     // no part answered: one next step, no empty boxes
+    const empty = !(age || gender) && !segs.length && !wants.length && !(r.cities || []).length && !cities.length && !tier && !also.length;     // no part answered: one next step, no empty boxes
     if (empty && d.verdict !== "OPEN" && !r.qloo_down) [word, cls] = ["No taste data from Qloo", "unknown"];   // a real empty answer only
     // Qloo not answering (apps/wanted recorded.py): said first, with the sample's last real card when there is one
     const at = (t) => String(t || "").replace("T", " ").slice(0, 16) + " UTC";
@@ -531,9 +534,9 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
       ${wants.length ? `<ul class="k-wants">${wants.map((a) => `<li><b>${esc(qlabel(a.name))}</b> <span class="k-fine">tied by Qloo ${
         a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}${a.tie.via ? `, through ${esc(a.tie.via)}` : ""}</span></li>`).join("")}</ul>`
         : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
-    <section class="k-part k-where" data-part="cities" data-qloo data-heat="${heat.length}"><h3>Where to launch</h3>
-      ${cities.length ? map(cities, where) + `<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}${c.country ? ` <span class="k-fine">${esc(c.country)}</span>` : ""}${
-        (c.because || []).length ? `<br><span class="k-fine" data-because>because ${esc(c.because.map((id) => matched[id] || id).join(", "))}</span>` : ""}</li>`).join("")}</ol>` : r.stage === "verdict" ? `<p class="k-none" data-pending>Qloo's map is on its way.</p>` : `<p class="k-none">Qloo named no launch city.</p>`}${terms ? "" : r.no_map ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}${src(h, cities[0]?.src)}</section>
+    ${cities.length ? `<section class="k-part k-where" data-part="cities" data-qloo data-heat="${cities.length}"><h3>Where to launch</h3>
+      ${map(cities, where)}<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}</li>`).join("")}</ol>${src(h, cities[0]?.src)}</section>`
+      : r.stage === "verdict" && (r.matches || []).length ? `<p class="k-none" data-pending>Qloo's map is on its way.</p>` : !empty && r.no_map && (r.matches || []).length ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}
     ${also.length ? `<section class="k-part" data-part="also" data-qloo><h3>They also love</h3>${also.map((d) =>
       `<p class="k-also" data-domain="${esc(d.domain)}"><b>${esc(d.domain === "music" ? "Music" : d.domain === "film" ? "Film" : d.domain)}</b> ${
       d.items.map((x) => esc(x.name)).join(", ")}${src(h, d.src)}</p>`).join("")}</section>` : ""}
@@ -570,11 +573,12 @@ ${src(h, price.src)}</section>
       if (!ref && r.stage === "verdict") {
         const full = await post("/api/check", { idea: v, ...extra }).catch(() => null);
         if (full && slot.dataset.idea === v && slot.last === r) {
-          const open = slot.querySelector("details[data-claude]")?.open;
-          slot.innerHTML = card(full);
+          // what the reader already pressed on the first card stays pressed on the full one
+          const off = !!slot.querySelector("[data-without-qloo]"), open = [...slot.querySelectorAll("details[data-claude], details[data-part=calls]")].filter((x) => x.open).map((x) => x.matches("[data-claude]") ? "details[data-claude]" : "details[data-part=calls]");
+          slot.innerHTML = off ? without(full) : card(full);
           slot.last = full;
           slot.dataset.full = String(Math.round(performance.now() - t0));
-          if (open) slot.querySelector("details[data-claude]")?.setAttribute("open", "");
+          for (const s of open) slot.querySelector(s)?.setAttribute("open", "");
         }
       }
     } catch (e) {
@@ -647,7 +651,7 @@ ${src(h, price.src)}</section>
     if (!body || body.dataset.done) return;
     body.dataset.done = "1";
     const r = slot.last || {}, d = r.decision || {}, who = r.who || {}, p = d.plan || {};
-    const cities = ((r.cities || []).length ? r.cities : (r.launch || {}).cities || []).slice(0, 3).map((c) => c.name);
+    const cities = cityList(r).map((c) => c.name);
     const mine = { verdict: d.verdict, audience: [(p.who?.age || who.top_age || "").replace(/_/g, " "), p.who?.gender || who.top_gender || ""].filter(Boolean).join(", ")
                      || (p.who?.segments || (r.audiences || []).filter((x) => x.tied).map((x) => x.name)).filter(Boolean).slice(0, 2).join(", "),
                    cities, tier: (r.price || {}).tier };

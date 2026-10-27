@@ -85,8 +85,8 @@ def page(rep: dict | None, url: str, rid: str) -> str:
         t = terms_of(rep)                     # the one answer the card and the trace draw (metros.launch_terms), whatever the state
         made = str(rep.get("made") or "")[:10]
         # the launch city and target as the card has them; with no terms those rows are left out (the sentence says why)
-        rows = ([("Launch city", e(t["city"])), ("Pre-order target", f"{t['target']}, all refunded if it falls short")] if t else []) + [
-                ("Cities Qloo names", e(", ".join(str(c.get("name")) for c in (rep.get("cities") or [])[:5]) or "none")),
+        rows = ([("Launch city", e(t["city"])), ("Pre-order target", f"{t['target']}, all refunded if it falls short"),
+                 ("Launch cities", f'<span data-cities>{e(", ".join(t["cities"]))}</span>')] if t else []) + [
                 ("Qloo calls", f'<a href="/trace.html?hash={e(str(rep.get("hash") or ""))}">{len(rep.get("calls") or [])}, read {e(made)}</a>')]
         title = f"{idea}: {word}"
         body = (f'<h1>{e(idea)}</h1><p class="verdict" data-verdict="{e(str((rep.get("decision") or {}).get("verdict") or ""))}">{e(word)}</p>'

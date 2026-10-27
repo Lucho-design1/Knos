@@ -1,5 +1,5 @@
 // The demand check's card in full (web/brand/hero.js), in headless Chromium, on 3 SYNTHETIC reports shaped as
-// apps/wanted check.py writes them: the because line, the room against the leader, the taste persona, the brand ladder
+// apps/wanted check.py writes them: the room against the leader, the taste persona, the brand ladder
 // and the recommendations are drawn from the report (no new call), each value names the Qloo call it came from, and the
 // calls panel lists every call with its endpoint, key parameters, milliseconds and the part of the card it fed.
 //   node tests/web/card_full.mjs
@@ -70,7 +70,8 @@ const browser = await chromiumOrSkip();
         ok(`report ${i}: "${p}" renders each value, linked to the call it came from in the trace`, JSON.stringify(got.parts[p]) === JSON.stringify(rows), got.parts[p]);
       const fed = { 3: ["launch cities", "because"], 4: ["taste persona"], 5: ["brand ladder"], 6: ["next to it"], 7: ["room against the leader"], 2: ["who wants it"] };
       ok(`report ${i}: the calls panel lists 7 calls, each live or cached`, got.summary === "Qloo calls (7)" && got.rows.length === 7 && got.rows.every((r) => / \u00b7 (live|cached)( \u00b7 |$)/.test(r)), got.summary);
-      ok(`report ${i}: the trend line and "because" under the launch city`, got.trend === `Trend of Leader ${i}: flat, data through 2026-05-07 source` && got.city === `because Match ${i}`, [got.trend, got.city]);
+      // the card lists launch cities only from the launch terms (apps/wanted metros.launch_terms); this report has none
+      ok(`report ${i}: the trend line, and no launch-city list without launch terms`, got.trend === `Trend of Leader ${i}: flat, data through 2026-05-07 source` && got.city === undefined, [got.trend, got.city]);
       await page.click("#k-card [data-without]");
       const off = await page.evaluate(() => ({ v: document.querySelector("#k-card [data-without-qloo]")?.dataset.verdict, cities: document.querySelectorAll("#k-card .k-cities li").length,
         said: document.querySelector("#k-card [data-without-qloo] .k-why")?.textContent }));
