@@ -107,6 +107,7 @@ GET_ROUTES = {"/actions.json": "Solana Actions rules", "/api/refuse": "What Knos
               "/mcp": "MCP discovery page (POST JSON-RPC here)", "/mcp/store": "The app-store MCP profile: read-only tools, no sign-in, a daily call cap (POST JSON-RPC here)", "/auth/orcid": "Sign in with ORCID", "/auth/orcid/callback": "ORCID callback",
               "/": "301 to the front door, https://drexthealpha.github.io/Knos/", "/app": "301 to /app/", "/app/": "The app", "/status/qloo": "Qloo as this server met it today: calls, cache hits, last success, last 429", "/api/qloo/status": "The same as JSON, with the line the front door shows while Qloo limits requests", "/paid": "Paid on proof: the passkey wallet, pre-orders, pools, company sign-in and accounting files", "/api/status": "Server status", "/api/ops/memory": "The operator's: this process's memory now and at its peak", "/api/agent/payout/latest": "The newest payout to an agent, read from devnet", "/api/usage": "Demand checks run, Ready briefs made, and the knos_pay program's devnet transactions", "/api/taste/movie": "The films a film's fans also love, from Qloo (?title=&year=): names and years only", "/api/products": "Listed products", "/api/quote": "Fee quote",
               "/api/pool": "A report's pre-order pool", "/healthz": "Health check", "/api/report": "A demand report",
+              "/api/receipts": "A result's receipts (?id=, the first 16 hex of its hash): each Qloo call with its time and hash, the target's rule, the model's answer, the brief's criteria hash, the Sibyl record line, devnet transactions",
               "/api/commitment": "One commitment", "/api/auth/config": "Sign-in providers", "/api/fees": "Fees (config/fees.yaml)",
               "/api/receivables": "Receivables a lender can finance (passkey wallets: advance rate, fee, due date)",
               "/api/referee/group": "The FROST referee group (public)", "/api/referee/pending": "Open referee signing sessions",
@@ -646,6 +647,13 @@ def make_handler(state: State):
                     page = page.replace('<script type="application/json" id="k-proof">null</script>',
                                         f'<script type="application/json" id="k-proof">{data}</script>', 1)
                 return self._send(200, inline_css(vectors.filled(page)).encode("utf-8"), "text/html; charset=utf-8")
+            if re.fullmatch(r"/receipts/[0-9a-f]{16}", u.path) or u.path == "/api/receipts":   # each number's source, row by row
+                from . import receipts, result_page
+                rid = u.path[10:] if u.path.startswith("/receipts/") else (qs.get("id") or [""])[0][:16]
+                rep = result_page.find(state, rid) if re.fullmatch(r"[0-9a-f]{16}", rid) else None
+                if u.path == "/api/receipts":
+                    return self._send(200, receipts.doc(rep)) if rep else self._send(404, {"error": "no result has this id"})
+                return self._send(200 if rep else 404, receipts.page(rep, rid).encode("utf-8"), "text/html; charset=utf-8")
             if re.fullmatch(r"/r/[0-9a-f]{16}", u.path):     # a demand result's permanent page, from the reports kept here
                 from . import result_page
                 rid = u.path[3:]

@@ -196,11 +196,11 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
       rec = ((r.recommended && r.recommended.items) || []).filter(tied);
     const parts = [];
     if (vs && (vs.whitespace || []).length) parts.push(`<section class="k-part" data-part="whitespace" data-qloo><h3>Room against ${esc(vs.leader)}</h3><ul class="k-vals">${
-      vs.whitespace.slice(0, 6).map((w) => val(vs.src, esc(qlabel(w)))).join("")}</ul><p class="k-fine">overlap ${Math.round((vs.overlap || 0) * 100)}%</p>${src(h, vs.src)}</section>`);
+      vs.whitespace.slice(0, 6).map((w) => val(vs.src, esc(qlabel(w)))).join("")}</ul><p class="k-fine">overlap ${Math.round((vs.overlap || 0) * 100)}%${chip("qloo", `call-${vs.src}`)}</p>${src(h, vs.src)}</section>`);
     if (persona.length) parts.push(`<section class="k-part" data-part="persona" data-qloo><h3>Taste persona</h3><ul class="k-vals">${
       persona.slice(0, 6).map((t) => val(t.src, esc(qlabel(t.name)))).join("")}</ul>${src(h, persona[0].src)}</section>`);
     if (ladder.length) parts.push(`<section class="k-part" data-part="ladder" data-qloo><h3>Brand ladder</h3><ol class="k-vals">${
-      ladder.slice(0, 6).map((b) => val(b.src, `${esc(b.name)} <span class="k-fine">${esc(Number(b.affinity || 0).toFixed(2))}</span>`)).join("")}</ol>${src(h, ladder[0].src)}</section>`);
+      ladder.slice(0, 6).map((b) => val(b.src, `${esc(b.name)} <span class="k-fine">${esc(Number(b.affinity || 0).toFixed(2))}</span>`) .replace("</a></li>", `</a>${chip("qloo", `call-${b.src}`)}</li>`)).join("")}</ol>${src(h, ladder[0].src)}</section>`);
     if (rec.length) parts.push(`<section class="k-part" data-part="recommendations" data-qloo><h3>Next to it</h3><ul class="k-vals">${
       rec.slice(0, 6).map((x) => val(r.recommended.src, esc(x.name))).join("")}</ul>${src(h, r.recommended.src)}</section>`);
     return parts.join("");
@@ -231,7 +231,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
   // the lists and the calls panel are styled when a card first needs them: the first screen's stylesheet stays within its
   // weight (tests/web/perf.mjs)
   const style = () => { if (document.getElementById("k-card-css")) return;
-    document.head.insertAdjacentHTML("beforeend", `<style id="k-card-css">.k-vals{margin:0;padding-left:1.1em}.k-vals li{margin:0 0 4px}.k-val{color:inherit;text-decoration:none}.k-val:hover{text-decoration:underline}.k-calls{margin:var(--sp-3) var(--sp-5);font-size:var(--s-1)}.k-calls ol{margin:var(--sp-2) 0 0;padding-left:1.1em}.k-calls li{margin:0 0 4px;overflow-wrap:anywhere}.k-switch{display:inline-flex;gap:4px;margin-left:6px}.k-model{margin:var(--sp-3) var(--sp-5)}.k-vs-t{width:100%;border-collapse:collapse;font-size:var(--s0)}.k-vs-t th,.k-vs-t td{text-align:left;vertical-align:top;padding:6px 8px;border-top:1px solid var(--line);overflow-wrap:anywhere}.k-vs-t mark{background:color-mix(in srgb,var(--accent) 22%,transparent);color:inherit;border-radius:3px;padding:0 2px}.k-timeline{margin:var(--sp-2) 0 0}.k-timeline ol{margin:4px 0 0;padding-left:1.4em;font-size:var(--s-1);max-height:12em;overflow:auto}.k-timeline li{overflow-wrap:anywhere}</style>`); };
+    document.head.insertAdjacentHTML("beforeend", `<style id="k-card-css">.k-vals{margin:0;padding-left:1.1em}.k-vals li{margin:0 0 4px}.k-val{color:inherit;text-decoration:none}.k-val:hover{text-decoration:underline}.k-calls{margin:var(--sp-3) var(--sp-5);font-size:var(--s-1)}.k-calls ol{margin:var(--sp-2) 0 0;padding-left:1.1em}.k-calls li{margin:0 0 4px;overflow-wrap:anywhere}.k-switch{display:inline-flex;gap:4px;margin-left:6px}.k-model{margin:var(--sp-3) var(--sp-5)}.k-vs-t{width:100%;border-collapse:collapse;font-size:var(--s0)}.k-vs-t th,.k-vs-t td{text-align:left;vertical-align:top;padding:6px 8px;border-top:1px solid var(--line);overflow-wrap:anywhere}.k-vs-t mark{background:color-mix(in srgb,var(--accent) 22%,transparent);color:inherit;border-radius:3px;padding:0 2px}.k-timeline{margin:var(--sp-2) 0 0}.k-timeline ol{margin:4px 0 0;padding-left:1.4em;font-size:var(--s-1);max-height:12em;overflow:auto}.k-timeline li{overflow-wrap:anywhere}.k-schip{display:inline-block;height:14px;padding:0 5px;margin-left:4px;border:1px solid var(--line);border-radius:7px;font:600 10px/12px var(--text);vertical-align:middle;color:var(--muted);text-decoration:none}.k-schip:hover{color:var(--fg)}</style>`); };
   function calls(r) {
     style();
     const fed = {}, add = (n, part) => { if (n != null) (fed[n] ||= new Set()).add(part); };
@@ -246,9 +246,13 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
       const keys = Object.keys(p).filter((k) => p[k] != null && p[k] !== "").map((k) => `${k}=${String(p[k]).slice(0, 40)}`).join(", ");
       return `<li data-call="${esc(c.n)}"><a href="${esc(API)}/trace.html?hash=${encodeURIComponent(r.hash || "")}#call-${esc(c.n)}" target="_blank" rel="noopener">#${esc(c.n)}</a> ${
         esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${Number.isFinite(c.ms) ? `${esc(c.ms)} ms` : `recorded ${esc(String(r.made || c.at || "").slice(0, 10))}`} · ${c.cached ? "cached" : "live"}${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || String(c.effect || "").slice(0, 60) || "the verdict")}${r.signals ? ` · <span data-role="${(r.signals.decides || []).includes(c.n) ? "decides" : "context"}">${(r.signals.decides || []).includes(c.n) ? "decides" : "context"}</span>` : ""}</li>`; });
-    return rows.length ? `<details class="k-calls" data-part="calls"><summary>Qloo calls (${rows.length})</summary><ol>${rows.join("")}</ol></details>` : "";
+    const first = (Array.isArray(r.calls) && r.calls[0] && r.calls[0].n) || 1;
+    return rows.length ? `<details class="k-calls" data-part="calls"><summary>Qloo calls (${rows.length})${chip("qloo", `call-${first}`)}</summary><ol>${rows.join("")}</ol></details>` : "";
   }
 
+  // a number's source as a chip at most 16 px tall (Qloo, rule, model or chain), opening its row of the result's receipts
+  let rcpt = "";
+  const chip = (kind, row) => rcpt ? ` <a class="k-schip" data-src="${esc(kind)}" href="${esc(API)}/receipts/${esc(rcpt)}#${esc(row)}" target="_blank" rel="noopener" aria-label="Source: ${esc(kind)}, ${esc(row.replace("-", " "))}">${esc({ qloo: "Qloo", rule: "rule", model: "model", chain: "chain" }[kind])}</a>` : "";
   // the launch terms a card draws (apps/wanted metros.launch_terms): a city only when Qloo matched a product to the idea
   const termsOf = (r) => r && r.terms && r.terms.city && (r.matches || []).length ? r.terms : null;
   const cityList = (r) => { const t = termsOf(r);
@@ -269,7 +273,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
       <tr data-row="city"><th scope="row">Launch city</th><td data-knos>${cell(city, !same)}</td><td data-model>${cell(m.city, !same)}</td></tr>
       <tr data-row="who"><th scope="row">Who</th><td data-knos>${cell(who || "Qloo named no audience", true)}</td><td data-model>${cell(m.who || "", true)}</td></tr>
       <tr data-row="why"><th scope="row">Why</th><td data-knos>${esc(terms ? `Qloo's heatmap: the highest lift, ${terms.cells} cells` : "Qloo's map names no launch city")}</td><td data-model>${esc(m.why || "")}</td></tr></tbody></table>
-      <p class="k-fine">Model alone: ${esc(m.model || "Claude")}, asked once with no Qloo data, ${esc(String(m.at || "").slice(0, 10))}.</p></div>`;
+      <p class="k-fine">Model alone: ${esc(m.model || "Claude")}, asked once with no Qloo data, ${esc(String(m.at || "").slice(0, 10))}.${chip("model", "model")}</p></div>`;
   };
   // Qloo cannot answer and no idea it answered shares 2 words with this one (apps/wanted nearest.py): the 3 nearest
   const options = (r) => `<article class="k-card k-unknown" data-nearest-options data-not-prose>
@@ -279,6 +283,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
     style();
     if ((r.nearest_options || []).length) return options(r);
     const d = r.decision || {}, p = d.plan || {}, h = r.hash;
+    rcpt = /^[0-9a-f]{16}/.test(h || "") ? h.slice(0, 16) : "";
     let [word, cls] = WORD[d.verdict] || [String(d.verdict || "No verdict"), "unknown"];
     const who = r.who || {}, age = (p.who?.age || who.top_age || "").replace(/_/g, " ").replace(" and ", " and "), gender = p.who?.gender || who.top_gender || "";
     const segs = (p.who?.segments || (r.audiences || []).filter((a) => a.tied).map((a) => a.name)).filter(Boolean).slice(0, 3).map(qlabel);
@@ -309,7 +314,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
     return `<article class="k-card k-${cls}" data-verdict="${esc(d.verdict || "")}" data-not-prose>
   ${down ? `<p class="k-terms" data-qloo-down>${esc(down)}</p>` : ""}${r.nearest && limit ? `<p class="k-terms" data-qloo-limit-line>${esc(limit)}</p>` : ""}
   <header class="k-card-head"><p class="k-kick">${label ? `<span class="k-real">${esc(label)}</span> · ` : ""}${esc(r.idea || r.label || "")}</p><h2 class="k-verdict" data-part="verdict" data-qloo>${esc(word)}${src(h)}</h2>
-  ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders. Every pre-order is refunded if the target is missed.</p>${terms.by_population ? `<p class="k-fine" data-part="by-population" data-pop-city="${esc(terms.by_population.city)}" data-pop-target="${esc(terms.by_population.target)}">By population: ${esc(terms.by_population.city)}, ${esc(terms.by_population.target)}. By Qloo taste: ${esc(terms.city)}, ${esc(terms.target)}.</p>` : ""}` : ""}
+  ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders.${chip("rule", "rule-target")} Every pre-order is refunded if the target is missed.</p>${terms.by_population ? `<p class="k-fine" data-part="by-population" data-pop-city="${esc(terms.by_population.city)}" data-pop-target="${esc(terms.by_population.target)}">By population: ${esc(terms.by_population.city)}, ${esc(terms.by_population.target)}.${chip("rule", "rule-population")} By Qloo taste: ${esc(terms.city)}, ${esc(terms.target)}.${chip("rule", "rule-target")}</p>` : ""}` : ""}
   ${r.signals && r.signals.line ? `<p class="k-fine" data-part="signals">${esc(r.signals.line)}</p>` : ""}
   ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}${trendLine(r)}
   ${Array.isArray(r.calls) && r.calls.length ? `<section class="k-timeline" data-timeline aria-live="polite"><p class="k-fine" data-counter>Qloo calls this check: 0 (live 0, cached 0)</p><ol data-rows></ol></section>` : ""}
@@ -337,7 +342,7 @@ ${src(h, price.src)}</section>
   </div>`}
   ${calls(r)}
   <details class="k-claude" data-claude hidden><summary>Claude alone</summary><div class="k-claude-body" data-claude-body></div></details>
-  <footer class="k-card-foot"><p class="k-fine">Aggregate taste from Qloo: not causal, not a forecast, not about any one person.${
+  <footer class="k-card-foot">${rcpt ? `<p class="k-fine"><a href="${esc(API)}/receipts/${esc(rcpt)}" target="_blank" rel="noopener" data-receipts>Receipts</a></p>` : ""}<p class="k-fine">Aggregate taste from Qloo: not causal, not a forecast, not about any one person.${
     HEALTH.test(r.idea || "") ? " Not medical advice: Qloo has no medical demand." : ""}</p>
     ${undecided ? "" : `${d.verdict === "OPEN" ? `<a class="k-cta" href="${esc(APP)}#buy=${esc(h)}">Open pre-orders for it →</a>` : `<a class="k-cta quiet" href="${esc(APP)}#research">Try it with a launch market →</a>`}${/^[0-9a-f]{16}/.test(h || "") ? ` <a class="k-cta quiet" href="${esc(API)}/r/${esc(h.slice(0, 16))}" data-share>Share this result</a>` : ""}`}</footer>
 </article>`;
