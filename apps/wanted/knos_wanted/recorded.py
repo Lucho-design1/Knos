@@ -134,6 +134,8 @@ def honest(text: str, rep: dict) -> dict:
         return rep
     rec = recording(text)
     if rec:
+        from . import qloo_rest                     # /status/qloo counts the answers served from recordings today
+        qloo_rest._today()["recorded"] = qloo_rest._today().get("recorded", 0) + 1
         return {**rec, "stage": rep.get("stage") or rec.get("stage"), "qloo_down": {"code": code},
                 "stale": {"code": code, "from": rec.get("made")}}
     return {**rep, "qloo_down": {"code": code}}

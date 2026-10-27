@@ -30,7 +30,7 @@ window.KNOS_I18N = {
     agents_t: "For agents", agents_p: "The same crossing, pre-order and milestone flows over the Model Context Protocol.",
     agents_add: "Add this server by URL in Claude, Cursor or any MCP client:",
     verify_link: "How we verify", lang_l: "Language",
-    test_money: "Devnet test money — no real funds", status_live: "Qloo: live", status_off: "Qloo: off",
+    test_money: "Devnet test money — no real funds", status_live: "Qloo: live", status_limited: "Qloo: limited", status_off: "Qloo: off",
     loading: "Working", empty: "Nothing here yet", err_signin: "Sign in first.",
     receipt_t: "Held until the proof passes", evidence_pin: "Evidence pin on chain", page_sha: "Evidence page sha256",
     milestone_prove: "Prove and release", evidence_url: "Evidence page URL", claim_id: "Claim id",

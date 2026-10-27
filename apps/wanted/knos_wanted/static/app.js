@@ -476,8 +476,10 @@ async function boot() {
   try {
     status = await api("/api/status");
     const rest = status.qloo_rest || {};
-    $("modeBadge").textContent = rest.rest ? t("status_live") : t("status_off");
-    $("modeBadge").className = "badge " + (rest.rest ? "live" : "off");
+    // live only while Qloo answers: its 429 pause (GET /api/qloo/status, this server's own traffic) says limited
+    const limited = rest.rest && (await api("/api/qloo/status").catch(() => ({}))).limited === true;
+    $("modeBadge").textContent = limited ? t("status_limited") : rest.rest ? t("status_live") : t("status_off");
+    $("modeBadge").className = "badge " + (rest.rest && !limited ? "live" : "off");
     const a = status.auth || {};
     if (!a.passkey || !window.PublicKeyCredential) { $("pkNew").disabled = $("pkUse").disabled = true; $("pkNote").textContent = t("pk_none"); }
   } catch (e) { err(e); }

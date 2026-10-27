@@ -171,6 +171,8 @@
   }
 
   // the parts of the card that read Qloo's answers already in the report (no new call): each value names its call
+  // a Qloo label as the card shows it: title case, and no "(Lifestyle Preferences ...)" type suffix
+  const qlabel = (s) => String(s || "").replace(/\s*\(Lifestyle Preferences[^)]*\)/gi, "").trim().replace(/(^|[\s/-])([a-z])/g, (m, a, b) => a + b.toUpperCase());
   let traceOf = "";
   const val = (n, html) => `<li data-call="${esc(n ?? "")}"><a class="k-val" href="${esc(API)}/trace.html?hash=${encodeURIComponent(traceOf)}#call-${esc(n ?? "")}" target="_blank" rel="noopener">${html}</a></li>`;
   function more(r) {
@@ -184,9 +186,9 @@
       rec = ((r.recommended && r.recommended.items) || []).filter(tied);
     const parts = [];
     if (vs && (vs.whitespace || []).length) parts.push(`<section class="k-part" data-part="whitespace" data-qloo><h3>Room against ${esc(vs.leader)}</h3><ul class="k-vals">${
-      vs.whitespace.slice(0, 6).map((w) => val(vs.src, esc(w))).join("")}</ul><p class="k-fine">overlap ${Math.round((vs.overlap || 0) * 100)}%</p>${src(h, vs.src)}</section>`);
+      vs.whitespace.slice(0, 6).map((w) => val(vs.src, esc(qlabel(w)))).join("")}</ul><p class="k-fine">overlap ${Math.round((vs.overlap || 0) * 100)}%</p>${src(h, vs.src)}</section>`);
     if (persona.length) parts.push(`<section class="k-part" data-part="persona" data-qloo><h3>Taste persona</h3><ul class="k-vals">${
-      persona.slice(0, 6).map((t) => val(t.src, esc(t.name))).join("")}</ul>${src(h, persona[0].src)}</section>`);
+      persona.slice(0, 6).map((t) => val(t.src, esc(qlabel(t.name)))).join("")}</ul>${src(h, persona[0].src)}</section>`);
     if (ladder.length) parts.push(`<section class="k-part" data-part="ladder" data-qloo><h3>Brand ladder</h3><ol class="k-vals">${
       ladder.slice(0, 6).map((b) => val(b.src, `${esc(b.name)} <span class="k-fine">${esc(Number(b.affinity || 0).toFixed(2))}</span>`)).join("")}</ol>${src(h, ladder[0].src)}</section>`);
     if (rec.length) parts.push(`<section class="k-part" data-part="recommendations" data-qloo><h3>Next to it</h3><ul class="k-vals">${
@@ -237,7 +239,7 @@
     const d = r.decision || {}, p = d.plan || {}, h = r.hash;
     let [word, cls] = WORD[d.verdict] || [String(d.verdict || "No verdict"), "unknown"];
     const who = r.who || {}, age = (p.who?.age || who.top_age || "").replace(/_/g, " ").replace(" and ", " and "), gender = p.who?.gender || who.top_gender || "";
-    const segs = (p.who?.segments || (r.audiences || []).filter((a) => a.tied).map((a) => a.name)).filter(Boolean).slice(0, 3);
+    const segs = (p.who?.segments || (r.audiences || []).filter((a) => a.tied).map((a) => a.name)).filter(Boolean).slice(0, 3).map(qlabel);
     // Qloo's audiences for the idea's own tags (or products), each naming what ties it: none is unrelated
     const wants = (r.who_wants || []).filter((a) => a && a.name && a.tie && a.tie.name).slice(0, 4);
     const launch = r.launch || {}, terms = r.terms && r.terms.city ? r.terms : null;
@@ -274,7 +276,7 @@
   <form class="k-like" data-like><label>Most like <input name="like" maxlength="80" placeholder="a product or brand you know" aria-label="What is it most like?"></label> <button type="submit">Check</button></form>` : `<div class="k-parts">`}
     ${empty ? "" : `<section class="k-part" data-part="audience" data-qloo><h3>Who wants it</h3>
       ${age || gender ? `<p class="k-big">${esc([age, gender].filter(Boolean).join(", "))}</p>` : `<p class="k-none">Qloo did not answer who.</p>`}
-      ${wants.length ? `<ul class="k-wants">${wants.map((a) => `<li><b>${esc(a.name)}</b> <span class="k-fine">tied by Qloo ${
+      ${wants.length ? `<ul class="k-wants">${wants.map((a) => `<li><b>${esc(qlabel(a.name))}</b> <span class="k-fine">tied by Qloo ${
         a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}${a.tie.via ? `, through ${esc(a.tie.via)}` : ""}</span></li>`).join("")}</ul>`
         : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
     <section class="k-part k-where" data-part="cities" data-qloo data-heat="${heat.length}"><h3>Where to launch</h3>
@@ -289,7 +291,7 @@ ${src(h, price.src)}</section>
     ${more(r)}
   </div>`}
   ${calls(r)}
-  <details class="k-claude" data-claude><summary>Claude alone</summary><div class="k-claude-body" data-claude-body></div></details>
+  <details class="k-claude" data-claude hidden><summary>Claude alone</summary><div class="k-claude-body" data-claude-body></div></details>
   <footer class="k-card-foot"><p class="k-fine">Aggregate taste from Qloo: not causal, not a forecast, not about any one person.${
     HEALTH.test(r.idea || "") ? " Not medical advice: Qloo has no medical demand." : ""}</p>
     ${d.verdict === "OPEN" ? `<a class="k-cta" href="${esc(APP)}#buy=${esc(h)}">Open pre-orders for it →</a>` : `<a class="k-cta quiet" href="${esc(APP)}#research">Try it with a launch market →</a>`}${/^[0-9a-f]{16}/.test(h || "") ? ` <a class="k-cta quiet" href="${esc(API)}/r/${esc(h.slice(0, 16))}" data-share>Share this result</a>` : ""}</footer>
@@ -399,6 +401,16 @@ ${src(h, price.src)}</section>
                    cities, tier: (r.price || {}).tier };
     body.innerHTML = await claudeAlone(r.idea || slot.dataset.idea, mine);
   }, true);
+  // "Claude alone" is shown only when the published table has Claude's answer for this idea; a card drawn by a press
+  // asks (the past result in its fold, drawn at the first paint, asks nobody)
+  new MutationObserver(async () => {
+    const box = slot.querySelector("details[data-claude][hidden]");
+    if (!box || box.closest(".k-past") || box.dataset.asked) return;
+    box.dataset.asked = "1";
+    table = table || await get("/api/qloo-diff").catch(() => ({ rows: [] }));
+    const idea = (slot.last || {}).idea || slot.dataset.idea;
+    if ((table.rows || []).some((x) => x.claude && norm(x.idea) === norm(idea))) box.hidden = false;
+  }).observe(slot, { childList: true });
   slot.addEventListener("submit", (ev) => {                 // "most like ...": the named product is the one to compare with
     const f = ev.target.closest("[data-like]");
     if (!f) return;

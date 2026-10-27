@@ -1,5 +1,5 @@
 """The page of one crossing, for the front door (web/crossing/<id>/index.html): the demand behind it, the hashed Ready
-brief (the hash recomputed here from the brief the project holds), each pre-order locked on devnet, the check that
+brief (the hash recomputed here from the brief the project holds), each pre-order held on devnet, the check that
 counted them, and each release with what released it, read from its own transaction. Static: it asks nothing when read.
 
     python scripts/crossing_page.py <project id> [--check]
@@ -87,7 +87,7 @@ def page(f: dict) -> str:
     t = max(10, round(d["population"] / 100_000 * d["affinity"]))
     rows = "".join(
         f'<tr><td>{i}</td><td><a href="{ADDR.format(r["wallet"])}">{e(r["wallet"][:6])}…</a></td><td>{r["units"]}</td>'
-        f'<td><a href="{TX.format(r["lock"])}">locked</a></td>'
+        f'<td><a href="{TX.format(r["lock"])}">held</a></td>'
         f'<td>{f"""<a href="{TX.format(r["release"])}">{e(r["released_by"] or "released")}</a>""" if r["release"] else e(r["status"])}</td></tr>'
         for i, r in enumerate(f["orders"], 1))
     run = next((r["check_run"] for r in f["orders"] if r["check_run"]), None)
@@ -112,7 +112,7 @@ table{{border-collapse:collapse;width:100%;font-size:var(--s-1)}}td,th{{border-b
 <p class="fine"><a href="../../">Knos</a> · <a href="../../demo/">The demo</a></p>
 <h1>{e(d["idea"])}</h1>
 <ol>
-<li><h2>Demand</h2><p>Qloo's heatmap: <b>{e(d["city"])}</b>, mean affinity {d["affinity"]} over {d["cells"]} cells, population {d["population"]:,}.
+<li id="demand"><h2>Demand</h2><p>Qloo's heatmap: <b>{e(d["city"])}</b>, mean affinity {d["affinity"]} over {d["cells"]} cells, population {d["population"]:,}.
 Target = max(10, round({d["population"]:,} / 100,000 × {d["affinity"]})) = <b>{t}</b> pre-orders.</p>
 <p class="fine">Recorded from a live demand check, {e(d["when"])} (<a href="{e(d["script"])}">the run</a>). Qloo has refused Knos's key since 25 Oct.</p></li>
 <li><h2>Ready brief</h2><p>{e(m["name"])}: {e(m["target"])}. Checked by <span class="mono">{e(m["verifier"]["check"])}</span>.</p>

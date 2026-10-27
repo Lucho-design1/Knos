@@ -68,9 +68,11 @@ def table(rs: list[dict]) -> str:
     e = lambda v: html.escape("none" if v is None else str(v))  # noqa: E731
     body = "".join(f"<tr><td>{e(r['chip'])}</td><td>{e(r['removed'])}</td><td>{e(r['city'][0])} → {e(r['city'][1])}</td>"
                    f"<td>{e(r['target'][0])} → {e(r['target'][1])}</td><td>{e(r['label'][0])} → {e(r['label'][1])}</td></tr>" for r in rs)
-    changed = sum(r["city"][0] != r["city"][1] or r["target"][0] != r["target"][1] or r["label"][0] != r["label"][1] for r in rs)
+    moved = lambda r: r["city"][0] != r["city"][1] or r["target"][0] != r["target"][1] or r["label"][0] != r["label"][1]  # noqa: E731
+    one = [r for r in rs if r["removed"] != "every Qloo answer"]
+    every = [r for r in rs if r["removed"] == "every Qloo answer"]
     return (f'{START}\n    <section class="t" id="ablation">\n      <h2>What each Qloo signal changes</h2>\n'
-            f'      <p class="t-n">{len(rs)} removals on 6 recorded samples: {changed} change the city, the target or the verdict.</p>\n'
+            f'      <p class="t-n" data-one="{sum(map(moved, one))}" data-of="{len(one)}">On 6 recorded samples, removing one Qloo signal changes the city, the target or the verdict in {sum(map(moved, one))} of {len(one)} removals; removing every answer, in {sum(map(moved, every))} of {len(every)}.</p>\n'
             f'      <details><summary>The table</summary><div class="k-table"><table>\n'
             f'        <thead><tr><th scope="col">Sample</th><th scope="col">Removed</th><th scope="col">Launch city</th><th scope="col">Target</th><th scope="col">Verdict</th></tr></thead>\n'
             f'        <tbody>{body}</tbody>\n      </table></div></details>\n'

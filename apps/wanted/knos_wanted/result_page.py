@@ -82,7 +82,7 @@ def page(rep: dict | None, url: str, rid: str) -> str:
         word = WORD.get(str((rep.get("decision") or {}).get("verdict") or ""), "Qloo cannot decide this one")
         if word == WORD["OPEN"] and not terms_of(rep):              # Open needs a launch city, as on the card
             word = "Not yet: Qloo sets no launch city for this idea"
-        t = terms_of(rep) if st in (None, "outage") else None     # an outage card is the last real answer: its terms hold
+        t = terms_of(rep)                     # the one answer the card and the trace draw (metros.launch_terms), whatever the state
         made = str(rep.get("made") or "")[:10]
         # the launch city and target as the card has them; with no terms those rows are left out (the sentence says why)
         rows = ([("Launch city", e(t["city"])), ("Pre-order target", f"{t['target']}, all refunded if it falls short")] if t else []) + [
