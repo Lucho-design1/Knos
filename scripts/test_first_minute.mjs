@@ -36,7 +36,7 @@ try {
     await p.waitForSelector("#k-card > .k-card .k-verdict", { timeout: 60000 }).catch(() => {});
     const s = await p.evaluate(() => {
       const H = innerHeight, on = (el) => { if (!el || !el.checkVisibility()) return false; const r = el.getBoundingClientRect(); return r.top < H && r.bottom > 0; };
-      const card = document.querySelector("#k-card > .k-card"), proof = [...document.querySelectorAll("[data-proof-lines] a")];
+      const card = document.querySelector("#k-card > .k-card"), proof = [...document.querySelectorAll("[data-proof-lines] a[data-proof-line]")];
       const bar = document.querySelector("#k-bar"), pl = bar?.querySelector("a[data-proof]");
       return { buyer: document.querySelector("#k-for")?.textContent.trim() || "", buyerOn: on(document.querySelector("#k-for")),
         card: !!card, cardOn: on(card), verdict: card?.querySelector(".k-verdict")?.firstChild?.textContent.trim() || "", kick: card?.querySelector(".k-kick")?.textContent.trim() || "",

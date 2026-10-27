@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knos. Proof</title>
+<meta name="description" content="Knos's published numbers, each against its baseline and linked to its source, the results of every outside test and the devnet transactions of each program.">
+<meta name="author" content="drexthealpha">
+<link rel="canonical" href="https://drexthealpha.github.io/Knos/proof/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#07080c">
+<meta name="theme-color" content="#f4f4f0" media="(prefers-color-scheme: light)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Knos">
+<meta property="og:title" content="Knos. Proof">
+<meta property="og:url" content="https://drexthealpha.github.io/Knos/proof/">
+<meta property="og:image" content="https://drexthealpha.github.io/Knos/brand/card.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../brand/tokens.css">
+<link rel="stylesheet" href="../app.css">
+<!-- THE PROOF PAGE: Knos's published numbers as one bar chart, each against its baseline and each bar linked to the
+     file that holds it (docs/reference/TAMPER.md, docs/idt/summary.json, docs/reference/qloo_ablation.json); the results
+     board of How we test Knos, copied in unchanged by scripts/sync_brand.py; and each Knos program's devnet transactions,
+     read live from devnet (getSignaturesForAddress, at most 1,000 each) for the ids in program_ids.json. -->
+<style>
+:where(a[href]){padding-block:max(0px,calc((24px - 1em) / 2))}:where(summary){min-height:24px}
+.proof-page h2{margin-top:40px}
+.p-chart{display:grid;gap:20px;margin:16px 0 0;max-width:720px}
+.p-row h3{font-size:var(--s1);margin:0 0 6px}
+.p-bar{display:grid;grid-template-columns:minmax(0,7.5em) minmax(0,1fr);gap:8px;align-items:center;margin:0 0 6px;color:inherit;text-decoration:none}
+.p-bar:hover .p-fill{filter:brightness(1.1)}
+.p-track{position:relative;height:28px;border-radius:6px;background:var(--soft);overflow:hidden}
+.p-fill{position:absolute;inset:0 auto 0 0;background:var(--accent)}
+.p-base .p-fill{background:var(--muted)}
+.p-val{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-weight:600;font-size:var(--s0);color:var(--fg);mix-blend-mode:normal;white-space:nowrap}
+.p-fill+.p-val{text-shadow:0 0 3px var(--paper)}
+.p-who{font-size:var(--s0);overflow-wrap:anywhere}
+.p-src{font-size:var(--s0)}
+.t .k-table{overflow-x:auto}
+@media (max-width: 479.98px) {
+  .t .k-table { overflow: visible; }
+  .t .k-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .t .k-table table, .t .k-table tbody, .t .k-table tr, .t .k-table td { display: block; min-width: 0; width: auto; }
+  .t .k-table tr { border: 1px solid var(--line); border-radius: var(--radius, 8px); padding: 8px 12px; margin: 0 0 8px; }
+  .t .k-table td { border: 0; padding: 2px 0; overflow-wrap: anywhere; }
+  .t .k-table td[data-h]::before { content: attr(data-h) ": "; color: var(--muted); }
+}
+</style>
+<link rel="preconnect" href="https://drexthealpha.github.io" crossorigin>
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="icon" href="../favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="../brand/apple-touch-icon.png">
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="../" aria-label="Knos home"><span class="wordmark" aria-hidden="true"></span><span class="name">Knos</span></a>
+</header>
+<main>
+  <section class="view proof-page" id="proof-page">
+    <h1>Proof</h1>
+    <div class="p-chart" id="p-chart" role="list">
+      <div class="p-row" role="listitem" data-row="tamper">
+        <h3>Cheating pull requests caught</h3>
+        <a class="p-bar" href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/TAMPER.md" data-n="63" data-of="63"><span class="p-who">Knos</span><span class="p-track"><span class="p-fill" style="width:100%"></span><span class="p-val">63 of 63</span></span></a>
+        <a class="p-bar p-base" href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/TAMPER.md" data-n="7" data-of="63"><span class="p-who">Plain CI</span><span class="p-track"><span class="p-fill" style="width:11.1%"></span><span class="p-val">7 of 63</span></span></a>
+      </div>
+      <div class="p-row" role="listitem" data-row="ready">
+        <h3>Ready briefs passed</h3>
+        <a class="p-bar" href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/summary.json" data-n="70" data-of="100"><span class="p-who">Ready brief</span><span class="p-track"><span class="p-fill" style="width:70%"></span><span class="p-val">70%</span></span></a>
+        <a class="p-bar p-base" href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/summary.json" data-n="5" data-of="100"><span class="p-who">Vague brief</span><span class="p-track"><span class="p-fill" style="width:5%"></span><span class="p-val">5%</span></span></a>
+      </div>
+      <div class="p-row" role="listitem" data-row="ablation">
+        <h3>Qloo signals that change the verdict</h3>
+        <a class="p-bar" href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/qloo_ablation.json" data-n="18" data-of="59"><span class="p-who">One signal removed</span><span class="p-track"><span class="p-fill" style="width:30.5%"></span><span class="p-val">18 of 59</span></span></a>
+        <a class="p-bar p-base" href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/qloo_ablation.json" data-n="6" data-of="6"><span class="p-who">Every answer removed</span><span class="p-track"><span class="p-fill" style="width:100%"></span><span class="p-val">6 of 6 cards</span></span></a>
+      </div>
+    </div>
+    <p class="fine">Each bar opens the file its number comes from.</p>
+<!-- k-board -->
+    <section class="t" id="board">
+      <h2>Every outside test</h2>
+      <div class="k-table"><table>
+        <thead><tr><th scope="col">Test</th><th scope="col">Question</th><th scope="col">Arms</th><th scope="col">Numbers</th><th scope="col">95% interval</th><th scope="col">Result</th></tr></thead>
+        <tbody><tr><td><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/where_truth.json" rel="noopener">Where demand is</a></td><td>Where is a kind of business most common per person?</td><td>Knos with Qloo, Claude alone</td><td>0.193 against 0.407 (n 30)</td><td>[-0.360, -0.060]</td><td data-label="loss">loss</td></tr><tr><td><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/taste_truth.json" rel="noopener">Films fans also love</a></td><td>Which films do a film's fans also love?</td><td>Knos with Qloo, Claude alone</td><td>0.320 against 0.307 (n 30)</td><td>[-0.060, +0.087]</td><td data-label="tie">tie</td></tr><tr><td><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/kickstarter_truth.json" rel="noopener">Kickstarter, 250 held out</a></td><td>Did a past project reach its goal?</td><td>open signals with Qloo, always success</td><td>78.0% tuned (59.6% as one verdict) against 78.8% (n 250)</td><td>[-0.063, +0.039]*</td><td data-label="tie">tie</td></tr><tr><td><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/qloo_lift_ranked.json" rel="noopener">Kickstarter, 300 ranked</a></td><td>Does the score rank projects by money raised?</td><td>open signals with Qloo, open signals alone</td><td>Spearman 0.108 against 0.113 (n 300)</td><td>[-0.037, +0.025]</td><td data-label="tie">tie</td></tr><tr><td><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/outside_truth.json" rel="noopener">200 research awards</a></td><td>Did a past award succeed?</td><td>open signals, a coin</td><td>47.5% against 50% (n 200)</td><td>[-0.093, +0.044]*</td><td data-label="tie">tie</td></tr>
+<tr><td><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/qloo_ablation.json" rel="noopener">Each Qloo signal removed</a></td><td>Does one Qloo answer change the launch city, the target or the verdict?</td><td>each recorded card with every Qloo answer, then with one call family removed</td><td>18 of 59 removals change one; all removed, 6 of 6 (6 cards)</td><td>[+0.203, +0.431]&dagger;</td><td data-label="win">win</td></tr>
+<tr><td><a href="https://knos.onrender.com/status/qloo" rel="noopener">Launch cities, pre-registered</a></td><td>Do Qloo's lifts find the metros where a kind of business is densest?</td><td>top 15 metros by people reranked by lift, people alone, Claude alone, shuffled lift</td><td>not run: Qloo has refused every call since 25 Oct (HTTP 429)</td><td>none</td><td data-label="none">not run</td></tr></tbody>
+      </table></div>
+      <p class="fine">An interval above 0 is a win and one below 0 a loss. One that holds 0 is a tie. * Wilson interval of the accuracy, less the base rate, from the published counts. &dagger; Wilson interval of the share of removals that change one. A test that has not run has no result.</p>
+    </section>
+<!-- /k-board -->
+    <section class="t" id="devnet">
+      <h2>Devnet transactions by program</h2>
+      <div class="k-table"><table>
+        <thead><tr><th scope="col">Program</th><th scope="col">Transactions</th><th scope="col">Newest</th></tr></thead>
+        <tbody id="p-tx"><tr><td colspan="3">Reading devnet…</td></tr></tbody>
+      </table></div>
+      <p class="fine">Read now from devnet, at most 1,000 per program.</p>
+    </section>
+  </section>
+</main>
+<footer class="foot">
+  <span>Devnet is test mode: the money is test USDC.</span>
+  <span><a href="../">Knos home</a> · <a href="../how-we-test.html">How we test Knos</a> · <a href="https://github.com/drexthealpha/Knos">Source (MIT)</a></span>
+</footer>
+<script>
+// each Knos program's devnet transactions, read live (the ids from the program_ids.json the build ships)
+(() => {
+  const out = document.getElementById("p-tx");
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const rpc = (body) => fetch("https://api.devnet.solana.com", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((r) => r.json());
+  fetch("../program_ids.json").then((r) => r.json()).then(async (ids) => {
+    const progs = Object.entries(ids).filter(([k, v]) => k.startsWith("knos_") && typeof v === "string");
+    const rows = [];
+    for (const [name, id] of progs) {
+      const j = await rpc({ jsonrpc: "2.0", id: 1, method: "getSignaturesForAddress", params: [id, { limit: 1000 }] }).catch(() => ({}));
+      const sigs = Array.isArray(j.result) ? j.result : null;
+      const n = sigs ? sigs.length : null, top = sigs && sigs[0];
+      rows.push(`<tr data-program="${esc(name)}" data-count="${n ?? ""}"><td><a href="https://explorer.solana.com/address/${esc(id)}?cluster=devnet" rel="noopener">${esc(name)}</a></td>` +
+        `<td>${n == null ? "devnet did not answer" : n >= 1000 ? "1,000 or more" : esc(n.toLocaleString("en-US"))}</td>` +
+        `<td>${top ? `<a href="https://explorer.solana.com/tx/${esc(top.signature)}?cluster=devnet" rel="noopener" data-tx>${esc(top.blockTime ? new Date(top.blockTime * 1000).toISOString().slice(0, 10) : "the transaction")}</a>` : "none"}</td></tr>`);
+      out.innerHTML = rows.join("");
+    }
+  }).catch(() => { out.innerHTML = `<tr><td colspan="3">The program list did not load.</td></tr>`; });
+  // each cell names its column, for the stacked cards on a phone
+  document.querySelectorAll(".t .k-table table").forEach((t) => { const h = [...t.querySelectorAll("thead th")].map((x) => x.textContent.trim());
+    new MutationObserver(() => t.querySelectorAll("tbody tr").forEach((r) => [...r.children].forEach((td, i) => { if (h[i] && !td.hasAttribute("colspan")) td.setAttribute("data-h", h[i]); }))).observe(t, { childList: true, subtree: true });
+    t.querySelectorAll("tbody tr").forEach((r) => [...r.children].forEach((td, i) => { if (h[i] && !td.hasAttribute("colspan")) td.setAttribute("data-h", h[i]); })); });
+})();
+</script>
+</body>
+</html>

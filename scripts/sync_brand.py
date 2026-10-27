@@ -29,7 +29,11 @@ COPIES |= {WEB / "icon.svg": STATIC / "icon.svg", WEB / "favicon.ico": STATIC / 
            **{WEB / "brand" / n: STATIC / "brand" / n for n in ("apple-touch-icon.png", "icon-192.png", "icon-512.png")}}
 ICON_LINK = re.compile(r'[ \t]*<link rel="(?:icon|shortcut icon|apple-touch-icon|preconnect)"[^>]*>\n?')
 # pages outside PAGES that still carry the icons: (page, the path from it to the site's root)
-ICON_ONLY = {WEB / "check" / "index.html": "../"}
+ICON_ONLY = {WEB / "check" / "index.html": "../", WEB / "proof" / "index.html": "../"}
+# the proof page carries How we test Knos's results board as it is, between these marks
+BOARD_PAGE, BOARD_FROM = WEB / "proof" / "index.html", WEB / "how-we-test.html"
+BOARD = re.compile(r"<!-- k-board -->.*?<!-- /k-board -->", re.S)
+BOARD_SECTION = re.compile(r'<section class="t" id="board">.*?</section>', re.S)
 # the front door's fonts are asked for in CORS mode (crossorigin), so they cannot reuse the page's own connection: this
 # opens that second connection while the page parses. Nothing is downloaded by it, so it does not compete with the
 # first paint the way preloading the fonts did (page() below).
@@ -99,7 +103,7 @@ def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) 
             s = re.sub(r"<body([^>]*)>", lambda m: f"<body{m.group(1)}>\n{block}", s, count=1)
     if path in HEROES:
         api, app_pages, js = HEROES[path]
-        t = (WEB / "brand" / "hero.html").read_text(encoding="utf-8").strip().replace("{API}", api).replace("{APP}", app_pages)
+        t = (WEB / "brand" / "hero.html").read_text(encoding="utf-8").strip().replace("{API}", api).replace("{APP}", app_pages).replace("{SP}", site or "./")
         t = t.replace("<!-- k-vectors -->", vectors(api, js.replace("hero.js", "vectors.js")))
         # hero.js runs in place, right after the proof slot: the past result is drawn before anything below it is laid
         # out (run deferred, the card arrived after the first paint and moved the page under the reader: CLS)
@@ -134,6 +138,14 @@ def page(path: Path, home: str, site: str, app: str, tokens: str, script: bool) 
     return s
 
 
+def board() -> str:
+    """The proof page with How we test Knos's results board copied in, unchanged."""
+    s = BOARD_PAGE.read_text(encoding="utf-8")
+    sec = BOARD_SECTION.search(BOARD_FROM.read_text(encoding="utf-8"))
+    assert sec, "how-we-test.html has no results board"
+    return BOARD.sub(lambda _: f"<!-- k-board -->\n    {sec.group(0)}\n<!-- /k-board -->", s, count=1)
+
+
 def main(argv: list[str]) -> int:
     check, off = "--check" in argv, []
     for a, b in COPIES.items():
@@ -143,7 +155,8 @@ def main(argv: list[str]) -> int:
                 b.parent.mkdir(parents=True, exist_ok=True)
                 b.write_bytes(a.read_bytes())
     todo = [(p, lambda p=p, a=a: page(p, *a)) for p, a in PAGES.items()] + \
-        [(p, lambda p=p, r=r: icons(p.read_text(encoding="utf-8"), r, preconnect=True)) for p, r in ICON_ONLY.items()]
+        [(p, lambda p=p, r=r: icons(p.read_text(encoding="utf-8"), r, preconnect=True)) for p, r in ICON_ONLY.items()] + \
+        [(BOARD_PAGE, board)]
     for path, make in todo:
         new = make()
         if new != path.read_text(encoding="utf-8"):
