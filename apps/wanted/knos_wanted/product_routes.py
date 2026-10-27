@@ -113,7 +113,7 @@ def handle_get(h, state, u, qs) -> bool:
         if p == "/api/templates":
             return h._send(200, valley.templates()) or True
         if p == "/api/projects":
-            return h._send(200, valley.projects_json(min(100, max(1, int(q("take", "50") or 50))))) or True
+            return h._send(200, valley.summaries_json(min(100, max(1, int(q("take", "10") or 10))))) or True
         if p == "/api/project":
             return h._send(200, valley.public_project(valley.project(q("id")))) or True
         if p == "/api/project/prompt":
@@ -423,8 +423,9 @@ MCP_TOOLS = [
                     "regulatory milestones from OpenRegulatory's open templates (with attribution and licence).",
      "inputSchema": _obj({})},
     {"name": "knos_projects", "title": "Projects and their milestones",
-     "description": "Every project: milestones (tranches), their held orders, AMC commitments, attempts and where the work can be bought.",
-     "inputSchema": _obj({"id": _S})},
+     "description": "The newest projects (take, default 10) as summaries: each milestone's state and held units. With id: one project "
+                    "in full, with its milestones (tranches), held orders, AMC commitments, attempts and where the work can be bought.",
+     "inputSchema": _obj({"id": _S, "take": {"type": "integer", "minimum": 1, "maximum": 100}})},
     {"name": "knos_project_open", "title": "Open a project from a template", "description": "Opens a project; each milestone is its own "
      "tranche, released only on a result plus an independent check. " + _CONFIRM,
      "inputSchema": _obj({"template": _S, "title": _S, "regulatory": {"type": "array", "items": _S}, "session": _S}, ("template", "title"))},
@@ -505,7 +506,9 @@ def _mcp_call(name: str, args: dict, signed) -> dict:
     if name == "knos_templates":
         return valley.templates()
     if name == "knos_projects":
-        return valley.public_project(valley.project(str(args["id"]))) if args.get("id") else {"projects": valley.projects(30)}
+        if args.get("id"):
+            return valley.public_project(valley.project(str(args["id"])))
+        return json.loads(valley.summaries_json(min(100, max(1, int(args.get("take") or 10)))))
     if name == "knos_openapi":
         from . import openapi
         return openapi.document()

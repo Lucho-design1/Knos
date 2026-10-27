@@ -65,6 +65,7 @@ def _save(kind: str, key: str, obj: dict, chain: bool = True) -> dict:
             obj["grounding_snapshot"] = g
     if kind in ("projects", "orders"):
         _list_cache.clear()                        # the public list shows this change at once
+        _sum_cache.clear()
         _json_cache.clear()
     f = _dir(kind) / f"{key}.json"
     tmp = f.with_suffix(".tmp")
@@ -575,6 +576,30 @@ def projects(n: int = 50) -> list[dict]:
 
 
 _json_cache: dict[int, tuple[float, bytes]] = {}
+_sum_cache: dict[int, tuple[float, bytes]] = {}
+
+
+def summary(p: dict) -> dict:
+    """A project as the list draws it: its title, template and each milestone's state and held units. No devnet read
+    (the credit mint, the readiness and the grounding are on GET /api/project?id=)."""
+    ms = []
+    for m in p["milestones"]:
+        raw = [o for o in (_safe_order(x) for x in m["fundings"]) if o]
+        ms.append({"key": m["key"], "name": m.get("name"), "status": m.get("status"),
+                   "locked_units": sum(o["units"] * o["unit_price"] for o in raw if o["status"] == "locked")})
+    return {"id": p["id"], "title": p.get("title"), "template_name": p.get("template_name"), "regulatory": p.get("regulatory") or [],
+            "sandbox": p.get("sandbox"), "milestones": ms}
+
+
+def summaries_json(take: int = 10) -> bytes:
+    """GET /api/projects: the newest `take` projects not archived, as summaries, encoded once every 30 s."""
+    hit = _sum_cache.get(take)
+    if hit and time.time() - hit[0] < 30:
+        return hit[1]
+    rows = [summary(p) for p in _all("projects") if not p.get("unlisted")][:take]
+    body = json.dumps({"projects": rows, "take": take, "shape": "summary", "one": "/api/project?id=<id>"}, default=str).encode()
+    _sum_cache[take] = (time.time(), body)
+    return body
 
 
 def projects_json(n: int = 50) -> bytes:

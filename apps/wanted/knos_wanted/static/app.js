@@ -36,7 +36,8 @@ async function api(path, body) {
   if (session && session.token) headers.Authorization = "Bearer " + session.token;
   const r = await fetch(path, body === undefined ? { headers } : { method: "POST", headers, body: JSON.stringify(body) });
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.error || data.message || "HTTP " + r.status);
+  // a failure in one plain sentence: the server's own words, else what happened (never a bare status code)
+  if (!r.ok) throw new Error(data.error || data.message || (r.status >= 500 ? "The server did not answer this time. Try again in a moment." : "The server refused this request."));
   return data;
 }
 let slowTimer = null;
@@ -70,10 +71,10 @@ function show() {
     a.classList.toggle("on", a.dataset.view === view);
     a.setAttribute("aria-current", a.dataset.view === view ? "page" : "false");
   });
-  if (m) loadProduct(m[1]); else if (view === "buy") loadCrossings($("productCard"), true);
+  if (m) loadProduct(m[1]); else if (view === "buy") loadCrossings($("buyList"), true).then(() => released($("buyItems")));
   if (view === "home") loadHome();
-  if (view === "make") loadMaker();
-  if (view === "fund") loadFund(one && one[2]);
+  if (view === "make") loadMaker().then(() => released($("makeList")));
+  if (view === "fund") loadFund(one && one[2]).then(() => released($("fundList")));
   if (view === "contribute") loadTasks(one && one[2]);
   if (view === "agents") loadAgents();
   if (window.KNOS_VIEW) window.KNOS_VIEW(view);       // projects + teams (valley.js)
@@ -160,6 +161,7 @@ async function cross() {
     ...(window.KnosDemand ? KnosDemand.values($("demandOpts")) : {}) };     // the Qloo families' options (static/demand_opts.js)
   const j = await api("/api/cross", body);
   $("timeline").hidden = false; $("steps").innerHTML = ""; $("outcome").innerHTML = ""; $("timeline").scrollIntoView({ behavior: "smooth" });
+  $("stepsBox").open = true;                         // the log is open while the crossing runs, folded once the verdict is in
   let since = 0;
   if (window.Knos && Knos.streamCrossing) {          // static/ux_more.js: the steps pushed as they happen (Server-Sent Events)
     const done = await new Promise((res) => {
@@ -193,6 +195,7 @@ function linkSteps(r) {
 }
 function outcome(r) {
   linkSteps(r);
+  $("stepsBox").open = false;
   const d = r.decision || {}, p = d.plan;
   const word = d.verdict === "OPEN" ? t("open_v") : d.verdict === "REFUSE" ? t("refuse") : t("cannot");
   const src = window.KnosDemand ? KnosDemand.src("", r.hash) : "";
@@ -213,10 +216,25 @@ function outcome(r) {
 async function loadCrossings(el, withTitle) {
   try {
     const b = await board(true);
-    el.innerHTML = (withTitle ? `<h1>${t("buy_t")}</h1>` : "") + (b.products.length ? `<ul class="plist hp">${b.products.map(card).join("")}</ul>` :
-      `<p class="empty">${t("empty")}</p>`) + `<p class="small"><a href="#research">${t("home_own")}</a></p>`;
+    el.innerHTML = (withTitle ? `<h1>${t("buy_t")}</h1>` : "") + `<ul class="plist hp" id="buyItems">${b.products.map(card).join("") || `<li class="empty">${t("empty")}</li>`}</ul>` +
+      `<p class="small"><a href="#research">${t("home_own")}</a></p>`;
     $("buyBox").hidden = true; $("tracker").hidden = true;
   } catch (e) { err(e); }
+}
+// the crossing Knos released on devnet (its facts, published with the front door): first in Pre-order, Back a milestone
+// and Milestones and payouts, each with its whole record one press away
+const CROSSING = "https://drexthealpha.github.io/Knos/crossing/7b4ed16b8c2903dc/";
+let crossed = null;
+async function released(list) {
+  if (!list) return;
+  crossed = crossed || fetch(CROSSING + "facts.json").then((r) => r.json()).catch(() => null);
+  const f = await crossed;
+  if (!f || list.querySelector("[data-crossing]")) return;
+  const d = f.demand || {}, n = (f.orders || []).filter((o) => o.status === "released").length;
+  list.querySelector(":scope > .empty")?.remove();
+  list.insertAdjacentHTML("afterbegin", `<li class="card" data-crossing="${esc(f.project)}"><b>${esc(d.idea || f.title)}</b>
+    <p class="small">${esc(n)} pre-orders from ${esc(d.city || "")} · ${f.status === "released" ? "Released by the referee's verdict" : esc(f.status)}</p>
+    <p class="small"><a href="${CROSSING}">The whole crossing</a></p></li>`);
 }
 async function loadProduct(h) {
   try {

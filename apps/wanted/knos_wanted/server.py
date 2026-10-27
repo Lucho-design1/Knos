@@ -225,9 +225,31 @@ _payout_cache: dict = {"at": 0.0, "v": None}
 PAID_BLOCK = re.compile(r"<!-- paid:start -->.*?<!-- paid:end -->", re.S)
 MOVED_VIEWS = ("signin", "buy", "teams")
 _VOID = {"input", "img", "br", "hr", "meta", "link"}
-TO_PAID = ('<script>(() => { const go = () => { const v = location.hash.slice(1).split("=")[0]; '
-           f'if ({list(MOVED_VIEWS)!r}.includes(v)) location.replace("/paid" + location.hash); }}; go(); '
+# the list of what can be pre-ordered stays on the home (#buy); one product's pre-order (#buy=<hash>) is on /paid
+TO_PAID = ('<script>(() => { const go = () => { const h = location.hash.slice(1), v = h.split("=")[0]; '
+           f'if ({list(MOVED_VIEWS)!r}.includes(v) && !(v === "buy" && !h.includes("="))) location.replace("/paid" + location.hash); }}; go(); '
            'addEventListener("hashchange", go); })();</script>')
+
+
+def named(state, q: str) -> list[dict]:
+    """The crossings this server ran and the checks it keeps (the recorded ones included) whose idea holds q, newest first."""
+    from . import recorded
+    want = " ".join(q.lower().split())
+    seen, rows = set(), []
+    for c in agent.crossings(state):
+        idea = str(c.get("idea") or "")
+        if want and want in idea.lower() and idea.lower() not in seen:
+            seen.add(idea.lower())
+            rows.append({"tier": "crossing", "name": idea, "key": c.get("report"), "snippet": f"verdict {c.get('verdict') or 'none yet'}, {c.get('status')}"})
+    with recorded._lock:
+        kept = sorted([*recorded._last.values(), *recorded._answered.values()], key=lambda r: str(r.get("made") or ""), reverse=True)
+    for r in kept:
+        idea = str(r.get("idea") or "")
+        if want and want in idea.lower() and idea.lower() not in seen:
+            seen.add(idea.lower())
+            rows.append({"tier": "check", "name": idea, "key": r.get("hash"),
+                         "snippet": f"verdict {(r.get('decision') or {}).get('verdict')}, Qloo answered {str(r.get('made') or '')[:10]}"})
+    return rows[:20]
 
 
 def home_page(page: str) -> str:
@@ -553,9 +575,12 @@ def make_handler(state: State):
                 try:
                     from knos.record import search as rsearch
                     got = rsearch.search(q, root=company.root())
-                    return self._send(200, {"query": q, "said": got.get("said"), "verdict": got.get("verdict"),
-                                            "rows": [{k: r.get(k) for k in ("tier", "key", "category", "name", "doc_key", "snippet", "score")}
-                                                     for r in got.get("rows", [])[:20]]})
+                    rows = [{k: r.get(k) for k in ("tier", "key", "category", "name", "doc_key", "snippet", "score")} for r in got.get("rows", [])[:20]]
+                    said = got.get("said")
+                    if not rows:                     # nothing in the record: the crossings and checks that name it, by their words
+                        rows = named(state, q)
+                        said = f"{len(rows)} crossing{'s' if len(rows) != 1 else ''} and checks name \"{q}\"." if rows else f"Nothing in the record or the crossings names \"{q}\"."
+                    return self._send(200, {"query": q, "said": said, "verdict": got.get("verdict"), "rows": rows})
                 except Exception as why:  # noqa: BLE001
                     return self._send(503, {"error": f"the record cannot be searched here ({type(why).__name__})"})
             if u.path == "/api/x402/report":

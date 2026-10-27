@@ -572,14 +572,15 @@ ${src(h, price.src)}</section>
     </form>
     <section id="timeline" class="card" hidden aria-live="polite">
       <h2 data-i18n="timeline_t">The crossing, live</h2>
-      <ol id="steps" class="steps"></ol>
       <div id="outcome"></div>
+      <details id="stepsBox" class="k-more"><summary>Details</summary><ol id="steps" class="steps"></ol></details>
     </section>
   </section>
 
-<!-- paid:start -->
-  <!-- BUYER -->
+  <!-- BUYER: the list stays on the home; one product's pre-order is on /paid -->
   <section id="v-buy" class="view" hidden>
+    <div id="buyList"></div>
+<!-- paid:start -->
     <div id="productCard" class="card"></div>
     <section id="buyBox" class="card" hidden aria-labelledby="buyH">
       <div class="row spread"><h2 id="buyH" data-i18n="buy_t">Pre-order</h2><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
@@ -598,9 +599,9 @@ ${src(h, price.src)}</section>
         <p class="small"><a id="blinkLink" target="_blank" rel="noopener">Blink</a></p></details>
     </section>
     <section id="tracker" class="card" hidden><h2 data-i18n="goal_l">Funding goal</h2><ul id="trackList" class="list"></ul></section>
+<!-- paid:end -->
   </section>
 
-<!-- paid:end -->
   <!-- FUNDER -->
   <section id="v-fund" class="view" hidden>
     <div class="row spread"><h1 data-i18n="fund_t">Back a milestone</h1><span class="testmoney" data-i18n="test_money">Devnet test money — no real funds</span></div>
