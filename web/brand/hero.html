@@ -1,15 +1,20 @@
 <div class="k-hero" id="k-hero" data-api="{API}" data-app="{APP}">
+  <p class="k-for" id="k-for">For anyone about to build or fund a product: see who wants it and where, then get paid only on proof.</p>
   <h1 id="k-mission" class="k-mission">See who wants your product, and where, before you build it</h1>
   <form class="k-ask" id="k-ask" autocomplete="off" role="search" aria-label="Check demand">
     <input id="k-q" name="q" type="text" aria-label="What are you about to build? An idea, or a paper's DOI" maxlength="500" placeholder="What are you about to build?" enterkeyhint="go" spellcheck="false">
-    <button id="k-go" type="submit">Check demand</button>
+    <button id="k-go" type="submit">Check demand</button> <span class="k-fine k-wait" data-wait>about 2 s</span>
   </form>
   <p class="k-fine k-limit" data-qloo-limit hidden></p>
+  <ul class="k-proofs" data-proof-lines data-not-prose>
+    <li><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/TAMPER.md" data-proof-line="tamper">Cheating pull requests caught: Knos 63 of 63, plain CI 7 of 63</a></li>
+    <li><a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/summary.json" data-proof-line="ready">Ready briefs passed 70% vs 5% for vague ones</a></li>
+  </ul>
   <div class="k-try" role="group" aria-label="Examples: housing, food, energy, health, across technologies">
+    <button type="button" class="k-chip" data-tech="energy" data-need="energy" data-q="a solar powered music festival">Solar festival</button>
     <button type="button" class="k-chip" data-tech="ai" data-need="food" data-q="an AI recipe planner for families">AI recipes</button>
     <button type="button" class="k-chip" data-tech="web3" data-q="a crypto podcast for beginners">Crypto podcast</button>
     <button type="button" class="k-chip" data-tech="quantum" data-q="a quantum physics book for kids">Quantum book</button>
-    <button type="button" class="k-chip" data-tech="energy" data-need="energy" data-q="a solar powered music festival">Solar festival</button>
     <button type="button" class="k-chip" data-tech="biotech" data-need="food" data-q="a probiotic kombucha brand">Kombucha</button>
     <button type="button" class="k-chip" data-tech="materials" data-q="a recycled ocean plastic swimwear brand">Ocean swimwear</button>
     <span class="k-fine" data-more-chips data-needs="housing health">2 more examples return when Qloo answers again</span></div>

@@ -116,8 +116,8 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
   </nav>
   <div class="tools">
     <button id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <a class="proof" href="./how-we-test.html" data-proof>Proof</a>
     <button id="theme" type="button" aria-label="Switch light or dark">◐</button>
-    <a id="whoBtn" class="signin" href="wanted.html#signin">Sign in</a>
   </div>
 </header>
 <!-- /k-bar -->
@@ -322,17 +322,22 @@ html.js #view-network:not([data-stats]) > .card { visibility: hidden; animation:
   <section id="view-home" class="view home" aria-labelledby="k-mission">
 <!-- k-hero -->
 <div class="k-hero" id="k-hero" data-api="@app" data-app="wanted.html">
+  <p class="k-for" id="k-for">For anyone about to build or fund a product: see who wants it and where, then get paid only on proof.</p>
   <h1 id="k-mission" class="k-mission">See who wants your product, and where, before you build it</h1>
   <form class="k-ask" id="k-ask" autocomplete="off" role="search" aria-label="Check demand">
     <input id="k-q" name="q" type="text" aria-label="What are you about to build? An idea, or a paper's DOI" maxlength="500" placeholder="What are you about to build?" enterkeyhint="go" spellcheck="false">
-    <button id="k-go" type="submit">Check demand</button>
+    <button id="k-go" type="submit">Check demand</button> <span class="k-fine k-wait" data-wait>about 2 s</span>
   </form>
   <p class="k-fine k-limit" data-qloo-limit hidden></p>
+  <ul class="k-proofs" data-proof-lines data-not-prose>
+    <li><a href="https://github.com/drexthealpha/Knos/blob/main/docs/reference/TAMPER.md" data-proof-line="tamper">Cheating pull requests caught: Knos 63 of 63, plain CI 7 of 63</a></li>
+    <li><a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/summary.json" data-proof-line="ready">Ready briefs passed 70% vs 5% for vague ones</a></li>
+  </ul>
   <div class="k-try" role="group" aria-label="Examples: housing, food, energy, health, across technologies">
+    <button type="button" class="k-chip" data-tech="energy" data-need="energy" data-q="a solar powered music festival">Solar festival</button>
     <button type="button" class="k-chip" data-tech="ai" data-need="food" data-q="an AI recipe planner for families">AI recipes</button>
     <button type="button" class="k-chip" data-tech="web3" data-q="a crypto podcast for beginners">Crypto podcast</button>
     <button type="button" class="k-chip" data-tech="quantum" data-q="a quantum physics book for kids">Quantum book</button>
-    <button type="button" class="k-chip" data-tech="energy" data-need="energy" data-q="a solar powered music festival">Solar festival</button>
     <button type="button" class="k-chip" data-tech="biotech" data-need="food" data-q="a probiotic kombucha brand">Kombucha</button>
     <button type="button" class="k-chip" data-tech="materials" data-q="a recycled ocean plastic swimwear brand">Ocean swimwear</button>
     <span class="k-fine" data-more-chips data-needs="housing health">2 more examples return when Qloo answers again</span></div>
@@ -602,11 +607,19 @@ ${src(h, price.src)}</section>
   };
   const draw = (r) => {
     if (!r || slot.dataset.ms || slot.querySelector(".k-status")) return;
-    const when = String(r.checked_at || "").replace("T", " ").replace(/:\d\dZ$/, " UTC");
-    // the last real check, folded to one line: the proof is on the first screen, the steps follow right under it
-    const d = r.decision || {}, w = (WORD[d.verdict] || [d.verdict || ""])[0];
-    slot.innerHTML = `<details class="k-more k-past"><summary>Real check, ${esc(when)}: ${esc(r.idea || "")}, ${esc(w)}</summary>${card(r, `Real check, ${when}`)}</details>`;
-    slot.last = r;
+    // a finished real result, whole, before any press: the recorded sample whose verdict is Open (vectors.open_sample),
+    // labelled with the day Qloo answered it; else the last real check, folded to one line
+    if (r.sample) {
+      const s = r.sample, day = String(s.made || "").slice(0, 10);
+      slot.innerHTML = card(s, `Real Qloo answer, ${day}`);
+      slot.last = s;
+    } else {
+      const p = r.proof || r, when = String(p.checked_at || "").replace("T", " ").replace(/:\d\dZ$/, " UTC");
+      if (!p.decision) return;
+      const w = (WORD[p.decision.verdict] || [p.decision.verdict || ""])[0];
+      slot.innerHTML = `<details class="k-more k-past"><summary>Real check, ${esc(when)}: ${esc(p.idea || "")}, ${esc(w)}</summary>${card(p, `Real check, ${when}`)}</details>`;
+      slot.last = p;
+    }
     slot.dataset.past = "1";
     try { performance.mark("knos-proof-shown"); } catch { /* old browsers */ }   // when the past result was drawn
   };
@@ -696,8 +709,8 @@ ${src(h, price.src)}</section>
   const shown = (r) => { try { draw(r); } catch (e) { console.warn("knos: the past result was not drawn", e); } };
   let carried = null;
   try { carried = JSON.parse(document.getElementById("k-proof")?.textContent || "null"); } catch { carried = null; }
-  if (carried) shown(carried);                                 // in the page: at the first paint
-  else seen(root, () => get("/api/proof").then((p) => shown(p && p.proof)).catch(() => {}));
+  if (carried) shown({ proof: carried });                      // in the page: at the first paint
+  if (!asked) get("/api/proof").then((p) => p && shown(p)).catch(() => {});   // the Open sample, asked at once (no stored answer in the page)
 })();
 </script>
 </div>
@@ -730,9 +743,8 @@ ${src(h, price.src)}</section>
       <!-- /home:products -->
     </ol>
     <p class="fine" id="home-when" data-not-prose>Passkey sign-in, no account · devnet, test money, no customers yet</p>
-    <p class="home-mission" id="home-mission">Science to products, past the valley of death, paid on Solana.</p>
     <!-- home:idt -->
-    <section id="home-idt" aria-label="IDT benchmark" data-ratio="2.08"><p class="fine" id="idt-line">Clear briefs: <strong class="k-num" id="idt-ratio">2.08x</strong> fewer output tokens, measured on 20 tasks.</p><details class="k-more" id="idt-per-brief" data-not-prose><summary>Each brief</summary><p class="fine">One model (sonnet, medium effort) for both. Vague: 12,365 tokens, 5% passed. Ready: 5,942 tokens, 70% passed.</p><div class="k-table"><table><thead><tr><th scope="col">Task</th><th scope="col">Vague</th><th scope="col">Ready</th><th scope="col">Saved</th><th scope="col">Passed</th></tr></thead><tbody><tr><td>c01</td><td class="k-num">3,380</td><td class="k-num">67</td><td class="k-num">+3,313</td><td>no / yes</td></tr><tr><td>c02</td><td class="k-num">151</td><td class="k-num">53</td><td class="k-num">+98</td><td>no / yes</td></tr><tr><td>c03</td><td class="k-num">1,718</td><td class="k-num">63</td><td class="k-num">+1,655</td><td>no / yes</td></tr><tr><td>c04</td><td class="k-num">204</td><td class="k-num">107</td><td class="k-num">+97</td><td>no / yes</td></tr><tr><td>c05</td><td class="k-num">669</td><td class="k-num">58</td><td class="k-num">+611</td><td>no / yes</td></tr><tr><td>c06</td><td class="k-num">80</td><td class="k-num">93</td><td class="k-num">-13</td><td>no / yes</td></tr><tr><td>c07</td><td class="k-num">169</td><td class="k-num">72</td><td class="k-num">+97</td><td>no / yes</td></tr><tr><td>c08</td><td class="k-num">581</td><td class="k-num">226</td><td class="k-num">+355</td><td>no / yes</td></tr><tr><td>c09</td><td class="k-num">274</td><td class="k-num">118</td><td class="k-num">+156</td><td>yes / yes</td></tr><tr><td>c10</td><td class="k-num">554</td><td class="k-num">111</td><td class="k-num">+443</td><td>no / no</td></tr><tr><td>r01</td><td class="k-num">208</td><td class="k-num">846</td><td class="k-num">-638</td><td>no / no</td></tr><tr><td>r02</td><td class="k-num">825</td><td class="k-num">701</td><td class="k-num">+124</td><td>no / yes</td></tr><tr><td>r03</td><td class="k-num">158</td><td class="k-num">240</td><td class="k-num">-82</td><td>no / yes</td></tr><tr><td>r04</td><td class="k-num">351</td><td class="k-num">277</td><td class="k-num">+74</td><td>no / yes</td></tr><tr><td>r05</td><td class="k-num">581</td><td class="k-num">240</td><td class="k-num">+341</td><td>no / yes</td></tr><tr><td>r06</td><td class="k-num">90</td><td class="k-num">444</td><td class="k-num">-354</td><td>no / no</td></tr><tr><td>r07</td><td class="k-num">1,507</td><td class="k-num">784</td><td class="k-num">+723</td><td>no / no</td></tr><tr><td>r08</td><td class="k-num">74</td><td class="k-num">520</td><td class="k-num">-446</td><td>no / no</td></tr><tr><td>r09</td><td class="k-num">259</td><td class="k-num">705</td><td class="k-num">-446</td><td>no / yes</td></tr><tr><td>r10</td><td class="k-num">532</td><td class="k-num">217</td><td class="k-num">+315</td><td>no / no</td></tr></tbody></table></div><p class="fine">Output tokens include thinking. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/runs.json" rel="noopener">Every run, raw</a>.</p></details><p class="fine" id="qloo-line" data-delta="-0.032">With Qloo's line: 3.2% fewer tokens, Ready 4 vs 4 of 10.</p><details class="k-more" id="qloo-per-brief" data-not-prose><summary>With and without Qloo</summary><p class="fine">The 10 research briefs, each run without and with its Grounding (Qloo) line (sonnet, medium effort): 5,074 vs 4,912 output tokens, $0.307 vs $0.3325 estimated. The IDT ratio above is Knos's own (clear briefs), not Qloo's.</p><div class="k-table"><table><thead><tr><th scope="col">Task</th><th scope="col">Without</th><th scope="col">With Qloo</th><th scope="col">Ready</th></tr></thead><tbody><tr><td>r01</td><td class="k-num">792</td><td class="k-num">845</td><td>no / yes</td></tr><tr><td>r02</td><td class="k-num">698</td><td class="k-num">927</td><td>yes / no</td></tr><tr><td>r03</td><td class="k-num">258</td><td class="k-num">231</td><td>no / yes</td></tr><tr><td>r04</td><td class="k-num">294</td><td class="k-num">278</td><td>yes / no</td></tr><tr><td>r05</td><td class="k-num">267</td><td class="k-num">219</td><td>no / no</td></tr><tr><td>r06</td><td class="k-num">514</td><td class="k-num">472</td><td>no / no</td></tr><tr><td>r07</td><td class="k-num">767</td><td class="k-num">577</td><td>no / yes</td></tr><tr><td>r08</td><td class="k-num">549</td><td class="k-num">548</td><td>no / no</td></tr><tr><td>r09</td><td class="k-num">712</td><td class="k-num">630</td><td>yes / yes</td></tr><tr><td>r10</td><td class="k-num">223</td><td class="k-num">185</td><td>yes / no</td></tr></tbody></table></div><p class="fine"><a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/qloo_runs.json" rel="noopener">Every run, raw</a>.</p></details></section>
+    <section id="home-idt" aria-label="IDT benchmark" data-ratio="2.08"><p class="fine" id="idt-line">Clear briefs: <strong class="k-num" id="idt-ratio">2.08x</strong> fewer output tokens, measured on 20 tasks.</p><details class="k-more" id="idt-per-brief" data-not-prose><summary>Each brief</summary><p class="fine">One model (sonnet, medium effort) for both. Vague: 12,365 tokens, 5% passed. Ready: 5,942 tokens, 70% passed.</p><div class="k-table"><table><thead><tr><th scope="col">Task</th><th scope="col">Vague</th><th scope="col">Ready</th><th scope="col">Saved</th><th scope="col">Passed</th></tr></thead><tbody><tr><td>c01</td><td class="k-num">3,380</td><td class="k-num">67</td><td class="k-num">+3,313</td><td>no / yes</td></tr><tr><td>c02</td><td class="k-num">151</td><td class="k-num">53</td><td class="k-num">+98</td><td>no / yes</td></tr><tr><td>c03</td><td class="k-num">1,718</td><td class="k-num">63</td><td class="k-num">+1,655</td><td>no / yes</td></tr><tr><td>c04</td><td class="k-num">204</td><td class="k-num">107</td><td class="k-num">+97</td><td>no / yes</td></tr><tr><td>c05</td><td class="k-num">669</td><td class="k-num">58</td><td class="k-num">+611</td><td>no / yes</td></tr><tr><td>c06</td><td class="k-num">80</td><td class="k-num">93</td><td class="k-num">-13</td><td>no / yes</td></tr><tr><td>c07</td><td class="k-num">169</td><td class="k-num">72</td><td class="k-num">+97</td><td>no / yes</td></tr><tr><td>c08</td><td class="k-num">581</td><td class="k-num">226</td><td class="k-num">+355</td><td>no / yes</td></tr><tr><td>c09</td><td class="k-num">274</td><td class="k-num">118</td><td class="k-num">+156</td><td>yes / yes</td></tr><tr><td>c10</td><td class="k-num">554</td><td class="k-num">111</td><td class="k-num">+443</td><td>no / no</td></tr><tr><td>r01</td><td class="k-num">208</td><td class="k-num">846</td><td class="k-num">-638</td><td>no / no</td></tr><tr><td>r02</td><td class="k-num">825</td><td class="k-num">701</td><td class="k-num">+124</td><td>no / yes</td></tr><tr><td>r03</td><td class="k-num">158</td><td class="k-num">240</td><td class="k-num">-82</td><td>no / yes</td></tr><tr><td>r04</td><td class="k-num">351</td><td class="k-num">277</td><td class="k-num">+74</td><td>no / yes</td></tr><tr><td>r05</td><td class="k-num">581</td><td class="k-num">240</td><td class="k-num">+341</td><td>no / yes</td></tr><tr><td>r06</td><td class="k-num">90</td><td class="k-num">444</td><td class="k-num">-354</td><td>no / no</td></tr><tr><td>r07</td><td class="k-num">1,507</td><td class="k-num">784</td><td class="k-num">+723</td><td>no / no</td></tr><tr><td>r08</td><td class="k-num">74</td><td class="k-num">520</td><td class="k-num">-446</td><td>no / no</td></tr><tr><td>r09</td><td class="k-num">259</td><td class="k-num">705</td><td class="k-num">-446</td><td>no / yes</td></tr><tr><td>r10</td><td class="k-num">532</td><td class="k-num">217</td><td class="k-num">+315</td><td>no / no</td></tr></tbody></table></div><p class="fine">Output tokens include thinking. <a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/runs.json" rel="noopener">Every run, raw</a>.</p></details><details class="k-more" id="qloo-per-brief" data-not-prose><summary>With and without Qloo</summary><p class="fine" id="qloo-line" data-delta="-0.032">With Qloo's line: 3.2% fewer tokens, Ready 4 vs 4 of 10.</p><p class="fine">The 10 research briefs, each run without and with its Grounding (Qloo) line (sonnet, medium effort): 5,074 vs 4,912 output tokens, $0.307 vs $0.3325 estimated. The IDT ratio above is Knos's own (clear briefs), not Qloo's.</p><div class="k-table"><table><thead><tr><th scope="col">Task</th><th scope="col">Without</th><th scope="col">With Qloo</th><th scope="col">Ready</th></tr></thead><tbody><tr><td>r01</td><td class="k-num">792</td><td class="k-num">845</td><td>no / yes</td></tr><tr><td>r02</td><td class="k-num">698</td><td class="k-num">927</td><td>yes / no</td></tr><tr><td>r03</td><td class="k-num">258</td><td class="k-num">231</td><td>no / yes</td></tr><tr><td>r04</td><td class="k-num">294</td><td class="k-num">278</td><td>yes / no</td></tr><tr><td>r05</td><td class="k-num">267</td><td class="k-num">219</td><td>no / no</td></tr><tr><td>r06</td><td class="k-num">514</td><td class="k-num">472</td><td>no / no</td></tr><tr><td>r07</td><td class="k-num">767</td><td class="k-num">577</td><td>no / yes</td></tr><tr><td>r08</td><td class="k-num">549</td><td class="k-num">548</td><td>no / no</td></tr><tr><td>r09</td><td class="k-num">712</td><td class="k-num">630</td><td>yes / yes</td></tr><tr><td>r10</td><td class="k-num">223</td><td class="k-num">185</td><td>yes / no</td></tr></tbody></table></div><p class="fine"><a href="https://github.com/drexthealpha/Knos/blob/main/docs/idt/qloo_runs.json" rel="noopener">Every run, raw</a>.</p></details></section>
     <!-- /home:idt -->
   </section>
 

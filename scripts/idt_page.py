@@ -52,9 +52,10 @@ def qloo_block() -> str:
         f"<td>{'yes' if r['without_passed'] else 'no'} / {'yes' if r['with_passed'] else 'no'}</td></tr>" for r in q["rows"])
     d = q["delta_share"]
     said = f"{abs(round(100 * d, 1))}% {'fewer' if d < 0 else 'more'}" if d else "no change in"
-    return (f"<p class=\"fine\" id=\"qloo-line\" data-delta=\"{d}\">With Qloo's line: {said} tokens, "
+    # the line sits inside its fold: the first screen's prose stays within its budget (tests/test_site_home.py)
+    return (f"<details class=\"k-more\" id=\"qloo-per-brief\" data-not-prose><summary>With and without Qloo</summary>"
+            f"<p class=\"fine\" id=\"qloo-line\" data-delta=\"{d}\">With Qloo's line: {said} tokens, "
             f"Ready {q['without_pass']} vs {q['with_pass']} of {q['tasks']}.</p>"
-            f"<details class=\"k-more\" id=\"qloo-per-brief\" data-not-prose><summary>With and without Qloo</summary>"
             f"<p class=\"fine\">The {q['tasks']} research briefs, each run without and with its Grounding (Qloo) line ({html.escape(str(q['model']))}, "
             f"{html.escape(str(q['effort']))} effort): {q['without_output_tokens']:,} vs {q['with_output_tokens']:,} output tokens, "
             f"${q['without_cost_usd']} vs ${q['with_cost_usd']} estimated. The IDT ratio above is Knos's own (clear briefs), not Qloo's.</p>"

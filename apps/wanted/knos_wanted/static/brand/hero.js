@@ -261,11 +261,19 @@ ${src(h, price.src)}</section>
   };
   const draw = (r) => {
     if (!r || slot.dataset.ms || slot.querySelector(".k-status")) return;
-    const when = String(r.checked_at || "").replace("T", " ").replace(/:\d\dZ$/, " UTC");
-    // the last real check, folded to one line: the proof is on the first screen, the steps follow right under it
-    const d = r.decision || {}, w = (WORD[d.verdict] || [d.verdict || ""])[0];
-    slot.innerHTML = `<details class="k-more k-past"><summary>Real check, ${esc(when)}: ${esc(r.idea || "")}, ${esc(w)}</summary>${card(r, `Real check, ${when}`)}</details>`;
-    slot.last = r;
+    // a finished real result, whole, before any press: the recorded sample whose verdict is Open (vectors.open_sample),
+    // labelled with the day Qloo answered it; else the last real check, folded to one line
+    if (r.sample) {
+      const s = r.sample, day = String(s.made || "").slice(0, 10);
+      slot.innerHTML = card(s, `Real Qloo answer, ${day}`);
+      slot.last = s;
+    } else {
+      const p = r.proof || r, when = String(p.checked_at || "").replace("T", " ").replace(/:\d\dZ$/, " UTC");
+      if (!p.decision) return;
+      const w = (WORD[p.decision.verdict] || [p.decision.verdict || ""])[0];
+      slot.innerHTML = `<details class="k-more k-past"><summary>Real check, ${esc(when)}: ${esc(p.idea || "")}, ${esc(w)}</summary>${card(p, `Real check, ${when}`)}</details>`;
+      slot.last = p;
+    }
     slot.dataset.past = "1";
     try { performance.mark("knos-proof-shown"); } catch { /* old browsers */ }   // when the past result was drawn
   };
@@ -355,6 +363,6 @@ ${src(h, price.src)}</section>
   const shown = (r) => { try { draw(r); } catch (e) { console.warn("knos: the past result was not drawn", e); } };
   let carried = null;
   try { carried = JSON.parse(document.getElementById("k-proof")?.textContent || "null"); } catch { carried = null; }
-  if (carried) shown(carried);                                 // in the page: at the first paint
-  else seen(root, () => get("/api/proof").then((p) => shown(p && p.proof)).catch(() => {}));
+  if (carried) shown({ proof: carried });                      // in the page: at the first paint
+  if (!asked) get("/api/proof").then((p) => p && shown(p)).catch(() => {});   // the Open sample, asked at once (no stored answer in the page)
 })();

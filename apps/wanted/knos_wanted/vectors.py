@@ -10,6 +10,7 @@ IDT benchmark, docs/idt/summary.json). Nothing is estimated: a vector with no me
 """
 from __future__ import annotations
 
+import copy
 import json
 import statistics
 import threading
@@ -172,7 +173,19 @@ def proof() -> dict:
     _load()
     with _lock:
         p = shape(dict(_proof)) if _proof else None
-    return {"proof": p, "label": "A real check this server ran" if p else "No real check yet"}
+    return {"proof": p, "label": "A real check this server ran" if p else "No real check yet", "sample": open_sample()}
+
+
+def open_sample() -> dict | None:
+    """The first sample chip (recorded.CHIPS order) whose recorded card opens pre-orders in a launch city: the finished
+    result the front door draws at load. From the private recordings, never the page."""
+    from . import metros, recorded
+    with recorded._lock:
+        cards = [recorded._last.get(recorded.key(c)) for c in recorded.CHIPS]
+    for r in cards:
+        if r and (r.get("decision") or {}).get("verdict") == "OPEN" and metros.launch_terms(r):
+            return copy.deepcopy(r)
+    return None
 
 
 SPEED = '<li data-v="speed"><b>…</b> median to verdict</li>'
