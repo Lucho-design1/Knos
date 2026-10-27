@@ -131,7 +131,7 @@
   // the lists and the calls panel are styled when a card first needs them: the first screen's stylesheet stays within its
   // weight (tests/web/perf.mjs)
   const style = () => { if (document.getElementById("k-card-css")) return;
-    document.head.insertAdjacentHTML("beforeend", `<style id="k-card-css">.k-vals{margin:0;padding-left:1.1em}.k-vals li{margin:0 0 4px}.k-val{color:inherit;text-decoration:none}.k-val:hover{text-decoration:underline}.k-calls{margin:var(--sp-3) var(--sp-5);font-size:var(--s-1)}.k-calls ol{margin:var(--sp-2) 0 0;padding-left:1.1em}.k-calls li{margin:0 0 4px;overflow-wrap:anywhere}.k-switch{display:inline-flex;gap:4px;margin-left:6px}.k-model{margin:var(--sp-3) var(--sp-5)}.k-vs-t{width:100%;border-collapse:collapse;font-size:var(--s0)}.k-vs-t th,.k-vs-t td{text-align:left;vertical-align:top;padding:6px 8px;border-top:1px solid var(--line);overflow-wrap:anywhere}.k-vs-t mark{background:color-mix(in srgb,var(--accent) 22%,transparent);color:inherit;border-radius:3px;padding:0 2px}</style>`); };
+    document.head.insertAdjacentHTML("beforeend", `<style id="k-card-css">.k-vals{margin:0;padding-left:1.1em}.k-vals li{margin:0 0 4px}.k-val{color:inherit;text-decoration:none}.k-val:hover{text-decoration:underline}.k-calls{margin:var(--sp-3) var(--sp-5);font-size:var(--s-1)}.k-calls ol{margin:var(--sp-2) 0 0;padding-left:1.1em}.k-calls li{margin:0 0 4px;overflow-wrap:anywhere}.k-switch{display:inline-flex;gap:4px;margin-left:6px}.k-model{margin:var(--sp-3) var(--sp-5)}.k-vs-t{width:100%;border-collapse:collapse;font-size:var(--s0)}.k-vs-t th,.k-vs-t td{text-align:left;vertical-align:top;padding:6px 8px;border-top:1px solid var(--line);overflow-wrap:anywhere}.k-vs-t mark{background:color-mix(in srgb,var(--accent) 22%,transparent);color:inherit;border-radius:3px;padding:0 2px}.k-timeline{margin:var(--sp-2) 0 0}.k-timeline ol{margin:4px 0 0;padding-left:1.4em;font-size:var(--s-1);max-height:12em;overflow:auto}.k-timeline li{overflow-wrap:anywhere}</style>`); };
   function calls(r) {
     style();
     const fed = {}, add = (n, part) => { if (n != null) (fed[n] ||= new Set()).add(part); };
@@ -212,6 +212,7 @@
   ${terms ? `<p class="k-terms" data-part="terms" data-city="${esc(terms.city)}" data-target="${esc(terms.target)}">Launch in <b>${esc(terms.city)}</b>: ${esc(terms.target)} pre-orders. Every pre-order is refunded if the target is missed.</p>${terms.by_population ? `<p class="k-fine" data-part="by-population" data-pop-city="${esc(terms.by_population.city)}" data-pop-target="${esc(terms.by_population.target)}">By population: ${esc(terms.by_population.city)}, ${esc(terms.by_population.target)}. By Qloo taste: ${esc(terms.city)}, ${esc(terms.target)}.</p>` : ""}` : ""}
   ${r.signals && r.signals.line ? `<p class="k-fine" data-part="signals">${esc(r.signals.line)}</p>` : ""}
   ${read}${why ? `<p class="k-why"><b>Knos rule:</b> ${esc(why)}</p>` : ""}${trendLine(r)}
+  ${Array.isArray(r.calls) && r.calls.length ? `<section class="k-timeline" data-timeline aria-live="polite"><p class="k-fine" data-counter>Qloo calls this check: 0 (live 0, cached 0)</p><ol data-rows></ol></section>` : ""}
   ${r.decision ? `<button type="button" class="k-chip" data-without aria-pressed="false">Without Qloo</button>` : ""}
   ${r.decision ? `<span class="k-switch" role="group" aria-label="With Qloo or the model alone"><button type="button" class="k-chip" data-view="qloo" aria-pressed="true">With Qloo</button><button type="button" class="k-chip" data-view="model" aria-pressed="false">Model alone</button></span>` : ""}</header>
   ${r.decision ? modelPanel(r, terms, [age, gender].filter(Boolean).join(", ") || segs.join(", ")) : ""}
@@ -345,6 +346,32 @@ ${src(h, price.src)}</section>
     }).catch(() => {});
   }));
 
+  // each Qloo call of the card, in its order, as a row of the timeline: what it asked, what it decides, its ms, live or
+  // cached; the counter counts them as they come, and the month's calls left are read once from /api/qloo/status
+  let month = null;
+  const play = (box, r) => {
+    box.dataset.played = "1";
+    const rows = box.querySelector("[data-rows]"), counter = box.querySelector("[data-counter]");
+    const decides = new Set((r.signals && r.signals.decides) || []);
+    const list = r.calls.filter((c) => c && typeof c === "object");
+    let live = 0, cached = 0, i = 0;
+    const left = () => month && month.month_left != null ? ` · Qloo's month: ${Number(month.month_left).toLocaleString("en-US")} of ${Number(month.month_limit).toLocaleString("en-US")} calls left` : "";
+    const step = () => {
+      if (!box.isConnected || i >= list.length) return;
+      const c = list[i++];
+      c.cached ? cached++ : live++;
+      rows.insertAdjacentHTML("beforeend", `<li data-call="${esc(c.n)}">${esc(c.call || "")} · ${esc(c.what || c.effect || "")} · ${decides.size ? (decides.has(c.n) ? "decides" : "context") : "the verdict"} · ${
+        Number.isFinite(c.ms) ? `${esc(c.ms)} ms` : `recorded ${esc(String(r.made || c.at || "").slice(0, 10))}`} · ${c.cached ? "cached" : "live"}</li>`);
+      counter.textContent = `Qloo calls this check: ${i} (live ${live}, cached ${cached})${left()}`;
+      setTimeout(step, 90);
+    };
+    step();
+    if (!month) get("/api/qloo/status").then((s) => { month = s || {}; if (box.isConnected) counter.textContent = `Qloo calls this check: ${i} (live ${live}, cached ${cached})${left()}`; }).catch(() => {});
+  };
+  new MutationObserver(() => {
+    const box = slot.querySelector("[data-timeline]:not([data-played])");
+    if (box && slot.last && !box.closest(".k-past")) play(box, slot.last);
+  }).observe(slot, { childList: true, subtree: true });
   // the fold "Claude alone": filled when it is first opened, from the published table, beside this card's answer
   slot.addEventListener("toggle", async (ev) => {
     const box = ev.target;
