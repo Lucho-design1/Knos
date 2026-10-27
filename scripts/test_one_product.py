@@ -104,7 +104,7 @@ def main(sha: str, out: str) -> int:
         text = (ROOT / f).read_text(encoding="utf-8")
         first = text.split("\n")[8] if f == "README.md" else text
         ok(ONE in first, f"the one line in {f}" + (" (its first line under the heading)" if f == "README.md" else ""))
-    older = subprocess.run(["git", "-C", str(ROOT), "grep", "-nF", *sum((["-e", o] for o in OLDER), []), "--", ".", ":!CHANGELOG.md"],
+    older = subprocess.run(["git", "-C", str(ROOT), "grep", "-nF", *sum((["-e", o] for o in OLDER), []), "--", ".", ":!CHANGELOG.md", ":!scripts/test_one_product.py"],
                            capture_output=True, text=True).stdout.strip()
     ok(not older, f"older one-line descriptions in the tree: {len(older.splitlines()) if older else 0}")
     # the live answers carry it too
@@ -118,7 +118,7 @@ def main(sha: str, out: str) -> int:
     said = subprocess.run([str(exe), "--help"], capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
     at = [said.find(h) for h in ("Check demand", "Hold money", "Paid on proof", "Run Knos")]
     ok(all(a > 0 for a in at) and at == sorted(at) and ONE in " ".join(said.replace("│", " ").split()), f"knos --help: headings at {at}, the one line in its header")
-    notes = subprocess.run(["git", "-C", str(ROOT), "grep", "-nE", NOTES], capture_output=True, text=True).stdout.strip().splitlines()
+    notes = subprocess.run(["git", "-C", str(ROOT), "grep", "-nE", NOTES, "--", ".", ":!scripts/test_one_product.py"], capture_output=True, text=True).stdout.strip().splitlines()
     loose = [n for n in notes if not n.startswith(FIXED)]
     ok(not loose, f"run names or operator notes in tracked files: {len(loose)}" + (f" ({loose[:3]})" if loose else "")
        + (f"; apart: {len(notes) - len(loose)} in a pre-registered plan fixed by its sha256 ({', '.join(sorted(set(n.split(':')[0] for n in notes if n.startswith(FIXED))))})" if len(notes) > len(loose) else ""))
