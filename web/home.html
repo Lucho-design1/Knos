@@ -253,10 +253,17 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
   // a number's source as a chip at most 16 px tall (Qloo, rule, model or chain), opening its row of the result's receipts
   let rcpt = "";
   const chip = (kind, row) => rcpt ? ` <a class="k-schip" data-src="${esc(kind)}" href="${esc(API)}/receipts/${esc(rcpt)}#${esc(row)}" target="_blank" rel="noopener" aria-label="Source: ${esc(kind)}, ${esc(row.replace("-", " "))}">${esc({ qloo: "Qloo", rule: "rule", model: "model", chain: "chain" }[kind])}</a>` : "";
+  // Qloo's concentration index of a launch city, 0 to 100, as Qloo's page defines it ("each row's place among the ...
+  // fetched at this scale, rescaled"): each metro's mean affinity over Qloo's heatmap cells in it (the terms' metros,
+  // apps/wanted metros.stats), rescaled over the card's metros, the highest 100 and the lowest 0
+  const indexer = (ms) => { const a = ms.map((m) => m.affinity).filter(Number.isFinite), lo = Math.min(...a), hi = Math.max(...a);
+    return (m) => !Number.isFinite(m && m.affinity) ? null : hi > lo ? Math.round((100 * (m.affinity - lo)) / (hi - lo)) : 100; };
+  const INDEX = `<a href="https://qloo.com/use-cases/expand-to-a-new-market" target="_blank" rel="noopener">Qloo concentration index (0-100)</a>`;
   // the launch terms a card draws (apps/wanted metros.launch_terms): a city only when Qloo matched a product to the idea
   const termsOf = (r) => r && r.terms && r.terms.city && (r.matches || []).length ? r.terms : null;
   const cityList = (r) => { const t = termsOf(r);
-    const heat = ((t && t.metros) || []).map((m) => ({ name: m.city, lat: m.lat, lon: m.lon, src: (r.where || [])[0]?.src }));
+    const ms = (t && t.metros) || [], index = indexer(ms);
+    const heat = ms.map((m) => ({ name: m.city, lat: m.lat, lon: m.lon, src: (r.where || [])[0]?.src, index: index(m) }));
     heat.sort((x, y) => (y.name === t.city) - (x.name === t.city));
     return heat.slice(0, 5); };
   const WORD = { OPEN:["Open for pre-orders", "open"], REFUSE: ["Not yet: pre-orders stay closed", "refuse"], CANNOT_DECIDE: ["Qloo cannot decide this one", "unknown"] };
@@ -330,7 +337,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
         a.tie.kind === "tag" ? "tag" : "product"} ${esc(a.tie.name || "")}${a.tie.via ? `, through ${esc(a.tie.via)}` : ""}</span></li>`).join("")}</ul>`
         : segs.length ? `<p>${esc(segs.join(" · "))}</p>` : ""}${src(h, who.src)}</section>
     ${cities.length ? `<section class="k-part k-where" data-part="cities" data-qloo data-heat="${cities.length}"><h3>Where to launch</h3>
-      ${map(cities, where)}<ol class="k-cities">${cities.map((c) => `<li>${esc(c.name)}</li>`).join("")}</ol>${src(h, cities[0]?.src)}</section>`
+      ${map(cities, where)}<p class="k-fine" data-index-label>${INDEX}</p><ol class="k-cities">${cities.map((c) => `<li><span data-city>${esc(c.name)}</span>${c.index == null ? "" : ` <span class="k-fine" data-index="${esc(c.index)}">${esc(c.index)}</span>`}${c.src != null ? chip("qloo", `call-${c.src}`) : ""}</li>`).join("")}</ol>${src(h, cities[0]?.src)}</section>`
       : r.stage === "verdict" && (r.matches || []).length ? `<p class="k-none" data-pending>Qloo's map is on its way.</p>` : !empty && r.no_map && (r.matches || []).length ? `<p class="k-terms" data-no-map>${esc(r.no_map)}</p>` : ""}
     ${also.length ? `<section class="k-part" data-part="also" data-qloo><h3>They also love</h3>${also.map((d) =>
       `<p class="k-also" data-domain="${esc(d.domain)}"><b>${esc(d.domain === "music" ? "Music" : d.domain === "film" ? "Film" : d.domain)}</b> ${
