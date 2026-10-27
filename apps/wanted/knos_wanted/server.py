@@ -729,6 +729,8 @@ def make_handler(state: State):
                     return self._send(400, {"error": f"{type(why).__name__}: {why}"[:300]})
             if u.path == "/healthz":
                 return self._send(200, {"ok": True})
+            if u.path in ("/quality", "/quality/"):          # the quality page is the front door's, measured at each build
+                return self._send(301, b"", "text/plain", headers={"Location": "https://drexthealpha.github.io/Knos/quality/"})
             if u.path == "/api/report":
                 rep = state.report((qs.get("hash") or [""])[0])
                 if rep is None:

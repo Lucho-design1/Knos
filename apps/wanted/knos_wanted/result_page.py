@@ -94,12 +94,13 @@ def page(rep: dict | None, url: str, rid: str) -> str:
                 + '<dl data-not-prose>' + "".join(f"<dt>{k}</dt><dd>{v}</dd>" for k, v in rows) + "</dl>"
                 + '<p class="fine">Aggregate taste of many people from Qloo, never about one person: directional demand evidence for this idea.</p>')
     share = (f'<div class="row"><figure id="r-qr">{qr.svg(url, px=4)}<figcaption>{e(url)}</figcaption></figure>'
-             f'<p class="noprint"><button type="button" id="r-share" data-url="{e(url)}">Share this result</button><br>'
-             f'<span class="fine" id="r-said" role="status"></span></p></div>')
+             f'<p class="noprint"><button type="button" id="r-share" data-url="{e(url)}">Share this result</button> '
+             f'<button type="button" id="r-print">Print</button><br><span class="fine" id="r-said" role="status"></span></p></div>')
     if rep is not None:                       # the downloads: the brief in the print layout's fields, the calls, the Ready brief
         share += (f'<p class="noprint" data-exports><a href="/r/{e(rid)}.pdf" download>Download brief (PDF)</a> · '
                   f'<a href="/r/{e(rid)}.csv" download>Download calls (CSV)</a> · <a href="/r/{e(rid)}.json" download>Download Ready brief (JSON)</a></p>')
-    script = ("<script>document.getElementById('r-share').addEventListener('click',async(ev)=>{const u=ev.currentTarget.dataset.url,said=document.getElementById('r-said');"
+    script = ("<script>document.getElementById('r-print').addEventListener('click',()=>print());"
+              "document.getElementById('r-share').addEventListener('click',async(ev)=>{const u=ev.currentTarget.dataset.url,said=document.getElementById('r-said');"
               "try{if(navigator.share){await navigator.share({title:document.title,url:u});return;}await navigator.clipboard.writeText(u);said.textContent='Link copied.';}"
               "catch(e){said.textContent=u;}});</script>")
     return (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'

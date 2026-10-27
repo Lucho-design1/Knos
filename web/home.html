@@ -243,8 +243,10 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
     (r.persona || []).forEach((t) => add(t.src, "taste persona")); (r.ladder || []).forEach((b) => add(b.src, "brand ladder"));
     add(r.versus && r.versus.src, "room against the leader"); add(r.recommended && r.recommended.src, "next to it");
     (r.cities || []).filter((c) => (c.because || []).length).forEach((c) => add(c.src, "because"));
+    const words = String(r.idea || "").match(/[^\W\d_][\w-]*/gu) || [];
+    const own = (v) => String(v).replace(/[^\W\d_][\w-]*/gu, (w) => words.find((x) => x.toLowerCase() !== w.toLowerCase() && x.toLowerCase().startsWith(w.toLowerCase()) && x.length - w.length <= 2) || w);
     const rows = (Array.isArray(r.calls) ? r.calls : []).map((c) => { const p = c.params || {};
-      const keys = Object.keys(p).filter((k) => p[k] != null && p[k] !== "").map((k) => `${k}=${String(p[k]).slice(0, 40)}`).join(", ");
+      const keys = Object.keys(p).filter((k) => p[k] != null && p[k] !== "").map((k) => `${k}=${own(String(p[k])).slice(0, 40)}`).join(", ");
       return `<li data-call="${esc(c.n)}"><a href="${esc(API)}/trace.html?hash=${encodeURIComponent(r.hash || "")}#call-${esc(c.n)}" target="_blank" rel="noopener">#${esc(c.n)}</a> ${
         esc(c.call || "")} <span class="k-fine">${esc(keys)}</span> · ${Number.isFinite(c.ms) ? `${esc(c.ms)} ms` : `recorded ${esc(String(r.made || c.at || "").slice(0, 10))}`} · ${c.cached ? "cached" : "live"}${c.error ? " · failed" : ""} · ${esc([...(fed[c.n] || [])].join(", ") || String(c.effect || "").slice(0, 60) || "the verdict")}${r.signals ? ` · <span data-role="${(r.signals.decides || []).includes(c.n) ? "decides" : "context"}">${(r.signals.decides || []).includes(c.n) ? "decides" : "context"}</span>` : ""}</li>`; });
     const first = (Array.isArray(r.calls) && r.calls[0] && r.calls[0].n) || 1;

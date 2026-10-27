@@ -62,6 +62,7 @@
     <h1>Pricing</h1>
     <p class="p-n">Free check. At mainnet the funder pays 1% on top of each payout; the solver keeps 100%.</p>
     <p class="p-n">While Knos runs on devnet test money, nothing real is charged.</p>
+    <p class="p-n" data-example>Worked example: a funder holds 25.00 test USDC on a milestone and pays a 0.075 fee on top (0.30%, above the 0.05 floor), 25.075 in all. On proof the solver receives 25.00. At mainnet the same payout carries a 0.25 fee.</p>
     <p class="fine">The fee field in the payment program on devnet reads <a href="https://github.com/drexthealpha/Knos/blob/main/programs-v2/knos_pay/src/lib.rs#L420" rel="noopener">FEE_BPS = 30</a>: 0.30% of each payout, at least 0.05 test units, paid in test units worth nothing. It becomes 1% when the program is upgraded for mainnet.</p>
     <h2>The market</h2>
     <div class="k-table"><table>

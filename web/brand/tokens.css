@@ -143,6 +143,7 @@ code, pre, kbd, .mono { font-family: var(--code); }
 .k-err{color:var(--bad);}
 .k-card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--depth-2);overflow:hidden;}
 .k-card-head{padding:var(--sp-5) var(--sp-5) var(--sp-4);border-bottom:1px solid var(--line);}
+.k-card>.k-terms,.k-card>.k-claude{margin:var(--sp-3) var(--sp-5);}
 .k-kick{margin:0 0 6px;color:var(--muted);font-size:var(--s0);}
 .k-verdict{margin:0 0 var(--sp-2);font:600 var(--s3)/1.15 var(--head);letter-spacing:-.02em;}
 .k-open .k-verdict{color:var(--ok);}
