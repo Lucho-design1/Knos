@@ -467,7 +467,9 @@ def test_the_site_asks_nobody_but_github_and_devnet():
     hosts = {"api.github.com", "api.devnet.solana.com", "github.com", "explorer.solana.com", "faucet.circle.com", "drexthealpha.github.io",
              "knos.onrender.com",
              # a result's launch map: OpenStreetMap's tiles, and its credit link that the tiles' licence asks for
-             "tile.openstreetmap.org", "www.openstreetmap.org"}
+             "tile.openstreetmap.org", "www.openstreetmap.org",
+             # the page where Qloo describes its concentration index, linked beside each launch city's index (a link, never asked)
+             "qloo.com"}
     # The facts for search engines (JSON-LD, tests/test_seo.py) name schema.org's vocabulary, the licence and the package's
     # page: identifiers a search engine reads, which no browser asks for. They are held to exactly these three hosts, and
     # everything else on the page to the list above (tests/web/seo.mjs counts the requests the pages make in a browser).

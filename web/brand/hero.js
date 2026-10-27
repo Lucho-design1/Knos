@@ -490,5 +490,6 @@ ${src(h, price.src)}</section>
   let carried = null;
   try { carried = JSON.parse(document.getElementById("k-proof")?.textContent || "null"); } catch { carried = null; }
   if (carried) shown({ proof: carried });                      // in the page: at the first paint
-  if (!asked) get("/api/proof").then((p) => p && shown(p)).catch(() => {});   // the Open sample, asked at once (no stored answer in the page)
+  // the Open sample, asked as soon as the box is in view (no stored answer in the page; a hidden box asks nobody)
+  if (!asked) seen(root, () => get("/api/proof").then((p) => p && shown(p)).catch(() => {}));
 })();

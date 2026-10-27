@@ -22,12 +22,14 @@ def test_every_page_and_copy_is_what_sync_brand_writes():
 
 def test_each_page_loads_the_tokens_first_and_carries_the_one_bar():
     bar = re.sub(r'href="[^"]*"', 'href=""', (WEB / "brand" / "bar.html").read_text(encoding="utf-8").strip())
+    no_sign_in = re.sub(r'\n\s*<a id="whoBtn"[^\n]*</a>', "", bar)       # the front door's pages: sign-in stays inside the app
     for page in sync_brand.PAGES:
         s = page.read_text(encoding="utf-8")
+        want = no_sign_in if page.is_relative_to(sync_brand.WEB) else bar
         sheets = re.findall(r'<link rel="stylesheet" href="([^"]+)"', s)
         assert sheets and sheets[0].endswith("brand/tokens.css"), (page.name, sheets)
         shown = re.search(r"<!-- k-bar -->\n(.*?)\n(?:<script|<!-- /k-bar -->)", s, re.S)[1]
-        assert re.sub(r'href="[^"]*"', 'href=""', shown) == bar, page.name                   # the same words and order
+        assert re.sub(r'href="[^"]*"', 'href=""', shown) == want, page.name                  # the same words and order
         assert s.count('id="k-bar"') == 1 and 'class="mark"' not in s, page.name
 
 
@@ -46,5 +48,6 @@ def test_the_hero_is_one_box_on_both_front_doors():
         s = page.read_text(encoding="utf-8")
         hero = s[s.index("<!-- k-hero -->"):s.index("<!-- /k-hero -->")]
         hero = re.sub(r"(<script\b[^>]*>).*?(</script>)", r"\1\2", hero, flags=re.S)   # an inline script's text is not markup
-        assert hero.count("<form") == 1 and hero.count("<input") == 1 and 'id="k-mission"' in hero, page.name
+        # one box, with the reader's optional guess of a launch city above it
+        assert hero.count("<form") == 1 and hero.count("<input") == 2 and 'id="k-guess"' in hero and 'id="k-mission"' in hero, page.name
         assert "see who wants your product, and where, before you build it" in hero.lower() and "valley" not in hero.lower(), page.name   # the mission sits below
