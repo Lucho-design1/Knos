@@ -95,11 +95,11 @@ asks nothing else of anyone: no key, no server of ours, no GitHub token.
 import { quote, eligible, statement } from "knos-settle/agent";
 
 const RPC = "https://api.devnet.solana.com";
-const offers = await quote(RPC, 1353152983, 7);                          // a repository's GitHub id, an issue's number
+const offers = await quote(RPC, 1406351591, 15);                         // a repository's GitHub id, an issue's number (funded)
 console.log(offers.said);                                                // what is held for it, and what stands in the way
 for (const o of offers.items) console.log(o.money, "until", new Date(o.deadline * 1000).toISOString(), "-", o.terms?.words[0]);
-console.log((await eligible(RPC, 1353152983, 7, 12)).said);              // whether pull request 12 meets the terms: not decidable here
-console.log((await statement(RPC, 142920951, "2026-10")).said);          // what a seller billed and was paid in a month
+console.log((await eligible(RPC, 1406351591, 15, 16)).said);             // whether pull request 16 meets the terms: not decidable here
+console.log((await statement(RPC, 142920951, "2026-10")).said);          // what a seller billed and was paid in a month (minutes: see below)
 ```
 
 - `quote(connection, repo, issue)` lists every open work order and job on the issue. For each: the terms in words, what
@@ -112,7 +112,9 @@ console.log((await statement(RPC, 142920951, "2026-10")).said);          // what
   chain: the orders that could pay, and the command for each.
 - `statement(connection, seller, month)` is one seller's month: each buyer's evaluations, accepted and rejected, their declared
   value and fees, recomputed from the meter's own log lines and compared with the month account; and the payments the payment program
-  logged to the seller. A history the node cut short is said so in `notes`.
+  logged to the seller. A history the node cut short is said so in `notes`. It reads every transaction of the month one
+  by one: on the public devnet RPC, which limits how fast it answers, a busy month took 467 s (27 Oct 2026). Give it a
+  private RPC address, or run it where a few minutes are fine.
 
 A `connection` is the RPC address, or `{ url, programs, names, now }` to name other program ids, call a mint's money something,
 or fix the time deadlines are judged by.

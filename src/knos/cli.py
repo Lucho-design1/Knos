@@ -1070,10 +1070,10 @@ def accept_init(issue: int = typer.Option(..., "--issue", help="the issue the bo
 
 WORKFLOWS, MONEY = "For a repository's workflows", "For money"
 _HELP = [    # (command or group, its panel (None: the first, "Commands"), the one line `knos --help` shows)
-    ("check", None, "Does what a pull request says agree with GitHub's record of its checks?"),
-    ("init", None, "Install the free Stop hook, and register `knos mcp`, with the coding agents on this machine."),
-    ("claim", None, "Name the Solana address your GitHub account is paid at; `claim --org`: an organisation's."),
-    ("status", None, "Check that Knos's programs on devnet (the second deployment) are running as designed. `--json` prints the same as data."),
+    ("check", "Agent work", "Does what a pull request says agree with GitHub's record of its checks?"),
+    ("init", "Agent work", "Install the free Stop hook, and register `knos mcp`, with the coding agents on this machine."),
+    ("claim", "Agent work", "Name the Solana address your GitHub account is paid at; `claim --org`: an organisation's."),
+    ("status", "Agent work", "Check that Knos's programs on devnet (the second deployment) are running as designed. `--json` prints the same as data."),
     ("command", WORKFLOWS, "A workflow's job: act on a comment's `/knos` line and reply."),
     ("settle", WORKFLOWS, "A workflow's job: pay what each merged pull request earned."),
     ("review", WORKFLOWS, "A workflow's job: one comment on a pull request saying what it would earn."),
@@ -1200,7 +1200,8 @@ def load(command: str | None = None) -> None:
             _loaded.add(i)
             _MODULES[i][1]()
     tail = [row for name in ("meter", "audit", "budget", "observe", "reproduce", "shadow", "events", "bill", "preflight", "keep", "appeal", "vault", "archive", "approve", "decide", "net", "advance", "faucet", "controls", "recall", "task", "exit", "boundary", "selfhost", "assurance", "fees", "protect", "referee", "cheats", "outcome", "gate", "verify", "self", "game", "idea", "idt", "demand") for row in _HELP if row[0] == name]   # the lines modules append: in this order always
-    _HELP[:] = [row for row in _HELP if row not in tail] + tail
+    first = [row for name in ("demand", "idt", "idea") for row in _HELP if row[0] == name]      # the product's first steps, first
+    _HELP[:] = first + [row for row in _HELP if row not in tail and row not in first] + [row for row in tail if row not in first]
     _arrange()
 
 

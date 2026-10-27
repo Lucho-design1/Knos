@@ -10,6 +10,54 @@ from . import product_routes
 
 TYPES = {"string": {"type": "string"}, "integer": {"type": "integer"}, "array": {"type": "array", "items": {}}, "object": {"type": "object"}, "boolean": {"type": "boolean"}}
 
+# Examples are real on this server: the recorded solar festival card, the crossing released on devnet and its attempt.
+H, P = "14d68eb782caff051897a9799ed592e7a6875bce6559c1c19fa67b0be41899c0", "7b4ed16b8c2903dc"
+MS = {"project": P, "milestone": "preorders"}
+# a GET route's query: name -> example (a required name is in REQUIRED); a value {"from": ...} is read from another call
+FROM_CROSS = {"from": {"method": "POST", "path": "/api/cross", "body": {"ref": "10.1038/nature16521"}, "pick": "id"}}
+PARAMS = {"/api/report": {"hash": H}, "/api/trace": {"hash": H}, "/api/receipts": {"id": H[:16]}, "/api/pool": {"hash": H},
+          "/api/quote": {"hash": H, "units": 5}, "/api/x402/report": {"hash": H}, "/api/project": {"id": P}, "/api/project/prompt": MS,
+          "/api/project/route": MS, "/api/commitments": {"take": 5}, "/api/crossings": {"take": 5}, "/api/receivables": {"take": 5},
+          "/api/company/export": {"project": P, "format": "xero"}, "/api/actions/preorder": {"report": H}, "/api/price": {"pair": "EUR/USD"},
+          "/api/ready/card": {"hash": "0" * 64}, "/api/memory/search": {"q": "kombucha"}, "/api/taste/movie": {"title": "Inception", "year": 2010},
+          "/api/attest": {**MS, "attempt": "46088348e3"}, "/api/track": {"wallet": "EZi57B4aT661Nwf9oZyPN5ronZMMgtgGUfe68aGff4Gf"},
+          "/api/sns": {"name": "knos.sol"}, "/api/projects": {"take": 10}, "/api/cross": {"id": FROM_CROSS, "since": 0},
+          "/api/cross/stream": {"id": FROM_CROSS},
+          "/api/commitment": {"id": {"from": {"method": "GET", "path": "/api/commitments", "pick": "commitments.0.commitment"}}},
+          "/api/referee/session": {"id": {"from": {"method": "GET", "path": "/api/referee/pending", "pick": "sessions.0.id"}}},
+          "/api/project/evidence": {"id": {"from": {"method": "GET", "path": "/api/project?id=" + P, "pick": "milestones.0.attempts.0.evidence"}}},
+          "/api/prize/evidence": {"id": {"from": {"method": "GET", "path": "/api/tasks", "pick": "rounds.0.prize.id"}}},
+          "/api/front": {"slug": {"from": {"method": "GET", "path": "/api/front", "pick": "products.0.slug"}}}}
+REQUIRED = {"/api/report": {"hash"}, "/api/trace": {"hash"}, "/api/receipts": {"id"}, "/api/pool": {"hash"}, "/api/quote": {"hash"},
+            "/api/x402/report": {"hash"}, "/api/project": {"id"}, "/api/project/prompt": {"project", "milestone"},
+            "/api/project/route": {"project", "milestone"}, "/api/company/export": {"project"}, "/api/actions/preorder": {"report"},
+            "/api/ready/card": {"hash"}, "/api/memory/search": {"q"}, "/api/taste/movie": {"title", "year"}, "/api/attest": {"project", "milestone", "attempt"},
+            "/api/track": {"wallet"}, "/api/sns": {"name"}, "/api/cross": {"id"}, "/api/cross/stream": {"id"}, "/api/commitment": {"id"},
+            "/api/referee/session": {"id"}, "/api/project/evidence": {"id"}, "/api/prize/evidence": {"id"}}
+BRIEF = {"title": "A check", "milestones": [{"name": "Tests pass", "target": "pytest exits 0 on the repository", "verifier": {"kind": "machine", "check": "pytest"}, "deadline_days": 3}]}
+# a POST route that changes nothing: its body and example
+BODIES = {"/api/research": ({"ref": "string", "product": "string"}, {"ref": "10.1038/nature14539"}),
+          "/api/open-signals": ({"idea": "string", "place": "string"}, {"idea": "a cold brew coffee shop", "place": "Austin"}),
+          "/api/ready": ({"brief": "object"}, {"brief": BRIEF})}
+READ_POSTS = {"/api/research", "/api/open-signals", "/api/ready", "/api/check"}
+HTML = {"/app/", "/paid", "/fields", "/money", "/with-without", "/companies", "/verify", "/status/qloo", "/qloo-safe-use", "/trace.html", "/r/{code}"}
+CONTENT = {"/sw.js": "application/javascript", "/manifest.webmanifest": "application/manifest+json", "/api/proofs/cosign.pub": "text/plain",
+           "/api/proofs/signature": "application/json", "/api/cross/stream": "text/event-stream", "/api/company/export": "text/csv"}
+MOVED = {"/": "https://drexthealpha.github.io/Knos/", "/app": "/app/", "/quality": "https://drexthealpha.github.io/Knos/quality/",
+         "/quality/": "https://drexthealpha.github.io/Knos/quality/"}
+NOT_READ_ONLY = {"/auth/orcid", "/auth/orcid/callback", "/auth/sso", "/auth/sso/callback", "/r/{code}", "/api/agent/keys", "/mcp/store"}
+
+
+def _answer(method: str, path: str) -> dict:
+    """The 200 (or 301) a route answers, with its real content type."""
+    if method == "GET" and path in MOVED:
+        return {"301": {"description": f"moved: {MOVED[path]}", "headers": {"Location": {"schema": {"type": "string"}, "example": MOVED[path]}}}}
+    if method == "GET" and path in HTML:
+        return {"200": {"description": "an HTML page", "content": {"text/html": {"schema": {"type": "string"}}}}}
+    if method == "GET" and path in CONTENT:
+        return {"200": {"description": "OK", "content": {CONTENT[path]: {"schema": {"type": "string"}}}}}
+    return {"200": {"description": "OK", "content": {"application/json": {"schema": {"type": "object"}}}}}
+
 
 def _routes():
     from . import server
@@ -31,18 +79,32 @@ def document(base: str = "https://knos.onrender.com") -> dict:
     paths: dict = {}
     for method, path, signed, summary, fields in _routes():
         op = {"summary": summary, "operationId": (method.lower() + path.replace("/", "_").replace("{", "").replace("}", "")).strip("_") + ("_page" if len(path) > 1 and path.endswith("/") else ""),
-              "responses": {"200": {"description": "OK", "content": {"application/json": {"schema": {"type": "object"}}}},
-                            "400": {"description": "refused, with the reason in `error`"},
-                            "429": {"description": "rate limited"}}}
+              "responses": {**_answer(method, path), "400": {"description": "refused, with the reason in `error`"},
+                            "404": {"description": "no such object, with the reason in `error`"}, "429": {"description": "rate limited"}}}
+        if (method == "GET" and path not in NOT_READ_ONLY and not signed and not path.startswith("/auth/")) or (method == "POST" and path in READ_POSTS):
+            op["x-read-only"] = True
+        if method == "GET" and path == "/api/x402/report":
+            op["responses"]["402"] = {"description": "payment required: the x402 price, in the PAYMENT-REQUIRED header"}
+        if method == "GET" and path == "/api/taste/movie":
+            op["responses"]["503"] = {"description": "Qloo did not answer, with the reason in `error`"}
         if signed:
             op["security"] = [{"session": []}]
             op["responses"]["401"] = {"description": "sign in first"}
         params = [{"name": n, "in": "path", "required": True, "schema": {"type": "string"}} for n in _path_params(path)]
         if method == "GET":
-            params += [{"name": k, "in": "query", "required": False, "schema": TYPES.get(t, {"type": "string"})} for k, t in fields.items()]
-        elif fields:
+            ex = PARAMS.get(path, {})
+            names = list(dict.fromkeys([*fields, *ex]))
+            for k in names:
+                prm = {"name": k, "in": "query", "required": k in REQUIRED.get(path, set()), "schema": TYPES.get(fields.get(k, "integer" if isinstance(ex.get(k), int) else "string"), {"type": "string"})}
+                if isinstance(ex.get(k), dict) and "from" in ex[k]:
+                    prm["x-example-from"] = ex[k]["from"]
+                elif k in ex:
+                    prm["example"] = ex[k]
+                params.append(prm)
+        elif fields or path in BODIES:
+            props, example = BODIES.get(path, (fields, None))
             op["requestBody"] = {"required": True, "content": {"application/json": {"schema": {
-                "type": "object", "properties": {k: TYPES.get(t, {"type": "string"}) for k, t in fields.items()}}}}}
+                "type": "object", "properties": {k: TYPES.get(t, {"type": "string"}) for k, t in props.items()}}, **({"example": example} if example else {})}}}
         if method == "POST" and path in DEMAND_BODIES:      # the demand check: every Qloo family field, typed, with an example
             op["requestBody"] = {"required": True, "content": {"application/json": {"schema": demand_body(path),
                                  "examples": {"who-and-where": {"summary": "Who and where",

@@ -105,8 +105,8 @@ def demand(c: dict, product: str | None = None, place: str | None = None, rivals
     in the demand-check page); that is said in the result."""
     try:
         dm, qm = _knos_wanted()
-    except Exception as why:  # noqa: BLE001 - the demand check is optional; the rest of step 2 is not
-        return {"status": "unavailable", "why": f"knos_wanted not importable ({type(why).__name__})"}
+    except Exception as why:  # noqa: BLE001 - not installed here (a wheel): the hosted check answers instead
+        return hosted(c, product, place, why)
     own = q is None
     if own:
         if os.environ.get("QLOO_API_KEY") or os.environ.get("KNOS_WANTED_LIVE") == "1":
@@ -130,6 +130,25 @@ def demand(c: dict, product: str | None = None, place: str | None = None, rivals
             "lean": lean, "hash": rep["hash"], "steps": len(rep.get("trail", [])), **({"warning": warn} if warn else {}),
             "confirmed": "first candidate of each question (demo); a maker confirms each match in the demand-check page",
             "key": "QLOO_API_KEY (live when set; MOCK otherwise)"}
+
+
+LEAN = {"OPEN": "leans wanted", "REFUSE": "leans not wanted", "CANNOT_DECIDE": "cannot decide"}
+
+
+def hosted(c: dict, product: str | None, place: str | None, missing: Exception) -> dict:
+    """The demand check as the hosted app runs it (POST /api/check, knos.demand_cli.ask), labelled "hosted"."""
+    from ..demand_cli import ask
+    from ..demand_tool import base_url
+    try:
+        rep = ask(product or product_phrase(c), place, None, {})
+    except Exception as why:  # noqa: BLE001 - neither here nor hosted: said, with both reasons
+        return {"status": "unavailable", "why": f"knos_wanted not importable ({type(missing).__name__}); the hosted check did not answer ({str(why)[:120]})"}
+    d = rep.get("decision") or {}
+    reasons = [rep["qloo_limit"]] if rep.get("qloo_limit") else list(d.get("reasons") or [])[:2]
+    near = (rep.get("nearest") or {}).get("idea")
+    return {"status": "ok", "mode": "hosted", "label": f"hosted: {base_url()}/api/check" + (f", the nearest idea Qloo has answered: {near}" if near else ""),
+            "idea": rep.get("idea"), "lean": {"word": LEAN.get(str(d.get("verdict")), "cannot decide"), "why": reasons},
+            "hash": rep.get("hash"), "steps": len(rep.get("calls") or []), "key": "the hosted check: knos_wanted is not installed here"}
 
 
 # ---- 2. milestone oracles -----------------------------------------------------------------------------------------

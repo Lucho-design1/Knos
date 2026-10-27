@@ -76,7 +76,7 @@ def register(app, help_lines: list | None = None) -> None:
     from ..cli import Stop
 
     if help_lines is not None:
-        help_lines.append(("idea", "For money", "Idea in from anyone or any research source (every field), then demand + pull commitments locked in stages."))
+        help_lines.append(("idea", None, "Idea in from anyone or any research source (every field), then demand + pull commitments locked in stages."))
     g = typer.Typer(help="An idea from a person, a player, an AI agent or a research source (OpenAlex, arXiv, PubMed/Europe PMC, "
                          "bioRxiv/medRxiv, Crossref + retractions, ClinicalTrials.gov, patents) as one Claim record; then wanted? "
                          "(demand check + pre-orders + pull commitments released in stages). docs/reference/IDEAS.md", no_args_is_help=True)

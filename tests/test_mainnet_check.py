@@ -562,7 +562,7 @@ def test_each_status_check_fails_on_its_own_and_says_what_to_do():
         "new programs": (status_world(new=str(other)), "set-upgrade-authority"),
         "upgrade delay": (status_world(upgrade=squads_multisig(UPGRADE_KEY, 172_800)), "node scripts/governance.mjs set-time-lock 691200 --send"),
         "upgrade multisig": (status_world(upgrade=squads_multisig(UPGRADE_KEY, 691_200, config_authority=other)), "node scripts/governance.mjs create"),
-        "upgrade proposal": (status_world(proposals={5: proposal_account(5, "Approved", NOW - 3600)}), "governance.mjs cancel upgrade 5"),
+        "upgrade proposal": (status_world(proposals={5: proposal_account(5, "Active", NOW - 3600)}), "governance.mjs cancel upgrade 5"),
         "guardian": (status_world(guardian=squads_multisig(GUARDIAN_KEY, 0, config_authority=other)), "pin it"),
         "GitHub's keys": (status_world(keys={N1: KEYS[N1]}), "the rotate workflow"),
         "key refresh": (status_world(keys={N1: key_account(expires_at=NOW + 20 * 86_400), N2: key_account(flags=oidc.APPROVED, expires_at=NOW + 12 * 86_400)}), "Refresh"),
@@ -812,15 +812,15 @@ def test_a_pending_upgrade_is_named_with_its_index_its_buffer_and_when_it_can_ex
     got = _upgrade("Approved", at=NOW - 3600)
     left = 691_200 - 3600
     unread = "; its buffer could not be read, so whether GitHub built it is not known"         # (no buffer account in this world: the gate says so)
-    assert not got.ok and got.evidence == (f"proposal 5: an upgrade of program {PROG} from buffer {BUF}; approved by 2 of 2 members needed; "
+    assert got.ok and got.warn and got.evidence == (f"proposal 5: an upgrade of program {PROG} from buffer {BUF}; approved by 2 of 2 members needed; "
                                            f"it can be executed from {mc._at(NOW - 3600 + 691_200)} (in {left // 3600} h {left % 3600 // 60} min)" + unread)
     assert got.todo.startswith(f"before it runs, compare the buffer with the verified build: solana program dump {BUF} buffer.so")
     assert "node scripts/governance.mjs cancel upgrade 5" in got.todo and "passes again once it has executed or been cancelled" in got.todo
     # once the delay is over, it says so
     got = _upgrade("Approved", at=NOW - 7 * 86_400)
-    assert not got.ok and "its delay is over" not in got.evidence                  # 7 days after the vote: a day of the 8 left
+    assert got.warn and "its delay is over" not in got.evidence                  # 7 days after the vote: a day of the 8 left
     got = _upgrade("Approved", at=NOW - 9 * 86_400)
-    assert not got.ok and "its delay is over" in got.evidence and "execute it now" in got.evidence
+    assert got.ok and got.warn and "its delay is over" in got.evidence and got.evidence.endswith("approved, waiting to be executed" + unread)
     # a proposal still being voted on, and one only drafted
     got = _upgrade("Active", approved=1)
     assert not got.ok and got.evidence == f"proposal 5: an upgrade of program {PROG} from buffer {BUF}; 1 of 2 approvals so far; it can be executed 8 days after the last approval is given" + unread
@@ -866,9 +866,9 @@ def test_proposals_that_finished_or_are_not_upgrades_or_are_not_readable_are_not
     got = checks(status_world(proposals={5: (proposal_account(5, "Active", NOW), cfg)}))["upgrade proposal"]
     assert not got.ok and "a change to the upgrade multisig itself (its members, threshold or delay)" in got.evidence
     other = checks(status_world(proposals={5: (proposal_account(5, "Approved", NOW), vault_transaction_account(loader=False))}))["upgrade proposal"]
-    assert not other.ok and "a transaction of the upgrade vault" in other.evidence and "solana program dump" not in other.todo
+    assert other.warn and "a transaction of the upgrade vault" in other.evidence and "solana program dump" not in other.todo
     # no transaction account (closed) still shows the proposal
-    assert not checks(status_world(proposals={5: (proposal_account(5, "Approved", NOW), None)}))["upgrade proposal"].ok
+    assert checks(status_world(proposals={5: (proposal_account(5, "Approved", NOW), None)}))["upgrade proposal"].warn
     # a proposal at or below the stale index is void and is not read; the older ones are looked at only as far as LOOK_BACK
     assert checks(status_world(proposals={1: proposal_account(1, "Approved", NOW)}))["upgrade proposal"].ok
     assert checks(status_world(proposals={4: proposal_account(4, "Active", NOW)}))["upgrade proposal"].ok is False

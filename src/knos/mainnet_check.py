@@ -323,7 +323,8 @@ def _pending_words(p: Pending, now: int) -> str:
         left = max(0, p.executes_at - now)
         when = (f"it can be executed from {_at(p.executes_at)} (in {left // 3600} h {left % 3600 // 60} min)" if left else
                 f"its delay is over ({_at(p.executes_at)}): anyone in the multisig can execute it now")
-        return f"proposal {p.index}: {what}; approved by {p.approved} of {p.threshold} members needed; {when}"
+        return f"proposal {p.index}: {what}; approved by {p.approved} of {p.threshold} members needed; {when}" + (
+            "" if left else "; approved, waiting to be executed")
     if p.status == "Active":
         return (f"proposal {p.index}: {what}; {p.approved} of {p.threshold} approvals so far; it can be executed {TIME_LOCK // 86_400} days after the "
                 "last approval is given")
@@ -496,6 +497,7 @@ class Check(NamedTuple):
     ok: bool
     evidence: str      # what was read from chain, in words
     todo: str          # what to do when it fails; empty when it passes
+    warn: bool = False  # passes, with something to know (an approved upgrade waiting to be executed)
 
 
 def _at(t: int) -> str:
@@ -603,7 +605,9 @@ def status(fetch: Fetch, ids: dict | None = None, first: dict | None = None) -> 
     else:
         waiting = pending_proposals(fetch.account, ids["upgrade_multisig"], ms, squads)
         head = waiting[0] if waiting else None
-        res.append(Check("upgrade proposal: nothing pending on the upgrade multisig", not waiting,
+        # approved by the members: the public delay is the safeguard working, said as a warning (never a failure)
+        approved = bool(waiting) and all(p.status == "Approved" for p in waiting)
+        res.append(Check("upgrade proposal: nothing pending on the upgrade multisig", not waiting or approved,
                          # an upgrade's buffer is held against upgrade_gate's record: whether a GitHub run built exactly those bytes
                          "; ".join(_pending_words(p, now) + (gate.words(fetch.account, p.program, p.buffer) if p.kind == "upgrade" else "") for p in waiting) or
                          f"no proposal is pending on {ids['upgrade_multisig']} ({ms.transaction_index} made so far; the newest {LOOK_BACK} were read)",
@@ -611,7 +615,7 @@ def status(fetch: Fetch, ids: dict | None = None, first: dict | None = None) -> 
                          (f"before it runs, compare the buffer with the verified build: solana program dump {head.buffer} buffer.so, and its hash "
                           "(sha256 without trailing zeros) with the executable hash of this repository's verified build. " if head.buffer else "") +
                          f"If it is not expected, members vote to cancel it: node scripts/governance.mjs cancel upgrade {head.index}. "
-                         "This line passes again once it has executed or been cancelled."))
+                         "This line passes again once it has executed or been cancelled.", warn=approved))
 
     ok, why = _guardian(fetch.account, ids, {name: elf for name, (_, _, elf) in data.items()})
     res.append(Check("guardian: the vault both programs name is the pinned multisig's", ok, why,
@@ -662,7 +666,7 @@ def status(fetch: Fetch, ids: dict | None = None, first: dict | None = None) -> 
                      f"knos_pay {ids['knos_pay']}: " + (f"{seen[0]} refund{'s' if seen[0] != 1 else ''} in its newest {seen[1]} transactions" if seen[0]
                                                          else f"no refund in its newest {seen[1]} transactions"),
                      refund_todo))
-    return [c if not c.ok else c._replace(todo="") for c in res]       # a line that passes has nothing to do
+    return [c if not c.ok or c.warn else c._replace(todo="") for c in res]       # a line that passes has nothing to do (a warning keeps its next step)
 
 
 # ---- the real fetchers ----------------------------------------------------------------------------------------------
@@ -846,12 +850,13 @@ def status_main(say: Callable[[str], None] = print, fetch: Fetch | None = None, 
     passed = sum(c.ok for c in got)
     if as_json:
         say(json.dumps({"cluster": source.cluster() if source.cluster else "unknown",
-                        "checks": [{"check": c.name, "pass": c.ok, "evidence": c.evidence, "next": c.todo if not c.ok else ""} for c in got],
+                        "checks": [{"check": c.name, "pass": c.ok, "warning": c.warn, "evidence": c.evidence, "next": c.todo if not c.ok or c.warn else ""} for c in got],
                         "overall": passed == len(got), "passed": passed, "of": len(got)}, indent=1))
         return 0 if passed == len(got) else 1
     for c in got:
-        say(f"{'PASS' if c.ok else 'FAIL'}  {c.name}  ({c.evidence})")
-        if not c.ok:
+        say(f"{'WARN' if c.warn else 'PASS' if c.ok else 'FAIL'}  {c.name}  ({c.evidence})")
+        if not c.ok or c.warn:
             say(f"      Next: {c.todo}")
-    say(f"{passed} of {len(got)} checks pass" + ("" if passed == len(got) else f"; {len(got) - passed} to fix"))
+    warned = sum(c.warn for c in got)
+    say(f"{passed} of {len(got)} checks pass" + (f", {warned} with a warning" if warned else "") + ("" if passed == len(got) else f"; {len(got) - passed} to fix"))
     return 0 if passed == len(got) else 1

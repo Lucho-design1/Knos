@@ -96,25 +96,42 @@ def summary(rep: dict) -> dict:
             "calls": len(rep.get("calls") or [])}
 
 
+def lines(rep: dict) -> list[str]:
+    """The answer in three plain lines: the verdict, the reason (Qloo's month, else the first call's error, else the
+    verdict's first reason) and the report with its page."""
+    d = rep.get("decision") or {}
+    err = next((c.get("error") for c in rep.get("calls") or [] if isinstance(c, dict) and c.get("error")), None)
+    reason = rep.get("qloo_limit") or err or next(iter(d.get("reasons") or []), "") or "no reason given"
+    near = rep.get("nearest") or {}
+    h = str(rep.get("hash") or "")
+    return [f"Verdict: {d.get('verdict') or 'none'}" + (f", from the nearest idea Qloo has answered: {near.get('idea')}" if near.get("idea") else ""),
+            f"Why: {reason}",
+            f"Report: {h[:16] or 'none'}, {len(rep.get('calls') or [])} Qloo calls" + (f", https://knos.onrender.com/r/{h[:16]}" if h else "")]
+
+
 def register(app, help_lines: list | None = None) -> None:
     """`knos demand "<idea>" [--flags]` on the main app. `help_lines`: cli._HELP."""
     import importlib
     typer = importlib.import_module("typer")          # annotations here are evaluated (no postponed annotations in this module)
 
     if help_lines is not None:
-        help_lines.append(("demand", "Demand", "Is it wanted? Qloo's demand check with every family's option as a flag."))
+        help_lines.append(("demand", None, "Is it wanted? Qloo's demand check with every family's option as a flag."))
 
     @app.command("demand", context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
-                 help="Qloo demand check: who, gaps, where, price tier, who serves it, media kind, look up.\n\n" + flags_help())
+                 help="Qloo demand check: who, gaps, where, price tier, who serves it, media kind, look up. Prints three lines; --json the report.",
+                 epilog="Qloo's options, each a flag:\n\n" + flags_help())
     def demand_(ctx: typer.Context,  # type: ignore[name-defined]  # typer: imported on registration only
                 idea: str = typer.Argument(..., help="the product idea in plain words (8 to 500 characters)"),
                 place: str = typer.Option("", "--place", help="the launch market (city or country)"),
                 leader: str = typer.Option("", "--leader", help="the market leader to compare against"),
-                as_json: bool = typer.Option(False, "--json", help="the whole report, not the summary")) -> None:
+                as_json: bool = typer.Option(False, "--json", help="the whole report, not the three lines")) -> None:
         try:
             opts = parse(list(ctx.args))
             rep = ask(idea, place or None, leader or None, opts)
         except ValueError as why:
             typer.echo(str(why), err=True)
             raise typer.Exit(2) from None
-        typer.echo(json.dumps(rep if as_json else summary(rep), indent=1, ensure_ascii=False, default=str))
+        if as_json:
+            typer.echo(json.dumps(rep, indent=1, ensure_ascii=False, default=str))
+        else:
+            typer.echo("\n".join(lines(rep)))

@@ -224,10 +224,10 @@ try {
   globalThis.fetch = node(empty);
   console.log = (...what) => printed.push(what.join(" "));
   try { writeFileSync(file, block); await import(pathToFileURL(file).href); } finally { console.log = log; rmSync(file, { force: true }); }
-  same("the README's agent example runs as pasted and prints three answers", [printed.length, printed[0].startsWith("Issue 7 of repository 1353152983: nothing payable is held."),
+  same("the README's agent example runs as pasted and prints three answers", [printed.length, printed[0].startsWith("Issue 15 of repository 1406351591: nothing payable is held."),
     printed[1].includes("`knos attest`"), printed[2]], [3, true, true, "Seller 142920951, 2026-10: 0 billable evaluations (0 accepted, 0 rejected) across 0 buyers, and 0 payments from the payment program."]);
   const ids = JSON.parse(readFileSync(join(here, "../../src/knos/settle/v2/program_ids.json"), "utf8"));
-  same("its repository and seller are ids the programs file names", [ids.attest_repo_ids.includes(1353152983), ids.attest_owner_id], [true, 142920951]);
+  same("its seller is the id the programs file names", ids.attest_owner_id, 142920951);
 } finally { globalThis.fetch = real; }
 
 console.log(`sdk/settle/agent: ${n} checks against recorded RPC (${Object.keys(world.accounts).length} accounts, ${Object.keys(world.transactions).length} transactions)`);

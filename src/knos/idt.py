@@ -298,16 +298,20 @@ def register(app, help_lines: list | None = None) -> None:
     sub = typer.Typer(add_completion=False, no_args_is_help=True, help="Intent Disambiguation Tax: route a brief, or draft one cheaply.")
     app.add_typer(sub, name="idt")
     if help_lines is not None:
-        help_lines.append(("idt", "Briefs", "Route a brief (effort, budget, one question) or draft the shortest Ready one with Claude."))
+        help_lines.append(("idt", None, "Route a brief (effort, budget, one question) or draft the shortest Ready one with Claude."))
 
     @sub.command("check")
     def check_(brief: Path = typer.Argument(..., help="A brief as JSON: {milestones: [...], kill_fee_bps, challenge_s}"),
                milestone: str = typer.Option("", "--prompt-for", help="also print the prompt an agent gets for this milestone key")) -> None:
         b = json.loads(brief.read_text(encoding="utf-8"))
-        out = {"ready": ready.check(b)["ready"], "route": route(b), "sketch": sketch(b), "tiers": tiers(b), "benchmark": benchmark_for(b), "not_on_claude": NOT_ON_CLAUDE}
+        rc = ready.check(b)               # what is missing, milestone by milestone, as the hosted knos_ready says it
+        out = {"ready": rc["ready"], "missing": rc["missing"], "milestones": rc["milestones"], "route": route(b), "sketch": sketch(b),
+               "tiers": tiers(b), "benchmark": benchmark_for(b), "not_on_claude": NOT_ON_CLAUDE}
         if milestone:
             out["agent_prompt"] = agent_prompt(b, milestone)
         typer.echo(json.dumps(out, indent=1, ensure_ascii=False))
+        if not rc["ready"]:
+            raise typer.Exit(1)           # not ready: a script or CI can stop on it
 
     @sub.command("draft")
     def draft_(ask: str = typer.Argument(..., help="What the brief is for, in plain words (a paper, a product, a task)"),
