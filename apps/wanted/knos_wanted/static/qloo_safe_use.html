@@ -89,7 +89,7 @@
     <td data-h="In Knos"><code>qloo_rest.Client.get</code>: HTTP 401 or 403 says Qloo refused the key; 429 says the rate limit was reached. The report then says "NO QLOO EVIDENCE" and "cannot decide". There is no other key and no other endpoint to fall back to.</td>
     <td data-h="Checked by"><code>test_qloo_safe_use</code></td></tr>
   <tr id="r-small"><td data-h="Rule">The smallest request that answers the question; cache only what the project needs; respect the quota; bounded retries.</td>
-    <td data-h="In Knos">Each call asks for a bounded number of results (<code>take</code>: 5 to 12 for most calls, 300 for the audience list); answers are cached privately for 7 days; a monthly budget stops new calls (<code>QLOO_MONTHLY_BUDGET</code>); a token bucket paces calls; one retry at most. Traces keep the request and a short excerpt, only for reports something links to.</td>
+    <td data-h="In Knos">Each call asks for a bounded number of results (<code>take</code>: 5 to 12 for most calls, 300 for the audience list); answers are cached privately, with no time limit; a monthly budget stops new calls (<code>QLOO_MONTHLY_BUDGET</code>); at most 1,500 calls go to Qloo on one UTC day (<code>DAY_CAP</code>), and none once Qloo's month has under 2,000 left (<code>MONTH_FLOOR</code>); a token bucket paces calls; one retry at most. Traces keep the request and a short excerpt, only for reports something links to.</td>
     <td data-h="Checked by"><code>test_qloo_safe_use</code>, <code>test_qloo_rest</code></td></tr>
   <tr id="r-scrape"><td data-h="Rule">No bulk scraping; no recreating an unrelated database.</td>
     <td data-h="In Knos">Calls are made only for an idea someone asks about, at most a few dozen per report; nothing crawls Qloo.</td>

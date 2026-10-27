@@ -42,8 +42,9 @@ def main(sha: str, out: str, scratch: str) -> int:
     s = Path(scratch)
     dep = json.loads(run(["gh", "api", "repos/drexthealpha/Knos/deployments?environment=github-pages&per_page=1"])[1])[0]
     ok(dep["sha"] == sha, f"Pages deployed at {dep['sha'][:7]} (commit under test {sha[:7]})")
-    latest = run([sys.executable, "-I", os.environ["KNOS_RENDER_LATEST"]])[1].split()
-    ok(len(latest) > 2 and latest[1] == "live" and sha.startswith(latest[2]), f"Render live at {latest[2] if len(latest) > 2 else '?'}")
+    if os.environ.get("KNOS_RENDER_LATEST"):          # a script printing Render's newest deploy: "<id> <status> <sha>"
+        latest = run([sys.executable, "-I", os.environ["KNOS_RENDER_LATEST"]])[1].split()
+        ok(len(latest) > 2 and latest[1] == "live" and sha.startswith(latest[2]), f"Render live at {latest[2] if len(latest) > 2 else '?'}")
     # the wheel, and a venv with nothing else
     whl, venv = s / "n7wheel", s / "n7venv"
     for d in (whl, venv):
@@ -52,7 +53,9 @@ def main(sha: str, out: str, scratch: str) -> int:
     wheel = next(whl.glob("knos-*.whl"), None)
     ok(code == 0 and wheel is not None, f"wheel built: {wheel.name if wheel else said[-200:]}")
     run([sys.executable, "-m", "venv", str(venv)])
-    py, knos = venv / "Scripts" / "python.exe", venv / "Scripts" / "knos.exe"
+    bin_ = venv / ("Scripts" if os.name == "nt" else "bin")
+    exe = ".exe" if os.name == "nt" else ""
+    py, knos = bin_ / f"python{exe}", bin_ / f"knos{exe}"
     code, said = run([str(py), "-m", "pip", "install", "-q", str(wheel)], timeout=1800)
     ok(code == 0 and knos.exists(), f"installed from the wheel in a fresh venv (not -e): {'yes' if code == 0 else said[-200:]}")
     certifi = run([str(py), "-c", "import certifi; print(certifi.where())"])[1].strip()
@@ -95,10 +98,11 @@ def main(sha: str, out: str, scratch: str) -> int:
     ok(code == 0 and "{" not in said and len(rows) == 3 and rows[0].startswith("Verdict:") and rows[1].startswith("Why: ") and len(rows[1]) > 10,
        f"(e) knos demand: {' | '.join(rows)[:260]}")
     code, said = kn("demand", "--help")
-    u, f = said.find("Usage"), said.find("--signal")
-    ok(code == 0 and 0 <= u < f, f"(e) knos demand --help: Usage at {u}, the first Qloo flag at {f}")
+    u, o, f = said.find("Usage"), said.find("Options"), said.find("Qloo's options")
+    ok(code == 0 and 0 <= u < o < f, f"(e) knos demand --help: Usage at {u}, its Options at {o}, the Qloo flags after them at {f}")
     code, said = kn("--help")
-    cmds = [m.group(1) for m in re.finditer(r"^\W+([a-z][a-z-]+)\s{2,}", said, re.M)]
+    panel = said[said.find("Commands"):]                 # the commands, from the Commands panel on (Options holds --version, --help)
+    cmds = [m.group(1) for m in re.finditer(r"^\W+([a-z][a-z-]+)\s{2,}", panel, re.M)]
     ok(cmds[:3] == ["demand", "idt", "idea"], f"(e) knos --help: the first commands {cmds[:5]}")
     # (f)
     readme = (ROOT / "README.md").read_text(encoding="utf-8")

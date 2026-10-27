@@ -129,7 +129,7 @@ const verdictOf = (page) => page.waitForSelector("#check-verdict", { timeout: 15
   ok("pending: shown in the same task as the press", pending.live === "live" && pending.bars && pending.busy === "true", pending);
   await page.waitForSelector("#check-limit");
   const limit = await page.textContent("#check-limit");
-  ok("limits: GitHub's hourly limit is said, with its reset", /^Wait until .+: GitHub answers 60 reads an hour per address\.$/.test(limit), limit);
+  ok("limits: GitHub's hourly limit is said, with its reset", /^GitHub's limit for this address resets at \d{2}:\d{2} UTC: it answers 60 reads an hour per address\.$/.test(limit), limit);
 
   await page.fill("#check-url", "github.com/nobody/nothing/pull/9");
   await page.click("#check-run");
@@ -186,7 +186,7 @@ const verdictOf = (page) => page.waitForSelector("#check-verdict", { timeout: 15
   ok("late share: link 2 is the one checked", second, await page.textContent("#check-verdict"));
   await ctx.close();
 }
-ok("hosts: only the page's own, api.github.com and the app's newest payout", [...hosts].every((h) => h === new URL(origin).host || h === "api.github.com" || h === "knos.onrender.com")
+ok("hosts: only the page's own, api.github.com, the devnet read and the app's newest payout", [...hosts].every((h) => h === new URL(origin).host || h === "api.github.com" || h === "api.devnet.solana.com" || h === "knos.onrender.com")
   && [...knos].every((p) => p === "/api/agent/payout/latest"), [...hosts, ...knos]);
 
 await browser.close(); server.close();

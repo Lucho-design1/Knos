@@ -100,7 +100,7 @@ def test_the_help_is_the_same_whatever_was_loaded_first():
     assert whole.returncode == after.returncode == 0 and whole.stdout == after.stdout
     for name in ("judge", "terms", "meter", "bundle", "receipt", "audit", "agent", "work", "budget", "observe", "reproduce", "shadow"):
         assert f" {name} " in whole.stdout, name
-    for names in (("meter", "audit", "budget"), ("observe", "reproduce", "shadow")):    # groups, then commands: each in the order named
+    for names in (("budget", "meter", "audit"), ("observe", "reproduce", "shadow")):    # the flow's headings, then each in the order named
         order = [whole.stdout.index(f" {name} ") for name in names]
         assert order == sorted(order), names
 

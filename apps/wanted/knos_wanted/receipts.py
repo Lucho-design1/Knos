@@ -81,8 +81,18 @@ def rows(rep: dict) -> list[dict]:
     return out
 
 
+def shown(rep: dict) -> str | None:
+    """The verdict the card shows (web/brand/hero.js): an OPEN with no launch city is drawn as not yet open."""
+    v = (rep.get("decision") or {}).get("verdict")
+    if v == "OPEN":
+        from . import metros
+        if not metros.launch_terms(rep):
+            return "REFUSE"
+    return v
+
+
 def doc(rep: dict) -> dict:
-    return {"report": rep.get("hash"), "idea": rep.get("idea"), "made": rep.get("made"), "verdict": (rep.get("decision") or {}).get("verdict"), "rows": rows(rep),
+    return {"report": rep.get("hash"), "idea": rep.get("idea"), "made": rep.get("made"), "verdict": shown(rep), "rows": rows(rep),
             "recompute": {"call": "sha256 of canonical JSON (sorted keys, no spaces) of n, call, params, at, body_digest",
                           "brief": "knos.ready.criteria_hash(brief)"}}
 

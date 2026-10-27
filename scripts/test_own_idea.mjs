@@ -31,10 +31,15 @@ const mcp = async (name, args) => { const j = await post("/mcp", { jsonrpc: "2.0
   return j.result?.structuredContent || JSON.parse(j.result?.content?.[0]?.text || "{}"); };
 // 1. MCP and REST agree
 const chips = Object.keys(JSON.parse(readFileSync(REC, "utf8")).cards);
-let same = 0;
+let same = 0, asked = 0;
+// the app answers an address 30 checks in 10 minutes (server.py LIMITS["check"], MCP checks included): one pause keeps it
+const pace = async (n) => { if (asked + n > 28) { lines.push("     (a pause of 610 s: the app's check limit is 30 an address in 10 minutes)"); await new Promise((r) => setTimeout(r, 610000)); asked = 0; } asked += n; };
 for (const idea of [...chips, ...P1]) {
+  await pace(2);
   const [r, m] = await Promise.all([post("/api/check", { idea }), mcp("knos_demand_check", { idea })]);
-  const agree = (r.decision || {}).verdict === (m.decision || {}).verdict && r.hash === m.report;
+  const rv = (r.decision || {}).verdict, mv = (m.decision || {}).verdict;
+  const agree = Boolean(rv) && rv === mv && Boolean(r.hash) && r.hash === m.report;
+  if (!rv || !mv) lines.push(`     no verdict: REST ${String(r.error || "").slice(0, 80)} | MCP ${String(m.error || m.message || "").slice(0, 80)}`);
   same += agree;
   lines.push(`${agree ? "ok  " : "FAIL"} ${idea.slice(0, 44).padEnd(44)} REST ${(r.decision || {}).verdict} ${String(r.hash).slice(0, 12)} | MCP ${(m.decision || {}).verdict} ${String(m.report).slice(0, 12)}`);
   if (!agree) fails++;
@@ -49,7 +54,7 @@ try {
   for (const [w, scheme] of [[390, "dark"], [1280, "light"]]) {
     const p = await (await browser.newContext({ viewport: { width: w, height: 844 }, colorScheme: scheme })).newPage();
     p.on("pageerror", (e) => errors.push(`${w}: ${e.message}`));
-    await p.goto(SITE + "?t=" + Date.now(), { waitUntil: "load" });
+    await p.goto(SITE + "?t=" + Date.now(), { waitUntil: "domcontentloaded", timeout: 90000 });
     await p.waitForSelector("#k-card > .k-card", { timeout: 60000 }).catch(() => {});
     const screen = await p.evaluate(() => { const b = document.querySelector("[data-qloo-limit]"), H = innerHeight;
       const shown = [...document.querySelectorAll("body *")].filter((e) => e.children.length === 0 && e.checkVisibility() && e.getBoundingClientRect().top < H)
@@ -58,6 +63,7 @@ try {
     ok(!screen.banner && !screen.words, `${w} ${scheme}: the first screen shows ${screen.banner || screen.words ? "a quota banner" : "no quota banner"}`);
     if (w !== 1280) continue;
     for (const idea of NEW) {
+      await pace(1);
       await p.fill("#k-q", idea); await p.click("#k-go");
       await p.waitForFunction((i) => { const k = document.querySelector("#k-card > .k-card"); return k && !k.closest(".k-past") && (k.querySelector("[data-qloo-down]") || k.matches("[data-nearest-options]") || k.querySelector(".k-kick")?.textContent.includes(i)); }, idea, { timeout: 30000 }).catch(() => {});
       await p.waitForTimeout(400);
@@ -72,6 +78,8 @@ try {
       ok(said && (m || c.none.startsWith("Qloo has not answered an idea close to this yet.")), `${idea}: ${m ? `closest "${m}"` : c.none ? `"${c.none}" ${c.opts.length} option(s)` : `"${c.first || c.kick}"`}`);
     }
   }
+} catch (e) {
+  ok(false, `the browser step stopped: ${String(e.message).split("\n")[0].slice(0, 160)}`);
 } finally {
   await browser.close();
 }

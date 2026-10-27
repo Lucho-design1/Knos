@@ -63,16 +63,14 @@ def _save(kind: str, key: str, obj: dict, chain: bool = True) -> dict:
         g = grounding(obj)                         # kept on the project: its report file does not survive a redeploy
         if g:
             obj["grounding_snapshot"] = g
-    if kind in ("projects", "orders"):
-        _list_cache.clear()                        # the public list shows this change at once
-        _sum_cache.clear()
-        for f in _dir("pages").glob("projects-summary-*.json"):
-            f.unlink(missing_ok=True)
-        _json_cache.clear()
     f = _dir(kind) / f"{key}.json"
     tmp = f.with_suffix(".tmp")
     tmp.write_text(json.dumps(obj, indent=1, default=str), encoding="utf-8")
     os.replace(tmp, f)
+    if kind in ("projects", "orders"):
+        _list_cache.clear()                        # the public list shows this change at once
+        _json_cache.clear()
+        _sum_stale.update(_sum_cache.keys() | {10})  # the summary is built again on its next call; its file stays till then
     if chain:
         from . import chainstate
         chainstate.queue_save(kind, key, obj)      # and on devnet, so it survives a redeploy (KNOS_STATE_ON_CHAIN=1)
@@ -579,6 +577,7 @@ def projects(n: int = 50) -> list[dict]:
 
 _json_cache: dict[int, tuple[float, bytes]] = {}
 _sum_cache: dict[int, tuple[float, bytes]] = {}
+_sum_stale: set[int] = set()                       # takes whose summary a save since has made old
 
 
 def summary(p: dict) -> dict:
@@ -594,23 +593,29 @@ def summary(p: dict) -> dict:
 
 
 def summaries_json(take: int = 10) -> bytes:
-    """GET /api/projects: the newest `take` projects not archived, as summaries. Answered at once from memory, else from
-    the file the last build left beside the projects (a deploy or a sleep empties memory); one older than 30 s is rebuilt
-    behind the answer. A project saved since deletes the file (_save), so a change shows on the next call."""
+    """GET /api/projects: the newest `take` projects not archived, as summaries. Built at boot (warm_summaries) and again
+    only after a project or order is saved (_save marks it old); otherwise answered from memory, else from the file the
+    last build wrote beside the projects (a deploy or a sleep empties memory). A sweep that changes nothing rewrites nothing."""
+    if take in _sum_stale:
+        return _build_summaries(take)
     hit = _sum_cache.get(take)
-    if hit and time.time() - hit[0] < 30:
+    if hit:
         return hit[1]
     f = _dir("pages") / f"projects-summary-{take}.json"
-    if hit is None and f.is_file():
-        try:
-            hit = (f.stat().st_mtime, f.read_bytes())
-        except OSError:
-            hit = None
-    if hit is not None:
-        _sum_cache[take] = (time.time(), hit[1])     # answered now; one rebuild at a time behind it
-        threading.Thread(target=_build_summaries, args=(take,), daemon=True).start()
-        return hit[1]
-    return _build_summaries(take)
+    try:
+        body = f.read_bytes()
+    except OSError:
+        return _build_summaries(take)
+    _sum_cache[take] = (time.time(), body)
+    return body
+
+
+def warm_summaries() -> None:
+    """At boot: the list's summary is built once, so the first visitor to /app/#projects reads a file, never all projects."""
+    try:
+        _build_summaries(10)
+    except Exception as why:  # noqa: BLE001 - the list is then built on its first call
+        print(f"knos projects summary: {type(why).__name__}: {str(why)[:200]}", flush=True)
 
 
 def list_html(take: int = 10) -> str:
@@ -631,12 +636,14 @@ def list_html(take: int = 10) -> str:
 def _build_summaries(take: int) -> bytes:
     rows = [summary(p) for p in _all("projects") if not p.get("unlisted")][:take]
     body = json.dumps({"projects": rows, "take": take, "shape": "summary", "one": "/api/project?id=<id>"}, default=str).encode()
+    _sum_stale.discard(take)
     _sum_cache[take] = (time.time(), body)
     try:
         f = _dir("pages") / f"projects-summary-{take}.json"
-        tmp = f.with_suffix(".tmp")
-        tmp.write_bytes(body)
-        tmp.replace(f)
+        if not f.is_file() or f.read_bytes() != body:   # written only when the list changed
+            tmp = f.with_suffix(".tmp")
+            tmp.write_bytes(body)
+            tmp.replace(f)
     except OSError:
         pass
     return body

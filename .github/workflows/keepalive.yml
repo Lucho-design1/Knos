@@ -24,5 +24,11 @@ jobs:
             echo "knos: attempt $i answered ${code:-nothing}"; sleep 20
           done
           [ "$code" = "200" ]
+      # every other run (10 minutes): the app page itself, so its projects list and page stay warm, not only /healthz
+      - name: Ask for knos.onrender.com/app/
+        run: |
+          if [ $(( $(date -u +%M) / 5 % 2 )) -eq 0 ]; then
+            curl -s -o /dev/null -w "app: %{http_code} in %{time_total}s\n" -m 90 https://knos.onrender.com/app/ || true
+          fi
 # Only the app is kept awake: Render's free tier gives 750 instance hours a month per workspace, and one service awake
 # all month uses about 744 of them. The SSO service (knos-sso) is left to sleep and wakes on its first sign-in.

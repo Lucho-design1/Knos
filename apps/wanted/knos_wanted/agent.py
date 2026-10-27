@@ -645,9 +645,16 @@ def mcp(state, msg: dict, profile: str = "full") -> dict | None:
                 out = _tasks.listing()
             elif name == "knos_memory_search":
                 from knos.record import search as rsearch
-                got = rsearch.search(str(args.get("q") or "")[:200], root=company.root())
+                q = str(args.get("q") or "")[:200]
+                got = rsearch.search(q, root=company.root())
+                rows, said = got.get("rows", [])[:20], got.get("said")
+                if not rows and q.strip():           # as /api/memory/search: the crossings and checks that name it
+                    from .server import named
+                    rows = named(state, q)
+                    if rows:                         # none found either: Sibyl's own words stand
+                        said = f"{len(rows)} crossing{'s' if len(rows) != 1 else ''} and checks name \"{q}\"."
                 # Sibyl's verdict object and its code, as Sibyl gave them (why these rows, or why none)
-                out = {"said": got.get("said"), "rows": got.get("rows", [])[:20], "verdict": got.get("verdict"),
+                out = {"said": said, "rows": rows, "verdict": got.get("verdict"),
                        "verdict_code": (got.get("verdict") or {}).get("code")}
             elif name == "knos_memory_recall":
                 out = recall(memory_key(args.get("ref"), args.get("idea"))) or {"remembered": False}

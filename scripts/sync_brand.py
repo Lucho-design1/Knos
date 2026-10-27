@@ -22,7 +22,7 @@ SITE = "https://drexthealpha.github.io/Knos/"
 # the front door names no other host in its pages (tests/test_settle_fixtures.py): its links to the app go through its own
 # wake page, which wakes the free server and forwards (web/wanted.html: the hash, and ?to= one of the app's pages)
 WAKE = "wanted.html"
-COPIES = {WEB / "brand" / n: STATIC / "brand" / n for n in ("tokens.css", "wordmark.svg", "mark.svg", "bar.js", "hero.js", "vectors.js")}
+COPIES = {WEB / "brand" / n: STATIC / "brand" / n for n in ("tokens.css", "card.css", "wordmark.svg", "mark.svg", "bar.js", "hero.js", "vectors.js")}
 COPIES |= {f: STATIC / "fonts" / f.name for f in sorted((WEB / "fonts").iterdir()) if f.suffix in (".woff2", ".txt")}
 # the crow icon set (scripts/make_icons.py) on every Knos page, the app's included
 COPIES |= {WEB / "icon.svg": STATIC / "icon.svg", WEB / "favicon.ico": STATIC / "favicon.ico",

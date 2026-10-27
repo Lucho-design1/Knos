@@ -8,6 +8,7 @@ import csv
 import io
 import json
 import re
+import textwrap
 
 from . import metros, result_page
 
@@ -56,7 +57,7 @@ def pdf(rep: dict, url: str) -> bytes:
              (9, "Aggregate taste of many people from Qloo, never about one person."), (9, url), (9, "Devnet, test money.")]
     y, ops = 800, []
     for size, text in rows:
-        for part in [text[i:i + 90] for i in range(0, len(text), 90)] or [""]:
+        for part in textwrap.wrap(text, 90, break_long_words=False, break_on_hyphens=False) or [""]:
             ops.append(f"BT /F1 {size} Tf 50 {y} Td ({_ascii(part)}) Tj ET")
             y -= size + 8
     stream = "\n".join(ops).encode("latin-1")

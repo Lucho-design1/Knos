@@ -103,9 +103,9 @@ export function describe(terms) {
 
 // ---- the chain, through public RPC reads -----------------------------------------------------------------------------
 /** Signatures that named `address`, newest first, as { signature, blockTime }; failed transactions are left out. */
-async function* signatures(c, address, most) {
+async function* signatures(c, address, most, size = 1000) {
   for (let before = null, left = most; left > 0;) {
-    const limit = Math.min(left, 1000);
+    const limit = Math.min(left, size);
     const page = await rpc(c.url, "getSignaturesForAddress", [address, { limit, commitment: "confirmed", ...(before ? { before } : {}) }]);
     for (const s of page) if (s.err === null || s.err === undefined) yield { signature: s.signature, blockTime: s.blockTime ?? null };
     left -= page.length;
@@ -270,11 +270,14 @@ const same = (a, b) => ["evaluations", "accepted", "rejected", "value", "fees"].
  *           from the meter's own log lines and compared with it (`agrees`), and the sums
  *   escrow  the payments the escrow logged to this seller in the month (a work order's `knos3:paid` line, a job's `knos2:paid`),
  *           in the mint's smallest units as logged, with the transaction of each, and how far the history was read
- * `most` caps the transactions read per history (default 1000); a cut-short history says so in `notes`.
+ * `most` caps the transactions read per history (default 1000), `pageSize` the signatures asked for per call (default 100,
+ * at most 1000), and `timeoutMs` the whole read (default 60000): a history cut short by either says so in `notes`.
  */
-export async function statement(connection, seller, month, { most = 1000 } = {}) {
+export async function statement(connection, seller, month, { most = 1000, pageSize = 100, timeoutMs = 60000 } = {}) {
   const c = await link(connection), sellerId = whole(seller, "Pass the seller's GitHub id, like 142920951."), when = monthOf(month);
-  const ledger = { history: async function* history(address, limit) { for await (const s of signatures(c, address, limit)) yield s.signature; },
+  const size = Math.max(1, Math.min(1000, Math.floor(Number(pageSize)) || 100)), until = Date.now() + Math.max(1, Number(timeoutMs) || 60000);
+  let late = false;
+  const ledger = { history: async function* history(address, limit) { for await (const s of signatures(c, address, limit, size)) { if (Date.now() > until) { late = true; return; } yield s.signature; } },
     logs: async (signature) => (await logsOf(c, signature))?.logs ?? [] };
   const buyers = [];
   for (const m of await monthAccounts(c, sellerId, when.yyyymm)) {
@@ -284,7 +287,8 @@ export async function statement(connection, seller, month, { most = 1000 } = {})
   const sums = Object.fromEntries(["evaluations", "accepted", "rejected", "value", "fees"].map((k) => [k, buyers.reduce((a, b) => a + b[k], 0)]));
   const payments = [], escrow = { payments, paid: 0, scanned: 0, unread: 0, complete: false };
   let reached = false;
-  for await (const s of signatures(c, c.pay, most)) {
+  for await (const s of signatures(c, c.pay, most, size)) {
+    if (Date.now() > until) { late = true; break; }
     escrow.scanned += 1;
     if (s.blockTime !== null && s.blockTime >= when.to) continue;       // a later month: nothing to read
     if (s.blockTime !== null && s.blockTime < when.from) { reached = true; break; }
@@ -301,9 +305,10 @@ export async function statement(connection, seller, month, { most = 1000 } = {})
     }
     payments.unshift(...here);                                          // newest transaction first in, so the list ends up oldest first
   }
-  escrow.complete = reached || escrow.scanned < most;
+  escrow.complete = !late && (reached || escrow.scanned < most);
   const notes = [...buyers.filter((b) => !b.agrees).map((b) => `For buyer ${b.buyerId} the meter's log in this node's history differs from its month account: the node's history is cut short, and the account is the count.`),
-    ...(escrow.complete ? [] : [`Only the newest ${escrow.scanned} transactions of the payment program were read, so payments earlier in the month may be missing.`]),
+    ...(late ? [`The read stopped at its ${Math.round((Number(timeoutMs) || 60000) / 1000)} s time limit, so the history is cut short.`] : []),
+    ...(escrow.complete || late ? [] : [`Only the newest ${escrow.scanned} transactions of the payment program were read, so payments earlier in the month may be missing.`]),
     ...(escrow.unread ? [`${escrow.unread} transactions of the payment program could not be read: the payments are a lower bound.`] : []),
     "Amounts are in the smallest units of the mint, as the programs logged them: USDC has six decimals."];
   const text = `Seller ${sellerId}, ${when.label}: ${sums.evaluations} billable evaluation${sums.evaluations === 1 ? "" : "s"} (${sums.accepted} accepted, ${sums.rejected} rejected) across ${buyers.length} buyer${buyers.length === 1 ? "" : "s"}, `

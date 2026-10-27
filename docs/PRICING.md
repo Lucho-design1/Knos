@@ -30,13 +30,13 @@ The 1% goes on chain only with a program upgrade, which waits in public first ([
 
 ```mermaid
 flowchart TB
-    check["Check a pull request: free"]
-    paid["Fund a task or tip: a fee of 0.30%, at least 0.05"]
-    meter["Meter: free up to a monthly limit"]
-    check --> paid
-    check --> meter
+    check["Demand check: free"]
+    brief["Ready brief and proof page: free"]
+    paid["Release on verified proof: 1% decided; 0.30%, at least 0.05, on devnet today"]
+    check --> brief
+    brief --> paid
 ```
-*Checking is free. A fee is charged only when money moves or work is counted.*
+*The check and the brief are free. A fee is charged only when held money is released on proof.*
 
 This part gives the prices the programs on [devnet](WORDS.md#devnet) charge today.
 
